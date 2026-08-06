@@ -493,16 +493,23 @@ export class TimeGrid extends ArrayGrid {
         }
     }
 
-    /** Keeps the focused channel within the vertically visible window. */
+    /**
+     * Pins the focused channel at the TOP of the vertically visible window — device-observed:
+     * TimeGrid's vertical navigation is always "fixed focus" (there is no `vertFocusAnimationStyle`
+     * field for it, unlike `RowList`/`MarkupList`); the highlighted row never floats down through
+     * the viewport, the content scrolls under it instead. Combined with wrap (`handleUpDown`), the
+     * window is fully circular, so no end-of-list clamp is needed here.
+     */
     protected updateTopRow() {
-        const visible = this.visibleChannels || this.numRows || 1;
-        if (this.channelIndex < this.topRow) {
-            this.topRow = this.channelIndex;
-        } else if (this.channelIndex > this.topRow + visible - 1) {
-            this.topRow = this.channelIndex - visible + 1;
+        this.topRow = this.channels.length > 0 ? this.wrapIndex(this.channelIndex, this.channels.length) : 0;
+    }
+
+    /** Wraps `index` into `[0, length)`, e.g. `wrapIndex(-1, 5) === 4`. */
+    protected wrapIndex(index: number, length: number): number {
+        if (length <= 0) {
+            return 0;
         }
-        const maxTop = Math.max(0, this.channels.length - visible);
-        this.topRow = Math.max(0, Math.min(this.topRow, maxTop));
+        return ((index % length) + length) % length;
     }
 
     protected pageSize(): number {
@@ -539,8 +546,11 @@ export class TimeGrid extends ArrayGrid {
         } else {
             return false;
         }
+        // Wraps: pressing up from the first channel moves to the last, and down from the last
+        // wraps to the first (device-observed). A single-channel grid resolves back to itself,
+        // which correctly reports "not handled" below so the key bubbles to an ancestor.
         if (this.inChannelInfoColumn) {
-            const next = this.clamp(this.channelIndex + offset, 0, this.channels.length - 1);
+            const next = this.wrapIndex(this.channelIndex + offset, this.channels.length);
             if (next === this.channelIndex) {
                 return false;
             }
@@ -555,8 +565,8 @@ export class TimeGrid extends ArrayGrid {
             this.isDirty = true;
             return true;
         }
-        const next = this.channelIndex + offset;
-        if (next < 0 || next >= this.channels.length) {
+        const next = this.wrapIndex(this.channelIndex + offset, this.channels.length);
+        if (next === this.channelIndex) {
             return false;
         }
         const curProg = this.programIndexByChannel[this.channelIndex] ?? 0;
@@ -666,7 +676,6 @@ export class TimeGrid extends ArrayGrid {
             return;
         }
         const ch = this.clamp(n, 0, this.channels.length - 1);
-        this.topRow = ch;
         this.focusCell(ch, this.programIndexAtTime(ch, this.viewStartTime));
     }
 
@@ -731,12 +740,16 @@ export class TimeGrid extends ArrayGrid {
 
         const isFHD = this.resolution === "FHD";
         const timeBarH = (this.getValueJS("timeBarHeight") as number) || 50;
+        // Declared here (not just below with the row-drawing locals) so the sole drawText call in
+        // the "nothing loaded yet" branch below still threads through the same running counter.
+        let textIndex = 0;
         if (this.channels.length === 0) {
             if (this.shouldShowLoading()) {
                 this.renderLoading(
                     { x: rect.x, y: rect.y + timeBarH, width: totalW, height: totalH - timeBarH },
                     opacity,
-                    draw2D
+                    draw2D,
+                    textIndex++
                 );
             }
             return;
@@ -773,7 +786,6 @@ export class TimeGrid extends ArrayGrid {
         const now = this.cachedNowEpoch;
         const center = this.getScaleRotateCenter();
         const nodeFocus = sgRoot.focused === this;
-        let textIndex = 0;
 
         // --- Time bar ---
         const timeBarBmp = this.getBitmap("timeBarBitmapUri");
@@ -844,12 +856,17 @@ export class TimeGrid extends ArrayGrid {
         const vGap = isFHD ? 3 : 2; // thin gap between rows so cells read as separate
         const cellH = rowHeight - vGap;
         const nowX = this.gridX + (now - this.viewStartTime) * secToPx;
+        // Automatic per-row "not loaded yet" feedback (see renderLoading below) — the manual
+        // showLoadingDataFeedback override is a whole-grid toggle handled separately at the end of
+        // this method, and is ignored while automatic feedback is enabled (documented behavior).
+        const autoLoading = (this.getValueJS("automaticLoadingDataFeedback") as boolean) ?? true;
         let y = gridTop;
-        for (let r = 0; r < visible; r++) {
-            const ch = topCh + r;
-            if (ch >= this.channels.length) {
-                break;
-            }
+        // The window is fully circular (updateTopRow pins the focused channel at the top, and
+        // vertical navigation wraps) — never fewer than the channel count, never more (no row
+        // repeats within one frame when there are fewer channels than visible slots).
+        const rowsToRender = Math.min(visible, this.channels.length);
+        for (let r = 0; r < rowsToRender; r++) {
+            const ch = (topCh + r) % this.channels.length;
             // Past-time screen: a dim base layer behind the programs airing before "now". Drawn
             // first so program cells (and the focus highlight) render on top of it.
             if (showPast && nowX > this.gridX) {
@@ -883,6 +900,12 @@ export class TimeGrid extends ArrayGrid {
                 startP = Math.min(startP, focusedProgram);
             }
             startP = Math.max(0, startP);
+            // Tracks whether ANY program cell actually intersects the visible time window this
+            // pass — false both when the channel has zero programs (still loading, per
+            // ContentManagerTimeGrid-style row-by-row lazy loading: an unloaded row starts as an
+            // empty ContentNode) and when its programs exist but none cover the current window
+            // (scrolled to a time not yet loaded). Either way, per automaticLoadingDataFeedback.
+            let anyProgramVisible = false;
             for (let p = startP; p < progs.length; p++) {
                 const pStart = this.programStart[ch][p];
                 const pDuration = this.programDuration[ch][p];
@@ -894,6 +917,7 @@ export class TimeGrid extends ArrayGrid {
                 if (cellX >= this.gridX + this.gridWidth) {
                     break;
                 }
+                anyProgramVisible = true;
                 const clipX = Math.max(cellX, this.gridX);
                 const clipW = Math.min(cellX + cellW, this.gridX + this.gridWidth) - clipX;
                 const cellRect = { x: clipX, y, width: clipW, height: cellH };
@@ -951,6 +975,14 @@ export class TimeGrid extends ArrayGrid {
                     this.renderFocus(cellRect, opacity, nodeFocus, draw2D);
                 }
             }
+            if (!anyProgramVisible && autoLoading) {
+                this.renderLoading(
+                    { x: this.gridX, y, width: this.gridWidth, height: cellH },
+                    opacity,
+                    draw2D,
+                    textIndex++
+                );
+            }
             y += rowHeight;
         }
 
@@ -994,7 +1026,8 @@ export class TimeGrid extends ArrayGrid {
             this.renderLoading(
                 { x: this.gridX, y: gridTop, width: this.gridWidth, height: gridAreaH },
                 opacity,
-                draw2D
+                draw2D,
+                textIndex++
             );
         }
     }
@@ -1066,11 +1099,11 @@ export class TimeGrid extends ArrayGrid {
         return !auto && show;
     }
 
-    protected renderLoading(rect: Rect, opacity: number, draw2D?: IfDraw2D) {
+    protected renderLoading(rect: Rect, opacity: number, draw2D: IfDraw2D | undefined, textIndex: number) {
         const text = (this.getValueJS("loadingDataText") as string) || "Loading Data…";
         const font = this.getValue("programTitleFont") as Font;
         const color = this.getValueJS("programTitleColor") as number;
-        this.drawText(text, font, color, opacity, rect, "center", "center", 0, draw2D, "...", 99999);
+        this.drawText(text, font, color, opacity, rect, "center", "center", 0, draw2D, "...", textIndex);
     }
 
     /** Formats an epoch (seconds) as a 12-hour clock label, e.g. "8:30 pm". */

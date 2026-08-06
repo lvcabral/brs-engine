@@ -287,6 +287,47 @@ reparse (the only time the channel/program model, and therefore the `textIndex` 
 changed) forces fresh `drawText` measurement for the whole node that frame. Regression: "a content
 reparse forces fresh text draws" in `TimeGrid.test.js`.
 
+## `TimeGrid` vertical navigation is always fixed-focus and wraps — there is no `vertFocusAnimationStyle`
+
+**Device-observed**, and confirmed against the reference (`external/dev-doc/.../timegrid.md`), which
+documents no `vertFocusAnimationStyle` field for `TimeGrid` at all (unlike `RowList`/`MarkupList`,
+where it's app-configurable). The engine used to give `TimeGrid` `ArrayGrid`'s inherited
+`floatingFocus` default and no wrap — the highlighted channel row floated down through the visible
+window before the window started scrolling, and up/down stopped dead at the first/last channel. A
+real device instead pins the focused channel at the **top** of the visible window unconditionally
+(`updateTopRow` — content scrolls, the highlight never moves within the viewport) and **wraps**: up
+from channel 0 goes to the last channel, down from the last goes to channel 0
+(`handleUpDown`/`wrapIndex`), for both the main grid and the channel-info column. `renderContent`'s row
+loop indexes channels with `(topRow + r) % channels.length` instead of a linear `topRow + r` with an
+end-of-list `break`, capped at `Math.min(visible, channels.length)` so a channel count smaller than the
+visible window doesn't repeat a row within one frame. A single-channel grid's wrap-to-self resolves to
+a no-op and reports the key **unhandled**, matching `MarkupList`'s single-item wrap rule, so it bubbles
+to an ancestor. Regression: "vertical navigation is fixed-focus and wraps" in `TimeGrid.test.js`.
+
+## `TimeGrid` automatic per-row loading feedback (`automaticLoadingDataFeedback`)
+
+The reference documents `automaticLoadingDataFeedback` (default `true`) as replacing "the program data
+region of the grid... automatically... whenever the content field has not been set **or the user
+scrolls to a time where the content has not yet been loaded**." The engine already handled the first
+half (`channels.length === 0`, via `shouldShowLoading`/`renderLoading`) and the fully-manual
+`showLoadingDataFeedback` whole-grid override, but never the per-row case — once at least one channel
+had loaded, no row ever showed loading feedback again, even one with zero programs. This matters
+because `TimeGrid` combined with wrap reaches unloaded rows immediately (e.g. one "up" press from
+channel 0 jumps straight to the last channel), and a row-by-row lazy content loader (SGDEX's
+`ContentManagerTimeGrid` sample) keeps most rows empty until their own async load completes.
+
+Fix: the row loop in `renderContent` tracks whether **any** program cell actually intersected the
+visible time window (`anyProgramVisible`) — false both for a channel with zero programs and for one
+whose programs exist but don't cover the current window (scrolled to an unloaded time). When
+`automaticLoadingDataFeedback` is true, an empty row draws `loadingDataText` across its own
+program-grid width instead of staying blank; `showLoadingDataFeedback` stays a whole-grid manual
+toggle, ignored while automatic feedback is on (per the reference). `renderLoading` takes an explicit
+`textIndex` from the same running counter every other string in this render pass uses (previously a
+hardcoded `99999` sentinel, safe only because there was ever at most one call per frame) — now that a
+frame can call it once per unloaded row, each call needs its own slot in `Group.drawText`'s
+`cachedLines` cache (see the section above) or they'd collide. Regression: "automatic per-row loading
+feedback" in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two

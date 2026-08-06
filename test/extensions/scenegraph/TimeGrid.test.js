@@ -433,4 +433,169 @@ describe("TimeGrid node", () => {
             expect(drawn[row3NameIdx + 1]).toBe("I Remember, I Remember");
         });
     });
+
+    /**
+     * Device-observed: TimeGrid has no `vertFocusAnimationStyle` field (unlike RowList/MarkupList) —
+     * its vertical navigation is always "fixed focus": the focused channel is pinned at the TOP of
+     * the visible window and the content scrolls under it, and moving up from the first channel (or
+     * down from the last) wraps around instead of stopping. Previously the engine floated the
+     * highlight through the visible rows (like ArrayGrid's default floatingFocus) and did not wrap.
+     */
+    describe("vertical navigation is fixed-focus and wraps (device-observed, no vertFocusAnimationStyle field on TimeGrid)", () => {
+        function buildChannels(n) {
+            const base = 1_000_000_000;
+            const channels = [];
+            for (let i = 0; i < n; i++) {
+                channels.push({ title: `Ch${i}`, programs: [{ title: `P${i}`, start: base, duration: 3600 }] });
+            }
+            return buildContent(channels);
+        }
+
+        test("the focused channel is always the top visible row — content scrolls, focus does not float", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("numRows", new Int32(2));
+            grid.setValue("content", buildChannels(5));
+
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.topRow).toBe(0);
+
+            // A floating-focus list would keep topRow at 0 here (channel 1 still fits in a 2-row
+            // window starting at 0). A fixed-focus list scrolls immediately.
+            grid.handleKey("down", true);
+            expect(grid.getValueJS("channelFocused")).toBe(1);
+            expect(grid.topRow).toBe(1);
+
+            grid.handleKey("down", true);
+            expect(grid.getValueJS("channelFocused")).toBe(2);
+            expect(grid.topRow).toBe(2);
+        });
+
+        test("up from the first channel wraps to the last; down from the last wraps to the first", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("content", buildChannels(5));
+
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.handleKey("up", true)).toBe(true);
+            expect(grid.getValueJS("channelFocused")).toBe(4);
+            expect(grid.topRow).toBe(4);
+
+            expect(grid.handleKey("down", true)).toBe(true);
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.topRow).toBe(0);
+        });
+
+        test("a single-channel grid reports the key unhandled (wrap-to-self is a no-op, matching MarkupList)", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("content", buildChannels(1));
+
+            expect(grid.handleKey("up", true)).toBe(false);
+            expect(grid.handleKey("down", true)).toBe(false);
+        });
+
+        test("the channel-info column wraps the same way", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("channelInfoFocusable", core.BrsBoolean.True);
+            grid.setValue("content", buildChannels(3));
+
+            // Move into the channel-info column, then wrap up from channel 0.
+            grid.handleKey("left", true);
+            expect(grid.getValueJS("channelInfoFocused")).toBe(0);
+            grid.handleKey("up", true);
+            expect(grid.getValueJS("channelInfoFocused")).toBe(2);
+        });
+    });
+
+    /**
+     * Device-observed (per the TimeGrid reference and confirmed on a real Roku): with
+     * `automaticLoadingDataFeedback` at its default `true`, the program-grid region of a channel row
+     * is automatically replaced with `loadingDataText` whenever that row has no program data
+     * covering the visible time window — e.g. a row-by-row lazy content loader (like SGDEX's
+     * ContentManagerTimeGrid) that hasn't fetched that channel's programs yet. Previously the engine
+     * only ever showed this for the WHOLE grid (no channels loaded at all) or in the fully manual
+     * `showLoadingDataFeedback` override — never per row once at least one channel had data.
+     */
+    describe("automatic per-row loading feedback (automaticLoadingDataFeedback)", () => {
+        function recordingDraw2D() {
+            const drawn = [];
+            return {
+                draw2D: {
+                    doDrawRotatedText: (text) => drawn.push(text),
+                    doDrawRotatedRect: () => {},
+                    doDrawRotatedBitmap: () => {},
+                    drawNinePatch: () => {},
+                },
+                drawn,
+            };
+        }
+
+        test("a channel with no programs shows loadingDataText in its row; a loaded channel does not", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("numRows", new Int32(2));
+            grid.setValue(
+                "content",
+                buildContent([
+                    { title: "Loaded", programs: [{ title: "Real Program", start: base, duration: 3600 }] },
+                    { title: "NotLoaded", programs: [] },
+                ])
+            );
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).toContain("Real Program");
+            expect(drawn).toContain("Loading Data…");
+        });
+
+        test("a custom loadingDataText is used instead of the default", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("loadingDataText", new BrsString("Please wait..."));
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).toContain("Please wait...");
+            expect(drawn).not.toContain("Loading Data…");
+        });
+
+        test("disabling automaticLoadingDataFeedback (without showLoadingDataFeedback) shows nothing for an unloaded row", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("automaticLoadingDataFeedback", core.BrsBoolean.False);
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).not.toContain("Loading Data…");
+        });
+
+        test("disabling automaticLoadingDataFeedback but enabling showLoadingDataFeedback covers the whole grid manually", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("automaticLoadingDataFeedback", core.BrsBoolean.False);
+            grid.setValue("showLoadingDataFeedback", core.BrsBoolean.True);
+            grid.setValue(
+                "content",
+                buildContent([{ title: "Loaded", programs: [{ title: "Real Program", start: base, duration: 3600 }] }])
+            );
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            // Manual mode is a whole-grid override — pre-existing behavior, unaffected by the
+            // per-row automatic detection above.
+            expect(drawn).toContain("Loading Data…");
+        });
+    });
 });
