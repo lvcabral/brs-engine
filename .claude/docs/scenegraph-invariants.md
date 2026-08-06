@@ -221,6 +221,33 @@ When `addFields` builds a custom component's fields, a `<field>` whose name alre
 the XML default is applied by the subsequent `setValueSilent`. Regression:
 `duplicate-system-field-app` in `test/cli/cli-scenegraph.test.js`.
 
+## `ArrayGrid`/`RowList` item-component caches are position-keyed, not content-keyed
+
+`ArrayGrid.itemComps[]` and `RowList.rowItemComps[][]` are reused across frames, indexed purely by
+screen **position** (index / row+col) — cleared only on a full `content` field **reassignment**
+(`ArrayGrid.setValue`, `content` branch). Whether a cached item component gets its `itemContent`
+re-pushed was gated solely on the content child's **own** `.changed` flag
+(`ArrayGrid.renderItemComponent`, `RowList`'s row-cell render path):
+
+```ts
+if (content.changed) {
+    itemComp.setValue("itemContent", content, true);
+    content.changed = false;
+}
+```
+
+That misses in-place reordering. `removeChild`/`insertChild`/`appendChild`-as-move
+(`ContentNode.appendChildToParent`, `Node.insertChildAtIndex`, `Node.removeChildrenAtIndex`) mark
+`.changed` and call `makeDirty()` on the **container** node so `renderNodeContent`'s top-level check
+correctly rebuilds the flattened `this.content[]`/`this.metadata[]` model (`refreshContent`) — but the
+individual `ContentNode` objects that land at new positions in that array never had their own
+`.changed` set. So after a reorder, `this.content[index]` can be a *different* object than the one the
+position-keyed cache slot was last told about, and the app never sees its updated field/content until
+something else (a focus move touching unrelated fields on that slot) coincidentally papers over it.
+Fix: also compare the cached item component's live `itemContent` value (a plain reference read) against
+the content object now assigned to that slot, and push whenever the two differ — not only when
+`content.changed`. Regression: `ArrayGridItemReorder.test.js`.
+
 ## `TimeGrid.channelParseCache` must invalidate on in-place program mutation, not just count
 
 `TimeGrid` doesn't cache item *components* like `ArrayGrid`/`RowList` do — it draws its program cells
