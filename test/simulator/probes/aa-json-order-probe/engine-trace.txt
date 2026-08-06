@@ -1,0 +1,13 @@
+PROBE|000|boot|start
+PROBE|000|boot|device model=Roku TV os=15.0
+PROBE|small-lit|foreach|d,a,c,b
+PROBE|small-lit|keys|a,b,c,d
+PROBE|small-json|foreach|d,a,c,b
+PROBE|small-json|keys|a,b,c,d
+PROBE|large-lit|foreach|m,b,t,f,q,a,k,s,c,p,g,n,d,r,h,e,j,o,i,l
+PROBE|large-lit|keys|a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
+PROBE|large-json|foreach|m,b,t,f,q,a,k,s,c,p,g,n,d,r,h,e,j,o,i,l
+PROBE|large-json|keys|a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t
+PROBE|999|boot|end
+------ Finished 'aa-json-order-probe' execution [EXIT_USER_NAV] ------
+

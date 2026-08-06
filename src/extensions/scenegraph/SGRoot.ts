@@ -479,6 +479,15 @@ export class SGRoot {
         if (!address) {
             return undefined;
         }
+        // Fast reject: every node that has ever crossed a thread boundary is registered here
+        // (`fromSGNode`/`toSGNode`/`updateSGNode` all call `registerCrossThreadNode` unconditionally),
+        // so an address absent from the registry cannot possibly be found by the tree walk below —
+        // this lets a node crossing for the first time (the common case for a freshly built subtree,
+        // now checked on every deserialized node, not just field syncs) skip walking
+        // scene/global/every task tree entirely.
+        if (!this.getCrossThreadNode(address)) {
+            return undefined;
+        }
         const roots: (Node | undefined)[] = [this._scene, this._mGlobal];
         for (const thread of this._threads.values()) {
             roots.push(thread.task);

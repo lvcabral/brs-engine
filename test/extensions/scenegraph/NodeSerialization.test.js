@@ -29,6 +29,22 @@ describe("SceneGraph node serialization", () => {
         expect(isInvalid(fields.get("error").getValue(false))).toBe(true);
     });
 
+    test("updateSGNode clears a stale proxy flag once a full payload arrives", () => {
+        // A node rebuilt earlier as an address-only proxy (its field list incomplete, e.g. via a
+        // `_circular_` stub or a shallow `_proxy_` reference) must stop forcing rendezvous reads
+        // once a later payload fully populates it — otherwise it stays flagged incomplete forever.
+        const target = createFlatNode("Node", "Node");
+        target.setRemoteProxy(true);
+
+        const source = new Node([], "Node");
+        source.setAddress(target.getAddress());
+        source.setValueSilent("title", new core.BrsString("hello"));
+        const fullPayload = transfer(fromSGNode(source, true));
+
+        updateSGNode(fullPayload, target);
+        expect(target.isRemoteProxy()).toBe(false);
+    });
+
     test("does not capture types for fields with concrete (inferable) values", () => {
         const source = new Node([], "Node");
         source.setValueSilent("title", new core.BrsString("hello"));
@@ -222,6 +238,10 @@ describe("SceneGraph node serialization", () => {
             node.m.set(new BrsString("stashed"), orphan, true);
 
             const serialized = transfer(withScope(node));
+            // `withScope` (fromSGNode) registers `node`'s own address as cross-thread as a side
+            // effect of serializing it — give the rebuild a fresh address so it genuinely simulates
+            // a thread that has never seen this node, rather than resolving back to `node` itself.
+            serialized._address_ = "FEEDFACE00001";
             // Force an address this thread cannot resolve to any live instance.
             serialized._m_.stashed._mref_ = "DEADBEEF000000";
             const target = toSGNode(serialized, "Node", "CustomHelper");
