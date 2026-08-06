@@ -1053,7 +1053,11 @@ export class RowList extends ArrayGrid {
         // otherwise a button focused on the first render never shows its focused state once the list
         // is focused afterwards (focusPercent stays 1, so a focusPercent observer never re-fires).
         itemComp.setValue("itemHasFocus", BrsBoolean.from(focused && nodeFocus), false);
-        if (content.changed) {
+        // rowItemComps[][] is keyed by POSITION, not by content identity — see the matching comment
+        // in ArrayGrid.renderItemComponent. A reorder only dirties the container ContentNode, so
+        // content.changed alone misses "this cell now holds a different object".
+        const currentContent = itemComp.getValue("itemContent");
+        if (content.changed || currentContent !== content) {
             itemComp.setValue("itemContent", content, true);
             content.changed = false;
         }
