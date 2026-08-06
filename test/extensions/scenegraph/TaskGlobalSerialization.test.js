@@ -75,6 +75,11 @@ describe("Task launch serialization of m.global", () => {
         const serialized = JSON.parse(JSON.stringify(serializeTaskM(m, task)));
 
         const ref = serialized.global.authmanager;
+        // `globalWithManagers` attaches AuthManager directly under `sgRoot.mGlobal`, which is also
+        // one of `resolveLiveNode`'s tree-walk roots — in this single-process test that makes the
+        // manager "live" on the very thread meant to be receiving it for the first time. Give the
+        // rebuild a fresh address so it genuinely simulates a thread that has never seen it before.
+        ref._address_ = "FEEDFACE00002";
         const restored = toSGNode(ref, "Node", "Node");
         // Marked so a read of an unmirrored field rendezvouses to the owner instead of answering
         // invalid locally — the reference carries none of the owner's fields.

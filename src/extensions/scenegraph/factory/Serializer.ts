@@ -531,6 +531,20 @@ export function toSGNode(obj: any, type: string, subtype: string, child?: boolea
         sgRoot.registerCrossThreadNode(stub);
         return stub;
     }
+    // A full-payload address that already has a live instance on this thread — reachable within
+    // this pass (`nodeMap`) or via the scene/global/task trees (or, for a true orphan, the
+    // cross-thread registry, via `sgRoot.resolveLiveNode`) — must be reused in place instead of
+    // minting a second instance sharing its address. Reference-based reconciliation elsewhere
+    // (e.g. `Node.appendChildToParent`'s `indexOf`) can't recognize a fresh duplicate as "the node
+    // already there". Mirrors the resolution order `restoreScriptScopeM`/`Task.resolveNode` already
+    // establish for this codebase's cross-thread node identity.
+    const address: string | undefined = obj["_address_"];
+    if (address) {
+        const live = nodeMap.get(address) ?? sgRoot.resolveLiveNode(address);
+        if (live) {
+            return updateSGNode(obj, live, nodeMap);
+        }
+    }
     const newNode = buildFlatNode(type, subtype);
     // Store the node in the map using the original address for circular reference resolution
     // Use the address from serialized data if available, otherwise use the new node's address
@@ -708,6 +722,14 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
         nodeMap.delete(previousAddress);
     }
     targetNode.setOwner(obj["_owner_"] ?? targetNode.getOwner());
+    // A previously address-only stub (`_circular_` proxy, or an earlier `_proxy_` payload) that is
+    // now receiving a full payload is no longer incomplete — clear the flag so field reads stop
+    // forcing a rendezvous they no longer need. Never set the flag here: a `live` match is by
+    // definition a real, populated instance, so a `_proxy_` payload for it (a shallow reference to
+    // one of ITS OWN fields, not to this node) must not downgrade it.
+    if (!obj["_proxy_"] && targetNode.isRemoteProxy()) {
+        targetNode.setRemoteProxy(false);
+    }
     // Register/update in nodeMap
     nodeMap.set(targetNode.getAddress(), targetNode);
     sgRoot.registerCrossThreadNode(targetNode);
@@ -744,6 +766,7 @@ export function updateSGNode(obj: any, targetNode: Node, nodeMap?: Map<string, N
             targetNode.setValueSilent(key, BrsInvalid.Instance, undefined, FieldKind.fromString(fieldTypes[key]));
         }
     }
+    applyRemotePortObservers(obj, targetNode);
     // Populate script-scope `m` only when the target never had one (a flat-created cross-thread
     // copy holding just top/global): a locally populated `m` is authoritative and must not be
     // clobbered by a stale copy from the other thread.
