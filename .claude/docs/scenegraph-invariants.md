@@ -248,6 +248,205 @@ Fix: also compare the cached item component's live `itemContent` value (a plain 
 the content object now assigned to that slot, and push whenever the two differ — not only when
 `content.changed`. Regression: `ArrayGridItemReorder.test.js`.
 
+## `TimeGrid.channelParseCache` must invalidate on in-place program mutation, not just count
+
+`TimeGrid` doesn't cache item *components* like `ArrayGrid`/`RowList` do — it draws its program cells
+directly — but it does cache each channel's **parsed** program model:
+`TimeGrid.channelParseCache` (a `WeakMap<ContentNode, ChannelParse>`) holds the flattened
+`programs`/`starts`/`durations`/`gaps` derived from a channel's program children, and the invalidation
+gate used to be the channel's program **count** alone. That misses two real in-place mutations that
+keep the count unchanged:
+
+- **`replaceChildAtIndex`** swapping a program for a different object at the same position —
+  `ContentNode.makeDirty` only dirties the **container** (the channel), never the replaced child, so a
+  count-only gate kept serving the stale (removed) program object — its title (read live from the
+  object at draw time) stayed wrong indefinitely, with no self-correcting path (unlike `ArrayGrid`'s
+  item cache, nothing here is refreshed by a focus move).
+- **A field edit on an existing program object** (e.g. a schedule correction to
+  `PLAYSTART`/`PLAYDURATION`) — count unchanged again, and the edit sets the **program's own**
+  `.changed`, not the channel's or the root's.
+
+Fix: `channelParseStale` also compares the channel's current program children against the cached
+`rawPrograms` by **object identity per index** and by each program's own `.changed` flag, re-parsing
+only that channel when either differs — preserving the cache's whole reason to exist (avoiding O(N²)
+reparsing while incrementally loading N channels; see the comment on `channelParseCache`'s
+declaration). Consumed programs have their `.changed` reset to `false` at the end of `parseChannel` —
+a `ContentNode`'s `.changed` is otherwise never cleared, since content trees aren't part of the render
+tree's per-frame reset (`Node.renderChildren`). Regression: the "channel parse cache invalidates on
+in-place program mutation" tests in `TimeGrid.test.js`.
+
+## `Group.drawText`'s per-index text cache and `TimeGrid.refreshContent`
+
+`Group.drawText` caches each drawn string by a **running per-frame index** the caller passes in
+(`cachedLines[index]`), reused across paints unless `this.isDirty`:
+
+```ts
+if (this.isDirty || this.cachedLines[index] === undefined) {
+    // ...measure fresh...
+    this.cachedLines[index] = measured;
+} else {
+    measured = this.cachedLines[index]; // stale reuse
+}
+```
+
+`TimeGrid.renderContent` draws every channel-info/time-label/program-title string through this with
+**one running counter (`textIndex`) across the whole grid** — so the logical string bound to a given
+index depends on exactly how many `drawText` calls preceded it: the time-bar labels, then each row's
+channel-info draw followed by its program-title draws. `isDirty` is set by `Group.setValue` (any field
+write on the node itself) — never by an **in-place mutation of the `content` tree** (append/replace on
+a `ContentNode` already held by an assigned `content` field only marks that node's own `.changed` and
+`markSubtreeStale()`, per the `channelParseCache` section above — `isDirty` is a distinct flag).
+
+So: if a channel's program **count** shifts between two paints — e.g. an SGDEX-style content manager
+assigns `content` once as soon as the channel list loads, then streams each row's programs in
+afterward via an in-place append to the SAME already-assigned tree (never rewriting the `content`
+field) — every `textIndex` from that row onward maps to a **different** logical string than what the
+earlier (already-painted, `isDirty` now `false`) pass cached there. Device-observed symptom (SGDEX
+**TimeGridView** sample): a program cell whose row was still loading on the first paint later showed
+the **next row's channel name** instead of its own (now-loaded) program title — because that row grew
+from 0 draws (channel-info only) to 2 (channel-info + program title), pushing every following index up
+by one, and the stale cache at the shifted index still held what a later row's channel-info text used
+to be there. Any key press "fixed" it only because navigation writes a field through `Group.setValue`
+(`isDirty = true`), incidentally invalidating the whole cache.
+
+Fix: `TimeGrid.refreshContent` sets `this.isDirty = true` unconditionally at its own start — every
+reparse (the only time the channel/program model, and therefore the `textIndex` sequence, can have
+changed) forces fresh `drawText` measurement for the whole node that frame. Regression: "a content
+reparse forces fresh text draws" in `TimeGrid.test.js`.
+
+## `TimeGrid` vertical navigation is always fixed-focus and wraps — there is no `vertFocusAnimationStyle`
+
+**Device-observed**, and confirmed against the reference (`external/dev-doc/.../timegrid.md`), which
+documents no `vertFocusAnimationStyle` field for `TimeGrid` at all (unlike `RowList`/`MarkupList`,
+where it's app-configurable). The engine used to give `TimeGrid` `ArrayGrid`'s inherited
+`floatingFocus` default and no wrap — the highlighted channel row floated down through the visible
+window before the window started scrolling, and up/down stopped dead at the first/last channel. A
+real device instead pins the focused channel at the **top** of the visible window unconditionally
+(`updateTopRow` — content scrolls, the highlight never moves within the viewport) and **wraps**: up
+from channel 0 goes to the last channel, down from the last goes to channel 0
+(`handleUpDown`/`wrapIndex`), for both the main grid and the channel-info column. `renderContent`'s row
+loop indexes channels with `(topRow + r) % channels.length` instead of a linear `topRow + r` with an
+end-of-list `break`, capped at `Math.min(visible, channels.length)` so a channel count smaller than the
+visible window doesn't repeat a row within one frame. A single-channel grid's wrap-to-self resolves to
+a no-op and reports the key **unhandled**, matching `MarkupList`'s single-item wrap rule, so it bubbles
+to an ancestor. Regression: "vertical navigation is fixed-focus and wraps" in `TimeGrid.test.js`.
+
+## `TimeGrid` automatic per-row loading feedback (`automaticLoadingDataFeedback`)
+
+The reference documents `automaticLoadingDataFeedback` (default `true`) as replacing "the program data
+region of the grid... automatically... whenever the content field has not been set **or the user
+scrolls to a time where the content has not yet been loaded**." The engine already handled the first
+half (`channels.length === 0`, via `shouldShowLoading`/`renderLoading`) and the fully-manual
+`showLoadingDataFeedback` whole-grid override, but never the per-row case — once at least one channel
+had loaded, no row ever showed loading feedback again, even one with zero programs. This matters
+because `TimeGrid` combined with wrap reaches unloaded rows immediately (e.g. one "up" press from
+channel 0 jumps straight to the last channel), and a row-by-row lazy content loader (SGDEX's
+`ContentManagerTimeGrid` sample) keeps most rows empty until their own async load completes.
+
+Fix: the row loop in `renderContent` tracks whether **any** program cell actually intersected the
+visible time window (`anyProgramVisible`) — false both for a channel with zero programs and for one
+whose programs exist but don't cover the current window (scrolled to an unloaded time). When
+`automaticLoadingDataFeedback` is true, an empty row draws `loadingDataText` across its own
+program-grid width instead of staying blank; `showLoadingDataFeedback` stays a whole-grid manual
+toggle, ignored while automatic feedback is on (per the reference). `renderLoading` takes an explicit
+`textIndex` from the same running counter every other string in this render pass uses (previously a
+hardcoded `99999` sentinel, safe only because there was ever at most one call per frame) — now that a
+frame can call it once per unloaded row, each call needs its own slot in `Group.drawText`'s
+`cachedLines` cache (see the section above) or they'd collide. Regression: "automatic per-row loading
+feedback" in `TimeGrid.test.js`.
+
+**The loading text also needs a background panel, or it can be invisible.** Every other row's own
+cell drawing gives `programTitleColor` (default opaque white) something to contrast against — a plain
+translucent-white panel (`0xffffff0f`) or `programBackgroundBitmapUri`. The per-row loading branch
+skips ALL normal cell drawing (that's the whole point — there's no cell to draw), so without also
+painting that same panel first, the text sits directly on whatever's behind the grid (often the
+scene's own background), and white-on-a-light-background is invisible. Regression: "the loading text
+gets a background panel for contrast" in `TimeGrid.test.js`.
+
+## `TimeGrid.programIndexAtTime` must check whether the candidate has already ENDED, not just started
+
+`programIndexAtTime(ch, time)` binary-searches `programStart[ch]` (ascending) for the LAST program
+starting at or before `time`, and is the shared primitive behind both the render loop's per-row
+scan-start optimization and every focus-targeting call (`handleUpDown`'s vertical move/wrap,
+`jumpToChannel`, `jumpToTime`, `jumpToNow`). Checking START alone is wrong whenever `time` falls in a
+genuine gap — an unfilled schedule gap (`fillProgramGaps=false`, the default) or a channel whose guide
+data simply hasn't loaded that far: the nearest earlier program may have already **ended** before
+`time`, in which case it will never actually be drawn there (it fails the row loop's own start/end
+visibility check), yet `focusCell` would still park focus on it.
+
+Symptom (reported): the focus indicator sometimes vanished after a vertical **wrap** — wrap jumps to a
+channel that can have a very different, sparser schedule than the one just left, making a gap at the
+anchor time much more likely than an adjacent-row move — and the same failure then persisted on
+subsequent moves (pressing left from the now-invisible "focused" program), since the engine's own
+notion of "current program" was already wrong. Fix: after the binary search, if the candidate's own
+`start + duration <= time` (already ended), advance to the NEXT program instead, when one exists.
+Provably safe for the render-loop's `time = viewStartTime` scan-start usage too: a candidate that has
+already ended by `viewStartTime` is by definition entirely off-screen to the left, which the loop's own
+`continue` would have skipped anyway — the fix just avoids landing there in the first place.
+Regression: `programIndexAtTime` tests in `TimeGrid.test.js`.
+
+## `TimeGrid` left navigation must respect `contentStartTime`, not just array index 0
+
+`handleLeftRight`'s left branch only refused to move when the focused program was already at array
+index 0 (`cur <= 0`). That's not the actual boundary a device enforces — the reference defines
+`contentStartTime` as "the earliest time to which the time grid can be scrolled," and a channel's raw
+program array can (and, per the SGDEX `TimeGridView` sample's own synthetic-timestamp content manager
+in `content/CHRow.brs`, routinely does) hold entries **before** that boundary. `CHRow.brs` fakes each
+channel's schedule as a contiguous sequence starting one hour before "now", while `TimeGridView.brs`
+sets `contentStartTime` to "now" itself (rounded to the same mark) — so a channel's array index 0
+typically **ends exactly at** `contentStartTime`, with the currently-airing show one index later.
+Pressing left from there moved focus onto index 0 anyway (a real, present array entry — `cur` was `1`,
+not `0`), landing on a program that contributes nothing to the scrollable range and can never actually
+be drawn (same failure mode as the `programIndexAtTime` section above, reached from a different key).
+Fix: also block the move when the target program's own end is at/before `contentStartTime`
+(`programEndsBeforeContentStart`). Regression: "left navigation is blocked at contentStartTime" tests
+in `TimeGrid.test.js`.
+
+## `TimeGrid` gap-fill must cover a channel with ZERO programs, not just interior gaps
+
+`fillProgramGaps`'s gap-fill loop (`parseChannel`) only fires **between two already-known programs**,
+per its own documented wording ("if there is a gap between the program's start time and the previous
+program's end time") — a channel with **zero** programs (still awaiting its own lazy per-row load, the
+SGDEX `ContentManagerTimeGrid` model this node was built around) never enters that loop at all, so it
+produced no cell, no `channelNoDataText`, and — since nothing was drawn — no focus indicator either,
+until its real data arrived. This matters more than it might seem for one specific, real app
+configuration: `TimeGridView.brs` sets `automaticLoadingDataFeedback = false` and relies **entirely**
+on `fillProgramGaps` + `channelNoDataText = "Loading..."` for loading feedback — the
+`automaticLoadingDataFeedback` per-row mechanism documented and implemented in the section above never
+even activates for it.
+
+Fix: `parseChannel` special-cases `programNodes.length === 0` (when `fillGaps` is on) by synthesizing a
+single `_nodata_` gap covering the WHOLE navigable range (`contentStartTime` .. `contentStartTime +
+maxDays`), not just the currently visible window — parsing is content-driven and cached per channel
+independent of scroll position, so anything narrower would go stale the moment the user scrolled
+without a reparse. `ChannelParse.placeholder` marks a parse built this way.
+
+**That synthetic gap being enormous (multi-day) breaks two things that assume a normally-sized
+program, both only reachable once a placeholder-backed channel is actually FOCUSED:**
+
+1. **`ensureProgramVisible`'s "scroll to reveal" logic.** Its two branches (`pStart < viewStartTime` /
+   `pEnd > viewEnd`) assume the whole program should fit in the window — for a program at least as long
+   as the window itself, the second branch is almost always true (a multi-day span's end is almost
+   always past `viewEnd`), so focusing an unloaded row kept scrolling `viewStartTime` all the way to the
+   placeholder's far-future end. Fix: early-return when `pDuration >= duration` — nothing to "reveal"
+   for a program that large; the window (already clamped into the same navigable range the placeholder
+   spans) already overlaps it by construction.
+2. **Stale `programIndexByChannel` once the placeholder is replaced by real data.** Nothing previously
+   re-validated the focused program's index when a channel's parse changed shape — `initialFocusPending`
+   only covers the very first "zero programs anywhere" → "first content" transition (largely moot once
+   gap-fill means `programs[ch].length` is never actually zero), not "this specific channel's
+   placeholder just became real while it stayed focused." Left pinned at the placeholder's index 0, the
+   render loop can find no matching visible cell to highlight, and — since `channelFocused`/
+   `programFocused` don't change VALUE (same index, `0`, before and after) — no notification fires
+   either, so an app's own metadata panel never updates. Fix: `focusedChannelPendingIndex` tracks
+   whether the channel the grid is CURRENTLY looking at is placeholder-backed (re-derived on every
+   `focusCell`, so it never points at a channel the user has since navigated away from);
+   `refreshContent` re-snaps focus once that channel's real data arrives, mirroring the existing
+   `initialFocusPending` snap but not gated on "never focused anything before."
+
+Regression: "focusing a still-loading (placeholder) row does not scroll the view to the far future" and
+"real data replacing the FOCUSED channel's placeholder re-snaps focus" in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two

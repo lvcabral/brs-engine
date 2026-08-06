@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot, Node } = scenegraph;
-const { BrsDevice, BrsString, Int32 } = core;
+const { BrsDevice, BrsString, Float, Int32 } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
@@ -265,5 +265,646 @@ describe("TimeGrid node", () => {
         ]);
         grid.setValue("content", content);
         expect(() => grid.renderNode(fakeInterpreter, [0, 0], 0, 1)).not.toThrow();
+    });
+
+    /**
+     * Regression: channelParseCache's invalidation gate used to be the channel's child COUNT
+     * alone. That misses in-place mutations that keep the count the same — the same species of
+     * bug as the ArrayGrid/RowList item-component cache fixed in ArrayGridItemReorder.test.js, but
+     * a different mechanism (a per-channel parse cache, not a position-keyed item-component cache).
+     */
+    describe("channel parse cache invalidates on in-place program mutation, not just count", () => {
+        test("a program replaced in place (same count) is not left stale", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                {
+                    title: "Channel A",
+                    programs: [
+                        { title: "A1", start: base, duration: 1800 },
+                        { title: "A2", start: base + 1800, duration: 1800 },
+                    ],
+                },
+            ]);
+            grid.setValue("content", content);
+            expect(grid.programs[0][1].getValueJS("title")).toBe("A2");
+
+            // App swaps program index 1 for a different object at the same position (same channel
+            // child count) — mirrors an EPG data source replacing a program entry outright.
+            // ContentNode.makeDirty only dirties the CONTAINER (the channel), never the replaced
+            // child, so a count-only cache gate would keep serving the stale A2 object.
+            const channelA = content.getNodeChildren()[0];
+            const replacement = SGNodeFactory.createNode("ContentNode");
+            replacement.setValue("title", new BrsString("A2-updated"));
+            replacement.setValue("playStart", new Int32(base + 1800));
+            replacement.setValue("playDuration", new Int32(1800));
+            channelA.replaceChildAtIndex(replacement, 1);
+
+            grid.refreshContent();
+
+            expect(grid.programs[0][1].getValueJS("title")).toBe("A2-updated");
+        });
+
+        test("a program's PLAYDURATION edited in place (same count) updates the cached cell width", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                {
+                    title: "Channel A",
+                    programs: [
+                        { title: "A1", start: base, duration: 1800 },
+                        { title: "A2", start: base + 1800, duration: 1800 },
+                    ],
+                },
+            ]);
+            grid.setValue("content", content);
+            expect(grid.programDuration[0][0]).toBe(1800);
+
+            // App corrects A1's schedule in place (e.g. a live event running long) — same object,
+            // same channel child count. ContentNode marks the PROGRAM's own `.changed`, not the
+            // channel's, so a count-only cache gate never sees this edit.
+            const channelA = content.getNodeChildren()[0];
+            const a1 = channelA.getNodeChildren()[0];
+            a1.setValue("playDuration", new Int32(3600));
+
+            grid.refreshContent();
+
+            expect(grid.programDuration[0][0]).toBe(3600);
+        });
+    });
+
+    /**
+     * Regression: Group.drawText caches each drawn string by a running per-frame index
+     * (cachedLines[index]) unless the node isDirty. TimeGrid.renderContent draws every
+     * channel-info/time-label/program-title through drawText with ONE running counter across the
+     * whole grid, so if a channel's program COUNT shifts between two paints — e.g. an SGDEX-style
+     * content manager assigns `content` once, then streams each row's programs in afterward via an
+     * in-place append to the SAME already-assigned content tree (never rewriting the `content`
+     * field, so Group.setValue's isDirty=true never fires) — every index from that row onward maps
+     * to a DIFFERENT logical string than what an earlier paint cached there. Observed on a real
+     * SGDEX TimeGridView sample: a program cell whose row was still loading on the first paint later
+     * showed the NEXT row's channel name instead of its own (now-loaded) program title, until any
+     * key press (which dirties the node through an unrelated field write) forced a fresh redraw.
+     */
+    describe("a content reparse forces fresh text draws (no stale drawText cache across shifted row/program counts)", () => {
+        const stubDraw2D = () => ({
+            doDrawRotatedText: () => {},
+            doDrawRotatedRect: () => {},
+            doDrawRotatedBitmap: () => {},
+            drawNinePatch: () => {},
+        });
+
+        test("refreshContent marks the node dirty", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                { title: "Channel A", programs: [{ title: "A1", start: base, duration: 3600 }] },
+            ]);
+            grid.setValue("content", content);
+
+            // A real paint clears isDirty (Group.nodeRenderingDone, draw2D present).
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, stubDraw2D());
+            expect(grid.isDirty).toBe(false);
+
+            // An in-place content mutation (append, matching ContentManagerTimeGrid's per-row async
+            // load) never touches a field on the grid itself, so only refreshContent — invoked at
+            // the top of the next render because the mutation dirtied the content tree — can be the
+            // one to force fresh text draws.
+            const channelA = content.getNodeChildren()[0];
+            const a2 = SGNodeFactory.createNode("ContentNode");
+            a2.setValue("title", new BrsString("A2"));
+            a2.setValue("playStart", new Int32(base + 3600));
+            a2.setValue("playDuration", new Int32(1800));
+            channelA.appendChildToParent(a2);
+
+            grid.refreshContent();
+            expect(grid.isDirty).toBe(true);
+        });
+
+        test("a row whose programs finish loading after the first paint shows its own title, not the next row's channel name", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("numRows", new Int32(5));
+            grid.setValue("width", new Float(1280));
+            grid.setValue("height", new Float(720));
+
+            // Row 3 (0-indexed) starts with NO programs — still loading, like ContentManagerTimeGrid
+            // assigning `content` as soon as the channel list arrives, before every row's guide data
+            // has come back.
+            const content = buildContent([
+                { title: "Channel A", programs: [{ title: "Being Gary Busey", start: base, duration: 3600 }] },
+                {
+                    title: "Channel B",
+                    programs: [{ title: "The House Where Evil Dwells", start: base, duration: 3600 }],
+                },
+                { title: "Channel C", programs: [{ title: "The People's Court", start: base, duration: 3600 }] },
+                { title: "KATU 4.1", programs: [] },
+                { title: "KAZT 7.1", programs: [{ title: "Taye Diggs Is Here", start: base, duration: 3600 }] },
+            ]);
+            grid.setValue("content", content);
+
+            // First paint: row 3 draws only its (empty-row) channel info, no program title yet.
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, stubDraw2D());
+
+            // Row 3's program finishes loading: an in-place append to the SAME row ContentNode
+            // already held by `content` — `content` itself is never reassigned.
+            const row3 = content.getNodeChildren()[3];
+            const lateProgram = SGNodeFactory.createNode("ContentNode");
+            lateProgram.setValue("title", new BrsString("I Remember, I Remember"));
+            lateProgram.setValue("playStart", new Int32(base));
+            lateProgram.setValue("playDuration", new Int32(3600));
+            row3.appendChildToParent(lateProgram);
+
+            // Second paint: capture the drawn text sequence in order.
+            const drawn = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                ...stubDraw2D(),
+                doDrawRotatedText: (text) => drawn.push(text),
+            });
+
+            // Row 3's channel name is immediately followed by ITS OWN program title — not row 4's
+            // channel name ("KAZT 7.1"), which is what a stale cachedLines[index] would serve.
+            const row3NameIdx = drawn.indexOf("KATU 4.1");
+            expect(row3NameIdx).toBeGreaterThanOrEqual(0);
+            expect(drawn[row3NameIdx + 1]).toBe("I Remember, I Remember");
+        });
+    });
+
+    /**
+     * Device-observed: TimeGrid has no `vertFocusAnimationStyle` field (unlike RowList/MarkupList) —
+     * its vertical navigation is always "fixed focus": the focused channel is pinned at the TOP of
+     * the visible window and the content scrolls under it, and moving up from the first channel (or
+     * down from the last) wraps around instead of stopping. Previously the engine floated the
+     * highlight through the visible rows (like ArrayGrid's default floatingFocus) and did not wrap.
+     */
+    describe("vertical navigation is fixed-focus and wraps (device-observed, no vertFocusAnimationStyle field on TimeGrid)", () => {
+        function buildChannels(n) {
+            const base = 1_000_000_000;
+            const channels = [];
+            for (let i = 0; i < n; i++) {
+                channels.push({ title: `Ch${i}`, programs: [{ title: `P${i}`, start: base, duration: 3600 }] });
+            }
+            return buildContent(channels);
+        }
+
+        test("the focused channel is always the top visible row — content scrolls, focus does not float", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("numRows", new Int32(2));
+            grid.setValue("content", buildChannels(5));
+
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.topRow).toBe(0);
+
+            // A floating-focus list would keep topRow at 0 here (channel 1 still fits in a 2-row
+            // window starting at 0). A fixed-focus list scrolls immediately.
+            grid.handleKey("down", true);
+            expect(grid.getValueJS("channelFocused")).toBe(1);
+            expect(grid.topRow).toBe(1);
+
+            grid.handleKey("down", true);
+            expect(grid.getValueJS("channelFocused")).toBe(2);
+            expect(grid.topRow).toBe(2);
+        });
+
+        test("up from the first channel wraps to the last; down from the last wraps to the first", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("content", buildChannels(5));
+
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.handleKey("up", true)).toBe(true);
+            expect(grid.getValueJS("channelFocused")).toBe(4);
+            expect(grid.topRow).toBe(4);
+
+            expect(grid.handleKey("down", true)).toBe(true);
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.topRow).toBe(0);
+        });
+
+        test("a single-channel grid reports the key unhandled (wrap-to-self is a no-op, matching MarkupList)", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("content", buildChannels(1));
+
+            expect(grid.handleKey("up", true)).toBe(false);
+            expect(grid.handleKey("down", true)).toBe(false);
+        });
+
+        test("the channel-info column wraps the same way", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            grid.setValue("contentStartTime", new Int32(1_000_000_000));
+            grid.setValue("channelInfoFocusable", core.BrsBoolean.True);
+            grid.setValue("content", buildChannels(3));
+
+            // Move into the channel-info column, then wrap up from channel 0.
+            grid.handleKey("left", true);
+            expect(grid.getValueJS("channelInfoFocused")).toBe(0);
+            grid.handleKey("up", true);
+            expect(grid.getValueJS("channelInfoFocused")).toBe(2);
+        });
+    });
+
+    /**
+     * Device-observed (per the TimeGrid reference and confirmed on a real Roku): with
+     * `automaticLoadingDataFeedback` at its default `true`, the program-grid region of a channel row
+     * is automatically replaced with `loadingDataText` whenever that row has no program data
+     * covering the visible time window — e.g. a row-by-row lazy content loader (like SGDEX's
+     * ContentManagerTimeGrid) that hasn't fetched that channel's programs yet. Previously the engine
+     * only ever showed this for the WHOLE grid (no channels loaded at all) or in the fully manual
+     * `showLoadingDataFeedback` override — never per row once at least one channel had data.
+     */
+    describe("automatic per-row loading feedback (automaticLoadingDataFeedback)", () => {
+        function recordingDraw2D() {
+            const drawn = [];
+            return {
+                draw2D: {
+                    doDrawRotatedText: (text) => drawn.push(text),
+                    doDrawRotatedRect: () => {},
+                    doDrawRotatedBitmap: () => {},
+                    drawNinePatch: () => {},
+                },
+                drawn,
+            };
+        }
+
+        test("a channel with no programs shows loadingDataText in its row; a loaded channel does not", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("numRows", new Int32(2));
+            grid.setValue(
+                "content",
+                buildContent([
+                    { title: "Loaded", programs: [{ title: "Real Program", start: base, duration: 3600 }] },
+                    { title: "NotLoaded", programs: [] },
+                ])
+            );
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).toContain("Real Program");
+            expect(drawn).toContain("Loading Data…");
+        });
+
+        test("a custom loadingDataText is used instead of the default", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("loadingDataText", new BrsString("Please wait..."));
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).toContain("Please wait...");
+            expect(drawn).not.toContain("Loading Data…");
+        });
+
+        test("disabling automaticLoadingDataFeedback (without showLoadingDataFeedback) shows nothing for an unloaded row", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("automaticLoadingDataFeedback", core.BrsBoolean.False);
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(drawn).not.toContain("Loading Data…");
+        });
+
+        test("disabling automaticLoadingDataFeedback but enabling showLoadingDataFeedback covers the whole grid manually", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("automaticLoadingDataFeedback", core.BrsBoolean.False);
+            grid.setValue("showLoadingDataFeedback", core.BrsBoolean.True);
+            grid.setValue(
+                "content",
+                buildContent([{ title: "Loaded", programs: [{ title: "Real Program", start: base, duration: 3600 }] }])
+            );
+
+            const { draw2D, drawn } = recordingDraw2D();
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            // Manual mode is a whole-grid override — pre-existing behavior, unaffected by the
+            // per-row automatic detection above.
+            expect(drawn).toContain("Loading Data…");
+        });
+
+        test("the loading text gets a background panel for contrast (regression: invisible white-on-white text)", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            const rects = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                doDrawRotatedText: () => {},
+                doDrawRotatedRect: (_rect, color) => rects.push(color >>> 0),
+                doDrawRotatedBitmap: () => {},
+                drawNinePatch: () => {},
+            });
+
+            // The same translucent panel a normal (unfocused, non-past) program cell gets must be
+            // drawn behind the loading text — otherwise programTitleColor's default white sits
+            // directly on whatever's behind the grid, with nothing guaranteeing contrast.
+            expect(rects).toContain(0xffffff0f);
+        });
+    });
+
+    /**
+     * Regression: `programIndexAtTime` picked the nearest program STARTING at-or-before a target
+     * time without checking whether that program had already ENDED by then (a real gap: unfilled
+     * schedule data, or a channel whose guide simply hasn't loaded that far). A stale, already-ended
+     * program falls entirely outside the render loop's own visible-window check (see the row loop's
+     * start/end skip in `renderContent`), so the row drew NO focus indicator at all — reported as
+     * "the focus indicator sometimes disappears" after a vertical wrap (which can jump to a channel
+     * with very different, sparser schedule data) and after pressing left from the first program in
+     * a row (same underlying cause: the "current" program the engine thought was focused had never
+     * actually been visible to begin with).
+     */
+    describe("programIndexAtTime skips an already-ended program in favor of the next one", () => {
+        test("a time inside a gap resolves to the NEXT program, not the stale earlier one", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue(
+                "content",
+                buildContent([
+                    {
+                        title: "Channel A",
+                        programs: [
+                            { title: "Early", start: base, duration: 1800 }, // ends at base+1800
+                            // gap from base+1800 to base+7200
+                            { title: "Later", start: base + 7200, duration: 1800 },
+                        ],
+                    },
+                ])
+            );
+
+            // Still within "Early"'s own span: resolves to it, unaffected by the fix.
+            expect(grid.programIndexAtTime(0, base + 900)).toBe(0);
+            // Inside the gap, after "Early" ended and before "Later" starts: must resolve to
+            // "Later" (index 1), not the stale, already-ended "Early" (index 0).
+            expect(grid.programIndexAtTime(0, base + 3600)).toBe(1);
+            // Past the LAST program's end with nothing further loaded: falls back to the last
+            // index — there is nothing better to return.
+            expect(grid.programIndexAtTime(0, base + 100000)).toBe(1);
+        });
+
+        test("wrapping into a channel whose anchor-time program has already ended still shows a focus indicator", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("duration", new Float(3600)); // 1-hour visible window: [base, base+3600)
+            grid.setValue(
+                "content",
+                buildContent([
+                    { title: "Channel A", programs: [{ title: "A1", start: base, duration: 3600 }] },
+                    {
+                        title: "Channel B",
+                        programs: [
+                            // Long since ended by the anchor time (base) — the stale candidate.
+                            { title: "Old Show", start: base - 7200, duration: 1800 },
+                            // Starts within the visible window — must be the one that gets focus.
+                            { title: "Later Show", start: base + 1800, duration: 1800 },
+                        ],
+                    },
+                ])
+            );
+            sgRoot.setFocused(grid);
+
+            // Wrap up from channel 0 (only 2 channels) lands on channel 1, anchored at `base`
+            // (channel 0's focused program "A1" starts at base) — a gap in channel 1's schedule.
+            grid.handleKey("up", true);
+            expect(grid.getValueJS("channelFocused")).toBe(1);
+            expect(grid.getValueJS("programFocused")).toBe(1); // "Later Show", not "Old Show"
+
+            const rects = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                doDrawRotatedText: () => {},
+                doDrawRotatedRect: (_rect, color) => rects.push(color >>> 0),
+                doDrawRotatedBitmap: () => {},
+                drawNinePatch: () => {},
+            });
+
+            // The solid white focus highlight (a focused cell while the grid itself has focus) must
+            // actually be drawn — it wasn't, when focus silently landed on the invisible stale cell.
+            expect(rects).toContain(0xffffffff);
+        });
+    });
+
+    /**
+     * Regression, reproduced against the actual SGDEX TimeGridView sample's own content-loading
+     * shape: `content/CHRow.brs` fakes each channel's schedule as a contiguous sequence starting
+     * one hour before "now" (`playStart = now - (now mod 1800) - 3600`), while `TimeGridView.brs`
+     * sets `contentStartTime` to "now" itself (rounded to the same 30-minute mark) — so a channel's
+     * FIRST program (array index 0) typically ends exactly AT contentStartTime, with the
+     * currently-airing show one array index later (index 1). `handleLeftRight`'s left branch only
+     * checked the array index (`cur <= 0`), so it happily moved focus onto that index-0 program even
+     * though it contributes nothing to the scrollable range — same failure mode as the wrap case
+     * above (focus lands somewhere that can never actually be drawn), just reached from a different
+     * key.
+     */
+    describe("left navigation is blocked at contentStartTime, not just at array index 0", () => {
+        test("pressing left is blocked when the previous program ends at/before contentStartTime, even though its array index is > 0", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000; // contentStartTime, rounded to a 30-min mark
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue(
+                "content",
+                buildContent([
+                    {
+                        title: "Channel A",
+                        programs: [
+                            // Ends EXACTLY at contentStartTime — contributes nothing scrollable.
+                            { title: "Rules We All Break", start: cst - 3600, duration: 3600 },
+                            { title: "Being Gary Busey", start: cst, duration: 3600 },
+                        ],
+                    },
+                ])
+            );
+
+            // Initial focus lands on the currently-airing show (array index 1), not index 0.
+            expect(grid.getValueJS("programFocused")).toBe(1);
+
+            // Left must be refused (channelInfoFocusable defaults false) — not silently move focus
+            // onto the earlier, unscrollable-to program.
+            expect(grid.handleKey("left", true)).toBe(false);
+            expect(grid.getValueJS("programFocused")).toBe(1);
+        });
+
+        test("pressing left still works normally when the previous program IS within the scrollable range", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue(
+                "content",
+                buildContent([
+                    {
+                        title: "Channel A",
+                        programs: [
+                            // Starts AFTER contentStartTime — genuinely reachable by scrolling left.
+                            { title: "Early Show", start: cst + 100, duration: 3600 },
+                            { title: "Later Show", start: cst + 3700, duration: 3600 },
+                        ],
+                    },
+                ])
+            );
+            grid.setValue("jumpToProgram", new Int32(1));
+            expect(grid.getValueJS("programFocused")).toBe(1);
+
+            expect(grid.handleKey("left", true)).toBe(true);
+            expect(grid.getValueJS("programFocused")).toBe(0);
+        });
+    });
+
+    /**
+     * Regression, also reproduced against the SGDEX TimeGridView sample's actual configuration:
+     * `TimeGridView.brs` sets `fillProgramGaps = true`, `channelNoDataText = "Loading..."`, and
+     * `automaticLoadingDataFeedback = false` — it relies ENTIRELY on the gap-fill mechanism (not on
+     * `automaticLoadingDataFeedback`, which it explicitly disables) to show loading feedback. But
+     * `parseChannel`'s gap-fill loop only fills a gap BETWEEN two already-known programs, per its
+     * documented wording ("if there is a gap between the program's start time and the previous
+     * program's end time") — a channel with ZERO programs (still awaiting its own lazy per-row
+     * load) never enters that loop at all, so it produced no cell, no "Loading..." text, and no
+     * focus indicator, until its real data arrived.
+     */
+    describe("fillProgramGaps covers a channel with zero programs, not just interior gaps", () => {
+        test("an unloaded channel gets a single gap cell spanning the navigable range, labeled channelNoDataText", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue("maxDays", new Int32(3));
+            grid.setValue("fillProgramGaps", core.BrsBoolean.True);
+            grid.setValue("channelNoDataText", new BrsString("Loading..."));
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+
+            expect(grid.programs[0]).toHaveLength(1);
+            expect(grid.programs[0][0].getValueJS("title")).toBe("Loading...");
+            expect(grid.gapFlags[0][0]).toBe(true);
+            expect(grid.programStart[0][0]).toBe(cst);
+            expect(grid.programDuration[0][0]).toBe(3 * 86400);
+        });
+
+        test("the gap cell renders with channelNoDataText and the focus indicator, without automaticLoadingDataFeedback", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue("fillProgramGaps", core.BrsBoolean.True);
+            grid.setValue("channelNoDataText", new BrsString("Loading..."));
+            grid.setValue("automaticLoadingDataFeedback", core.BrsBoolean.False); // matches the sample app
+            grid.setValue("content", buildContent([{ title: "NotLoaded", programs: [] }]));
+            sgRoot.setFocused(grid);
+
+            const drawn = [];
+            const rects = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                doDrawRotatedText: (text) => drawn.push(text),
+                doDrawRotatedRect: (_rect, color) => rects.push(color >>> 0),
+                doDrawRotatedBitmap: () => {},
+                drawNinePatch: () => {},
+            });
+
+            expect(drawn).toContain("Loading...");
+            expect(rects).toContain(0xffffffff); // the focused cell's highlight
+        });
+
+        test("real data replacing the gap cell (in-place append) is picked up on the next reparse", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue("fillProgramGaps", core.BrsBoolean.True);
+            const content = buildContent([{ title: "NotLoaded", programs: [] }]);
+            grid.setValue("content", content);
+            expect(grid.programs[0][0].getValueJS("title")).toBe("No Data Available");
+
+            const channelA = content.getNodeChildren()[0];
+            const real = SGNodeFactory.createNode("ContentNode");
+            real.setValue("title", new BrsString("Real Show"));
+            real.setValue("playStart", new Int32(cst));
+            real.setValue("playDuration", new Int32(1800));
+            channelA.appendChildToParent(real);
+            grid.refreshContent();
+
+            expect(grid.programs[0]).toHaveLength(1);
+            expect(grid.programs[0][0].getValueJS("title")).toBe("Real Show");
+            expect(grid.gapFlags[0][0]).toBe(false);
+        });
+
+        test("focusing a still-loading (placeholder) row does not scroll the view to the far future", () => {
+            // The placeholder's own synthetic duration spans the whole navigable range (maxDays),
+            // which is far longer than the grid's own visible `duration` — ensureProgramVisible's
+            // ordinary "scroll to reveal the whole focused program" logic would otherwise treat that
+            // as "not visible" and yank viewStartTime all the way to the placeholder's end.
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue("fillProgramGaps", core.BrsBoolean.True);
+            grid.setValue(
+                "content",
+                buildContent([
+                    { title: "Loaded", programs: [{ title: "Real Show", start: cst, duration: 3600 }] },
+                    { title: "NotLoaded", programs: [] },
+                ])
+            );
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            const viewBefore = grid.viewStartTime;
+
+            grid.handleKey("down", true);
+            expect(grid.getValueJS("channelFocused")).toBe(1);
+
+            expect(grid.viewStartTime).toBe(viewBefore);
+        });
+
+        test("real data replacing the FOCUSED channel's placeholder re-snaps focus (and re-notifies observers)", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const cst = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(cst));
+            grid.setValue("fillProgramGaps", core.BrsBoolean.True);
+            const content = buildContent([{ title: "NotLoaded", programs: [] }]);
+            grid.setValue("content", content);
+
+            // Focused on the placeholder from the very first content assignment.
+            expect(grid.getValueJS("channelFocused")).toBe(0);
+            expect(grid.getValueJS("programFocused")).toBe(0);
+            expect(grid.programs[0][0].getValueJS("title")).toBe("No Data Available");
+
+            const spy = vi.spyOn(Node.prototype, "setValue");
+
+            // The channel's real data arrives (in-place append, matching a lazy per-row loader),
+            // WHILE it remains the current focus.
+            const channelA = content.getNodeChildren()[0];
+            const earlier = SGNodeFactory.createNode("ContentNode");
+            earlier.setValue("title", new BrsString("Earlier Show"));
+            earlier.setValue("playStart", new Int32(cst - 1800));
+            earlier.setValue("playDuration", new Int32(1800));
+            channelA.appendChildToParent(earlier);
+            const nowAiring = SGNodeFactory.createNode("ContentNode");
+            nowAiring.setValue("title", new BrsString("Now Airing"));
+            nowAiring.setValue("playStart", new Int32(cst));
+            nowAiring.setValue("playDuration", new Int32(1800));
+            channelA.appendChildToParent(nowAiring);
+
+            grid.refreshContent();
+
+            // Focus must have snapped onto the program actually covering the current view (index 1,
+            // "Now Airing") — not stayed pinned at the placeholder's index 0 — and
+            // channelFocused/programFocused must have been RE-NOTIFIED (both alwaysNotify) so an
+            // app's own metadata panel updates, even though this is the SAME numeric channel index.
+            const focused = grid.getValueJS("programFocused");
+            expect(focused).toBe(1);
+            expect(grid.programs[0][focused].getValueJS("title")).toBe("Now Airing");
+            const names = spy.mock.calls.map((call) => String(call[0]).toLowerCase());
+            expect(names).toContain("programfocused");
+            spy.mockRestore();
+        });
     });
 });
