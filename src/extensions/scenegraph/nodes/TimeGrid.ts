@@ -27,6 +27,9 @@ interface ChannelParse {
     starts: number[];
     durations: number[];
     gaps: boolean[];
+    /** True when this parse is the synthetic "not loaded yet" placeholder (see `parseChannel`),
+     *  not real content — used to re-snap focus once real data replaces it (see `focusCell`). */
+    placeholder: boolean;
 }
 
 /**
@@ -151,6 +154,14 @@ export class TimeGrid extends ArrayGrid {
     // focus to the program at the current view time so the highlight is visible and the grid scrolls
     // to it — matching Roku, instead of leaving focus on an off-screen program until the user moves.
     protected initialFocusPending: boolean = true;
+    // Index of the channel whose CURRENT focus was chosen against a placeholder parse (see
+    // parseChannel/isChannelPlaceholder), or -1 when the focused channel's data is real. Every
+    // focusCell call re-derives this for the channel it lands on, so it always tracks "is the
+    // channel the grid is looking at RIGHT NOW still a placeholder" — never a stale channel the
+    // user has since navigated away from. refreshContent re-snaps focus once this channel's real
+    // data replaces the placeholder, instead of leaving programIndexByChannel pinned to whatever
+    // (possibly now-invisible, or simply wrong) index the placeholder happened to use.
+    protected focusedChannelPendingIndex: number = -1;
 
     // Per-render layout caches (read by navigation between renders)
     protected gridX: number = 0;
@@ -298,6 +309,17 @@ export class TimeGrid extends ArrayGrid {
         // leaving focus on program 0 (which usually starts before the visible window).
         if (this.initialFocusPending && (this.programs[this.channelIndex]?.length ?? 0) > 0) {
             this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
+        } else if (
+            this.focusedChannelPendingIndex === this.channelIndex &&
+            !this.isChannelPlaceholder(this.channelIndex)
+        ) {
+            // The channel the grid is CURRENTLY looking at just had its placeholder replaced by
+            // real data (a lazy per-row load completing while the user stayed on this row, rather
+            // than navigating away and back). programIndexByChannel is still pinned to whatever the
+            // placeholder's own single index used — re-snap onto the program actually covering the
+            // current view, exactly like the initial-focus case above, just not gated on "ever had
+            // any focus at all".
+            this.focusCell(this.channelIndex, this.programIndexAtTime(this.channelIndex, this.viewStartTime));
         }
     }
 
@@ -317,12 +339,37 @@ export class TimeGrid extends ArrayGrid {
         return programNodes.some((node, i) => node !== parse.rawPrograms[i] || node.changed);
     }
 
+    /** Whether channel `ch`'s CURRENT cached parse is the synthetic "not loaded yet" placeholder
+     *  (see `parseChannel`) rather than real content. */
+    private isChannelPlaceholder(ch: number): boolean {
+        const channel = this.channels[ch];
+        return channel !== undefined && (this.channelParseCache.get(channel)?.placeholder ?? false);
+    }
+
     /** Parses one channel's program children into the cached model (with optional gap fill). */
     private parseChannel(programNodes: ContentNode[], fillGaps: boolean, noDataText: string): ChannelParse {
         const programs: ContentNode[] = [];
         const starts: number[] = [];
         const durations: number[] = [];
         const gaps: boolean[] = [];
+        if (fillGaps && programNodes.length === 0) {
+            // A channel with NO programs loaded yet (still awaiting its own async per-row fetch —
+            // the SGDEX row-by-row loading model this node was built around) is, from the grid's
+            // perspective, one continuous gap spanning the whole navigable range — not just
+            // "between two known programs" (the only case the loop below covers, per the
+            // reference's own wording). Without this, such a row stays entirely blank — no cell to
+            // draw, no focus indicator possible — until its real data arrives, instead of showing
+            // channelNoDataText like every other gap.
+            const cst = (this.getValueJS("contentStartTime") as number) ?? 0;
+            const maxDays = (this.getValueJS("maxDays") as number) || 7;
+            const gapNode = new ContentNode("_nodata_");
+            gapNode.setValueSilent("title", new BrsString(noDataText));
+            programs.push(gapNode);
+            starts.push(cst > 0 ? cst : this.nowEpoch());
+            durations.push(Math.max(1, maxDays * 86400));
+            gaps.push(true);
+            return { rawPrograms: programNodes, programs, starts, durations, gaps, placeholder: true };
+        }
         let prevEnd: number | null = null;
         for (const program of programNodes) {
             const start = this.readEpoch(program, "PLAYSTART");
@@ -345,7 +392,7 @@ export class TimeGrid extends ArrayGrid {
             // render tree's generic per-frame `changed` reset).
             program.changed = false;
         }
-        return { rawPrograms: programNodes, programs, starts, durations, gaps };
+        return { rawPrograms: programNodes, programs, starts, durations, gaps, placeholder: false };
     }
 
     /** Reads a unix-epoch (seconds) field, tolerating either an integer or roDateTime value. */
@@ -420,6 +467,21 @@ export class TimeGrid extends ArrayGrid {
         return Math.max(min, Math.min(value, max));
     }
 
+    /**
+     * Whether program `p` in channel `ch` ends at or before `contentStartTime` — i.e. it
+     * contributes nothing to the scrollable range (see the reference: "the earliest time to which
+     * the time grid can be scrolled"), so it must never become focusable via left navigation, even
+     * though it's a perfectly ordinary earlier entry in the channel's own program array.
+     */
+    private programEndsBeforeContentStart(ch: number, p: number): boolean {
+        const cst = (this.getValueJS("contentStartTime") as number) ?? 0;
+        if (cst <= 0) {
+            return false;
+        }
+        const end = (this.programStart[ch]?.[p] ?? 0) + (this.programDuration[ch]?.[p] ?? 0);
+        return end <= cst;
+    }
+
     /** Initial focus when content is (re)assigned — `index` is treated as a channel index. */
     protected setFocusedItem(index: number) {
         if (this.channels.length === 0) {
@@ -446,6 +508,9 @@ export class TimeGrid extends ArrayGrid {
             // Focus is now on a real program; no longer a placeholder awaiting content.
             this.initialFocusPending = false;
         }
+        // Re-derived every call so it always reflects whichever channel the grid is looking at
+        // RIGHT NOW — never a stale channel navigated away from (see the field's own doc comment).
+        this.focusedChannelPendingIndex = this.isChannelPlaceholder(newChannel) ? newChannel : -1;
         // Emit the scroll pulse before the settled focus fields go out (see
         // ArrayGrid.armScrollPulse): the falling edge precedes the settle on a device.
         this.emitScrollPulse();
@@ -473,7 +538,20 @@ export class TimeGrid extends ArrayGrid {
         this.isDirty = true;
     }
 
-    /** Scrolls the time window so the focused program is fully visible. */
+    /**
+     * Scrolls the time window so the focused program is fully visible.
+     *
+     * A program at least as long as the window itself — the synthetic "not loaded yet" placeholder
+     * (see `parseChannel`) spans the whole navigable range on purpose — can never be made "fully
+     * visible" the way an ordinary, window-sized-or-smaller program can. Since the view is always
+     * already clamped inside that placeholder's span (both cover the same `contentStartTime`..
+     * `contentStartTime + maxDays` range), there is nothing to scroll to: the two branches below
+     * would otherwise fire almost every time (their conditions read `pStart < viewStartTime` /
+     * `pEnd > viewEnd`, both near-always true for a multi-day span), yanking the window back to the
+     * placeholder's start or — worse — all the way to its far-future end, every time focus lands on
+     * an unloaded row. Regression: "focusing a still-loading (placeholder) row does not scroll the
+     * view to the far future" in `TimeGrid.test.js`.
+     */
     protected ensureProgramVisible(ch: number, prog: number) {
         const progs = this.programs[ch] ?? [];
         if (progs.length === 0) {
@@ -481,7 +559,11 @@ export class TimeGrid extends ArrayGrid {
         }
         const duration = this.getDurationSec();
         const pStart = this.programStart[ch][prog];
-        const pEnd = pStart + this.programDuration[ch][prog];
+        const pDuration = this.programDuration[ch][prog];
+        if (pDuration >= duration) {
+            return;
+        }
+        const pEnd = pStart + pDuration;
         const viewEnd = this.viewStartTime + duration;
         let changed = false;
         if (pStart < this.viewStartTime) {
@@ -607,7 +689,14 @@ export class TimeGrid extends ArrayGrid {
                 return false;
             }
             const cur = this.programIndexByChannel[ch] ?? 0;
-            if (cur <= 0) {
+            // Blocked at array index 0, OR when the PREVIOUS program ends at/before
+            // contentStartTime — "the earliest time to which the time grid can be scrolled" (the
+            // reference). A channel's raw program list can (and, per the SGDEX sample's own
+            // synthetic-timestamp content manager, routinely does) hold entries before that
+            // boundary; moving focus onto one contributes nothing to the scrollable range, so the
+            // cell can never actually be shown — matching real-device behavior of refusing the move
+            // entirely rather than landing focus somewhere invisible.
+            if (cur <= 0 || this.programEndsBeforeContentStart(ch, cur - 1)) {
                 if ((this.getValueJS("channelInfoFocusable") as boolean) ?? false) {
                     this.enterChannelInfo();
                     return true;

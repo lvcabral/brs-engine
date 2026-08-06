@@ -358,6 +358,68 @@ already ended by `viewStartTime` is by definition entirely off-screen to the lef
 `continue` would have skipped anyway — the fix just avoids landing there in the first place.
 Regression: `programIndexAtTime` tests in `TimeGrid.test.js`.
 
+## `TimeGrid` left navigation must respect `contentStartTime`, not just array index 0
+
+`handleLeftRight`'s left branch only refused to move when the focused program was already at array
+index 0 (`cur <= 0`). That's not the actual boundary a device enforces — the reference defines
+`contentStartTime` as "the earliest time to which the time grid can be scrolled," and a channel's raw
+program array can (and, per the SGDEX `TimeGridView` sample's own synthetic-timestamp content manager
+in `content/CHRow.brs`, routinely does) hold entries **before** that boundary. `CHRow.brs` fakes each
+channel's schedule as a contiguous sequence starting one hour before "now", while `TimeGridView.brs`
+sets `contentStartTime` to "now" itself (rounded to the same mark) — so a channel's array index 0
+typically **ends exactly at** `contentStartTime`, with the currently-airing show one index later.
+Pressing left from there moved focus onto index 0 anyway (a real, present array entry — `cur` was `1`,
+not `0`), landing on a program that contributes nothing to the scrollable range and can never actually
+be drawn (same failure mode as the `programIndexAtTime` section above, reached from a different key).
+Fix: also block the move when the target program's own end is at/before `contentStartTime`
+(`programEndsBeforeContentStart`). Regression: "left navigation is blocked at contentStartTime" tests
+in `TimeGrid.test.js`.
+
+## `TimeGrid` gap-fill must cover a channel with ZERO programs, not just interior gaps
+
+`fillProgramGaps`'s gap-fill loop (`parseChannel`) only fires **between two already-known programs**,
+per its own documented wording ("if there is a gap between the program's start time and the previous
+program's end time") — a channel with **zero** programs (still awaiting its own lazy per-row load, the
+SGDEX `ContentManagerTimeGrid` model this node was built around) never enters that loop at all, so it
+produced no cell, no `channelNoDataText`, and — since nothing was drawn — no focus indicator either,
+until its real data arrived. This matters more than it might seem for one specific, real app
+configuration: `TimeGridView.brs` sets `automaticLoadingDataFeedback = false` and relies **entirely**
+on `fillProgramGaps` + `channelNoDataText = "Loading..."` for loading feedback — the
+`automaticLoadingDataFeedback` per-row mechanism documented and implemented in the section above never
+even activates for it.
+
+Fix: `parseChannel` special-cases `programNodes.length === 0` (when `fillGaps` is on) by synthesizing a
+single `_nodata_` gap covering the WHOLE navigable range (`contentStartTime` .. `contentStartTime +
+maxDays`), not just the currently visible window — parsing is content-driven and cached per channel
+independent of scroll position, so anything narrower would go stale the moment the user scrolled
+without a reparse. `ChannelParse.placeholder` marks a parse built this way.
+
+**That synthetic gap being enormous (multi-day) breaks two things that assume a normally-sized
+program, both only reachable once a placeholder-backed channel is actually FOCUSED:**
+
+1. **`ensureProgramVisible`'s "scroll to reveal" logic.** Its two branches (`pStart < viewStartTime` /
+   `pEnd > viewEnd`) assume the whole program should fit in the window — for a program at least as long
+   as the window itself, the second branch is almost always true (a multi-day span's end is almost
+   always past `viewEnd`), so focusing an unloaded row kept scrolling `viewStartTime` all the way to the
+   placeholder's far-future end. Fix: early-return when `pDuration >= duration` — nothing to "reveal"
+   for a program that large; the window (already clamped into the same navigable range the placeholder
+   spans) already overlaps it by construction.
+2. **Stale `programIndexByChannel` once the placeholder is replaced by real data.** Nothing previously
+   re-validated the focused program's index when a channel's parse changed shape — `initialFocusPending`
+   only covers the very first "zero programs anywhere" → "first content" transition (largely moot once
+   gap-fill means `programs[ch].length` is never actually zero), not "this specific channel's
+   placeholder just became real while it stayed focused." Left pinned at the placeholder's index 0, the
+   render loop can find no matching visible cell to highlight, and — since `channelFocused`/
+   `programFocused` don't change VALUE (same index, `0`, before and after) — no notification fires
+   either, so an app's own metadata panel never updates. Fix: `focusedChannelPendingIndex` tracks
+   whether the channel the grid is CURRENTLY looking at is placeholder-backed (re-derived on every
+   `focusCell`, so it never points at a channel the user has since navigated away from);
+   `refreshContent` re-snaps focus once that channel's real data arrives, mirroring the existing
+   `initialFocusPending` snap but not gated on "never focused anything before."
+
+Regression: "focusing a still-loading (placeholder) row does not scroll the view to the far future" and
+"real data replacing the FOCUSED channel's placeholder re-snaps focus" in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two
