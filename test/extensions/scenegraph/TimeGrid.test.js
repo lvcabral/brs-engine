@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot, Node } = scenegraph;
-const { BrsDevice, BrsString, Int32 } = core;
+const { BrsDevice, BrsString, Float, Int32 } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
@@ -332,6 +332,105 @@ describe("TimeGrid node", () => {
             grid.refreshContent();
 
             expect(grid.programDuration[0][0]).toBe(3600);
+        });
+    });
+
+    /**
+     * Regression: Group.drawText caches each drawn string by a running per-frame index
+     * (cachedLines[index]) unless the node isDirty. TimeGrid.renderContent draws every
+     * channel-info/time-label/program-title through drawText with ONE running counter across the
+     * whole grid, so if a channel's program COUNT shifts between two paints — e.g. an SGDEX-style
+     * content manager assigns `content` once, then streams each row's programs in afterward via an
+     * in-place append to the SAME already-assigned content tree (never rewriting the `content`
+     * field, so Group.setValue's isDirty=true never fires) — every index from that row onward maps
+     * to a DIFFERENT logical string than what an earlier paint cached there. Observed on a real
+     * SGDEX TimeGridView sample: a program cell whose row was still loading on the first paint later
+     * showed the NEXT row's channel name instead of its own (now-loaded) program title, until any
+     * key press (which dirties the node through an unrelated field write) forced a fresh redraw.
+     */
+    describe("a content reparse forces fresh text draws (no stale drawText cache across shifted row/program counts)", () => {
+        const stubDraw2D = () => ({
+            doDrawRotatedText: () => {},
+            doDrawRotatedRect: () => {},
+            doDrawRotatedBitmap: () => {},
+            drawNinePatch: () => {},
+        });
+
+        test("refreshContent marks the node dirty", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            const content = buildContent([
+                { title: "Channel A", programs: [{ title: "A1", start: base, duration: 3600 }] },
+            ]);
+            grid.setValue("content", content);
+
+            // A real paint clears isDirty (Group.nodeRenderingDone, draw2D present).
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, stubDraw2D());
+            expect(grid.isDirty).toBe(false);
+
+            // An in-place content mutation (append, matching ContentManagerTimeGrid's per-row async
+            // load) never touches a field on the grid itself, so only refreshContent — invoked at
+            // the top of the next render because the mutation dirtied the content tree — can be the
+            // one to force fresh text draws.
+            const channelA = content.getNodeChildren()[0];
+            const a2 = SGNodeFactory.createNode("ContentNode");
+            a2.setValue("title", new BrsString("A2"));
+            a2.setValue("playStart", new Int32(base + 3600));
+            a2.setValue("playDuration", new Int32(1800));
+            channelA.appendChildToParent(a2);
+
+            grid.refreshContent();
+            expect(grid.isDirty).toBe(true);
+        });
+
+        test("a row whose programs finish loading after the first paint shows its own title, not the next row's channel name", () => {
+            const grid = SGNodeFactory.createNode("TimeGrid");
+            const base = 1_000_000_000;
+            grid.setValue("contentStartTime", new Int32(base));
+            grid.setValue("numRows", new Int32(5));
+            grid.setValue("width", new Float(1280));
+            grid.setValue("height", new Float(720));
+
+            // Row 3 (0-indexed) starts with NO programs — still loading, like ContentManagerTimeGrid
+            // assigning `content` as soon as the channel list arrives, before every row's guide data
+            // has come back.
+            const content = buildContent([
+                { title: "Channel A", programs: [{ title: "Being Gary Busey", start: base, duration: 3600 }] },
+                {
+                    title: "Channel B",
+                    programs: [{ title: "The House Where Evil Dwells", start: base, duration: 3600 }],
+                },
+                { title: "Channel C", programs: [{ title: "The People's Court", start: base, duration: 3600 }] },
+                { title: "KATU 4.1", programs: [] },
+                { title: "KAZT 7.1", programs: [{ title: "Taye Diggs Is Here", start: base, duration: 3600 }] },
+            ]);
+            grid.setValue("content", content);
+
+            // First paint: row 3 draws only its (empty-row) channel info, no program title yet.
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, stubDraw2D());
+
+            // Row 3's program finishes loading: an in-place append to the SAME row ContentNode
+            // already held by `content` — `content` itself is never reassigned.
+            const row3 = content.getNodeChildren()[3];
+            const lateProgram = SGNodeFactory.createNode("ContentNode");
+            lateProgram.setValue("title", new BrsString("I Remember, I Remember"));
+            lateProgram.setValue("playStart", new Int32(base));
+            lateProgram.setValue("playDuration", new Int32(3600));
+            row3.appendChildToParent(lateProgram);
+
+            // Second paint: capture the drawn text sequence in order.
+            const drawn = [];
+            grid.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                ...stubDraw2D(),
+                doDrawRotatedText: (text) => drawn.push(text),
+            });
+
+            // Row 3's channel name is immediately followed by ITS OWN program title — not row 4's
+            // channel name ("KAZT 7.1"), which is what a stale cachedLines[index] would serve.
+            const row3NameIdx = drawn.indexOf("KATU 4.1");
+            expect(row3NameIdx).toBeGreaterThanOrEqual(0);
+            expect(drawn[row3NameIdx + 1]).toBe("I Remember, I Remember");
         });
     });
 });

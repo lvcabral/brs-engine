@@ -248,6 +248,45 @@ a `ContentNode`'s `.changed` is otherwise never cleared, since content trees are
 tree's per-frame reset (`Node.renderChildren`). Regression: the "channel parse cache invalidates on
 in-place program mutation" tests in `TimeGrid.test.js`.
 
+## `Group.drawText`'s per-index text cache and `TimeGrid.refreshContent`
+
+`Group.drawText` caches each drawn string by a **running per-frame index** the caller passes in
+(`cachedLines[index]`), reused across paints unless `this.isDirty`:
+
+```ts
+if (this.isDirty || this.cachedLines[index] === undefined) {
+    // ...measure fresh...
+    this.cachedLines[index] = measured;
+} else {
+    measured = this.cachedLines[index]; // stale reuse
+}
+```
+
+`TimeGrid.renderContent` draws every channel-info/time-label/program-title string through this with
+**one running counter (`textIndex`) across the whole grid** — so the logical string bound to a given
+index depends on exactly how many `drawText` calls preceded it: the time-bar labels, then each row's
+channel-info draw followed by its program-title draws. `isDirty` is set by `Group.setValue` (any field
+write on the node itself) — never by an **in-place mutation of the `content` tree** (append/replace on
+a `ContentNode` already held by an assigned `content` field only marks that node's own `.changed` and
+`markSubtreeStale()`, per the `channelParseCache` section above — `isDirty` is a distinct flag).
+
+So: if a channel's program **count** shifts between two paints — e.g. an SGDEX-style content manager
+assigns `content` once as soon as the channel list loads, then streams each row's programs in
+afterward via an in-place append to the SAME already-assigned tree (never rewriting the `content`
+field) — every `textIndex` from that row onward maps to a **different** logical string than what the
+earlier (already-painted, `isDirty` now `false`) pass cached there. Device-observed symptom (SGDEX
+**TimeGridView** sample): a program cell whose row was still loading on the first paint later showed
+the **next row's channel name** instead of its own (now-loaded) program title — because that row grew
+from 0 draws (channel-info only) to 2 (channel-info + program title), pushing every following index up
+by one, and the stale cache at the shifted index still held what a later row's channel-info text used
+to be there. Any key press "fixed" it only because navigation writes a field through `Group.setValue`
+(`isDirty = true`), incidentally invalidating the whole cache.
+
+Fix: `TimeGrid.refreshContent` sets `this.isDirty = true` unconditionally at its own start — every
+reparse (the only time the channel/program model, and therefore the `textIndex` sequence, can have
+changed) forces fresh `drawText` measurement for the whole node that frame. Regression: "a content
+reparse forces fresh text draws" in `TimeGrid.test.js`.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two

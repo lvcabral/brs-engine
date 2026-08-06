@@ -246,6 +246,18 @@ export class TimeGrid extends ArrayGrid {
 
     /** Parse the root -> channels -> programs content tree into the per-channel model. */
     protected refreshContent() {
+        // renderContent draws every channel-info/time-label/program-title string through
+        // Group.drawText with a single running index (textIndex), and drawText caches each index's
+        // measured text (cachedLines[index]) unless this.isDirty. A content mutation reaching here
+        // is an IN-PLACE tree change (see ArrayGrid/RowList item-reorder and channelParseStale doc
+        // notes above) — it never touches a field on this node, so Group.setValue's isDirty=true
+        // never fires for it. If the channel/program COUNTS shift (e.g. a row's programs finish an
+        // async load after this node already painted once), the same textIndex maps to a different
+        // logical string across passes, and a stale cachedLines entry gets drawn at that index —
+        // e.g. a program cell showing the NEXT row's channel name. Any reparse must force fresh text
+        // draws this frame. Regression: "a content reparse that shifts row/program counts does not
+        // leave a stale drawText cache" in TimeGrid.test.js.
+        this.isDirty = true;
         this.content.length = 0;
         this.channels.length = 0;
         this.programs.length = 0;
