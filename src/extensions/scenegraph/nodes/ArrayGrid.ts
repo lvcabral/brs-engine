@@ -627,7 +627,12 @@ export class ArrayGrid extends Group {
         // was applied would stay frozen at the wrong (full-width) size — stretching the item.
         this.itemComps[index].setValue("width", new Float(itemRect.width), false);
         this.itemComps[index].setValue("height", new Float(itemRect.height), false);
-        if (content.changed) {
+        // itemComps[] is keyed by POSITION, not by content identity. A reorder (removeChild/
+        // insertChild/appendChild-as-move) only dirties the container ContentNode, never the moved
+        // child itself, so content.changed alone misses "this slot now holds a different object".
+        // Compare against what the cached item component was last told, too.
+        const currentContent = this.itemComps[index].getValue("itemContent");
+        if (content.changed || currentContent !== content) {
             this.itemComps[index].setValue("itemContent", content, true);
             content.changed = false;
         }
