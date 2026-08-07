@@ -943,6 +943,29 @@ describe.concurrent("cli scenegraph", () => {
         expect(stdout).toContain("[EXIT_BRIGHTSCRIPT_CRASH]");
     }, 30000);
 
+    it("roDataGramSocket performs real UDP send/receive from inside a Task", async () => {
+        let command = ["node", brsCliPath, "-r udp-loopback-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Exercises the full SetAddress/SetBroadcast-adjacent bind, SendStr, NotifyReadable, Wait,
+        // roSocketEvent, ReceiveStr loop end-to-end through the real interpreter running inside a Task
+        // worker thread — matching how real apps (e.g. Jellyfin's server-discovery Task) use
+        // roDataGramSocket. The task never calls Close() on its sockets, so this also proves the
+        // DatagramBridge helper process cleanup (stdin-close safety net) survives Task worker
+        // termination without hanging the CLI process.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== UDP Loopback Repro ===");
+        // `print` inserts a leading space before a numeric value's own text (Roku's `;`-separator
+        // semantics), so a bound port reads "port= 12345" and the byte count "sent= 14".
+        expect(lines.some((line) => /^TASK: bound=true port= \d+$/.test(line))).toBe(true);
+        expect(lines).toContain("TASK: sent= 14");
+        expect(lines).toContain("TASK: result=ping from task");
+        expect(lines).toContain("CONTENT: ping from task");
+        expect(lines).toContain("=== UDP Loopback Repro Complete ===");
+    }, 30000);
+
     it("Notifies a Task's port when it mutates a ContentNode held by an observed field", async () => {
         let command = ["node", brsCliPath, "-r task-contentcache-app", "source/main.brs", "-c 0"].join(" ");
 

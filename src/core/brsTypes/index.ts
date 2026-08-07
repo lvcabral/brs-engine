@@ -103,6 +103,7 @@ export * from "./components/RoTextureManager";
 export * from "./components/RoUtils";
 export * from "./events/BrsEvent";
 export * from "./events/RoURLEvent";
+export * from "./events/RoSocketEvent";
 export * from "./events/RoInputEvent";
 export * from "./events/RoAudioPlayerEvent";
 export * from "./events/RoVideoPlayerEvent";

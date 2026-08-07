@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="UdpTask" extends="Task">
+    <interface>
+        <field id="content" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "execute"
+    end sub
+
+    sub execute()
+        print "TASK: start"
+        port = CreateObject("roMessagePort")
+        recvAddr = CreateObject("roSocketAddress")
+        recvAddr.setAddress("127.0.0.1:0")
+        recvSocket = CreateObject("roDataGramSocket")
+        recvSocket.setMessagePort(port)
+        bound = recvSocket.setAddress(recvAddr)
+        boundPort = recvAddr.getPort()
+        print "TASK: bound="; bound; " port="; boundPort
+
+        sendAddr = CreateObject("roSocketAddress")
+        sendAddr.setAddress("127.0.0.1:" + boundPort.toStr())
+        sendSocket = CreateObject("roDataGramSocket")
+        sendSocket.setSendToAddress(sendAddr)
+
+        recvSocket.notifyReadable(true)
+        sent = sendSocket.sendStr("ping from task")
+        print "TASK: sent="; sent
+
+        result = "timeout"
+        timespan = CreateObject("roTimespan")
+        while timespan.TotalMilliseconds() < 3000
+            event = wait(100, port)
+            if type(event) = "roSocketEvent" and event.getSocketID() = recvSocket.getID() and recvSocket.isReadable()
+                result = recvSocket.receiveStr(1024)
+                exit while
+            end if
+        end while
+        print "TASK: result="; result
+        m.top.content = result
+        ' No Close() calls here on purpose — see source/main.brs.
+    end sub
+    ]]></script>
+</component>
