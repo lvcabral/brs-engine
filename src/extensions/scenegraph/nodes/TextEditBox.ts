@@ -45,9 +45,25 @@ export class TextEditBox extends Group {
     private readonly textLabel: Label;
     private readonly secureLabel: Label;
     private readonly hintLabel: Label;
-    private readonly height: number;
-    private readonly paddingX: number;
-    private readonly paddingY: number;
+    private readonly chromePaddingX: number;
+    private readonly lineHeight: number;
+    private height: number = 0;
+    private paddingX: number = 0;
+    private paddingY: number = 0;
+    /**
+     * Vertical shift applied to everything drawn inside the box (labels, cursor, background),
+     * on top of `paddingY`. Zero when the built-in background is shown (content is laid out
+     * top-down from the box's own translation, matching the original look). With a custom
+     * background, a real device centers the box's content on its own translation.y rather than
+     * dropping it straight down from that point the way a top-left translation normally would —
+     * device-confirmed via `test/simulator/probes/texteditbox-vertical-anchor-probe`
+     * (`device-trace-fhd.txt`: reported `boundingRect().y` is `-lineHeight/2` off translation.y
+     * on every custom-background case, matching this exactly, including a non-symmetric
+     * translation where a top-anchored guess would have been off by tens of pixels, not one).
+     */
+    private contentOffsetY: number = 0;
+    /** Tracks the last-seen `backgroundUri` so chrome is only recomputed on a real change. */
+    private lastBackgroundUri: string;
     private readonly cursorBlinkInterval = 500; // milliseconds
     private readonly secureDisplayTimeout = 2500; // milliseconds
     private readonly secureChar = "•";
@@ -61,25 +77,32 @@ export class TextEditBox extends Group {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
-        if (this.resolution === "FHD") {
-            this.height = 72;
-            this.paddingX = 33;
-            this.paddingY = 18; // Approximate vertical centering
-        } else {
-            this.height = 48;
-            this.paddingX = 22;
-            this.paddingY = 12; // Approximate vertical centering
-        }
-        this.background = this.loadBitmap(this.backUri);
-        const cursorUri = `common:/images/${this.resolution}/cursor_textInput.png`;
-        this.cursor = this.loadBitmap(cursorUri);
-        this.setValueSilent("focusable", BrsBoolean.True);
-        this.setValueSilent("height", new Float(this.height));
-
         // Create Labels for text and hint
         this.textLabel = new Label();
         this.secureLabel = new Label();
         this.hintLabel = new Label();
+
+        // Size the box from the resolved default font's real line height instead of a fixed
+        // guess. TextEditBox has no documented "height" field on real Roku devices; the built-in
+        // background (inputField.9.png) is drawn with generous chrome around the text (matching
+        // the previous fixed 48/72 look, now derived from the font instead of hardcoded), but
+        // apps that hide it via backgroundUri commonly draw their own — often sized tightly
+        // around a single line of text — so in that case the box hugs the text instead of
+        // padding it out to that same chrome height, which used to push the text out of a tight
+        // custom background entirely.
+        const fallbackLineHeight = this.resolution === "FHD" ? 36 : 24;
+        const font = this.textLabel.getValue("font") as Font;
+        const drawFont = font.createDrawFont();
+        this.lineHeight = drawFont instanceof RoFont ? drawFont.measureTextHeight() : fallbackLineHeight;
+
+        this.chromePaddingX = this.resolution === "FHD" ? 33 : 22;
+        this.lastBackgroundUri = this.getValueJS("backgroundUri") as string;
+        this.applyChrome(this.lastBackgroundUri !== "");
+
+        this.background = this.loadBitmap(this.backUri);
+        const cursorUri = `common:/images/${this.resolution}/cursor_textInput.png`;
+        this.cursor = this.loadBitmap(cursorUri);
+        this.setValueSilent("focusable", BrsBoolean.True);
 
         // Configure and add labels as children
         this.configureLabel(this.textLabel);
@@ -99,10 +122,35 @@ export class TextEditBox extends Group {
         this.lastCursorToggleTime = sgClock.now();
     }
 
+    /**
+     * Sets `height`/`paddingX`/`paddingY` for the current background mode. The built-in
+     * background keeps generous chrome around the text (matching the original fixed 48/72 look
+     * and the fixed left inset `chromePaddingX`, now derived from the font instead of hardcoded
+     * for height); a custom background hugs the text tightly with no added left padding, since
+     * the app owns the box's visual size/position in that case (see the constructor's
+     * `lineHeight` comment) and typically already accounts for its own left margin via the
+     * box's translation.x relative to its own background — adding `chromePaddingX` on top of
+     * that double-counts it, over-indenting the text/hint from the app's visible box.
+     */
+    private applyChrome(customBackground: boolean) {
+        if (customBackground) {
+            this.paddingX = 0;
+            this.paddingY = 0;
+            this.height = this.lineHeight;
+            this.contentOffsetY = -this.lineHeight / 2;
+        } else {
+            this.paddingX = this.chromePaddingX;
+            this.paddingY = this.lineHeight / 2;
+            this.height = this.lineHeight + this.paddingY * 2;
+            this.contentOffsetY = 0;
+        }
+        this.setValueSilent("height", new Float(this.height));
+    }
+
     private configureLabel(label: Label) {
         const width = this.getValueJS("width") as number;
         const labelWidth = width > 0 ? width - this.paddingX * 2 : 0;
-        label.setTranslation([this.paddingX, this.paddingY]);
+        label.setTranslation([this.paddingX, this.paddingY + this.contentOffsetY]);
         label.setValueSilent("width", new Float(labelWidth));
         label.setValueSilent("height", new Float(this.height - this.paddingY * 2));
         label.setValueSilent("vertAlign", new BrsString("center"));
@@ -203,21 +251,41 @@ export class TextEditBox extends Group {
         // Ensure labels have correct width if TextEditBox width changes
         // And update background if URI changes
         if (this.isDirty) {
-            const width = this.getValueJS("width") as number;
-            const labelWidth = width > 0 ? width - this.paddingX * 2 : 0;
-            const labelWidthFloat = new Float(labelWidth);
-            this.textLabel.setValueSilent("width", labelWidthFloat);
-            this.secureLabel.setValueSilent("width", labelWidthFloat);
-            this.hintLabel.setValueSilent("width", labelWidthFloat);
-            this.copyField(this.secureLabel, "color", "textColor");
             // Background Image
             const backgroundUri = this.getValueJS("backgroundUri") as string;
-            if (backgroundUri && this.background?.getImageName() !== backgroundUri) {
-                this.background = this.getBitmap("backgroundUri");
+            if (backgroundUri !== this.lastBackgroundUri) {
+                this.lastBackgroundUri = backgroundUri;
+                this.applyChrome(backgroundUri !== "");
             }
+            if (backgroundUri) {
+                if (this.background?.getImageName() !== backgroundUri) {
+                    this.background = this.getBitmap("backgroundUri");
+                }
+            } else if (this.background?.getImageName() !== this.backUri) {
+                // backgroundUri was cleared back to "" - revert to the built-in background;
+                // otherwise a stale custom image stays stretched into the now-larger chrome box.
+                this.background = this.loadBitmap(this.backUri);
+            }
+            // Re-applies width/height/translation from the current width and chrome mode.
+            this.configureLabel(this.textLabel);
+            this.configureLabel(this.secureLabel);
+            this.configureLabel(this.hintLabel);
+            this.copyField(this.secureLabel, "color", "textColor");
         }
 
-        const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
+        // NOTE: `updateBoundingRects` below rotates around this same shifted rect when `rotation
+        // !== 0` (Group.updateBoundingRects -> SGUtil.rotateRect uses rect.y as its base), so a
+        // rotated custom-background TextEditBox pivots around its shifted content rect rather
+        // than its raw translation.y. Untested combination (form inputs are essentially never
+        // rotated) with no device reading either way - left as the simplest, most internally
+        // consistent option (one definition of "this box's rect" everywhere) rather than
+        // special-casing rotation without evidence of what a device actually does.
+        const rect = {
+            x: drawTrans[0],
+            y: drawTrans[1] + this.contentOffsetY,
+            width: size.width,
+            height: size.height,
+        };
 
         // Draw Background
         if (this.background?.isValid()) {

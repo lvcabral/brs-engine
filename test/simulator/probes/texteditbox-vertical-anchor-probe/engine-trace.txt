@@ -1,0 +1,32 @@
+Engine baseline - brs-engine (this repo), FHD, captured via:
+
+    node packages/node/bin/brs.cli.js --root test/simulator/probes/texteditbox-vertical-anchor-probe
+
+(`di.GetUIResolution()` below reports the CLI's default device profile line, "HD 1280x720" -
+this is a known engine-CLI quirk in how that field is populated for `--root` runs; the actual
+scene/layout resolution used is FHD, confirmed by the h=36 readings below, FHD's line height for
+the default font - HD would read h=24.)
+
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|000|boot|ui|HD 1280x720
+PROBE|001|bounds|A-typed-text|customBg text=Wgy | rect={x=190 y=-18 w=420 h=36}
+PROBE|002|bounds|B-hint-only|customBg hintText only | rect={x=190 y=-18 w=420 h=36}
+PROBE|003|bounds|J-jellyfin-analog|customBg text=Erika, translation.y=40 (case-local) | rect={x=20 y=22 w=440 h=36}
+PROBE|004|bounds|D-default-bg|built-in background, hintText only | rect={x=0 y=0 w=440 h=72}
+PROBE|005|bounds|done|
+
+Reading (what brs-engine currently does, i.e. the hypothesis this probe exists to verify):
+
+- Custom backgroundUri (cases A, B, J): height = lineHeight (36 at FHD for the default font) and
+  the reported rect's y = -lineHeight/2 relative to the box's own translation - i.e. the box
+  (and the text inside it) is CENTERED on translation.y, not top-anchored from it.
+    - J confirms this against a real translation (40): reported y=22 = 40 - 18. ✓
+- Default/built-in background (case D): height = 72 (matches the original, pre-fix fixed
+  constant) and rect.y = 0 relative to translation - TOP-anchored, unchanged from before this
+  investigation. This case is a control, not part of the open question.
+
+Ruler screenshot (case A, zoomed) at this engine baseline: the "W" cap-top sits just below the
+-25 tick and the "y" descender extends to a little past +12, both within the [-18, +18] window
+implied by height=36 centered on translation.y - consistent with the boundingRect() reading
+above, as expected (this is the engine visualizing its own math, not new information).

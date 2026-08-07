@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    TextEditBox Vertical Anchor Probe.
+
+    Everything is built programmatically in init() so the ruler (a labeled tick every 25px from
+    -100 to +150, offset from each TextEditBox's own translation.y, plus unlabeled fine ticks
+    every 5px for precise reading) doesn't need dozens of hand-written XML rows per case. Four
+    cases, all using a TextEditBox with a CUSTOM backgroundUri (the mode this probe is about)
+    except the last, which is the default/built-in-background case kept only as a control
+    (already believed correct - not the open question).
+
+      A  ruler + typed text ("Wgy" - has both an ascender and a descender, so the full vertical
+         extent of the font is visible against the ruler)
+      B  ruler + hint text only (no text set) - confirms hint text follows the same vertical
+         anchor as typed text
+      J  "Jellyfin analog": reproduces the exact real-app numbers that this probe exists to
+         verify (a sibling background Rectangle height=60 at y=8, TextEditBox translated to
+         y=40) - a direct "does this look centered" visual check, no ruler needed
+      D  control: default/built-in background (no override) - NOT the open question, included
+         only so the same screenshot also confirms this case still looks like a normal padded box
+
+    Read the ruler: the RED tick is offset 0 (= the box's own translation.y). If the glyphs sit
+    with their TOP at the red tick, TextEditBox is top-anchored (standard SG translation
+    convention). If the glyphs straddle the red tick with roughly equal space above and below,
+    it's center-anchored. Cyan ticks are every 50px, for easier counting at a glance.
+
+    Also prints each case's boundingRect() via telnet - the exact reported box height/y in each
+    mode is more useful there than eyeballed off a screenshot. See README.md for full details.
+-->
+<component name="TextEditBoxProbeScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            m.top.backgroundColor = "0x101420FF"
+
+            header = CreateObject("roSGNode", "Label")
+            header.translation = [40, 30]
+            header.text = "TextEditBox Vertical Anchor Probe"
+            header.color = "0xFFFFFFFF"
+            header.font = "font:LargeSystemFont"
+            m.top.appendChild(header)
+
+            sub1 = CreateObject("roSGNode", "Label")
+            sub1.translation = [40, 90]
+            sub1.width = 1840
+            sub1.wrap = true
+            sub1.text = "Red tick = the box's translation.y. Cyan ticks = every 50px. Where do the glyphs (case A/B) sit relative to the red tick? Take a device screenshot (Developer Settings), then Home/Back to exit. Numeric boundingRect() readings print to telnet a moment after boot."
+            sub1.color = "0xCCCCCCFF"
+            sub1.font = "font:SmallSystemFont"
+            m.top.appendChild(sub1)
+
+            m.caseA = buildRulerCase("A - typed text (Wgy)", 80, 420, true, "Wgy", "")
+            m.caseB = buildRulerCase("B - hint text only", 1000, 420, false, "", "Enter a password")
+            m.caseJ = buildJellyfinAnalog(80, 700)
+            m.caseD = buildDefaultBoxCase(80, 880)
+
+            m.settleTimer = CreateObject("roSGNode", "Timer")
+            m.settleTimer.duration = 1.0
+            m.settleTimer.observeField("fire", "onSettled")
+            m.top.appendChild(m.settleTimer)
+            m.settleTimer.control = "start"
+        end sub
+
+        sub onSettled()
+            p("bounds", "A-typed-text", "customBg text=Wgy | rect=" + r(m.caseA.boundingRect()))
+            p("bounds", "B-hint-only", "customBg hintText only | rect=" + r(m.caseB.boundingRect()))
+            p("bounds", "J-jellyfin-analog", "customBg text=Erika, translation.y=40 (case-local) | rect=" + r(m.caseJ.boundingRect()))
+            p("bounds", "D-default-bg", "built-in background, hintText only | rect=" + r(m.caseD.boundingRect()))
+            p("bounds", "done", "")
+        end sub
+
+        '--------------------------------------------------------------------------------------
+        ' Case builders
+        '--------------------------------------------------------------------------------------
+
+        ' Ruler + one TextEditBox with a custom (hidden) background. Labeled major ticks run from
+        ' -100 to +150 every 25px, offset from the box's own translation.y; short unlabeled fine
+        ' ticks every 5px in between let you read an exact pixel value by counting from the
+        ' nearest label. All to the LEFT of the box, which sits at local x = boxX.
+        function buildRulerCase(caseId as string, x as integer, y as integer, useText as boolean, textVal as string, hintVal as string) as object
+            group = CreateObject("roSGNode", "Group")
+            group.translation = [x, y]
+
+            boxX = 190
+
+            title = CreateObject("roSGNode", "Label")
+            title.translation = [0, -170]
+            title.text = caseId
+            title.color = "0xFFFFFFFF"
+            title.font = "font:MediumSystemFont"
+            group.appendChild(title)
+
+            offset = -100
+            while offset <= 150
+                isMajor = (offset mod 25) = 0
+                tick = CreateObject("roSGNode", "Rectangle")
+                tick.translation = [0, offset]
+                if isMajor
+                    tick.width = boxX - 15
+                else
+                    tick.width = 30 ' fine tick: short, close to the box, no label
+                    tick.translation = [boxX - 15 - 30, offset]
+                end if
+                tick.height = 1
+                if offset = 0
+                    tick.color = "0xFF3B30FF" ' red - translation.y itself
+                else if (offset mod 50) = 0
+                    tick.color = "0x30D0FFFF" ' cyan - major gridline every 50px
+                else if isMajor
+                    tick.color = "0x999999FF" ' light gray - labeled 25px tick
+                else
+                    tick.color = "0x3A3A3AFF" ' faint gray - unlabeled 5px fine tick
+                end if
+                group.appendChild(tick)
+
+                if isMajor
+                    lbl = CreateObject("roSGNode", "Label")
+                    lbl.translation = [0, offset - 12]
+                    lbl.width = boxX - 20
+                    lbl.height = 24
+                    lbl.horizAlign = "right"
+                    lbl.vertAlign = "center"
+                    lbl.font = "font:TinySystemFont"
+                    s = itos(offset)
+                    if offset > 0 then s = "+" + s
+                    lbl.text = s
+                    if offset = 0
+                        lbl.color = "0xFF3B30FF"
+                    else
+                        lbl.color = "0xAAAAAAFF"
+                    end if
+                    group.appendChild(lbl)
+                end if
+
+                offset = offset + 5
+            end while
+
+            teb = CreateObject("roSGNode", "TextEditBox")
+            teb.translation = [boxX, 0]
+            teb.backgroundUri = "pkg:/images/transparent.png"
+            teb.width = 420
+            teb.textColor = "0xFFFFFFFF"
+            teb.hintTextColor = "0xAAAAAAFF"
+            if useText
+                teb.text = textVal
+                teb.cursorPosition = len(textVal)
+                teb.active = true
+            else
+                teb.hintText = hintVal
+            end if
+            group.appendChild(teb)
+
+            m.top.appendChild(group)
+            return teb
+        end function
+
+        ' Reproduces the exact real-app numbers this probe exists to verify: a sibling background
+        ' Poster/Rectangle height=60 at y=8, TextEditBox translated to y=40 (both relative to this
+        ' group) - matching a Jellyfin-style "own background, hidden built-in box" input field.
+        function buildJellyfinAnalog(x as integer, y as integer) as object
+            group = CreateObject("roSGNode", "Group")
+            group.translation = [x, y]
+
+            title = CreateObject("roSGNode", "Label")
+            title.translation = [0, -40]
+            title.text = "J - Jellyfin analog (background h=60 @ y=8, box translation.y=40) - does the text look centered?"
+            title.color = "0xFFFFFFFF"
+            title.font = "font:MediumSystemFont"
+            group.appendChild(title)
+
+            bg = CreateObject("roSGNode", "Rectangle")
+            bg.translation = [0, 8]
+            bg.width = 500
+            bg.height = 60
+            bg.color = "0xFFFFFFFF"
+            group.appendChild(bg)
+
+            teb = CreateObject("roSGNode", "TextEditBox")
+            teb.translation = [20, 40]
+            teb.backgroundUri = "pkg:/images/transparent.png"
+            teb.width = 440
+            teb.text = "Erika"
+            teb.textColor = "0x101010FF"
+            group.appendChild(teb)
+
+            m.top.appendChild(group)
+            return teb
+        end function
+
+        ' Control case: default/built-in background (no override). Not the open question, but
+        ' cheap to include so the same screenshot also confirms this case is unaffected.
+        function buildDefaultBoxCase(x as integer, y as integer) as object
+            group = CreateObject("roSGNode", "Group")
+            group.translation = [x, y]
+
+            title = CreateObject("roSGNode", "Label")
+            title.translation = [0, -40]
+            title.text = "D - default/built-in background (control - not the open question)"
+            title.color = "0xFFFFFFFF"
+            title.font = "font:MediumSystemFont"
+            group.appendChild(title)
+
+            teb = CreateObject("roSGNode", "TextEditBox")
+            teb.translation = [0, 0]
+            teb.width = 440
+            teb.hintText = "Default hint text"
+            group.appendChild(teb)
+
+            m.top.appendChild(group)
+            return teb
+        end function
+
+        '--------------------------------------------------------------------------------------
+        ' Helpers
+        '--------------------------------------------------------------------------------------
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(phase as string, caseId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + phase + "|" + caseId + "|" + detail
+        end sub
+
+    ]]></script>
+</component>
