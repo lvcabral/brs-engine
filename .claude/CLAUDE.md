@@ -19,7 +19,10 @@ like harmless simplifications.
 `docs/` (repo-level, user-facing) is the source of truth for usage: `build-from-source.md`,
 `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`,
 `extensions.md`, `scenegraph-rendezvous.md`, `scenegraph-layout-passes.md`, `remote-control.md`,
-`limitations.md`, `contributing.md`.
+`limitations.md`, `contributing.md`. `scenegraph-font-line-height.md` records the open, engine-wide
+`RoFont.measureTextHeight` divergence (it returns a font's point size where a device returns its real
+line height, 1-2px short at every system font size) — read it before "fixing" a 1-2px text-height gap
+in any node, because the correction belongs in `RoFont` and the exact formula is not pinned yet.
 
 ## Overview
 
