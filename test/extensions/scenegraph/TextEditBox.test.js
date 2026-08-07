@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString } = core;
+const { BrsDevice, BrsString, Float } = core;
 
 /**
  * Regression: TextEditBox has no documented "height" field on real Roku devices (see
@@ -126,6 +126,43 @@ describe("TextEditBox sizes itself from the resolved font's real metrics", () =>
             render(box);
             expect(box.getValueJS("height")).toBe(72); // back to the generous built-in chrome
             expect(textLabel.getValueJS("translation")[0]).toBe(33); // back to the fixed left inset
+        });
+    });
+
+    /**
+     * An app-provided `height` set alongside a custom `backgroundUri` (e.g. an XML attribute, set
+     * before the first render) is honored verbatim and top-anchored, instead of being overridden by
+     * the tight/centered default. See `explicitHeight` in `TextEditBox.ts`.
+     */
+    test("a custom backgroundUri with an app-provided height keeps that height, top-anchored, instead of the tight/centered default", () => {
+        atResolution("FHD", () => {
+            const box = SGNodeFactory.createNode("TextEditBox");
+            box.setValue("height", new Float(75));
+            box.setValue("backgroundUri", new BrsString("pkg:/images/transparent.png"));
+            render(box);
+
+            expect(box.getValueJS("height")).toBe(75);
+            const [textLabel] = box.getNodeChildren();
+            const translation = textLabel.getValueJS("translation");
+            expect(translation[0]).toBe(0); // still no left chrome padding
+            expect(translation[1]).toBe(0); // top-anchored, not shifted to straddle translation.y
+            expect(textLabel.getValueJS("height")).toBe(75); // label fills the full app-provided height
+        });
+    });
+
+    test("an app-provided height set after a custom backgroundUri is already active still takes effect", () => {
+        atResolution("FHD", () => {
+            const box = SGNodeFactory.createNode("TextEditBox");
+            box.setValue("backgroundUri", new BrsString("pkg:/images/transparent.png"));
+            render(box);
+            expect(box.getValueJS("height")).toBe(36); // still the tight/centered default so far
+
+            box.setValue("height", new Float(75));
+            render(box);
+
+            expect(box.getValueJS("height")).toBe(75);
+            const [textLabel] = box.getNodeChildren();
+            expect(textLabel.getValueJS("translation")[1]).toBe(0);
         });
     });
 

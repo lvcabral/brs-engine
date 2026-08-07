@@ -64,6 +64,14 @@ export class TextEditBox extends Group {
     private contentOffsetY: number = 0;
     /** Tracks the last-seen `backgroundUri` so chrome is only recomputed on a real change. */
     private lastBackgroundUri: string;
+    /**
+     * An app-provided `height` (XML attribute or a `.height = ...` assignment); `undefined` if the
+     * app never set one. Detected reactively in the `isDirty` block below, since XML attributes on
+     * a built-in node are applied via `setValue` after construction. Overrides the custom-background
+     * branch's auto-computed tight/centered sizing in `applyChrome`; ignored for the default-chrome
+     * branch.
+     */
+    private explicitHeight?: number;
     private readonly cursorBlinkInterval = 500; // milliseconds
     private readonly secureDisplayTimeout = 2500; // milliseconds
     private readonly secureChar = "•";
@@ -131,9 +139,18 @@ export class TextEditBox extends Group {
      * `lineHeight` comment) and typically already accounts for its own left margin via the
      * box's translation.x relative to its own background — adding `chromePaddingX` on top of
      * that double-counts it, over-indenting the text/hint from the app's visible box.
+     *
+     * A third case: custom background **and** an app-provided `height` (`explicitHeight`). Honor
+     * that height verbatim, top-anchored like the default-chrome case, instead of overriding it
+     * with the font's line height and centering on `translation.y`.
      */
     private applyChrome(customBackground: boolean) {
-        if (customBackground) {
+        if (customBackground && this.explicitHeight !== undefined) {
+            this.paddingX = 0;
+            this.paddingY = 0;
+            this.height = this.explicitHeight;
+            this.contentOffsetY = 0;
+        } else if (customBackground) {
             this.paddingX = 0;
             this.paddingY = 0;
             this.height = this.lineHeight;
@@ -251,10 +268,21 @@ export class TextEditBox extends Group {
         // Ensure labels have correct width if TextEditBox width changes
         // And update background if URI changes
         if (this.isDirty) {
+            // Detects an app-set `height` (checked before backgroundUri so both changing in the
+            // same pass still land in this pass's applyChrome call).
+            const heightField = this.getValueJS("height") as number;
+            const heightChanged = heightField !== this.height;
+            if (heightChanged) {
+                this.explicitHeight = heightField;
+            }
             // Background Image
             const backgroundUri = this.getValueJS("backgroundUri") as string;
-            if (backgroundUri !== this.lastBackgroundUri) {
+            const backgroundUriChanged = backgroundUri !== this.lastBackgroundUri;
+            if (backgroundUriChanged) {
                 this.lastBackgroundUri = backgroundUri;
+            }
+            // Also re-applies when height alone changes while a custom background is active.
+            if (backgroundUriChanged || (heightChanged && backgroundUri !== "")) {
                 this.applyChrome(backgroundUri !== "");
             }
             if (backgroundUri) {
