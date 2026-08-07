@@ -1,0 +1,28 @@
+Roku Express 4K+, Roku OS 15.3, FHD 1920x1080
+
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=15.3
+PROBE|000|boot|ui|FHD 1920x1080
+PROBE|001|bounds|A-typed-text|customBg text=Wgy | rect={x=190 y=-18 w=420 h=38}
+PROBE|002|bounds|B-hint-only|customBg hintText only | rect={x=190 y=-18 w=420 h=38}
+PROBE|003|bounds|J-jellyfin-analog|customBg text=Erika, translation.y=40 (case-local) | rect={x=20 y=22 w=440 h=38}
+PROBE|004|bounds|D-default-bg|built-in background, hintText only | rect={x=0 y=0 w=440 h=73}
+PROBE|005|bounds|done|
+
+CONFIRMED: center-anchored. y=-18 (not 0) for every custom-background case - the device itself
+reports the box's own bounding rect starting above translation.y, not at it. J confirms it
+against a real, non-symmetric translation: 22 == 40 - 18, exactly what centering predicts.
+
+vs. engine baseline (engine-trace.txt, same cases):
+  A/B/J: engine y=-18 h=36  |  device y=-18 h=38   -> y offset matches exactly; height off by 2px
+  D:     engine y=0  h=72   |  device y=0  h=73    -> matches (control, unaffected either way)
+
+The 2px height difference (36 vs 38, 72 vs 73) is the font itself (device system font vs the
+engine's bundled Metropolis approximation), not the anchor logic - already a known, separately
+tracked engine-wide font-metric gap (see .claude/docs/scenegraph-invariants.md), not specific to
+TextEditBox. The y offset - the actual open question this probe existed to answer - matches the
+engine's prediction (-18) exactly, even though the device's own h=38 would put an exact half at
+-19: the anchor is centered on the glyph box (ascent+descent), which doesn't always split a
+font's full line-height box exactly in half (extra leading can sit asymmetrically) - a 1px
+quirk of that font's metrics, not a different anchor rule. Not worth chasing further; the
+center-anchored model itself is confirmed.
