@@ -217,7 +217,7 @@ export class DatagramBridge {
  * @returns Source text passed to `node -e`.
  */
 function buildHelperScript(queueFile: string): string {
-    return `
+    return String.raw`
         const dgram = require('dgram');
         const fs = require('fs');
         const queueFile = ${JSON.stringify(queueFile)};
@@ -228,11 +228,11 @@ function buildHelperScript(queueFile: string): string {
         // removed by the process that owns it, on any exit path (explicit close, stdin end, crash).
         process.on('exit', () => { try { fs.unlinkSync(queueFile); } catch (e) {} });
         socket.on('message', (msg, rinfo) => {
-            const line = JSON.stringify({ data: msg.toString('base64'), host: rinfo.address, port: rinfo.port }) + '\\n';
+            const line = JSON.stringify({ data: msg.toString('base64'), host: rinfo.address, port: rinfo.port }) + '\n';
             try { fs.appendFileSync(queueFile, line); } catch (e) {}
         });
         socket.on('error', (err) => {
-            process.stderr.write('socket error: ' + (err && err.message ? err.message : err) + '\\n');
+            process.stderr.write('socket error: ' + (err && err.message ? err.message : err) + '\n');
         });
         function ack(ackFile, payload) {
             // Write to a temp file then rename into place: the parent busy-polls for ackFile to
@@ -244,17 +244,42 @@ function buildHelperScript(queueFile: string): string {
                 fs.renameSync(tmp, ackFile);
             } catch (e) {}
         }
-        function ensureBound(port, host, cb) {
+        function ensureBound(port, host, cb, onError) {
             if (bound) { cb(); return; }
-            socket.once('listening', () => { bound = true; cb(); });
-            socket.once('error', () => {});
-            try { socket.bind(port || 0, host || undefined); } catch (e) { cb(); }
+            let settled = false;
+            const onListening = () => {
+                if (settled) return;
+                settled = true;
+                socket.removeListener('error', onErr);
+                bound = true;
+                cb();
+            };
+            const onErr = (err) => {
+                if (settled) return;
+                settled = true;
+                socket.removeListener('listening', onListening);
+                onError(err);
+            };
+            socket.once('listening', onListening);
+            socket.once('error', onErr);
+            try {
+                socket.bind(port || 0, host || undefined);
+            } catch (e) {
+                if (!settled) {
+                    settled = true;
+                    socket.removeListener('listening', onListening);
+                    socket.removeListener('error', onErr);
+                    onError(e);
+                }
+            }
         }
         function handle(msg) {
             if (msg.cmd === 'bind') {
                 ensureBound(msg.port, msg.host, () => {
                     const addr = socket.address();
                     ack(msg.ackFile, { ok: true, boundPort: addr.port });
+                }, (err) => {
+                    ack(msg.ackFile, { ok: false, error: (err && err.code) || String(err) });
                 });
             } else if (msg.cmd === 'broadcast') {
                 ensureBound(0, undefined, () => {
@@ -264,6 +289,8 @@ function buildHelperScript(queueFile: string): string {
                     } catch (e) {
                         ack(msg.ackFile, { ok: false, error: (e && e.code) || String(e) });
                     }
+                }, (err) => {
+                    ack(msg.ackFile, { ok: false, error: (err && err.code) || String(err) });
                 });
             } else if (msg.cmd === 'send') {
                 const buf = Buffer.from(msg.data, 'base64');
@@ -287,7 +314,7 @@ function buildHelperScript(queueFile: string): string {
         process.stdin.on('data', (chunk) => {
             carry += chunk.toString('utf8');
             let idx;
-            while ((idx = carry.indexOf('\\n')) >= 0) {
+            while ((idx = carry.indexOf('\n')) >= 0) {
                 const line = carry.slice(0, idx);
                 carry = carry.slice(idx + 1);
                 if (!line.trim()) continue;

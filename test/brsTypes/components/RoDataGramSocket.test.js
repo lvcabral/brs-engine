@@ -91,6 +91,29 @@ describe("RoDataGramSocket", () => {
         }, 10000);
     });
 
+    describe("bind failure", () => {
+        it("reports EADDRINUSE quickly instead of waiting out the ack timeout", async () => {
+            // Regression: DatagramBridge's helper script had an `error` listener that swallowed an
+            // async bind failure entirely (`socket.once('error', () => {})`), so the parent's request()
+            // call never got an ack and had to wait out its full 2s timeout, reporting a generic
+            // ETIMEDOUT instead of the real reason.
+            const holder = newSocket();
+            const holderAddress = callAddress("127.0.0.1:0");
+            expect(holder.getMethod("setAddress").call(interpreter, holderAddress)).toEqual(BrsBoolean.True);
+            const takenPort = holderAddress.getMethod("getPort").call(interpreter).getValue();
+
+            const contender = newSocket();
+            const started = Date.now();
+            const bound = contender.getMethod("setAddress").call(interpreter, callAddress(`127.0.0.1:${takenPort}`));
+            const elapsedMs = Date.now() - started;
+
+            expect(bound).toEqual(BrsBoolean.False);
+            expect(elapsedMs).toBeLessThan(1500);
+            const status = contender.getMethod("status").call(interpreter);
+            expect(status.getValue()).not.toEqual(0);
+        });
+    });
+
     describe("setBroadcast", () => {
         it("returns a real (non-mocked) result", () => {
             const socket = newSocket();

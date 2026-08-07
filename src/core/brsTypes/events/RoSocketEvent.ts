@@ -1,5 +1,4 @@
-import { BrsType } from "..";
-import { Callable, Int32, ValueKind } from "..";
+import { BrsType, Callable, Int32, ValueKind } from "..";
 import { BrsEvent } from "./BrsEvent";
 import { Interpreter } from "../../interpreter";
 

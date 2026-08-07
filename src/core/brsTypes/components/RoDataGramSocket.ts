@@ -17,13 +17,7 @@ import {
 import { BrsComponent } from "./BrsComponent";
 import { RoMessagePort } from "./RoMessagePort";
 import { Interpreter } from "../../interpreter";
-import {
-    BrsSocket,
-    GENERIC_SOCKET_ERROR,
-    IfSocketOption,
-    IfSocketStatus,
-    socketErrorCode,
-} from "../interfaces/IfSocket";
+import { BrsSocket, IfSocketOption, IfSocketStatus } from "../interfaces/IfSocket";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { DatagramBridge, DatagramReceived } from "../../device/DatagramBridge";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -42,7 +36,7 @@ export class RoDataGramSocket extends BrsComponent implements BrsValue, BrsSocke
     readonly socket?: net.Socket;
     readonly identity: number;
     private readonly bridge: DatagramBridge;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
     private broadcast: boolean;
     private notifyReadableEnabled: boolean;
     private readonly recvQueue: QueuedDatagram[];
