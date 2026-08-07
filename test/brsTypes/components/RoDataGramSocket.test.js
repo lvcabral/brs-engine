@@ -100,6 +100,36 @@ describe("RoDataGramSocket", () => {
         });
     });
 
+    describe("unsupported environment (e.g. the browser's stubbed `os`/`child_process` modules)", () => {
+        it("never throws from construction or from socket calls", () => {
+            // Regression: the browser build's webpack `resolve.fallback` replaces `os`/`child_process`
+            // with empty stub modules (mirroring the pre-existing `net: false` behavior), so a call
+            // like `os.tmpdir()` throws "os.tmpdir is not a function" instead of `os` itself being
+            // missing. That call used to run unconditionally in DatagramBridge's constructor, outside
+            // any try/catch, crashing every `CreateObject("roDataGramSocket")` in the browser.
+            const os = require("os");
+            const originalTmpdir = os.tmpdir;
+            os.tmpdir = () => {
+                throw new TypeError("os.tmpdir is not a function");
+            };
+            try {
+                let socket;
+                expect(() => {
+                    socket = newSocket();
+                }).not.toThrow();
+                expect(() => {
+                    socket.getMethod("setSendToAddress").call(interpreter, callAddress("127.0.0.1:9"));
+                    const sent = socket.getMethod("sendStr").call(interpreter, new BrsString("data"));
+                    expect(sent).toEqual(new Int32(0));
+                    const bound = socket.getMethod("setAddress").call(interpreter, callAddress("127.0.0.1:0"));
+                    expect(bound).toEqual(BrsBoolean.False);
+                }).not.toThrow();
+            } finally {
+                os.tmpdir = originalTmpdir;
+            }
+        });
+    });
+
     describe("close", () => {
         it("makes a subsequent send fail cleanly instead of throwing", () => {
             const socket = newSocket();

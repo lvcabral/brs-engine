@@ -41,13 +41,15 @@ const DEFAULT_TIMEOUT_MS = 2000;
 
 export class DatagramBridge {
     private child?: ChildProcessWithoutNullStreams;
-    private readonly queueFile: string;
+    // Undefined until `ensureStarted()` succeeds — `os`/`crypto` are empty stub modules on the
+    // browser build (webpack `resolve.fallback`), so computing this path must stay inside that
+    // method's try/catch, not run unconditionally at construction time (crashed every
+    // `CreateObject("roDataGramSocket")` in the browser before the "unsupported" fallback ever ran).
+    private queueFile?: string;
     private queueOffset = 0;
     private closed = false;
 
-    constructor(private readonly onError?: (message: string) => void) {
-        this.queueFile = path.join(os.tmpdir(), `brs-udp-queue-${crypto.randomUUID()}`);
-    }
+    constructor(private readonly onError?: (message: string) => void) {}
 
     /** Binds the socket (BSD `bind()`), matching `ifSocket.SetAddress`. Port 0 means "any". */
     bind(port: number = 0, host?: string): { ok: boolean; boundPort?: number; errorCode: number } {
@@ -73,7 +75,7 @@ export class DatagramBridge {
      * `Wait()` loop iteration.
      */
     poll(): DatagramReceived[] {
-        if (!this.child) {
+        if (!this.child || !this.queueFile) {
             return [];
         }
         let size: number;
@@ -132,10 +134,12 @@ export class DatagramBridge {
             }
             this.child = undefined;
         }
-        try {
-            fs.unlinkSync(this.queueFile);
-        } catch {
-            // Never created, or already removed.
+        if (this.queueFile) {
+            try {
+                fs.unlinkSync(this.queueFile);
+            } catch {
+                // Never created, or already removed.
+            }
         }
     }
 
@@ -148,9 +152,11 @@ export class DatagramBridge {
             return false;
         }
         try {
+            const queueFile = path.join(os.tmpdir(), `brs-udp-queue-${crypto.randomUUID()}`);
             // stdout is left unconsumed on purpose: the helper never writes to it, only to stderr
             // (diagnostics) — an unread but never-written-to pipe never fills/blocks.
-            this.child = spawn(process.argv[0], ["-e", buildHelperScript(this.queueFile)]);
+            this.child = spawn(process.argv[0], ["-e", buildHelperScript(queueFile)]);
+            this.queueFile = queueFile;
             this.child.unref();
             this.child.stderr?.on("data", (chunk: Buffer) => {
                 this.onError?.(`[roDataGramSocket] helper: ${chunk.toString().trim()}`);
@@ -163,6 +169,7 @@ export class DatagramBridge {
         } catch (err: any) {
             this.onError?.(`[roDataGramSocket] failed to start UDP helper: ${err?.message ?? err}`);
             this.child = undefined;
+            this.queueFile = undefined;
             return false;
         }
     }
