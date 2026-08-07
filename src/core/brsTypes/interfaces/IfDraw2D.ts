@@ -157,7 +157,7 @@ export class IfDraw2D {
 
     doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
         if (text === "") {
-            // node-canvas crashes on empty-string text APIs; nothing to draw anyway
+            // nothing to draw
             return;
         }
         const baseX = this.component.x;
@@ -183,7 +183,7 @@ export class IfDraw2D {
         rotation: number
     ) {
         if (text === "") {
-            // node-canvas crashes on empty-string text APIs; nothing to draw anyway
+            // nothing to draw
             return;
         }
         const baseX = this.component.x;
