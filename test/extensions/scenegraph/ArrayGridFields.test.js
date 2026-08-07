@@ -232,6 +232,69 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
     });
 });
 
+/**
+ * `currFocusRow`/`currFocusColumn` (documented on the base `ArrayGrid`, arraygrid.md) must already
+ * reflect the newly focused position by the time `itemFocused` fires. Apps commonly read them
+ * synchronously from inside an `itemFocused` observer — e.g. a header that collapses once the
+ * focused row leaves index 0 — and a stale (pre-navigation) value there makes the app react one
+ * navigation late, or never, depending on how many rows exist. Regression for two bugs found via a
+ * real app (Jellyfin-Roku's VisualLibraryScene): RowList emitted itemFocused BEFORE updating
+ * currFocusRow, and grid types (MarkupGrid/PosterGrid, via the base ArrayGrid.setFocusedItem) never
+ * updated currFocusRow/currFocusColumn at all.
+ */
+describe("ArrayGrid currFocusRow/currFocusColumn reflect the new focus before itemFocused fires", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+
+    test("RowList: an itemFocused observer reading currFocusRow synchronously sees the NEW row", () => {
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A", "B"], ["C", "D"], ["E"]]));
+        list.setNodeFocus(true);
+
+        const seenDuringItemFocused = [];
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        port.pushMessage = (event) => {
+            const name = event.fieldName ? event.fieldName.getValue() : "";
+            if (name === "itemFocused") {
+                seenDuringItemFocused.push(list.getValueJS("currFocusRow"));
+            }
+            originalPush(event);
+        };
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("itemFocused"), port);
+
+        expect(list.handleKey("down", true)).toBe(true);
+
+        expect(seenDuringItemFocused).toEqual([1]);
+    });
+
+    test("MarkupGrid: currFocusRow/currFocusColumn track focus as the grid navigates", () => {
+        const grid = SGNodeFactory.createNode("MarkupGrid");
+        grid.setValue("numColumns", new Int32(2));
+        grid.setValue("content", buildContent([["A", "B", "C", "D"]]).getNodeChildren()[0]);
+        grid.setNodeFocus(true);
+
+        expect(grid.getValueJS("currFocusRow")).toBe(0);
+        expect(grid.getValueJS("currFocusColumn")).toBe(0);
+
+        expect(grid.handleKey("right", true)).toBe(true);
+        expect(grid.getValueJS("currFocusRow")).toBe(0);
+        expect(grid.getValueJS("currFocusColumn")).toBe(1);
+
+        expect(grid.handleKey("down", true)).toBe(true);
+        expect(grid.getValueJS("currFocusRow")).toBe(1);
+        expect(grid.getValueJS("currFocusColumn")).toBe(1);
+    });
+});
+
 describe("ArrayGrid numColumns/numRows string coercion", () => {
     beforeAll(() => {
         const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));

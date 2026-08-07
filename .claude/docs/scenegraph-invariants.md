@@ -993,6 +993,32 @@ Regression: `test/extensions/scenegraph/ArrayGridFields.test.js` (asserts on a m
 values *and* order are pinned — including three no-pulse cases) and the channel-info/time-pan test in
 `test/extensions/scenegraph/TimeGrid.test.js`.
 
+### `currFocusRow`/`currFocusColumn` must be current BEFORE `itemFocused` fires
+
+Both fields are documented on the base `ArrayGrid` (`arraygrid.md`), not just `RowList`. Apps commonly read
+`currFocusRow`/`currFocusColumn` **synchronously from inside an `itemFocused` observer** — e.g. a header
+that collapses once the focused row leaves index 0 (found via a real app, Jellyfin-Roku's
+`VisualLibraryScene`). Since an engine-initiated, non-reentrant emission dispatches its observer
+synchronously (see the deferred-dispatch section above), whichever field is `super.setValue`'d *first* in
+source order is the one an observer on a *later* field sees as already-settled — and vice versa. Two bugs
+from getting this backwards, both fixed together:
+
+1. `ArrayGrid.setFocusedItem` never wrote `currFocusRow`/`currFocusColumn` at all for grid types
+   (MarkupGrid/PosterGrid) — they stayed pinned at the `0.0` default forever, since the base class never
+   derives row/column from `focusIndex`/`numColumns`.
+2. `RowList.setFocusedItem` emitted `itemFocused` before calling `setRowItemFocused` (which sets
+   `currFocusRow`/`currFocusColumn`), so a synchronous read inside an `itemFocused` observer got the row
+   from *before* this navigation — the app's collapse logic ran one navigation late, or never, depending on
+   how many rows existed.
+
+Fix: both `ArrayGrid.setFocusedItem` and `RowList.setFocusedItem` now `super.setValue` `currFocusRow`/
+`currFocusColumn` immediately before `itemFocused`, inside the same `enterInternalUpdate`/`exitInternalUpdate`
+bracket. `RowList.setRowItemFocused` still re-applies the same values afterward (a harmless same-value
+no-op) before settling `rowItemFocused` last — that ordering is unchanged.
+
+Regression: `test/extensions/scenegraph/ArrayGridFields.test.js`, describe block
+`"ArrayGrid currFocusRow/currFocusColumn reflect the new focus before itemFocused fires"`.
+
 ## Focus chain consistency (`focusedChild` ↔ live focus)
 
 `focusedChild` is a stored, observable field: `Node.setNodeFocus` walks the parent chain (`createPath`) at

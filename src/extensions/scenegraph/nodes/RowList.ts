@@ -250,6 +250,13 @@ export class RowList extends ArrayGrid {
             // Engine-initiated emission: reentrant observers defer (see Field.enterInternalUpdate).
             Field.enterInternalUpdate();
             try {
+                // currFocusRow/currFocusColumn must already reflect the new position before
+                // itemFocused fires: apps commonly read them synchronously from an itemFocused
+                // observer (e.g. collapsing a header when the focused row leaves index 0). The
+                // values are re-applied (as a same-value no-op) by setRowItemFocused below, which
+                // still settles rowItemFocused last — see its own ordering comment.
+                super.setValue("currFocusRow", new Float(rowIndex));
+                super.setValue("currFocusColumn", new Float(colIndex));
                 super.setValue("itemFocused", new Int32(rowIndex));
             } finally {
                 Field.exitInternalUpdate();
