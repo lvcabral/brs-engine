@@ -330,6 +330,12 @@ export class ArrayGrid extends Group {
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
             if (inFocusChain) {
                 super.setValue("itemUnfocused", new Int32(focusedIndex));
+                // currFocusRow/currFocusColumn must already reflect the new position before
+                // itemFocused fires: apps commonly read them synchronously from an itemFocused
+                // observer (see RowList.setFocusedItem for the same ordering requirement).
+                const numCols = Math.max(1, this.numCols || 1);
+                super.setValue("currFocusRow", new Float(Math.floor(newFocus / numCols)));
+                super.setValue("currFocusColumn", new Float(newFocus % numCols));
                 super.setValue("itemFocused", new Int32(index));
             } else {
                 // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
