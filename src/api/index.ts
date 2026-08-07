@@ -674,13 +674,17 @@ function resetWorker() {
  * Resets the shared array buffer to initial state (-1 values).
  */
 function resetArray() {
+    // Previous rendezvous tracking state is preserved across resets
+    const rendezvousTracking = Atomics.load(sharedArray, DataType.RDT);
+    // Reset all values to -1, which is the "no data" sentinel for the shared array.
     sharedArray.some((_, index: number) => {
         Atomics.store(sharedArray, index, -1);
         return index === DataBufferIndex - 1;
     });
-    // Rendezvous tracing is a host setting, not app state: restore it from the device info so it
-    // survives the worker reset that starts each app, rather than silently turning itself off.
+    // Rendezvous tracing is a host setting, not app state: it survives the worker
+    // reset that starts each app, rather than silently turning itself off.
     Atomics.store(sharedArray, DataType.RDZ, deviceData.logRendezvous ? 1 : 0);
+    Atomics.store(sharedArray, DataType.RDT, rendezvousTracking);
 }
 
 /**
