@@ -61,7 +61,7 @@ export class RoFont extends BrsComponent implements BrsValue {
 
     measureTextWidth(text: string, maxWidth?: number, ellipsis?: string) {
         if (text === "") {
-            // node-canvas crashes on empty-string text APIs; measuring "" is always width 0
+            // measuring "" is always width 0
             return { width: 0, text, ellipsized: false };
         }
         // The key separates its parts with an escaped NUL, which cannot appear in a rendered
@@ -75,11 +75,6 @@ export class RoFont extends BrsComponent implements BrsValue {
         ctx.font = this.toFontString();
         ctx.textBaseline = "top";
         let measuredWidth = ctx.measureText(text).width;
-        if (measuredWidth === 0 && text.trim() === "") {
-            // node-canvas v4 collapses whitespace-only strings to width 0 (browsers return
-            // the real advance). Measure between sentinels to recover it.
-            measuredWidth = ctx.measureText(`|${text}|`).width - ctx.measureText("||").width;
-        }
         let length = maxWidth ? Math.min(measuredWidth, maxWidth) : measuredWidth;
         let ellipsizedText = text;
         let ellipsized = false;

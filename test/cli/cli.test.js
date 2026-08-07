@@ -145,7 +145,7 @@ describe.concurrent("cli", () => {
     }, 30000);
 
     it("Draws and measures empty strings without crashing", async () => {
-        // Regression: node-canvas v4 aborts the process (SIGTRAP) when its text APIs
+        // Regression: node-canvas v4-rc1 aborts the process (SIGTRAP) when its text APIs
         // (measureText/fillText) receive an empty string — the engine must guard them.
         let command = ["node", brsCliPath, "emptyTextDraw.brs", "-c 0"].join(" ");
 
