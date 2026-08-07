@@ -56,7 +56,8 @@ The **BrightScript Engine** implements the BrightScript language specification u
 * RAF (Roku Ads Framework) library that exposes `Roku_Ads` object is mocked with the most common methods available returning static values.
 * RED (Roku Event Dispatcher) and Google IMA3 libraries are also mocked.
 * Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
-* The `roStreamSocket` and `roDataGramSocket` components are mocked, and were only implemented to prevent crash on apps that use those.
+* The `roStreamSocket` (TCP) component is mocked, and was only implemented to prevent crash on apps that use it.
+* The `roDataGramSocket` (UDP) component performs real network I/O — binding, broadcast, send and receive, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()` — on the Node.js/CLI package only, backed by a small per-socket helper process (browsers cannot open raw sockets). On the browser package it remains mocked, like `roStreamSocket`. Real multicast group membership (`JoinGroup`/`DropGroup`) is not implemented on either platform.
 * The Text to Speech components (`roAudioGuide`, `roTextToSpeech` and `roMicrophone`) and the Signing Algorithm components (`roDSA` and `roRSA`) are mocked: they expose their documented methods returning static values, but perform no real speech, recording or cryptographic signing.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 

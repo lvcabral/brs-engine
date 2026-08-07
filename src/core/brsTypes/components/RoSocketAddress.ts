@@ -30,6 +30,20 @@ export class RoSocketAddress extends BrsComponent implements BrsValue {
         });
     }
 
+    /** Plain TS accessor for other components (e.g. RoDataGramSocket) — ifSocketAddress is BrightScript-only. */
+    getResolved(): { host: string; port: number; valid: boolean } {
+        return { host: this.hostIP, port: this.port, valid: this.valid };
+    }
+
+    /** Plain TS setter counterpart to `getResolved`, used to report an already-resolved peer address
+     *  (e.g. the sender of a received datagram) without re-running hostname validation/DNS. */
+    setFromResolved(host: string, port: number): void {
+        this.hostName = host;
+        this.hostIP = host;
+        this.port = port;
+        this.valid = isValidIP(host);
+    }
+
     validateAddress(address: string): boolean {
         // regex pattern for a valid quad address with port
         const quadAddressPattern = /^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})(?::(\d{1,5}))?$/;
