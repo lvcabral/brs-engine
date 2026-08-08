@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "TcpTask")
+        m.task.observeField("content", "onTaskContent")
+        m.task.control = "run"
+    end sub
+
+    sub onTaskContent(event as object)
+        print "CONTENT: "; event.getData()
+    end sub
+    ]]></script>
+</component>

@@ -1,9 +1,6 @@
 import * as fs from "fs";
-import * as os from "os";
-import * as path from "path";
-import * as crypto from "crypto";
-import { spawn, ChildProcessWithoutNullStreams } from "child_process";
-import { socketErrorCode, GENERIC_SOCKET_ERROR } from "../brsTypes/interfaces/IfSocket";
+import { ChildProcessWithoutNullStreams } from "child_process";
+import { mapBridgeError, pollQueueFile, requestAck, spawnHelperProcess } from "./HelperProcess";
 
 /**
  * Bridges `roDataGramSocket` to a real UDP socket on the Node/CLI build.
@@ -54,19 +51,19 @@ export class DatagramBridge {
     /** Binds the socket (BSD `bind()`), matching `ifSocket.SetAddress`. Port 0 means "any". */
     bind(port: number = 0, host?: string): { ok: boolean; boundPort?: number; errorCode: number } {
         const ack = this.request("bind", { port, host });
-        return { ok: ack.ok, boundPort: ack.boundPort, errorCode: ack.ok ? 0 : this.mapError(ack.error) };
+        return { ok: ack.ok, boundPort: ack.boundPort, errorCode: ack.ok ? 0 : mapBridgeError(ack.error) };
     }
 
     /** Enables/disables `SO_BROADCAST`, auto-binding first if the socket isn't bound yet. */
     setBroadcast(enable: boolean): { ok: boolean; errorCode: number } {
         const ack = this.request("broadcast", { enable });
-        return { ok: ack.ok, errorCode: ack.ok ? 0 : this.mapError(ack.error) };
+        return { ok: ack.ok, errorCode: ack.ok ? 0 : mapBridgeError(ack.error) };
     }
 
     /** Sends a datagram to host:port, auto-binding an ephemeral local port first if needed. */
     send(data: Buffer, host: string, port: number): { bytesSent: number; errorCode: number } {
         const ack = this.request("send", { data: data.toString("base64"), host, port });
-        return { bytesSent: ack.ok ? ack.bytesSent ?? 0 : 0, errorCode: ack.ok ? 0 : this.mapError(ack.error) };
+        return { bytesSent: ack.ok ? ack.bytesSent ?? 0 : 0, errorCode: ack.ok ? 0 : mapBridgeError(ack.error) };
     }
 
     /**
@@ -78,29 +75,10 @@ export class DatagramBridge {
         if (!this.child || !this.queueFile) {
             return [];
         }
-        let size: number;
-        try {
-            size = fs.statSync(this.queueFile).size;
-        } catch {
-            return [];
-        }
-        if (size <= this.queueOffset) {
-            return [];
-        }
-        const length = size - this.queueOffset;
-        const buffer = Buffer.alloc(length);
-        const fd = fs.openSync(this.queueFile, "r");
-        try {
-            fs.readSync(fd, buffer, 0, length, this.queueOffset);
-        } finally {
-            fs.closeSync(fd);
-        }
-        this.queueOffset = size;
+        const { lines, newOffset } = pollQueueFile(this.queueFile, this.queueOffset);
+        this.queueOffset = newOffset;
         const received: DatagramReceived[] = [];
-        for (const line of buffer.toString("utf8").split("\n")) {
-            if (!line.trim()) {
-                continue;
-            }
+        for (const line of lines) {
             try {
                 const parsed = JSON.parse(line);
                 received.push({
@@ -151,27 +129,24 @@ export class DatagramBridge {
         if (this.closed) {
             return false;
         }
-        try {
-            const queueFile = path.join(os.tmpdir(), `brs-udp-queue-${crypto.randomUUID()}`);
-            // stdout is left unconsumed on purpose: the helper never writes to it, only to stderr
-            // (diagnostics) — an unread but never-written-to pipe never fills/blocks.
-            this.child = spawn(process.argv[0], ["-e", buildHelperScript(queueFile)]);
-            this.queueFile = queueFile;
-            this.child.unref();
-            this.child.stderr?.on("data", (chunk: Buffer) => {
-                this.onError?.(`[roDataGramSocket] helper: ${chunk.toString().trim()}`);
-            });
-            this.child.on("error", (err: Error) => {
-                this.onError?.(`[roDataGramSocket] helper process error: ${err.message}`);
+        const spawned = spawnHelperProcess(
+            "brs-udp-queue",
+            buildHelperScript,
+            "roDataGramSocket",
+            "UDP",
+            this.onError,
+            () => {
                 this.child = undefined;
-            });
-            return true;
-        } catch (err: any) {
-            this.onError?.(`[roDataGramSocket] failed to start UDP helper: ${err?.message ?? err}`);
+            }
+        );
+        if (!spawned) {
             this.child = undefined;
             this.queueFile = undefined;
             return false;
         }
+        this.child = spawned.child;
+        this.queueFile = spawned.queueFile;
+        return true;
     }
 
     /** Writes a command and busy-polls for its ack file, mirroring XMLHttpRequest.ts's sync-XHR trick. */
@@ -179,33 +154,7 @@ export class DatagramBridge {
         if (!this.ensureStarted() || !this.child) {
             return { ok: false, error: "ENOTCONN" };
         }
-        const ackFile = path.join(os.tmpdir(), `brs-udp-ack-${crypto.randomUUID()}`);
-        try {
-            this.child.stdin.write(`${JSON.stringify({ cmd, ackFile, ...extra })}\n`);
-        } catch (err: any) {
-            return { ok: false, error: err?.code ?? "EPIPE" };
-        }
-        const deadline = performance.now() + timeoutMs;
-        while (!fs.existsSync(ackFile)) {
-            if (performance.now() > deadline) {
-                return { ok: false, error: "ETIMEDOUT" };
-            }
-        }
-        try {
-            const ack = JSON.parse(fs.readFileSync(ackFile, "utf8"));
-            fs.unlinkSync(ackFile);
-            return ack;
-        } catch (err: any) {
-            return { ok: false, error: err?.code ?? "EIO" };
-        }
-    }
-
-    /** Reuses `ifSocket`'s host-error-name mapping so status codes stay consistent across sockets. */
-    private mapError(error?: string): number {
-        if (!error) {
-            return GENERIC_SOCKET_ERROR;
-        }
-        return socketErrorCode({ code: error });
+        return requestAck(this.child, "brs-udp-ack", { cmd, ...extra }, timeoutMs);
     }
 }
 

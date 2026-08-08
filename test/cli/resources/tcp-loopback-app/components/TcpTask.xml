@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="TcpTask" extends="Task">
+    <interface>
+        <field id="content" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "execute"
+    end sub
+
+    sub execute()
+        print "TASK: start"
+        port = CreateObject("roMessagePort")
+
+        listenAddr = CreateObject("roSocketAddress")
+        listenAddr.setAddress("127.0.0.1:0")
+        listener = CreateObject("roStreamSocket")
+        listener.setMessagePort(port)
+        listener.setAddress(listenAddr)
+        listener.notifyReadable(true)
+        listening = listener.listen(4)
+        boundPort = listenAddr.getPort()
+        print "TASK: listening="; listening; " port="; boundPort
+
+        client = CreateObject("roStreamSocket")
+        client.setMessagePort(port)
+        client.notifyReadable(true)
+        clientAddr = CreateObject("roSocketAddress")
+        clientAddr.setAddress("127.0.0.1:" + boundPort.toStr())
+        client.setSendToAddress(clientAddr)
+        connected = client.connect()
+        print "TASK: connected="; connected
+
+        result = "timeout"
+        accepted = invalid
+        timespan = CreateObject("roTimespan")
+        while timespan.TotalMilliseconds() < 5000
+            event = wait(100, port)
+            if type(event) = "roSocketEvent"
+                changedID = event.getSocketID()
+                if changedID = listener.getID() and listener.isReadable() and accepted = invalid
+                    accepted = listener.accept()
+                    if accepted <> invalid
+                        print "TASK: accepted="; accepted.getID()
+                        accepted.setMessagePort(port)
+                        accepted.notifyReadable(true)
+                        sent = client.sendStr("ping from task")
+                        print "TASK: sent="; sent
+                    end if
+                else if accepted <> invalid and changedID = accepted.getID() and accepted.isReadable()
+                    received = accepted.receiveStr(1024)
+                    print "TASK: server received="; received
+                    accepted.sendStr("echo: " + received)
+                else if changedID = client.getID() and client.isReadable()
+                    result = client.receiveStr(1024)
+                    exit while
+                end if
+            end if
+        end while
+        print "TASK: result="; result
+        m.top.content = result
+        ' No Close() calls here on purpose — see source/main.brs.
+    end sub
+    ]]></script>
+</component>

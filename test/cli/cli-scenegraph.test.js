@@ -966,6 +966,32 @@ describe.concurrent("cli scenegraph", () => {
         expect(lines).toContain("=== UDP Loopback Repro Complete ===");
     }, 30000);
 
+    it("roStreamSocket performs real TCP send/receive from inside a Task", async () => {
+        let command = ["node", brsCliPath, "-r tcp-loopback-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Exercises Listen/Connect/Accept/NotifyReadable/Wait/roSocketEvent/Send/Receive end-to-end
+        // through the real interpreter running inside a Task worker thread, including a listener and
+        // an accepted connection sharing the same roMessagePort as the client (the scenario that needs
+        // RoMessagePort's per-instance callback key, not just the type-name key it used before). The
+        // task never calls Close() on its sockets, so this also proves the StreamBridge helper process
+        // cleanup (stdin-close safety net) survives Task worker termination without hanging the CLI.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== TCP Loopback Repro ===");
+        // `print` inserts a leading space before a numeric value's own text (Roku's `;`-separator
+        // semantics), so a bound port reads "port= 12345" and the byte count "sent= 14".
+        expect(lines.some((line) => /^TASK: listening=true port= \d+$/.test(line))).toBe(true);
+        expect(lines).toContain("TASK: connected=true");
+        expect(lines.some((line) => /^TASK: accepted= \d+$/.test(line))).toBe(true);
+        expect(lines).toContain("TASK: sent= 14");
+        expect(lines).toContain("TASK: server received=ping from task");
+        expect(lines).toContain("TASK: result=echo: ping from task");
+        expect(lines).toContain("CONTENT: echo: ping from task");
+        expect(lines).toContain("=== TCP Loopback Repro Complete ===");
+    }, 30000);
+
     it("Notifies a Task's port when it mutates a ContentNode held by an observed field", async () => {
         let command = ["node", brsCliPath, "-r task-contentcache-app", "source/main.brs", "-c 0"].join(" ");
 
