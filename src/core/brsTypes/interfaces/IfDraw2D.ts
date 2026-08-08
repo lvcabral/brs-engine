@@ -432,7 +432,8 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            const ctx = this.component.getContext();
+            // No `globalAlpha` reset here (unlike the sibling callables): `drawObjectToComponent`,
+            // which every BrsDraw2D `drawImage` routes through, brackets its own context state.
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -441,10 +442,6 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            // A leaked globalAlpha is permanent canvas state: every later draw on this canvas would
-            // inherit it (and an alpha of 0 would blank them entirely). The sibling draw callables
-            // reset it the same way.
-            ctx.globalAlpha = 1;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -931,37 +928,45 @@ export function drawObjectToComponent(
 ): boolean {
     const ctx = component.getContext();
     const alphaEnable = component.getCanvasAlpha();
-    let image: BrsCanvas;
-    if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
-        image = getCanvasFromDraw2d(object, rgba);
+    if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
+        return false;
+    }
+    // The alpha/smoothing writes below are PERSISTENT canvas state, and this function is reached from
+    // every `RoBitmap`/`RoScreen`/`RoRegion`/`RoCompositor` drawImage. A leaked `globalAlpha` would be
+    // inherited by every later draw on the canvas — and since a blend color of 0x00000000 legitimately
+    // sets it to 0, the leak would blank the canvas permanently rather than merely tint it. Bracketing
+    // here (rather than resetting in each caller) also covers the early `return false` below.
+    ctx.save();
+    try {
+        const image = getCanvasFromDraw2d(object, rgba);
         setContextAlpha(ctx, rgba);
-    } else {
-        return false;
-    }
-    if (!isCanvasValid(image)) {
-        return false;
-    }
-
-    const smoothing = (scaleMode ?? object.scaleMode) === 1;
-    ctx.imageSmoothingEnabled = smoothing;
-    if (smoothing && "imageSmoothingQuality" in ctx) {
-        ctx.imageSmoothingQuality = "high";
-    }
-
-    const destOffset = getDrawOffset(component);
-
-    // Only Compositor and Region uses wraps
-    const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
-
-    const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
-    for (const chunk of chunks) {
-        const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-        if (!alphaEnable) {
-            ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+        if (!isCanvasValid(image)) {
+            return false;
         }
-        drawChunk(ctx, image, chunk);
+
+        const smoothing = (scaleMode ?? object.scaleMode) === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
+        }
+
+        const destOffset = getDrawOffset(component);
+
+        // Only Compositor and Region uses wraps
+        const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
+
+        const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
+        for (const chunk of chunks) {
+            const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
+            if (!alphaEnable) {
+                ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+            }
+            drawChunk(ctx, image, chunk);
+        }
+        return true;
+    } finally {
+        ctx.restore();
     }
-    return true;
 }
 
 export function drawBitmapOnBitmap(source: RoBitmap, destiny: RoBitmap, scaleMode?: number) {

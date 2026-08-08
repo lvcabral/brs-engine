@@ -66,4 +66,32 @@ describe("blend color alpha", () => {
         expect([r, g, b]).toEqual([0, 0, 255]);
         expect(a).toBe(128);
     });
+
+    it("does not leak globalAlpha to later draws on the same canvas", () => {
+        // globalAlpha is PERSISTENT canvas state, and drawObjectToComponent — reached from every
+        // RoBitmap/RoScreen/RoRegion/RoCompositor drawImage, including the drawScaledObject callable,
+        // which resets nothing itself — sets it from the blend color. Now that alpha 0 is honored, a
+        // leak would blank every later draw on the canvas rather than merely tint it, so the reset has
+        // to live at the source. Goes through drawImage directly: that is the unguarded caller.
+        const target = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(40) },
+                { name: new BrsString("height"), value: new Int32(40) },
+                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
+            ])
+        );
+        const source = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(40) },
+                { name: new BrsString("height"), value: new Int32(40) },
+            ])
+        );
+        source.clearCanvas(0xffffffff | 0);
+
+        target.drawImage(source, 0, 0, 1, 1, 0x00000000); // fully transparent blend
+        target.drawImage(source, 0, 0, 1, 1); // untinted, must land fully opaque
+
+        const data = target.getContext().getImageData(20, 20, 1, 1).data;
+        expect([data[0], data[1], data[2], data[3]]).toEqual([255, 255, 255, 255]);
+    });
 });
