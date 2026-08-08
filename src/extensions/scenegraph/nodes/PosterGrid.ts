@@ -104,6 +104,7 @@ export class PosterGrid extends ArrayGrid {
     ];
 
     private readonly focusUri = "common:/images/focus_grid.9.png";
+    private readonly footprintUri = "common:/images/focus_footprint.9.png";
     private readonly layoutByIndex = new Map<number, PosterItemLayout>();
     private pendingIndex: number = -1;
     private fontHeightCache = new WeakMap<Font, number>();
@@ -121,6 +122,7 @@ export class PosterGrid extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
