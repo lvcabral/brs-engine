@@ -119,6 +119,58 @@ describe("a fully transparent subtree is not painted", () => {
         expect(list.getValueJS("opacity")).toBe(1);
     });
 
+    test("a node faded out itself, under an opaque parent, is not painted either", () => {
+        // The accumulated opacity the template receives has only the ANCESTORS' opacity folded in —
+        // each renderNodeContent folds its own in later. Testing that value alone still painted a
+        // node an app had faded out directly, which is the common single-widget fade.
+        const { group, list, rect } = buildList();
+        list.setValue("opacity", new Float(0));
+        rect.setValue("opacity", new Float(0));
+        const draw2D = recordingDraw2D();
+
+        group.paintNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.calls).toHaveLength(0);
+    });
+
+    test("a transparent subtree contributes the same ancestor bounds as a layout pass", () => {
+        // The skip degrades to a layout traversal rather than returning early: an early return would
+        // union a rect the subtree never computed ({0,0,0,0} for a node faded out before its first
+        // layout), inflating the parent's bounds toward that node's translation for every later frame.
+        function build(opacity) {
+            const parent = SGNodeFactory.createNode("Group");
+            const shown = SGNodeFactory.createNode("Group");
+            const near = SGNodeFactory.createNode("Rectangle");
+            near.setValue("width", new Float(100));
+            near.setValue("height", new Float(100));
+            shown.appendChildToParent(near);
+            shown.setValue("translation", new RoArray([new Float(300), new Float(300)]));
+            const faded = SGNodeFactory.createNode("Group");
+            const far = SGNodeFactory.createNode("Rectangle");
+            far.setValue("width", new Float(100));
+            far.setValue("height", new Float(100));
+            faded.appendChildToParent(far);
+            faded.setValue("translation", new RoArray([new Float(500), new Float(500)]));
+            faded.setValue("opacity", new Float(opacity));
+            parent.appendChildToParent(shown);
+            parent.appendChildToParent(faded);
+            return parent;
+        }
+
+        const painted = build(0);
+        painted.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
+        const laidOut = build(0);
+        laidOut.layoutNode(interpreter, [0, 0], 0, 1);
+        const opaque = build(1);
+        opaque.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
+
+        // A faded child is unioned by layout, so paint must union it identically — and identically to
+        // the same tree with the child opaque. An early return gave width/height 200 here, not 300.
+        expect(painted.rectToParent).toEqual(laidOut.rectToParent);
+        expect(painted.rectToParent).toEqual(opaque.rectToParent);
+        expect(painted.rectToParent.width).toBe(300);
+    });
+
     test("layout still runs under an opacity-0 ancestor, so boundingRect() is unaffected", () => {
         const transparent = buildList();
         transparent.group.setValue("opacity", new Float(0));
@@ -136,16 +188,22 @@ describe("a fully transparent subtree is not painted", () => {
         expect(hiddenRect).toEqual(shownRect);
     });
 
-    test("a transparent node reports renderTracking 'none'", () => {
-        const { group } = buildList();
-        group.setValue("enableRenderTracking", BrsBoolean.True);
+    test("a transparent node and its descendants report renderTracking 'none'", () => {
+        const { group, list, rect } = buildList();
+        for (const node of [group, list, rect]) {
+            node.setValue("enableRenderTracking", BrsBoolean.True);
+        }
         group.setValue("opacity", new Float(0));
         const draw2D = recordingDraw2D();
 
         group.paintNode(interpreter, [0, 0], 0, 1, draw2D);
 
-        // The reference puts opacity 0 in the same "none" bucket as visible = false.
+        // The reference puts opacity 0 in the same "none" bucket as visible = false. Because the skip
+        // degrades to a traversal, every descendant reaches its own nodeRenderingDone and reports it —
+        // an early return would have left theirs at whatever the last painted frame set.
         expect(group.getValueJS("renderTracking")).toBe("none");
+        expect(list.getValueJS("renderTracking")).toBe("none");
+        expect(rect.getValueJS("renderTracking")).toBe("none");
     });
 
     test("a revealed subtree paints again on the next frame", () => {

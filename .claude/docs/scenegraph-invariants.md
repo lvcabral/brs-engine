@@ -104,9 +104,10 @@ Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep the hard skip so h
 textures or creates item components. Regression:
 `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
-**A fully transparent subtree is skipped on PAINT, never on layout** (`Group.skipTransparentPaint`, in
-the `renderNode` template right after `prepareRender`). Apps commonly hide UI with `opacity = 0` rather
-than `visible = false`, and the engine used to paint such a subtree in full — every draw call issued,
+**A fully transparent subtree is DEGRADED to a layout traversal on paint, not returned from**
+(`Group.isTransparentPaint`, in the `renderNode` template right after `prepareRender`: it sets
+`draw2D = undefined` and falls through). Apps commonly hide UI with `opacity = 0` rather than
+`visible = false`, and the engine used to paint such a subtree in full — every draw call issued,
 invisibility resting *entirely* on the final `ctx.globalAlpha` write. That made any lost alpha
 downstream leak a full-strength draw over the visible screen: a grid with
 `focusFootprintBlendColor = 0x00000000` painted a solid black focus frame across the screen, because
@@ -116,26 +117,34 @@ downstream leak a full-strength draw over the visible screen: a grid with
 `renderTracking` in the same `"none"` bucket as `visible = false`, which paint already hard-skips.
 Load-bearing details, in order of how easily each is broken:
 
-- **Paint only (`draw2D !== undefined`).** `Group.renderNodeContent` *deliberately* propagates opacity 0
-  through measurement (the rule above), so a layout-pass skip would break `boundingRect()` on faded-out
-  UI and strand pruning contexts. It also leaves `layoutPassCount` untouched.
-- **The skipped node still hands its cached rect up** (`updateParentRects` when visible), exactly as
-  `skipSettledLayout` does: an opacity-0 node *is* unioned by layout passes (only `visible = false` is
-  excluded, in `nodeRenderingDone`), so contributing nothing here would make paint and layout disagree
-  about every ancestor's bounds.
-- **`isDirty` stays set**, as `skipRender` leaves it — that is what makes `ScrollingLabel`/`Video`/
-  `Keyboard` recompute on reveal.
-- **After `prepareRender`, before the clip** — `StandardDialog` self-centers there and the clip derives
-  from that settled translation.
+- **Degrade, never early-return.** An early return cannot hand the parent a rect the subtree never
+  computed: a node faded out *before it ever laid out* has a `{0,0,0,0}` `rectToParent`, which
+  `unionRect` treats as finite and unions in, inflating every ancestor's bounds toward that node's
+  translation and leaving them wrong for every later frame (measured: paint reported a parent 100px
+  wider than a layout pass over the same tree). Dropping `draw2D` instead computes exactly the rects a
+  layout pass would, by construction, because **every** draw call in every node goes through
+  `draw2D?.` — and each descendant still reaches its own `nodeRenderingDone`, so `renderTracking` is
+  right for the whole subtree, not just its root. Any future node type that draws through a captured
+  non-optional draw target would silently break this.
+- **The gate multiplies in the node's OWN `opacity`.** The accumulated value the template receives has
+  only the *ancestors'* opacity folded in — each `renderNodeContent` folds its own in later
+  (`Group.ts` `opacity = this.isVisible() ? opacity * this.getOpacity() : 0`). Testing the incoming
+  value alone still painted a node that is itself `opacity = 0`, which is the common case of an app
+  fading one widget out.
+- **Paint only (`draw2D !== undefined`).** A layout pass has no draw target to drop, and
+  `renderNodeContent` *deliberately* propagates opacity 0 through measurement (the rule above), so UI
+  under a faded-out ancestor keeps computing bounding rects.
+- **`isDirty` stays set** — `nodeRenderingDone` only clears it when `draw2D` is present, so a
+  transparent subtree stays dirty and repaints on reveal.
+- **After `prepareRender`, before the clip** — `StandardDialog` self-centers there, and `prepareRender`
+  still sees the real `draw2D`.
 - **Exactly `=== 0`, not `<= 0`.** A negative accumulated opacity currently draws *fully opaque*
   (`combineRgbaOpacity` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
   to be changed silently here.
 
-Intentional consequences, all already true for `visible = false`: while at opacity 0 a grid no longer
-creates/updates item components per frame, and time-based state (spinner angle, marquee scroll, cursor
-blink) holds instead of advancing. Animations and Timers run from `sgRoot.processAnimations()`/
-`processTimers()`, not the render tree, so a fade-in from `opacity = 0` still runs. `Video` is
-unaffected — it already requires `opacity > 0` for video-plane ownership. Regression:
+Because the traversal continues, `sgRoot.renderPass` is still `"paint"` and `isPaintPass()` stays true:
+time-based state and grid item creation behave exactly as before, so nothing is deferred to the reveal
+frame. Only the drawing is suppressed. Regression:
 `test/extensions/scenegraph/TransparentPaintSkip.test.js`.
 
 ## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL

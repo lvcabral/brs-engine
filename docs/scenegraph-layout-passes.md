@@ -149,7 +149,7 @@ directions:
 | Condition | Layout pass (`layoutNode`) | Paint pass (`paintNode`) |
 | --- | --- | --- |
 | `visible = false` | traverses (containers soft-skip, renderables measure their extent) | skips |
-| accumulated `opacity = 0` | traverses, propagating opacity 0 | **skips** (`Group.skipTransparentPaint`) |
+| accumulated `opacity = 0` | traverses, propagating opacity 0 | **degrades to layout** (`Group.isTransparentPaint` drops `draw2D`) |
 | settled subtree, unchanged context | skips (`Group.skipSettledLayout`, pruning) | never skips |
 
 Layout must keep descending into hidden and faded-out subtrees because bounding rects are independent
@@ -159,11 +159,17 @@ must not depend on the final `ctx.globalAlpha` write to make a transparent subtr
 single point of failure once painted a grid's focus frame at full strength over a screen the app had
 faded out.
 
-Two consequences to preserve when adding a skip on either side: a skipped node still hands its cached
-rect up (`updateParentRects`) whenever the *other* pass kind would have unioned it, or the two passes
-disagree about every ancestor's bounds; and a paint-side skip must not clear `isDirty` or record a
-layout context, or the subtree stays frozen after a reveal. Details and the regression tests are in
-`.claude/docs/scenegraph-invariants.md`.
+The transparent case is a *degrade*, not a skip, and that distinction is load-bearing: an early return
+would union a rect the subtree never computed (a node faded out before its first layout has a
+`{0,0,0,0}` `rectToParent`, which `unionRect` treats as finite) and inflate every ancestor's bounds,
+so paint and layout would disagree about the same tree. Dropping `draw2D` gets layout-identical rects
+for free, because every draw call goes through `draw2D?.`.
+
+The general rule when adding a skip on either side: a skipped node must still hand its cached rect up
+(`updateParentRects`) whenever the *other* pass kind would have unioned it, and that is only sound when
+the rect actually exists — otherwise degrade the traversal instead of skipping it. A paint-side skip
+must also not clear `isDirty` or record a layout context, or the subtree stays frozen after a reveal.
+Details and the regression tests are in `.claude/docs/scenegraph-invariants.md`.
 
 ## Related
 
