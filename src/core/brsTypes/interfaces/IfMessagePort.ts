@@ -10,10 +10,12 @@ import { RoMessagePort } from "../components/RoMessagePort";
 export class IfSetMessagePort {
     private readonly component: any;
     private readonly callback?: Function;
+    private readonly key?: string;
 
-    constructor(value: BrsComponent, callback?: Function) {
+    constructor(value: BrsComponent, callback?: Function, key?: string) {
         this.component = value;
         this.callback = callback;
+        this.key = key;
     }
 
     /** Sets the roMessagePort to be used for all events from the component */
@@ -22,8 +24,8 @@ export class IfSetMessagePort {
         this.component.port?.removeReference();
         if (this.callback) {
             const component = this.component.getComponentName();
-            this.component.port?.unregisterCallback(component);
-            port.registerCallback(component, this.callback);
+            this.component.port?.unregisterCallback(component, this.key);
+            port.registerCallback(component, this.callback, this.key);
         }
         this.component.port = port;
         return BrsInvalid.Instance;

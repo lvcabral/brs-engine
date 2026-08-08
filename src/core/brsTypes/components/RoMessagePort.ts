@@ -46,14 +46,14 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         this.callbackQueue.push(callback);
     }
 
-    registerCallback(component: string, callback: Function) {
+    registerCallback(component: string, callback: Function, key: string = component) {
         this.addReference();
-        this.callbackMap.set(component, callback);
+        this.callbackMap.set(key, callback);
     }
 
-    unregisterCallback(component: string) {
+    unregisterCallback(component: string, key: string = component) {
         this.removeReference();
-        this.callbackMap.delete(component);
+        this.callbackMap.delete(key);
     }
 
     asyncCancel() {
