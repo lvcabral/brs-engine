@@ -113,7 +113,7 @@ export class DynamicKeyboardBase extends Group {
 
     /** Applies a selected key (its strOut or label) to the text and keyboard mode. */
     protected applyKey(out: string) {
-        switch (out) {
+        switch (out.toLowerCase()) {
             case "clear":
                 this.textEditBox.setValue("text", new BrsString(""));
                 this.textEditBox.moveCursor(0);
@@ -132,7 +132,7 @@ export class DynamicKeyboardBase extends Group {
                 return;
             case "shift":
             case "capslock":
-            case "UpperLower":
+            case "upperlower":
                 this.toggleCase();
                 return;
             case "abc123":

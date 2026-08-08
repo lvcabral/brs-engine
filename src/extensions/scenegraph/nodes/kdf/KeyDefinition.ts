@@ -246,7 +246,7 @@ export interface SpecialKeyIcon {
  * clear/space/delete icons ship in `common.zip`; everything else is a glyph.
  */
 export function resolveKeyIcon(strOut: string): SpecialKeyIcon | undefined {
-    switch (strOut) {
+    switch (strOut.toLowerCase()) {
         case "clear":
             return { iconName: "clear", glyph: "clear" };
         case "backspace":
