@@ -104,6 +104,40 @@ Renderable/complex nodes (Poster, Label, ArrayGrid, …) keep the hard skip so h
 textures or creates item components. Regression:
 `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
+**A fully transparent subtree is skipped on PAINT, never on layout** (`Group.skipTransparentPaint`, in
+the `renderNode` template right after `prepareRender`). Apps commonly hide UI with `opacity = 0` rather
+than `visible = false`, and the engine used to paint such a subtree in full — every draw call issued,
+invisibility resting *entirely* on the final `ctx.globalAlpha` write. That made any lost alpha
+downstream leak a full-strength draw over the visible screen: a grid with
+`focusFootprintBlendColor = 0x00000000` painted a solid black focus frame across the screen, because
+`setContextAlpha`'s truthiness guard dropped the alpha of the one color whose packed value is falsy
+(`IfDraw2D.setContextAlpha` now checks `!== undefined`; regression
+`test/extensions/scenegraph/BlendColorAlpha.test.js`). Per the Group reference, `opacity` 0 puts
+`renderTracking` in the same `"none"` bucket as `visible = false`, which paint already hard-skips.
+Load-bearing details, in order of how easily each is broken:
+
+- **Paint only (`draw2D !== undefined`).** `Group.renderNodeContent` *deliberately* propagates opacity 0
+  through measurement (the rule above), so a layout-pass skip would break `boundingRect()` on faded-out
+  UI and strand pruning contexts. It also leaves `layoutPassCount` untouched.
+- **The skipped node still hands its cached rect up** (`updateParentRects` when visible), exactly as
+  `skipSettledLayout` does: an opacity-0 node *is* unioned by layout passes (only `visible = false` is
+  excluded, in `nodeRenderingDone`), so contributing nothing here would make paint and layout disagree
+  about every ancestor's bounds.
+- **`isDirty` stays set**, as `skipRender` leaves it — that is what makes `ScrollingLabel`/`Video`/
+  `Keyboard` recompute on reveal.
+- **After `prepareRender`, before the clip** — `StandardDialog` self-centers there and the clip derives
+  from that settled translation.
+- **Exactly `=== 0`, not `<= 0`.** A negative accumulated opacity currently draws *fully opaque*
+  (`combineRgbaOpacity` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
+  to be changed silently here.
+
+Intentional consequences, all already true for `visible = false`: while at opacity 0 a grid no longer
+creates/updates item components per frame, and time-based state (spinner angle, marquee scroll, cursor
+blink) holds instead of advancing. Animations and Timers run from `sgRoot.processAnimations()`/
+`processTimers()`, not the render tree, so a fade-in from `opacity = 0` still runs. `Video` is
+unaffected — it already requires `opacity > 0` for video-plane ownership. Regression:
+`test/extensions/scenegraph/TransparentPaintSkip.test.js`.
+
 ## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL
 
 **Device-measured** (probe channel: `Samples/layoutgroup-probe`, 12 spellings × XML-attribute and

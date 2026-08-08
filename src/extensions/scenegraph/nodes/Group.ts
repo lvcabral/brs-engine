@@ -727,6 +727,9 @@ export class Group extends Node {
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.prepareRender(draw2D);
+        if (this.skipTransparentPaint(origin, angle, opacity, draw2D)) {
+            return;
+        }
         // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
         // rects must stay unclipped), and an invisible node draws nothing — check both before probing
         // the field, so the overwhelmingly common case is one comparison. The real visibility gates
@@ -942,6 +945,43 @@ export class Group extends Node {
         if (this.isVisible()) {
             this.updateParentRects(origin, angle);
         }
+        return true;
+    }
+
+    /**
+     * Whether the `renderNode` template must skip this subtree because it is fully transparent.
+     *
+     * A subtree whose accumulated opacity is 0 draws nothing, so a PAINT pass can stop before doing
+     * any of the work — and, more importantly, must not DEPEND on the final `globalAlpha` write to
+     * make it invisible. That single step was the only thing hiding a node an app had faded out with
+     * `opacity = 0` (apps commonly hide UI that way instead of `visible = false`), so any lost alpha
+     * downstream leaked a full-strength draw over the visible screen. Per the Group reference,
+     * `opacity` 0 puts `renderTracking` in the same `"none"` bucket as `visible = false`, which the
+     * engine already hard-skips on paint.
+     *
+     * PAINT PASSES ONLY (`draw2D` present). `renderNodeContent` deliberately propagates opacity 0
+     * through measurement so UI under a faded-out ancestor still computes bounding rects — apps size
+     * and position UI before revealing it (see the visibility-vs-measurement rule). Skipping layout
+     * would break `boundingRect()` on hidden UI and strand pruning contexts.
+     *
+     * A skipped node still hands its cached rect up (`updateParentRects`), like `skipSettledLayout`:
+     * an opacity-0 node IS unioned into its parent by layout passes (only `visible = false` is
+     * excluded, in `nodeRenderingDone`), so contributing nothing here would make a paint pass and a
+     * layout pass disagree about every ancestor's bounds. `isDirty` is deliberately left set, exactly
+     * as `skipRender` leaves it, so time-driven nodes recompute when the subtree is revealed.
+     *
+     * Exactly `=== 0`: a negative accumulated opacity currently draws fully opaque
+     * (`combineRgbaOpacity` treats `opacity < 0` as "no opacity given") — a separate, unmeasured
+     * divergence that must not be changed silently here.
+     */
+    private skipTransparentPaint(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D): boolean {
+        if (draw2D === undefined || opacity !== 0) {
+            return false;
+        }
+        if (this.isVisible()) {
+            this.updateParentRects(origin, angle);
+        }
+        this.updateRenderTracking(true);
         return true;
     }
 
