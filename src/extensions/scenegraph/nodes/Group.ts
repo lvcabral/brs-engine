@@ -490,7 +490,10 @@ export class Group extends Node {
         }
         const words = text.split(/(\s|-)/);
         let currentMeasure = font.measureText(text);
-        if (currentMeasure.width <= width) {
+        // The reference: "Each newline character in the text results in a new line of text" —
+        // that has to hold even when the WHOLE string (embedded newlines and all) measures
+        // narrower than the box, so the single-line fast path below must not apply to it.
+        if (!text.includes("\n") && currentMeasure.width <= width) {
             return [currentMeasure];
         }
         currentMeasure = { text: "", width: 0, height: 0, ellipsized: false };

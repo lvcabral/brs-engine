@@ -29,6 +29,18 @@ function captureLineYs(label) {
     return ys;
 }
 
+/** Renders the label with a stub draw surface, capturing the text of each drawn line, in order. */
+function captureLineTexts(label) {
+    const texts = [];
+    const draw2D = {
+        doDrawRotatedText(text) {
+            texts.push(text);
+        },
+    };
+    label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+    return texts;
+}
+
 /** A long string that wraps to multiple lines at a narrow width. */
 const LONG_TEXT =
     "The quick brown fox jumps over the lazy dog while the lazy dog sleeps soundly in the warm afternoon sun.";
@@ -85,6 +97,32 @@ describe("Label node wrap/vertAlign", () => {
 
         expect(topYs[0]).toBeCloseTo(0, 5);
         expect(bottomYs[0]).toBeGreaterThan(topYs[0]);
+    });
+
+    /**
+     * Regression: wrap="true" must break on an embedded chr(10) even when the whole string
+     * (newlines and all) measures narrower than the label's width. The reference is explicit:
+     * "Each newline character in the text results in a new line of text." `breakTextIntoLines`
+     * had a single-line fast path (skip word-splitting when the full text already fits the box)
+     * that measured the newline characters as ordinary — near-zero-width — glyphs instead of
+     * treating them as forced breaks, so short multi-line text (e.g. a handful of short chat/log
+     * lines appended with chr(10), each individually much narrower than the box) rendered as one
+     * run-together line. It only "worked" once accumulated text grew wide enough to overflow the
+     * box and fall through to the real word-wrap loop below, which already handled "\n" correctly
+     * — matching the reported symptom exactly (fine once wrapping kicks in, broken before that).
+     */
+    test("wrap + short text still breaks on embedded newlines", () => {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:MediumSystemFont"));
+        label.setValue("width", new Float(400));
+        label.setValue("wrap", BrsBoolean.True);
+        label.setValue("text", new BrsString("line one\nline two\nline three"));
+
+        const texts = captureLineTexts(label);
+        expect(texts).toEqual(["line one", "line two", "line three"]);
+
+        const ys = captureLineYs(label);
+        expect(new Set(ys).size).toBe(3); // three distinct line positions, not stacked on one y
     });
 
     /**
