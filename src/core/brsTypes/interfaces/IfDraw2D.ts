@@ -432,6 +432,7 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
+            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -440,6 +441,10 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
+            // A leaked globalAlpha is permanent canvas state: every later draw on this canvas would
+            // inherit it (and an alpha of 0 would blank them entirely). The sibling draw callables
+            // reset it the same way.
+            ctx.globalAlpha = 1;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -724,8 +729,18 @@ export interface BrsDraw2D {
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
+/**
+ * Applies a color's alpha channel as the context's global alpha, so the blit is drawn at the
+ * requested transparency.
+ *
+ * The check MUST be `!== undefined`, never truthy: `0x00000000` (fully transparent black) is a
+ * legitimate 32-bit color and the only one whose entire packed value is falsy, so `if (rgba)`
+ * silently dropped its alpha. That painted a transparent blend color as SOLID BLACK, because this
+ * is the only place the blend alpha is applied — `RoBitmap.getRgbaCanvas` deliberately multiplies
+ * the RGB tint at full strength regardless of alpha (#935), leaving nothing to fall back on.
+ */
 function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number) {
-    if (rgba) {
+    if (rgba !== undefined) {
         const alpha = rgba & 255;
         if (alpha < 255) {
             ctx.globalAlpha = alpha / 255;
