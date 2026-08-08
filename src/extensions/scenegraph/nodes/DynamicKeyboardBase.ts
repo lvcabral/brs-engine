@@ -132,7 +132,6 @@ export class DynamicKeyboardBase extends Group {
                 return;
             case "shift":
             case "capslock":
-            case "upperlower":
                 this.toggleCase();
                 return;
             case "abc123":
