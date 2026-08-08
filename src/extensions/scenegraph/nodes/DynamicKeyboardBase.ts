@@ -40,7 +40,7 @@ export class DynamicKeyboardBase extends Group {
 
         this.textEditBox = new VoiceTextEditBox();
         this.keyGrid = new DynamicKeyGrid();
-        this.keyGrid.onKeySelected = (out) => this.applyKey(out);
+        this.keyGrid.onKeySelected = (out) => this.dispatchKeySelected(out);
 
         this.setValueSilent("textEditBox", this.textEditBox);
         this.setValueSilent("keyGrid", this.keyGrid);
@@ -111,9 +111,25 @@ export class DynamicKeyboardBase extends Group {
     // Key selection → text editing / mode switching
     // -------------------------------------------------------------------------
 
+    /**
+     * Gives an extending component's `keySelected(key as string) as boolean` interface function
+     * (per the DynamicCustomKeyboard spec) first chance to handle a key selection. Returning true
+     * means "handled" and skips the default handler; false, or the function not being declared,
+     * falls through to applyKey.
+     */
+    private dispatchKeySelected(out: string) {
+        if (this.funcNames.has("keyselected") && sgRoot.interpreter) {
+            const handled = this.callFunction(sgRoot.interpreter, new BrsString("keySelected"), new BrsString(out));
+            if (handled instanceof BrsBoolean && handled.toBoolean()) {
+                return;
+            }
+        }
+        this.applyKey(out);
+    }
+
     /** Applies a selected key (its strOut or label) to the text and keyboard mode. */
     protected applyKey(out: string) {
-        switch (out) {
+        switch (out.toLowerCase()) {
             case "clear":
                 this.textEditBox.setValue("text", new BrsString(""));
                 this.textEditBox.moveCursor(0);
@@ -132,7 +148,6 @@ export class DynamicKeyboardBase extends Group {
                 return;
             case "shift":
             case "capslock":
-            case "UpperLower":
                 this.toggleCase();
                 return;
             case "abc123":

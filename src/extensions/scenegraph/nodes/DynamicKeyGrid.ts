@@ -577,7 +577,7 @@ export class DynamicKeyGrid extends Group {
         const mode = this.mode;
         const upper = mode.endsWith("Upper") || mode.endsWith("Shift");
         const base = mode.startsWith("Symbols") ? "Symbols" : mode.startsWith("Accents") ? "Accents" : "ABC123";
-        switch (strOut) {
+        switch (strOut.toLowerCase()) {
             case "shift":
                 return "shift";
             case "space":

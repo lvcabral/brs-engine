@@ -197,6 +197,65 @@ describe("Dynamic voice keyboards", () => {
         });
     });
 
+    describe("keySelected custom handler", () => {
+        afterEach(() => {
+            sgRoot._interpreter = undefined;
+        });
+
+        test("a declared keySelected() returning true skips the default handler", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            kbd.funcNames.add("keyselected");
+            sgRoot._interpreter = fakeInterpreter;
+            const calls = [];
+            kbd.callFunction = (interpreter, name, key) => {
+                calls.push([interpreter, name.getValue(), key.getValue()]);
+                return core.BrsBoolean.True;
+            };
+            kbd.keyGrid.setValue("jumpToKey", coords(1, 0, 0)); // "a"
+            kbd.handleKey("OK", true);
+            expect(calls).toEqual([[fakeInterpreter, "keySelected", "a"]]);
+            expect(textOf(kbd)).toBe(""); // default insert was skipped
+        });
+
+        test("a declared keySelected() returning false falls through to the default handler", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            kbd.funcNames.add("keyselected");
+            sgRoot._interpreter = fakeInterpreter;
+            kbd.callFunction = () => core.BrsBoolean.False;
+            kbd.keyGrid.setValue("jumpToKey", coords(1, 0, 0)); // "a"
+            kbd.handleKey("OK", true);
+            expect(textOf(kbd)).toBe("a");
+        });
+
+        test("no keySelected() declared never calls callFunction and applies the default handler", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            sgRoot._interpreter = fakeInterpreter;
+            let called = false;
+            kbd.callFunction = () => {
+                called = true;
+                return core.BrsBoolean.True;
+            };
+            kbd.keyGrid.setValue("jumpToKey", coords(1, 0, 0)); // "a"
+            kbd.handleKey("OK", true);
+            expect(called).toBe(false);
+            expect(textOf(kbd)).toBe("a");
+        });
+
+        test("keySelected() declared but no interpreter set falls back to the default handler", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            kbd.funcNames.add("keyselected");
+            let called = false;
+            kbd.callFunction = () => {
+                called = true;
+                return core.BrsBoolean.True;
+            };
+            kbd.keyGrid.setValue("jumpToKey", coords(1, 0, 0)); // "a"
+            kbd.handleKey("OK", true);
+            expect(called).toBe(false);
+            expect(textOf(kbd)).toBe("a");
+        });
+    });
+
     describe("DynamicPinPad", () => {
         test("key grid matches the legacy keyboard_pinpad size (HD)", () => {
             const pad = SGNodeFactory.createNode("DynamicPinPad");
