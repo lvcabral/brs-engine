@@ -47,6 +47,11 @@ export class MaskGroup extends Group {
         // Fallback path: with no draw target, no/invalid mask, or an empty scene, behave like a
         // plain Group. This mirrors the documented behavior on Roku players without OpenGL, where
         // a MaskGroup just renders its children without applying the alpha mask.
+        // The `!draw2D` term is load-bearing beyond the layout-pass case, and must stay FIRST: a fully
+        // transparent subtree also arrives here with its draw target dropped, and the offscreen path below
+        // would allocate a scene-sized bitmap and build a REAL IfDraw2D over it — re-injecting a live draw
+        // target into a subtree the template just decided must not paint. Do not relax this to
+        // `isLayoutPass`, and do not hoist the allocation above it.
         if (!draw2D || !maskBitmap?.isValid() || this.sceneRect.width <= 0 || this.sceneRect.height <= 0) {
             super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
             return;

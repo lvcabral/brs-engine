@@ -144,7 +144,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         alpha?: number
     ): boolean {
         this.isDirty = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, undefined, alpha);
+        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
     }
     makeDirty(): void {
         this.isDirty = true;

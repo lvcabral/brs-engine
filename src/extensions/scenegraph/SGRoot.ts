@@ -271,6 +271,13 @@ export class SGRoot {
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
 
+    /**
+     * True while `Group.renderNode` has dropped the draw target of a fully transparent subtree, so its
+     * descendants see `draw2D === undefined` on what is really a PAINT frame. Read it through
+     * `Node.isLayoutPass(draw2D)`, never directly.
+     */
+    paintSuppressed: boolean = false;
+
     private audioFlags: number = -1;
     private audioIndex: number = -1;
     private audioDuration: number = -1;

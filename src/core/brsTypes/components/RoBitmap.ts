@@ -39,6 +39,25 @@ export interface NinePatch {
     margins: { left: number; right: number; top: number; bottom: number };
 }
 
+/**
+ * A 256-entry table mapping a channel value to `value * multiplier / 255`, for the blend-color multiply
+ * in `getRgbaCanvas`. Cached per multiplier: a tint is usually stable across frames, and even the first
+ * build is cheaper than the per-pixel divides it replaces on anything above icon size.
+ */
+const channelScales = new Map<number, Uint8ClampedArray>();
+
+function channelScale(multiplier: number): Uint8ClampedArray {
+    let table = channelScales.get(multiplier);
+    if (!table) {
+        table = new Uint8ClampedArray(256);
+        for (let value = 0; value < 256; value++) {
+            table[value] = (value * multiplier) / 255;
+        }
+        channelScales.set(multiplier, table);
+    }
+    return table;
+}
+
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -239,7 +258,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         alpha?: number
     ): boolean {
         this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, undefined, alpha);
+        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
@@ -272,36 +291,43 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             alpha: true,
         }) as BrsCanvasContext2D;
         // A per-channel multiply over the UN-PREMULTIPLIED pixels, NOT `globalCompositeOperation =
-        // "multiply"`. Canvas's `multiply` is the W3C *blend* formula, which over a semi-transparent
-        // backdrop is Co = (1-ab)*Cs + ab*Cb*Cs — it drags the result TOWARD the tint color by (1-ab)
-        // instead of multiplying by it, so it is only a true multiply where the source is fully opaque.
-        // Two consequences, both measured on a 50%-alpha rgba(200,100,50) source:
-        //   - opaque white was NOT an identity: [198,100,50] came out [226,178,152], so every
-        //     antialiased edge and soft shadow shifted toward the tint. Only the "default means no
-        //     blend" guard upstream kept this from being visible everywhere.
-        //   - a real tint came out too LIGHT: grey 0x808080 gave [114,88,76] where half is [98,48,24].
-        // Alpha is deliberately untouched: blendColor's alpha controls the resulting transparency via
-        // globalAlpha when blitting, not the tint strength — using it here would weaken the multiply and
-        // lighten the result, diverging from Roku (e.g. 0x0B001980 must render dark, not near-white).
+        // "multiply"` — canvas's `multiply` is the W3C *blend* formula, which over a semi-transparent
+        // backdrop drags the result toward the tint instead of multiplying by it, so opaque white was not
+        // an identity and a real tint came out lighter than the source. Measured table and derivation:
+        // `.claude/docs/scenegraph-invariants.md`, "Blend colors". Alpha is deliberately untouched:
+        // blendColor's alpha is the blit transparency (globalAlpha), never the tint strength (#935).
         const red = (rgba >> 24) & 0xff;
         const green = (rgba >> 16) & 0xff;
         const blue = (rgba >> 8) & 0xff;
-        const empty = this.canvas.width === 0 || this.canvas.height === 0;
-        if (empty || (red === 255 && green === 255 && blue === 255)) {
-            // Multiplying by white is a mathematical identity — copy instead, so an all-white tint is
+        if (this.canvas.width === 0 || this.canvas.height === 0) {
+            // `getImageData` THROWS on a 0-wide/0-tall rect, and both a zero-sized bitmap (which
+            // `isValid()` reports true for) and a `dispose()`d one reach here. `drawImageAtPos` no-ops.
+            drawImageAtPos(this.canvas, ctx, 0, 0);
+        } else if (red === 255 && green === 255 && blue === 255) {
+            // Multiplying by white is a mathematical identity — copy, so an all-white tint stays
             // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
-            // A zero-sized surface takes this branch too: `getImageData` THROWS on a 0-wide/0-tall
-            // rect, and both a `CreateObject("roBitmap", {width: 0, ...})` (which `isValid()` reports
-            // true for) and a `dispose()`d bitmap reach here, since `drawObjectToComponent` resolves the
-            // tinted canvas BEFORE its `isCanvasValid` check. `drawImageAtPos` no-ops on an empty source.
             drawImageAtPos(this.canvas, ctx, 0, 0);
         } else {
             const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
             const pixels = source.data;
+            // Per-channel lookup tables rather than the multiply inline: 256 entries build in noise even
+            // for a 24x24 icon and the table is byte-identical to `(value * m) / 255` for all 65536
+            // (value, multiplier) pairs, while cutting the arithmetic ~2.3x on a full-screen surface
+            // (2.99ms -> 1.30ms at 1280x720). A channel multiplied by 255 is an identity, so it is left
+            // alone entirely — the common case for a tint that only shifts one or two channels.
+            const scaleRed = red === 255 ? undefined : channelScale(red);
+            const scaleGreen = green === 255 ? undefined : channelScale(green);
+            const scaleBlue = blue === 255 ? undefined : channelScale(blue);
             for (let i = 0; i < pixels.length; i += 4) {
-                pixels[i] = (pixels[i] * red) / 255;
-                pixels[i + 1] = (pixels[i + 1] * green) / 255;
-                pixels[i + 2] = (pixels[i + 2] * blue) / 255;
+                if (scaleRed) {
+                    pixels[i] = scaleRed[pixels[i]];
+                }
+                if (scaleGreen) {
+                    pixels[i + 1] = scaleGreen[pixels[i + 1]];
+                }
+                if (scaleBlue) {
+                    pixels[i + 2] = scaleBlue[pixels[i + 2]];
+                }
             }
             putImageAtPos(source, ctx, 0, 0);
         }

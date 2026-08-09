@@ -1001,11 +1001,18 @@ export class Node extends RoSGNode implements BrsValue {
      */
     layoutNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number) {
         const previousPass = sgRoot.renderPass;
+        // `paintSuppressed` must be cleared as well as `renderPass`, or a layout pass STARTED from inside
+        // a suppressed paint inherits it and every node reads `isLayoutPass()` as false. Reachable on every
+        // fade: `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren` both call
+        // this from within the paint traversal (app observers and item `init()` measuring mid-frame).
+        const previousSuppressed = sgRoot.paintSuppressed;
         sgRoot.renderPass = "layout";
+        sgRoot.paintSuppressed = false;
         try {
             this.renderNode(interpreter, origin, angle, opacity);
         } finally {
             sgRoot.renderPass = previousPass;
+            sgRoot.paintSuppressed = previousSuppressed;
         }
     }
 
@@ -1032,6 +1039,20 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected isPaintPass(draw2D?: IfDraw2D): boolean {
         return draw2D !== undefined || sgRoot.renderPass === "paint";
+    }
+
+    /**
+     * Whether this traversal is a LAYOUT pass, as opposed to a paint frame whose drawing was suppressed
+     * because the subtree is fully transparent. Both look like `draw2D === undefined` from inside a node,
+     * so ask this — never a bare `!draw2D` — before doing work that is legitimate ONLY on a layout pass.
+     *
+     * **NOT the negation of `isPaintPass`**, and the two must not be collapsed: that one is deliberately
+     * true for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside a
+     * suppressed subtree. The two families of check, and which sites belong to each, are in
+     * `.claude/docs/scenegraph-invariants.md`.
+     */
+    protected isLayoutPass(draw2D?: IfDraw2D): boolean {
+        return draw2D === undefined && !sgRoot.paintSuppressed;
     }
 
     /**

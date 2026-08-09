@@ -223,9 +223,12 @@ export class LayoutGroup extends Group {
         // so a one-shot boundingRect() query never reads a pre-convergence size. The former cap of
         // 2 could exit while still dirty, returning rects that kept creeping on later refreshes.
         // MAX_LAYOUT_PASSES is a divergence backstop, not the terminator — hitting it means child
-        // metrics oscillate (a bug to fix, not a state to paper over). A real frame draw (draw2D
-        // present) keeps a single pass, preserving its next-frame correction.
-        const maxPasses = draw2D === undefined && layoutChildren.length ? LayoutGroup.MAX_LAYOUT_PASSES : 1;
+        // metrics oscillate (a bug to fix, not a state to paper over). A real frame draw keeps a single
+        // pass, preserving its next-frame correction. That is `isLayoutPass`, not `draw2D === undefined`:
+        // a fully transparent subtree has its draw target dropped on a PAINT frame, and a raw check would
+        // give it fixed-point convergence semantics — up to 8 passes per painted frame — for the whole
+        // duration of every fade transition.
+        const maxPasses = this.isLayoutPass(draw2D) && layoutChildren.length ? LayoutGroup.MAX_LAYOUT_PASSES : 1;
         // Each inner pass ends with nodeRenderingDone → updateParentRects, unioning this group's
         // rect into its PARENT — whose rects are reset once per ITS pass, not per inner pass here.
         // Without restoring them between passes, a converging layout leaves the union of every

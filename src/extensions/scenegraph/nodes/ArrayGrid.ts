@@ -556,7 +556,11 @@ export class ArrayGrid extends Group {
     ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
-            if (!draw2D) {
+            // Layout-pass only, and `isLayoutPass` rather than a bare `!draw2D`: this is not a pure
+            // measurement — `measureHiddenExtent` refreshes content as a side effect — so running it for a
+            // hidden grid inside a faded-out ancestor would do content work on painted frames, in the very
+            // path whose purpose is to suppress work.
+            if (this.isLayoutPass(draw2D)) {
                 this.measureHiddenExtent(origin, angle);
             }
             return;
@@ -699,12 +703,9 @@ export class ArrayGrid extends Group {
     /**
      * Draws the focus frame (or, when the grid itself is unfocused, the footprint) around an item.
      *
-     * TEMPLATE METHOD — override `focusFrameRect`, never this. Everything here is shared contract: which
+     * TEMPLATE METHOD — override `focusFrameRect`, never this. Everything here is shared contract: the
      * uri and blend field the focus state selects, the validity guard, the `hasNinePatch` write that
-     * `rectMargins()` reads, and the `drawImage` call. `PosterGrid` used to override this whole method to
-     * specialize only its geometry, and in doing so silently dropped the blend color (both fields became
-     * no-ops on that type) and the `hasNinePatch` write. A geometry-only hook makes that class of
-     * omission impossible.
+     * `rectMargins()` reads, and the `drawImage` call.
      */
     protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D, index = -1) {
         const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";

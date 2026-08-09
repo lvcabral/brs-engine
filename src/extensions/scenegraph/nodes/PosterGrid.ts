@@ -622,15 +622,18 @@ export class PosterGrid extends ArrayGrid {
      * top stays at the cell top, so with `captionVertAlignment = "above"` it spans the caption zone too.
      */
     protected focusFrameRect(itemRect: Rect, _bmp: RoBitmap, index: number): Rect {
+        // Fall back to the whole cell when this index has not been laid out yet (the frame is then just
+        // outset from itemRect, which is also what a direct renderFocus call in a test sees).
         const posterRect = this.layoutByIndex.get(index)?.posterRect;
-        const extraTop = this.marginY + this.focusPaddingTop;
-        const extraBottom = this.marginY + this.focusPaddingBottom;
-        const extraHorizontal = this.focusPaddingX;
+        const posterX = itemRect.x + (posterRect?.x ?? 0);
+        const posterWidth = posterRect?.width ?? itemRect.width;
+        const outsetTop = this.marginY + this.focusPaddingTop;
+        const outsetBottom = this.marginY + this.focusPaddingBottom;
         return {
-            x: (posterRect ? itemRect.x + posterRect.x : itemRect.x) - extraHorizontal,
-            y: itemRect.y - extraTop,
-            width: (posterRect?.width ?? itemRect.width) + extraHorizontal * 2,
-            height: itemRect.height + extraTop + extraBottom,
+            x: posterX - this.focusPaddingX,
+            y: itemRect.y - outsetTop,
+            width: posterWidth + this.focusPaddingX * 2,
+            height: itemRect.height + outsetTop + outsetBottom,
         };
     }
 
