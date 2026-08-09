@@ -1,0 +1,100 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|001|init|ready|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=F
+PROBE|002|R1-first-focus|before|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=F
+PROBE|003|R1-first-focus|after|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|004|R1-first-focus|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|005|R1-first-focus|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|006|R1-first-focus|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|007|R2-prep-move|before|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|008|R2-prep-move|after|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|009|R2-prep-move|OBS-itemUnfocused|data=0 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|010|R2-prep-move|OBS-currFocusRow|data=1 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|011|R2-prep-move|OBS-itemFocused|data=1 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|012|R2-prep-move|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|013|R2-park|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|014|R2-park|after|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|015|R2-refocus-unchanged|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|016|R2-refocus-unchanged|after|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|017|R2-refocus-unchanged|OBS-itemFocused|data=1 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|018|R2-refocus-unchanged|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|019|R2-settled|settled|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|020|R3-park|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|021|R3-park|after|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|022|R3-park|OBS-itemUnfocused|data=1 liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|023|R3-park|OBS-currFocusRow|data=0 liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|024|R3-park|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|025|R3-park|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|026|R3-park|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|027|R3-focus-then-move|before|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|028|R3-focus-then-move|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=F
+PROBE|029|R3-focus-then-move|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|030|R3-focus-then-move|mid-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|031|R3-focus-then-move|after-animateToItem|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|032|R3-focus-then-move|OBS-itemFocused|data=0 liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|033|R3-focus-then-move|OBS-rowItemFocused|data=[0,0] liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|034|R3-focus-then-move|OBS-itemUnfocused|data=0 liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|035|R3-focus-then-move|OBS-currFocusRow|data=2 liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|036|R3-focus-then-move|OBS-itemFocused|data=2 liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|037|R3-focus-then-move|OBS-rowItemFocused|data=[2,0] liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|038|R3-settled|settled|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|039|R4-prep-horiz|before|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|040|R4-prep-horiz|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|041|R4-prep-horiz|OBS-itemFocused|data=2 liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|042|R4-prep-horiz|OBS-rowItemFocused|data=[2,1] liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|043|R4-park|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|044|R4-park|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|045|R4-refocus-after-horiz|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|046|R4-refocus-after-horiz|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|047|R4-refocus-after-horiz|OBS-itemFocused|data=2 liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|048|R4-refocus-after-horiz|OBS-rowItemFocused|data=[2,1] liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|049|R4-settled|settled|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|050|R5-park|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|051|R5-park|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|052|R5-unfocused-jump|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|053|R5-unfocused-jump|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|054|R5-refocus-after-jump|before|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|055|R5-refocus-after-jump|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|056|R5-refocus-after-jump|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|057|R5-refocus-after-jump|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|058|R5-refocus-after-jump|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|059|R6-prep|before|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|060|R6-prep|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|---|R6-key|MANUAL|Now press DOWN once, then BACK on the remote.
+PROBE|061|R6-prep|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|062|R6-prep|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|063|R6-prep|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|064|R6-key-down|A-before-setFocus|row=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|065|R6-key-down|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=F
+PROBE|066|R6-key-down|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|067|R6-key-down|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|068|R6-key-down|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|069|R6-key-down|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|070|R6-key-down|A-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|071|R6-key-down|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|072|R6-key-down|OBS-currFocusRow|data=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|073|R6-key-down|OBS-itemFocused|data=1 liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|074|R6-key-down|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|075|R6-key-down|B-after-animateToItem|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|076|R6-key-down|C-hide-overlay|overlay would be faded out here liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|077|R6-key-down|OBS-itemUnfocused|data=1 liveRIF=[1,0] liveIF=1 liveIU=1 liveCFR=1 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|078|R6-key-down|OBS-currFocusRow|data=0 liveRIF=[1,0] liveIF=1 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|079|R6-key-down|OBS-itemFocused|data=0 liveRIF=[1,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|080|R6-key-down|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|081|R6-key-down|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|082|R6-key-down|RESHOW-regrab|calling overlay.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|083|R6-key-down|RESHOW-regrab-done|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|---|R7-key|MANUAL|Now press DOWN once more, then BACK.
+PROBE|084|R7-key-down-regrab|A-before-setFocus|row=0 liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|085|R7-key-down-regrab|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=F
+PROBE|086|R7-key-down-regrab|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|087|R7-key-down-regrab|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|088|R7-key-down-regrab|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|089|R7-key-down-regrab|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|090|R7-key-down-regrab|RESHOW-regrab|calling overlay.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=T overlayFocus=F
+PROBE|091|R7-key-down-regrab|RESHOW-regrab-done|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|092|R7-key-down-regrab|A-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=1 liveCFR=0 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|093|R7-key-down-regrab|B-after-animateToItem|liveRIF=[1,0] liveIF=1 liveIU=1 liveCFR=1 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|094|R7-key-down-regrab|C-hide-overlay|overlay would be faded out here liveRIF=[1,0] liveIF=1 liveIU=1 liveCFR=1 liveCFC=0 listInChain=F overlayFocus=T
+PROBE|095|R7-key-down-regrab|exit|probe complete
+PROBE|999|boot|end|
