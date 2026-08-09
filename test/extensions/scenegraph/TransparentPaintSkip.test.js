@@ -57,6 +57,17 @@ describe("a fully transparent subtree is not painted", () => {
         };
     }
 
+    /** A ContentNode tree of titled items, the content shape every list in this file uses. */
+    function contentWith(titles) {
+        const content = SGNodeFactory.createNode("ContentNode");
+        for (const title of titles) {
+            const item = SGNodeFactory.createNode("ContentNode");
+            item.setValue("title", new BrsString(title));
+            content.appendChildToParent(item);
+        }
+        return content;
+    }
+
     /**
      * Scene > Group > LabelList (two items) — an unfocused list, which is the case that draws the
      * focus FOOTPRINT 9-patch, plus a Rectangle sibling inside the group so a second draw kind is
@@ -69,14 +80,7 @@ describe("a fully transparent subtree is not painted", () => {
         const rect = SGNodeFactory.createNode("Rectangle");
         rect.setValue("width", new Float(100));
         rect.setValue("height", new Float(50));
-
-        const content = SGNodeFactory.createNode("ContentNode");
-        for (const title of ["A", "B"]) {
-            const item = SGNodeFactory.createNode("ContentNode");
-            item.setValue("title", new BrsString(title));
-            content.appendChildToParent(item);
-        }
-        list.setValue("content", content);
+        list.setValue("content", contentWith(["A", "B"]));
 
         group.appendChildToParent(list);
         group.appendChildToParent(rect);
@@ -220,18 +224,18 @@ describe("a fully transparent subtree is not painted", () => {
          * settling tree reports 1 either way and would make the assertion vacuous.
          */
         function buildNeverSettling() {
-            const wrapper = SGNodeFactory.createNode("Group");
             const layout = SGNodeFactory.createNode("LayoutGroup");
             const rect = SGNodeFactory.createNode("Rectangle");
             rect.setValue("width", new Float(100));
             rect.setValue("height", new Float(20));
             layout.appendChildToParent(rect);
-            wrapper.appendChildToParent(layout);
             const synchronize = layout.synchronizeChildMetrics.bind(layout);
             layout.synchronizeChildMetrics = (...args) => {
                 synchronize(...args);
                 layout.layoutDirty = true;
             };
+            const wrapper = SGNodeFactory.createNode("Group");
+            wrapper.appendChildToParent(layout);
             return { wrapper, layout };
         }
 
@@ -262,13 +266,7 @@ describe("a fully transparent subtree is not painted", () => {
             function build() {
                 const group = SGNodeFactory.createNode("Group");
                 const list = SGNodeFactory.createNode("LabelList");
-                const content = SGNodeFactory.createNode("ContentNode");
-                for (const title of ["A", "B"]) {
-                    const item = SGNodeFactory.createNode("ContentNode");
-                    item.setValue("title", new BrsString(title));
-                    content.appendChildToParent(item);
-                }
-                list.setValue("content", content);
+                list.setValue("content", contentWith(["A", "B"]));
                 list.setValue("visible", BrsBoolean.False);
                 group.appendChildToParent(list);
                 return { group, list };
@@ -300,78 +298,61 @@ describe("a fully transparent subtree is not painted", () => {
          * this is reachable on every fade — an app observer or an item component's `init()` measuring
          * during the frame.
          */
-        test("a layout pass started inside a suppressed paint is still a layout pass", () => {
-            function build(fade) {
-                const wrapper = SGNodeFactory.createNode("Group");
-                const probe = SGNodeFactory.createNode("Rectangle");
-                probe.setValue("width", new Float(10));
-                probe.setValue("height", new Float(10));
-                const list = SGNodeFactory.createNode("LabelList");
-                const content = SGNodeFactory.createNode("ContentNode");
-                for (const title of ["A", "B"]) {
-                    const item = SGNodeFactory.createNode("ContentNode");
-                    item.setValue("title", new BrsString(title));
-                    content.appendChildToParent(item);
-                }
-                list.setValue("content", content);
-                list.setValue("visible", BrsBoolean.False);
-                wrapper.appendChildToParent(probe);
-                wrapper.appendChildToParent(list);
-                if (fade) {
-                    wrapper.setValue("opacity", new Float(0));
-                }
-                return { wrapper, probe, list };
+        /**
+         * Paints `wrapper` (optionally faded) and runs `capture` from inside the frame, via a probe
+         * Rectangle rendered before `subject` — the position an app observer or an item component's
+         * `init()` occupies. Returns whatever `capture` produced.
+         */
+        function probeMidFrame(subject, fade, capture) {
+            const wrapper = SGNodeFactory.createNode("Group");
+            const probe = SGNodeFactory.createNode("Rectangle");
+            probe.setValue("width", new Float(10));
+            probe.setValue("height", new Float(10));
+            wrapper.appendChildToParent(probe);
+            wrapper.appendChildToParent(subject);
+            if (fade) {
+                wrapper.setValue("opacity", new Float(0));
             }
+            let captured;
+            const originalContent = probe.renderNodeContent.bind(probe);
+            probe.renderNodeContent = (...args) => {
+                captured = capture();
+                return originalContent(...args);
+            };
+            wrapper.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
+            return captured;
+        }
 
-            // Query a hidden grid's bounds from code running mid-frame, exactly as an app observer would.
-            function measureMidFrame(fade) {
-                const { wrapper, probe, list } = build(fade);
-                let measured;
-                const originalContent = probe.renderNodeContent.bind(probe);
-                probe.renderNodeContent = (...args) => {
-                    measured = list.getBoundingRect("toScene", interpreter);
-                    return originalContent(...args);
-                };
-                wrapper.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
-                return measured;
+        test("a layout pass started inside a suppressed paint is still a layout pass", () => {
+            function measureHiddenList(fade) {
+                const list = SGNodeFactory.createNode("LabelList");
+                list.setValue("content", contentWith(["A", "B"]));
+                list.setValue("visible", BrsBoolean.False);
+                return probeMidFrame(list, fade, () => list.getBoundingRect("toScene", interpreter));
             }
 
             // The faded tree must measure identically to the opaque one: layout is independent of
             // visibility, and this returned {0,0,0,0} while the suppression leaked into layoutNode.
-            const shown = measureMidFrame(false);
+            const shown = measureHiddenList(false);
             expect(shown.width).toBeGreaterThan(0);
-            expect(measureMidFrame(true)).toEqual(shown);
+            expect(measureHiddenList(true)).toEqual(shown);
         });
 
         test("a layout pass inside a suppressed paint keeps its convergence budget", () => {
             // The other half of the same leak: a mid-frame layoutNode must still converge to a fixed point,
-            // or the query that triggered it reads back a pre-convergence size. Measured at the query
-            // point, because the LayoutGroup is painted again (1 pass) later in the same frame.
-            function measureMidFrame(fade) {
-                const wrapper = SGNodeFactory.createNode("Group");
-                const probe = SGNodeFactory.createNode("Rectangle");
-                probe.setValue("width", new Float(10));
-                probe.setValue("height", new Float(10));
-                const { layout } = buildNeverSettling();
-                wrapper.appendChildToParent(probe);
-                wrapper.appendChildToParent(layout);
-                if (fade) {
-                    wrapper.setValue("opacity", new Float(0));
-                }
-                let passes;
-                const originalContent = probe.renderNodeContent.bind(probe);
-                probe.renderNodeContent = (...args) => {
+            // or the query that triggered it reads back a pre-convergence size. Captured AT the query,
+            // because the LayoutGroup is painted again (1 pass) later in the same frame.
+            function measurePasses(fade) {
+                const { wrapper, layout } = buildNeverSettling();
+                return probeMidFrame(wrapper, fade, () => {
                     layout.layoutNode(interpreter, [0, 0], 0, 1);
-                    passes = layout.lastPassCount;
-                    return originalContent(...args);
-                };
-                wrapper.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
-                return passes;
+                    return layout.lastPassCount;
+                });
             }
 
             // Was 1 for the faded tree — the suppression leaked in and capped convergence.
-            expect(measureMidFrame(true)).toBe(measureMidFrame(false));
-            expect(measureMidFrame(true)).toBeGreaterThan(1);
+            expect(measurePasses(true)).toBe(measurePasses(false));
+            expect(measurePasses(true)).toBeGreaterThan(1);
         });
 
         test("isPaintPass stays true inside a suppressed subtree", () => {

@@ -1002,12 +1002,9 @@ export class Node extends RoSGNode implements BrsValue {
     layoutNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number) {
         const previousPass = sgRoot.renderPass;
         // `paintSuppressed` must be cleared as well as `renderPass`, or a layout pass STARTED from inside
-        // a suppressed paint inherits it and every node reads `isLayoutPass()` as false. That is reachable
-        // on every fade: `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren`
-        // both call this from within the paint traversal (app observers and item `init()` measuring during
-        // the frame). Measured before this: a hidden grid's `boundingRect("toScene")` queried mid-frame
-        // under a faded ancestor returned {0,0,0,0} where the opaque tree gave the real rect, and a
-        // never-settling LayoutGroup reported 1 pass instead of 8, handing back a pre-convergence size.
+        // a suppressed paint inherits it and every node reads `isLayoutPass()` as false. Reachable on every
+        // fade: `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren` both call
+        // this from within the paint traversal (app observers and item `init()` measuring mid-frame).
         const previousSuppressed = sgRoot.paintSuppressed;
         sgRoot.renderPass = "layout";
         sgRoot.paintSuppressed = false;
@@ -1045,21 +1042,14 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Whether this traversal is a LAYOUT pass — a measurement with no draw target at all — as opposed to
-     * a paint frame whose drawing was suppressed because the subtree is fully transparent
-     * (`Group.renderNode` drops `draw2D` and sets `sgRoot.paintSuppressed`).
+     * Whether this traversal is a LAYOUT pass, as opposed to a paint frame whose drawing was suppressed
+     * because the subtree is fully transparent. Both look like `draw2D === undefined` from inside a node,
+     * so ask this — never a bare `!draw2D` — before doing work that is legitimate ONLY on a layout pass.
      *
-     * Both look like `draw2D === undefined` from inside a node, which is the trap this closes. Ask this
-     * before doing work that is legitimate ONLY on a layout pass: `LayoutGroup`'s multi-pass convergence
-     * (a real frame keeps a single pass and defers its correction to the next one), a hidden grid's
-     * arithmetic extent measurement (which refreshes content as a side effect), `StdDlgCustomItem`'s
-     * relayout request. A bare `!draw2D` there silently starts doing layout-pass work on painted frames
-     * for every faded-out subtree — i.e. during every fade transition.
-     *
-     * NOT the negation of `isPaintPass`, and the two must not be collapsed: that one is deliberately true
-     * for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside a suppressed
-     * subtree so time-based state and grid item creation behave exactly as on any other painted frame.
-     * These are the same question asked from the two sides of the seam, and both are needed.
+     * **NOT the negation of `isPaintPass`**, and the two must not be collapsed: that one is deliberately
+     * true for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside a
+     * suppressed subtree. The two families of check, and which sites belong to each, are in
+     * `.claude/docs/scenegraph-invariants.md`.
      */
     protected isLayoutPass(draw2D?: IfDraw2D): boolean {
         return draw2D === undefined && !sgRoot.paintSuppressed;

@@ -273,13 +273,8 @@ export class SGRoot {
 
     /**
      * True while `Group.renderNode` has dropped the draw target of a fully transparent subtree, so its
-     * descendants see `draw2D === undefined` on what is really a PAINT frame.
-     *
-     * Makes the "`draw2D` present ⇔ paint frame" invariant checkable rather than merely documented. A node
-     * that must tell "there is nowhere to draw" apart from "this is a layout pass" asks
-     * `Node.isLayoutPass(draw2D)` instead of testing `draw2D` directly — the former is a real question
-     * (may I do layout-pass-only work?), the latter is not. Saved and restored around the degraded
-     * traversal, so nesting is correct and an app exception cannot strand it.
+     * descendants see `draw2D === undefined` on what is really a PAINT frame. Read it through
+     * `Node.isLayoutPass(draw2D)`, never directly.
      */
     paintSuppressed: boolean = false;
 

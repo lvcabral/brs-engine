@@ -732,29 +732,20 @@ export interface BrsDraw2D {
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
 /**
- * Applies a color's alpha channel as the context's global alpha, so the blit is drawn at the
- * requested transparency.
+ * The `globalAlpha` a blend color implies, as a 0..1 factor. `1` (fully opaque) when there is no color.
  *
- * The check MUST be `!== undefined`, never truthy: `0x00000000` (fully transparent black) is a
- * legitimate 32-bit color and the only one whose entire packed value is falsy, so `if (rgba)`
- * silently dropped its alpha. That painted a transparent blend color as SOLID BLACK, because this
- * is the only place the blend alpha is applied — `RoBitmap.getRgbaCanvas` deliberately multiplies
- * the RGB tint at full strength regardless of alpha (#935), leaving nothing to fall back on.
- *
- * Returns whether `globalAlpha` was written, so callers can reset only when there is something to
- * reset instead of paying for a save/restore on every blit.
+ * The ONE place that answers "what transparency does this rgba mean", so nothing can disagree about it.
+ * Two inputs made that a real bug rather than a tidiness concern: `0x00000000` is a legitimate color
+ * whose entire packed value is falsy, so a truthiness guard here painted a fully transparent blend as
+ * SOLID BLACK (`RoBitmap.getRgbaCanvas` applies the RGB tint at full strength regardless of alpha,
+ * #935, so there is nothing to fall back on); and `NaN` used to mean "no tint" to `getCanvasFromDraw2d`
+ * and "alpha 0" to the alpha path, which made a NaN blend color an invisible draw.
  */
-function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number): boolean {
-    return setContextGlobalAlpha(ctx, rgba === undefined || Number.isNaN(rgba) ? 1 : (rgba & 255) / 255);
+function blitAlphaOf(rgba?: number): number {
+    return rgba === undefined || Number.isNaN(rgba) ? 1 : (rgba & 0xff) / 255;
 }
 
-/**
- * Writes `globalAlpha` when the blit is not fully opaque, and reports whether it wrote.
- *
- * The alpha-first sibling of `setContextAlpha`, for callers that have already separated the tint from
- * the blit alpha (`resolveBlitStyle`). Both funnel here so the two can never disagree about what a
- * given input means — a NaN blend color once meant "no tint" to one and "alpha 0" to the other.
- */
+/** Writes `globalAlpha` when the blit is not fully opaque, and reports whether it wrote. */
 function setContextGlobalAlpha(ctx: BrsCanvasContext2D, alpha: number): boolean {
     if (alpha < 1) {
         ctx.globalAlpha = Math.max(0, alpha);
@@ -942,12 +933,26 @@ export function drawObjectToComponent(
     scaleX: number = 1,
     scaleY: number = 1,
     rgba?: number,
-    scaleMode?: number,
-    alpha?: number
+    alpha?: number,
+    scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
     if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
         return false;
+    }
+    // Resolved and checked BEFORE the tint: a fully transparent blit contributes nothing, and
+    // `getCanvasFromDraw2d` would otherwise build a whole tinted canvas — a fresh surface plus a
+    // full-surface multiply — to draw with it. Measured at 0.71ms for a cold 300x300 tint, ~4x a real
+    // blit, thrown away. The tint cache is a single slot on a `RoBitmap` shared across nodes, so a grid
+    // with `focusFootprintBlendColor = 0x00000000` next to any other blend color rebuilds it every frame.
+    // Validity is still reported off the untinted source, which a tint never changes the size of, so the
+    // return value is what it would have been. It must also leave the destination ALONE: on a non-alpha
+    // target the draw loop replaces the rect rather than compositing over it, so drawing a 0-alpha blit
+    // would erase what was there (an `roScreen` defaults to alphaEnable false — a transparent hole in an
+    // opaque screen). Only reachable since alpha 0 started being honored; before that it drew opaque.
+    const blitAlpha = alpha ?? blitAlphaOf(rgba);
+    if (blitAlpha === 0) {
+        return isCanvasValid(object.getCanvas());
     }
     const image = getCanvasFromDraw2d(object, rgba);
     if (!isCanvasValid(image)) {
@@ -962,7 +967,6 @@ export function drawObjectToComponent(
     // (the opaque draw, which is the overwhelmingly common one, then costs nothing) and in a `finally`,
     // so a throw mid-blit cannot strand it. Targeted rather than `ctx.save()`/`restore()`: that pair
     // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
-    const blitAlpha = alpha ?? (rgba === undefined || Number.isNaN(rgba) ? 1 : (rgba & 255) / 255);
     const alphaSet = setContextGlobalAlpha(ctx, blitAlpha);
     try {
         const smoothing = (scaleMode ?? object.scaleMode) === 1;
@@ -976,14 +980,6 @@ export function drawObjectToComponent(
         // Only Compositor and Region uses wraps
         const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
 
-        // A fully transparent blit contributes nothing, so it must leave the destination ALONE. On a
-        // non-alpha target the loop below replaces the rect rather than compositing over it, so without
-        // this the blit would erase what was there — an `roScreen` (alphaEnable false by default) blitted
-        // with a 0x00000000 blend color would punch a transparent hole in an opaque screen. Only reachable
-        // since alpha 0 started being honored at all; before that the guard dropped it and drew opaque.
-        if (blitAlpha === 0) {
-            return true;
-        }
         const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
         for (const chunk of chunks) {
             const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
@@ -1224,16 +1220,11 @@ type BlitStyle = {
  * antialiased edges faded toward WHITE rather than merely fading. It also paid for a
  * `getRgbaCanvas` canvas allocation and a full-surface pass on every frame of every fade.
  *
- * `NaN` counts as "no color": it used to reach `setContextAlpha`, where `NaN & 255` is 0, so a NaN
- * blend color drew nothing at all while `getCanvasFromDraw2d` independently decided to skip the tint.
- * The two predicates disagreeing is what made that an invisible draw instead of an untinted one.
- *
  * A negative `opacity` means "not given", matching the pre-existing behavior that
  * `.claude/docs/scenegraph-invariants.md` records as an unmeasured divergence and leaves alone.
  */
 function resolveBlitStyle(rgba?: number, opacity?: number): BlitStyle {
     const hasColor = rgba !== undefined && !Number.isNaN(rgba);
     const factor = opacity === undefined || opacity < 0 || opacity >= 1 ? 1 : opacity;
-    const colorAlpha = hasColor ? (rgba! & 0xff) / 255 : 1;
-    return { rgba: hasColor ? rgba : undefined, alpha: Math.max(0, colorAlpha * factor) };
+    return { rgba: hasColor ? rgba : undefined, alpha: Math.max(0, blitAlphaOf(rgba) * factor) };
 }

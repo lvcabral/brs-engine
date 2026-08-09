@@ -739,11 +739,10 @@ export class Group extends Node {
         // regressions: `.claude/docs/scenegraph-invariants.md`.
         // Flag it as well as dropping the target: to a descendant, a dropped `draw2D` is indistinguishable
         // from a layout pass, and the handful of sites that legitimately do layout-pass-ONLY work would
-        // start doing it on painted frames (see `Node.isLayoutPass`). Saved and restored rather than
-        // cleared, so a faded subtree nested inside another one restores the outer state.
-        const suppressed = draw2D !== undefined && opacity * this.getOpacity() === 0;
+        // start doing it on painted frames (see `Node.isLayoutPass`). Restored rather than cleared below,
+        // so a faded subtree nested inside another one hands the outer state back.
         const wasSuppressed = sgRoot.paintSuppressed;
-        if (suppressed) {
+        if (draw2D !== undefined && opacity * this.getOpacity() === 0) {
             draw2D = undefined;
             sgRoot.paintSuppressed = true;
         }
@@ -759,9 +758,7 @@ export class Group extends Node {
             if (clipped) {
                 draw2D?.popClip();
             }
-            if (suppressed) {
-                sgRoot.paintSuppressed = wasSuppressed;
-            }
+            sgRoot.paintSuppressed = wasSuppressed;
         }
     }
 
