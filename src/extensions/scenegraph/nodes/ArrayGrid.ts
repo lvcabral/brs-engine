@@ -18,6 +18,7 @@ import { Group } from "./Group";
 import { Node } from "./Node";
 import { Field } from "./Field";
 import { createNode } from "../factory/NodeFactory";
+import { normalizeBlendColor } from "../SGUtil";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -654,12 +655,12 @@ export class ArrayGrid extends Group {
         const drawFocus = this.getValueJS("drawFocusFeedback");
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
-            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }
         const itemOrigin = [itemRect.x, itemRect.y];
         this.renderItemClipped(interpreter, this.itemComps[index], itemOrigin, itemRect, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
-            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }
     }
 
@@ -695,7 +696,17 @@ export class ArrayGrid extends Group {
         }
     }
 
-    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
+    /**
+     * Draws the focus frame (or, when the grid itself is unfocused, the footprint) around an item.
+     *
+     * TEMPLATE METHOD — override `focusFrameRect`, never this. Everything here is shared contract: which
+     * uri and blend field the focus state selects, the validity guard, the `hasNinePatch` write that
+     * `rectMargins()` reads, and the `drawImage` call. `PosterGrid` used to override this whole method to
+     * specialize only its geometry, and in doing so silently dropped the blend color (both fields became
+     * no-ops on that type) and the `hasNinePatch` write. A geometry-only hook makes that class of
+     * omission impossible.
+     */
+    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D, index = -1) {
         const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
         const blendField = nodeFocus ? "focusBitmapBlendColor" : "focusFootprintBlendColor";
         const bmp = this.getBitmap(bmpUri);
@@ -703,17 +714,35 @@ export class ArrayGrid extends Group {
             return;
         }
         this.hasNinePatch = bmp.ninePatch;
+        const blendColor = normalizeBlendColor(this.getValueJS(blendField));
+        this.drawImage(bmp, this.focusFrameRect(itemRect, bmp, index), 0, opacity, draw2D, blendColor);
+    }
+
+    /**
+     * The rect the focus frame is DRAWN in, given the item's cell rect and the resolved frame bitmap.
+     * Override this to specialize a grid's focus geometry.
+     *
+     * `index` is the content index of the focused item, or -1 when the caller has none: the
+     * `renderItemComponent` call sites know it, `LabelList.renderFocused` and `TimeGrid` do not.
+     * `PosterGrid` needs it to find that cell's laid-out poster rect.
+     *
+     * ALIASING: the non-9-patch branch returns `itemRect` ITSELF, not a copy. `Group.drawImage` writes
+     * `rect.width`/`rect.height` for a plain bitmap, and `renderItemComponent` then positions and clips
+     * the item against the same object — so the scaled size the draw computes is what the item is laid
+     * out against. Pre-existing and load-bearing; an override returning a fresh object severs that link,
+     * which is what every override wants, but do it deliberately.
+     */
+    protected focusFrameRect(itemRect: Rect, bmp: RoBitmap, index: number): Rect {
+        if (!bmp.ninePatch) {
+            return itemRect;
+        }
         const { left, right, top, bottom } = this.focusMargins(bmp);
-        let focusRect = bmp.ninePatch
-            ? {
-                  x: itemRect.x - left,
-                  y: itemRect.y - top,
-                  width: itemRect.width + left + right,
-                  height: itemRect.height + top + bottom,
-              }
-            : itemRect;
-        const blendColor = this.getValueJS(blendField) as number;
-        this.drawImage(bmp, focusRect, 0, opacity, draw2D, blendColor);
+        return {
+            x: itemRect.x - left,
+            y: itemRect.y - top,
+            width: itemRect.width + left + right,
+            height: itemRect.height + top + bottom,
+        };
     }
 
     /**

@@ -208,14 +208,14 @@ export class LabelList extends ArrayGrid {
         const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
         if (drawFocus && !drawFocusOnTop) {
-            this.renderFocus(rect, opacity, nodeFocus, draw2D);
+            this.renderFocus(rect, opacity, nodeFocus, draw2D, index);
         }
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
         this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
         if (drawFocus && drawFocusOnTop) {
-            this.renderFocus(rect, opacity, nodeFocus, draw2D);
+            this.renderFocus(rect, opacity, nodeFocus, draw2D, index);
         }
         this.hasNinePatch &&= drawFocus;
     }
