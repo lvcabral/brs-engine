@@ -386,6 +386,7 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     if (brsWorker !== undefined) {
         resetWorker();
     }
+    notifyAll("loading", filePath);
     deviceDebug(`beacon,Loading ${filePath}...\r\n`);
     initSoundModule(sharedArray, options.muteSound);
     muteVideo(options.muteSound);
