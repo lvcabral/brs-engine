@@ -215,9 +215,13 @@ export function convertHexColor(strColor: string): number {
  * `convertHexColor` and `Int32.fromString("&hFFFFFFFF")` both yield `-1`, so only an app passing the
  * decimal literal `4294967295` could hit it. Swallowing a real color to catch that is the wrong trade.
  *
- * Deliberately NOT applied inside `IfDraw2D`: an ifDraw2D app calling `drawObject(x, y, bmp, -1)` means
- * "tint with opaque white" and must keep meaning it. The BrightScript Callables already map
- * `BrsInvalid` to `undefined`, so core has a clean two-state world and needs no sentinel at all.
+ * Applied in the extension rather than in `IfDraw2D` because "the default means no blending" is a
+ * SceneGraph *field* rule, not an ifDraw2D one — the BrightScript Callables map `BrsInvalid` to
+ * `undefined`, so core already has a clean two-state world and no sentinel to resolve. Note the saving is
+ * now purely cost, not pixels: `getRgbaCanvas` short-circuits an all-white tint to a copy, so
+ * `drawObject(x, y, bmp, -1)` and an untinted draw are byte-identical (verified at source alpha 1 and
+ * 0.5). What normalizing avoids is a wasted `rgbaCanvas` allocation and a thrash of `RoBitmap`'s
+ * single-slot tint cache, which is shared across every node drawing that bitmap.
  */
 export function normalizeBlendColor(rgba: unknown): number | undefined {
     if (typeof rgba !== "number" || Number.isNaN(rgba)) {

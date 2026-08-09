@@ -708,9 +708,13 @@ export interface BrsDraw2D {
     getCanvasAlpha(): boolean;
 
     /**
-     * `alpha` is the blit transparency when it must be carried SEPARATELY from `rgba` — an untinted
-     * draw at a reduced opacity has no color to pack an alpha byte into. Omit it to derive the alpha
-     * from `rgba` as before.
+     * `alpha` is the blit transparency when it must be carried SEPARATELY from `rgba` — an untinted draw
+     * at a reduced opacity has no color to pack an alpha byte into.
+     *
+     * It is the FINAL blit alpha, not an extra factor: when given, it REPLACES the one `rgba`'s low byte
+     * would imply rather than multiplying with it. Callers that have both must fold them together first
+     * (that is what `resolveBlitStyle` does), or the color's transparency is silently dropped. Omit it to
+     * derive the alpha from `rgba`.
      */
     drawImage(
         object: BrsComponent,
