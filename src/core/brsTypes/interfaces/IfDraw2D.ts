@@ -53,17 +53,17 @@ export class IfDraw2D {
         rgba?: number,
         opacity?: number
     ): boolean {
-        rgba = combineRgbaOpacity(rgba, opacity);
-        return this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
+        const style = resolveBlitStyle(rgba, opacity);
+        return this.component.drawImage(object, x, y, scaleX, scaleY, style.rgba, style.alpha);
     }
 
     doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
         const ctx = this.component.getContext();
-        rgba = combineRgbaOpacity(rgba, opacity);
-        const image = getCanvasFromDraw2d(object, rgba);
+        const style = resolveBlitStyle(rgba, opacity);
+        const image = getCanvasFromDraw2d(object, style.rgba);
         ctx.save();
         // Set context properties (alpha blending, smoothing)
-        setContextAlpha(ctx, rgba);
+        setContextGlobalAlpha(ctx, style.alpha);
         const smoothing = object.scaleMode === 1;
         ctx.imageSmoothingEnabled = smoothing;
         if (smoothing && "imageSmoothingQuality" in ctx) {
@@ -101,7 +101,7 @@ export class IfDraw2D {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
-        rgba = combineRgbaOpacity(rgba, opacity);
+        const style = resolveBlitStyle(rgba, opacity);
         ctx.save();
         const rotationCenterX = centerX ?? 0;
         const rotationCenterY = centerY ?? 0;
@@ -116,7 +116,7 @@ export class IfDraw2D {
         // Translate back to the origin after scaling and rotation
         ctx.translate(-rotationCenterX / scaleX, -rotationCenterY / scaleY);
         // Draw Bitmap
-        this.component.drawImage(object, 0, 0, 1, 1, rgba);
+        this.component.drawImage(object, 0, 0, 1, 1, style.rgba, style.alpha);
         ctx.restore();
         this.component.makeDirty();
     }
@@ -251,8 +251,8 @@ export class IfDraw2D {
 
     drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {
         const ctx = this.component.getContext();
-        rgba = combineRgbaOpacity(rgba, opacity);
-        const image = getCanvasFromDraw2d(bitmap, rgba);
+        const style = resolveBlitStyle(rgba, opacity);
+        const image = getCanvasFromDraw2d(bitmap, style.rgba);
         const patchSizes = bitmap.getPatchSizes();
         if (!patchSizes) {
             return;
@@ -305,7 +305,7 @@ export class IfDraw2D {
 
         ctx.save();
         // Set context properties (alpha blending, smoothing)
-        setContextAlpha(ctx, rgba);
+        setContextGlobalAlpha(ctx, style.alpha);
         const smoothing = bitmap.scaleMode === 1;
         ctx.imageSmoothingEnabled = smoothing;
         if (smoothing && "imageSmoothingQuality" in ctx) {
@@ -707,7 +707,20 @@ export interface BrsDraw2D {
 
     getCanvasAlpha(): boolean;
 
-    drawImage(object: BrsComponent, x: number, y: number, scaleX?: number, scaleY?: number, rgba?: number): boolean;
+    /**
+     * `alpha` is the blit transparency when it must be carried SEPARATELY from `rgba` — an untinted
+     * draw at a reduced opacity has no color to pack an alpha byte into. Omit it to derive the alpha
+     * from `rgba` as before.
+     */
+    drawImage(
+        object: BrsComponent,
+        x: number,
+        y: number,
+        scaleX?: number,
+        scaleY?: number,
+        rgba?: number,
+        alpha?: number
+    ): boolean;
 
     makeDirty(): void;
 
@@ -732,12 +745,20 @@ const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
  * reset instead of paying for a save/restore on every blit.
  */
 function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number): boolean {
-    if (rgba !== undefined) {
-        const alpha = rgba & 255;
-        if (alpha < 255) {
-            ctx.globalAlpha = alpha / 255;
-            return true;
-        }
+    return setContextGlobalAlpha(ctx, rgba === undefined || Number.isNaN(rgba) ? 1 : (rgba & 255) / 255);
+}
+
+/**
+ * Writes `globalAlpha` when the blit is not fully opaque, and reports whether it wrote.
+ *
+ * The alpha-first sibling of `setContextAlpha`, for callers that have already separated the tint from
+ * the blit alpha (`resolveBlitStyle`). Both funnel here so the two can never disagree about what a
+ * given input means — a NaN blend color once meant "no tint" to one and "alpha 0" to the other.
+ */
+function setContextGlobalAlpha(ctx: BrsCanvasContext2D, alpha: number): boolean {
+    if (alpha < 1) {
+        ctx.globalAlpha = Math.max(0, alpha);
+        return true;
     }
     return false;
 }
@@ -921,7 +942,8 @@ export function drawObjectToComponent(
     scaleX: number = 1,
     scaleY: number = 1,
     rgba?: number,
-    scaleMode?: number
+    scaleMode?: number,
+    alpha?: number
 ): boolean {
     const ctx = component.getContext();
     if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
@@ -936,11 +958,11 @@ export function drawObjectToComponent(
     // `RoBitmap`/`RoScreen`/`RoRegion`/`RoCompositor` drawImage — so the reset lives here, at the shared
     // choke point, rather than in each caller. A leak would be inherited by every later draw on the
     // canvas, and since a blend color of 0x00000000 legitimately sets the alpha to 0, it would blank the
-    // canvas permanently rather than merely tint it. Reset only when `setContextAlpha` actually wrote
+    // canvas permanently rather than merely tint it. Reset only when the alpha was actually written
     // (the opaque draw, which is the overwhelmingly common one, then costs nothing) and in a `finally`,
     // so a throw mid-blit cannot strand it. Targeted rather than `ctx.save()`/`restore()`: that pair
     // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
-    const alphaSet = setContextAlpha(ctx, rgba);
+    const alphaSet = alpha === undefined ? setContextAlpha(ctx, rgba) : setContextGlobalAlpha(ctx, alpha);
     try {
         const smoothing = (scaleMode ?? object.scaleMode) === 1;
         ctx.imageSmoothingEnabled = smoothing;
@@ -1174,25 +1196,35 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
     /// #endif
 }
 
+/** The two independent things a blend color and a node opacity resolve to for one blit. */
+type BlitStyle = {
+    /** The color to MULTIPLY the source by, or `undefined` for no tint at all. */
+    rgba?: number;
+    /** The `globalAlpha` to blit at, 0..1. `1` means "leave globalAlpha alone". */
+    alpha: number;
+};
+
 /**
- * Helper function to combine RGBA color integer with an opacity value.
- * @param rgba The base RGBA color integer (e.g., 0xFF0000FF for opaque red).
- * @param opacity The opacity factor (0.0 to 1.0).
- * @returns The combined RGBA color integer, or undefined if both inputs are undefined.
+ * Resolves a blend color and an opacity into the tint and the blit alpha.
+ *
+ * These are deliberately NOT folded back into one packed integer. Doing that forced a base color to
+ * exist whenever an opacity was given, and the old `rgba ?? 0xffffffff` FABRICATED opaque white —
+ * re-injecting the very "no blend color" value the caller had just resolved away. Every partially
+ * transparent image drawn at opacity < 1 therefore took the tint path: measured RGB drift of
+ * [+29,+77,+103] on a 50%-alpha pixel at opacity 0.5, i.e. every fade of an image with soft or
+ * antialiased edges faded toward WHITE rather than merely fading. It also paid for a
+ * `getRgbaCanvas` canvas allocation and a full-surface pass on every frame of every fade.
+ *
+ * `NaN` counts as "no color": it used to reach `setContextAlpha`, where `NaN & 255` is 0, so a NaN
+ * blend color drew nothing at all while `getCanvasFromDraw2d` independently decided to skip the tint.
+ * The two predicates disagreeing is what made that an invisible draw instead of an untinted one.
+ *
+ * A negative `opacity` means "not given", matching the pre-existing behavior that
+ * `.claude/docs/scenegraph-invariants.md` records as an unmeasured divergence and leaves alone.
  */
-function combineRgbaOpacity(rgba?: number, opacity?: number): number | undefined {
-    if (rgba === undefined && opacity === undefined) {
-        return undefined;
-    } else if (opacity === undefined || opacity < 0 || opacity >= 1) {
-        return rgba;
-    }
-    // Default to opaque white if only opacity is given and rgba is undefined
-    const baseRgba = rgba ?? 0xffffffff;
-    let alpha = baseRgba & 0xff;
-    // Apply opacity
-    alpha = Math.round(alpha * opacity);
-    // Ensure alpha is within the valid 0-255 range
-    alpha = Math.max(0, Math.min(255, alpha));
-    // Reconstruct the RGBA integer with the new alpha
-    return (baseRgba & 0xffffff00) | alpha;
+function resolveBlitStyle(rgba?: number, opacity?: number): BlitStyle {
+    const hasColor = rgba !== undefined && !Number.isNaN(rgba);
+    const factor = opacity === undefined || opacity < 0 || opacity >= 1 ? 1 : opacity;
+    const colorAlpha = hasColor ? (rgba! & 0xff) / 255 : 1;
+    return { rgba: hasColor ? rgba : undefined, alpha: Math.max(0, colorAlpha * factor) };
 }

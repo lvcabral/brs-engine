@@ -7,6 +7,7 @@ const {
     convertNumber,
     convertLong,
     convertHexColor,
+    normalizeBlendColor,
     resolveRowItemSubpart,
 } = scenegraph;
 const Long = require("long");
@@ -622,6 +623,36 @@ describe("SGUtil", () => {
 
         test("falls back to column 0 when the row has no recorded focus", () => {
             expect(resolveRowItemSubpart("item0", grid, focusIndex, [])).toBe("0_0");
+        });
+    });
+
+    /**
+     * The reference defines the "no blend" case by VALUE ("If set to the default, 0xFFFFFFFF, no color
+     * blending will occur"), but a color field stores that default as -1 (convertHexColor's `| 0`) and can
+     * also hold three other spellings of it. Every one has to resolve to the same answer, because the
+     * consequence of missing one is a visible tint: multiplying a semi-transparent pixel by opaque white
+     * is only an identity if the multiply is reached at all.
+     */
+    describe("normalizeBlendColor", () => {
+        test.each([
+            ["undefined (field unset)", undefined],
+            ["-1, what convertHexColor('0xFFFFFFFF') actually stores", -1],
+            ["0xffffffff, an unsigned read or a literal", 0xffffffff],
+            ["0x7fffffff, new Int32(0xFFFFFFFF) clamping", 0x7fffffff],
+            ["NaN", Number.NaN],
+            ["a string", "0xff0000ff"],
+            ["null", null],
+        ])("resolves %s to no blend", (_label, value) => {
+            expect(normalizeBlendColor(value)).toBeUndefined();
+        });
+
+        test.each([
+            ["a real tint", 0x7b2ff7ff | 0],
+            ["fully transparent black, the one falsy color", 0x00000000],
+            ["a partially transparent tint", 0x0000ff80],
+            ["opaque black", 0x000000ff],
+        ])("passes %s through unchanged", (_label, value) => {
+            expect(normalizeBlendColor(value)).toBe(value);
         });
     });
 });

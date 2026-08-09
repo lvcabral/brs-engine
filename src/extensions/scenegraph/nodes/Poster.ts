@@ -15,6 +15,7 @@ import {
 import { Group } from "./Group";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
+import { normalizeBlendColor } from "../SGUtil";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -127,10 +128,15 @@ export class Poster extends Group {
         const displayMode = this.getValueJS("loadDisplayMode") as string;
         opacity = opacity * this.getOpacity();
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
-            let rgba = this.getValueJS("blendColor");
+            // Normalize HERE, not only inside `drawImage`: the `scaletozoom` branch below goes straight
+            // to `doDrawCroppedBitmap`, so an un-normalized default (stored as -1) reached the draw and
+            // tinted the poster — washing out every partially transparent pixel.
+            let rgba = normalizeBlendColor(this.getValueJS("blendColor"));
             let alpha = opacity;
             if (loadStatus === "failed") {
-                rgba = 0xffffffff;
+                // The placeholder draw is deliberately untinted; `0xffffffff` said that in the spelling
+                // that leaked through the unscrubbed path above.
+                rgba = undefined;
                 alpha = opacity * this.getValueJS("loadingBitmapOpacity");
             }
             this.bitmap.scaleMode = 1;

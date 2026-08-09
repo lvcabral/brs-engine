@@ -235,10 +235,11 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         y: number,
         scaleX: number = 1,
         scaleY: number = 1,
-        rgba?: number
+        rgba?: number,
+        alpha?: number
     ): boolean {
         this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba);
+        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, undefined, alpha);
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
@@ -270,17 +271,35 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         const ctx = this.rgbaCanvas.getContext("2d", {
             alpha: true,
         }) as BrsCanvasContext2D;
-        drawImageAtPos(this.canvas, ctx, 0, 0);
-        ctx.globalCompositeOperation = "multiply";
-        // Apply the RGB tint at full strength: blendColor's alpha controls the resulting
-        // transparency (handled separately via globalAlpha when blitting), not the tint
-        // strength. Using the color's alpha here would weaken the multiply and lighten the
-        // result, diverging from Roku (e.g. 0x0B001980 must render dark, not near-white).
-        ctx.fillStyle = rgbaIntToHex(rgba, false);
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        ctx.globalCompositeOperation = "destination-in";
-        drawImageAtPos(this.canvas, ctx, 0, 0);
-        ctx.globalCompositeOperation = "source-over";
+        // A per-channel multiply over the UN-PREMULTIPLIED pixels, NOT `globalCompositeOperation =
+        // "multiply"`. Canvas's `multiply` is the W3C *blend* formula, which over a semi-transparent
+        // backdrop is Co = (1-ab)*Cs + ab*Cb*Cs — it drags the result TOWARD the tint color by (1-ab)
+        // instead of multiplying by it, so it is only a true multiply where the source is fully opaque.
+        // Two consequences, both measured on a 50%-alpha rgba(200,100,50) source:
+        //   - opaque white was NOT an identity: [198,100,50] came out [226,178,152], so every
+        //     antialiased edge and soft shadow shifted toward the tint. Only the "default means no
+        //     blend" guard upstream kept this from being visible everywhere.
+        //   - a real tint came out too LIGHT: grey 0x808080 gave [114,88,76] where half is [98,48,24].
+        // Alpha is deliberately untouched: blendColor's alpha controls the resulting transparency via
+        // globalAlpha when blitting, not the tint strength — using it here would weaken the multiply and
+        // lighten the result, diverging from Roku (e.g. 0x0B001980 must render dark, not near-white).
+        const red = (rgba >> 24) & 0xff;
+        const green = (rgba >> 16) & 0xff;
+        const blue = (rgba >> 8) & 0xff;
+        if (red === 255 && green === 255 && blue === 255) {
+            // Multiplying by white is a mathematical identity — copy instead, so an all-white tint is
+            // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
+            drawImageAtPos(this.canvas, ctx, 0, 0);
+        } else {
+            const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            const pixels = source.data;
+            for (let i = 0; i < pixels.length; i += 4) {
+                pixels[i] = (pixels[i] * red) / 255;
+                pixels[i + 1] = (pixels[i + 1] * green) / 255;
+                pixels[i + 2] = (pixels[i + 2] * blue) / 255;
+            }
+            putImageAtPos(source, ctx, 0, 0);
+        }
         this.rgbaLast = rgba;
         this.rgbaRedraw = false;
         return this.rgbaCanvas;

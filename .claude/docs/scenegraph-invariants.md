@@ -112,8 +112,9 @@ invisibility resting *entirely* on the final `ctx.globalAlpha` write. That made 
 downstream leak a full-strength draw over the visible screen: a grid with
 `focusFootprintBlendColor = 0x00000000` painted a solid black focus frame across the screen, because
 `setContextAlpha`'s truthiness guard dropped the alpha of the one color whose packed value is falsy
-(`IfDraw2D.setContextAlpha` now checks `!== undefined`; regression
-`test/extensions/scenegraph/BlendColorAlpha.test.js`). Per the Group reference, `opacity` 0 puts
+(`IfDraw2D.setContextAlpha` now checks `!== undefined` — one of several defects in that area; see
+*Blend colors* below. Regression: `test/extensions/scenegraph/BlendColorAlpha.test.js`). Per the Group
+reference, `opacity` 0 puts
 `renderTracking` in the same `"none"` bucket as `visible = false`, which paint already hard-skips.
 Load-bearing details, in order of how easily each is broken:
 
@@ -139,13 +140,61 @@ Load-bearing details, in order of how easily each is broken:
 - **After `prepareRender`, before the clip** — `StandardDialog` self-centers there, and `prepareRender`
   still sees the real `draw2D`.
 - **Exactly `=== 0`, not `<= 0`.** A negative accumulated opacity currently draws *fully opaque*
-  (`combineRgbaOpacity` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
+  (`resolveBlitStyle` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
   to be changed silently here.
 
 Because the traversal continues, `sgRoot.renderPass` is still `"paint"` and `isPaintPass()` stays true:
 time-based state and grid item creation behave exactly as before, so nothing is deferred to the reveal
 frame. Only the drawing is suppressed. Regression:
 `test/extensions/scenegraph/TransparentPaintSkip.test.js`.
+
+## Blend colors: a tint is a MULTIPLY, and "no blend" has five spellings
+
+Two independent defects here **cancelled for the default value only**, which is why neither showed up
+until a transparent blend color forced the guard open.
+
+**A tint is a true per-channel multiply, not a canvas `multiply` composite.**
+`RoBitmap.getRgbaCanvas` used `globalCompositeOperation = "multiply"`, but canvas's `multiply` is the
+W3C *blend* formula: over a semi-transparent backdrop it is `Co = (1-ab)*Cs + ab*Cb*Cs`, which drags the
+result **toward** the tint by `(1-ab)` instead of multiplying by it. It is only a true multiply where
+the source is fully opaque. Measured on a source pixel `rgba(200,100,50,128)`:
+
+| | raw | WHITE tint | GREY `0x808080` |
+| --- | --- | --- | --- |
+| composite (old) | `[198,100,50]` | `[226,178,152]` | `[114,88,76]` |
+| per-channel multiply | `[198,100,50]` | `[198,100,50]` — identity | `[98,48,24]` — half |
+
+So opaque white was **not** an identity (every antialiased edge and soft shadow shifted toward the
+tint), and a real tint came out *lighter* than the source it was meant to darken. Now an `ImageData`
+pass, with an `r=g=b=255` short-circuit so an all-white tint is byte-identical even if a sentinel slips
+through. Alpha stays untouched — the color's alpha is the blit transparency (`globalAlpha`), never the
+tint strength (#935).
+
+**"No color blending" is normalized in the extension, never in core.** The reference defines the case
+by *value* ("If set to the default, 0xFFFFFFFF, no color blending will occur"), but a `type: "color"`
+field can hold five spellings of it: `undefined`, **`-1`** (what `convertHexColor`'s `| 0` actually
+stores, and what reaches production), `0xffffffff`, `0x7fffffff` (`new Int32(0xFFFFFFFF)` clamping),
+and `NaN`. `SGUtil.normalizeBlendColor` maps all of them to `undefined`. Note `-1` triples as opaque
+white, `convertHexColor`'s parse-failure sentinel, and `NodeFactory`'s "no declared default" — all
+three want the same answer here, so the collision (documented at `nodes/Node.ts` `resolvePaletteColor`)
+does not need resolving for this to be correct.
+
+It must **not** move into `IfDraw2D`: a BrightScript app calling `drawObject(x, y, bmp, -1)` means
+"tint with opaque white" and must keep meaning it. The Callables already map `BrsInvalid` to
+`undefined`, so core has a clean two-state world. Only two call sites are needed —
+`Group.drawImage` and `Poster.renderNodeContent` — because every other node draws through
+`Group.drawImage`. `Poster` needs its own because `loadDisplayMode="scaleToZoom"` goes **straight** to
+`doDrawCroppedBitmap`, and that unscrubbed path tinted every poster at the default.
+
+**The tint and the blit alpha are resolved separately** (`resolveBlitStyle` → `{rgba, alpha}`). Packing
+them into one integer forced a base color to exist whenever an opacity was given, and the old
+`rgba ?? 0xffffffff` **fabricated** opaque white — re-injecting the sentinel the caller had just
+resolved away. Every partially transparent image drawn at `opacity < 1` therefore took the tint path and
+faded toward WHITE rather than merely fading (measured drift `[+29,+77,+103]`), and paid for a
+`getRgbaCanvas` allocation per fade frame. `NaN` is "no color" in both predicates now; it used to mean
+"skip the tint" to `getCanvasFromDraw2d` and "alpha 0" to `setContextAlpha`, making a NaN blend color an
+*invisible* draw instead of an untinted one. Regressions:
+`test/extensions/scenegraph/BlendColorAlpha.test.js`, `Poster.test.js`, `SGUtil.test.js`.
 
 ## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL
 

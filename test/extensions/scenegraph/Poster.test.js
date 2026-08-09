@@ -82,24 +82,30 @@ describe("Poster 9-patch display modes", () => {
         const draw2D = new IfDraw2D(target);
         const ninePatchRects = [];
         const croppedRects = [];
+        // Every blend color handed to any primitive, so a draw that bypasses Group.drawImage's
+        // normalization is visible to a test.
+        const blendColors = [];
         const drawNinePatch = draw2D.drawNinePatch.bind(draw2D);
         draw2D.drawNinePatch = (bitmap, rect, rgba, opacity) => {
             ninePatchRects.push({ ...rect });
+            blendColors.push(rgba);
             return drawNinePatch(bitmap, rect, rgba, opacity);
         };
         const doDrawCroppedBitmap = draw2D.doDrawCroppedBitmap.bind(draw2D);
         draw2D.doDrawCroppedBitmap = (bitmap, source, dest, rgba, opacity) => {
             croppedRects.push({ ...dest });
+            blendColors.push(rgba);
             return doDrawCroppedBitmap(bitmap, source, dest, rgba, opacity);
         };
         const scaledRects = [];
         const doDrawScaledObject = draw2D.doDrawScaledObject.bind(draw2D);
         draw2D.doDrawScaledObject = (x, y, scaleX, scaleY, bitmap, rgba, opacity) => {
             scaledRects.push({ x, y, width: scaleX * bitmap.width, height: scaleY * bitmap.height });
+            blendColors.push(rgba);
             return doDrawScaledObject(x, y, scaleX, scaleY, bitmap, rgba, opacity);
         };
         poster.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
-        return { ninePatchRects, croppedRects, scaledRects };
+        return { ninePatchRects, croppedRects, scaledRects, blendColors };
     }
 
     /** A Poster sized like a text pill: much wider than tall, from a square-ish source asset. */
@@ -129,6 +135,45 @@ describe("Poster 9-patch display modes", () => {
         // Cropping would slice through the marker border and the fixed corners.
         expect(croppedRects).toEqual([]);
         expect(ninePatchRects).toEqual([{ x: 0, y: 0, width: 200, height: 40 }]);
+    });
+
+    // The default blendColor means "no color blending" per the reference, but it is STORED as -1
+    // (convertHexColor's `| 0`). `scaletozoom` is the one display mode that goes straight to
+    // doDrawCroppedBitmap instead of through Group.drawImage, so it was the only path where that raw -1
+    // reached the draw — tinting the poster and washing out every partially transparent pixel.
+    test.each(["scaleToFit", "scaleToZoom", "noScale"])(
+        "%s draws with no blend color at the default blendColor",
+        (displayMode) => {
+            const { blendColors } = renderCapturing(createPillPoster(plainUri, displayMode));
+
+            expect(blendColors.length).toBeGreaterThan(0);
+            expect(blendColors.every((rgba) => rgba === undefined)).toBe(true);
+        }
+    );
+
+    test("a failed load draws its placeholder untinted", () => {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString("scaleToZoom"));
+        poster.setValue("width", new Float(200));
+        poster.setValue("height", new Float(40));
+        poster.setValue("failedBitmapUri", new BrsString(plainUri));
+        poster.setValue("uri", new BrsString("pkg:/images/does-not-exist.png"));
+        expect(poster.getValueJS("loadStatus")).toBe("failed");
+
+        const { blendColors } = renderCapturing(poster);
+
+        // Said "untinted" as 0xffffffff, which leaked through the unnormalized scaleToZoom path.
+        expect(blendColors.every((rgba) => rgba === undefined)).toBe(true);
+    });
+
+    test("an explicit blend color still reaches the draw", () => {
+        const poster = createPillPoster(plainUri, "scaleToZoom");
+        const purple = 0x7b2ff7ff | 0;
+        poster.setValue("blendColor", new Int32(purple));
+
+        const { blendColors } = renderCapturing(poster);
+
+        expect(blendColors).toContain(purple);
     });
 
     test("the drawn rect matches the reported bounding rect", () => {
