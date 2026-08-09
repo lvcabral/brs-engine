@@ -74,7 +74,6 @@ export class RowList extends ArrayGrid {
         { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocus },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly gap: number;
@@ -113,7 +112,6 @@ export class RowList extends ArrayGrid {
         }
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         // Re-derive the cached vertical focus style AFTER registerDefaultFields has installed RowList's
         // own default (fixedFocus). ArrayGrid's constructor already ran applyVertFocusStyle(), but at

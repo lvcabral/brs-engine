@@ -105,8 +105,8 @@ textures or creates item components. Regression:
 `test/extensions/scenegraph/HiddenMeasure.test.js`.
 
 **A fully transparent subtree is DEGRADED to a layout traversal on paint, not returned from**
-(`Group.isTransparentPaint`, in the `renderNode` template right after `prepareRender`: it sets
-`draw2D = undefined` and falls through). Apps commonly hide UI with `opacity = 0` rather than
+(in the `renderNode` template right after `prepareRender`: it sets `draw2D = undefined` and falls
+through). Apps commonly hide UI with `opacity = 0` rather than
 `visible = false`, and the engine used to paint such a subtree in full — every draw call issued,
 invisibility resting *entirely* on the final `ctx.globalAlpha` write. That made any lost alpha
 downstream leak a full-strength draw over the visible screen: a grid with

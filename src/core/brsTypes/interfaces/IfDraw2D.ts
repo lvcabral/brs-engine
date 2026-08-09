@@ -53,11 +53,8 @@ export class IfDraw2D {
         rgba?: number,
         opacity?: number
     ): boolean {
-        const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
-        const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
-        ctx.globalAlpha = 1;
-        return didDraw;
+        return this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
     }
 
     doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
@@ -370,7 +367,6 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
-            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -379,7 +375,6 @@ export class IfDraw2D {
                 1,
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -432,8 +427,6 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
-            // No `globalAlpha` reset here (unlike the sibling callables): `drawObjectToComponent`,
-            // which every BrsDraw2D `drawImage` routes through, brackets its own context state.
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -485,7 +478,6 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1;
             ctx.restore();
             return BrsBoolean.from(didDraw);
         },
@@ -735,14 +727,19 @@ const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
  * silently dropped its alpha. That painted a transparent blend color as SOLID BLACK, because this
  * is the only place the blend alpha is applied — `RoBitmap.getRgbaCanvas` deliberately multiplies
  * the RGB tint at full strength regardless of alpha (#935), leaving nothing to fall back on.
+ *
+ * Returns whether `globalAlpha` was written, so callers can reset only when there is something to
+ * reset instead of paying for a save/restore on every blit.
  */
-function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number) {
+function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number): boolean {
     if (rgba !== undefined) {
         const alpha = rgba & 255;
         if (alpha < 255) {
             ctx.globalAlpha = alpha / 255;
+            return true;
         }
     }
+    return false;
 }
 
 function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
@@ -927,23 +924,24 @@ export function drawObjectToComponent(
     scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
-    const alphaEnable = component.getCanvasAlpha();
     if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
         return false;
     }
-    // The alpha/smoothing writes below are PERSISTENT canvas state, and this function is reached from
-    // every `RoBitmap`/`RoScreen`/`RoRegion`/`RoCompositor` drawImage. A leaked `globalAlpha` would be
-    // inherited by every later draw on the canvas — and since a blend color of 0x00000000 legitimately
-    // sets it to 0, the leak would blank the canvas permanently rather than merely tint it. Bracketing
-    // here (rather than resetting in each caller) also covers the early `return false` below.
-    ctx.save();
+    const image = getCanvasFromDraw2d(object, rgba);
+    if (!isCanvasValid(image)) {
+        return false;
+    }
+    const alphaEnable = component.getCanvasAlpha();
+    // `globalAlpha` is PERSISTENT canvas state, and this function is reached from every
+    // `RoBitmap`/`RoScreen`/`RoRegion`/`RoCompositor` drawImage — so the reset lives here, at the shared
+    // choke point, rather than in each caller. A leak would be inherited by every later draw on the
+    // canvas, and since a blend color of 0x00000000 legitimately sets the alpha to 0, it would blank the
+    // canvas permanently rather than merely tint it. Reset only when `setContextAlpha` actually wrote
+    // (the opaque draw, which is the overwhelmingly common one, then costs nothing) and in a `finally`,
+    // so a throw mid-blit cannot strand it. Targeted rather than `ctx.save()`/`restore()`: that pair
+    // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
+    const alphaSet = setContextAlpha(ctx, rgba);
     try {
-        const image = getCanvasFromDraw2d(object, rgba);
-        setContextAlpha(ctx, rgba);
-        if (!isCanvasValid(image)) {
-            return false;
-        }
-
         const smoothing = (scaleMode ?? object.scaleMode) === 1;
         ctx.imageSmoothingEnabled = smoothing;
         if (smoothing && "imageSmoothingQuality" in ctx) {
@@ -965,7 +963,9 @@ export function drawObjectToComponent(
         }
         return true;
     } finally {
-        ctx.restore();
+        if (alphaSet) {
+            ctx.globalAlpha = 1;
+        }
     }
 }
 

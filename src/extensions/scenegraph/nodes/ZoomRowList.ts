@@ -83,7 +83,6 @@ export class ZoomRowList extends ArrayGrid {
     ];
 
     protected readonly focusUri = "common:/images/focus_grid.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     // Margins only applies to the focus indicator
     protected readonly marginX: number;
     protected readonly marginY: number;
@@ -108,7 +107,6 @@ export class ZoomRowList extends ArrayGrid {
         this.registerInitializedFields(initializedFields);
 
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
 
         if (this.resolution === "FHD") {

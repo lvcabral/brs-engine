@@ -12,6 +12,18 @@ const { RoBitmap, RoAssociativeArray, BrsString, Int32, BrsBoolean, IfDraw2D } =
  * transparent) took the guard and vanished correctly — that asymmetry is what this pins.
  */
 describe("blend color alpha", () => {
+    /** A blank 40x40 scratch bitmap to draw into (or a solid source to draw from). */
+    function scratchBitmap(alphaEnable = true) {
+        const fields = [
+            { name: new BrsString("width"), value: new Int32(40) },
+            { name: new BrsString("height"), value: new Int32(40) },
+        ];
+        if (alphaEnable) {
+            fields.push({ name: new BrsString("alphaEnable"), value: BrsBoolean.True });
+        }
+        return new RoBitmap(new RoAssociativeArray(fields));
+    }
+
     /** Opaque-white 9-patch with single-pixel center stretch markers and no content margins. */
     function whiteNinePatch() {
         const size = 11;
@@ -30,16 +42,16 @@ describe("blend color alpha", () => {
         return bitmap;
     }
 
+    /** Encoded/decoded once: every case draws the same frame, only the blend color varies. */
+    let ninePatch;
+    beforeAll(() => {
+        ninePatch = whiteNinePatch();
+    });
+
     /** Draws the 9-patch over a 40x40 transparent target and returns the center pixel's RGBA. */
     function centerPixel(rgba, opacity) {
-        const target = new RoBitmap(
-            new RoAssociativeArray([
-                { name: new BrsString("width"), value: new Int32(40) },
-                { name: new BrsString("height"), value: new Int32(40) },
-                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
-            ])
-        );
-        new IfDraw2D(target).drawNinePatch(whiteNinePatch(), { x: 0, y: 0, width: 40, height: 40 }, rgba, opacity);
+        const target = scratchBitmap();
+        new IfDraw2D(target).drawNinePatch(ninePatch, { x: 0, y: 0, width: 40, height: 40 }, rgba, opacity);
         const data = target.getContext().getImageData(20, 20, 1, 1).data;
         return [data[0], data[1], data[2], data[3]];
     }
@@ -47,10 +59,6 @@ describe("blend color alpha", () => {
     it("draws nothing for a fully transparent blend color", () => {
         // Used to paint 0,0,0,255 — a solid black frame over whatever was already on screen.
         expect(centerPixel(0x00000000, 1)).toEqual([0, 0, 0, 0]);
-    });
-
-    it("draws nothing for a fully transparent blend color at zero node opacity", () => {
-        expect(centerPixel(0x00000000, 0)).toEqual([0, 0, 0, 0]);
     });
 
     it("still applies an opaque tint at full strength", () => {
@@ -67,25 +75,21 @@ describe("blend color alpha", () => {
         expect(a).toBe(128);
     });
 
+    it("folds the node opacity into an opaque blend color", () => {
+        // The other direction of the same multiply: combineRgbaOpacity scales the color's alpha by the
+        // node opacity before setContextAlpha sees it.
+        const [r, g, b, a] = centerPixel(0x0000ffff, 0.5);
+        expect([r, g, b]).toEqual([0, 0, 255]);
+        expect(a).toBe(128);
+    });
+
     it("does not leak globalAlpha to later draws on the same canvas", () => {
         // globalAlpha is PERSISTENT canvas state, and drawObjectToComponent — reached from every
-        // RoBitmap/RoScreen/RoRegion/RoCompositor drawImage, including the drawScaledObject callable,
-        // which resets nothing itself — sets it from the blend color. Now that alpha 0 is honored, a
-        // leak would blank every later draw on the canvas rather than merely tint it, so the reset has
-        // to live at the source. Goes through drawImage directly: that is the unguarded caller.
-        const target = new RoBitmap(
-            new RoAssociativeArray([
-                { name: new BrsString("width"), value: new Int32(40) },
-                { name: new BrsString("height"), value: new Int32(40) },
-                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
-            ])
-        );
-        const source = new RoBitmap(
-            new RoAssociativeArray([
-                { name: new BrsString("width"), value: new Int32(40) },
-                { name: new BrsString("height"), value: new Int32(40) },
-            ])
-        );
+        // RoBitmap/RoScreen/RoRegion/RoCompositor drawImage — sets it from the blend color. Now that
+        // alpha 0 is honored, a leak would blank every later draw on the canvas rather than merely tint
+        // it, so the reset lives at that shared choke point instead of in each caller.
+        const target = scratchBitmap();
+        const source = scratchBitmap(false);
         source.clearCanvas(0xffffffff | 0);
 
         target.drawImage(source, 0, 0, 1, 1, 0x00000000); // fully transparent blend

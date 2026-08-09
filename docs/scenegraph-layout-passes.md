@@ -149,7 +149,7 @@ directions:
 | Condition | Layout pass (`layoutNode`) | Paint pass (`paintNode`) |
 | --- | --- | --- |
 | `visible = false` | traverses (containers soft-skip, renderables measure their extent) | skips |
-| accumulated `opacity = 0` | traverses, propagating opacity 0 | **degrades to layout** (`Group.isTransparentPaint` drops `draw2D`) |
+| accumulated `opacity = 0` | traverses, propagating opacity 0 | **degrades to layout** (`renderNode` drops `draw2D`) |
 | settled subtree, unchanged context | skips (`Group.skipSettledLayout`, pruning) | never skips |
 
 Layout must keep descending into hidden and faded-out subtrees because bounding rects are independent
@@ -157,13 +157,8 @@ of visibility on a device, and apps measure and position UI *before* revealing i
 would make `boundingRect()` return zeros for exactly the UI that is about to be shown. Paint, in turn,
 must not depend on the final `ctx.globalAlpha` write to make a transparent subtree invisible; that
 single point of failure once painted a grid's focus frame at full strength over a screen the app had
-faded out.
-
-The transparent case is a *degrade*, not a skip, and that distinction is load-bearing: an early return
-would union a rect the subtree never computed (a node faded out before its first layout has a
-`{0,0,0,0}` `rectToParent`, which `unionRect` treats as finite) and inflate every ancestor's bounds,
-so paint and layout would disagree about the same tree. Dropping `draw2D` gets layout-identical rects
-for free, because every draw call goes through `draw2D?.`.
+faded out. Note that the transparent case is a *degrade*, not a skip — the reasons that distinction is
+load-bearing are in `.claude/docs/scenegraph-invariants.md`.
 
 The general rule when adding a skip on either side: a skipped node must still hand its cached rect up
 (`updateParentRects`) whenever the *other* pass kind would have unioned it, and that is only sound when

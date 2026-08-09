@@ -119,6 +119,13 @@ export class ArrayGrid extends Group {
         { name: "vertFocusDirection", type: "string", value: "none" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
+    /**
+     * The unfocused-item footprint frame. Unlike `focusUri` — which genuinely varies by type
+     * (`focus_grid` for grids, `focus_list` for lists) and so stays per-subclass — every ArrayGrid
+     * derivative uses this same asset, so it is seeded once here. Subclasses that were each setting it
+     * in their own constructor drifted: four of the seven had no footprint at all.
+     */
+    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly content: ContentNode[] = [];
     protected readonly metadata: ArrayGrid.Metadata[] = [];
     protected readonly itemComps: Group[] = [];
@@ -182,6 +189,7 @@ export class ArrayGrid extends Group {
         this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.applyVertFocusStyle();
         this.applyHorizFocusStyle();
         this.lastPressHandled = "";

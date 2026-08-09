@@ -84,15 +84,29 @@ describe("a fully transparent subtree is not painted", () => {
         return { scene, group, list, rect };
     }
 
-    test("an opacity-0 ancestor stops the paint: no draw calls at all", () => {
-        const { group } = buildList();
-        group.setValue("opacity", new Float(0));
+    // Every way a subtree can reach accumulated opacity 0. All three used to issue the list's footprint
+    // drawNinePatch, its item text and the sibling rectangle, relying on globalAlpha to stay invisible.
+    // The third is the one the incoming-opacity-only test missed: the template receives only the
+    // ANCESTORS' opacity (each renderNodeContent folds its own in later), so testing that value alone
+    // still painted a node an app had faded out directly — the common single-widget fade.
+    test.each([
+        ["the traversal root's own opacity is 0", ({ group }) => group.setValue("opacity", new Float(0)), 1],
+        ["the incoming accumulated opacity is 0", ({ group }) => group.setValue("opacity", new Float(0.5)), 0],
+        [
+            "each child is faded out under an opaque parent",
+            ({ list, rect }) => {
+                list.setValue("opacity", new Float(0));
+                rect.setValue("opacity", new Float(0));
+            },
+            1,
+        ],
+    ])("no draw calls at all when %s", (_label, fade, incomingOpacity) => {
+        const tree = buildList();
+        fade(tree);
         const draw2D = recordingDraw2D();
 
-        group.paintNode(interpreter, [0, 0], 0, 1, draw2D);
+        tree.group.paintNode(interpreter, [0, 0], 0, incomingOpacity, draw2D);
 
-        // Used to issue the list's footprint drawNinePatch, its item text and the sibling rectangle,
-        // all relying on globalAlpha to stay invisible.
         expect(draw2D.calls).toHaveLength(0);
     });
 
@@ -105,32 +119,6 @@ describe("a fully transparent subtree is not painted", () => {
         // Pins that the guard is opacity-0 only, and that this tree really does draw a footprint.
         expect(draw2D.calls.some((call) => call.name === "drawNinePatch")).toBe(true);
         expect(draw2D.calls.some((call) => call.name === "doDrawRotatedRect")).toBe(true);
-    });
-
-    test("an accumulated opacity of 0 stops the paint even when the node's own opacity is 1", () => {
-        const { group, list } = buildList();
-        group.setValue("opacity", new Float(0.5));
-        const draw2D = recordingDraw2D();
-
-        // The parent contributes 0 to the accumulated opacity handed to the group.
-        group.paintNode(interpreter, [0, 0], 0, 0, draw2D);
-
-        expect(draw2D.calls).toHaveLength(0);
-        expect(list.getValueJS("opacity")).toBe(1);
-    });
-
-    test("a node faded out itself, under an opaque parent, is not painted either", () => {
-        // The accumulated opacity the template receives has only the ANCESTORS' opacity folded in —
-        // each renderNodeContent folds its own in later. Testing that value alone still painted a
-        // node an app had faded out directly, which is the common single-widget fade.
-        const { group, list, rect } = buildList();
-        list.setValue("opacity", new Float(0));
-        rect.setValue("opacity", new Float(0));
-        const draw2D = recordingDraw2D();
-
-        group.paintNode(interpreter, [0, 0], 0, 1, draw2D);
-
-        expect(draw2D.calls).toHaveLength(0);
     });
 
     test("a transparent subtree contributes the same ancestor bounds as a layout pass", () => {

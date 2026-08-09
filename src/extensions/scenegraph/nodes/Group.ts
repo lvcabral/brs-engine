@@ -727,9 +727,12 @@ export class Group extends Node {
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.prepareRender(draw2D);
-        if (this.isTransparentPaint(opacity, draw2D)) {
-            // Drop the draw target: the subtree lays out exactly as a layout pass would (so ancestor
-            // bounds stay identical) but issues no draw call, since every node draws through `draw2D?.`.
+        // A fully transparent subtree DEGRADES to a layout traversal — drop the draw target rather
+        // than returning, so ancestor bounds come out identical to a layout pass and every descendant
+        // still reaches its own `nodeRenderingDone`. Multiplies in this node's OWN opacity (the
+        // accumulated value has only the ancestors' folded in) and tests exactly `=== 0`. Rationale and
+        // regressions: `.claude/docs/scenegraph-invariants.md`.
+        if (draw2D !== undefined && opacity * this.getOpacity() === 0) {
             draw2D = undefined;
         }
         // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
@@ -948,39 +951,6 @@ export class Group extends Node {
             this.updateParentRects(origin, angle);
         }
         return true;
-    }
-
-    /**
-     * Whether this subtree is fully transparent, so the `renderNode` template must run it as a
-     * LAYOUT traversal instead of a paint one (`draw2D` dropped).
-     *
-     * A subtree at accumulated opacity 0 draws nothing, and a paint pass must not DEPEND on the
-     * final `globalAlpha` write to make it invisible. That single step was the only thing hiding a
-     * node an app had faded out with `opacity = 0` (apps commonly hide UI that way instead of
-     * `visible = false`), so any lost alpha downstream leaked a full-strength draw over the visible
-     * screen. Per the Group reference, `opacity` 0 puts `renderTracking` in the same `"none"` bucket
-     * as `visible = false`, which the engine already hard-skips on paint.
-     *
-     * DEGRADE, DO NOT RETURN. An early return cannot hand the parent a rect the subtree never
-     * computed: a node faded out before it ever laid out has a `{0,0,0,0}` `rectToParent`, which
-     * `unionRect` treats as finite and therefore unions in — inflating every ancestor's bounds
-     * toward the node's translation and leaving them wrong for every later frame (paint reported a
-     * parent 100px wider than a layout pass did). Continuing without `draw2D` computes the same
-     * rects a layout pass would, by construction, because every draw call in every node goes through
-     * `draw2D?.`. It also keeps `renderTracking` correct for the whole subtree, since each
-     * descendant reaches its own `nodeRenderingDone` with opacity 0.
-     *
-     * This gate multiplies in the node's OWN `opacity`: the accumulated value the template receives
-     * has only the ANCESTORS' opacity folded in (each `renderNodeContent` folds its own in later), so
-     * testing the incoming value alone would paint a node that is itself `opacity = 0` — the exact
-     * case an app fading one widget out hits.
-     *
-     * Exactly `=== 0`: a negative accumulated opacity currently draws fully opaque
-     * (`combineRgbaOpacity` treats `opacity < 0` as "no opacity given") — a separate, unmeasured
-     * divergence that must not be changed silently here.
-     */
-    private isTransparentPaint(opacity: number, draw2D?: IfDraw2D): boolean {
-        return draw2D !== undefined && opacity * this.getOpacity() === 0;
     }
 
     /**

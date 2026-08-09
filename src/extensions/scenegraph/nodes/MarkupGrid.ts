@@ -14,7 +14,6 @@ export class MarkupGrid extends ArrayGrid {
         { name: "numColumns", type: "integer", value: "1" },
     ];
     protected readonly focusUri = "common:/images/focus_grid.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly marginX: number;
     protected readonly marginY: number;
     protected readonly gap: number;
@@ -39,7 +38,6 @@ export class MarkupGrid extends ArrayGrid {
         }
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.applyVertFocusStyle();
         this.applyHorizFocusStyle();

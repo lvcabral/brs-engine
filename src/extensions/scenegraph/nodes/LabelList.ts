@@ -24,7 +24,6 @@ export class LabelList extends ArrayGrid {
     ];
 
     protected readonly focusUri = "common:/images/focus_list.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.LabelList) {
         super([], name);
@@ -39,7 +38,6 @@ export class LabelList extends ArrayGrid {
             this.setValueSilent("itemSize", brsValueOf([340, 48]));
         }
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
         this.numRows = this.getValueJS("numRows") as number;
