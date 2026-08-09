@@ -174,6 +174,15 @@ fixed-point convergence passes instead of the single pass a real frame gets (mea
 content — in the path whose whole purpose is suppressing work; and `StdDlgCustomItem` stopped requesting
 a relayout, leaving a faded dialog item stuck mid-layout until something else dirtied it.
 
+**`layoutNode` clears the flag as well as setting `renderPass`.** A real layout pass *started from inside*
+a suppressed paint must not inherit the suppression, and that is reachable on every fade:
+`getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren` both call `layoutNode`
+from within the paint traversal, so an app observer or an item component's `init()` measuring during the
+frame hits it. Without the clear, a hidden grid's mid-frame `boundingRect("toScene")` returned
+`{0,0,0,0}` under a faded ancestor where the opaque tree gave the real rect, and a mid-frame
+`layoutNode` on a `LayoutGroup` capped convergence at one pass, handing back a pre-convergence size.
+`paintNode` needs no such clear — it always has a `draw2D`, so `isLayoutPass` is false there regardless.
+
 `isLayoutPass` is **not** the negation of `isPaintPass` and the two must not be collapsed: `isPaintPass`
 is deliberately true for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside
 a suppressed subtree (that is what keeps time-based state and grid item creation unchanged). A

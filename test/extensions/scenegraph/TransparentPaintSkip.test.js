@@ -293,6 +293,87 @@ describe("a fully transparent subtree is not painted", () => {
             expect(measured).toHaveLength(1); // ...but a real layout pass must still measure it
         });
 
+        /**
+         * The other direction of the same trap: a REAL layout pass started from inside a suppressed paint
+         * must not inherit the suppression. `getBoundingRect`'s mid-render fallback and
+         * `LayoutGroup.measureUnsizedChildren` both call `layoutNode` from within the paint traversal, so
+         * this is reachable on every fade — an app observer or an item component's `init()` measuring
+         * during the frame.
+         */
+        test("a layout pass started inside a suppressed paint is still a layout pass", () => {
+            function build(fade) {
+                const wrapper = SGNodeFactory.createNode("Group");
+                const probe = SGNodeFactory.createNode("Rectangle");
+                probe.setValue("width", new Float(10));
+                probe.setValue("height", new Float(10));
+                const list = SGNodeFactory.createNode("LabelList");
+                const content = SGNodeFactory.createNode("ContentNode");
+                for (const title of ["A", "B"]) {
+                    const item = SGNodeFactory.createNode("ContentNode");
+                    item.setValue("title", new BrsString(title));
+                    content.appendChildToParent(item);
+                }
+                list.setValue("content", content);
+                list.setValue("visible", BrsBoolean.False);
+                wrapper.appendChildToParent(probe);
+                wrapper.appendChildToParent(list);
+                if (fade) {
+                    wrapper.setValue("opacity", new Float(0));
+                }
+                return { wrapper, probe, list };
+            }
+
+            // Query a hidden grid's bounds from code running mid-frame, exactly as an app observer would.
+            function measureMidFrame(fade) {
+                const { wrapper, probe, list } = build(fade);
+                let measured;
+                const originalContent = probe.renderNodeContent.bind(probe);
+                probe.renderNodeContent = (...args) => {
+                    measured = list.getBoundingRect("toScene", interpreter);
+                    return originalContent(...args);
+                };
+                wrapper.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
+                return measured;
+            }
+
+            // The faded tree must measure identically to the opaque one: layout is independent of
+            // visibility, and this returned {0,0,0,0} while the suppression leaked into layoutNode.
+            const shown = measureMidFrame(false);
+            expect(shown.width).toBeGreaterThan(0);
+            expect(measureMidFrame(true)).toEqual(shown);
+        });
+
+        test("a layout pass inside a suppressed paint keeps its convergence budget", () => {
+            // The other half of the same leak: a mid-frame layoutNode must still converge to a fixed point,
+            // or the query that triggered it reads back a pre-convergence size. Measured at the query
+            // point, because the LayoutGroup is painted again (1 pass) later in the same frame.
+            function measureMidFrame(fade) {
+                const wrapper = SGNodeFactory.createNode("Group");
+                const probe = SGNodeFactory.createNode("Rectangle");
+                probe.setValue("width", new Float(10));
+                probe.setValue("height", new Float(10));
+                const { layout } = buildNeverSettling();
+                wrapper.appendChildToParent(probe);
+                wrapper.appendChildToParent(layout);
+                if (fade) {
+                    wrapper.setValue("opacity", new Float(0));
+                }
+                let passes;
+                const originalContent = probe.renderNodeContent.bind(probe);
+                probe.renderNodeContent = (...args) => {
+                    layout.layoutNode(interpreter, [0, 0], 0, 1);
+                    passes = layout.lastPassCount;
+                    return originalContent(...args);
+                };
+                wrapper.paintNode(interpreter, [0, 0], 0, 1, recordingDraw2D());
+                return passes;
+            }
+
+            // Was 1 for the faded tree — the suppression leaked in and capped convergence.
+            expect(measureMidFrame(true)).toBe(measureMidFrame(false));
+            expect(measureMidFrame(true)).toBeGreaterThan(1);
+        });
+
         test("isPaintPass stays true inside a suppressed subtree", () => {
             // The two predicates are NOT each other's negation, and collapsing them would silently defer
             // time-based state to the reveal frame. A BusySpinner advances its rotation on paint only.

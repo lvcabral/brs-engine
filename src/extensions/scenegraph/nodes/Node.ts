@@ -1001,11 +1001,21 @@ export class Node extends RoSGNode implements BrsValue {
      */
     layoutNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number) {
         const previousPass = sgRoot.renderPass;
+        // `paintSuppressed` must be cleared as well as `renderPass`, or a layout pass STARTED from inside
+        // a suppressed paint inherits it and every node reads `isLayoutPass()` as false. That is reachable
+        // on every fade: `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren`
+        // both call this from within the paint traversal (app observers and item `init()` measuring during
+        // the frame). Measured before this: a hidden grid's `boundingRect("toScene")` queried mid-frame
+        // under a faded ancestor returned {0,0,0,0} where the opaque tree gave the real rect, and a
+        // never-settling LayoutGroup reported 1 pass instead of 8, handing back a pre-convergence size.
+        const previousSuppressed = sgRoot.paintSuppressed;
         sgRoot.renderPass = "layout";
+        sgRoot.paintSuppressed = false;
         try {
             this.renderNode(interpreter, origin, angle, opacity);
         } finally {
             sgRoot.renderPass = previousPass;
+            sgRoot.paintSuppressed = previousSuppressed;
         }
     }
 
