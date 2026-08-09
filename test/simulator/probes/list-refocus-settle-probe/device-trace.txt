@@ -1,0 +1,171 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Streaming Stick+ os=15.3
+PROBE|001|init|ready|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=-1 liveCFC=-1 listInChain=F overlayFocus=F
+PROBE|002|init|OBS-currFocusRow|data=0 liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=F overlayFocus=F
+PROBE|003|R1-first-focus|before|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=F overlayFocus=F
+PROBE|004|R1-first-focus|OBS-itemFocused|data=0 liveRIF=[] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|005|R1-first-focus|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|006|R1-first-focus|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|007|R1-first-focus|after|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|008|R2-prep-move|before|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|009|R2-prep-move|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|010|R2-prep-move|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|011|R2-prep-move|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|012|R2-prep-move|OBS-currFocusRow|data=0.1041667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.1041667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|013|R2-prep-move|OBS-currFocusRow|data=0.1333333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.1333333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|014|R2-prep-move|OBS-currFocusRow|data=0.175 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.175 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|015|R2-prep-move|OBS-currFocusRow|data=0.25 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.25 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|016|R2-prep-move|OBS-currFocusRow|data=0.3791667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.3791667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|017|R2-prep-move|OBS-currFocusRow|data=0.475 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.475 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|018|R2-prep-move|OBS-currFocusRow|data=0.5708333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5708333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|019|R2-prep-move|OBS-currFocusRow|data=0.65 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.65 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|020|R2-prep-move|OBS-currFocusRow|data=0.7166666 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.7166666 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|021|R2-prep-move|OBS-currFocusRow|data=0.7791666 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.7791666 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|022|R2-prep-move|OBS-currFocusRow|data=0.8291667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.8291667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|023|R2-prep-move|OBS-currFocusRow|data=0.8666667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.8666667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|024|R2-prep-move|OBS-currFocusRow|data=0.9041666 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9041666 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|025|R2-prep-move|OBS-currFocusRow|data=0.9333333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9333333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|026|R2-prep-move|OBS-currFocusRow|data=0.9541667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9541667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|027|R2-prep-move|OBS-currFocusRow|data=0.9708334 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9708334 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|028|R2-prep-move|OBS-currFocusRow|data=0.9833333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9833333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|029|R2-prep-move|OBS-currFocusRow|data=0.9875 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9875 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|030|R2-prep-move|OBS-currFocusRow|data=0.9958333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9958333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|031|R2-prep-move|OBS-currFocusRow|data=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|032|R2-prep-move|OBS-itemFocused|data=1 liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|033|R2-prep-move|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|034|R2-prep-move|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|035|R2-park|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|036|R2-park|after|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=F overlayFocus=T
+PROBE|037|R2-refocus-unchanged|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=F overlayFocus=T
+PROBE|038|R2-refocus-unchanged|OBS-itemFocused|data=1 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|039|R2-refocus-unchanged|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|040|R2-refocus-unchanged|after|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|041|R2-settled|settled|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|042|R3-park|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|043|R3-park|OBS-currFocusRow|data=0 liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|044|R3-park|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|045|R3-park|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|046|R3-park|after|liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=F overlayFocus=T
+PROBE|047|R3-focus-then-move|before|liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=F overlayFocus=T
+PROBE|048|R3-focus-then-move|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=F overlayFocus=F
+PROBE|049|R3-focus-then-move|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|050|R3-focus-then-move|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|051|R3-focus-then-move|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|052|R3-focus-then-move|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|053|R3-focus-then-move|mid-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|054|R3-focus-then-move|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|055|R3-focus-then-move|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|056|R3-focus-then-move|after-animateToItem|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|057|R3-focus-then-move|OBS-currFocusRow|data=0.01666667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.01666667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|058|R3-focus-then-move|OBS-currFocusRow|data=0.04166667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.04166667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|059|R3-focus-then-move|OBS-currFocusRow|data=0.1125 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.1125 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|060|R3-focus-then-move|OBS-currFocusRow|data=0.1916667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.1916667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|061|R3-focus-then-move|OBS-currFocusRow|data=0.3208333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.3208333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|062|R3-focus-then-move|OBS-currFocusRow|data=0.4541667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.4541667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|063|R3-focus-then-move|OBS-currFocusRow|data=0.5791667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5791667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|064|R3-focus-then-move|OBS-currFocusRow|data=0.6833333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.6833333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|065|R3-focus-then-move|OBS-currFocusRow|data=0.7958333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.7958333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|066|R3-focus-then-move|OBS-currFocusRow|data=0.9 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|067|R3-focus-then-move|OBS-currFocusRow|data=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|068|R3-focus-then-move|OBS-currFocusRow|data=1.095833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.095833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|069|R3-focus-then-move|OBS-currFocusRow|data=1.183333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.183333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|070|R3-focus-then-move|OBS-currFocusRow|data=1.258333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.258333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|071|R3-focus-then-move|OBS-currFocusRow|data=1.333333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.333333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|072|R3-focus-then-move|OBS-currFocusRow|data=1.404167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.404167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|073|R3-focus-then-move|OBS-currFocusRow|data=1.4625 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.4625 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|074|R3-focus-then-move|OBS-currFocusRow|data=1.525 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.525 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|075|R3-focus-then-move|OBS-currFocusRow|data=1.579167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.579167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|076|R3-focus-then-move|OBS-currFocusRow|data=1.633333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.633333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|077|R3-focus-then-move|OBS-currFocusRow|data=1.679167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.679167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|078|R3-focus-then-move|OBS-currFocusRow|data=1.720833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.720833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|079|R3-focus-then-move|OBS-currFocusRow|data=1.7625 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.7625 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|080|R3-focus-then-move|OBS-currFocusRow|data=1.795833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.795833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|081|R3-focus-then-move|OBS-currFocusRow|data=1.825 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.825 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|082|R3-focus-then-move|OBS-currFocusRow|data=1.854167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.854167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|083|R3-focus-then-move|OBS-currFocusRow|data=1.879167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.879167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|084|R3-focus-then-move|OBS-currFocusRow|data=1.9 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.9 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|085|R3-focus-then-move|OBS-currFocusRow|data=1.916667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.916667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|086|R3-focus-then-move|OBS-currFocusRow|data=1.933333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.933333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|087|R3-focus-then-move|OBS-currFocusRow|data=1.945833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.945833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|088|R3-focus-then-move|OBS-currFocusRow|data=1.958333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.958333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|089|R3-focus-then-move|OBS-currFocusRow|data=1.970833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.970833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|090|R3-focus-then-move|OBS-currFocusRow|data=1.979167 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.979167 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|091|R3-focus-then-move|OBS-currFocusRow|data=1.983333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.983333 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|092|R3-focus-then-move|OBS-currFocusRow|data=1.9875 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.9875 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|093|R3-focus-then-move|OBS-currFocusRow|data=1.991667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.991667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|094|R3-settled|settled|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.991667 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|095|R3-settled|OBS-currFocusRow|data=1.995833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.995833 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|096|R3-settled|OBS-currFocusRow|data=2 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|097|R3-settled|OBS-itemFocused|data=2 liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|098|R3-settled|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|099|R3-settled|OBS-rowItemFocused|data=[2,0] liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|100|R4-prep-horiz|before|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=-1 listInChain=T overlayFocus=F
+PROBE|101|R4-prep-horiz|OBS-rowItemFocused|data=[2,1] liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|102|R4-prep-horiz|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|103|R4-park|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|104|R4-park|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|105|R4-refocus-after-horiz|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|106|R4-refocus-after-horiz|OBS-itemFocused|data=2 liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|107|R4-refocus-after-horiz|OBS-rowItemFocused|data=[2,1] liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|108|R4-refocus-after-horiz|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|109|R4-settled|settled|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|110|R5-park|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|111|R5-park|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|112|R5-unfocused-jump|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|113|R5-unfocused-jump|OBS-currFocusRow|data=0 liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|114|R5-unfocused-jump|after|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|115|R5-refocus-after-jump|before|liveRIF=[2,1] liveIF=2 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|116|R5-refocus-after-jump|OBS-itemFocused|data=0 liveRIF=[2,1] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|117|R5-refocus-after-jump|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|118|R5-refocus-after-jump|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|119|R5-refocus-after-jump|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|121|R6-prep|before|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|122|R6-prep|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|123|R6-prep|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|124|R6-prep|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|---|R6-key|MANUAL|Now press DOWN once, then BACK on the remote.
+PROBE|125|R6-key-down|A-before-setFocus|row=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|126|R6-key-down|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=F overlayFocus=F
+PROBE|127|R6-key-down|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|128|R6-key-down|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|129|R6-key-down|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|130|R6-key-down|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|131|R6-key-down|A-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|132|R6-key-down|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|133|R6-key-down|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|134|R6-key-down|B-after-animateToItem|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|135|R6-key-down|C-hide-overlay|overlay would be faded out here liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|136|R6-key-down|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|137|R6-key-down|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|138|R6-key-down|RESHOW-regrab|calling overlay.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|139|R6-key-down|RESHOW-regrab-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|---|R7-key|MANUAL|Now press DOWN once more, then BACK.
+PROBE|140|R6-key-down|OBS-currFocusRow|data=0.075 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.075 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|160|R6-key-down|OBS-currFocusRow|data=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|161|R6-key-down|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|162|R6-key-down|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|163|R6-key-down|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|164|R6-key-down|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|165|R6-key-down|RESHOW-regrab|calling overlay.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|166|R6-key-down|RESHOW-regrab-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|167|R7-key-down-regrab|A-before-setFocus|row=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=F overlayFocus=T
+PROBE|168|R7-key-down-regrab|OBS-containerFocus-redirect|calling list.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=F overlayFocus=F
+PROBE|169|R7-key-down-regrab|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|170|R7-key-down-regrab|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|171|R7-key-down-regrab|WOULD-RESHOW|liveRow=0 (overlay re-shown from a LIVE read)
+PROBE|172|R7-key-down-regrab|RESHOW-regrab|calling overlay.setFocus(true) liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|173|R7-key-down-regrab|RESHOW-regrab-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|174|R7-key-down-regrab|OBS-containerFocus-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|175|R7-key-down-regrab|A-after-setFocus|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|176|R7-key-down-regrab|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|177|R7-key-down-regrab|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|178|R7-key-down-regrab|B-after-animateToItem|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|179|R7-key-down-regrab|C-hide-overlay|overlay would be faded out here liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|180|R7-key-down-regrab|OBS-currFocusRow|data=1.05 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.05 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|200|R7-key-down-regrab|OBS-currFocusRow|data=2 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=T
+PROBE|201|R7-key-down-regrab|OBS-itemFocused|data=2 liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|202|R7-key-down-regrab|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|203|R7-key-down-regrab|OBS-rowItemFocused|data=[2,0] liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveCFC=1 listInChain=T overlayFocus=F
+PROBE|204|R7-key-down-regrab|exit|probe complete
+PROBE|999|boot|end|
+PROBE|999|capture-note|manual|Second capture (DOWN pressed twice) adds R7. R2-prep-move record 031 and R6-key-down 141-159 / R7 181-199 fractional currFocusRow steps elided for brevity; the endpoints are kept.
