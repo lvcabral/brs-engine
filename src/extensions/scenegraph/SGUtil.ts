@@ -194,6 +194,39 @@ export function convertHexColor(strColor: string): number {
 }
 
 /**
+ * Resolves a SceneGraph blend-color field to a tint, or `undefined` for "no color blending".
+ *
+ * The `0xFFFFFFFF` these fields default to means exactly that per the reference (arraygrid.md,
+ * poster.md: "If set to the default, 0xFFFFFFFF, no color blending will occur"). Multiplying by white
+ * is a mathematical identity, so skipping it is spec-correct AND avoids `RoBitmap.getRgbaCanvas`'s
+ * canvas allocation and full-surface pass per (bitmap, color) pair.
+ *
+ * A color field is not a clean channel, so every spelling the value can arrive in has to be accepted:
+ *   `undefined`        - field unset, or `getValueJS` on an absent field
+ *   `-1`               - what `convertHexColor("0xFFFFFFFF")` stores, because of its `| 0`. This is
+ *                        the spelling that actually reaches production; it doubles as that function's
+ *                        parse-failure sentinel and as `NodeFactory`'s "no declared default", and all
+ *                        three want the same answer here.
+ *   `0xffffffff`       - an unsigned read (`>>> 0`) or a hand-written literal
+ *   `NaN` / non-number - a non-numeric value assigned to a `type: "color"` field
+ *
+ * NOT treated as the default: `0x7fffffff`, which is what `new Int32(0xFFFFFFFF)` clamps to. It is also a
+ * legitimate opaque light-cyan (R=0x7F, G=0xFF, B=0xFF, A=0xFF), and no engine path produces the clamp —
+ * `convertHexColor` and `Int32.fromString("&hFFFFFFFF")` both yield `-1`, so only an app passing the
+ * decimal literal `4294967295` could hit it. Swallowing a real color to catch that is the wrong trade.
+ *
+ * Deliberately NOT applied inside `IfDraw2D`: an ifDraw2D app calling `drawObject(x, y, bmp, -1)` means
+ * "tint with opaque white" and must keep meaning it. The BrightScript Callables already map
+ * `BrsInvalid` to `undefined`, so core has a clean two-state world and needs no sentinel at all.
+ */
+export function normalizeBlendColor(rgba: unknown): number | undefined {
+    if (typeof rgba !== "number" || Number.isNaN(rgba)) {
+        return undefined;
+    }
+    return rgba >>> 0 === 0xffffffff ? undefined : rgba;
+}
+
+/**
  * Maps an ifSGNodeBoundingRect sub-part id to a rendered item component in a row-based grid's
  * `rowItemComps[row][col]` store. Shared by RowList and ZoomRowList, which both hold a 2-D grid of
  * components (unlike the flat ArrayGrid `itemComps[]` the base resolver assumes), so

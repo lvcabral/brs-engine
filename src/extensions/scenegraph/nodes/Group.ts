@@ -27,7 +27,14 @@ import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
-import { convertHexColor, rectContainsRect, rotateRect, rotateTranslation, unionRect } from "../SGUtil";
+import {
+    convertHexColor,
+    normalizeBlendColor,
+    rectContainsRect,
+    rotateRect,
+    rotateTranslation,
+    unionRect,
+} from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
 import { jsValueOf } from "../factory/Serializer";
 
@@ -568,9 +575,7 @@ export class Group extends Node {
     ) {
         if (bitmap.isValid()) {
             bitmap.scaleMode = 1;
-            if (typeof rgba !== "number" || rgba === 0xffffffff || rgba === -1) {
-                rgba = undefined;
-            }
+            rgba = normalizeBlendColor(rgba);
             if (opacity < 0 || opacity > 1) {
                 opacity = 1;
             }
