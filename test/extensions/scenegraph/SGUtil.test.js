@@ -638,7 +638,6 @@ describe("SGUtil", () => {
             ["undefined (field unset)", undefined],
             ["-1, what convertHexColor('0xFFFFFFFF') actually stores", -1],
             ["0xffffffff, an unsigned read or a literal", 0xffffffff],
-            ["0x7fffffff, new Int32(0xFFFFFFFF) clamping", 0x7fffffff],
             ["NaN", Number.NaN],
             ["a string", "0xff0000ff"],
             ["null", null],
@@ -651,6 +650,11 @@ describe("SGUtil", () => {
             ["fully transparent black, the one falsy color", 0x00000000],
             ["a partially transparent tint", 0x0000ff80],
             ["opaque black", 0x000000ff],
+            // 0x7fffffff is what new Int32(0xFFFFFFFF) clamps to, but it is ALSO a legitimate opaque
+            // light-cyan, and no engine path produces the clamp (convertHexColor and
+            // Int32.fromString("&hFFFFFFFF") both give -1). Swallowing a real color to catch it is the
+            // wrong trade, so it must pass through.
+            ["opaque light-cyan, not mistaken for the Int32 clamp", 0x7fffffff],
         ])("passes %s through unchanged", (_label, value) => {
             expect(normalizeBlendColor(value)).toBe(value);
         });

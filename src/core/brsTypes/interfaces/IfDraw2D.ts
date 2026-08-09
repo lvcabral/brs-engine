@@ -962,7 +962,8 @@ export function drawObjectToComponent(
     // (the opaque draw, which is the overwhelmingly common one, then costs nothing) and in a `finally`,
     // so a throw mid-blit cannot strand it. Targeted rather than `ctx.save()`/`restore()`: that pair
     // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
-    const alphaSet = alpha === undefined ? setContextAlpha(ctx, rgba) : setContextGlobalAlpha(ctx, alpha);
+    const blitAlpha = alpha ?? (rgba === undefined || Number.isNaN(rgba) ? 1 : (rgba & 255) / 255);
+    const alphaSet = setContextGlobalAlpha(ctx, blitAlpha);
     try {
         const smoothing = (scaleMode ?? object.scaleMode) === 1;
         ctx.imageSmoothingEnabled = smoothing;
@@ -975,6 +976,14 @@ export function drawObjectToComponent(
         // Only Compositor and Region uses wraps
         const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
 
+        // A fully transparent blit contributes nothing, so it must leave the destination ALONE. On a
+        // non-alpha target the loop below replaces the rect rather than compositing over it, so without
+        // this the blit would erase what was there — an `roScreen` (alphaEnable false by default) blitted
+        // with a 0x00000000 blend color would punch a transparent hole in an opaque screen. Only reachable
+        // since alpha 0 started being honored at all; before that the guard dropped it and drew opaque.
+        if (blitAlpha === 0) {
+            return true;
+        }
         const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
         for (const chunk of chunks) {
             const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;

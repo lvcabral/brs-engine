@@ -155,6 +155,38 @@ describe("blend color alpha", () => {
         expect(blit(source, NaN, 1)).toEqual(blit(source, undefined, 1));
     });
 
+    it("leaves a non-alpha destination untouched for a fully transparent blend", () => {
+        // A blit that contributes nothing must not ERASE. On an alphaEnable=false target the draw loop
+        // replaces the rect (clearRect + draw) rather than compositing over it, so honoring alpha 0
+        // turned "draw nothing" into "punch a transparent hole" — on an roScreen, which defaults to
+        // alphaEnable false, that means a hole in an opaque screen.
+        const target = scratchBitmap(false);
+        target.clearCanvas(0xff0000ff | 0);
+        const source = scratchBitmap(false);
+        source.clearCanvas(0x00ff00ff | 0);
+
+        target.drawImage(source, 0, 0, 1, 1, 0x00000000);
+
+        const data = target.getContext().getImageData(20, 20, 1, 1).data;
+        expect([data[0], data[1], data[2], data[3]]).toEqual([255, 0, 0, 255]);
+    });
+
+    it("does not throw when tinting a zero-sized bitmap", () => {
+        // getRgbaCanvas's multiply path calls getImageData, which THROWS on a 0-wide/0-tall rect. Both a
+        // 0-sized roBitmap (isValid() reports true) and a dispose()d one reach it, because
+        // drawObjectToComponent resolves the tinted canvas BEFORE its isCanvasValid check.
+        const empty = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(0) },
+                { name: new BrsString("height"), value: new Int32(0) },
+            ])
+        );
+        const target = scratchBitmap();
+
+        expect(() => target.drawImage(empty, 0, 0, 1, 1, 0x00ff00ff)).not.toThrow();
+        expect(() => target.drawImage(empty, 0, 0, 1, 1)).not.toThrow();
+    });
+
     it("does not leak globalAlpha to later draws on the same canvas", () => {
         // globalAlpha is PERSISTENT canvas state, and drawObjectToComponent — reached from every
         // RoBitmap/RoScreen/RoRegion/RoCompositor drawImage — sets it from the blend color. Now that

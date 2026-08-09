@@ -208,8 +208,12 @@ export function convertHexColor(strColor: string): number {
  *                        parse-failure sentinel and as `NodeFactory`'s "no declared default", and all
  *                        three want the same answer here.
  *   `0xffffffff`       - an unsigned read (`>>> 0`) or a hand-written literal
- *   `0x7fffffff`       - `new Int32(0xFFFFFFFF)` clamping, reachable from an app's `setValue`
  *   `NaN` / non-number - a non-numeric value assigned to a `type: "color"` field
+ *
+ * NOT treated as the default: `0x7fffffff`, which is what `new Int32(0xFFFFFFFF)` clamps to. It is also a
+ * legitimate opaque light-cyan (R=0x7F, G=0xFF, B=0xFF, A=0xFF), and no engine path produces the clamp —
+ * `convertHexColor` and `Int32.fromString("&hFFFFFFFF")` both yield `-1`, so only an app passing the
+ * decimal literal `4294967295` could hit it. Swallowing a real color to catch that is the wrong trade.
  *
  * Deliberately NOT applied inside `IfDraw2D`: an ifDraw2D app calling `drawObject(x, y, bmp, -1)` means
  * "tint with opaque white" and must keep meaning it. The BrightScript Callables already map
@@ -219,10 +223,7 @@ export function normalizeBlendColor(rgba: unknown): number | undefined {
     if (typeof rgba !== "number" || Number.isNaN(rgba)) {
         return undefined;
     }
-    if (rgba >>> 0 === 0xffffffff || rgba === 0x7fffffff) {
-        return undefined;
-    }
-    return rgba;
+    return rgba >>> 0 === 0xffffffff ? undefined : rgba;
 }
 
 /**

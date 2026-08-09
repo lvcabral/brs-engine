@@ -286,9 +286,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         const red = (rgba >> 24) & 0xff;
         const green = (rgba >> 16) & 0xff;
         const blue = (rgba >> 8) & 0xff;
-        if (red === 255 && green === 255 && blue === 255) {
+        const empty = this.canvas.width === 0 || this.canvas.height === 0;
+        if (empty || (red === 255 && green === 255 && blue === 255)) {
             // Multiplying by white is a mathematical identity — copy instead, so an all-white tint is
             // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
+            // A zero-sized surface takes this branch too: `getImageData` THROWS on a 0-wide/0-tall
+            // rect, and both a `CreateObject("roBitmap", {width: 0, ...})` (which `isValid()` reports
+            // true for) and a `dispose()`d bitmap reach here, since `drawObjectToComponent` resolves the
+            // tinted canvas BEFORE its `isCanvasValid` check. `drawImageAtPos` no-ops on an empty source.
             drawImageAtPos(this.canvas, ctx, 0, 0);
         } else {
             const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
