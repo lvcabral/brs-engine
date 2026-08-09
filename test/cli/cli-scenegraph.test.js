@@ -371,6 +371,42 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Animates animateToItem so the focus settle outlives the key handler that wrote it", async () => {
+        let command = ["node", brsCliPath, "-r list-refocus-overlay-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // An overlay is a SIBLING of a RowList and is re-shown from an observer on the list's
+        // rowItemFocused that reads the field LIVE. The key handler must hand focus to the list BEFORE
+        // moving a row (a list's container may jumpToItem on focus change), so (A) setFocus,
+        // (B) animateToItem, (C) hide run in one call.
+        //
+        // Verified on a real Roku (test/simulator/probes/grid-scroll-animation-probe): animateToItem
+        // starts an ANIMATED scroll, ~340 ms per row, that outlives the handler. The `inflight:` line
+        // is sampled a few frames after the handler returned and is what an instant move cannot
+        // produce: still scrolling, currFocusRow between two rows, itemFocused still on the OUTGOING
+        // row. Previously the move completed inside the handler, so (B)'s settle landed before (C)
+        // describing the outgoing row and re-showed the overlay (C) was about to hide.
+        //
+        // The showOverlay between A and B is expected and device-accurate: it comes from (A)'s
+        // focus-gain re-emission for an unchanged position, not from the move.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== List Refocus Overlay Repro ===",
+            "scenario ready: overlayFocus = true row =  0",
+            "A: handing focus to the list (row =  0)",
+            "showOverlay (live row =  0)",
+            "B: animateToItem =  1",
+            "C: hiding the overlay",
+            "inflight: scrolling = true settled = false itemFocused =  0",
+            "final: overlayVisible = false currFocusRow =  1 itemFocused =  1",
+            "=== List Refocus Overlay Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Defers a focusedChild notification raised during init() so a later-registered observer fires", async () => {
         let command = ["node", brsCliPath, "-r init-focus-observer-app", "source/main.brs", "-c 0"].join(" ");
 

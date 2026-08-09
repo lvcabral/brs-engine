@@ -21,6 +21,7 @@ import { createNode } from "../factory/NodeFactory";
 import { normalizeBlendColor } from "../SGUtil";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
+import { sgClock } from "../SGClock";
 import { ContentNode } from "./ContentNode";
 import { Font } from "./Font";
 
@@ -61,6 +62,26 @@ export declare namespace ArrayGrid {
         index: number;
         divider: boolean;
         sectionTitle: string;
+    };
+    /**
+     * An in-flight animated focus scroll started by `animateToItem`.
+     *
+     * `from` is fractional so a mid-flight retarget continues from the position currently on screen
+     * rather than restarting — device-measured (probe A3: an interrupt at 0.52 resumed at 0.658).
+     */
+    type ScrollAnimation = {
+        /** Fractional content index the scroll started from. */
+        from: number;
+        /** Content index being scrolled to. */
+        to: number;
+        /** Target index as the app wrote it, for the `itemFocused` payload at completion. */
+        toIndex: number;
+        /** Column to settle on, for the list types that track one; -1 to reuse the remembered one. */
+        toColumn: number;
+        /** `sgClock.perfNow()` at the frame the scroll started. */
+        start: number;
+        /** Total duration in ms, scaled by the distance travelled. */
+        duration: number;
     };
 }
 
@@ -118,6 +139,14 @@ export class ArrayGrid extends Group {
         // apps observe it to track scroll direction (e.g. to position an in-transit overlay toward the
         // incoming row). Emitted as up/down on a vertical nav then reset to "none".
         { name: "vertFocusDirection", type: "string", value: "none" },
+        // Documented on ArrayGrid: "Specifies whether changes in the focus item should be animated."
+        // Declared for compatibility so an app reading it gets `false` rather than `invalid` (which
+        // crashes a strongly-typed BrightScript helper). Deliberately NOT wired to the scroll
+        // animation: device-measured (grid-scroll-animation-probe A7) that setting it true does NOT
+        // suppress the scroll — the move still ramped over the same ~1s/3 rows. Its wording is about
+        // the focus *indicator*'s repositioning/scaling, so treating it as a scroll on/off switch
+        // would diverge from hardware.
+        { name: "skipFocusAnimations", type: "boolean", value: "false" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     /**
@@ -153,6 +182,31 @@ export class ArrayGrid extends Group {
     protected scrollPulseArmed: boolean = false;
     /** The rising edge has been emitted and the falling edge is still owed. */
     protected scrollPulseActive: boolean = false;
+    /**
+     * The in-flight `animateToItem` scroll, or undefined when settled.
+     *
+     * Device-measured (`test/simulator/probes/grid-scroll-animation-probe`): `animateToItem` starts a
+     * multi-frame eased scroll, ~340 ms per row traversed, publishing fractional `currFocusRow` every
+     * frame and the settled focus fields only at completion. `jumpToItem` stays instant.
+     */
+    protected scrollAnim?: ArrayGrid.ScrollAnimation;
+    /**
+     * Set while an animated scroll's settle runs, so `setFocusedItem` skips the two emissions the
+     * animation already made at its START: the `scrollingStatus` pulse and `itemUnfocused`. Without
+     * this the settle would re-emit both, which a device does exactly once per scroll.
+     */
+    protected settlingScrollAnim: boolean = false;
+    /**
+     * Set while the grid's own key handling writes `animateToItem` as an internal shortcut, so the
+     * write takes the INSTANT path instead of starting an animated scroll.
+     *
+     * A device animates key navigation too, but that is a much wider behavior change: the key-driven
+     * emission order is pinned by `test/extensions/scenegraph/ArrayGridFields.test.js` and several CLI
+     * fixtures read focus fields synchronously right after `handleKey`. Animating app-written
+     * `animateToItem` is what the reported failure needs; animating key navigation is a separate
+     * change that should come with its own regression pass.
+     */
+    protected keyNavMove: boolean = false;
     protected hasNinePatch: boolean;
     protected focusField: string;
     protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
@@ -206,8 +260,18 @@ export class ArrayGrid extends Group {
             this.refreshContent();
             this.resetFocusForNewContent(true);
             return;
-        } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
+        } else if (fieldName === "jumptoitem" && isNumberComp(value)) {
+            // Documented as an immediate move, and device-measured as one (probe A2: no
+            // scrollingStatus, no fractional currFocusRow, every focus field in the same millisecond).
+            this.cancelScrollAnimation();
             this.setFocusedItem(jsValueOf(value));
+        } else if (fieldName === "animatetoitem" && isNumberComp(value)) {
+            if (this.keyNavMove) {
+                // The grid's own key handler routes through this field; keep that instant (see keyNavMove).
+                this.setFocusedItem(jsValueOf(value));
+            } else {
+                this.startScrollAnimation(jsValueOf(value) as number);
+            }
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = resolveFocusStyle(value.toString());
             if (style) {
@@ -343,7 +407,7 @@ export class ArrayGrid extends Group {
         }
         const nodeFocus = sgRoot.focused === this;
         const inFocusChain = nodeFocus || this.isChildrenFocused();
-        if (inFocusChain) {
+        if (inFocusChain && !this.settlingScrollAnim) {
             // Emit the scroll pulse BEFORE the settled focus fields go out: on a device
             // scrollingStatus falls while the scroll finishes and the focus settles afterward, and
             // apps depend on that order (the falling edge tears transient scroll state down, the
@@ -351,6 +415,8 @@ export class ArrayGrid extends Group {
             // bracket below — these notifications must dispatch synchronously here, not defer past
             // the settle they precede. Skipped when unfocused: that path publishes no focus fields at
             // all, so a pulse would be a teardown with nothing to rebuild from (see armScrollPulse).
+            // Also skipped while an animated scroll settles: that pulse opened at animation start and
+            // its falling edge is emitted by tickScrollAnimation.
             this.emitScrollPulse();
         }
         // Focus fields are emitted by the grid's internal machinery, not by a direct BrightScript
@@ -365,7 +431,11 @@ export class ArrayGrid extends Group {
             this.updateHorizScroll(newFocus);
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
             if (inFocusChain) {
-                super.setValue("itemUnfocused", new Int32(focusedIndex));
+                // An animated scroll already emitted itemUnfocused at its start (device-measured), so
+                // re-emitting it here would double-report one scroll.
+                if (!this.settlingScrollAnim) {
+                    super.setValue("itemUnfocused", new Int32(focusedIndex));
+                }
                 // currFocusRow/currFocusColumn must already reflect the new position before
                 // itemFocused fires: apps commonly read them synchronously from an itemFocused
                 // observer (see RowList.setFocusedItem for the same ordering requirement).
@@ -490,6 +560,184 @@ export class ArrayGrid extends Group {
         super.setValue("scrollingStatus", BrsBoolean.False);
     }
 
+    /**
+     * Milliseconds of scroll per row/column traversed.
+     *
+     * Device-measured on a Roku Streaming Stick+ (OS 15.3), `grid-scroll-animation-probe`: a 1-row
+     * move took 364 ms, 2 rows 686 ms, 3 rows 1021 ms — i.e. the duration scales with the distance
+     * rather than being fixed, at ~340 ms per row.
+     */
+    protected static readonly scrollMsPerItem = 340;
+
+    /**
+     * Starts (or retargets) the animated focus scroll for `animateToItem`.
+     *
+     * Emission contract, all device-measured (probe A1):
+     * - `scrollingStatus = true` and `itemUnfocused` go out **here**, at animation START, before the
+     *   app's assignment even returns — NOT in the settle bracket where the key-navigation path emits
+     *   `itemUnfocused`.
+     * - `currFocusRow`/`currFocusColumn` then carry fractional in-transit values every frame
+     *   (`tickScrollAnimation`).
+     * - The settled fields (`itemFocused`, `rowItemFocused`) are emitted only at completion.
+     *
+     * A write landing while a scroll is already running RETARGETS it, continuing from the fractional
+     * position currently on screen — no restart, no second pulse, and nothing emitted for the
+     * abandoned target (probe A3).
+     *
+     * @param index Content index to scroll to, as the app wrote it.
+     * @param column Column to settle on, or -1 to reuse the row's remembered column (RowList).
+     */
+    protected startScrollAnimation(index: number, column: number = -1) {
+        const target = this.findContentIndex(index);
+        if (target === -1) {
+            return;
+        }
+        const retarget = this.scrollAnim;
+        // Continue from where the scroll actually is, so a retarget does not visibly jump back.
+        const from = retarget ? this.currentScrollPosition(retarget) : this.focusIndex;
+        if (!retarget) {
+            // Start-of-scroll emissions. An unfocused grid still pulses and still ramps on a device
+            // (probe A6) — only the SETTLE fields are focus-gated — so this is deliberately not
+            // wrapped in an inFocusChain check. itemUnfocused reports the sentinel when nothing was
+            // focused, exactly as the device did (A6 record 248: itemUnfocused = -1).
+            // Both dispatch synchronously, matching the device: it emitted scrollingStatus=true and
+            // itemUnfocused BEFORE the app's assignment returned (probe A1 records 008-009 precede
+            // `after-write` at 010). Deliberately NOT wrapped in enterInternalUpdate, which would
+            // defer them past the writing statement.
+            super.setValue("scrollingStatus", BrsBoolean.True);
+            super.setValue("itemUnfocused", new Int32(this.getValueJS("itemFocused") as number));
+        }
+        const distance = Math.abs(target - from) || 1;
+        this.scrollAnim = {
+            from,
+            to: target,
+            toIndex: index,
+            toColumn: column,
+            start: sgClock.perfNow(),
+            duration: distance * ArrayGrid.scrollMsPerItem,
+        };
+        this.enqueueScrollAnimation();
+    }
+
+    /**
+     * Publishes an in-transit fractional scroll position to the focus-position fields.
+     *
+     * A grid's flat content index maps onto both axes; a list scrolls only along rows and leaves the
+     * column alone (device-measured: a RowList's vertical scroll emitted no `currFocusColumn` at all
+     * during the ramp), so RowList overrides this.
+     * @param position Fractional content index currently on screen.
+     */
+    protected publishScrollPosition(position: number) {
+        const numCols = Math.max(1, this.numCols || 1);
+        super.setValue("currFocusRow", new Float(position / numCols));
+        super.setValue("currFocusColumn", new Float(position % numCols));
+    }
+
+    /** The fractional content index an in-flight scroll currently sits at. */
+    private currentScrollPosition(anim: ArrayGrid.ScrollAnimation): number {
+        const elapsed = sgClock.perfNow() - anim.start;
+        if (elapsed >= anim.duration || anim.duration <= 0) {
+            return anim.to;
+        }
+        const eased = ArrayGrid.easeInOut(Math.max(0, elapsed) / anim.duration);
+        return anim.from + (anim.to - anim.from) * eased;
+    }
+
+    /**
+     * Ease-in-out over a normalized 0..1 progress. The device curve accelerates to ~0.13 rows/frame
+     * mid-flight and decays to ~0.004 approaching the target; smoothstep reproduces that shape.
+     */
+    private static easeInOut(t: number): number {
+        const clamped = Math.min(1, Math.max(0, t));
+        return clamped * clamped * (3 - 2 * clamped);
+    }
+
+    /**
+     * Advances the in-flight scroll one frame. Called from the render loop via
+     * `sgRoot.processScrollAnimations`.
+     * @returns True while the scroll is still running (so the frame is marked dirty).
+     */
+    tickScrollAnimation(): boolean {
+        const anim = this.scrollAnim;
+        if (!anim) {
+            return false;
+        }
+        const elapsed = sgClock.perfNow() - anim.start;
+        if (elapsed < anim.duration) {
+            // In transit: publish the fractional position. currFocusRow/currFocusColumn are floats
+            // precisely so they can carry these values (arraygrid.md: currFocusRow "will go directly
+            // from 3.0 to 4.0 instead of taking on values between" only when animations are skipped).
+            this.focusLayoutDirty = true;
+            Field.enterInternalUpdate();
+            try {
+                this.publishScrollPosition(this.currentScrollPosition(anim));
+            } finally {
+                Field.exitInternalUpdate();
+            }
+            return true;
+        }
+        // Completed: hand off to the normal settle path, which applies the focus gate to the settled
+        // fields (and stays silent for an unfocused grid, matching probe A6).
+        this.scrollAnim = undefined;
+        this.dequeueScrollAnimation();
+        this.settleScrollAnimation(anim);
+        // Falling edge last, i.e. after the whole settle.
+        //
+        // KNOWN ONE-RECORD DEVIATION: a device interleaves it INSIDE the settle — probe A1 measured
+        // `itemFocused` (067), `scrollingStatus=false` (068), `rowItemFocused` (069). Reproducing that
+        // exactly would mean suppressing `rowItemFocused` inside `RowList.setFocusedItem` and
+        // re-emitting it here, which fights the pinned "rowItemFocused settles last" invariant
+        // (RowList.test.js) and touches four other `setRowItemFocused` call sites. Both orders keep the
+        // property apps actually rely on — the falling edge and the settle are adjacent, and an app
+        // that tears transient scroll state down on the edge still has the settle to rebuild from —
+        // so the interleave is left as-is until an app is found that depends on it.
+        super.setValue("scrollingStatus", BrsBoolean.False);
+        return true;
+    }
+
+    /**
+     * Emits the settled focus fields at the end of an animated scroll. Overridden by the list types
+     * that settle a [row, column] pair rather than a single index.
+     */
+    protected settleScrollAnimation(anim: ArrayGrid.ScrollAnimation) {
+        this.settlingScrollAnim = true;
+        try {
+            this.setFocusedItem(anim.toIndex);
+        } finally {
+            this.settlingScrollAnim = false;
+        }
+    }
+
+    /**
+     * Abandons an in-flight scroll without emitting anything. Used by `jumpToItem` (an immediate move
+     * supersedes a running one) and by teardown paths.
+     */
+    protected cancelScrollAnimation() {
+        if (!this.scrollAnim) {
+            return;
+        }
+        this.scrollAnim = undefined;
+        this.dequeueScrollAnimation();
+        // The pulse was opened by startScrollAnimation, so it must be closed or the field is stranded
+        // at true — which would silently suppress every later notification (it is not alwaysNotify).
+        super.setValue("scrollingStatus", BrsBoolean.False);
+    }
+
+    /** Registers with sgRoot so the render loop ticks this grid's scroll each frame. */
+    private enqueueScrollAnimation() {
+        if (!sgRoot.scrollAnimations.includes(this)) {
+            sgRoot.scrollAnimations.push(this);
+        }
+    }
+
+    /** Removes this grid from the render loop's scroll list. */
+    private dequeueScrollAnimation() {
+        const index = sgRoot.scrollAnimations.indexOf(this);
+        if (index > -1) {
+            sgRoot.scrollAnimations.splice(index, 1);
+        }
+    }
+
     handleKey(key: string, press: boolean): boolean {
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
@@ -503,6 +751,9 @@ export class ArrayGrid extends Group {
                 // Arm inside the try so an exception from either edge's observers still unwinds
                 // through the finally below and cannot strand the field at true.
                 this.armScrollPulse();
+                // Mark this as internal key navigation, so a subclass writing `animateToItem` as its
+                // move shortcut settles instantly rather than starting an animated scroll.
+                this.keyNavMove = true;
                 if (key === "up" || key === "down") {
                     handled = this.handleUpDown(key);
                 } else if (key === "left" || key === "right") {
@@ -511,6 +762,7 @@ export class ArrayGrid extends Group {
                     handled = this.handlePageUpDown(key);
                 }
             } finally {
+                this.keyNavMove = false;
                 // Disarm: a key that scrolled nothing emits no pulse at all (see armScrollPulse).
                 this.endScrollPulse();
             }

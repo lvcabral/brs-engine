@@ -21,7 +21,7 @@ import { ThreadInfo } from "./SGTypes";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
-import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
+import type { AnimationBase, ArrayGrid, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
 
 /**
@@ -47,6 +47,7 @@ export class SGRoot {
     private readonly _threads: Map<number, { task?: Task; info: ThreadInfo }>;
     private readonly _timers: Timer[];
     private readonly _animations: AnimationBase[];
+    private readonly _scrollAnimations: ArrayGrid[];
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
@@ -189,6 +190,15 @@ export class SGRoot {
         return this._timers;
     }
 
+    /**
+     * Grids with an animated focus scroll in flight (`animateToItem`). Separate from `_animations`,
+     * which holds `Animation` nodes an app declares: a scroll is engine-internal, has no `state`
+     * field and no app-visible node, so it must not appear in that list.
+     */
+    get scrollAnimations(): ArrayGrid[] {
+        return this._scrollAnimations;
+    }
+
     get animations(): AnimationBase[] {
         return this._animations;
     }
@@ -293,6 +303,7 @@ export class SGRoot {
         this._sfx = [];
         this._timers = [];
         this._animations = [];
+        this._scrollAnimations = [];
         this._threads = new Map();
         // Add Render thread by default
         this._threadId = 0;
@@ -639,6 +650,27 @@ export class SGRoot {
         let updated = false;
         for (const animation of this._animations) {
             if (animation.tick()) {
+                updated = true;
+            }
+        }
+        return updated;
+    }
+
+    /**
+     * Advances every in-flight animated focus scroll (`animateToItem`) one frame.
+     *
+     * Iterates a snapshot: a scroll that completes removes itself from the list mid-loop, and its
+     * settle emission runs app observers that can start another scroll on any grid.
+     * @returns True if any scroll updated, so the frame is marked dirty.
+     */
+    processScrollAnimations(): boolean {
+        let updated = false;
+        // Snapshot into a local, not a `for…of` over the live array: a scroll that completes removes
+        // itself mid-loop, and its settle emission runs app observers that can start another scroll on
+        // any grid. Iterating the live array would skip or repeat entries.
+        const grids = this._scrollAnimations.slice();
+        for (const grid of grids) {
+            if (grid.tickScrollAnimation()) {
                 updated = true;
             }
         }

@@ -146,6 +146,8 @@ export class RowList extends ArrayGrid {
         } else if (fieldName === "jumptorowitem" && value instanceof RoArray) {
             const rowItem = jsValueOf(value) as any[];
             if (typeof rowItem[0] === "number" && typeof rowItem[1] === "number") {
+                // An immediate move supersedes any in-flight animated scroll, as jumpToItem does.
+                this.cancelScrollAnimation();
                 this.setFocusedItem(rowItem[0], rowItem[1]);
             }
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
@@ -153,6 +155,29 @@ export class RowList extends ArrayGrid {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    /**
+     * A RowList's scroll position IS a row index, and a vertical scroll leaves the focused column
+     * alone — device-measured: the ramp emitted `currFocusRow` only, never `currFocusColumn`.
+     */
+    protected publishScrollPosition(position: number) {
+        super.setValue("currFocusRow", new Float(position));
+    }
+
+    /**
+     * Settles an animated scroll on a row, reusing the row's remembered column.
+     *
+     * Overridden because `ArrayGrid.setFocusedItem` takes a single index while a RowList settles a
+     * [row, column] pair — and because the base class's flat `index` is a row index here.
+     */
+    protected settleScrollAnimation(anim: ArrayGrid.ScrollAnimation) {
+        this.settlingScrollAnim = true;
+        try {
+            this.setFocusedItem(anim.toIndex, anim.toColumn);
+        } finally {
+            this.settlingScrollAnim = false;
+        }
     }
 
     protected setFocusedItem(rowIndex: number, colIndex: number = -1) {
@@ -170,15 +195,16 @@ export class RowList extends ArrayGrid {
         // but do NOT notify observers; setNodeFocus re-emits on focus-gain. See ArrayGrid.setFocusedItem.
         const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
 
-        if (inFocusChain) {
+        if (inFocusChain && !this.settlingScrollAnim) {
             // Emit the scroll pulse before ANY of the settled focus fields go out — itemUnfocused
             // below included, so the order matches ArrayGrid.setFocusedItem. See armScrollPulse for
             // why the pulse precedes the settle, and why it is skipped entirely when the list is
-            // outside the focus chain (that path notifies nothing).
+            // outside the focus chain (that path notifies nothing). Skipped while an animated scroll
+            // settles: that pulse opened at animation start (see startScrollAnimation).
             this.emitScrollPulse();
         }
 
-        if (isChangingRow && inFocusChain) {
+        if (isChangingRow && inFocusChain && !this.settlingScrollAnim) {
             // Engine-initiated emission (not a direct BrightScript assignment): on Roku its
             // observers dispatch from the message loop, so a reentrant notification defers
             // (see Field.enterInternalUpdate).

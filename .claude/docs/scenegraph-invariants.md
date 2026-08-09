@@ -1105,8 +1105,12 @@ Per `zoomrowlist.md` the field is "set to true whenever the list is scrolling th
 vertically". It is documented only under `ZoomRowList` but exists on **every** `ArrayGrid`-derived node on
 a device, and apps alias it up from a plain `RowList`. On a device the scroll spans several frames: the
 field goes true, the focus fields pass through in-transit values, and it goes **false before the focus
-finally settles**. Our scroll is instant, so both edges land in one frame — which makes their **order
-relative to the focus fields the entire contract**, and the two rules below easy to get backwards. Both
+finally settles**.
+
+**Two paths now, and they differ.** An app-written `animateToItem` genuinely animates across frames (see
+the next section). Everything else — key navigation, `jumpToItem`/`jumpToRowItem`, a focus-gain
+re-emission — still settles instantly, so both edges land in one frame, which makes their **order
+relative to the focus fields the entire contract** and the two rules below easy to get backwards. Both
 were regressed once each while this was being written.
 
 1. **The falling edge must precede the settled focus fields.** Apps depend on the interleave in both
@@ -1174,6 +1178,59 @@ no-op) before settling `rowItemFocused` last — that ordering is unchanged.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js`, describe block
 `"ArrayGrid currFocusRow/currFocusColumn reflect the new focus before itemFocused fires"`.
+
+### `animateToItem` animates across frames — and that timing is load-bearing
+
+An app-written `animateToItem` starts a real multi-frame scroll (`ArrayGrid.startScrollAnimation`,
+`tickScrollAnimation`, driven from `sgRoot.processScrollAnimations` in the render loop). All of it is
+device-measured on a Roku Streaming Stick+ (OS 15.3) with
+`test/simulator/probes/grid-scroll-animation-probe` — read that probe's README before changing any of it.
+
+- **Duration scales with distance:** ~340 ms **per row traversed** (measured 364/686/1021 ms for 1/2/3
+  rows), ease-in-out. Not a fixed total.
+- **`scrollingStatus = true` and `itemUnfocused` fire at animation START**, synchronously, *before the
+  app's assignment returns* — deliberately **not** inside an `enterInternalUpdate` bracket, which would
+  defer them past the writing statement. This is the opposite of the key-navigation path, which emits
+  `itemUnfocused` as part of the settle. `setFocusedItem` skips both when `settlingScrollAnim` is set, so
+  one scroll reports them exactly once.
+- **`currFocusRow` carries fractional in-transit values** each frame via `publishScrollPosition`. A
+  RowList overrides it to write **only** `currFocusRow`: a device's vertical scroll emitted no
+  `currFocusColumn` at all during the ramp.
+- **The settle happens only at completion**, through the normal `setFocusedItem`, so the existing
+  focus gate applies: an **unfocused** list still pulses and still ramps (device-confirmed) but publishes
+  no `itemFocused`/`rowItemFocused`.
+- **A mid-flight write retargets** from the current fractional position — no restart, no second rising
+  edge, nothing emitted for the abandoned target. That is why `ScrollAnimation.from` is a float.
+- **`jumpToItem`/`jumpToRowItem` stay instant** and cancel any in-flight scroll (`cancelScrollAnimation`,
+  which must close the pulse or `scrollingStatus` is stranded at `true` and silently suppresses every
+  later notification — it is not `alwaysNotify`).
+
+**Why it matters beyond smoothness.** A real app failed because of the *ordering*, not the visuals: an
+overlay parented as a sibling of a list, re-shown from a `rowItemFocused` observer that reads the field
+live, with a key handler that must hand focus to the list **before** moving a row (the list's container
+may `jumpToItem` on focus change). With an instant move, (B)'s settle landed inside the handler
+describing the **outgoing** row and re-showed the very overlay the handler was about to hide. Animated,
+that settle lands ~340 ms later and describes the row moved *to*.
+
+**Deliberately scoped out: key navigation.** A device animates it too, but `ArrayGrid.handleKey` sets
+`keyNavMove` so a subclass writing `animateToItem` as its internal move shortcut (`MarkupGrid.handleUpDown`)
+still settles instantly. Animating key nav would rewrite the key-driven emission order pinned by
+`ArrayGridFields.test.js` and read synchronously by several CLI fixtures; it needs its own regression pass.
+
+**Known one-record deviation:** a device interleaves the falling edge *inside* the settle
+(`itemFocused` → `scrollingStatus=false` → `rowItemFocused`); we emit it after the whole settle. Matching
+exactly would mean suppressing `rowItemFocused` inside `RowList.setFocusedItem` and re-emitting it here,
+fighting the "rowItemFocused settles last" invariant and four other `setRowItemFocused` call sites. Both
+orders keep the property apps rely on (edge and settle adjacent, teardown followed by a rebuild).
+
+`skipFocusAnimations` is declared on `ArrayGrid` but **intentionally not wired** to any of this: the probe
+measured that setting it `true` on a device does **not** suppress the scroll (its wording is about the
+focus *indicator*). It exists so an app reading the documented field gets `false` instead of `invalid`,
+which used to crash a strongly-typed BrightScript helper.
+
+Regressions: `test/extensions/scenegraph/ArrayGridScrollAnimation.test.js` (drives the injectable
+`sgClock` for determinism) and `list-refocus-overlay-app` in `test/cli/cli-scenegraph.test.js`, whose
+`inflight:` line is what an instant move cannot produce.
 
 ## Focus chain consistency (`focusedChild` ↔ live focus)
 

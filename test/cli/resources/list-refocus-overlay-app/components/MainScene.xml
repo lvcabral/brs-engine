@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Models a real app shape: an overlay parented as a SIBLING of a RowList, re-shown from an observer
+    on the list's `rowItemFocused` that reads the field LIVE off the node (not from event.getData()).
+
+    The key handler must hand focus to the list BEFORE moving a row — a necessary order, because a
+    list's container may jumpToItem when focus changes — so the sequence is:
+
+        (A) list.setFocus(true)
+        (B) list.animateToItem = currFocusRow + 1
+        (C) hideOverlay()
+
+    Verified on a real Roku device: `animateToItem` starts an ANIMATED scroll (~340 ms per row) that
+    OUTLIVES the key handler. What this app pins is that (B)'s settle does not land inside the handler:
+    a few frames after `pressDown` returns the list is still mid-scroll — `scrollingStatus` is true,
+    `currFocusRow` sits BETWEEN two rows, and `itemFocused` still reports the OUTGOING row. An instant
+    move cannot produce that state, so `inflight:` is what discriminates the two implementations.
+
+    Note the `showOverlay` between (A) and (B) is expected and device-accurate: it comes from (A)'s
+    focus-gain re-emission of `rowItemFocused` (a real Roku re-emits the settle for an unchanged
+    position — measured in `test/simulator/probes/list-refocus-settle-probe`, R2/R4/R5), NOT from the
+    move. The app tolerates it because (C) hides the overlay afterwards; what broke a real app was
+    (B)'s settle ALSO landing before (C) while describing the outgoing row, which the animated scroll
+    now defers past the handler.
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+        <function name="startScenario" />
+        <function name="pressDown" />
+        <function name="reportInFlight" />
+        <function name="report" />
+    </interface>
+    <children>
+        <RowList
+            id="list"
+            itemComponentName="OverlayItem"
+            itemSize="[1000, 240]"
+            rowItemSize="[[300, 200]]"
+            numRows="3"
+            translation="[100, 300]" />
+        <Rectangle
+            id="overlay"
+            width="600"
+            height="160"
+            translation="[100, 100]"
+            color="0xCC7722FF"
+            focusable="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.list = m.top.findNode("list")
+        m.overlay = m.top.findNode("overlay")
+        ' The overlay belongs to row 0; focusing that row is what re-shows it.
+        m.overlayRow = 0
+
+        content = createObject("roSGNode", "ContentNode")
+        for r = 0 to 3
+            row = content.createChild("ContentNode")
+            for c = 0 to 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + str(r).trim() + "C" + str(c).trim()
+            end for
+        end for
+        m.list.content = content
+
+        m.list.observeField("rowItemFocused", "onRowItemFocused")
+    end sub
+
+    ' Reads rowItemFocused LIVE, as a real app does, and re-shows the overlay when the focused row is
+    ' the overlay's row. A "showOverlay" line printed between "A:" and "C:" is the bug reproducing.
+    sub onRowItemFocused()
+        live = m.list.rowItemFocused
+        if live <> invalid and live.count() = 2 and live[0] = m.overlayRow
+            print "showOverlay (live row = "; live[0]; ")"
+            m.overlay.visible = true
+        end if
+    end sub
+
+    ' Puts the app in the state the user is in: overlay visible and focused, list parked on row 0.
+    sub startScenario()
+        m.list.jumpToRowItem = [m.overlayRow, 0]
+        m.overlay.visible = true
+        m.overlay.setFocus(true)
+        print "scenario ready: overlayFocus = "; m.overlay.hasFocus(); " row = "; m.list.currFocusRow
+    end sub
+
+    ' The app's navigate-out-of-the-overlay handler, in the order a real app must use it.
+    sub pressDown()
+        row = m.list.currFocusRow
+        print "A: handing focus to the list (row = "; row; ")"
+        m.list.setFocus(true)
+        print "B: animateToItem = "; row + 1
+        m.list.animateToItem = row + 1
+        print "C: hiding the overlay"
+        m.overlay.visible = false
+    end sub
+
+    ' Sampled a few frames after the handler returned, while the scroll is still in flight. This is
+    ' the observable difference an instant move cannot produce: currFocusRow sits BETWEEN the rows
+    ' (fractional) and itemFocused still reports the OUTGOING row, because the settle has not run yet.
+    sub reportInFlight()
+        row = m.list.currFocusRow
+        print "inflight: scrolling = "; m.list.scrollingStatus; " settled = "; (row = int(row)); " itemFocused = "; m.list.itemFocused
+    end sub
+
+    sub report()
+        print "final: overlayVisible = "; m.overlay.visible; " currFocusRow = "; m.list.currFocusRow; " itemFocused = "; m.list.itemFocused
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

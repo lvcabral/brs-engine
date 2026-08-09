@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Minimal item component: this app pins field-emission ordering, not rendering. -->
+<component name="OverlayItem" extends="Group">
+    <children>
+        <Rectangle id="bg" width="300" height="200" color="0x223344FF" />
+        <Label id="label" translation="[12, 12]" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.observeField("itemContent", "onItemContent")
+    end sub
+
+    sub onItemContent()
+        if m.top.itemContent <> invalid
+            m.top.findNode("label").text = m.top.itemContent.title
+        end if
+    end sub
+    ]]></script>
+</component>
