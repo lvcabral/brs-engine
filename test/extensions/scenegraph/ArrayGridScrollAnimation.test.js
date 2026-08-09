@@ -268,4 +268,46 @@ describe("ArrayGrid animateToItem animates the focus scroll", () => {
         expect(sgRoot.scrollAnimations).toHaveLength(1);
         expect(list.getValueJS("itemFocused")).toBe(0);
     });
+    test("interleaves the falling edge between itemFocused and rowItemFocused", () => {
+        // Device-measured (grid-scroll-animation-probe A1 records 067/068/069): the completing scroll
+        // emits itemFocused, THEN scrollingStatus=false, THEN rowItemFocused last.
+        //
+        // The order is load-bearing. An app tears transient scroll state down on the rising edge and
+        // REBUILDS its focused-item overlay on the falling edge, reading the settled focus position
+        // there, while treating the rowItemFocused observer as the authoritative settle that
+        // re-derives its own state. Emitting the edge after rowItemFocused inverts that: the rebuild
+        // runs first and the settle handler overwrites it, so the overlay stays hidden until some
+        // later navigation re-triggers it.
+        const list = makeList();
+        const log = observe(list, ["scrollingStatus", "itemFocused", "rowItemFocused"]);
+
+        list.setValue("animateToItem", new Int32(2));
+        advance(1000);
+
+        const rising = log.indexOf("scrollingStatus=true");
+        const focused = log.indexOf("itemFocused=2");
+        const falling = log.indexOf("scrollingStatus=false");
+        const settled = log.lastIndexOf("rowItemFocused=[...]");
+
+        expect(rising).toBe(0);
+        expect(focused).toBeGreaterThan(rising);
+        expect(falling).toBeGreaterThan(focused);
+        // rowItemFocused settles LAST, after the falling edge.
+        expect(settled).toBeGreaterThan(falling);
+    });
+
+    test("closes the pulse even when the settle publishes nothing", () => {
+        // Backstop: an unfocused list publishes no settled focus fields, so the interleave point is
+        // never reached. scrollingStatus must still fall, or it is stranded at true — and because it is
+        // not alwaysNotify, a stranded true silently suppresses every later notification.
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("content", buildContent([["A"], ["B"], ["C"]]));
+
+        list.setValue("animateToItem", new Int32(2));
+        expect(list.getValueJS("scrollingStatus")).toBe(true);
+
+        advance(1000);
+        expect(list.getValueJS("scrollingStatus")).toBe(false);
+        expect(sgRoot.scrollAnimations).toHaveLength(0);
+    });
 });

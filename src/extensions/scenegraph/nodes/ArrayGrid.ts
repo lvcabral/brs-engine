@@ -197,6 +197,12 @@ export class ArrayGrid extends Group {
      */
     protected settlingScrollAnim: boolean = false;
     /**
+     * A completing animated scroll still owes its `scrollingStatus=false`, which the settle path emits
+     * at the device's interleave point — after `itemFocused`, before `rowItemFocused`. See
+     * `emitPendingScrollFallingEdge`.
+     */
+    protected pendingScrollFallingEdge: boolean = false;
+    /**
      * Set while the grid's own key handling writes `animateToItem` as an internal shortcut, so the
      * write takes the INSTANT path instead of starting an animated scroll.
      *
@@ -454,6 +460,12 @@ export class ArrayGrid extends Group {
         } finally {
             Field.exitInternalUpdate();
         }
+        // A completing animated scroll closes its pulse HERE, right after itemFocused — the device's
+        // interleave point (see emitPendingScrollFallingEdge). Outside the bracket above so it
+        // dispatches synchronously rather than deferring past the settle it must sit inside. A grid
+        // type settles entirely in this method; RowList overrides the placement so the edge still
+        // precedes its own rowItemFocused.
+        this.emitPendingScrollFallingEdge();
     }
 
     protected findContentIndex(index: number) {
@@ -680,19 +692,39 @@ export class ArrayGrid extends Group {
         // fields (and stays silent for an unfocused grid, matching probe A6).
         this.scrollAnim = undefined;
         this.dequeueScrollAnimation();
-        this.settleScrollAnimation(anim);
-        // Falling edge last, i.e. after the whole settle.
+        // The falling edge is INTERLEAVED into the settle, not appended after it: a device emits
+        // `itemFocused`, then `scrollingStatus=false`, then `rowItemFocused` last (probe A1 records
+        // 067/068/069). `pendingScrollFallingEdge` makes the settle path emit it at that point.
         //
-        // KNOWN ONE-RECORD DEVIATION: a device interleaves it INSIDE the settle — probe A1 measured
-        // `itemFocused` (067), `scrollingStatus=false` (068), `rowItemFocused` (069). Reproducing that
-        // exactly would mean suppressing `rowItemFocused` inside `RowList.setFocusedItem` and
-        // re-emitting it here, which fights the pinned "rowItemFocused settles last" invariant
-        // (RowList.test.js) and touches four other `setRowItemFocused` call sites. Both orders keep the
-        // property apps actually rely on — the falling edge and the settle are adjacent, and an app
-        // that tears transient scroll state down on the edge still has the settle to rebuild from —
-        // so the interleave is left as-is until an app is found that depends on it.
-        super.setValue("scrollingStatus", BrsBoolean.False);
+        // This is load-bearing, not cosmetic. An app tears transient scroll state down on the RISING
+        // edge and rebuilds it on the FALLING edge, reading the settled focus position there — while
+        // treating the `rowItemFocused` observer as the authoritative "focus settled" callback that
+        // then re-derives its own state. Emitting the edge AFTER `rowItemFocused` inverts that: the
+        // rebuild runs first and the settle handler overwrites it, leaving the overlay hidden until
+        // some later navigation re-triggers it.
+        this.pendingScrollFallingEdge = true;
+        try {
+            this.settleScrollAnimation(anim);
+        } finally {
+            // Backstop: if the settle path never reached the interleave point (an empty/rejected
+            // target, or a subclass that settles without emitting), the edge must still close or
+            // `scrollingStatus` is stranded at true and silently suppresses every later notification.
+            this.emitPendingScrollFallingEdge();
+        }
         return true;
+    }
+
+    /**
+     * Emits the owed `scrollingStatus=false` for a completing animated scroll, if it has not gone out
+     * yet. Called from the settle path at the device's interleave point (between `itemFocused` and
+     * `rowItemFocused`) and again as a backstop when the settle returns.
+     */
+    protected emitPendingScrollFallingEdge() {
+        if (!this.pendingScrollFallingEdge) {
+            return;
+        }
+        this.pendingScrollFallingEdge = false;
+        super.setValue("scrollingStatus", BrsBoolean.False);
     }
 
     /**

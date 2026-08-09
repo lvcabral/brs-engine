@@ -1,0 +1,361 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Grid Scroll Animation Probe.
+
+    A real Roku ANIMATES a list/grid focus move: `animateToItem` ramps `currFocusRow` through
+    fractional values across many frames before the focus fields settle. brs-engine completes the
+    move instantly (both `animateToItem` and `jumpToItem` route to the same `setFocusedItem`), so an
+    app's key handler observes a fully settled move where a device observes one still in flight.
+
+    This probe measures exactly what a native implementation has to reproduce. Every record carries a
+    MILLISECOND timestamp and a frame counter (from a repeat Timer with duration=0), so the ramp's
+    duration, frame count and easing curve can be reconstructed - not just its value sequence.
+
+    THE LOAD-BEARING QUESTION (A4/A5): on device, an overlay that steals focus from a
+    `rowItemFocused` observer keeps `hasFocus()` for the WHOLE animation and loses it exactly when the
+    animation settles. Two readings fit:
+      (i)  `animateToItem` is an animated focus MOVE, and its completion re-asserts focus on the list
+           (so the steal is simply overwritten at the end); or
+      (ii) the steal never rewrote the chain at all, and completion merely re-lands focus.
+    A4 separates them by stealing focus and then NOT moving a row: under (i) the overlay keeps focus
+    indefinitely, under (ii) it also keeps it - so A5 adds the reverse check, stealing focus with an
+    animation already in flight and observing whether the in-flight animation still settles onto the
+    list. Together they say whether implementing scroll animation is SUFFICIENT to fix the app-level
+    failure, or whether the focus-chain model has to change too.
+
+    Scenarios
+      A1  animateToItem on a focused list           - full ramp: duration, frames, easing, ordering
+      A2  jumpToItem on a focused list              - does it animate at all, or settle instantly?
+      A3  animateToItem interrupted mid-flight      - does a second write retarget or restart?
+      A4  steal focus from a rowItemFocused observer, WITHOUT moving a row afterwards
+      A5  steal focus while an animation is ALREADY in flight - does it still settle onto the list?
+      A6  animateToItem on an UNFOCUSED list        - animated, or silent like jumpToItem?
+      A7  animateToItem with skipFocusAnimations=true - the documented opt-out; the ramp must collapse
+-->
+<component name="ScrollAnimScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <RowList
+            id="list"
+            itemComponentName="ScrollAnimItem"
+            itemSize="[1000, 240]"
+            rowItemSize="[[300, 200]]"
+            numRows="3"
+            translation="[100, 300]" />
+        <Rectangle
+            id="overlay"
+            width="600"
+            height="160"
+            translation="[100, 100]"
+            color="0xCC7722FF"
+            focusable="true" />
+        <!--
+            Ticks close to one render frame (1/60s). Deliberately NOT duration=0: that free-runs as
+            fast as the interpreter loops (the engine reached ~250k "frames" per second), which makes
+            the counter meaningless as a frame metric. At 0.016 the counter tracks real frames closely
+            enough to convert a ramp into a frame count, and the ms stamp is the precise measure.
+        -->
+        <Timer id="frameTimer" duration="0.016" repeat="true" />
+        <Timer id="stepTimer" duration="1.2" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.seq = 0
+        m.step = 0
+        m.frame = 0
+        m.scenario = "init"
+        m.span = createObject("roTimespan")
+        m.span.mark()
+
+        m.list = m.top.findNode("list")
+        m.overlay = m.top.findNode("overlay")
+
+        ' Armed per-scenario: whether a rowItemFocused observer should steal focus to the overlay.
+        m.stealOnFocus = false
+        m.stealRow = -1
+        m.pendingInterrupt = false
+        m.interruptFrames = 0
+        m.pendingMidflightSteal = false
+        m.midflightFrames = 0
+
+        content = createObject("roSGNode", "ContentNode")
+        for r = 0 to 5
+            row = content.createChild("ContentNode")
+            row.title = "Row" + str(r).trim()
+            for c = 0 to 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + str(r).trim() + "C" + str(c).trim()
+            end for
+        end for
+        m.list.content = content
+
+        m.list.observeField("rowItemFocused", "onRowItemFocused")
+        m.list.observeField("itemFocused", "onItemFocused")
+        m.list.observeField("itemUnfocused", "onItemUnfocused")
+        m.list.observeField("currFocusRow", "onCurrFocusRow")
+        m.list.observeField("currFocusColumn", "onCurrFocusColumn")
+        m.list.observeField("scrollingStatus", "onScrollingStatus")
+
+        p("init", "ready", ls())
+
+        m.frameTimer = m.top.findNode("frameTimer")
+        m.frameTimer.observeField("fire", "onFrameTimer")
+        m.frameTimer.control = "start"
+
+        m.stepTimer = m.top.findNode("stepTimer")
+        m.stepTimer.observeField("fire", "onStepTimer")
+        m.stepTimer.control = "start"
+    end sub
+
+    ' ---------------------------------------------------------------- trace helpers
+
+    ' Every record carries ms since boot and the current frame number, so the ramp's real duration and
+    ' per-frame step can be reconstructed (a value sequence alone cannot distinguish a 20-frame ramp
+    ' from a 60-frame one sampled every third frame).
+    sub p(scenario as string, point as string, detail = "" as string)
+        m.seq = m.seq + 1
+        num = "00" + str(m.seq).trim()
+        print "PROBE3|" + Right(num, 3) + "|" + str(m.span.totalMilliseconds()).trim() + "ms|f" + str(m.frame).trim() + "|" + scenario + "|" + point + "|" + detail
+    end sub
+
+    function b(value as boolean) as string
+        if value then return "T"
+        return "F"
+    end function
+
+    function arr(value as object) as string
+        if value = invalid then return "invalid"
+        if type(value) <> "roArray" then return "type:" + type(value)
+        if value.count() = 0 then return "[]"
+        out = "["
+        for i = 0 to value.count() - 1
+            if i > 0 then out = out + ","
+            out = out + str(value[i]).trim()
+        end for
+        return out + "]"
+    end function
+
+    function ls() as string
+        return "liveRIF=" + arr(m.list.rowItemFocused) + " liveIF=" + str(m.list.itemFocused).trim() + " liveIU=" + str(m.list.itemUnfocused).trim() + " liveCFR=" + str(m.list.currFocusRow).trim() + " liveSS=" + b(m.list.scrollingStatus) + " listInChain=" + b(m.list.isInFocusChain()) + " overlayFocus=" + b(m.overlay.hasFocus())
+    end function
+
+    ' Drives the frame counter, and fires the two MID-FLIGHT actions. They must land while an
+    ' animation is running, which only a per-frame hook can do: a step-timer tick is too coarse (the
+    ' whole ramp is ~0.3s on device, so a 1.2s step would always land after it settled).
+    sub onFrameTimer()
+        m.frame = m.frame + 1
+
+        ' A3: retarget 4 frames after the first animateToItem was written.
+        if m.pendingInterrupt = true
+            m.interruptFrames = m.interruptFrames + 1
+            if m.interruptFrames >= 4
+                m.pendingInterrupt = false
+                m.interruptFrames = 0
+                p(m.scenario, "INTERRUPT", "retargeting animateToItem = 2 mid-flight " + ls())
+                m.list.animateToItem = 2
+                p(m.scenario, "INTERRUPT-done", ls())
+            end if
+        end if
+
+        ' A5: steal focus 4 frames into the animation, while it is still ramping.
+        if m.pendingMidflightSteal = true
+            m.midflightFrames = m.midflightFrames + 1
+            if m.midflightFrames >= 4
+                m.pendingMidflightSteal = false
+                m.midflightFrames = 0
+                p(m.scenario, "MIDFLIGHT-STEAL", "calling overlay.setFocus(true) mid-animation " + ls())
+                m.overlay.setFocus(true)
+                p(m.scenario, "MIDFLIGHT-STEAL-done", ls())
+            end if
+        end if
+    end sub
+
+    ' ---------------------------------------------------------------- observers
+
+    sub onCurrFocusRow(event as object)
+        p(m.scenario, "OBS-currFocusRow", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onCurrFocusColumn(event as object)
+        p(m.scenario, "OBS-currFocusColumn", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onItemFocused(event as object)
+        p(m.scenario, "OBS-itemFocused", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onItemUnfocused(event as object)
+        p(m.scenario, "OBS-itemUnfocused", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onScrollingStatus(event as object)
+        p(m.scenario, "OBS-scrollingStatus", "data=" + b(event.getData()) + " " + ls())
+    end sub
+
+    ' The app-shaped observer: steal focus to the overlay when the focused row is the armed one.
+    sub onRowItemFocused(event as object)
+        p(m.scenario, "OBS-rowItemFocused", "data=" + arr(event.getData()) + " " + ls())
+        live = m.list.rowItemFocused
+        if m.stealOnFocus and live <> invalid and live.count() = 2 and live[0] = m.stealRow
+            m.stealOnFocus = false
+            p(m.scenario, "STEAL", "calling overlay.setFocus(true) " + ls())
+            m.overlay.setFocus(true)
+            p(m.scenario, "STEAL-done", ls())
+        end if
+    end sub
+
+    ' ---------------------------------------------------------------- scenario driver
+
+    sub onStepTimer()
+        m.step = m.step + 1
+
+        if m.step = 1
+            m.scenario = "A0-focus"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 2
+            ' A1: the reference ramp. Everything between "before" and the settle is the animation.
+            m.scenario = "A1-animate"
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 3
+            p(m.scenario, "after-write", ls())
+
+        else if m.step = 3
+            m.scenario = "A1-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 4
+            ' A2: jumpToItem for contrast - documented as an immediate move, so it should NOT ramp.
+            m.scenario = "A2-jump"
+            p(m.scenario, "before", ls())
+            m.list.jumpToItem = 0
+            p(m.scenario, "after-write", ls())
+
+        else if m.step = 5
+            m.scenario = "A2-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 6
+            ' A3: retarget mid-flight. The second write lands a few frames into the first animation.
+            m.scenario = "A3-interrupt"
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 5
+            p(m.scenario, "after-first-write", ls())
+            m.pendingInterrupt = true
+
+        else if m.step = 7
+            m.scenario = "A3-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 8
+            m.scenario = "A4-prep"
+            p(m.scenario, "before", ls())
+            m.list.jumpToItem = 0
+            p(m.scenario, "after", ls())
+
+        else if m.step = 9
+            ' A4: steal focus from the rowItemFocused observer and then do NOTHING else. If the
+            ' overlay still holds focus a second later, the steal genuinely rewrote the chain and
+            ' animation completion is what would have rescued it.
+            m.scenario = "A4-steal-no-move"
+            m.stealOnFocus = true
+            m.stealRow = 1
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 1
+            p(m.scenario, "after-write", ls())
+
+        else if m.step = 10
+            m.scenario = "A4-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 11
+            m.scenario = "A5-prep"
+            p(m.scenario, "before", ls())
+            m.overlay.setFocus(true)
+            m.list.jumpToItem = 0
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 12
+            ' A5: start an animation, then steal focus a few frames in (from the frame timer below).
+            ' Does the in-flight animation still settle onto the list, taking focus back?
+            m.scenario = "A5-steal-midflight"
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 4
+            p(m.scenario, "after-write", ls())
+            m.pendingMidflightSteal = true
+
+        else if m.step = 13
+            m.scenario = "A5-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 14
+            ' A6: unfocused animateToItem - animated or silent?
+            m.scenario = "A6-prep"
+            p(m.scenario, "before", ls())
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 15
+            m.scenario = "A6-unfocused-animate"
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 2
+            p(m.scenario, "after-write", ls())
+
+        else if m.step = 16
+            m.scenario = "A6-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 17
+            m.scenario = "A7-prep"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            m.list.jumpToItem = 0
+            p(m.scenario, "after", ls())
+
+        else if m.step = 18
+            ' A7: skipFocusAnimations is the documented opt-out (arraygrid.md) - with it true, the
+            ' focus fields "are updated instantly and not transition smoothly between old and new
+            ' values". That is exactly what the engine does unconditionally today, so this scenario
+            ' confirms the field is the right switch: A1's ramp must collapse to a single step here.
+            m.scenario = "A7-skipFocusAnimations"
+            ' hasField first: the engine does not declare skipFocusAnimations at all, so reading it
+            ' yields Invalid. Reporting "absent" is itself a finding (the documented opt-out is
+            ' missing), and it keeps the probe from crashing on the engine side.
+            hasSkip = m.list.hasField("skipFocusAnimations")
+            if hasSkip then m.list.skipFocusAnimations = true
+            if hasSkip
+                skipState = b(m.list.skipFocusAnimations)
+            else
+                skipState = "absent"
+            end if
+            p(m.scenario, "before", "skipFocusAnimations=" + skipState + " " + ls())
+            m.list.animateToItem = 3
+            p(m.scenario, "after-write", ls())
+
+        else if m.step = 19
+            m.scenario = "A7-settled"
+            p(m.scenario, "settled", ls())
+            if m.list.hasField("skipFocusAnimations") then m.list.skipFocusAnimations = false
+            m.stepTimer.control = "stop"
+            m.frameTimer.control = "stop"
+            p(m.scenario, "exit", "probe complete")
+            m.top.probeExit = true
+
+        end if
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if key = "back" and press
+            p(m.scenario, "exit", "probe aborted by user")
+            m.top.probeExit = true
+            return true
+        end if
+        return false
+    end function
+    ]]></script>
+</component>

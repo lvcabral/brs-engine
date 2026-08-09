@@ -1,0 +1,104 @@
+PROBE3|000|0ms|f0|boot|start|
+PROBE3|000|0ms|f0|boot|device|model=Roku Streaming Stick+ os=15.3
+PROBE3|001|3ms|f0|init|ready|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=-1 liveSS=F listInChain=F overlayFocus=F
+PROBE3|002|21ms|f0|init|OBS-currFocusRow|data=0 liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveSS=F listInChain=F overlayFocus=F
+PROBE3|003|1204ms|f73|A0-focus|before|liveRIF=[] liveIF=-1 liveIU=-1 liveCFR=0 liveSS=F listInChain=F overlayFocus=F
+PROBE3|004|1205ms|f73|A0-focus|OBS-itemFocused|data=0 liveRIF=[] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|005|1206ms|f73|A0-focus|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|006|1206ms|f73|A0-focus|after|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|007|2407ms|f148|A1-animate|before|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|008|2410ms|f148|A1-animate|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|009|2413ms|f148|A1-animate|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|010|2417ms|f148|A1-animate|after-write|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|011|2428ms|f149|A1-animate|OBS-currFocusRow|data=0.07916667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.07916667 liveSS=T listInChain=T overlayFocus=F
+PROBE3|012|2439ms|f150|A1-animate|OBS-currFocusRow|data=0.2 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.2 liveSS=T listInChain=T overlayFocus=F
+PROBE3|020|2545ms|f156|A1-animate|OBS-currFocusRow|data=1.016667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.016667 liveSS=T listInChain=T overlayFocus=F
+PROBE3|031|2728ms|f167|A1-animate|OBS-currFocusRow|data=2.020833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2.020833 liveSS=T listInChain=T overlayFocus=F
+PROBE3|065|3312ms|f201|A1-animate|OBS-currFocusRow|data=2.995833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2.995833 liveSS=T listInChain=T overlayFocus=F
+PROBE3|066|3412ms|f207|A1-animate|OBS-currFocusRow|data=3 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=3 liveSS=T listInChain=T overlayFocus=F
+PROBE3|067|3430ms|f207|A1-animate|OBS-itemFocused|data=3 liveRIF=[0,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=T listInChain=T overlayFocus=F
+PROBE3|068|3431ms|f207|A1-animate|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|069|3431ms|f207|A1-animate|OBS-rowItemFocused|data=[3,0] liveRIF=[3,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|070|3604ms|f219|A1-settled|settled|liveRIF=[3,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|071|4805ms|f294|A2-jump|before|liveRIF=[3,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|072|4805ms|f294|A2-jump|OBS-itemUnfocused|data=3 liveRIF=[3,0] liveIF=3 liveIU=3 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|073|4805ms|f294|A2-jump|OBS-currFocusRow|data=0 liveRIF=[3,0] liveIF=3 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|074|4806ms|f294|A2-jump|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=3 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|075|4808ms|f294|A2-jump|OBS-itemFocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|076|4808ms|f294|A2-jump|after-write|liveRIF=[0,0] liveIF=0 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|077|6006ms|f369|A2-settled|settled|liveRIF=[0,0] liveIF=0 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|078|7205ms|f444|A3-interrupt|before|liveRIF=[0,0] liveIF=0 liveIU=3 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|079|7205ms|f444|A3-interrupt|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=3 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|080|7206ms|f444|A3-interrupt|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|081|7206ms|f444|A3-interrupt|after-first-write|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|087|7266ms|f447|A3-interrupt|OBS-currFocusRow|data=0.5208333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5208333 liveSS=T listInChain=T overlayFocus=F
+PROBE3|088|7283ms|f448|A3-interrupt|INTERRUPT|retargeting animateToItem = 2 mid-flight liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5208333 liveSS=T listInChain=T overlayFocus=F
+PROBE3|089|7284ms|f448|A3-interrupt|INTERRUPT-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5208333 liveSS=T listInChain=T overlayFocus=F
+PROBE3|090|7285ms|f448|A3-interrupt|OBS-currFocusRow|data=0.6583334 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.6583334 liveSS=T listInChain=T overlayFocus=F
+PROBE3|113|7666ms|f470|A3-interrupt|OBS-currFocusRow|data=1.995833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1.995833 liveSS=T listInChain=T overlayFocus=F
+PROBE3|114|7734ms|f474|A3-interrupt|OBS-currFocusRow|data=2 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2 liveSS=T listInChain=T overlayFocus=F
+PROBE3|115|7751ms|f474|A3-interrupt|OBS-itemFocused|data=2 liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveSS=T listInChain=T overlayFocus=F
+PROBE3|116|7752ms|f474|A3-interrupt|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=2 liveIU=0 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|117|7753ms|f474|A3-interrupt|OBS-rowItemFocused|data=[2,0] liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|118|8406ms|f516|A3-settled|settled|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|119|9606ms|f591|A4-prep|before|liveRIF=[2,0] liveIF=2 liveIU=0 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|124|9628ms|f591|A4-prep|after|liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|125|10806ms|f666|A4-steal-no-move|before|liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|126|10808ms|f666|A4-steal-no-move|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|127|10810ms|f666|A4-steal-no-move|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|128|10812ms|f666|A4-steal-no-move|after-write|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|148|11103ms|f684|A4-steal-no-move|OBS-currFocusRow|data=0.9958333 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.9958333 liveSS=T listInChain=T overlayFocus=F
+PROBE3|149|11154ms|f687|A4-steal-no-move|OBS-currFocusRow|data=1 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=1 liveSS=T listInChain=T overlayFocus=F
+PROBE3|150|11171ms|f687|A4-steal-no-move|OBS-itemFocused|data=1 liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=T listInChain=T overlayFocus=F
+PROBE3|151|11172ms|f687|A4-steal-no-move|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=T overlayFocus=F
+PROBE3|152|11173ms|f687|A4-steal-no-move|OBS-rowItemFocused|data=[1,0] liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=T overlayFocus=F
+PROBE3|153|11173ms|f687|A4-steal-no-move|STEAL|calling overlay.setFocus(true) liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=T overlayFocus=F
+PROBE3|154|11174ms|f687|A4-steal-no-move|STEAL-done|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=F overlayFocus=T
+PROBE3|155|12006ms|f740|A4-settled|settled|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=F overlayFocus=T
+PROBE3|156|13206ms|f815|A5-prep|before|liveRIF=[1,0] liveIF=1 liveIU=0 liveCFR=1 liveSS=F listInChain=F overlayFocus=T
+PROBE3|157|13208ms|f815|A5-prep|OBS-itemUnfocused|data=-1 liveRIF=[1,0] liveIF=1 liveIU=-1 liveCFR=1 liveSS=F listInChain=F overlayFocus=T
+PROBE3|158|13210ms|f815|A5-prep|OBS-currFocusRow|data=0 liveRIF=[1,0] liveIF=1 liveIU=-1 liveCFR=0 liveSS=F listInChain=F overlayFocus=T
+PROBE3|159|13216ms|f815|A5-prep|OBS-itemFocused|data=0 liveRIF=[1,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|160|13218ms|f815|A5-prep|OBS-rowItemFocused|data=[0,0] liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|161|13220ms|f815|A5-prep|after|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|162|14405ms|f890|A5-steal-midflight|before|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|163|14407ms|f890|A5-steal-midflight|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|164|14409ms|f890|A5-steal-midflight|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|165|14411ms|f890|A5-steal-midflight|after-write|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|170|14456ms|f893|A5-steal-midflight|OBS-currFocusRow|data=0.3916667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.3916667 liveSS=T listInChain=T overlayFocus=F
+PROBE3|171|14473ms|f894|A5-steal-midflight|MIDFLIGHT-STEAL|calling overlay.setFocus(true) mid-animation liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.3916667 liveSS=T listInChain=T overlayFocus=F
+PROBE3|172|14475ms|f894|A5-steal-midflight|MIDFLIGHT-STEAL-done|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.3916667 liveSS=T listInChain=F overlayFocus=T
+PROBE3|173|14476ms|f894|A5-steal-midflight|OBS-currFocusRow|data=0.5375 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.5375 liveSS=T listInChain=F overlayFocus=T
+PROBE3|239|15575ms|f960|A5-steal-midflight|OBS-currFocusRow|data=3.991667 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=3.991667 liveSS=T listInChain=F overlayFocus=T
+PROBE3|240|15607ms|f962|A5-settled|settled|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=3.991667 liveSS=T listInChain=F overlayFocus=T
+PROBE3|241|15625ms|f963|A5-settled|OBS-currFocusRow|data=3.995833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=3.995833 liveSS=T listInChain=F overlayFocus=T
+PROBE3|242|15741ms|f970|A5-settled|OBS-currFocusRow|data=4 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=T listInChain=F overlayFocus=T
+PROBE3|243|15758ms|f970|A5-settled|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=F listInChain=F overlayFocus=T
+PROBE3|244|16804ms|f1037|A6-prep|before|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=F listInChain=F overlayFocus=T
+PROBE3|245|16805ms|f1037|A6-prep|after|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=F listInChain=F overlayFocus=T
+PROBE3|246|18006ms|f1112|A6-unfocused-animate|before|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=F listInChain=F overlayFocus=T
+PROBE3|247|18009ms|f1112|A6-unfocused-animate|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=4 liveSS=T listInChain=F overlayFocus=T
+PROBE3|248|18011ms|f1112|A6-unfocused-animate|OBS-itemUnfocused|data=-1 liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=4 liveSS=T listInChain=F overlayFocus=T
+PROBE3|249|18013ms|f1112|A6-unfocused-animate|after-write|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=4 liveSS=T listInChain=F overlayFocus=T
+PROBE3|250|18025ms|f1113|A6-unfocused-animate|OBS-currFocusRow|data=3.925 liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=3.925 liveSS=T listInChain=F overlayFocus=T
+PROBE3|286|18595ms|f1147|A6-unfocused-animate|OBS-currFocusRow|data=2 liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=2 liveSS=T listInChain=F overlayFocus=T
+PROBE3|287|18695ms|f1152|A6-unfocused-animate|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=2 liveSS=F listInChain=F overlayFocus=T
+PROBE3|288|19207ms|f1185|A6-settled|settled|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=2 liveSS=F listInChain=F overlayFocus=T
+PROBE3|289|20406ms|f1260|A7-prep|before|liveRIF=[0,0] liveIF=0 liveIU=-1 liveCFR=2 liveSS=F listInChain=F overlayFocus=T
+PROBE3|290|20412ms|f1260|A7-prep|OBS-itemFocused|data=2 liveRIF=[0,0] liveIF=2 liveIU=-1 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|291|20415ms|f1260|A7-prep|OBS-rowItemFocused|data=[2,0] liveRIF=[2,0] liveIF=2 liveIU=-1 liveCFR=2 liveSS=F listInChain=T overlayFocus=F
+PROBE3|296|20431ms|f1260|A7-prep|after|liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|297|21604ms|f1335|A7-skipFocusAnimations|before|skipFocusAnimations=T liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=F listInChain=T overlayFocus=F
+PROBE3|298|21605ms|f1335|A7-skipFocusAnimations|OBS-scrollingStatus|data=T liveRIF=[0,0] liveIF=0 liveIU=2 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|299|21606ms|f1335|A7-skipFocusAnimations|OBS-itemUnfocused|data=0 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|300|21606ms|f1335|A7-skipFocusAnimations|after-write|liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0 liveSS=T listInChain=T overlayFocus=F
+PROBE3|301|21608ms|f1335|A7-skipFocusAnimations|OBS-currFocusRow|data=0.008333334 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=0.008333334 liveSS=T listInChain=T overlayFocus=F
+PROBE3|355|22499ms|f1388|A7-skipFocusAnimations|OBS-currFocusRow|data=2.995833 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=2.995833 liveSS=T listInChain=T overlayFocus=F
+PROBE3|356|22615ms|f1395|A7-skipFocusAnimations|OBS-currFocusRow|data=3 liveRIF=[0,0] liveIF=0 liveIU=0 liveCFR=3 liveSS=T listInChain=T overlayFocus=F
+PROBE3|357|22633ms|f1395|A7-skipFocusAnimations|OBS-itemFocused|data=3 liveRIF=[0,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=T listInChain=T overlayFocus=F
+PROBE3|358|22633ms|f1395|A7-skipFocusAnimations|OBS-scrollingStatus|data=F liveRIF=[0,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|359|22634ms|f1395|A7-skipFocusAnimations|OBS-rowItemFocused|data=[3,0] liveRIF=[3,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|360|22804ms|f1407|A7-settled|settled|liveRIF=[3,0] liveIF=3 liveIU=0 liveCFR=3 liveSS=F listInChain=T overlayFocus=F
+PROBE3|361|22805ms|f1407|A7-settled|exit|probe complete
+PROBE3|999|0ms|f0|boot|end|
+PROBE3|999|capture-note|manual|Long fractional currFocusRow runs elided (A1 013-064, A3 082-112, A4 129-147, A5 174-238, A6 251-285, A7 302-354); every structural record and each ramp's endpoints are kept verbatim. Full log in the conversation that produced this file.

@@ -1217,11 +1217,23 @@ that settle lands ~340 ms later and describes the row moved *to*.
 still settles instantly. Animating key nav would rewrite the key-driven emission order pinned by
 `ArrayGridFields.test.js` and read synchronously by several CLI fixtures; it needs its own regression pass.
 
-**Known one-record deviation:** a device interleaves the falling edge *inside* the settle
-(`itemFocused` → `scrollingStatus=false` → `rowItemFocused`); we emit it after the whole settle. Matching
-exactly would mean suppressing `rowItemFocused` inside `RowList.setFocusedItem` and re-emitting it here,
-fighting the "rowItemFocused settles last" invariant and four other `setRowItemFocused` call sites. Both
-orders keep the property apps rely on (edge and settle adjacent, teardown followed by a rebuild).
+**The falling edge is INTERLEAVED into the settle, not appended after it.** A device emits
+`itemFocused` → `scrollingStatus=false` → `rowItemFocused` (probe A1 records 067/068/069), and
+`pendingScrollFallingEdge` / `emitPendingScrollFallingEdge` reproduce that: `ArrayGrid.setFocusedItem`
+emits the edge right after `itemFocused` (outside the `enterInternalUpdate` bracket, so it dispatches
+synchronously), and `RowList.setFocusedItem` emits it between `itemFocused` and its own
+`setRowItemFocused`. `tickScrollAnimation` calls the hook again as a backstop, because a settle that
+publishes nothing (an unfocused list, a rejected target) never reaches the interleave point — and a
+stranded `true` silently suppresses every later notification, the field not being `alwaysNotify`.
+
+This ordering was initially dismissed as a harmless one-record deviation and **that was wrong**: an app
+tears transient scroll state down on the rising edge and *rebuilds* its focused-item overlay on the
+falling edge, reading the settled focus position there, while treating the `rowItemFocused` observer as
+the authoritative settle that re-derives its own state. With the edge emitted last, the rebuild ran
+first and the settle handler overwrote it — the overlay stayed hidden until a later navigation
+re-triggered it (visible as "the focused-poster overlay only appears after moving horizontally").
+Note the edge still precedes `rowItemFocused`, so rule 1 above and the "rowItemFocused settles last"
+invariant both continue to hold.
 
 `skipFocusAnimations` is declared on `ArrayGrid` but **intentionally not wired** to any of this: the probe
 measured that setting it `true` on a device does **not** suppress the scroll (its wording is about the

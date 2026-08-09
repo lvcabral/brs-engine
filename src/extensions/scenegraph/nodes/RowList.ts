@@ -287,6 +287,12 @@ export class RowList extends ArrayGrid {
             } finally {
                 Field.exitInternalUpdate();
             }
+            // A completing animated scroll closes its pulse between itemFocused (just emitted) and
+            // rowItemFocused (emitted by setRowItemFocused below) — the device's interleave point.
+            // An app rebuilds its focused-item overlay on this falling edge and then treats the
+            // rowItemFocused observer as the authoritative settle; reversing the two lets the settle
+            // handler overwrite the rebuild. See ArrayGrid.emitPendingScrollFallingEdge.
+            this.emitPendingScrollFallingEdge();
             this.setRowItemFocused(rowIndex, colIndex);
         } else {
             // Unfocused: remember the row/column silently (no observer notification). The values are
