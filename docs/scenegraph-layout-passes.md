@@ -152,6 +152,13 @@ directions:
 | accumulated `opacity = 0` | traverses, propagating opacity 0 | **degrades to layout** (`renderNode` drops `draw2D`) |
 | settled subtree, unchanged context | skips (`Group.skipSettledLayout`, pruning) | never skips |
 
+Because the degraded case drops `draw2D` on what is still a paint frame, "no draw target" and "this is a
+layout pass" stop being the same thing. Node code that needs the latter asks `Node.isLayoutPass(draw2D)`,
+which also consults `sgRoot.paintSuppressed`; code that just needs somewhere to draw keeps testing
+`draw2D`. The distinction matters for work that is legitimate only on a layout pass — `LayoutGroup`'s
+multi-pass convergence, a hidden grid's extent measurement, a dialog item's relayout request — which
+would otherwise run on every painted frame of every fade.
+
 Layout must keep descending into hidden and faded-out subtrees because bounding rects are independent
 of visibility on a device, and apps measure and position UI *before* revealing it — a layout-side skip
 would make `boundingRect()` return zeros for exactly the UI that is about to be shown. Paint, in turn,

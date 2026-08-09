@@ -1035,6 +1035,27 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Whether this traversal is a LAYOUT pass — a measurement with no draw target at all — as opposed to
+     * a paint frame whose drawing was suppressed because the subtree is fully transparent
+     * (`Group.renderNode` drops `draw2D` and sets `sgRoot.paintSuppressed`).
+     *
+     * Both look like `draw2D === undefined` from inside a node, which is the trap this closes. Ask this
+     * before doing work that is legitimate ONLY on a layout pass: `LayoutGroup`'s multi-pass convergence
+     * (a real frame keeps a single pass and defers its correction to the next one), a hidden grid's
+     * arithmetic extent measurement (which refreshes content as a side effect), `StdDlgCustomItem`'s
+     * relayout request. A bare `!draw2D` there silently starts doing layout-pass work on painted frames
+     * for every faded-out subtree — i.e. during every fade transition.
+     *
+     * NOT the negation of `isPaintPass`, and the two must not be collapsed: that one is deliberately true
+     * for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside a suppressed
+     * subtree so time-based state and grid item creation behave exactly as on any other painted frame.
+     * These are the same question asked from the two sides of the seam, and both are needed.
+     */
+    protected isLayoutPass(draw2D?: IfDraw2D): boolean {
+        return draw2D === undefined && !sgRoot.paintSuppressed;
+    }
+
+    /**
      * Iterates through child nodes, invoking their render methods in order.
      * @param interpreter Active interpreter.
      * @param origin Parent-space translation.

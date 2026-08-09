@@ -82,7 +82,10 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
         // Children (e.g. a LayoutGroup) only know their size after rendering. If that changed the
         // content height from what layout assumed, ask the owning dialog to re-lay-out next frame so
         // the following areas (buttons) are positioned below this item rather than overlapping it.
-        if (draw2D) {
+        // Keyed on "not a layout pass" rather than on having a draw target: a dialog item inside a
+        // faded-out subtree still needs the request, or it stays mid-layout until something else
+        // dirties it — and a fade-in is exactly when that is visible.
+        if (!this.isLayoutPass(draw2D)) {
             const measured = this.measureContentHeight();
             if (Math.abs(measured - ((this.getValueJS("height") as number) ?? 0)) > 1) {
                 // Content size became known after rendering; ask the dialog to re-lay-out next frame

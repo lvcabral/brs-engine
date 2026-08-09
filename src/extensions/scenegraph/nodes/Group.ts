@@ -737,8 +737,15 @@ export class Group extends Node {
         // still reaches its own `nodeRenderingDone`. Multiplies in this node's OWN opacity (the
         // accumulated value has only the ancestors' folded in) and tests exactly `=== 0`. Rationale and
         // regressions: `.claude/docs/scenegraph-invariants.md`.
-        if (draw2D !== undefined && opacity * this.getOpacity() === 0) {
+        // Flag it as well as dropping the target: to a descendant, a dropped `draw2D` is indistinguishable
+        // from a layout pass, and the handful of sites that legitimately do layout-pass-ONLY work would
+        // start doing it on painted frames (see `Node.isLayoutPass`). Saved and restored rather than
+        // cleared, so a faded subtree nested inside another one restores the outer state.
+        const suppressed = draw2D !== undefined && opacity * this.getOpacity() === 0;
+        const wasSuppressed = sgRoot.paintSuppressed;
+        if (suppressed) {
             draw2D = undefined;
+            sgRoot.paintSuppressed = true;
         }
         // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
         // rects must stay unclipped), and an invisible node draws nothing — check both before probing
@@ -751,6 +758,9 @@ export class Group extends Node {
         } finally {
             if (clipped) {
                 draw2D?.popClip();
+            }
+            if (suppressed) {
+                sgRoot.paintSuppressed = wasSuppressed;
             }
         }
     }
@@ -927,7 +937,9 @@ export class Group extends Node {
             this.updateParentRects(origin, angle);
         }
         this.updateRenderTracking(opacity === 0 || !this.isVisible());
-        // Mark node as clean after rendering
+        // Mark node as clean after rendering. Deliberately keyed on having actually had a draw target, NOT
+        // on `isLayoutPass`: a fully transparent subtree drew nothing, so it must stay dirty and repaint
+        // when revealed. Regression: "a revealed subtree paints again on the next frame".
         if (draw2D) {
             this.isDirty = false;
         }

@@ -148,6 +148,40 @@ time-based state and grid item creation behave exactly as before, so nothing is 
 frame. Only the drawing is suppressed. Regression:
 `test/extensions/scenegraph/TransparentPaintSkip.test.js`.
 
+### A suppressed paint is not a layout pass — the two families of `draw2D` check
+
+Dropping `draw2D` makes a suppressed paint **look like a layout pass** from inside a node, so
+`sgRoot.paintSuppressed` is set around the degraded traversal (saved/restored in a `finally`, so nesting
+is correct and an app exception cannot strand it). Every `draw2D`-presence check falls into one of two
+families, which want *opposite* answers here:
+
+| family | the question actually asked | ask |
+| --- | --- | --- |
+| **can I issue a draw call?** | is there anywhere to draw? | `draw2D` directly |
+| **is this a layout pass?** | may I do layout-pass-ONLY work? | `Node.isLayoutPass(draw2D)` |
+
+The first family is already right by construction — a suppressed subtree genuinely has nowhere to draw —
+and includes three sites where the raw check is **load-bearing**: `nodeRenderingDone` must leave
+`isDirty` set (else a revealed subtree never repaints), `Video`'s own `isDirty` clear, and `MaskGroup`'s
+fallback guard, whose offscreen path would allocate a scene-sized bitmap and build a **real** `IfDraw2D`
+over it — re-injecting a live draw target into a subtree the template just decided must not paint. Do
+not "modernize" those to `isLayoutPass`.
+
+The second family is the one that broke: three sites did layout-pass work on painted frames for every
+faded-out subtree, i.e. throughout every fade transition. `LayoutGroup` ran up to `MAX_LAYOUT_PASSES`
+fixed-point convergence passes instead of the single pass a real frame gets (measured: 8 vs 1);
+`ArrayGrid` ran `measureHiddenExtent` for a hidden grid, which is not a pure measurement — it refreshes
+content — in the path whose whole purpose is suppressing work; and `StdDlgCustomItem` stopped requesting
+a relayout, leaving a faded dialog item stuck mid-layout until something else dirtied it.
+
+`isLayoutPass` is **not** the negation of `isPaintPass` and the two must not be collapsed: `isPaintPass`
+is deliberately true for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside
+a suppressed subtree (that is what keeps time-based state and grid item creation unchanged). A
+`renderPass` enum value was rejected instead: suppression is a *subtree* property while `renderPass` is
+set once per traversal root, and mutating it mid-traversal breaks the two-valued contract
+`LayoutPaintSeam.test.js` pins. A null-object `IfDraw2D` was rejected too — it inverts the whole first
+family, starting with `isDirty`.
+
 ## Blend colors: a tint is a MULTIPLY, and "no blend" has five spellings
 
 Two independent defects here **cancelled for the default value only**, which is why neither showed up

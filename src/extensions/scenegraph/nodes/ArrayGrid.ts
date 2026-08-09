@@ -556,7 +556,11 @@ export class ArrayGrid extends Group {
     ) {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
-            if (!draw2D) {
+            // Layout-pass only, and `isLayoutPass` rather than a bare `!draw2D`: this is not a pure
+            // measurement — `measureHiddenExtent` refreshes content as a side effect — so running it for a
+            // hidden grid inside a faded-out ancestor would do content work on painted frames, in the very
+            // path whose purpose is to suppress work.
+            if (this.isLayoutPass(draw2D)) {
                 this.measureHiddenExtent(origin, angle);
             }
             return;
