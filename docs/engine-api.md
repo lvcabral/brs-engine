@@ -67,8 +67,11 @@ The browser API now re-exports a small set of shared types and constants so host
 
 ## Events
 
+The engine API emits events to subscribers via the `subscribe()` method. Each event has a name and a data payload, which can be of different types depending on the event.
+
 | Event      | Description                                      | Data Type                         |
 |------------|--------------------------------------------------|-----------------------------------|
+| loading    | Triggered when the source code data has started loading | string: `filePath` |
 | loaded     | Triggered when the source code data has finished loading | object: `{id: string, file: string, title: string, subtitle: string, version: string, running: boolean}`|
 | icon       | Triggered when the zip file is loaded and manifest links to a valid icon for the app | base64: A base64 string of the app icon, extracted from the zip file. |
 | registry   | Triggered when the app updates the registry | Map: the registry with all recent recent updates. |
