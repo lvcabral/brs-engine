@@ -65,4 +65,79 @@ describe("SceneGraph focus management", () => {
         expect(focusedDuringALosingFocus).toBe(buttonB);
         expect(sgRoot.focused).toBe(buttonB);
     });
+    test("drops a backwards steal raised from a container's own focusedChild observer", () => {
+        // Device-measured shape (test/simulator/probes/list-refocus-settle-probe, R7): a container
+        // observes its own `focusedChild` and redirects focus to an inner child; something reached
+        // from that notification then re-grabs focus to an unrelated SIBLING of the container. That
+        // target sits outside the subtree the in-flight transaction just focused, so it is a backwards
+        // steal and must be dropped.
+        //
+        // Regression for an owner-keyed classifier: the container IS still in the focus chain (focus
+        // went to its own child), so testing only the notifying owner reads this as a legal forward
+        // focus and honors it — leaving the app focused on the node it was navigating away from.
+        const scene = focusableNode();
+        const container = focusableNode();
+        const inner = focusableNode();
+        const sibling = focusableNode();
+        scene.appendChildToParent(container);
+        container.appendChildToParent(inner);
+        scene.appendChildToParent(sibling);
+
+        sibling.setNodeFocus(true);
+
+        // The container redirects focus inward, then steals it back out to the sibling.
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let redirected = false;
+        port.pushMessage = (event) => {
+            if (!redirected && container.isChildrenFocused() === false && sgRoot.focused === container) {
+                redirected = true;
+                inner.setNodeFocus(true);
+                // Raised while the container's notification is still dispatching: a backwards steal.
+                sibling.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+
+        container.setNodeFocus(true);
+
+        // The steal is dropped: focus stays where the redirect put it.
+        expect(sgRoot.focused).toBe(inner);
+        expect(sibling.getValueJS("focusable")).toBe(true);
+    });
+
+    test("still honors a forward focus onto a sibling of the focused child", () => {
+        // The mirror case that must keep working: a container hands focus from its first child to
+        // another of its own children (how a dialog highlights a specific button). The target is a
+        // SIBLING of the live focus, not a descendant of it, so a target-must-be-below-focus test
+        // would wrongly drop this.
+        const scene = focusableNode();
+        const container = focusableNode();
+        const childA = focusableNode();
+        const childB = focusableNode();
+        scene.appendChildToParent(container);
+        container.appendChildToParent(childA);
+        container.appendChildToParent(childB);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let forwarded = false;
+        port.pushMessage = (event) => {
+            if (!forwarded && sgRoot.focused === childA) {
+                forwarded = true;
+                childB.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+
+        childA.setNodeFocus(true);
+
+        expect(sgRoot.focused).toBe(childB);
+    });
 });
