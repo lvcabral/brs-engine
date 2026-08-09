@@ -257,7 +257,34 @@ export class ArrayGrid extends Group {
                 }
             }
             if (focusIndex >= 0) {
-                this.setFocusedItem(focusIndex);
+                // Device-measured (`test/simulator/probes/list-refocus-settle-probe`, R2/R4/R5): a
+                // focus-gain re-publishes the settle and its observers run BETWEEN the probe's
+                // `before` and `after` records — i.e. before `setFocus` returns.
+                //
+                // That timing is load-bearing, not cosmetic: an app that re-grabs focus from the
+                // resulting `rowItemFocused` observer (an overlay re-showing itself) must be
+                // classified by `Node.isFocusRequestDropped` as a backwards steal and dropped. That
+                // rule keys off `Node.focusNotifyOwners`, which is loaded only while the focus
+                // transaction is on the stack — so a deferred settle escapes it, the steal wins the
+                // live focus, and the app is stranded on the node it was navigating away from.
+                //
+                // Scoped to exactly that case: inline ONLY when a `focusedChild` notification is
+                // dispatching. A plain `setFocus` from app code has no transaction to defend, and
+                // forcing its settle inline there re-creates the reentrancy the deferral exists to
+                // prevent — an observer that assigns content to several lists and moves focus between
+                // the assignments would have a later list's `itemFocused` handler run while an
+                // earlier `content` is still `invalid` (deferred-observer-app).
+                const syncSettle = Node.inFocusNotification();
+                if (syncSettle) {
+                    Field.enterSyncFocusSettle();
+                }
+                try {
+                    this.setFocusedItem(focusIndex);
+                } finally {
+                    if (syncSettle) {
+                        Field.exitSyncFocusSettle();
+                    }
+                }
             }
         }
         return focus;

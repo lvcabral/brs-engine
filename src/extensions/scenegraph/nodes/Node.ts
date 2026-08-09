@@ -92,6 +92,18 @@ export class Node extends RoSGNode implements BrsValue {
      * focus onward) from a focus-loss one (whose focus requests a Roku ignores).
      */
     private static readonly focusNotifyOwners: Node[] = [];
+
+    /**
+     * Whether a `focusedChild` notification is dispatching right now, i.e. a focus transaction is on
+     * the stack and a nested `setFocus` raised from here can still be classified by
+     * `isFocusRequestDropped`.
+     *
+     * Read by `ArrayGrid.setNodeFocus` to decide whether its focus-gain settle must dispatch inline:
+     * only then does the timing matter, because only then is there a transaction to defend.
+     */
+    static inFocusNotification(): boolean {
+        return Node.focusNotifyOwners.length > 0;
+    }
     /**
      * Set while a focus transaction stages its `focusedChild` writes: `setValue` applies the value
      * but routes the notification here instead of dispatching it — see `stageFocusedChild`.
@@ -1329,7 +1341,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Whether the node is focusable.
      */
     setNodeFocus(focusOn: boolean): boolean {
-        if (focusOn && Node.isFocusRequestDropped()) {
+        if (focusOn && Node.isFocusRequestDropped(this)) {
             // Device-measured: Roku ignores a focus request raised from a focus-LOSS notification
             // (see notifyStagedFocus). Report the request as not applied, so a subclass override
             // gated on `super.setNodeFocus(...)` skips its focus bookkeeping too (an ArrayGrid must
@@ -1492,20 +1504,48 @@ export class Node extends RoSGNode implements BrsValue {
      * pointing at different nodes.
      * @returns True when the in-flight notification is a focus loss, so the request is ignored.
      */
-    private static isFocusRequestDropped(): boolean {
+    private static isFocusRequestDropped(target: Node): boolean {
         const owner = Node.focusNotifyOwners.at(-1);
         const focused = sgRoot.focused;
         if (!owner || !(focused instanceof Node)) {
             return false;
         }
-        // Is the owner still in the focus chain? Cheap upward walk from the focused node, the same
-        // shape restoreFocusChainOnAttach uses — an O(subtree) descent would be walked on every
-        // focus request made from inside a notification.
-        let ancestor: BrsType = focused;
-        while (ancestor instanceof Node && ancestor !== owner) {
-            ancestor = ancestor.parent;
+        // Classify by BOTH the notifying owner and the TARGET.
+        //
+        // The rule `focus-probe2` established is (a): a nested request is dropped only when it targets
+        // a node OUTSIDE the subtree the in-flight transaction just focused, while redirecting focus
+        // WITHIN that subtree is allowed. "Within" means inside the notifying owner — forward focus
+        // routinely targets a SIBLING of the focused leaf (a container handing focus from its first
+        // child to another, which is how a dialog highlights its buttons), so testing only whether the
+        // target sits at-or-below the live focus is too strict and breaks that pattern.
+        //
+        // Two conditions, and both matter:
+        //   1. The owner must still be in the focus chain. A request from a node that just LOST focus
+        //      is the classic backwards steal (probe2 N3).
+        //   2. The target must be inside the owner's subtree. Otherwise a container that observes its
+        //      own `focusedChild`, redirects focus to its inner list, and then has the list's
+        //      focus-gain settle run an app observer that re-grabs focus to an unrelated sibling would
+        //      slip through: the owner IS still in the chain (focus went to its own child), so
+        //      condition 1 alone reads that steal as a legal forward focus and strands the app on the
+        //      node it was navigating away from.
+        if (target === focused) {
+            // Re-asserting the node that just took focus is idempotent, never a steal (probe2 N4).
+            return false;
         }
-        return ancestor !== owner;
+        // Cheap upward walks, the same shape restoreFocusChainOnAttach uses — an O(subtree) descent
+        // would run on every nested focus request.
+        let ownerInChain: BrsType = focused;
+        while (ownerInChain instanceof Node && ownerInChain !== owner) {
+            ownerInChain = ownerInChain.parent;
+        }
+        if (ownerInChain !== owner) {
+            return true;
+        }
+        let targetUnderOwner: BrsType = target;
+        while (targetUnderOwner instanceof Node && targetUnderOwner !== owner) {
+            targetUnderOwner = targetUnderOwner.parent;
+        }
+        return targetUnderOwner !== owner;
     }
 
     /**
