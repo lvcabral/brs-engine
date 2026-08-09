@@ -695,6 +695,26 @@ export class RowList extends ArrayGrid {
             this.currRow = this.topRow;
         }
 
+        // While an animated scroll is in flight, anchor the window to the row it has reached and shift
+        // the whole layout up by the sub-row remainder, so the rows visibly slide instead of snapping at
+        // the settle. `scrollAnchorRow` is the integer part of the animated position and takes over from
+        // the settled `currRow`/`topRow` above (which still hold the pre-move row until completion);
+        // `scrollRowOffset` is the [0,1) remainder, converted to pixels with the anchor row's own pitch
+        // because rows may differ in height (rowHeights).
+        const scrollOffset = this.scrollRowOffset();
+        if (scrollOffset > 0) {
+            const anchor = this.scrollAnchorRow();
+            if (anchor !== undefined) {
+                this.currRow = this.isFixedFocusMode() ? anchor : Math.max(0, anchor);
+            }
+            // Same row-height resolution renderSingleRow uses (rowHeights indexed by absolute row,
+            // falling back to itemSize), plus that row's spacing — the pitch to the next row down.
+            const rowHeight = context.rowHeights[this.currRow] ?? context.itemSize[1] ?? 0;
+            const pitch =
+                rowHeight + this.calculateRowSpacing(this.currRow, context.rowSpacings, context.globalSpacing);
+            context.itemRect.y -= scrollOffset * pitch;
+        }
+
         // Rows advance by their own height plus, when the label/counter band does not fit in the row's
         // slack, that band's height (see renderSingleRow). No arithmetic in updateRect can reproduce
         // that without re-measuring the label, so accumulate the extent the loop actually laid out and
@@ -702,7 +722,12 @@ export class RowList extends ArrayGrid {
         const startY = context.itemRect.y;
         let renderedRows = 0;
         let trailingSpacing = 0;
-        for (let r = 0; r < context.displayRows; r++) {
+        // Shifting the layout up by a sub-row offset opens a gap at the bottom of the window, so draw
+        // one extra row while a scroll is in flight — the row sliding in. renderSingleRow's own
+        // viewport test still stops the pass early when that row lands off screen, and the row count
+        // reported to updateRect below is the settled `displayRows` either way.
+        const rowsToRender = scrollOffset > 0 ? context.displayRows + 1 : context.displayRows;
+        for (let r = 0; r < rowsToRender; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
             if (rowIndex === -1) {
                 break;

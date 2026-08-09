@@ -310,4 +310,66 @@ describe("ArrayGrid animateToItem animates the focus scroll", () => {
         expect(list.getValueJS("scrollingStatus")).toBe(false);
         expect(sgRoot.scrollAnimations).toHaveLength(0);
     });
+    test("visibly slides the drawn rows, not just the observable fields", () => {
+        // The point of the animation is that PIXELS move. The render path lays rows out from an integer
+        // anchor row plus a per-row Y advance, so publishing fractional currFocusRow alone would leave
+        // the layout frozen until the settle snapped it — the fields would ramp while the screen jumped.
+        // scrollRowOffset/scrollAnchorRow split the animated position into "which row is on top" and
+        // "how far past it", and RowList.renderContent shifts the layout by the remainder.
+        const list = SGNodeFactory.createNode("RowList");
+
+        // Record the y-origin each row's item component is drawn at. Installed before focusing, because
+        // item components are cached across renders and focusing builds the focused row's component.
+        const drawn = {};
+        const original = list.createItemComponent.bind(list);
+        list.createItemComponent = (interp, itemRect, content) => {
+            const comp = original(interp, itemRect, content);
+            const render = comp.renderNode.bind(comp);
+            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+                drawn[content.getValueJS("title")] = Math.round(origin[1]);
+                return render(i2, origin, angle, opacity, draw2D);
+            };
+            return comp;
+        };
+        const rows = [];
+        for (let i = 0; i < 6; i++) {
+            rows.push(["R" + i]);
+        }
+        list.setValue("content", buildContent(rows));
+        list.setValue("itemSize", new RoArray([new Int32(1280), new Int32(100)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(300), new Int32(100)])]));
+        list.setValue("itemSpacing", new RoArray([new Int32(0), new Int32(20)]));
+        list.setValue("numRows", new Int32(3));
+        list.setNodeFocus(true);
+
+        const renderRows = () => {
+            for (const key of Object.keys(drawn)) {
+                delete drawn[key];
+            }
+            list.renderNode({}, [0, 0], 0, 1);
+            return { ...drawn };
+        };
+
+        // Settled: rows sit on the 120px pitch (100 height + 20 spacing).
+        expect(renderRows()).toEqual({ R0: 0, R1: 120, R2: 240 });
+
+        list.setValue("animateToItem", new Int32(2));
+
+        // Mid-flight: the whole layout has shifted UP by a sub-row amount — not a whole row, and not
+        // zero. An extra row is drawn to fill the gap the shift opens at the bottom.
+        advance(100);
+        const early = renderRows();
+        expect(early.R0).toBeLessThan(0);
+        expect(early.R0).toBeGreaterThan(-120);
+        expect(early.R3).toBeDefined();
+
+        // Later in the flight it has slid further, still smoothly rather than snapping.
+        advance(200);
+        const later = renderRows();
+        expect(later.R0).toBeLessThan(early.R0);
+
+        // Settled at the target: row 2 is at the top, back on the exact pitch.
+        advance(1000);
+        expect(renderRows()).toEqual({ R2: 0, R3: 120, R4: 240 });
+    });
 });

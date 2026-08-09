@@ -645,6 +645,35 @@ export class ArrayGrid extends Group {
         super.setValue("currFocusColumn", new Float(position % numCols));
     }
 
+    /**
+     * How far, in rows, an in-flight animated scroll has travelled past the row the render window is
+     * anchored to — always in `[0, 1)` after the integer part is folded into the anchor row.
+     *
+     * This is what makes the scroll VISIBLE rather than merely observable: the render path lays rows out
+     * from an integer anchor (`currRow`) plus a per-row Y advance, so without a sub-row offset the
+     * fields ramp while the pixels stay put until the settle snaps them. Returns 0 when nothing is
+     * animating, so every non-animated path renders exactly as before.
+     */
+    protected scrollRowOffset(): number {
+        if (!this.scrollAnim) {
+            return 0;
+        }
+        const position = this.currentScrollPosition(this.scrollAnim);
+        return position - Math.floor(position);
+    }
+
+    /**
+     * The integer row the render window is anchored to while a scroll is in flight, or undefined when
+     * nothing is animating. Together with `scrollRowOffset` this splits the fractional position into
+     * "which row is at the top" and "how far past it we are".
+     */
+    protected scrollAnchorRow(): number | undefined {
+        if (!this.scrollAnim) {
+            return undefined;
+        }
+        return Math.floor(this.currentScrollPosition(this.scrollAnim));
+    }
+
     /** The fractional content index an in-flight scroll currently sits at. */
     private currentScrollPosition(anim: ArrayGrid.ScrollAnimation): number {
         const elapsed = sgClock.perfNow() - anim.start;

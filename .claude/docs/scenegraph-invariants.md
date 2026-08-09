@@ -1196,6 +1196,15 @@ device-measured on a Roku Streaming Stick+ (OS 15.3) with
 - **`currFocusRow` carries fractional in-transit values** each frame via `publishScrollPosition`. A
   RowList overrides it to write **only** `currFocusRow`: a device's vertical scroll emitted no
   `currFocusColumn` at all during the ramp.
+- **The rows visibly slide, and that took a second step.** The render path lays rows out from an integer
+  anchor (`currRow`) plus a per-row Y advance, so publishing fractional fields alone left the layout
+  frozen until the settle snapped it — the fields ramped while the screen jumped, which is exactly how
+  the first version of this shipped. `ArrayGrid.scrollRowOffset`/`scrollAnchorRow` split the animated
+  position into "which row is on top" and "how far past it we are"; `RowList.renderContent` re-anchors
+  the window to that row and shifts the layout up by the remainder, converted to pixels with the anchor
+  row's own pitch (`rowHeights` can differ per row). It also renders **one extra row** while a scroll is
+  in flight, to fill the gap the shift opens at the bottom. Pinned by the "visibly slides the drawn rows"
+  test, which records each row's drawn y-origin.
 - **The settle happens only at completion**, through the normal `setFocusedItem`, so the existing
   focus gate applies: an **unfocused** list still pulses and still ramps (device-confirmed) but publishes
   no `itemFocused`/`rowItemFocused`.
