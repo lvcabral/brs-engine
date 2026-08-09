@@ -53,11 +53,8 @@ export class IfDraw2D {
         rgba?: number,
         opacity?: number
     ): boolean {
-        const ctx = this.component.getContext();
         rgba = combineRgbaOpacity(rgba, opacity);
-        const didDraw = this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
-        ctx.globalAlpha = 1;
-        return didDraw;
+        return this.component.drawImage(object, x, y, scaleX, scaleY, rgba);
     }
 
     doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
@@ -370,7 +367,6 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
-            const ctx = this.component.getContext();
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -379,7 +375,6 @@ export class IfDraw2D {
                 1,
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1;
             return BrsBoolean.from(didDraw);
         },
     });
@@ -483,7 +478,6 @@ export class IfDraw2D {
                 scaleY.getValue(),
                 rgba instanceof Int32 ? rgba.getValue() : undefined
             );
-            ctx.globalAlpha = 1;
             ctx.restore();
             return BrsBoolean.from(didDraw);
         },
@@ -724,13 +718,28 @@ export interface BrsDraw2D {
 // Also, in Firefox, draws slow down when this is false. So it's a trade-off
 const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
 
-function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number) {
-    if (rgba) {
+/**
+ * Applies a color's alpha channel as the context's global alpha, so the blit is drawn at the
+ * requested transparency.
+ *
+ * The check MUST be `!== undefined`, never truthy: `0x00000000` (fully transparent black) is a
+ * legitimate 32-bit color and the only one whose entire packed value is falsy, so `if (rgba)`
+ * silently dropped its alpha. That painted a transparent blend color as SOLID BLACK, because this
+ * is the only place the blend alpha is applied — `RoBitmap.getRgbaCanvas` deliberately multiplies
+ * the RGB tint at full strength regardless of alpha (#935), leaving nothing to fall back on.
+ *
+ * Returns whether `globalAlpha` was written, so callers can reset only when there is something to
+ * reset instead of paying for a save/restore on every blit.
+ */
+function setContextAlpha(ctx: BrsCanvasContext2D, rgba?: number): boolean {
+    if (rgba !== undefined) {
         const alpha = rgba & 255;
         if (alpha < 255) {
             ctx.globalAlpha = alpha / 255;
+            return true;
         }
     }
+    return false;
 }
 
 function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
@@ -915,38 +924,49 @@ export function drawObjectToComponent(
     scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
-    const alphaEnable = component.getCanvasAlpha();
-    let image: BrsCanvas;
-    if (object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen) {
-        image = getCanvasFromDraw2d(object, rgba);
-        setContextAlpha(ctx, rgba);
-    } else {
+    if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
         return false;
     }
+    const image = getCanvasFromDraw2d(object, rgba);
     if (!isCanvasValid(image)) {
         return false;
     }
-
-    const smoothing = (scaleMode ?? object.scaleMode) === 1;
-    ctx.imageSmoothingEnabled = smoothing;
-    if (smoothing && "imageSmoothingQuality" in ctx) {
-        ctx.imageSmoothingQuality = "high";
-    }
-
-    const destOffset = getDrawOffset(component);
-
-    // Only Compositor and Region uses wraps
-    const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
-
-    const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
-    for (const chunk of chunks) {
-        const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-        if (!alphaEnable) {
-            ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+    const alphaEnable = component.getCanvasAlpha();
+    // `globalAlpha` is PERSISTENT canvas state, and this function is reached from every
+    // `RoBitmap`/`RoScreen`/`RoRegion`/`RoCompositor` drawImage — so the reset lives here, at the shared
+    // choke point, rather than in each caller. A leak would be inherited by every later draw on the
+    // canvas, and since a blend color of 0x00000000 legitimately sets the alpha to 0, it would blank the
+    // canvas permanently rather than merely tint it. Reset only when `setContextAlpha` actually wrote
+    // (the opaque draw, which is the overwhelmingly common one, then costs nothing) and in a `finally`,
+    // so a throw mid-blit cannot strand it. Targeted rather than `ctx.save()`/`restore()`: that pair
+    // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
+    const alphaSet = setContextAlpha(ctx, rgba);
+    try {
+        const smoothing = (scaleMode ?? object.scaleMode) === 1;
+        ctx.imageSmoothingEnabled = smoothing;
+        if (smoothing && "imageSmoothingQuality" in ctx) {
+            ctx.imageSmoothingQuality = "high";
         }
-        drawChunk(ctx, image, chunk);
+
+        const destOffset = getDrawOffset(component);
+
+        // Only Compositor and Region uses wraps
+        const allowWrap = component instanceof RoCompositor || object instanceof RoRegion;
+
+        const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
+        for (const chunk of chunks) {
+            const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
+            if (!alphaEnable) {
+                ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+            }
+            drawChunk(ctx, image, chunk);
+        }
+        return true;
+    } finally {
+        if (alphaSet) {
+            ctx.globalAlpha = 1;
+        }
     }
-    return true;
 }
 
 export function drawBitmapOnBitmap(source: RoBitmap, destiny: RoBitmap, scaleMode?: number) {

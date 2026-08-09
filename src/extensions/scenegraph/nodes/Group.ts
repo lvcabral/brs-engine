@@ -727,6 +727,14 @@ export class Group extends Node {
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
         this.prepareRender(draw2D);
+        // A fully transparent subtree DEGRADES to a layout traversal — drop the draw target rather
+        // than returning, so ancestor bounds come out identical to a layout pass and every descendant
+        // still reaches its own `nodeRenderingDone`. Multiplies in this node's OWN opacity (the
+        // accumulated value has only the ancestors' folded in) and tests exactly `=== 0`. Rationale and
+        // regressions: `.claude/docs/scenegraph-invariants.md`.
+        if (draw2D !== undefined && opacity * this.getOpacity() === 0) {
+            draw2D = undefined;
+        }
         // Order matters for cost, not just correctness. A layout/measure pass never clips (bounding
         // rects must stay unclipped), and an invisible node draws nothing — check both before probing
         // the field, so the overwhelmingly common case is one comparison. The real visibility gates

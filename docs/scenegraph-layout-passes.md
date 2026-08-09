@@ -141,6 +141,31 @@ fixture if this work proceeds.
 - Device comparison for the numbers. The target is the device's shape — *flat* per-component cost — not
   a particular millisecond count.
 
+## Skips are asymmetric: what paint may skip, layout may not
+
+The two entry points do **not** prune the same subtrees, and the asymmetry is deliberate in both
+directions:
+
+| Condition | Layout pass (`layoutNode`) | Paint pass (`paintNode`) |
+| --- | --- | --- |
+| `visible = false` | traverses (containers soft-skip, renderables measure their extent) | skips |
+| accumulated `opacity = 0` | traverses, propagating opacity 0 | **degrades to layout** (`renderNode` drops `draw2D`) |
+| settled subtree, unchanged context | skips (`Group.skipSettledLayout`, pruning) | never skips |
+
+Layout must keep descending into hidden and faded-out subtrees because bounding rects are independent
+of visibility on a device, and apps measure and position UI *before* revealing it — a layout-side skip
+would make `boundingRect()` return zeros for exactly the UI that is about to be shown. Paint, in turn,
+must not depend on the final `ctx.globalAlpha` write to make a transparent subtree invisible; that
+single point of failure once painted a grid's focus frame at full strength over a screen the app had
+faded out. Note that the transparent case is a *degrade*, not a skip — the reasons that distinction is
+load-bearing are in `.claude/docs/scenegraph-invariants.md`.
+
+The general rule when adding a skip on either side: a skipped node must still hand its cached rect up
+(`updateParentRects`) whenever the *other* pass kind would have unioned it, and that is only sound when
+the rect actually exists — otherwise degrade the traversal instead of skipping it. A paint-side skip
+must also not clear `isDirty` or record a layout context, or the subtree stays frozen after a reveal.
+Details and the regression tests are in `.claude/docs/scenegraph-invariants.md`.
+
 ## Related
 
 - `docs/scenegraph-rendezvous.md` — the other place render-thread timing is analysed in depth.

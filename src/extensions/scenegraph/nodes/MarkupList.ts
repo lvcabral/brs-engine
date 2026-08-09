@@ -16,7 +16,6 @@ export class MarkupList extends ArrayGrid {
         { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
     ];
     protected readonly focusUri = "common:/images/focus_list.9.png";
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
     protected readonly gap: number;
     protected wrap: boolean;
     private itemComponentErrorLogged = false;
@@ -30,7 +29,6 @@ export class MarkupList extends ArrayGrid {
 
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         const style = this.getValueJS("vertFocusAnimationStyle") as string;
         this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();

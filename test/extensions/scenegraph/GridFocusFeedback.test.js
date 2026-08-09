@@ -40,4 +40,26 @@ describe("ArrayGrid focus feedback rendering", () => {
         expect(calls[0].rect.width).toBe(338);
         expect(calls[0].rect.height).toBe(338);
     });
+
+    // PosterGrid overrides renderFocus for its own rect math (the frame tracks the poster, not the whole
+    // item) and once dropped the blend color entirely, making BOTH blend fields silent no-ops on this
+    // type — the override re-derives what the base already resolves, so it can drift again.
+    test.each([
+        ["focused", true, "focusBitmapBlendColor"],
+        ["unfocused", false, "focusFootprintBlendColor"],
+    ])("PosterGrid honors the %s blend color in its own renderFocus", (_label, nodeFocus, blendField) => {
+        const grid = SGNodeFactory.createNode("PosterGrid");
+        const purple = 0x7b2ff7ff | 0;
+        grid.setValue(blendField, new Int32(purple));
+
+        const calls = [];
+        const draw2D = {
+            drawNinePatch: (bmp, rect, rgba) => calls.push({ rect: { ...rect }, rgba }),
+        };
+
+        grid.renderFocus({ x: 100, y: 100, width: 300, height: 300 }, 1, nodeFocus, draw2D);
+
+        expect(calls).toHaveLength(1);
+        expect(calls[0].rgba).toBe(purple);
+    });
 });

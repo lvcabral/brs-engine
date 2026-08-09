@@ -615,6 +615,7 @@ export class PosterGrid extends ArrayGrid {
 
     protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
         const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
+        const blendField = nodeFocus ? "focusBitmapBlendColor" : "focusFootprintBlendColor";
         const bmp = this.getBitmap(bmpUri);
         if (!bmp?.isValid()) {
             return;
@@ -634,7 +635,10 @@ export class PosterGrid extends ArrayGrid {
             width: baseWidth + extraHorizontal * 2,
             height: baseHeight + extraTop + extraBottom,
         };
-        this.drawImage(bmp, focusRect, 0, opacity, draw2D);
+        // Only the rect math is specialized here; the blend color must still be honored, as in
+        // ArrayGrid.renderFocus — dropping it made both blend-color fields silent no-ops on this type.
+        const blendColor = this.getValueJS(blendField) as number;
+        this.drawImage(bmp, focusRect, 0, opacity, draw2D, blendColor);
     }
 
     protected createItemComponent(_interpreter: Interpreter, itemRect: Rect, content: ContentNode) {
