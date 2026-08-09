@@ -970,8 +970,29 @@ Three outsets meet on `subBoundingRect("item<r>_<c>")` and only two of them exis
 | outset | applied by | shows up in |
 | --- | --- | --- |
 | `rectMargins()` → `marginX`/`marginY` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
-| `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.renderFocus` | the **drawn** focus frame — paint only, nothing reports it |
+| `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.focusFrameRect` | the **drawn** focus frame — paint only, nothing reports it |
 | *(none)* | — | an **item sub-rect** |
+
+**Override `focusFrameRect`, never `renderFocus`.** `renderFocus` is a template like
+`renderNode`/`renderNodeContent`: it owns which uri and blend field the focus state selects, the validity
+guard, the `hasNinePatch` write that `rectMargins()` reads, and the `drawImage` call —
+`focusFrameRect(itemRect, bmp, index)` owns only the geometry. `PosterGrid` used to override the whole
+method to specialize its rect math and silently dropped both the blend color (making
+`focusBitmapBlendColor` *and* `focusFootprintBlendColor` no-ops on that type) and the `hasNinePatch`
+write; a geometry-only hook makes that class of omission impossible. Two deliberate asymmetries in
+`PosterGrid`'s override, both pinned by `GridFocusFeedback.test.js`: its outset is device-measured
+constants (`marginY + focusPadding*`) so it is **not** gated on `bmp.ninePatch` the way the base is —
+there are no markers to read — and it takes only `posterRect`'s x/width, so the frame's height still spans
+the caption band. The `index` parameter is what lets it find that cell's laid-out poster; it replaced a
+`focusLayoutOverride` field that the call sites set and cleared around `renderFocus` to smuggle the layout
+in. `-1` means "the caller has no index" (`TimeGrid`, and the row-based grids, whose position is
+(row, col) rather than a flat content index).
+
+The base's non-9-patch branch returns `itemRect` **itself, not a copy**: `Group.drawImage` writes
+`rect.width`/`rect.height` for a plain bitmap and `renderItemComponent` then positions and clips the item
+against the same object, so the scaled size the draw computes is what the item is laid out against. An
+override returning a fresh object severs that link — which is what every override wants, but do it
+knowingly.
 
 The calibrated invariant is **`subBoundingRect("item<r>_<c>")` == the item component's own rect** — the
 bare poster, in all three coordinate spaces, focused cell included. `PosterGridItem` corroborates it

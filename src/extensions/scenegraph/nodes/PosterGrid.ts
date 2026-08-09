@@ -8,6 +8,7 @@ import {
     Int32,
     IfDraw2D,
     Rect,
+    RoBitmap,
     RoFont,
     isBrsString,
 } from "brs-engine";
@@ -111,7 +112,6 @@ export class PosterGrid extends ArrayGrid {
     private readonly focusPaddingTop: number;
     private readonly focusPaddingBottom: number;
     private readonly defaultCaptionBackgroundUri: string;
-    private focusLayoutOverride?: PosterItemLayout;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PosterGrid) {
         super([], name);
@@ -600,45 +600,38 @@ export class PosterGrid extends ArrayGrid {
         const drawFocus = this.getValueJS("drawFocusFeedback");
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
-            this.focusLayoutOverride = layout;
-            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
-            this.focusLayoutOverride = undefined;
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }
         const itemOrigin = [itemRect.x, itemRect.y];
         this.renderItemClipped(interpreter, itemComp, itemOrigin, itemRect, rotation, opacity, draw2D);
         if (focused && drawFocus && drawFocusOnTop) {
-            this.focusLayoutOverride = layout;
-            this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
-            this.focusLayoutOverride = undefined;
+            this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }
     }
 
-    protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D) {
-        const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
-        const blendField = nodeFocus ? "focusBitmapBlendColor" : "focusFootprintBlendColor";
-        const bmp = this.getBitmap(bmpUri);
-        if (!bmp?.isValid()) {
-            return;
-        }
-        const layout = this.focusLayoutOverride;
-        const posterRect = layout?.posterRect;
-        const baseX = posterRect ? itemRect.x + posterRect.x : itemRect.x;
-        const baseWidth = posterRect?.width ?? itemRect.width;
-        const baseY = itemRect.y;
-        const baseHeight = itemRect.height;
+    /**
+     * A PosterGrid's focus frame tracks the POSTER, not the whole cell: a cell reserves a caption zone
+     * below (or above) the poster, and a frame around the whole cell would enclose the captions too.
+     * `layoutByIndex` holds that per-cell geometry keyed by content index, which is why the hook needs
+     * the index — it replaces a `focusLayoutOverride` field that the two call sites set and cleared
+     * around `renderFocus` purely to smuggle the layout in.
+     *
+     * Deliberately NOT gated on `bmp.ninePatch`, unlike the base: this outset is
+     * `marginY + focusPadding*`, device-measured constants, not the 9-patch's own content margins, so
+     * there is nothing marker-derived to gate on. Note it uses only `posterRect`'s x/width — the frame's
+     * top stays at the cell top, so with `captionVertAlignment = "above"` it spans the caption zone too.
+     */
+    protected focusFrameRect(itemRect: Rect, _bmp: RoBitmap, index: number): Rect {
+        const posterRect = this.layoutByIndex.get(index)?.posterRect;
         const extraTop = this.marginY + this.focusPaddingTop;
         const extraBottom = this.marginY + this.focusPaddingBottom;
         const extraHorizontal = this.focusPaddingX;
-        const focusRect: Rect = {
-            x: baseX - extraHorizontal,
-            y: baseY - extraTop,
-            width: baseWidth + extraHorizontal * 2,
-            height: baseHeight + extraTop + extraBottom,
+        return {
+            x: (posterRect ? itemRect.x + posterRect.x : itemRect.x) - extraHorizontal,
+            y: itemRect.y - extraTop,
+            width: (posterRect?.width ?? itemRect.width) + extraHorizontal * 2,
+            height: itemRect.height + extraTop + extraBottom,
         };
-        // Only the rect math is specialized here; the blend color must still be honored, as in
-        // ArrayGrid.renderFocus — dropping it made both blend-color fields silent no-ops on this type.
-        const blendColor = this.getValueJS(blendField) as number;
-        this.drawImage(bmp, focusRect, 0, opacity, draw2D, blendColor);
     }
 
     protected createItemComponent(_interpreter: Interpreter, itemRect: Rect, content: ContentNode) {
