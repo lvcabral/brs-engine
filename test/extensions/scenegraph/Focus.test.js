@@ -65,4 +65,156 @@ describe("SceneGraph focus management", () => {
         expect(focusedDuringALosingFocus).toBe(buttonB);
         expect(sgRoot.focused).toBe(buttonB);
     });
+    test("drops a backwards steal raised from a container's own focusedChild observer", () => {
+        // Device-measured shape (test/simulator/probes/list-refocus-settle-probe, R7): a container
+        // observes its own `focusedChild` and redirects focus to an inner child; something reached
+        // from that notification then re-grabs focus to an unrelated SIBLING of the container. That
+        // target sits outside the subtree the in-flight transaction just focused, so it is a backwards
+        // steal and must be dropped.
+        //
+        // Regression for an owner-keyed classifier: the container IS still in the focus chain (focus
+        // went to its own child), so testing only the notifying owner reads this as a legal forward
+        // focus and honors it — leaving the app focused on the node it was navigating away from.
+        const scene = focusableNode();
+        const container = focusableNode();
+        const inner = focusableNode();
+        const sibling = focusableNode();
+        scene.appendChildToParent(container);
+        container.appendChildToParent(inner);
+        scene.appendChildToParent(sibling);
+
+        sibling.setNodeFocus(true);
+
+        // The container redirects focus inward, then steals it back out to the sibling.
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let redirected = false;
+        port.pushMessage = (event) => {
+            if (!redirected && container.isChildrenFocused() === false && sgRoot.focused === container) {
+                redirected = true;
+                inner.setNodeFocus(true);
+                // Raised while the container's notification is still dispatching: a backwards steal.
+                sibling.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+
+        container.setNodeFocus(true);
+
+        // The steal is dropped: focus stays where the redirect put it.
+        expect(sgRoot.focused).toBe(inner);
+        expect(sibling.getValueJS("focusable")).toBe(true);
+    });
+
+    test("still honors a forward focus onto a sibling of the focused child", () => {
+        // The mirror case that must keep working: a container hands focus from its first child to
+        // another of its own children (how a dialog highlights a specific button). The target is a
+        // SIBLING of the live focus, not a descendant of it, so a target-must-be-below-focus test
+        // would wrongly drop this.
+        const scene = focusableNode();
+        const container = focusableNode();
+        const childA = focusableNode();
+        const childB = focusableNode();
+        scene.appendChildToParent(container);
+        container.appendChildToParent(childA);
+        container.appendChildToParent(childB);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let forwarded = false;
+        port.pushMessage = (event) => {
+            if (!forwarded && sgRoot.focused === childA) {
+                forwarded = true;
+                childB.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+
+        childA.setNodeFocus(true);
+
+        expect(sgRoot.focused).toBe(childB);
+    });
+    test("honors a redirect out of a node observing its OWN focus gain", () => {
+        // The "I got focus but have nothing to show, pass it on" pattern: a node observes its own
+        // focusedChild and hands focus to a sibling (or up to its container). The focus transaction
+        // stages focusedChild on the focused leaf itself, so that leaf is also an `owner` — and an
+        // over-broad "target must be inside the owner's subtree" test dropped both redirects, which is a
+        // regression against long-standing behavior that focus-probe2 never covered (N1/N2 only measured
+        // forward focus INTO a container's subtree). The subtree test applies only when the owner is a
+        // PROPER ANCESTOR of the focused node, i.e. the container-redirect shape.
+        for (const targetIsSibling of [true, false]) {
+            sgRoot.setFocused();
+            const scene = focusableNode();
+            const container = focusableNode();
+            const leaf = focusableNode();
+            const sibling = focusableNode();
+            scene.appendChildToParent(container);
+            container.appendChildToParent(leaf);
+            container.appendChildToParent(sibling);
+
+            // Sibling redirect targets a peer; the other case hands focus UP to the container.
+            const redirectTo = targetIsSibling ? sibling : container;
+            const port = new RoMessagePort();
+            const originalPush = port.pushMessage.bind(port);
+            let redirected = false;
+            port.pushMessage = (event) => {
+                if (!redirected && sgRoot.focused === leaf) {
+                    redirected = true;
+                    redirectTo.setNodeFocus(true);
+                }
+                originalPush(event);
+            };
+            leaf.fields.get("focusedchild").addObserver("permanent", fakeInterpreter, port, leaf, focusedChildFieldArg);
+
+            leaf.setNodeFocus(true);
+
+            expect(sgRoot.focused).toBe(redirectTo);
+        }
+    });
+
+    test("drops a focus-loss observer re-asserting the node that is taking focus", () => {
+        // The "refresh focus" router pattern: a node's focus-LOSS observer calls setFocus on whatever
+        // it believes should be focused, which is the node currently TAKING focus. That must stay
+        // dropped like any other loss-observer request. Honoring it re-runs the whole focus
+        // transaction — `focusedChild` is alwaysNotify — so every observer fires a second time, and an
+        // ArrayGrid re-publishes its `itemFocused` settle, spuriously re-triggering an app side effect
+        // such as starting preview playback.
+        //
+        // Regression for testing `target === focused` BEFORE the owner-in-chain check: that ordering
+        // widens the honored set, because re-asserting the incoming node looks idempotent while the
+        // request is in fact coming from the outgoing one.
+        const parent = focusableNode();
+        const leaving = focusableNode();
+        const arriving = focusableNode();
+        parent.appendChildToParent(leaving);
+        parent.appendChildToParent(arriving);
+
+        leaving.setNodeFocus(true);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let transactions = 0;
+        port.pushMessage = (event) => {
+            if (sgRoot.focused !== leaving) {
+                transactions++;
+                arriving.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        leaving.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, leaving, focusedChildFieldArg);
+
+        arriving.setNodeFocus(true);
+
+        // The re-assert is dropped, so the loss notification is not dispatched a second time.
+        expect(transactions).toBe(1);
+        expect(sgRoot.focused).toBe(arriving);
+    });
 });

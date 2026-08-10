@@ -99,8 +99,19 @@ export class Field {
      * each other (a manual field-alias ping-pong) loop forever.
      */
     private static draining = false;
-    /** Deferred reentrant observer invocations, drained at the outermost unwind. */
-    private static readonly deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
+    /**
+     * Deferred reentrant observer invocations, drained at the outermost unwind.
+     *
+     * `focusNotifyOwner` is the `focusedChild` notification that was dispatching when the emission
+     * was queued, reinstated around the deferred call so a `setFocus` raised from the callback is
+     * still classifiable as a backwards steal — see `Node.runWithFocusNotifyOwner`.
+     */
+    private static readonly deferredQueue: {
+        field: Field;
+        callback: BrsCallback;
+        event: RoSGNodeEvent;
+        focusNotifyOwner?: Node;
+    }[] = [];
     /**
      * Fields whose focus-chain notification was raised during a component's init() and deferred.
      * The observer that reacts is often registered LATER in the same init (after the setFocus call),
@@ -751,7 +762,15 @@ export class Field {
             !Field.draining &&
             Field.parentCascadeDepth === 0
         ) {
-            Field.deferredQueue.push({ field: this, callback, event });
+            // Carry the in-flight focus notification with the entry: it will have left the stack by
+            // the time this drains, and without it a `setFocus` raised from the callback can no
+            // longer be classified as a backwards steal (see Node.runWithFocusNotifyOwner).
+            Field.deferredQueue.push({
+                field: this,
+                callback,
+                event,
+                focusNotifyOwner: Node.currentFocusNotifyOwner(),
+            });
             return;
         }
 
@@ -817,7 +836,11 @@ export class Field {
                 field.notifying = true;
                 Field.observerDepth++;
                 try {
-                    field.invoke(deferred.callback, deferred.event);
+                    // Reinstate the focus notification this emission was raised under, so a nested
+                    // setFocus stays classifiable even though the transaction has left the stack.
+                    Node.runWithFocusNotifyOwner(deferred.focusNotifyOwner, () =>
+                        field.invoke(deferred.callback, deferred.event)
+                    );
                 } finally {
                     Field.observerDepth--;
                     field.notifying = wasNotifying;

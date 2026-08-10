@@ -92,6 +92,35 @@ export class Node extends RoSGNode implements BrsValue {
      * focus onward) from a focus-loss one (whose focus requests a Roku ignores).
      */
     private static readonly focusNotifyOwners: Node[] = [];
+
+    /**
+     * The `focusedChild` notification dispatching right now, if any — the context a nested
+     * `setFocus` is classified against by `isFocusRequestDropped`. Captured by
+     * `Field.executeCallbacks` when it defers an emission raised inside a focus transaction, so the
+     * classification survives the wait; see `runWithFocusNotifyOwner`.
+     */
+    static currentFocusNotifyOwner(): Node | undefined {
+        return Node.focusNotifyOwners.at(-1);
+    }
+
+    /**
+     * Runs `body` with `owner` reinstated as the in-flight `focusedChild` notification, so a
+     * `setFocus` raised from a deferred grid focus-settle observer (`itemFocused`/`rowItemFocused`)
+     * is still classified against the notification it was originally raised under.
+     * @param owner Notification owner captured at defer time, or undefined if there was none.
+     * @param body Deferred dispatch to run.
+     */
+    static runWithFocusNotifyOwner<T>(owner: Node | undefined, body: () => T): T {
+        if (!owner) {
+            return body();
+        }
+        Node.focusNotifyOwners.push(owner);
+        try {
+            return body();
+        } finally {
+            Node.focusNotifyOwners.pop();
+        }
+    }
     /**
      * Set while a focus transaction stages its `focusedChild` writes: `setValue` applies the value
      * but routes the notification here instead of dispatching it — see `stageFocusedChild`.
@@ -1329,11 +1358,10 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Whether the node is focusable.
      */
     setNodeFocus(focusOn: boolean): boolean {
-        if (focusOn && Node.isFocusRequestDropped()) {
-            // Device-measured: Roku ignores a focus request raised from a focus-LOSS notification
-            // (see notifyStagedFocus). Report the request as not applied, so a subclass override
-            // gated on `super.setNodeFocus(...)` skips its focus bookkeeping too (an ArrayGrid must
-            // not move `itemFocused` for a grid that never took focus).
+        if (focusOn && Node.isFocusRequestDropped(this)) {
+            // Report the request as not applied, so a subclass override gated on
+            // `super.setNodeFocus(...)` skips its own focus bookkeeping too (an ArrayGrid must not
+            // move `itemFocused` for a grid that never took focus).
             return false;
         }
         if (focusOn) {
@@ -1456,16 +1484,7 @@ export class Node extends RoSGNode implements BrsValue {
         Field.enterFocusEmission();
         try {
             for (const entry of staged) {
-                if (gaining) {
-                    Node.focusNotifyOwners.push(entry.node);
-                }
-                try {
-                    entry.field.notifyObservers();
-                } finally {
-                    if (gaining) {
-                        Node.focusNotifyOwners.pop();
-                    }
-                }
+                Node.runWithFocusNotifyOwner(gaining ? entry.node : undefined, () => entry.field.notifyObservers());
             }
         } finally {
             Field.exitFocusEmission();
@@ -1480,32 +1499,63 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Whether a `setFocus(true)` issued right now must be ignored.
      *
-     * Device-measured: a Roku honors a focus request raised from a `focusedChild` observer only when
-     * the observed node is still in the focus chain — the "forward focus" pattern where a container
-     * that just GAINED focus hands it to an inner widget. A request raised from the mirror-image
-     * notification, by a node that just LOST focus, is dropped: the chain and the remote stay with
-     * the node the in-flight transaction focused.
-     *
-     * That asymmetry is what makes an app which re-grabs focus from its own focus-loss observer
-     * behave on a device and not here: the engine used to let the re-grab win the live focus while
-     * the outer transaction still wrote its own chain, leaving `sgRoot.focused` and `focusedChild`
-     * pointing at different nodes.
-     * @returns True when the in-flight notification is a focus loss, so the request is ignored.
+     * A Roku honors a focus request raised from a `focusedChild` observer only when the observed node
+     * is still in the focus chain (forward focus — a container that just gained focus hands it to an
+     * inner widget) AND the target stays inside that owner's subtree. A request from a node that just
+     * lost focus, or one that reaches for a target outside the subtree the owner just focused, is a
+     * backwards steal and is dropped.
+     * @param target Node the nested `setFocus(true)` is trying to focus.
+     * @returns True when the request must be ignored.
      */
-    private static isFocusRequestDropped(): boolean {
+    private static isFocusRequestDropped(target: Node): boolean {
         const owner = Node.focusNotifyOwners.at(-1);
         const focused = sgRoot.focused;
         if (!owner || !(focused instanceof Node)) {
             return false;
         }
-        // Is the owner still in the focus chain? Cheap upward walk from the focused node, the same
-        // shape restoreFocusChainOnAttach uses — an O(subtree) descent would be walked on every
-        // focus request made from inside a notification.
-        let ancestor: BrsType = focused;
-        while (ancestor instanceof Node && ancestor !== owner) {
-            ancestor = ancestor.parent;
+        // Owner must still be in the focus chain.
+        if (!Node.isAncestorOrSelf(owner, focused)) {
+            return true;
         }
-        return ancestor !== owner;
+        // Legitimate forward focus: the owner focused itself (nothing to redirect out of), or the
+        // target is inside the subtree the owner just focused.
+        if (owner === focused || Node.isAncestorOrSelf(owner, target)) {
+            return false;
+        }
+        // A target outside the owner's tree entirely is not a steal either — a node still unparented
+        // (mid-`init()`, before `appendChild`), or the scene's modal `dialog` (parented straight to
+        // the Scene, never into the owner).
+        if (!(target.parent instanceof Node) || Node.isSceneDialog(target)) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Whether the upward walk from `node` reaches `ancestor` (`node` itself counts).
+     * @param ancestor Node to test membership against.
+     * @param node Node (or non-Node value) to walk up from.
+     * @returns True when `node` is `ancestor` or nested somewhere below it.
+     */
+    private static isAncestorOrSelf(ancestor: Node, node: BrsType): boolean {
+        let current = node;
+        while (current instanceof Node) {
+            if (current === ancestor) {
+                return true;
+            }
+            current = current.parent;
+        }
+        return false;
+    }
+
+    /**
+     * Whether `node` is the dialog the scene is currently showing, or sits inside it.
+     * @param node Node to test.
+     * @returns True when the node is the current scene dialog or one of its descendants.
+     */
+    private static isSceneDialog(node: Node): boolean {
+        const dialog = sgRoot.scene?.dialog;
+        return dialog instanceof Node && Node.isAncestorOrSelf(dialog, node);
     }
 
     /**

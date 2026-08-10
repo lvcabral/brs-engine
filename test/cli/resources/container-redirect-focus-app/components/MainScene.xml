@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Pins the focus-steal classification for the container-redirect shape, measured on device in
+    `test/simulator/probes/list-refocus-settle-probe` (R7).
+
+    A container observes its own `focusedChild` and redirects focus down to an inner list. The list's
+    focus-gain settle (`itemFocused`) then runs an app observer. What that observer is allowed to do
+    is the whole point:
+
+      1. re-grabbing focus to a node OUTSIDE the container -> a backwards steal, DROPPED. Honoring it
+         strands the app on the node it was navigating away from (the reported symptom: an overlay
+         stays up and keeps taking the remote).
+      2. focusing a component whose `init()` focuses itself, or the scene's `dialog` -> NOT steals.
+         Neither is parented inside the container when the request is raised, so a target-subtree test
+         alone would silently swallow both.
+      3. a focus-LOSS observer re-asserting the node that is TAKING focus -> still dropped, so the
+         focus transaction is not re-run and `itemFocused` fires exactly once.
+
+    All three run from a real focus transaction (a top-level field write), and the settle that carries
+    them is DEFERRED - which is what makes this a regression test for the classification surviving the
+    deferral rather than the settle being forced to dispatch inline. Forcing it inline instead
+    re-creates the reentrancy crash `deferred-observer-app` pins.
+-->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="runScenario" type="integer" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.focusedCount = 0
+
+        ' A sibling of the container, standing in for the app's overlay.
+        m.overlay = createObject("roSGNode", "Group")
+        m.overlay.focusable = true
+        m.top.appendChild(m.overlay)
+
+        m.container = createObject("roSGNode", "Group")
+        m.container.focusable = true
+        m.list = createObject("roSGNode", "LabelList")
+        m.container.appendChild(m.list)
+        m.top.appendChild(m.container)
+
+        m.list.content = buildContent(4)
+        m.container.observeField("focusedChild", "onContainerFocus")
+        m.list.observeField("itemFocused", "onItemFocused")
+        m.overlay.observeField("focusedChild", "onOverlayFocusChange")
+
+        ' Scenario 4's tree: a container whose focusedChild observer loads three lists.
+        m.loaderContainer = createObject("roSGNode", "Group")
+        m.loaderContainer.focusable = true
+        m.loaderA = createObject("roSGNode", "LabelList")
+        m.loaderB = createObject("roSGNode", "LabelList")
+        m.loaderC = createObject("roSGNode", "LabelList")
+        m.loaderContainer.appendChild(m.loaderA)
+        m.loaderContainer.appendChild(m.loaderB)
+        m.loaderContainer.appendChild(m.loaderC)
+        m.top.appendChild(m.loaderContainer)
+        m.loaderA.observeField("itemFocused", "onLoaderFocused")
+        m.loaderB.observeField("itemFocused", "onLoaderFocused")
+        m.loaderContainer.observeField("focusedChild", "onLoaderContainerFocus")
+
+        m.overlay.setFocus(true)
+        m.top.observeField("runScenario", "onRunScenario")
+    end sub
+
+    sub onRunScenario(event as object)
+        m.scenario = event.getData()
+        m.focusedCount = 0
+        print "-- scenario"; m.scenario
+        if m.scenario = 3
+            ' Scenario 3 needs focus to LEAVE the overlay, so the overlay's own focus-loss observer
+            ' is the one raising the nested request. Put focus back on the overlay first, undoing
+            ' whatever scenario 2 left focused.
+            m.top.dialog = invalid
+            m.overlay.setFocus(true)
+            m.focusedCount = 0
+            m.list.setFocus(true)
+            return
+        end if
+        if m.scenario = 4
+            ' Focus the deferral-check container, whose observer runs the multi-list load below.
+            m.loaderContainer.setFocus(true)
+            return
+        end if
+        ' Scenarios 1 and 2: hand focus to the container, which redirects inward.
+        m.container.setFocus(true)
+        print "   after setFocus: listInChain="; m.list.isInFocusChain(); " overlayFocus="; m.overlay.hasFocus()
+    end sub
+
+    ' Scenario 4 pins that the settle still DEFERS. This is `deferred-observer-app`'s crash shape with
+    ' its trigger changed to a focusedChild notification: content + setFocus on two lists before the
+    ' third list's content is assigned, where each focus-gain settle's observer reads that third
+    ' list. Dispatching those settles inline runs them while `loaderC.content` is still invalid ->
+    ' dot-on-invalid crash. So the steal classification must NOT be bought by forcing the settle
+    ' synchronous; it has to travel with the deferred entry instead.
+    sub onLoaderContainerFocus(event as object)
+        if not m.loaderContainer.hasFocus() then return
+        print "   loader: start"
+        m.loaderA.content = buildContent(6)
+        m.loaderA.setFocus(true)
+        m.loaderA.jumpToItem = 3
+        m.loaderB.content = buildContent(12)
+        m.loaderB.setFocus(true)
+        m.loaderB.jumpToItem = 5
+        ' Assigned LAST, after the focus moves above have queued their observers.
+        m.loaderC.content = buildContent(31)
+        print "   loader: done"
+    end sub
+
+    sub onLoaderFocused(event as object)
+        print "   loader: observer sees loaderC count="; m.loaderC.content.getChildCount()
+    end sub
+
+    ' The container's redirect. After this the container is a PROPER ANCESTOR of the focused node,
+    ' which is the shape the target test gates on.
+    sub onContainerFocus(event as object)
+        if m.container.hasFocus() then m.list.setFocus(true)
+    end sub
+
+    ' Runs from the list's focus-gain settle, which is deferred to this handler's boundary.
+    sub onItemFocused(event as object)
+        m.focusedCount = m.focusedCount + 1
+        print "   onItemFocused index="; event.getData(); " fireCount="; m.focusedCount
+        if m.scenario = 1
+            ' A backwards steal: target sits outside the container the transaction just focused.
+            m.overlay.setFocus(true)
+            print "   steal: listInChain="; m.list.isInFocusChain(); " overlayFocus="; m.overlay.hasFocus()
+        else if m.scenario = 2
+            ' (a) a component that focuses itself from init(), before it is parented.
+            page = createObject("roSGNode", "SelfFocusingPage")
+            m.container.appendChild(page)
+            print "   selfFocusingPage hasFocus="; page.hasFocus()
+            ' (b) the scene's modal dialog, parented to the Scene rather than to the container.
+            dialog = createObject("roSGNode", "StandardDialog")
+            m.top.dialog = dialog
+            dialog.setFocus(true)
+            print "   dialog inFocusChain="; dialog.isInFocusChain()
+        end if
+    end sub
+
+    ' Scenario 3: a focus-LOSS observer re-asserting the node that is taking focus. Dropped, so the
+    ' focus transaction does not re-run and itemFocused is not published a second time.
+    sub onOverlayFocusChange(event as object)
+        if m.scenario = 3 and not m.overlay.hasFocus() and m.list.isInFocusChain()
+            m.list.setFocus(true)
+        end if
+    end sub
+
+    function buildContent(count as integer) as object
+        content = createObject("roSGNode", "ContentNode")
+        for i = 1 to count
+            item = createObject("roSGNode", "ContentNode")
+            item.title = i.toStr()
+            content.appendChild(item)
+        end for
+        return content
+    end function
+    ]]></script>
+</component>

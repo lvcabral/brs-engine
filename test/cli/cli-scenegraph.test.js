@@ -1197,6 +1197,56 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Classifies a focus request raised from a container's redirect settle", async () => {
+        let command = ["node", brsCliPath, "-r container-redirect-focus-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The container-redirect shape from `test/simulator/probes/list-refocus-settle-probe` (R7): a
+        // container observes its own focusedChild, redirects focus down to an inner list, and the
+        // list's focus-gain settle runs an app observer. What that observer may do is the whole test:
+        //   1. re-grabbing focus OUTSIDE the container is a backwards steal and is dropped, so the
+        //      list keeps focus (honoring it stranded the app on the node it was leaving).
+        //   2. focusing a component that focuses itself from init(), or the scene's dialog, is NOT a
+        //      steal - neither is parented inside the container when the request is raised, so a
+        //      target-subtree test alone would silently swallow both.
+        //   3. a focus-LOSS observer re-asserting the node that is TAKING focus is still dropped, so
+        //      the transaction is not re-run and itemFocused fires exactly once (a second fire
+        //      re-triggers app side effects like starting preview playback).
+        //   4. the settle still DEFERS. This is `deferred-observer-app`'s crash shape re-triggered
+        //      from a focusedChild notification: each list's settle observer reads a third list whose
+        //      content is assigned last, so dispatching them inline crashes on dot-of-invalid.
+        // (4) is why the classification travels with the queued entry
+        // (Node.runWithFocusNotifyOwner) instead of the settle being forced to dispatch synchronously
+        // - buying (1) that way re-creates the very reentrancy the deferral exists to prevent.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Container Redirect Focus Repro ===",
+            "-- scenario 1",
+            "   after setFocus: listInChain=true overlayFocus=false",
+            "   onItemFocused index= 0 fireCount= 1",
+            "   steal: listInChain=true overlayFocus=false",
+            "-- scenario 2",
+            "   after setFocus: listInChain=true overlayFocus=false",
+            "   onItemFocused index= 0 fireCount= 1",
+            "   selfFocusingPage hasFocus=true",
+            "   dialog inFocusChain=true",
+            "-- scenario 3",
+            "   onItemFocused index= 0 fireCount= 1",
+            "-- scenario 4",
+            "   loader: start",
+            "   loader: done",
+            "   loader: observer sees loaderC count= 31",
+            "   loader: observer sees loaderC count= 31",
+            "   loader: observer sees loaderC count= 31",
+            "   loader: observer sees loaderC count= 31",
+            "=== Container Redirect Focus Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("ButtonGroup leaves custom (non-Button) children unmanaged", async () => {
         let command = ["node", brsCliPath, "-r buttongroup-custom-children-app", "source/main.brs", "-c 0"].join(" ");
 

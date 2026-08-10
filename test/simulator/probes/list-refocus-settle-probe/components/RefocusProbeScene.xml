@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    List Refocus Settle Probe.
+
+    Measures WHETHER and WHEN a RowList re-publishes its "focus settle" fields (itemFocused,
+    itemUnfocused, currFocusRow, currFocusColumn, rowItemFocused, scrollingStatus) when the list is
+    handed focus WITHOUT its focused position having moved.
+
+    Why this matters: a common app shape parents an overlay as a SIBLING of the list and re-shows it
+    from an observer on the list's `rowItemFocused`. That observer reads the field LIVE off the node
+    (not from event.getData()). A key handler that hands focus to the list BEFORE moving a row - a
+    necessary ordering, because a container may jumpToItem when focus changes - then depends entirely
+    on the delivery timing:
+
+      * settle dispatched SYNCHRONOUSLY inside setFocus() -> the live read sees the OUTGOING row, so
+        the observer re-shows the very overlay the handler is about to hide.
+      * settle dispatched from the MESSAGE LOOP -> by delivery time the row has moved, the live read
+        sees the new row, and the overlay is not re-shown.
+
+    Each scenario is stepped from a repeating Timer so the message loop drains in between. That is
+    what makes SYNCHRONOUS vs. DEFERRED dispatch visible: a synchronous notification prints BETWEEN
+    the "before" and "after" records of the call that caused it; a message-loop notification prints
+    AFTER "after".
+
+    TWO CALL SHAPES, and the difference is the point. The app never focuses the RowList directly: it
+    focuses a CONTAINER, whose own `focusedChild` observer redirects focus down to the inner list.
+    That intermediate observer changes where a deferred notification drains, so the probe measures
+    both:
+
+      * DIRECT   - `list.setFocus(true)`      (R2/R4/R5)
+      * INDIRECT - `container.setFocus(true)` -> container's focusedChild observer ->
+                   `list.setFocus(true)`      (R3, R6) - the real app's shape
+
+    Scenarios
+      R1  first focus-gain on a list whose content was loaded while unfocused
+      R2  DIRECT refocus after moving to row 1, focus parked on a sibling (does the settle re-fire?)
+      R3  INDIRECT, the app sequence in ONE handler: container.setFocus(true) then
+          animateToItem = row+1 (which row does an observer's LIVE read of rowItemFocused see?)
+      R4  DIRECT refocus after a horizontal-only move (column changed, row did not)
+      R5  jumpToRowItem written while unfocused, then focus (is the silent position published?)
+      R6  the same INDIRECT sequence driven from onKeyEvent instead of a Timer observer - the
+          genuine repro, since a key handler starts at observer depth zero
+-->
+<component name="RefocusProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <!--
+            The container mirrors the real app: a Group that owns the list and redirects focus down
+            to it from its own focusedChild observer. Focusing the container - never the list - is
+            what the app's key handler does.
+        -->
+        <Group id="container">
+            <RowList
+                id="list"
+                itemComponentName="RefocusProbeItem"
+                itemSize="[1000, 240]"
+                rowItemSize="[[300, 200]]"
+                numRows="3"
+                translation="[100, 300]" />
+        </Group>
+        <!-- The overlay: a focusable SIBLING of the container, the shape the real failure has. -->
+        <Rectangle
+            id="overlay"
+            width="600"
+            height="160"
+            translation="[100, 100]"
+            color="0xCC7722FF"
+            focusable="true" />
+        <Timer id="stepTimer" duration="0.6" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.seq = 0
+        m.step = 0
+        m.scenario = "init"
+
+        m.list = m.top.findNode("list")
+        m.container = m.top.findNode("container")
+        m.overlay = m.top.findNode("overlay")
+        ' Tracks whether the overlay would be re-shown, i.e. whether a rowItemFocused observer that
+        ' reads the field LIVE decides the focused row is the overlay's row (row 0 here).
+        m.overlayRow = 0
+        ' Armed only for R7 - the re-focus half of the app's re-show. Left off for R1-R6 so those
+        ' scenarios measure emission/timing without focus churn confusing the picture.
+        m.regrabOnReshow = false
+
+        ' Content is loaded while the list is UNFOCUSED, as an async content Task does. Per the
+        ' documented rule this must NOT fire itemFocused - only the later focus-gain should.
+        content = createObject("roSGNode", "ContentNode")
+        for r = 0 to 2
+            row = content.createChild("ContentNode")
+            row.title = "Row" + str(r).trim()
+            for c = 0 to 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + str(r).trim() + "C" + str(c).trim()
+            end for
+        end for
+        m.list.content = content
+
+        ' The container redirects focus inward, exactly as the real app's container does.
+        m.container.observeField("focusedChild", "onContainerFocusChange")
+
+        m.list.observeField("rowItemFocused", "onRowItemFocused")
+        m.list.observeField("itemFocused", "onItemFocused")
+        m.list.observeField("itemUnfocused", "onItemUnfocused")
+        m.list.observeField("currFocusRow", "onCurrFocusRow")
+        m.list.observeField("scrollingStatus", "onScrollingStatus")
+
+        p("init", "ready", ls())
+
+        m.stepTimer = m.top.findNode("stepTimer")
+        m.stepTimer.observeField("fire", "onStepTimer")
+        m.stepTimer.control = "start"
+    end sub
+
+    ' ---------------------------------------------------------------- trace helpers
+
+    sub p(scenario as string, point as string, detail = "" as string)
+        m.seq = m.seq + 1
+        num = "00" + str(m.seq).trim()
+        print "PROBE|" + Right(num, 3) + "|" + scenario + "|" + point + "|" + detail
+    end sub
+
+    function b(value as boolean) as string
+        if value then return "T"
+        return "F"
+    end function
+
+    ' Renders an int-array field (rowItemFocused) as [r,c], tolerating the empty default.
+    function arr(value as object) as string
+        if value = invalid then return "invalid"
+        if type(value) <> "roArray" then return "type:" + type(value)
+        if value.count() = 0 then return "[]"
+        out = "["
+        for i = 0 to value.count() - 1
+            if i > 0 then out = out + ","
+            out = out + str(value[i]).trim()
+        end for
+        return out + "]"
+    end function
+
+    ' The LIVE state read straight off the node - the whole point of this probe. An app's
+    ' rowItemFocused observer reads the field this way rather than from event.getData(), so this is
+    ' what decides whether it acts on the outgoing or the incoming row.
+    function ls() as string
+        return "liveRIF=" + arr(m.list.rowItemFocused) + " liveIF=" + str(m.list.itemFocused).trim() + " liveIU=" + str(m.list.itemUnfocused).trim() + " liveCFR=" + str(m.list.currFocusRow).trim() + " liveCFC=" + str(m.list.currFocusColumn).trim() + " listInChain=" + b(m.list.isInFocusChain()) + " overlayFocus=" + b(m.overlay.hasFocus())
+    end function
+
+    ' ---------------------------------------------------------------- observers
+    '
+    ' Every observer prints BOTH the event payload and the live read-back, so a payload/live
+    ' disagreement (the settle arriving after a subsequent move) is visible on one line.
+
+    ' The container's own focusedChild observer, redirecting focus down to the list. This is the
+    ' intermediate observer the real app has, and it matters: a notification raised inside it drains
+    ' at ITS boundary, not at the end of the outer key handler.
+    sub onContainerFocusChange()
+        if m.container.hasFocus()
+            p(m.scenario, "OBS-containerFocus-redirect", "calling list.setFocus(true) " + ls())
+            m.list.setFocus(true)
+            p(m.scenario, "OBS-containerFocus-done", ls())
+        end if
+    end sub
+
+    ' Models the app's decision precisely: read rowItemFocused LIVE off the node (NOT from
+    ' event.getData()) and re-show the overlay when the focused row is the overlay's row. A
+    ' "WOULD-RESHOW" record is the bug reproducing - the overlay being re-shown (and re-grabbing
+    ' focus) at the very moment the handler is trying to hide it.
+    sub onRowItemFocused(event as object)
+        p(m.scenario, "OBS-rowItemFocused", "data=" + arr(event.getData()) + " " + ls())
+        live = m.list.rowItemFocused
+        if live <> invalid and live.count() = 2 and live[0] = m.overlayRow
+            p(m.scenario, "WOULD-RESHOW", "liveRow=" + str(live[0]).trim() + " (overlay re-shown from a LIVE read)")
+            ' The app does not merely re-SHOW the overlay here - it also re-FOCUSES it. That is a
+            ' nested setFocus targeting a node OUTSIDE the chain just committed by the setFocus we
+            ' are currently notifying for, i.e. a "backwards steal". focus-probe2 established that a
+            ' real Roku DROPS such a request (while honoring a forward focus into the committed
+            ' chain). If it is honored instead, the list loses focus again and the (B) row move that
+            ' follows goes silent - which is what leaves the overlay stuck on screen.
+            if m.regrabOnReshow
+                p(m.scenario, "RESHOW-regrab", "calling overlay.setFocus(true) " + ls())
+                m.overlay.setFocus(true)
+                p(m.scenario, "RESHOW-regrab-done", ls())
+            end if
+        end if
+    end sub
+
+    sub onItemFocused(event as object)
+        p(m.scenario, "OBS-itemFocused", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onItemUnfocused(event as object)
+        p(m.scenario, "OBS-itemUnfocused", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onCurrFocusRow(event as object)
+        p(m.scenario, "OBS-currFocusRow", "data=" + str(event.getData()).trim() + " " + ls())
+    end sub
+
+    sub onScrollingStatus(event as object)
+        p(m.scenario, "OBS-scrollingStatus", "data=" + b(event.getData()) + " " + ls())
+    end sub
+
+    ' ---------------------------------------------------------------- scenario driver
+
+    sub onStepTimer()
+        m.step = m.step + 1
+
+        if m.step = 1
+            ' R1: content was loaded while unfocused (in init). The first focus-gain is the one case
+            ' the docs and existing regressions DO pin: focus genuinely moves onto item 0.
+            m.scenario = "R1-first-focus"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 2
+            ' Move down one row so the remembered position is row 1, not the default 0.
+            m.scenario = "R2-prep-move"
+            p(m.scenario, "before", ls())
+            m.list.animateToItem = 1
+            p(m.scenario, "after", ls())
+
+        else if m.step = 3
+            ' Park focus on the sibling overlay - the list leaves the focus chain.
+            m.scenario = "R2-park"
+            p(m.scenario, "before", ls())
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 4
+            ' THE question: hand focus back with the position unchanged (still row 1).
+            ' Any OBS- record here means the settle re-fires for an unchanged position; whether it
+            ' lands before or after "after" answers the timing half.
+            m.scenario = "R2-refocus-unchanged"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 5
+            ' One settled frame later: anything arriving here was dispatched from the message loop.
+            m.scenario = "R2-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 6
+            ' Re-park for R3, with the remembered row set to the OVERLAY's row (0) - the state the
+            ' app is in when the user presses down out of the overlay. A stale settle then describes
+            ' row 0 and trips WOULD-RESHOW; a correctly-timed one describes the moved-to row.
+            m.scenario = "R3-park"
+            p(m.scenario, "before", ls())
+            m.list.jumpToRowItem = [m.overlayRow, 0]
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 7
+            ' R3: the exact app sequence, all inside ONE handler, via the CONTAINER (not the list) -
+            ' focus first, THEN move the row. If the settle dispatches while still inside step (A),
+            ' an observer's live read sees the OLD row. If it defers past the handler, by delivery
+            ' time (B) has moved it. Park the position on the overlay's row first so a stale read
+            ' trips WOULD-RESHOW.
+            m.scenario = "R3-focus-then-move"
+            p(m.scenario, "before", ls())
+            m.container.setFocus(true)
+            p(m.scenario, "mid-after-setFocus", ls())
+            m.list.animateToItem = 2
+            p(m.scenario, "after-animateToItem", ls())
+
+        else if m.step = 8
+            m.scenario = "R3-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 9
+            ' R4: a horizontal-only move - column changes, row does not.
+            m.scenario = "R4-prep-horiz"
+            p(m.scenario, "before", ls())
+            m.list.jumpToRowItem = [2, 1]
+            p(m.scenario, "after", ls())
+
+        else if m.step = 10
+            m.scenario = "R4-park"
+            p(m.scenario, "before", ls())
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 11
+            m.scenario = "R4-refocus-after-horiz"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 12
+            m.scenario = "R4-settled"
+            p(m.scenario, "settled", ls())
+
+        else if m.step = 13
+            ' R5: park, then write a position while UNFOCUSED. The write itself should be silent;
+            ' the question is whether the focus-gain that follows publishes it.
+            m.scenario = "R5-park"
+            p(m.scenario, "before", ls())
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 14
+            m.scenario = "R5-unfocused-jump"
+            p(m.scenario, "before", ls())
+            m.list.jumpToRowItem = [0, 0]
+            p(m.scenario, "after", ls())
+
+        else if m.step = 15
+            m.scenario = "R5-refocus-after-jump"
+            p(m.scenario, "before", ls())
+            m.list.setFocus(true)
+            p(m.scenario, "after", ls())
+
+        else if m.step = 16
+            ' R6 setup: put the remembered position back on the overlay's row and park focus on the
+            ' overlay, so the next DOWN press is the genuine repro.
+            m.scenario = "R6-prep"
+            p(m.scenario, "before", ls())
+            m.list.jumpToRowItem = [m.overlayRow, 0]
+            m.overlay.setFocus(true)
+            p(m.scenario, "after", ls())
+            m.stepTimer.control = "stop"
+            print "PROBE|---|R6-key|MANUAL|Now press DOWN once, then BACK on the remote."
+
+        end if
+    end sub
+
+    ' ---------------------------------------------------------------- key-driven repro (R6)
+    '
+    ' R1-R5 are driven from a Timer observer, which already sits at observer depth >= 1. A real key
+    ' handler starts at depth ZERO, which can move where a deferred notification drains - so the
+    ' genuine repro has to come through onKeyEvent. This mirrors the app's handler exactly:
+    '   (A) hand focus to the container   (B) move a row   (C) hide the overlay
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if key = "back" and press
+            p(m.scenario, "exit", "probe complete")
+            m.top.probeExit = true
+            return true
+        end if
+
+        if key = "down" and press and m.overlay.hasFocus()
+            ' First DOWN = R6 (re-show only). Second DOWN = R7, with the re-focus armed: the FULL app
+            ' behavior, where the re-show also grabs focus back. R7 is the one that decides whether a
+            ' nested backwards steal is honored (engine) or dropped (device, per focus-probe2).
+            if m.regrabOnReshow
+                m.scenario = "R7-key-down-regrab"
+            else
+                m.scenario = "R6-key-down"
+            end if
+            row = m.list.currFocusRow
+            p(m.scenario, "A-before-setFocus", "row=" + str(row).trim() + " " + ls())
+            m.container.setFocus(true)
+            p(m.scenario, "A-after-setFocus", ls())
+            m.list.animateToItem = row + 1
+            p(m.scenario, "B-after-animateToItem", ls())
+            p(m.scenario, "C-hide-overlay", "overlay would be faded out here " + ls())
+
+            if not m.regrabOnReshow
+                ' Arm R7 and put the state back so a second DOWN reruns the same sequence.
+                m.regrabOnReshow = true
+                m.list.jumpToRowItem = [m.overlayRow, 0]
+                m.overlay.setFocus(true)
+                print "PROBE|---|R7-key|MANUAL|Now press DOWN once more, then BACK."
+            end if
+            return true
+        end if
+
+        return false
+    end function
+    ]]></script>
+</component>
