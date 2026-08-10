@@ -231,12 +231,29 @@ just focused. Both conditions are needed, and "inside the owner's subtree" is th
 because forward focus routinely targets a *sibling* of the focused leaf (how a dialog highlights its
 buttons).
 
-**Fix** (`Node.isFocusRequestDropped`, `ArrayGrid.setNodeFocus`): classify by owner **and** target, and
-dispatch the focus-gain settle synchronously while a `focusedChild` notification is on the stack — the
-only window in which the steal can be classified at all. Finding 2 above is what makes that second half
-necessary: a deferred settle escapes the rule entirely. It is scoped to that window, because forcing a
-plain app `setFocus`'s settle inline re-creates the reentrancy the deferral exists to prevent
-(`deferred-observer-app`).
+**Fix**, in two halves:
+
+1. **Classify by owner *and* target** (`Node.isFocusRequestDropped`). The target test applies only when
+   the owner is a *proper ancestor* of the focused node — the container shape. When the owner **is** the
+   focused node the transaction staged `focusedChild` on the leaf itself, so a redirect from there is the
+   ordinary "I got focus but have nothing to show, pass it on" pattern and must still be honored. Two
+   targets are likewise never steals, because they are not in the owner's tree when the request is
+   raised and a subtree walk would drop them: a node still unparented (a component focusing itself from
+   `init()`, which runs before `appendChild`) and the scene's `dialog` (parented to the Scene via
+   `setNodeParent`). The `target === focused` idempotence check is tested **after** the owner-in-chain
+   walk, never before — ahead of it, a focus-*loss* observer re-asserting the incoming node would be
+   honored, re-running the whole transaction and double-firing every observer.
+
+2. **Carry the classification through the deferral** (`Node.runWithFocusNotifyOwner`,
+   `Field.executeCallbacks`). Finding 2 above says the settle *should* dispatch synchronously, and that
+   was the first attempt — but the settle is also what carries an app's reentrant multi-list load, so
+   forcing it inline re-creates the crash `deferred-observer-app` pins (an earlier list's `content` is
+   still `invalid` when a later list's handler runs). The crash shape and this steal shape are both "a
+   container's `focusedChild` observer calls `setFocus` on a list", so no timing gate separates them.
+   Instead the queued entry remembers the notification it was raised under and reinstates it around the
+   deferred dispatch: the drop rule stays applicable without moving *when* the observer runs. Delivery
+   timing is therefore still the engine's (deferred), and finding 2 remains an open divergence —
+   independent of this bug, since the classification no longer depends on it.
 
 Post-fix, record 156 reads `listInChain=T overlayFocus=F`: the steal is dropped, the list keeps focus,
 (B) publishes normally, and the sequence settles on the new row.
@@ -244,9 +261,11 @@ Post-fix, record 156 reads `listInChain=T overlayFocus=F`: the steal is dropped,
 **R6 is deliberately unchanged.** Its steal is raised after the settle has already drained, with no focus
 transaction on the stack, so nothing can classify it. That shape is not what the app does.
 
-Regressions: two tests in `test/extensions/scenegraph/Focus.test.js` — the steal case (fails without the
-target-keyed rule) and a companion forward-focus case that passes both ways, pinning that the rule does
-not over-drop.
+Regressions: `test/extensions/scenegraph/Focus.test.js` (the steal case, which fails without the
+target-keyed rule; a forward-focus companion pinning that the rule does not over-drop; the own-focus-gain
+redirect; and the loss-observer re-assert) plus `container-redirect-focus-app` in
+`test/cli/cli-scenegraph.test.js`, which drives all four shapes end-to-end through the **deferred**
+settle — the unit tests use port observers, which never defer, so only the CLI fixture covers half 2.
 
 ### Corrections recorded, so the trail is not re-walked
 

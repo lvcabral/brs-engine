@@ -94,15 +94,42 @@ export class Node extends RoSGNode implements BrsValue {
     private static readonly focusNotifyOwners: Node[] = [];
 
     /**
-     * Whether a `focusedChild` notification is dispatching right now, i.e. a focus transaction is on
-     * the stack and a nested `setFocus` raised from here can still be classified by
-     * `isFocusRequestDropped`.
+     * The `focusedChild` notification dispatching right now, if any — the context a nested
+     * `setFocus` is classified against by `isFocusRequestDropped`.
      *
-     * Read by `ArrayGrid.setNodeFocus` to decide whether its focus-gain settle must dispatch inline:
-     * only then does the timing matter, because only then is there a transaction to defend.
+     * Captured by `Field.executeCallbacks` when it DEFERS an emission raised inside a focus
+     * transaction, so the classification survives the wait; see `runWithFocusNotifyOwner`.
      */
-    static inFocusNotification(): boolean {
-        return Node.focusNotifyOwners.length > 0;
+    static currentFocusNotifyOwner(): Node | undefined {
+        return Node.focusNotifyOwners.at(-1);
+    }
+
+    /**
+     * Runs `body` with `owner` reinstated as the in-flight `focusedChild` notification.
+     *
+     * A grid's focus-gain settle (`itemFocused`/`rowItemFocused`) is an engine emission, so when it is
+     * raised inside another observer it defers to the end of that handler (see `executeCallbacks`) —
+     * but by then the focus transaction has left the stack, and a `setFocus` raised from the settle's
+     * observer could no longer be told apart from an ordinary app-initiated one. That is how a
+     * backwards steal used to win the live focus: an app re-grabbing focus from its `rowItemFocused`
+     * handler (an overlay re-showing itself) stranded the user on the node being navigated away from.
+     *
+     * Restoring the captured owner around the deferred dispatch keeps the drop rule applicable
+     * without changing WHEN the observer runs — deferral is what stops a later list's handler from
+     * running while an earlier `content` is still `invalid` (`deferred-observer-app`).
+     * @param owner Notification owner captured at defer time, or undefined if there was none.
+     * @param body Deferred dispatch to run.
+     */
+    static runWithFocusNotifyOwner<T>(owner: Node | undefined, body: () => T): T {
+        if (!owner) {
+            return body();
+        }
+        Node.focusNotifyOwners.push(owner);
+        try {
+            return body();
+        } finally {
+            Node.focusNotifyOwners.pop();
+        }
     }
     /**
      * Set while a focus transaction stages its `focusedChild` writes: `setValue` applies the value

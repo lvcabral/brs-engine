@@ -658,7 +658,9 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > registered *after* the `setFocus` call, so a field (not a callback) is recorded and re-notified from
    > the extension `tick` hook after init unwinds (`deliverPendingInitFocus`, render-thread only). The
    > split is intentional (callback-level reentrant-unwind vs. field-level message-loop delivery) — do
-   > **not** naively merge them. `notifyObservers` **consumes** a field from `pendingInitFocusFields` as
+   > **not** naively merge them. A `deferredQueue` entry also carries the `focusedChild` notification it
+   > was raised under (`focusNotifyOwner`), reinstated around the deferred dispatch so a nested `setFocus`
+   > is still classifiable as a focus steal — see the focus-chain section below. `notifyObservers` **consumes** a field from `pendingInitFocusFields` as
    > it dispatches so an inline re-focus of a still-pending ancestor doesn't double-fire; and `invoke`
    > stashes/zeroes both `internalUpdateDepth` and `focusEmissionDepth` so a handler's own writes are
    > treated as app-initiated. Any change to dispatch semantics must be re-checked against *both* paths
@@ -1214,6 +1216,34 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
    just *gained* focus hands it to an inner widget. The mirror case, a node re-grabbing focus as it
    *loses* it, leaves the chain and the remote with the node the in-flight transaction focused.
 
+   **The owner alone is not enough — the TARGET is classified too.** A container that observes its own
+   `focusedChild` and redirects focus into its own child *stays* in the chain, so an owner-only test reads
+   a subsequent re-grab to an unrelated sibling as legal forward focus and strands the app on the node it
+   was navigating away from (device-measured: `list-refocus-settle-probe` R7). Four rules, and the
+   **order** matters:
+   - The owner must still be in the focus chain (the classic backwards steal).
+   - `target === focused` is idempotent and honored — but tested **after** the owner walk, never before.
+     Ahead of it, a focus-*loss* observer re-asserting the incoming node gets honored, re-running the
+     whole transaction and double-firing every observer (`focusedChild` is `alwaysNotify`, and an
+     `ArrayGrid` re-publishes its `itemFocused` settle, re-triggering app side effects like starting
+     preview playback).
+   - The target-subtree test applies **only when the owner is a proper ancestor** of the focused node. When
+     the owner *is* the focused node, the transaction staged `focusedChild` on the leaf itself, so the
+     redirect is the ordinary "I got focus but nothing to show, pass it on" pattern — which legitimately
+     targets a sibling or the parent.
+   - A target that is **not in the owner's tree** is never a steal, or the subtree walk drops it: a node
+     still unparented (a component focusing itself from `init()`, which runs *before* `appendChild`) and
+     the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner).
+
+   **The classification must survive the deferral, not defeat it.** A grid's focus-gain settle is an
+   engine emission, so raised inside another observer it defers — by which point the transaction has left
+   the stack and the steal is unclassifiable. Do **not** fix that by dispatching the settle synchronously:
+   the settle is also what carries an app's reentrant multi-list load, so inline dispatch re-creates the
+   `deferred-observer-app` crash (an earlier list's `content` still `invalid` when a later list's handler
+   runs), and the two shapes are indistinguishable — both are "a container's `focusedChild` observer calls
+   `setFocus` on a list". Instead the deferred entry records the notification it was raised under and
+   `Node.runWithFocusNotifyOwner` reinstates it around the dispatch, leaving *when* observers run alone.
+
    Scoped to transactions where a node is **taking** focus (`notifyStagedFocus`'s `gaining` flag). The
    unfocus paths notify without classifying: with no competing target there is nothing to defend, and
    swallowing an unfocus observer's restore would leave the app with **no focused node at all**. The
@@ -1232,5 +1262,7 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
    true` until the next focus transaction, so two nodes report focus at once. Reproducing that would make
    both render focused. We report `hasFocus()` only for the live focus.
 
-   Regression: `focus-steal-app` in `test/cli/`, which must stay green alongside
-   `dialog-buttongroup-focus-app` and `init-focus-observer-app`.
+   Regression: `focus-steal-app` and `container-redirect-focus-app` in `test/cli/` (the latter drives all
+   four rules plus the deferral through a real app; the `Focus.test.js` unit tests use port observers,
+   which never defer), which must stay green alongside `dialog-buttongroup-focus-app`,
+   `deferred-observer-app` and `init-focus-observer-app`.

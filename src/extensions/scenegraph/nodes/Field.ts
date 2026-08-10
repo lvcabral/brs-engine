@@ -75,12 +75,6 @@ export class Field {
      */
     private static internalUpdateDepth = 0;
     /**
-     * >0 while a focus-GAIN settle is being published, which a device dispatches synchronously even
-     * though every other grid emission defers. Overrides the deferral in `executeCallbacks`; see
-     * `enterSyncFocusSettle` for why the timing is load-bearing.
-     */
-    private static syncFocusSettleDepth = 0;
-    /**
      * >0 while a component's `init()` is running (the `init` hierarchy walk in `initializeNode`).
      * Focus emissions raised during `init` must defer until the OUTERMOST init unwinds — on Roku a
      * `setFocus(true)` in `init()` dispatches its `focusedChild` observers from the message loop
@@ -105,8 +99,19 @@ export class Field {
      * each other (a manual field-alias ping-pong) loop forever.
      */
     private static draining = false;
-    /** Deferred reentrant observer invocations, drained at the outermost unwind. */
-    private static readonly deferredQueue: { field: Field; callback: BrsCallback; event: RoSGNodeEvent }[] = [];
+    /**
+     * Deferred reentrant observer invocations, drained at the outermost unwind.
+     *
+     * `focusNotifyOwner` is the `focusedChild` notification that was dispatching when the emission
+     * was queued, reinstated around the deferred call so a `setFocus` raised from the callback is
+     * still classifiable as a backwards steal — see `Node.runWithFocusNotifyOwner`.
+     */
+    private static readonly deferredQueue: {
+        field: Field;
+        callback: BrsCallback;
+        event: RoSGNodeEvent;
+        focusNotifyOwner?: Node;
+    }[] = [];
     /**
      * Fields whose focus-chain notification was raised during a component's init() and deferred.
      * The observer that reacts is often registered LATER in the same init (after the setFocus call),
@@ -135,24 +140,6 @@ export class Field {
     /** Marks exit from an engine-initiated field emission. */
     static exitInternalUpdate() {
         Field.internalUpdateDepth--;
-    }
-
-    /**
-     * Marks a focus-gain settle that must dispatch SYNCHRONOUSLY rather than defer.
-     *
-     * Device-measured (`test/simulator/probes/list-refocus-settle-probe`, R2/R4/R5): when a grid gains
-     * focus it re-publishes its focus fields and those observers run before `setFocus` returns. Every
-     * other engine-initiated grid emission defers (see `internalUpdateDepth`), and applying that here
-     * broke the focus-steal drop rule, which can only classify a nested `setFocus` while the focus
-     * transaction is still on the stack (`Node.focusNotifyOwners`).
-     */
-    static enterSyncFocusSettle() {
-        Field.syncFocusSettleDepth++;
-    }
-
-    /** Marks exit from a synchronous focus-gain settle. */
-    static exitSyncFocusSettle() {
-        Field.syncFocusSettleDepth--;
     }
 
     /** Marks entry into a component's `init()` (the init hierarchy walk). */
@@ -221,7 +208,6 @@ export class Field {
         Field.observerDepth = 0;
         Field.parentCascadeDepth = 0;
         Field.internalUpdateDepth = 0;
-        Field.syncFocusSettleDepth = 0;
         Field.initDepth = 0;
         Field.focusEmissionDepth = 0;
         Field.draining = false;
@@ -774,12 +760,17 @@ export class Field {
             Field.internalUpdateDepth > 0 &&
             Field.observerDepth > 0 &&
             !Field.draining &&
-            Field.parentCascadeDepth === 0 &&
-            // A focus-gain settle dispatches inline: a device runs these observers before setFocus
-            // returns, and the focus-steal drop rule depends on that (see enterSyncFocusSettle).
-            Field.syncFocusSettleDepth === 0
+            Field.parentCascadeDepth === 0
         ) {
-            Field.deferredQueue.push({ field: this, callback, event });
+            // Carry the in-flight focus notification with the entry: it will have left the stack by
+            // the time this drains, and without it a `setFocus` raised from the callback can no
+            // longer be classified as a backwards steal (see Node.runWithFocusNotifyOwner).
+            Field.deferredQueue.push({
+                field: this,
+                callback,
+                event,
+                focusNotifyOwner: Node.currentFocusNotifyOwner(),
+            });
             return;
         }
 
@@ -845,7 +836,11 @@ export class Field {
                 field.notifying = true;
                 Field.observerDepth++;
                 try {
-                    field.invoke(deferred.callback, deferred.event);
+                    // Reinstate the focus notification this emission was raised under, so a nested
+                    // setFocus stays classifiable even though the transaction has left the stack.
+                    Node.runWithFocusNotifyOwner(deferred.focusNotifyOwner, () =>
+                        field.invoke(deferred.callback, deferred.event)
+                    );
                 } finally {
                     Field.observerDepth--;
                     field.notifying = wasNotifying;
@@ -868,20 +863,13 @@ export class Field {
         // re-enters them on its own.
         const stashedInternalDepth = Field.internalUpdateDepth;
         const stashedFocusDepth = Field.focusEmissionDepth;
-        // Stashed for the same reason: the sync-dispatch exemption applies to the focus-gain settle
-        // itself, not to whatever the handler goes on to trigger. A grid emission raised from inside
-        // this callback must defer as usual, or a reentrant cascade dispatches inline and loses the
-        // handler-boundary ordering the deferral exists to preserve.
-        const stashedSyncSettle = Field.syncFocusSettleDepth;
         Field.internalUpdateDepth = 0;
         Field.focusEmissionDepth = 0;
-        Field.syncFocusSettleDepth = 0;
         try {
             this.invokeCallable(callback, event);
         } finally {
             Field.internalUpdateDepth = stashedInternalDepth;
             Field.focusEmissionDepth = stashedFocusDepth;
-            Field.syncFocusSettleDepth = stashedSyncSettle;
         }
     }
 

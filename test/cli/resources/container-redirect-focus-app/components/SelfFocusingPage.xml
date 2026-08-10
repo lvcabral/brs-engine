@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    A page that focuses itself from init(). init() runs BEFORE the node is appended to its parent,
+    so `m.top.parent` is still invalid at this point - the shape scenario 2 measures.
+-->
+<component name="SelfFocusingPage" extends="Group">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.focusable = true
+        m.top.setFocus(true)
+    end sub
+    ]]></script>
+</component>
