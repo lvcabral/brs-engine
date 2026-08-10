@@ -140,4 +140,41 @@ describe("SceneGraph focus management", () => {
 
         expect(sgRoot.focused).toBe(childB);
     });
+    test("honors a redirect out of a node observing its OWN focus gain", () => {
+        // The "I got focus but have nothing to show, pass it on" pattern: a node observes its own
+        // focusedChild and hands focus to a sibling (or up to its container). The focus transaction
+        // stages focusedChild on the focused leaf itself, so that leaf is also an `owner` — and an
+        // over-broad "target must be inside the owner's subtree" test dropped both redirects, which is a
+        // regression against long-standing behavior that focus-probe2 never covered (N1/N2 only measured
+        // forward focus INTO a container's subtree). The subtree test applies only when the owner is a
+        // PROPER ANCESTOR of the focused node, i.e. the container-redirect shape.
+        for (const targetIsSibling of [true, false]) {
+            sgRoot.setFocused();
+            const scene = focusableNode();
+            const container = focusableNode();
+            const leaf = focusableNode();
+            const sibling = focusableNode();
+            scene.appendChildToParent(container);
+            container.appendChildToParent(leaf);
+            container.appendChildToParent(sibling);
+
+            // Sibling redirect targets a peer; the other case hands focus UP to the container.
+            const redirectTo = targetIsSibling ? sibling : container;
+            const port = new RoMessagePort();
+            const originalPush = port.pushMessage.bind(port);
+            let redirected = false;
+            port.pushMessage = (event) => {
+                if (!redirected && sgRoot.focused === leaf) {
+                    redirected = true;
+                    redirectTo.setNodeFocus(true);
+                }
+                originalPush(event);
+            };
+            leaf.fields.get("focusedchild").addObserver("permanent", fakeInterpreter, port, leaf, focusedChildFieldArg);
+
+            leaf.setNodeFocus(true);
+
+            expect(sgRoot.focused).toBe(redirectTo);
+        }
+    });
 });
