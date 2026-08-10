@@ -196,3 +196,71 @@ describe("Poster 9-patch display modes", () => {
         expect(scaledRects[0].x).toBeCloseTo(80);
     });
 });
+
+/**
+ * loadDisplayMode="limitSize" is the only mode whose spec text governs loadWidth/loadHeight directly:
+ * it clamps the LOADED texture (not the render rect) to a max box, only shrinking, and preserving aspect
+ * ratio. Before this fix it fell through to the same code path as noScale — an unconditional distort
+ * stretch to exactly loadWidth x loadHeight, even when the source was already smaller.
+ */
+describe("Poster loadDisplayMode limitSize", () => {
+    beforeAll(mountCommonVolume);
+
+    // A plain (non 9-patch) 853x480 asset — landscape aspect ratio, distinct from a square source so a
+    // stretch-to-box bug is distinguishable from a correctly clamped, aspect-preserved result.
+    const wideUri = "common:/images/video_overlay_top.png";
+
+    function loadedSize(poster) {
+        return { width: poster.getValueJS("bitmapWidth"), height: poster.getValueJS("bitmapHeight") };
+    }
+
+    test("shrinks to fit the box, preserving aspect ratio, when the source exceeds both dimensions", () => {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString("limitSize"));
+        poster.setValue("loadWidth", new Float(200));
+        poster.setValue("loadHeight", new Float(200));
+        poster.setValue("uri", new BrsString(wideUri));
+        expect(poster.getValueJS("loadStatus")).toBe("ready");
+
+        const { width, height } = loadedSize(poster);
+        // Width is the binding axis (853/480 is wider than the 200x200 box). RoBitmap truncates
+        // fractional pixel sizes, so compare against the same truncation rather than the raw float.
+        expect(width).toBe(200);
+        expect(height).toBe(Math.trunc(200 * (480 / 853)));
+        expect(width / height).toBeCloseTo(853 / 480, 1);
+    });
+
+    test("leaves the source at its regular size when it is already smaller than the box", () => {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString("limitSize"));
+        poster.setValue("loadWidth", new Float(2000));
+        poster.setValue("loadHeight", new Float(2000));
+        poster.setValue("uri", new BrsString(wideUri));
+        expect(poster.getValueJS("loadStatus")).toBe("ready");
+
+        expect(loadedSize(poster)).toEqual({ width: 853, height: 480 });
+    });
+
+    test("clamps by whichever axis actually exceeds the box", () => {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString("limitSize"));
+        poster.setValue("loadWidth", new Float(400));
+        poster.setValue("loadHeight", new Float(1000));
+        poster.setValue("uri", new BrsString(wideUri));
+        expect(poster.getValueJS("loadStatus")).toBe("ready");
+
+        const { width, height } = loadedSize(poster);
+        expect(width).toBeCloseTo(400, 0);
+        expect(height).toBeCloseTo(400 * (480 / 853), 0);
+    });
+
+    test("differs from the noScale distort-stretch at the same loadWidth/loadHeight", () => {
+        const stretched = SGNodeFactory.createNode("Poster");
+        stretched.setValue("loadDisplayMode", new BrsString("noScale"));
+        stretched.setValue("loadWidth", new Float(200));
+        stretched.setValue("loadHeight", new Float(200));
+        stretched.setValue("uri", new BrsString(wideUri));
+
+        expect(loadedSize(stretched)).toEqual({ width: 200, height: 200 });
+    });
+});

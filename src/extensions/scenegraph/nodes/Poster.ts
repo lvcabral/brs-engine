@@ -192,7 +192,13 @@ export class Poster extends Group {
                 const loadWidth = this.getValueJS("loadWidth") as number;
                 const loadHeight = this.getValueJS("loadHeight") as number;
                 if (loadWidth > 0 && loadHeight > 0) {
-                    this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
+                    const mode = (this.getValueJS("loadDisplayMode") as string).trim().toLowerCase();
+                    if (mode === "limitsize") {
+                        const size = this.clampLoadSize(this.bitmap.width, this.bitmap.height, loadWidth, loadHeight);
+                        this.bitmap = getTextureManager().resizeTexture(this.bitmap, size.width, size.height);
+                    } else {
+                        this.bitmap = getTextureManager().resizeTexture(this.bitmap, loadWidth, loadHeight);
+                    }
                 }
             }
             const subSearch = sgRoot.autoSub.search.toLowerCase();
@@ -210,6 +216,14 @@ export class Poster extends Group {
             loadStatus = "ready";
         }
         return loadStatus;
+    }
+
+    private clampLoadSize(width: number, height: number, maxWidth: number, maxHeight: number) {
+        if (width <= maxWidth && height <= maxHeight) {
+            return { width, height };
+        }
+        const scale = Math.min(maxWidth / width, maxHeight / height);
+        return { width: width * scale, height: height * scale };
     }
 
     private scaleToFit(rect: Rect): Rect {
