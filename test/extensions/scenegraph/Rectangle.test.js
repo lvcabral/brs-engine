@@ -1,7 +1,7 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory } = scenegraph;
+const { SGNodeFactory, Node } = scenegraph;
 const { Float, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
@@ -145,6 +145,24 @@ describe("Rectangle node scale", () => {
         expect(childCall.scaleY).toBe(1);
         expect(childCall.r.x).toBe(10);
         expect(childCall.r.y).toBe(20);
+    });
+
+    /**
+     * Efficiency regression: `getTranslation()` already reads the `scale` field internally (to
+     * compensate the drawn position for `scaleRotateCenter`), so `renderNodeContent` must fetch
+     * `scale` ONCE and thread it into `getDrawTranslation(origin, angle, scale)` rather than
+     * reading the field a second time for `applyScale`/`doDrawRotatedRect` — a real, avoidable
+     * double allocation (getValueJS on a vector2d field allocates a WeakSet + a fresh array) that
+     * slipped in when scale support was first wired into these node types.
+     */
+    test("reads the scale field exactly once per render pass", () => {
+        const rect = rectangle({ translation: [10, 20], scale: [0.5, 0.5] });
+        const spy = vi.spyOn(Node.prototype, "getValueJS");
+        rect.renderNode(fakeInterpreter, [0, 0], 0, 1, { doDrawRotatedRect() {} });
+
+        const scaleCalls = spy.mock.calls.filter(([field]) => field === "scale");
+        expect(scaleCalls.length).toBe(1);
+        spy.mockRestore();
     });
 });
 

@@ -272,10 +272,15 @@ export class Group extends Node {
         return rectangle;
     }
 
-    protected getTranslation() {
+    /**
+     * @param scale This node's own scale field, if the caller already fetched it (avoids a second
+     * `getValueJS` lookup on this hot render-path method, e.g. a caller that also needs `scale` for
+     * `applyScale`/`withScale`); fetched here when omitted.
+     */
+    protected getTranslation(scale?: number[]) {
         const translation = this.getValueJS("translation") as number[];
         // Adjust translation based on scale and rotation center
-        const scale = this.getValueJS("scale") as number[];
+        scale ??= this.getValueJS("scale") as number[];
         const scaleRotateCenter = this.getScaleRotateCenter();
         const scaleDiffX = scaleRotateCenter[0] * (scale[0] - 1);
         const scaleDiffY = scaleRotateCenter[1] * (scale[1] - 1);
@@ -699,8 +704,9 @@ export class Group extends Node {
         this.rectToScene = { x: trans[0], y: trans[1], width, height };
     }
 
-    protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number) {
-        const nodeTrans = this.getTranslation();
+    /** @param scale See `getTranslation`'s `scale` param — threaded through to avoid a re-fetch. */
+    protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number, scale?: number[]) {
+        const nodeTrans = this.getTranslation(scale);
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation === 0) {
             // Local space must agree with the parent/scene rects below: a grid's drawRect is outset
@@ -857,8 +863,9 @@ export class Group extends Node {
      * looked accidental (#1133 preserved it pending exactly this measurement) and placed a container's
      * children 100px off under a rotated ancestor.
      */
-    protected getDrawTranslation(origin: number[], angle: number): number[] {
-        const nodeTrans = this.getTranslation();
+    /** @param scale See `getTranslation`'s `scale` param — threaded through to avoid a re-fetch. */
+    protected getDrawTranslation(origin: number[], angle: number, scale?: number[]): number[] {
+        const nodeTrans = this.getTranslation(scale);
         const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];

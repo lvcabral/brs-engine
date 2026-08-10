@@ -155,19 +155,19 @@ export class ScrollableText extends Group {
             return;
         }
 
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
 
         const size = this.getDimensions();
         const rect: Rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        const scale = this.getValueJS("scale") as number[];
 
         if (draw2D && size.width > 0 && size.height > 0) {
             this.renderContent(draw2D, rect, rotation, opacity, scale);
         }
 
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
