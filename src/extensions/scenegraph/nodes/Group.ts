@@ -374,13 +374,15 @@ export class Group extends Node {
     }
 
     /**
-     * Brackets `draw` with `IfDraw2D.pushScale`/`popScale` around `rect.x`/`rect.y` when `scale`
+     * Brackets `draw` with `IfDraw2D.pushScale`/`popScale` around the pivot `(x, y)` when `scale`
      * isn't the default `[1,1]` — the shared shape behind `drawText`'s single draw call and
-     * `drawTextWrap`'s per-line loop (pushed once for the whole block, not per line).
+     * `drawTextWrap`'s per-line loop (pushed once for the whole block, not per line). Takes raw
+     * coordinates rather than a `Rect` since only the pivot position is ever needed: a caller whose
+     * own rect gets mutated before drawing (SimpleLabel's horizOrigin/vertOrigin alignment) can pass
+     * its captured pivot directly instead of packaging a throwaway `Rect` around it.
      */
-    private withScale(draw2D: IfDraw2D | undefined, rect: Rect, scale: number[], draw: () => void) {
-        const scaled =
-            (scale[0] !== 1 || scale[1] !== 1) && (draw2D?.pushScale(rect.x, rect.y, scale[0], scale[1]) ?? false);
+    protected withScale(draw2D: IfDraw2D | undefined, x: number, y: number, scale: number[], draw: () => void) {
+        const scaled = (scale[0] !== 1 || scale[1] !== 1) && (draw2D?.pushScale(x, y, scale[0], scale[1]) ?? false);
         try {
             draw();
         } finally {
@@ -448,7 +450,7 @@ export class Group extends Node {
             }
         }
         scale ??= this.getValueJS("scale") as number[];
-        this.withScale(draw2D, rect, scale, () => {
+        this.withScale(draw2D, rect.x, rect.y, scale, () => {
             draw2D?.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
         });
         return measured;
@@ -488,7 +490,7 @@ export class Group extends Node {
         }
         scale ??= this.getValueJS("scale") as number[];
         let ellipsized = false;
-        this.withScale(draw2D, rect, scale, () => {
+        this.withScale(draw2D, rect.x, rect.y, scale, () => {
             for (const line of this.cachedLines) {
                 let x = rect.x;
                 if (horizAlign === "center") {

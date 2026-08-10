@@ -161,17 +161,18 @@ export class ScrollableText extends Group {
 
         const size = this.getDimensions();
         const rect: Rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
+        const scale = this.getValueJS("scale") as number[];
 
         if (draw2D && size.width > 0 && size.height > 0) {
-            this.renderContent(draw2D, rect, rotation, opacity);
+            this.renderContent(draw2D, rect, rotation, opacity, scale);
         }
 
-        this.updateBoundingRects(rect, origin, rotation);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
-    private renderContent(draw2D: IfDraw2D, rect: Rect, rotation: number, opacity: number) {
+    private renderContent(draw2D: IfDraw2D, rect: Rect, rotation: number, opacity: number, scale: number[]) {
         const font = this.getValue("font") as Font;
         const drawFont = font?.createDrawFont();
         if (!(drawFont instanceof RoFont)) {
@@ -225,28 +226,33 @@ export class ScrollableText extends Group {
         // Draw visible lines with clipping to prevent overflow
         const clipWidth = showScrollbar ? nodeWidth - this.scrollbarWidth : nodeWidth;
         const clipRect: Rect = { x: rect.x, y: rect.y, width: clipWidth, height: nodeHeight };
-        draw2D.pushClip(clipRect);
-        try {
-            const endLine = Math.min(this.scrollTopLine + this.visibleLines, this.totalLines);
-            let y = startY;
-            for (let i = this.scrollTopLine; i < endLine; i++) {
-                const line = finalLines[i];
-                let x = rect.x;
-                if (horizAlign === "center" && textWidth > line.width) {
-                    x += (textWidth - line.width) / 2;
-                } else if (horizAlign === "right" && textWidth > line.width) {
-                    x += textWidth - line.width;
+        this.withScale(draw2D, rect.x, rect.y, scale, () => {
+            draw2D.pushClip(clipRect);
+            try {
+                const endLine = Math.min(this.scrollTopLine + this.visibleLines, this.totalLines);
+                let y = startY;
+                for (let i = this.scrollTopLine; i < endLine; i++) {
+                    const line = finalLines[i];
+                    let x = rect.x;
+                    if (horizAlign === "center" && textWidth > line.width) {
+                        x += (textWidth - line.width) / 2;
+                    } else if (horizAlign === "right" && textWidth > line.width) {
+                        x += textWidth - line.width;
+                    }
+                    draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
+                    y += this.lineHeight + lineSpacing;
                 }
-                draw2D.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
-                y += this.lineHeight + lineSpacing;
+            } finally {
+                draw2D.popClip();
             }
-        } finally {
-            draw2D.popClip();
-        }
+        });
 
-        // Draw scrollbar if needed
+        // Draw scrollbar if needed. Not wrapped in the scale bracket above: drawImage (used for the
+        // track/thumb bitmaps below) already applies this node's own scale to the bitmap dimensions
+        // directly (Group.drawImage) — nesting it inside another canvas-transform bracket would
+        // double-apply the scale.
         if (showScrollbar) {
-            this.renderScrollbar(draw2D, rect, nodeWidth, nodeHeight, rotation, opacity, maxScroll);
+            this.renderScrollbar(draw2D, rect, nodeWidth, nodeHeight, rotation, opacity, maxScroll, scale);
         }
     }
 
@@ -278,7 +284,8 @@ export class ScrollableText extends Group {
         nodeHeight: number,
         rotation: number,
         opacity: number,
-        maxScroll: number
+        maxScroll: number,
+        scale: number[]
     ) {
         const sbX = rect.x + nodeWidth - this.scrollbarWidth;
         const sbY = rect.y;
@@ -290,13 +297,17 @@ export class ScrollableText extends Group {
             const trackRect: Rect = { x: sbX, y: sbY, width: this.scrollbarWidth, height: nodeHeight };
             this.drawImage(trackBmp, trackRect, rotation, opacity, draw2D, trackBlend);
         } else {
-            // Fallback: draw a semi-transparent rectangle as track
+            // Fallback: draw a semi-transparent rectangle as track. Passed scale directly (not the
+            // canvas-transform withScale bracket) since doDrawRotatedRect already applies scale to a
+            // single rect draw the same way Rectangle.renderNodeContent does.
             draw2D.doDrawRotatedRect(
                 { x: sbX, y: sbY, width: this.scrollbarWidth, height: nodeHeight },
                 0x333333aa,
                 rotation,
                 undefined,
-                opacity
+                opacity,
+                scale[0],
+                scale[1]
             );
         }
 

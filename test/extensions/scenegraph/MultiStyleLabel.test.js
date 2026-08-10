@@ -4,7 +4,12 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, BrsBoolean, Int32, RoAssociativeArray } = core;
+const { BrsDevice, BrsString, BrsBoolean, Int32, Float, RoArray, RoAssociativeArray } = core;
+
+/** A float vector for translation/scale-style fields. */
+function vector(values) {
+    return new RoArray(values.map((v) => new Float(v)));
+}
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
@@ -227,5 +232,71 @@ describe("MultiStyleLabel node", () => {
         } finally {
             sgRoot.rendering = false;
         }
+    });
+});
+
+/**
+ * Regression: `scale` used to be a no-op on MultiStyleLabel (it extends Group directly with its
+ * own renderNodeContent/renderLabel, bypassing Group.drawText's scale bracket and never calling
+ * Group.applyScale for its bounding rect). Fixed the same way as Label: Group.withScale pushed
+ * once around the whole multi-line/multi-token draw loop, and Group.applyScale folded into the
+ * rect passed to updateBoundingRects.
+ */
+describe("MultiStyleLabel scale", () => {
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function styledLabel({ scale, translation = [0, 0] } = {}) {
+        const label = SGNodeFactory.createNode("MultiStyleLabel");
+        label.setValue("drawingStyles", drawingStyles({ default: { fontUri: "font:MediumSystemFont" } }));
+        label.setValue("translation", vector(translation));
+        if (scale) label.setValue("scale", vector(scale));
+        label.setValue("text", new BrsString("hello <b>world</b>"));
+        return label;
+    }
+
+    test("scale=[0,0] pushes a scale bracket once for the whole block, around the node's own translation", () => {
+        const label = styledLabel({ scale: [0, 0], translation: [10, 20] });
+        const calls = [];
+        const draw2D = {
+            pushScale(pivotX, pivotY, scaleX, scaleY) {
+                calls.push(["push", pivotX, pivotY, scaleX, scaleY]);
+                return true;
+            },
+            popScale() {
+                calls.push(["pop"]);
+            },
+            doDrawRotatedText(text) {
+                if (text.length > 0) calls.push(["draw", text]);
+            },
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        expect(calls[0]).toEqual(["push", 10, 20, 0, 0]);
+        expect(calls.filter((c) => c[0] === "draw").length).toBeGreaterThan(1); // multiple tokens
+        expect(calls.at(-1)).toEqual(["pop"]);
+    });
+
+    test("scale=[1,1] (default) never calls pushScale/popScale", () => {
+        const label = styledLabel();
+        const draw2D = { doDrawRotatedText() {} };
+        expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+    });
+
+    test("scale=[0,0] collapses the reported boundingRect", () => {
+        const label = styledLabel({ scale: [0, 0], translation: [10, 20] });
+        const draw2D = {
+            doDrawRotatedText() {},
+            pushScale() {
+                return true;
+            },
+            popScale() {},
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+        expect(rect.width).toBe(0);
+        expect(rect.height).toBe(0);
     });
 });

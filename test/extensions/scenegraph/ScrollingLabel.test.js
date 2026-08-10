@@ -4,10 +4,15 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Float } = core;
+const { BrsDevice, BrsString, Float, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
+
+/** A float vector for translation/scale-style fields. */
+function vector(values) {
+    return new RoArray(values.map((v) => new Float(v)));
+}
 
 /** Renders the label with a stub draw surface, capturing the y of the drawn text. */
 function captureTextY(label) {
@@ -87,5 +92,74 @@ describe("ScrollingLabel node vertAlign", () => {
 
         expect(centerYs).toBeCloseTo(0, 5);
         expect(bottomYs).toBeCloseTo(0, 5);
+    });
+});
+
+/**
+ * Regression: `scale` used to be a no-op on ScrollingLabel (it overrides Label.renderLabel with
+ * its own marquee draw path, bypassing Group.drawText's scale bracket entirely), so
+ * `scale=[0,0]` never visually collapsed it. Fixed via the same Group.withScale mechanism, pushed
+ * around the existing pushClip/popClip bracket. The bounding-rect fix comes for free: ScrollingLabel
+ * doesn't override Label.renderNodeContent, which already applies Group.applyScale.
+ */
+describe("ScrollingLabel node scale", () => {
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function scrollingLabel({ scale, translation = [0, 0] } = {}) {
+        const label = SGNodeFactory.createNode("ScrollingLabel");
+        label.setValue("font", new BrsString("font:MediumSystemFont"));
+        label.setValue("translation", vector(translation));
+        if (scale) label.setValue("scale", vector(scale));
+        label.setValue("text", new BrsString("Search"));
+        return label;
+    }
+
+    test("scale=[0,0] pushes a scale bracket around the node's own translation before drawing", () => {
+        const label = scrollingLabel({ scale: [0, 0], translation: [10, 20] });
+        const calls = [];
+        const draw2D = {
+            pushClip() {},
+            popClip() {},
+            pushScale(pivotX, pivotY, scaleX, scaleY) {
+                calls.push(["push", pivotX, pivotY, scaleX, scaleY]);
+                return true;
+            },
+            popScale() {
+                calls.push(["pop"]);
+            },
+            doDrawRotatedText(text) {
+                if (text.trim() !== "") calls.push(["draw", text]);
+            },
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        expect(calls[0]).toEqual(["push", 10, 20, 0, 0]);
+        expect(calls.at(-1)).toEqual(["pop"]);
+    });
+
+    test("scale=[1,1] (default) never calls pushScale/popScale", () => {
+        const label = scrollingLabel();
+        const draw2D = { pushClip() {}, popClip() {}, doDrawRotatedText() {} };
+        expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+    });
+
+    test("scale=[0,0] collapses the reported boundingRect", () => {
+        const label = scrollingLabel({ scale: [0, 0], translation: [10, 20] });
+        const draw2D = {
+            pushClip() {},
+            popClip() {},
+            doDrawRotatedText() {},
+            pushScale() {
+                return true;
+            },
+            popScale() {},
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        const rect = label.getBoundingRect("toParent", { environment: {}, inSubEnv: () => {} });
+        expect(rect.width).toBe(0);
+        expect(rect.height).toBe(0);
     });
 });

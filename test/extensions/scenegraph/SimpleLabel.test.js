@@ -4,13 +4,18 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Int32 } = core;
+const { BrsDevice, BrsString, Int32, Float, RoArray } = core;
 
 /** Minimal fake interpreter accepted by getBoundingRect (mirrors Poster.test.js). */
 const fakeObserverInterpreter = { environment: {}, inSubEnv: () => {} };
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
+
+/** A float vector for translation/scale-style fields. */
+function vector(values) {
+    return new RoArray(values.map((v) => new Float(v)));
+}
 
 describe("SimpleLabel node", () => {
     beforeAll(() => {
@@ -122,5 +127,78 @@ describe("SimpleLabel node", () => {
                 expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1)).not.toThrow();
             }
         }
+    });
+
+    /**
+     * Regression: `scale` used to be a no-op on SimpleLabel (only Label ever wired the draw-time
+     * and bounding-rect scale bracket), so `scale=[0,0]` never visually collapsed it. Fixed by the
+     * same Group.withScale/applyScale mechanism Label uses. SimpleLabel's own renderLabel mutates
+     * rect.x/y in place for horizOrigin/vertOrigin alignment BEFORE drawing, so the scale pivot must
+     * be captured up front — otherwise a centered/right/bottom-anchored label would scale around its
+     * post-alignment position instead of its own translation.
+     */
+    describe("scale", () => {
+        function scaledLabel({ scale, translation, horizOrigin = "left", vertOrigin = "top" } = {}) {
+            const label = SGNodeFactory.createNode("SimpleLabel");
+            label.setValue("fontUri", new BrsString("font:MediumSystemFont"));
+            label.setValue("text", new BrsString("hello"));
+            if (translation) label.setValue("translation", vector(translation));
+            label.setValue("horizOrigin", new BrsString(horizOrigin));
+            label.setValue("vertOrigin", new BrsString(vertOrigin));
+            if (scale) label.setValue("scale", vector(scale));
+            return label;
+        }
+
+        test("scale=[0,0] pushes a scale bracket around the node's own translation, not the aligned draw position", () => {
+            const label = scaledLabel({
+                scale: [0, 0],
+                translation: [10, 20],
+                horizOrigin: "center",
+                vertOrigin: "bottom",
+            });
+            const calls = [];
+            const draw2D = {
+                pushScale(pivotX, pivotY, scaleX, scaleY) {
+                    calls.push(["push", pivotX, pivotY, scaleX, scaleY]);
+                    return true;
+                },
+                popScale() {
+                    calls.push(["pop"]);
+                },
+                doDrawRotatedText(text, x, y) {
+                    calls.push(["draw", x, y]);
+                },
+            };
+            label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            // Pivot is the node's own (10,20) translation, NOT wherever center/bottom alignment
+            // shifted the actual draw position to.
+            expect(calls[0]).toEqual(["push", 10, 20, 0, 0]);
+            expect(calls[1][0]).toBe("draw");
+            expect(calls[1][1]).not.toBe(10); // the draw itself IS shifted by horizOrigin/vertOrigin
+            expect(calls[2]).toEqual(["pop"]);
+        });
+
+        test("scale=[1,1] (default) never calls pushScale/popScale", () => {
+            const label = scaledLabel();
+            const draw2D = { doDrawRotatedText() {} };
+            expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+        });
+
+        test("scale=[0,0] collapses the reported boundingRect", () => {
+            const label = scaledLabel({ scale: [0, 0], translation: [10, 20] });
+            const draw2D = {
+                doDrawRotatedText() {},
+                pushScale() {
+                    return true;
+                },
+                popScale() {},
+            };
+            label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            const rect = label.getBoundingRect("toParent", fakeObserverInterpreter);
+            expect(rect.width).toBe(0);
+            expect(rect.height).toBe(0);
+        });
     });
 });

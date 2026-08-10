@@ -35,7 +35,13 @@ export class MonospaceLabel extends Label {
         }
     }
 
-    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
+    protected renderLabel(
+        rect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        scale?: number[]
+    ): MeasuredText {
         const font = this.getValue("font") as Font;
         const drawFont = font.createDrawFont();
         const fullText = (this.getValueJS("text") as string) ?? "";
@@ -93,23 +99,26 @@ export class MonospaceLabel extends Label {
         }
 
         if (draw2D) {
+            scale ??= this.getValueJS("scale") as number[];
             const chars = [...text];
-            for (let i = 0; i < chars.length; i++) {
-                const char = chars[i];
-                const centerOffset =
-                    i === 0 && firstCharTrueLeftAlign ? 0 : (cellWidth - drawFont.measureTextWidth(char).width) / 2;
-                const local = [startX + i * cellWidth + centerOffset, startY];
-                const screen = rotation === 0 ? local : rotateTranslation(local, rotation);
-                draw2D.doDrawRotatedText(
-                    char,
-                    rect.x + screen[0],
-                    rect.y + screen[1],
-                    color,
-                    opacity,
-                    drawFont,
-                    rotation
-                );
-            }
+            this.withScale(draw2D, rect.x, rect.y, scale, () => {
+                for (let i = 0; i < chars.length; i++) {
+                    const char = chars[i];
+                    const centerOffset =
+                        i === 0 && firstCharTrueLeftAlign ? 0 : (cellWidth - drawFont.measureTextWidth(char).width) / 2;
+                    const local = [startX + i * cellWidth + centerOffset, startY];
+                    const screen = rotation === 0 ? local : rotateTranslation(local, rotation);
+                    draw2D.doDrawRotatedText(
+                        char,
+                        rect.x + screen[0],
+                        rect.y + screen[1],
+                        color,
+                        opacity,
+                        drawFont,
+                        rotation
+                    );
+                }
+            });
         }
 
         this.setEllipsized(ellipsized);
