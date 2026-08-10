@@ -157,34 +157,6 @@ export class RowList extends ArrayGrid {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    /**
-     * A RowList's scroll position IS a row index, and a vertical scroll leaves the focused column
-     * alone — device-measured: the ramp emitted `currFocusRow` only, never `currFocusColumn`.
-     */
-    protected publishScrollPosition(position: number) {
-        super.setValue("currFocusRow", new Float(position));
-    }
-
-    /** A RowList's indices are already rows, so no flat-index-to-row conversion is needed. */
-    protected scrollDuration(from: number, to: number): number {
-        return Math.max(1, Math.abs(to - from)) * ArrayGrid.scrollMsPerItem;
-    }
-
-    /**
-     * Settles an animated scroll on a row, reusing the row's remembered column.
-     *
-     * Overridden because `ArrayGrid.setFocusedItem` takes a single index while a RowList settles a
-     * [row, column] pair — and because the base class's flat `index` is a row index here.
-     */
-    protected settleScrollAnimation(anim: ArrayGrid.ScrollAnimation) {
-        this.settlingScrollAnim = true;
-        try {
-            this.setFocusedItem(anim.toIndex, anim.toColumn);
-        } finally {
-            this.settlingScrollAnim = false;
-        }
-    }
-
     protected setFocusedItem(rowIndex: number, colIndex: number = -1) {
         if (rowIndex < 0 || rowIndex >= this.content.length) {
             return;
@@ -715,7 +687,10 @@ export class RowList extends ArrayGrid {
             }
             // Same row-height resolution renderSingleRow uses (rowHeights indexed by absolute row,
             // falling back to itemSize), plus that row's spacing — the pitch to the next row down.
-            const rowHeight = context.rowHeights[this.currRow] ?? context.itemSize[1] ?? 0;
+            // resolveTrackValue, not `?? itemSize[1]`: it is the shared resolver for these per-row
+            // arrays (see ArrayGrid.updateRect) and it rejects non-finite entries, so a NaN in
+            // rowHeights cannot propagate into the shift and blank the layout for the whole scroll.
+            const rowHeight = this.resolveTrackValue(context.rowHeights, this.currRow, context.itemSize[1]);
             const pitch =
                 rowHeight + this.calculateRowSpacing(this.currRow, context.rowSpacings, context.globalSpacing);
             scrollShift = scrollOffset * pitch;

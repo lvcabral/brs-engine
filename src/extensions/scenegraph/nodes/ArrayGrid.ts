@@ -76,12 +76,18 @@ export declare namespace ArrayGrid {
         to: number;
         /** Target index as the app wrote it, for the `itemFocused` payload at completion. */
         toIndex: number;
-        /** Column to settle on, for the list types that track one; -1 to reuse the remembered one. */
-        toColumn: number;
         /** `sgClock.perfNow()` at the frame the scroll started. */
         start: number;
         /** Total duration in ms, scaled by the distance travelled. */
         duration: number;
+        /**
+         * Fractional position sampled once per frame by `tickScrollAnimation`, so every reader within
+         * that frame agrees. Reading the clock per accessor instead let the anchor's `Math.floor` and
+         * the sub-row remainder straddle a row boundary — a one-row layout jump — and violated the
+         * clock-free layout-pass contract (`docs/scenegraph-layout-passes.md`), since `renderContent`
+         * is reachable from a layout pass.
+         */
+        position: number;
     };
 }
 
@@ -603,7 +609,7 @@ export class ArrayGrid extends Group {
      * @param index Content index to scroll to, as the app wrote it.
      * @param column Column to settle on, or -1 to reuse the row's remembered column (RowList).
      */
-    protected startScrollAnimation(index: number, column: number = -1) {
+    protected startScrollAnimation(index: number) {
         const target = this.findContentIndex(index);
         if (target === -1) {
             return;
@@ -627,9 +633,9 @@ export class ArrayGrid extends Group {
             from,
             to: target,
             toIndex: index,
-            toColumn: column,
             start: sgClock.perfNow(),
             duration: this.scrollDuration(from, target),
+            position: from,
         };
         this.enqueueScrollAnimation();
     }
@@ -664,13 +670,23 @@ export class ArrayGrid extends Group {
         // `currFocusColumn` oscillated 0.14, 0.50, 0.02, … on a field whose only valid value is 0; and on
         // a multi-column grid a purely vertical move swept the column 0 → numCols-1 → 0 while the focused
         // column never changed. A device emits no column ramp for a vertical scroll at all.
-        if (
-            numCols > 1 &&
-            this.scrollAnim &&
-            Math.floor(this.scrollAnim.from) % numCols !== this.scrollAnim.to % numCols
-        ) {
+        if (this.scrollCrossesColumns()) {
             super.setValue("currFocusColumn", new Float(position % numCols));
         }
+    }
+
+    /**
+     * Whether the in-flight scroll actually changes the focused column.
+     *
+     * `from` is fractional (a retarget resumes mid-flight), so the starting column comes from its floor.
+     * A vertical-only move keeps the column, and a device emits no column ramp for one.
+     */
+    private scrollCrossesColumns(): boolean {
+        const numCols = Math.max(1, this.numCols || 1);
+        if (numCols === 1 || !this.scrollAnim) {
+            return false;
+        }
+        return Math.floor(this.scrollAnim.from) % numCols !== this.scrollAnim.to % numCols;
     }
 
     /**
@@ -683,11 +699,23 @@ export class ArrayGrid extends Group {
      * animating, so every non-animated path renders exactly as before.
      */
     protected scrollRowOffset(): number {
+        const row = this.scrollRowPosition();
+        return row === undefined ? 0 : row - Math.floor(row);
+    }
+
+    /**
+     * The in-flight scroll's position in ROW space, or undefined when nothing is animating.
+     *
+     * Row space, not flat content index: a grid's index spans columns, so `position` on a 6-column
+     * MarkupGrid mid-way through `animateToItem(6)` is 3.4 — an *item* fraction of 0.4, where the true
+     * row progress is 3.4/6. Dividing here keeps `scrollRowOffset`/`scrollAnchorRow` meaningful for
+     * every subclass rather than only for RowList, whose indices already are rows.
+     */
+    protected scrollRowPosition(): number | undefined {
         if (!this.scrollAnim) {
-            return 0;
+            return undefined;
         }
-        const position = this.currentScrollPosition(this.scrollAnim);
-        return position - Math.floor(position);
+        return this.scrollAnim.position / Math.max(1, this.numCols || 1);
     }
 
     /**
@@ -699,7 +727,8 @@ export class ArrayGrid extends Group {
         if (!this.scrollAnim) {
             return undefined;
         }
-        return Math.floor(this.currentScrollPosition(this.scrollAnim));
+        const row = this.scrollRowPosition();
+        return row === undefined ? undefined : Math.floor(row);
     }
 
     /** The fractional content index an in-flight scroll currently sits at. */
@@ -732,14 +761,24 @@ export class ArrayGrid extends Group {
             return false;
         }
         const elapsed = sgClock.perfNow() - anim.start;
+        // Sample once per frame; every reader this frame (publish below, and the render path's
+        // scrollRowOffset/scrollAnchorRow) uses this value rather than re-reading the clock.
+        anim.position = this.currentScrollPosition(anim);
         if (elapsed < anim.duration) {
             // In transit: publish the fractional position. currFocusRow/currFocusColumn are floats
             // precisely so they can carry these values (arraygrid.md: currFocusRow "will go directly
             // from 3.0 to 4.0 instead of taking on values between" only when animations are skipped).
-            this.focusLayoutDirty = true;
+            //
+            // Deliberately NOT setting focusLayoutDirty here. Its only consumer is
+            // needsSubBoundingRectRefresh, which makes a subBoundingRect query run a full-scene layout
+            // refresh — doing that per in-transit frame turns one layout pass per scroll into ~60 for
+            // any app measuring from a currFocusRow observer, which this ramp is what causes to fire
+            // every frame. The tick returns true so the frame repaints anyway, leaving rects at most one
+            // frame stale (the staleness Node.getSubBoundingRect already declares acceptable), and the
+            // settle still marks it dirty.
             Field.enterInternalUpdate();
             try {
-                this.publishScrollPosition(this.currentScrollPosition(anim));
+                this.publishScrollPosition(anim.position);
             } finally {
                 Field.exitInternalUpdate();
             }
@@ -813,6 +852,15 @@ export class ArrayGrid extends Group {
         // The pulse was opened by startScrollAnimation, so it must be closed or the field is stranded
         // at true — which would silently suppress every later notification (it is not alwaysNotify).
         super.setValue("scrollingStatus", BrsBoolean.False);
+    }
+
+    /**
+     * A detached grid stops scrolling: keep ticking and it forces a repaint every frame and eventually
+     * runs its settle — dispatching focus observers — on a node no longer in the tree.
+     */
+    removeParent() {
+        this.cancelScrollAnimation();
+        super.removeParent();
     }
 
     /** Registers with sgRoot so the render loop ticks this grid's scroll each frame. */

@@ -1205,6 +1205,15 @@ device-measured on a Roku Streaming Stick+ (OS 15.3) with
   row's own pitch (`rowHeights` can differ per row). It also renders **one extra row** while a scroll is
   in flight, to fill the gap the shift opens at the bottom. Pinned by the "visibly slides the drawn rows"
   test, which records each row's drawn y-origin.
+
+  **Only `RowList` consumes the offset today.** The helpers are expressed in ROW space (see
+  `scrollRowPosition` — it divides by `numCols`, so they stay meaningful for a multi-column grid rather
+  than returning an item fraction), but the other `ArrayGrid` render paths (`MarkupGrid`, `PosterGrid`,
+  `MarkupList`, `LabelList`, `ZoomRowList`, `TimeGrid`, `CheckList`, `RadioButtonList`) do not apply it
+  yet: they ramp the fields and snap the pixels at the settle. Each one settles `currRow` then advances an
+  `itemRect` the same way, so extending them is a call to the same two helpers per subclass — the
+  non-obvious part to carry over is the extra row plus the reported-extent compensation
+  (`RowList.renderContent`), without which `boundingRect()` grows a row mid-scroll.
 - **The settle happens only at completion**, through the normal `setFocusedItem`, so the existing
   focus gate applies: an **unfocused** list still pulses and still ramps (device-confirmed) but publishes
   no `itemFocused`/`rowItemFocused`.

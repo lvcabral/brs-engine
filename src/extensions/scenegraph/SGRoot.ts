@@ -664,6 +664,11 @@ export class SGRoot {
      * @returns True if any scroll updated, so the frame is marked dirty.
      */
     processScrollAnimations(): boolean {
+        if (this._scrollAnimations.length === 0) {
+            // The common case by far — skip the snapshot allocation below rather than building a dead
+            // array every frame for every app, animating or not.
+            return false;
+        }
         let updated = false;
         // Snapshot into a local, not a `for…of` over the live array: a scroll that completes removes
         // itself mid-loop, and its settle emission runs app observers that can start another scroll on
