@@ -1528,10 +1528,6 @@ export class Node extends RoSGNode implements BrsValue {
         //      slip through: the owner IS still in the chain (focus went to its own child), so
         //      condition 1 alone reads that steal as a legal forward focus and strands the app on the
         //      node it was navigating away from.
-        if (target === focused) {
-            // Re-asserting the node that just took focus is idempotent, never a steal (probe2 N4).
-            return false;
-        }
         // Cheap upward walks, the same shape restoreFocusChainOnAttach uses — an O(subtree) descent
         // would run on every nested focus request.
         let ownerInChain: BrsType = focused;
@@ -1540,6 +1536,15 @@ export class Node extends RoSGNode implements BrsValue {
         }
         if (ownerInChain !== owner) {
             return true;
+        }
+        // Tested only AFTER the owner-in-chain check, never before it: a focus-LOSS observer that
+        // re-asserts the node currently TAKING focus must still be dropped. Honoring it re-runs the
+        // whole focus transaction — `focusedChild` is alwaysNotify and `ArrayGrid.setNodeFocus`
+        // re-publishes its settle — so every observer fires a second time, and an app with a side
+        // effect on `itemFocused` (starting preview playback) gets a spurious repeat.
+        if (target === focused) {
+            // Re-asserting the node that just took focus is idempotent, never a steal (probe2 N4).
+            return false;
         }
         // The target test applies ONLY when the owner is a PROPER ANCESTOR of the focused node, i.e. the
         // container shape: the owner handed focus down into its own subtree, and something reached from

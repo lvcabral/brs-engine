@@ -177,4 +177,44 @@ describe("SceneGraph focus management", () => {
             expect(sgRoot.focused).toBe(redirectTo);
         }
     });
+
+    test("drops a focus-loss observer re-asserting the node that is taking focus", () => {
+        // The "refresh focus" router pattern: a node's focus-LOSS observer calls setFocus on whatever
+        // it believes should be focused, which is the node currently TAKING focus. That must stay
+        // dropped like any other loss-observer request. Honoring it re-runs the whole focus
+        // transaction — `focusedChild` is alwaysNotify — so every observer fires a second time, and an
+        // ArrayGrid re-publishes its `itemFocused` settle, spuriously re-triggering an app side effect
+        // such as starting preview playback.
+        //
+        // Regression for testing `target === focused` BEFORE the owner-in-chain check: that ordering
+        // widens the honored set, because re-asserting the incoming node looks idempotent while the
+        // request is in fact coming from the outgoing one.
+        const parent = focusableNode();
+        const leaving = focusableNode();
+        const arriving = focusableNode();
+        parent.appendChildToParent(leaving);
+        parent.appendChildToParent(arriving);
+
+        leaving.setNodeFocus(true);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let transactions = 0;
+        port.pushMessage = (event) => {
+            if (sgRoot.focused !== leaving) {
+                transactions++;
+                arriving.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        leaving.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, leaving, focusedChildFieldArg);
+
+        arriving.setNodeFocus(true);
+
+        // The re-assert is dropped, so the loss notification is not dispatched a second time.
+        expect(transactions).toBe(1);
+        expect(sgRoot.focused).toBe(arriving);
+    });
 });
