@@ -257,11 +257,6 @@ export class ArrayGrid extends Group {
                 }
             }
             if (focusIndex >= 0) {
-                // The focus-gain settle (`itemFocused`/`rowItemFocused`) defers like every other grid
-                // emission when it is raised inside another observer. An app that re-grabs focus from
-                // the resulting handler is still classified as a backwards steal, because the deferred
-                // entry carries the notification it was raised under — see
-                // `Node.runWithFocusNotifyOwner`, which is what makes keeping the deferral safe here.
                 this.setFocusedItem(focusIndex);
             }
         }
