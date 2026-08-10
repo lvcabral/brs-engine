@@ -124,6 +124,19 @@ export function unionRect(rectChild: Rect, rectParent: Rect) {
 }
 
 /**
+ * Applies a node's scale factor to a measured extent (width or height), normalizing a mirrored
+ * (negative) scale to a non-negative magnitude — callers that assume a non-negative extent
+ * (`unionRect`'s `x + width` far-edge math, a `width > 0` gate) need this rather than the raw,
+ * possibly-negative product.
+ * @param extent The unscaled width or height.
+ * @param scale The matching scale component (`scale[0]` for width, `scale[1]` for height).
+ * @returns The scaled, non-negative extent.
+ */
+export function scaledExtent(extent: number, scale: number): number {
+    return Math.abs(extent * scale);
+}
+
+/**
  * Converts a string representation of a number to a numeric value.
  * @param strNumber String representation of the number
  * @returns Numeric value of the string

@@ -30,15 +30,16 @@ export class Rectangle extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const color = this.getValueJS("color") as number;
         opacity = opacity * this.getOpacity();
         const center = this.getScaleRotateCenter();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity);
-        this.updateBoundingRects(rect, origin, rotation);
+        draw2D?.doDrawRotatedRect(rect, color, rotation, center, opacity, scale[0], scale[1]);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }

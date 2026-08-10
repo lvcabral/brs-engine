@@ -165,7 +165,13 @@ export class ScrollingLabel extends Label {
     }
 
     // Override renderLabel to implement scrolling logic
-    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
+    protected renderLabel(
+        rect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        scale?: number[]
+    ): MeasuredText {
         const text = this.getValueJS("text") as string;
         if (this.isDirty || (this.fullTextWidth === 0 && text)) {
             this.checkForScrolling();
@@ -238,12 +244,15 @@ export class ScrollingLabel extends Label {
                 }
             }
         }
-        draw2D?.pushClip(clipRect);
-        try {
-            draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
-        } finally {
-            draw2D?.popClip();
-        }
+        scale ??= this.getValueJS("scale") as number[];
+        this.withScale(draw2D, rect.x, rect.y, scale, () => {
+            draw2D?.pushClip(clipRect);
+            try {
+                draw2D?.doDrawRotatedText(textToDraw, drawX, drawY, color, opacity, drawFont, rotation);
+            } finally {
+                draw2D?.popClip();
+            }
+        });
         // Safe on layout passes too (matching the base Label): with the scroll state frozen
         // during layout, the value derives purely from stored state, and setValue only notifies
         // on a genuine change — idempotent.

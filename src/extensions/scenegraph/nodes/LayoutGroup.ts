@@ -13,6 +13,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
+import { scaledExtent } from "../SGUtil";
 import { Group } from "./Group";
 import { Node } from "./Node";
 
@@ -560,11 +561,25 @@ export class LayoutGroup extends Group {
         const dims = child.getDimensions();
         const cached = this.childSizes.get(child);
 
+        // A child scaled all the way to [0,0] legitimately renders a zero-size rect (Group.applyScale),
+        // which fails the cached-rect gate above and lands here. getDimensions() reads the child's raw,
+        // scale-unaware width/height field, so fold the child's own scale in before using it (via the
+        // same scaledExtent normalization Group.applyScale uses) — otherwise a fully collapsed child
+        // (e.g. hidden via scale rather than the visible field) is measured at its pre-collapse size
+        // and the LayoutGroup spaces siblings as if it were still full size.
+        const scale = child.getValueJS("scale") as number[] | undefined;
+
         const rect = {
             x: translation[0],
             y: translation[1],
-            width: typeof dims.width === "number" && dims.width > 0 ? dims.width : cached?.width ?? 0,
-            height: typeof dims.height === "number" && dims.height > 0 ? dims.height : cached?.height ?? 0,
+            width:
+                typeof dims.width === "number" && dims.width > 0
+                    ? scaledExtent(dims.width, scale?.[0] ?? 1)
+                    : cached?.width ?? 0,
+            height:
+                typeof dims.height === "number" && dims.height > 0
+                    ? scaledExtent(dims.height, scale?.[1] ?? 1)
+                    : cached?.height ?? 0,
         };
         return { rect, cached: false };
     }

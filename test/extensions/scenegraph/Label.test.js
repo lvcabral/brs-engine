@@ -202,3 +202,155 @@ describe("Label node wrap/vertAlign", () => {
         }
     });
 });
+
+/**
+ * Regression: `scale` used to be a no-op on drawn text (it was only ever applied to Poster-style
+ * bitmap drawing), so a component hiding a Label via `scale=[0,0]` when unfocused — the idiomatic
+ * Roku show/hide pattern used by many apps' focus-driven buttons — rendered the label at full size
+ * regardless of scale. Fixed by wrapping the (unmodified) draw call in a division-free
+ * translate/scale/translate-back bracket (IfDraw2D.pushScale/popScale).
+ */
+describe("Label node scale", () => {
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function textLabel({ scale, translation = [0, 0], text = "hello", horizAlign = "left" } = {}) {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:MediumSystemFont"));
+        label.setValue("translation", vector(translation));
+        label.setValue("horizAlign", new BrsString(horizAlign));
+        if (scale !== undefined) label.setValue("scale", vector(scale));
+        label.setValue("text", new BrsString(text));
+        return label;
+    }
+
+    test("scale=[0,0] pushes a scale bracket (around the node's translated origin) before drawing, then pops it", () => {
+        const label = textLabel({ scale: [0, 0], translation: [10, 20] });
+        const calls = [];
+        const draw2D = {
+            pushScale(pivotX, pivotY, scaleX, scaleY) {
+                calls.push(["push", pivotX, pivotY, scaleX, scaleY]);
+                return true;
+            },
+            popScale() {
+                calls.push(["pop"]);
+            },
+            doDrawRotatedText(text) {
+                calls.push(["draw", text]);
+            },
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        expect(calls[0]).toEqual(["push", 10, 20, 0, 0]);
+        expect(calls[1][0]).toBe("draw");
+        expect(calls[2]).toEqual(["pop"]);
+    });
+
+    test("scale=[1,1] (default) never calls pushScale/popScale", () => {
+        const label = textLabel();
+        // Deliberately omits pushScale/popScale, mirroring existing minimal draw2D stubs
+        // elsewhere in this file (e.g. captureLineYs) — a default-scale node must not call them.
+        const draw2D = { doDrawRotatedText() {} };
+        expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+    });
+
+    test("a wrapping multi-line Label pushes the scale bracket once for the whole block, not per line", () => {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:MediumSystemFont"));
+        label.setValue("width", new Float(400));
+        label.setValue("wrap", BrsBoolean.True);
+        label.setValue("scale", vector([2, 2]));
+        label.setValue("text", new BrsString(LONG_TEXT));
+
+        let pushCount = 0;
+        let popCount = 0;
+        let drawCount = 0;
+        const draw2D = {
+            pushScale() {
+                pushCount++;
+                return true;
+            },
+            popScale() {
+                popCount++;
+            },
+            doDrawRotatedText(text) {
+                if (text.trim() !== "") drawCount++;
+            },
+        };
+        label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        expect(drawCount).toBeGreaterThan(1); // actually wrapped into multiple lines
+        expect(pushCount).toBe(1);
+        expect(popCount).toBe(1);
+    });
+
+    test("scale does not affect measured size (getMeasured)", () => {
+        const unscaled = textLabel().getMeasured();
+        const shrunk = textLabel({ scale: [0, 0] }).getMeasured();
+        const grown = textLabel({ scale: [2, 2] }).getMeasured();
+
+        expect(shrunk.width).toBeCloseTo(unscaled.width, 5);
+        expect(shrunk.height).toBeCloseTo(unscaled.height, 5);
+        expect(grown.width).toBeCloseTo(unscaled.width, 5);
+        expect(grown.height).toBeCloseTo(unscaled.height, 5);
+    });
+});
+
+/**
+ * Integration regression, reproducing the reported shape: a custom "button" component (a Group
+ * wrapping a fixed-width Rectangle background that stays present, plus a Label collapsed via
+ * `scale=[0,0]` — TextIconButton's exact pattern, with a Rectangle standing in for its Poster
+ * background) placed inside an outer horizontal LayoutGroup (TransportButtons). Before this fix,
+ * the collapsed Label still contributed its full unscaled text width to the button's own reported
+ * footprint, so the outer LayoutGroup spaced buttons as if every label were shown even when none
+ * had focus.
+ */
+describe("LayoutGroup spacing reflects a button whose label is collapsed via scale", () => {
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function button({ bgWidth, labelScale, text = "Feedback" }) {
+        const group = SGNodeFactory.createNode("Group");
+        const bg = SGNodeFactory.createNode("Rectangle");
+        bg.setValue("width", new Float(bgWidth));
+        bg.setValue("height", new Float(60));
+        group.appendChildToParent(bg);
+
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("font", new BrsString("font:MediumSystemFont"));
+        label.setValue("translation", vector([10, 20]));
+        label.setValue("scale", vector(labelScale));
+        label.setValue("text", new BrsString(text));
+        group.appendChildToParent(label);
+
+        return group;
+    }
+
+    test("a button with its label collapsed reports a footprint close to its background, not its label text", () => {
+        const focusedButton = button({ bgWidth: 160, labelScale: [1, 1] });
+        const collapsedButton = button({ bgWidth: 40, labelScale: [0, 0] });
+
+        const row = SGNodeFactory.createNode("LayoutGroup");
+        row.setValue("layoutDirection", new BrsString("horiz"));
+        row.setValue("itemSpacings", vector([20]));
+        row.appendChildToParent(focusedButton);
+        row.appendChildToParent(collapsedButton);
+
+        const draw2D = {
+            doDrawRotatedText() {},
+            doDrawRotatedRect() {},
+            pushScale() {
+                return true;
+            },
+            popScale() {},
+        };
+        row.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+        // The collapsed button must be packed right after the focused one's background width
+        // (160) plus the item spacing (20) — NOT pushed out by "Feedback"'s full text width,
+        // which is comfortably wider than the 40px background alone.
+        expect(collapsedButton.getValueJS("translation")[0]).toBeCloseTo(180, 5);
+    });
+});

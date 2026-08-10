@@ -157,15 +157,16 @@ export class MultiStyleLabel extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        this.measured = this.renderLabel(rect, rotation, opacity, draw2D);
+        this.measured = this.renderLabel(rect, rotation, opacity, draw2D, scale);
         rect.width = Math.max(this.measured.width, size.width);
         rect.height = Math.max(this.measured.height, size.height);
-        this.updateBoundingRects(rect, origin, rotation);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
@@ -175,7 +176,13 @@ export class MultiStyleLabel extends Group {
      * `width`/`height` field values (the computed bounding box); the returned
      * MeasuredText carries the rendered block size for bounding-rect tracking.
      */
-    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
+    protected renderLabel(
+        rect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        scale?: number[]
+    ): MeasuredText {
         this.buildStyles();
         const fullText = (this.getValueJS("text") as string) ?? "";
         const horizAlign = (this.getValueJS("horizAlign") as string) || "left";
@@ -258,31 +265,34 @@ export class MultiStyleLabel extends Group {
                 y += rect.height - blockHeight;
             }
         }
-        for (let i = 0; i < rendered.length; i++) {
-            const line = rendered[i];
-            const { ascent, descent } = lineMetrics[i];
-            const baseline = y + ascent;
-            maxWidth = Math.max(maxWidth, line.width);
-            ellipsized ||= line.ellipsized;
-            let x = rect.x;
-            if (rect.width > line.width) {
-                if (horizAlign === "center") {
-                    x += (rect.width - line.width) / 2;
-                } else if (horizAlign === "right") {
-                    x += rect.width - line.width;
+        scale ??= this.getValueJS("scale") as number[];
+        this.withScale(draw2D, rect.x, rect.y, scale, () => {
+            for (let i = 0; i < rendered.length; i++) {
+                const line = rendered[i];
+                const { ascent, descent } = lineMetrics[i];
+                const baseline = y + ascent;
+                maxWidth = Math.max(maxWidth, line.width);
+                ellipsized ||= line.ellipsized;
+                let x = rect.x;
+                if (rect.width > line.width) {
+                    if (horizAlign === "center") {
+                        x += (rect.width - line.width) / 2;
+                    } else if (horizAlign === "right") {
+                        x += rect.width - line.width;
+                    }
                 }
-            }
-            for (const token of line.tokens) {
-                if (token.text.length > 0) {
-                    // Place this span's baseline on the line baseline.
-                    const topAdjust = token.font.getTopAdjust();
-                    const drawY = baseline - (token.height - 2 * topAdjust) - topAdjust;
-                    draw2D?.doDrawRotatedText(token.text, x, drawY, token.color, opacity, token.font, rotation);
+                for (const token of line.tokens) {
+                    if (token.text.length > 0) {
+                        // Place this span's baseline on the line baseline.
+                        const topAdjust = token.font.getTopAdjust();
+                        const drawY = baseline - (token.height - 2 * topAdjust) - topAdjust;
+                        draw2D?.doDrawRotatedText(token.text, x, drawY, token.color, opacity, token.font, rotation);
+                    }
+                    x += token.width;
                 }
-                x += token.width;
+                y += ascent + descent;
             }
-            y += ascent + descent;
-        }
+        });
         this.setEllipsized(ellipsized);
         return { text: fullText, width: maxWidth, height: blockHeight, ellipsized };
     }

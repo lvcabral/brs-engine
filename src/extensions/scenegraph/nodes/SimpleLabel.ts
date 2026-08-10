@@ -87,15 +87,16 @@ export class SimpleLabel extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rect = { x: drawTrans[0], y: drawTrans[1], width: 0, height: 0 };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         // renderLabel offsets rect.x/rect.y to the drawn top-left so bounding rects are accurate.
-        this.measured = this.renderLabel(rect, rotation, opacity, draw2D);
+        this.measured = this.renderLabel(rect, rotation, opacity, draw2D, scale);
         rect.width = this.measured.width;
         rect.height = this.measured.height;
-        this.updateBoundingRects(rect, origin, rotation);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
@@ -105,7 +106,13 @@ export class SimpleLabel extends Group {
      * position according to `horizOrigin`/`vertOrigin`. On return, `rect.x`/`rect.y`
      * are moved to the actual top-left of the drawn text.
      */
-    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D): MeasuredText {
+    protected renderLabel(
+        rect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        scale?: number[]
+    ): MeasuredText {
         const color = this.getValueJS("color") as number;
         const fullText = (this.getValueJS("text") as string) ?? "";
         const horizOrigin = (this.getValueJS("horizOrigin") as string) || "left";
@@ -120,6 +127,11 @@ export class SimpleLabel extends Group {
         const text = newlineIndex === -1 ? fullText : fullText.substring(0, newlineIndex);
         const measured = drawFont.measureText(text);
 
+        // Captured BEFORE the horizOrigin/vertOrigin adjustments below mutate rect.x/y: the scale
+        // pivot is the node's own local origin, not wherever the text ends up anchored.
+        const pivotX = rect.x;
+        const pivotY = rect.y;
+
         if (horizOrigin === "center") {
             rect.x -= measured.width / 2;
         } else if (horizOrigin === "right") {
@@ -133,7 +145,10 @@ export class SimpleLabel extends Group {
             const ascent = measured.height - 2 * drawFont.getTopAdjust();
             rect.y -= ascent;
         }
-        draw2D?.doDrawRotatedText(text, rect.x, rect.y, color, opacity, drawFont, rotation);
+        scale ??= this.getValueJS("scale") as number[];
+        this.withScale(draw2D, pivotX, pivotY, scale, () => {
+            draw2D?.doDrawRotatedText(text, rect.x, rect.y, color, opacity, drawFont, rotation);
+        });
         return measured;
     }
 }

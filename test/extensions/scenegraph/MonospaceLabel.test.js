@@ -4,10 +4,15 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, BrsBoolean, Float } = core;
+const { BrsDevice, BrsString, BrsBoolean, Float, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
+
+/** A float vector for translation/scale-style fields. */
+function vector(values) {
+    return new RoArray(values.map((v) => new Float(v)));
+}
 
 /** Renders the label with a stub draw surface, capturing each drawn glyph (text + position + color). */
 function captureGlyphs(label, origin = [0, 0]) {
@@ -171,5 +176,66 @@ describe("MonospaceLabel node", () => {
                 expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1)).not.toThrow();
             }
         }
+    });
+
+    /**
+     * Regression: `scale` used to be a no-op on MonospaceLabel (it overrides Label.renderLabel
+     * with its own per-character draw loop, bypassing Group.drawText's scale bracket entirely).
+     * Fixed via Group.withScale, pushed ONCE around the whole per-character loop (not once per
+     * glyph) so every character shares the same pivot/scale.
+     */
+    describe("scale", () => {
+        function monoLabel({ scale, translation = [0, 0] } = {}) {
+            const label = SGNodeFactory.createNode("MonospaceLabel");
+            label.setValue("font", new BrsString("font:MediumSystemFont"));
+            label.setValue("translation", vector(translation));
+            if (scale) label.setValue("scale", vector(scale));
+            label.setValue("text", new BrsString("hi"));
+            return label;
+        }
+
+        test("scale=[0,0] pushes a scale bracket once for the whole run, around the node's own translation", () => {
+            const label = monoLabel({ scale: [0, 0], translation: [10, 20] });
+            const calls = [];
+            const draw2D = {
+                pushScale(pivotX, pivotY, scaleX, scaleY) {
+                    calls.push(["push", pivotX, pivotY, scaleX, scaleY]);
+                    return true;
+                },
+                popScale() {
+                    calls.push(["pop"]);
+                },
+                doDrawRotatedText(text) {
+                    calls.push(["draw", text]);
+                },
+            };
+            label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            expect(calls[0]).toEqual(["push", 10, 20, 0, 0]);
+            expect(calls.filter((c) => c[0] === "draw").length).toBe(2); // "h" and "i"
+            expect(calls.at(-1)).toEqual(["pop"]);
+        });
+
+        test("scale=[1,1] (default) never calls pushScale/popScale", () => {
+            const label = monoLabel();
+            const draw2D = { doDrawRotatedText() {} };
+            expect(() => label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+        });
+
+        test("scale=[0,0] collapses the reported boundingRect", () => {
+            const label = monoLabel({ scale: [0, 0], translation: [10, 20] });
+            const draw2D = {
+                doDrawRotatedText() {},
+                pushScale() {
+                    return true;
+                },
+                popScale() {},
+            };
+            label.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+
+            const rect = label.getBoundingRect("toParent", { environment: {}, inSubEnv: () => {} });
+            expect(rect.width).toBe(0);
+            expect(rect.height).toBe(0);
+        });
     });
 });

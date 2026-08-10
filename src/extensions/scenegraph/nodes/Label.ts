@@ -80,20 +80,21 @@ export class Label extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        this.measured = this.renderLabel(rect, rotation, opacity, draw2D);
+        this.measured = this.renderLabel(rect, rotation, opacity, draw2D, scale);
         rect.width = Math.max(this.measured.width, size.width);
         rect.height = Math.max(this.measured.height, size.height);
-        this.updateBoundingRects(rect, origin, rotation);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
-    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D) {
+    protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D, scale?: number[]) {
         const font = this.getValue("font") as Font;
         const color = this.getValueJS("color") as number;
         const textField = this.getValueJS("text") as string;
@@ -123,7 +124,8 @@ export class Label extends Group {
                     maxLines,
                     lineSpacing,
                     displayPartialLines,
-                    draw2D
+                    draw2D,
+                    scale
                 );
             } else {
                 measured = { text: "", width: 0, height: 0, ellipsized: false };
@@ -139,7 +141,9 @@ export class Label extends Group {
                 vertAlign,
                 rotation,
                 draw2D,
-                ellipsis
+                ellipsis,
+                0,
+                scale
             );
         }
         this.setEllipsized(measured.ellipsized);
