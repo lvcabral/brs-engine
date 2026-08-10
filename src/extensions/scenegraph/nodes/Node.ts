@@ -1541,6 +1541,19 @@ export class Node extends RoSGNode implements BrsValue {
         if (ownerInChain !== owner) {
             return true;
         }
+        // The target test applies ONLY when the owner is a PROPER ANCESTOR of the focused node, i.e. the
+        // container shape: the owner handed focus down into its own subtree, and something reached from
+        // that notification is now trying to pull focus back out. That is the steal to drop.
+        //
+        // When the owner IS the focused node the transaction staged `focusedChild` on the leaf itself
+        // (see setNodeFocus's final stageFocusedChild), so the node observing its own focus gain is
+        // simply deciding where focus should go next — the "I got focus but have nothing to show, pass it
+        // on" pattern, which legitimately targets a sibling or its own parent. Applying the subtree test
+        // there dropped both, a regression against pre-change behavior that `focus-probe2` never covered
+        // (N1/N2 only measured forward focus INTO a container's subtree).
+        if (owner === focused) {
+            return false;
+        }
         let targetUnderOwner: BrsType = target;
         while (targetUnderOwner instanceof Node && targetUnderOwner !== owner) {
             targetUnderOwner = targetUnderOwner.parent;
