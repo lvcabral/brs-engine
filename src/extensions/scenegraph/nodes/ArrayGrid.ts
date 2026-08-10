@@ -272,8 +272,12 @@ export class ArrayGrid extends Group {
             this.cancelScrollAnimation();
             this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "animatetoitem" && isNumberComp(value)) {
-            if (this.keyNavMove) {
-                // The grid's own key handler routes through this field; keep that instant (see keyNavMove).
+            // `keyNavMove` marks the grid's OWN move shortcut during key handling. An app observer that
+            // fires synchronously from the key-driven settle and writes animateToItem itself must not be
+            // caught by it — that write is app-initiated and should animate. Field.invoke already stashes
+            // the engine-emission markers for the duration of a callback for the same reason; this asks
+            // it whether a callback is executing right now.
+            if (this.keyNavMove && !Field.inObserverCallback()) {
                 this.setFocusedItem(jsValueOf(value));
             } else {
                 this.startScrollAnimation(jsValueOf(value) as number);
@@ -619,16 +623,29 @@ export class ArrayGrid extends Group {
             super.setValue("scrollingStatus", BrsBoolean.True);
             super.setValue("itemUnfocused", new Int32(this.getValueJS("itemFocused") as number));
         }
-        const distance = Math.abs(target - from) || 1;
         this.scrollAnim = {
             from,
             to: target,
             toIndex: index,
             toColumn: column,
             start: sgClock.perfNow(),
-            duration: distance * ArrayGrid.scrollMsPerItem,
+            duration: this.scrollDuration(from, target),
         };
         this.enqueueScrollAnimation();
+    }
+
+    /**
+     * Duration for a scroll from `from` to `to`, both flat content indices.
+     *
+     * `scrollMsPerItem` is per ROW traversed (device-measured), so the distance has to be converted out
+     * of the flat index space first: on a 6-column grid one row down is a flat delta of 6, and charging
+     * 340 ms per flat step made that move take ~2 s instead of ~364 ms. A grid scrolls vertically, so the
+     * row delta is what counts; RowList overrides this because its indices ARE rows.
+     */
+    protected scrollDuration(from: number, to: number): number {
+        const numCols = Math.max(1, this.numCols || 1);
+        const rows = Math.abs(Math.floor(to / numCols) - Math.floor(from / numCols));
+        return Math.max(1, rows) * ArrayGrid.scrollMsPerItem;
     }
 
     /**
@@ -642,7 +659,18 @@ export class ArrayGrid extends Group {
     protected publishScrollPosition(position: number) {
         const numCols = Math.max(1, this.numCols || 1);
         super.setValue("currFocusRow", new Float(position / numCols));
-        super.setValue("currFocusColumn", new Float(position % numCols));
+        // Only ramp the column when the scroll actually crosses columns. Mapping a flat index onto both
+        // axes emitted nonsense otherwise: on a single-column list `position % 1` is the ROW fraction, so
+        // `currFocusColumn` oscillated 0.14, 0.50, 0.02, … on a field whose only valid value is 0; and on
+        // a multi-column grid a purely vertical move swept the column 0 → numCols-1 → 0 while the focused
+        // column never changed. A device emits no column ramp for a vertical scroll at all.
+        if (
+            numCols > 1 &&
+            this.scrollAnim &&
+            Math.floor(this.scrollAnim.from) % numCols !== this.scrollAnim.to % numCols
+        ) {
+            super.setValue("currFocusColumn", new Float(position % numCols));
+        }
     }
 
     /**
@@ -779,6 +807,9 @@ export class ArrayGrid extends Group {
         }
         this.scrollAnim = undefined;
         this.dequeueScrollAnimation();
+        // Drop any owed interleave edge with the animation that owed it, or it leaks into whatever
+        // settles next and closes a pulse that settle never opened.
+        this.pendingScrollFallingEdge = false;
         // The pulse was opened by startScrollAnimation, so it must be closed or the field is stranded
         // at true — which would silently suppress every later notification (it is not alwaysNotify).
         super.setValue("scrollingStatus", BrsBoolean.False);
@@ -811,6 +842,14 @@ export class ArrayGrid extends Group {
             try {
                 // Arm inside the try so an exception from either edge's observers still unwinds
                 // through the finally below and cannot strand the field at true.
+                // A key press supersedes an app-initiated scroll that is still in flight, exactly as
+                // jumpToItem does. Without this the abandoned animation kept ticking against the old
+                // target and the pulse came out garbled: emitScrollPulse's rising edge was a no-op (the
+                // animation had already set scrollingStatus true), its falling edge fired mid-scroll, and
+                // the settle's own falling edge then wrote an already-false value and notified nobody —
+                // so an app that rebuilds state on the falling edge saw the teardown but never the
+                // rebuild. Cancel first, so the pulse below starts from a clean false.
+                this.cancelScrollAnimation();
                 this.armScrollPulse();
                 // Mark this as internal key navigation, so a subclass writing `animateToItem` as its
                 // move shortcut settles instantly rather than starting an animated scroll.

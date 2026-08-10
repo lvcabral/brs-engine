@@ -165,6 +165,11 @@ export class RowList extends ArrayGrid {
         super.setValue("currFocusRow", new Float(position));
     }
 
+    /** A RowList's indices are already rows, so no flat-index-to-row conversion is needed. */
+    protected scrollDuration(from: number, to: number): number {
+        return Math.max(1, Math.abs(to - from)) * ArrayGrid.scrollMsPerItem;
+    }
+
     /**
      * Settles an animated scroll on a row, reusing the row's remembered column.
      *
@@ -702,6 +707,7 @@ export class RowList extends ArrayGrid {
         // `scrollRowOffset` is the [0,1) remainder, converted to pixels with the anchor row's own pitch
         // because rows may differ in height (rowHeights).
         const scrollOffset = this.scrollRowOffset();
+        let scrollShift = 0;
         if (scrollOffset > 0) {
             const anchor = this.scrollAnchorRow();
             if (anchor !== undefined) {
@@ -712,7 +718,8 @@ export class RowList extends ArrayGrid {
             const rowHeight = context.rowHeights[this.currRow] ?? context.itemSize[1] ?? 0;
             const pitch =
                 rowHeight + this.calculateRowSpacing(this.currRow, context.rowSpacings, context.globalSpacing);
-            context.itemRect.y -= scrollOffset * pitch;
+            scrollShift = scrollOffset * pitch;
+            context.itemRect.y -= scrollShift;
         }
 
         // Rows advance by their own height plus, when the label/counter band does not fit in the row's
@@ -727,12 +734,18 @@ export class RowList extends ArrayGrid {
         // viewport test still stops the pass early when that row lands off screen, and the row count
         // reported to updateRect below is the settled `displayRows` either way.
         const rowsToRender = scrollOffset > 0 ? context.displayRows + 1 : context.displayRows;
+        // Extent contributed by the extra row, so the reported rect can exclude it (see below).
+        let extraRowExtent = 0;
         for (let r = 0; r < rowsToRender; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
             if (rowIndex === -1) {
                 break;
             }
+            const beforeY = context.itemRect.y;
             const fits = this.renderSingleRow(rowIndex, r, context);
+            if (r >= context.displayRows) {
+                extraRowExtent = context.itemRect.y - beforeY;
+            }
             renderedRows++;
             trailingSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
             if (!fits) {
@@ -740,7 +753,15 @@ export class RowList extends ArrayGrid {
             }
         }
         const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : context.itemRect.y - startY - trailingSpacing + margin.y * 2;
+        let height = renderedRows === 0 ? 0 : context.itemRect.y - startY - trailingSpacing + margin.y * 2;
+        if (scrollOffset > 0) {
+            // Report the SETTLED extent while scrolling, not the transient one. The loop above drew an
+            // extra row and started a sub-row higher, so the accumulated extent overstates the list by
+            // most of a row pitch — an app sizing a background or overlay from boundingRect() would watch
+            // it grow and shrink every frame of the scroll. Recompute from the rows the list actually
+            // occupies once settled, dropping the extra row and the shift.
+            height = Math.max(0, height - (extraRowExtent + scrollShift));
+        }
         this.updateRect(rect, context.displayRows, context.itemSize, { height, firstRow: this.currRow });
     }
 

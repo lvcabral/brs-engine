@@ -155,6 +155,18 @@ export class Field {
         Field.syncFocusSettleDepth--;
     }
 
+    /**
+     * Whether an app observer callback is executing right now.
+     *
+     * Lets an engine site tell its own bookkeeping apart from a write made by app BrightScript that its
+     * emission just dispatched — e.g. `ArrayGrid` marks key navigation for the duration of a key press,
+     * but an app observer firing from that key's settle and writing `animateToItem` is app-initiated and
+     * must animate.
+     */
+    static inObserverCallback(): boolean {
+        return Field.observerDepth > 0;
+    }
+
     /** Marks entry into a component's `init()` (the init hierarchy walk). */
     static enterInit() {
         Field.initDepth++;

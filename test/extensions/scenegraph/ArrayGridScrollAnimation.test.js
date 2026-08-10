@@ -372,4 +372,107 @@ describe("ArrayGrid animateToItem animates the focus scroll", () => {
         advance(1000);
         expect(renderRows()).toEqual({ R2: 0, R3: 120, R4: 240 });
     });
+    test("scales the duration by ROWS traversed on a multi-column grid, not flat index delta", () => {
+        // scrollMsPerItem is per ROW (device-measured). A flat index delta charges numCols x too much:
+        // on a 6-column grid one row down is a delta of 6, which made a ~340 ms move take ~2 s.
+        const grid = SGNodeFactory.createNode("MarkupGrid");
+        grid.setValue("numColumns", new Int32(6));
+        const items = [];
+        for (let i = 0; i < 24; i++) {
+            items.push("I" + i);
+        }
+        grid.setValue("content", buildContent([items]).getNodeChildren()[0]);
+        grid.setNodeFocus(true);
+
+        grid.setValue("animateToItem", new Int32(6)); // exactly one row down
+
+        // Still running just under one row's worth of time, settled just after.
+        advance(300);
+        expect(sgRoot.scrollAnimations).toHaveLength(1);
+        advance(80);
+        expect(sgRoot.scrollAnimations).toHaveLength(0);
+        expect(grid.getValueJS("itemFocused")).toBe(6);
+    });
+
+    test("does not ramp currFocusColumn when the scroll does not cross columns", () => {
+        // Mapping a flat index onto both axes emitted nonsense: on a single-column list `position % 1` is
+        // the ROW fraction, so currFocusColumn oscillated (0.14, 0.50, 0.02, ...) on a field whose only
+        // valid value is 0. A device emits no column ramp for a vertical scroll.
+        const list = SGNodeFactory.createNode("LabelList");
+        const items = [];
+        for (let i = 0; i < 8; i++) {
+            items.push("I" + i);
+        }
+        list.setValue("content", buildContent([items]).getNodeChildren()[0]);
+        list.setNodeFocus(true);
+        const log = observe(list, ["currFocusColumn"]);
+
+        list.setValue("animateToItem", new Int32(4));
+        for (let i = 0; i < 8; i++) {
+            advance(150);
+        }
+
+        expect(log).toEqual([]);
+        expect(list.getValueJS("currFocusColumn")).toBe(0);
+    });
+
+    test("a key press cancels an in-flight app scroll and emits a clean pulse", () => {
+        // Without cancelling, the abandoned animation kept ticking against the old target and the pulse
+        // came out garbled: the key's rising edge was a no-op (the animation had already set the field
+        // true), its falling edge fired mid-scroll, and the settle's own edge then wrote an already-false
+        // value and notified nobody — so an app rebuilding on the falling edge saw a teardown with no
+        // rebuild.
+        const list = makeList(10);
+        list.setValue("animateToItem", new Int32(8));
+        advance(400);
+        expect(sgRoot.scrollAnimations).toHaveLength(1);
+
+        const log = observe(list, ["scrollingStatus", "itemFocused"]);
+        expect(list.handleKey("down", true)).toBe(true);
+
+        // The abandoned scroll closes, then the key press opens and closes its own pulse, then settles.
+        expect(log).toEqual([
+            "scrollingStatus=false",
+            "scrollingStatus=true",
+            "scrollingStatus=false",
+            "itemFocused=1",
+        ]);
+        expect(sgRoot.scrollAnimations).toHaveLength(0);
+
+        // And the abandoned target never reasserts itself.
+        advance(3000);
+        expect(list.getValueJS("itemFocused")).toBe(1);
+    });
+
+    test("reports the settled extent from boundingRect while scrolling", () => {
+        // The extra row and the sub-row shift both inflate the laid-out extent, so an app sizing a
+        // background or overlay from boundingRect() would watch it grow a full row and shrink again every
+        // frame of the scroll.
+        const list = SGNodeFactory.createNode("RowList");
+        const rows = [];
+        for (let i = 0; i < 6; i++) {
+            rows.push(["R" + i]);
+        }
+        list.setValue("content", buildContent(rows));
+        list.setValue("itemSize", new RoArray([new Int32(1280), new Int32(100)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(300), new Int32(100)])]));
+        list.setValue("itemSpacing", new RoArray([new Int32(0), new Int32(20)]));
+        list.setValue("numRows", new Int32(3));
+        list.setNodeFocus(true);
+
+        list.renderNode({}, [0, 0], 0, 1);
+        const settled = list.rectLocal.height;
+
+        list.setValue("animateToItem", new Int32(3));
+        for (const dt of [100, 300]) {
+            advance(dt);
+            list.renderNode({}, [0, 0], 0, 1);
+            // Within a few px of the settled extent, not a full row (120px) larger.
+            expect(Math.abs(list.rectLocal.height - settled)).toBeLessThan(15);
+        }
+
+        advance(1000);
+        list.renderNode({}, [0, 0], 0, 1);
+        expect(list.rectLocal.height).toBe(settled);
+    });
 });
