@@ -121,7 +121,15 @@ export class IfDraw2D {
         this.component.makeDirty();
     }
 
-    doDrawRotatedRect(rect: Rect, rgba: number, rotation: number, center?: number[], opacity: number = 1) {
+    doDrawRotatedRect(
+        rect: Rect,
+        rgba: number,
+        rotation: number,
+        center?: number[],
+        opacity: number = 1,
+        scaleX: number = 1,
+        scaleY: number = 1
+    ) {
         const baseX = this.component.x;
         const baseY = this.component.y;
         const ctx = this.component.getContext();
@@ -129,6 +137,17 @@ export class IfDraw2D {
         // Default to top-left corner if centerX and centerY are not provided
         const rotationCenterX = center === undefined ? 0 : center[0];
         const rotationCenterY = center === undefined ? 0 : center[1];
+        if (scaleX !== 1 || scaleY !== 1) {
+            // Division-free scale-around-pivot bracket: exactly a no-op at scale [1,1] for any
+            // pivot, and collapses to a single point at scale [0,0] instead of the NaN/Infinity
+            // risk a fused rotate+scale transform (see doDrawRotatedBitmap) would hit there.
+            // Pivot is rect.x/y as-is, NOT + rotationCenterX/Y: rect.x/y already bakes in
+            // scaleRotateCenter's position compensation via Group.getTranslation(), so adding the
+            // center again here would double-count it (see Group.applyScale for the derivation).
+            // Composed onto the ctx.save() already opened above (this method restores it below);
+            // pushScale (used by text drawing) does the same composition with its own save/restore.
+            this.composeScalePivot(ctx, baseX + rect.x, baseY + rect.y, scaleX, scaleY);
+        }
         if (rotation === 0) {
             ctx.translate(baseX + rect.x, baseY + rect.y);
         } else {
@@ -247,6 +266,49 @@ export class IfDraw2D {
     /** Depth of the active clip stack. Exposed for the frame-level balance check and tests. */
     getClipDepth(): number {
         return this.clipDepth;
+    }
+
+    /**
+     * Applies a division-free scale-around-pivot bracket: translate(pivot) -> scale -> translate(-pivot).
+     * `pivotX`/`pivotY` are in the node's local (pre-canvas-origin) coordinate space - the same
+     * convention every doDrawRotated* method uses - so this adds `this.component.x/y` internally.
+     *
+     * Mathematically an exact no-op at scale [1,1] for any pivot, so callers may compute the pivot
+     * from whatever origin/scaleRotateCenter is convenient without perturbing the common, unscaled
+     * case. Never divides by scale, so scale [0,0] just collapses everything drawn inside the
+     * bracket to the pivot point rather than risking a NaN/Infinity translate.
+     *
+     * Kept independent of the clip stack: this only ever brackets a synchronous, JS-only draw call
+     * with a try/finally around it (no BrightScript runs in between), so there's no equivalent of
+     * the cross-frame clip leak that `resetClips()` guards against.
+     *
+     * @returns Whether a transform was pushed (false at scale [1,1] - caller can skip popScale()).
+     */
+    pushScale(pivotX: number, pivotY: number, scaleX: number, scaleY: number): boolean {
+        if (scaleX === 1 && scaleY === 1) {
+            return false;
+        }
+        const ctx = this.component.getContext();
+        ctx.save();
+        this.composeScalePivot(ctx, this.component.x + pivotX, this.component.y + pivotY, scaleX, scaleY);
+        return true;
+    }
+
+    /**
+     * Composes `translate(pivot) -> scale -> translate(-pivot)` onto the canvas's CURRENT
+     * transform. Caller owns `ctx.save()`/`ctx.restore()` — shared by `doDrawRotatedRect` (which
+     * composes onto its own already-open save, alongside rotation) and `pushScale` (which opens
+     * its own save for text drawing, since `doDrawRotatedText` never takes a scale param).
+     */
+    private composeScalePivot(ctx: BrsCanvasContext2D, pivotX: number, pivotY: number, scaleX: number, scaleY: number) {
+        ctx.translate(pivotX, pivotY);
+        ctx.scale(scaleX, scaleY);
+        ctx.translate(-pivotX, -pivotY);
+    }
+
+    /** Pairs with a `pushScale()` call that returned true. */
+    popScale(): void {
+        this.component.getContext().restore();
     }
 
     drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {

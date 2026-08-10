@@ -33,6 +33,7 @@ import {
     rectContainsRect,
     rotateRect,
     rotateTranslation,
+    scaledExtent,
     unionRect,
 } from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
@@ -329,6 +330,66 @@ export class Group extends Node {
         return opacity ?? 1;
     }
 
+    /**
+     * Returns `rect` shrunk/grown by this node's own scale, WITHOUT touching x/y: `rect.x`/`rect.y`
+     * already come from `getDrawTranslation`/`getTranslation`, which bakes `scaleRotateCenter`'s
+     * pivot compensation into the position (`translation + center*(1-scale)`, Group.ts:274-284) —
+     * so the pivot-corrected anchor is already there; only width/height need the scale factor.
+     * Reapplying the center offset here would double-count it (verified against a device-spec
+     * derivation of the affine `C(-1) S C T` composition — the same reasoning fixed a matching
+     * double-count in the draw-time scale bracket, see IfDraw2D.doDrawRotatedRect/pushScale).
+     *
+     * Makes a node's reported bounding rect (what a parent LayoutGroup measures for spacing) agree
+     * with what it actually paints. Exact no-op at scale [1,1]. Returns a NEW rect; never mutates
+     * the input (callers still need the unscaled rect for the draw call itself, which applies its
+     * own scale bracket independently).
+     *
+     * Composed BEFORE any rotation in the caller's subsequent updateBoundingRects, unlike the
+     * scale-outside-rotation order used at draw time: a node combining non-zero rotation with a
+     * non-default scale can therefore report a bounding rect that doesn't quite match its drawn
+     * extent. Left unaddressed (no known caller hits it) rather than reworking the rotation
+     * composition in updateBoundingRects.
+     *
+     * A negative scale (a mirror, e.g. [-1,1]) flips which edge is "first": `width`/`height` are
+     * normalized back to non-negative extents (with x/y shifted to the new left/top edge) so callers
+     * downstream that assume a non-negative rect — `SGUtil.unionRect`'s `x+width` far-edge math,
+     * `chooseActiveRect`'s `width>0` gate — keep working instead of computing a backwards box.
+     *
+     * @param scale This node's own scale field, if the caller already fetched it (avoids a second
+     * `getValueJS` lookup on this hot render-path method); fetched here when omitted.
+     */
+    protected applyScale(rect: Rect, scale?: number[]): Rect {
+        scale ??= this.getValueJS("scale") as number[];
+        if (scale[0] === 1 && scale[1] === 1) {
+            return rect;
+        }
+        const width = rect.width * scale[0];
+        const height = rect.height * scale[1];
+        return {
+            x: width < 0 ? rect.x + width : rect.x,
+            y: height < 0 ? rect.y + height : rect.y,
+            width: scaledExtent(rect.width, scale[0]),
+            height: scaledExtent(rect.height, scale[1]),
+        };
+    }
+
+    /**
+     * Brackets `draw` with `IfDraw2D.pushScale`/`popScale` around `rect.x`/`rect.y` when `scale`
+     * isn't the default `[1,1]` — the shared shape behind `drawText`'s single draw call and
+     * `drawTextWrap`'s per-line loop (pushed once for the whole block, not per line).
+     */
+    private withScale(draw2D: IfDraw2D | undefined, rect: Rect, scale: number[], draw: () => void) {
+        const scaled =
+            (scale[0] !== 1 || scale[1] !== 1) && (draw2D?.pushScale(rect.x, rect.y, scale[0], scale[1]) ?? false);
+        try {
+            draw();
+        } finally {
+            if (scaled) {
+                draw2D?.popScale();
+            }
+        }
+    }
+
     protected drawText(
         fullText: string,
         font: Font,
@@ -340,7 +401,8 @@ export class Group extends Node {
         rotation: number,
         draw2D?: IfDraw2D,
         ellipsis: string = "...",
-        index: number = 0
+        index: number = 0,
+        scale?: number[]
     ) {
         const drawFont = font.createDrawFont();
         if (!(drawFont instanceof RoFont)) {
@@ -385,7 +447,10 @@ export class Group extends Node {
                 textY += rect.height - measured.height;
             }
         }
-        draw2D?.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
+        scale ??= this.getValueJS("scale") as number[];
+        this.withScale(draw2D, rect, scale, () => {
+            draw2D?.doDrawRotatedText(text, textX, textY, color, opacity, drawFont, rotation);
+        });
         return measured;
     }
 
@@ -403,7 +468,8 @@ export class Group extends Node {
         maxLines: number = 0,
         lineSpacing: number = 0,
         displayPartialLines: boolean = false,
-        draw2D?: IfDraw2D
+        draw2D?: IfDraw2D,
+        scale?: number[]
     ): MeasuredText {
         const drawFont = font.createDrawFont();
         if (!(drawFont instanceof RoFont)) {
@@ -420,18 +486,21 @@ export class Group extends Node {
                 y += rect.height - this.cachedHeight;
             }
         }
+        scale ??= this.getValueJS("scale") as number[];
         let ellipsized = false;
-        for (const line of this.cachedLines) {
-            let x = rect.x;
-            if (horizAlign === "center") {
-                x += (rect.width - line.width) / 2;
-            } else if (horizAlign === "right") {
-                x += rect.width - line.width;
+        this.withScale(draw2D, rect, scale, () => {
+            for (const line of this.cachedLines) {
+                let x = rect.x;
+                if (horizAlign === "center") {
+                    x += (rect.width - line.width) / 2;
+                } else if (horizAlign === "right") {
+                    x += rect.width - line.width;
+                }
+                draw2D?.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
+                y += line.height + lineSpacing;
+                ellipsized = line.ellipsized;
             }
-            draw2D?.doDrawRotatedText(line.text, x, y, color, opacity, drawFont, rotation);
-            y += line.height + lineSpacing;
-            ellipsized = line.ellipsized;
-        }
+        });
 
         return {
             text,
