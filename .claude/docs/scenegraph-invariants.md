@@ -1219,21 +1219,20 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
    **The owner alone is not enough — the TARGET is classified too.** A container that observes its own
    `focusedChild` and redirects focus into its own child *stays* in the chain, so an owner-only test reads
    a subsequent re-grab to an unrelated sibling as legal forward focus and strands the app on the node it
-   was navigating away from (device-measured: `list-refocus-settle-probe` R7). Four rules, and the
-   **order** matters:
-   - The owner must still be in the focus chain (the classic backwards steal).
-   - `target === focused` is idempotent and honored — but tested **after** the owner walk, never before.
-     Ahead of it, a focus-*loss* observer re-asserting the incoming node gets honored, re-running the
-     whole transaction and double-firing every observer (`focusedChild` is `alwaysNotify`, and an
-     `ArrayGrid` re-publishes its `itemFocused` settle, re-triggering app side effects like starting
-     preview playback).
+   was navigating away from (device-measured: `list-refocus-settle-probe` R7). Three rules, sharing one
+   bounded ancestor walk (`Node.isAncestorOrSelf`), and the **order** matters:
+   - The owner must still be in the focus chain (the classic backwards steal). `target === focused`
+     (probe2 N4, re-asserting the node that just took focus) is idempotent and falls out of the next rule
+     for free once this one confirms the owner is a proper ancestor — it is not a separate check.
    - The target-subtree test applies **only when the owner is a proper ancestor** of the focused node. When
      the owner *is* the focused node, the transaction staged `focusedChild` on the leaf itself, so the
      redirect is the ordinary "I got focus but nothing to show, pass it on" pattern — which legitimately
      targets a sibling or the parent.
    - A target that is **not in the owner's tree** is never a steal, or the subtree walk drops it: a node
      still unparented (a component focusing itself from `init()`, which runs *before* `appendChild`) and
-     the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner).
+     the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner). Checked last —
+     it costs an unbounded walk to the scene root, so it only runs once the cheap subtree walk has already
+     failed to place `target` under `owner`.
 
    **The classification must survive the deferral, not defeat it.** A grid's focus-gain settle is an
    engine emission, so raised inside another observer it defers — by which point the transaction has left

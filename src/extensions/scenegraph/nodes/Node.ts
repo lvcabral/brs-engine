@@ -95,28 +95,18 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * The `focusedChild` notification dispatching right now, if any — the context a nested
-     * `setFocus` is classified against by `isFocusRequestDropped`.
-     *
-     * Captured by `Field.executeCallbacks` when it DEFERS an emission raised inside a focus
-     * transaction, so the classification survives the wait; see `runWithFocusNotifyOwner`.
+     * `setFocus` is classified against by `isFocusRequestDropped`. Captured by
+     * `Field.executeCallbacks` when it defers an emission raised inside a focus transaction, so the
+     * classification survives the wait; see `runWithFocusNotifyOwner`.
      */
     static currentFocusNotifyOwner(): Node | undefined {
         return Node.focusNotifyOwners.at(-1);
     }
 
     /**
-     * Runs `body` with `owner` reinstated as the in-flight `focusedChild` notification.
-     *
-     * A grid's focus-gain settle (`itemFocused`/`rowItemFocused`) is an engine emission, so when it is
-     * raised inside another observer it defers to the end of that handler (see `executeCallbacks`) —
-     * but by then the focus transaction has left the stack, and a `setFocus` raised from the settle's
-     * observer could no longer be told apart from an ordinary app-initiated one. That is how a
-     * backwards steal used to win the live focus: an app re-grabbing focus from its `rowItemFocused`
-     * handler (an overlay re-showing itself) stranded the user on the node being navigated away from.
-     *
-     * Restoring the captured owner around the deferred dispatch keeps the drop rule applicable
-     * without changing WHEN the observer runs — deferral is what stops a later list's handler from
-     * running while an earlier `content` is still `invalid` (`deferred-observer-app`).
+     * Runs `body` with `owner` reinstated as the in-flight `focusedChild` notification, so a
+     * `setFocus` raised from a deferred grid focus-settle observer (`itemFocused`/`rowItemFocused`)
+     * is still classified against the notification it was originally raised under.
      * @param owner Notification owner captured at defer time, or undefined if there was none.
      * @param body Deferred dispatch to run.
      */
@@ -1369,10 +1359,9 @@ export class Node extends RoSGNode implements BrsValue {
      */
     setNodeFocus(focusOn: boolean): boolean {
         if (focusOn && Node.isFocusRequestDropped(this)) {
-            // Device-measured: Roku ignores a focus request raised from a focus-LOSS notification
-            // (see notifyStagedFocus). Report the request as not applied, so a subclass override
-            // gated on `super.setNodeFocus(...)` skips its focus bookkeeping too (an ArrayGrid must
-            // not move `itemFocused` for a grid that never took focus).
+            // Report the request as not applied, so a subclass override gated on
+            // `super.setNodeFocus(...)` skips its own focus bookkeeping too (an ArrayGrid must not
+            // move `itemFocused` for a grid that never took focus).
             return false;
         }
         if (focusOn) {
@@ -1495,16 +1484,7 @@ export class Node extends RoSGNode implements BrsValue {
         Field.enterFocusEmission();
         try {
             for (const entry of staged) {
-                if (gaining) {
-                    Node.focusNotifyOwners.push(entry.node);
-                }
-                try {
-                    entry.field.notifyObservers();
-                } finally {
-                    if (gaining) {
-                        Node.focusNotifyOwners.pop();
-                    }
-                }
+                Node.runWithFocusNotifyOwner(gaining ? entry.node : undefined, () => entry.field.notifyObservers());
             }
         } finally {
             Field.exitFocusEmission();
@@ -1519,20 +1499,13 @@ export class Node extends RoSGNode implements BrsValue {
     /**
      * Whether a `setFocus(true)` issued right now must be ignored.
      *
-     * Device-measured: a Roku honors a focus request raised from a `focusedChild` observer only when
-     * the observed node is still in the focus chain — the "forward focus" pattern where a container
-     * that just GAINED focus hands it to an inner widget. A request raised from the mirror-image
-     * notification, by a node that just LOST focus, is dropped: the chain and the remote stay with
-     * the node the in-flight transaction focused.
-     *
-     * That asymmetry is what makes an app which re-grabs focus from its own focus-loss observer
-     * behave on a device and not here: the engine used to let the re-grab win the live focus while
-     * the outer transaction still wrote its own chain, leaving `sgRoot.focused` and `focusedChild`
-     * pointing at different nodes.
+     * A Roku honors a focus request raised from a `focusedChild` observer only when the observed node
+     * is still in the focus chain (forward focus — a container that just gained focus hands it to an
+     * inner widget) AND the target stays inside that owner's subtree. A request from a node that just
+     * lost focus, or one that reaches for a target outside the subtree the owner just focused, is a
+     * backwards steal and is dropped.
      * @param target Node the nested `setFocus(true)` is trying to focus.
-     * @returns True when the request is a backwards steal — the notifying owner has left the focus
-     *   chain, or it redirected focus into its own subtree and `target` sits outside it — so the
-     *   request is ignored.
+     * @returns True when the request must be ignored.
      */
     private static isFocusRequestDropped(target: Node): boolean {
         const owner = Node.focusNotifyOwners.at(-1);
@@ -1540,96 +1513,49 @@ export class Node extends RoSGNode implements BrsValue {
         if (!owner || !(focused instanceof Node)) {
             return false;
         }
-        // Classify by BOTH the notifying owner and the TARGET.
-        //
-        // The rule `focus-probe2` established is (a): a nested request is dropped only when it targets
-        // a node OUTSIDE the subtree the in-flight transaction just focused, while redirecting focus
-        // WITHIN that subtree is allowed. "Within" means inside the notifying owner — forward focus
-        // routinely targets a SIBLING of the focused leaf (a container handing focus from its first
-        // child to another, which is how a dialog highlights its buttons), so testing only whether the
-        // target sits at-or-below the live focus is too strict and breaks that pattern.
-        //
-        // Two conditions, and both matter:
-        //   1. The owner must still be in the focus chain. A request from a node that just LOST focus
-        //      is the classic backwards steal (probe2 N3).
-        //   2. The target must be inside the owner's subtree. Otherwise a container that observes its
-        //      own `focusedChild`, redirects focus to its inner list, and then has the list's
-        //      focus-gain settle run an app observer that re-grabs focus to an unrelated sibling would
-        //      slip through: the owner IS still in the chain (focus went to its own child), so
-        //      condition 1 alone reads that steal as a legal forward focus and strands the app on the
-        //      node it was navigating away from.
-        // Cheap upward walks, the same shape restoreFocusChainOnAttach uses — an O(subtree) descent
-        // would run on every nested focus request.
-        let ownerInChain: BrsType = focused;
-        while (ownerInChain instanceof Node && ownerInChain !== owner) {
-            ownerInChain = ownerInChain.parent;
-        }
-        if (ownerInChain !== owner) {
+        // Owner must still be in the focus chain.
+        if (!Node.isAncestorOrSelf(owner, focused)) {
             return true;
         }
-        // Tested only AFTER the owner-in-chain check, never before it: a focus-LOSS observer that
-        // re-asserts the node currently TAKING focus must still be dropped. Honoring it re-runs the
-        // whole focus transaction — `focusedChild` is alwaysNotify and `ArrayGrid.setNodeFocus`
-        // re-publishes its settle — so every observer fires a second time, and an app with a side
-        // effect on `itemFocused` (starting preview playback) gets a spurious repeat.
-        if (target === focused) {
-            // Re-asserting the node that just took focus is idempotent, never a steal (probe2 N4).
+        // Legitimate forward focus: the owner focused itself (nothing to redirect out of), or the
+        // target is inside the subtree the owner just focused.
+        if (owner === focused || Node.isAncestorOrSelf(owner, target)) {
             return false;
         }
-        // The target test applies ONLY when the owner is a PROPER ANCESTOR of the focused node, i.e. the
-        // container shape: the owner handed focus down into its own subtree, and something reached from
-        // that notification is now trying to pull focus back out. That is the steal to drop.
-        //
-        // When the owner IS the focused node the transaction staged `focusedChild` on the leaf itself
-        // (see setNodeFocus's final stageFocusedChild), so the node observing its own focus gain is
-        // simply deciding where focus should go next — the "I got focus but have nothing to show, pass it
-        // on" pattern, which legitimately targets a sibling or its own parent. Applying the subtree test
-        // there dropped both, a regression against pre-change behavior that `focus-probe2` never covered
-        // (N1/N2 only measured forward focus INTO a container's subtree).
-        if (owner === focused) {
-            return false;
-        }
-        // A target that is not part of the owner's tree at all is not a steal — the subtree walk below
-        // could never reach the owner, so without this every such request would be dropped, silently
-        // swallowing two ordinary shapes:
-        //   - a component created inside the notification whose `init()` calls `m.top.setFocus(true)`.
-        //     `init` runs BEFORE `appendChild`, so the node is still parentless at that moment; the
-        //     ancestry is repaired by `restoreFocusChainOnAttach`, which only runs if focus moved.
-        //   - `m.top.dialog = d` followed by `d.setFocus(true)`. A dialog is the scene's modal
-        //     overlay, parented via `setNodeParent` straight to the Scene, so it is never inside the
-        //     owner's subtree — and focusing it is the whole point of showing it.
-        // Neither is pulling focus back out of the committed chain, which is the steal being dropped.
+        // A target outside the owner's tree entirely is not a steal either — a node still unparented
+        // (mid-`init()`, before `appendChild`), or the scene's modal `dialog` (parented straight to
+        // the Scene, never into the owner).
         if (!(target.parent instanceof Node) || Node.isSceneDialog(target)) {
             return false;
         }
-        let targetUnderOwner: BrsType = target;
-        while (targetUnderOwner instanceof Node && targetUnderOwner !== owner) {
-            targetUnderOwner = targetUnderOwner.parent;
-        }
-        return targetUnderOwner !== owner;
+        return true;
     }
 
     /**
-     * Whether `node` is the dialog the scene is currently showing (or sits inside it).
-     *
-     * `Scene.dialog` tracks the live modal directly, so this needs no `Dialog`/`StandardDialog`
-     * import — which would be a cycle, since both extend `Group`.
+     * Whether the upward walk from `node` reaches `ancestor` (`node` itself counts).
+     * @param ancestor Node to test membership against.
+     * @param node Node (or non-Node value) to walk up from.
+     * @returns True when `node` is `ancestor` or nested somewhere below it.
+     */
+    private static isAncestorOrSelf(ancestor: Node, node: BrsType): boolean {
+        let current = node;
+        while (current instanceof Node) {
+            if (current === ancestor) {
+                return true;
+            }
+            current = current.parent;
+        }
+        return false;
+    }
+
+    /**
+     * Whether `node` is the dialog the scene is currently showing, or sits inside it.
      * @param node Node to test.
      * @returns True when the node is the current scene dialog or one of its descendants.
      */
     private static isSceneDialog(node: Node): boolean {
         const dialog = sgRoot.scene?.dialog;
-        if (!dialog) {
-            return false;
-        }
-        let ancestor: BrsType = node;
-        while (ancestor instanceof Node) {
-            if (ancestor === dialog) {
-                return true;
-            }
-            ancestor = ancestor.parent;
-        }
-        return false;
+        return dialog instanceof Node && Node.isAncestorOrSelf(dialog, node);
     }
 
     /**
