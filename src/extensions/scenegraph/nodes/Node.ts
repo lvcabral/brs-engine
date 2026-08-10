@@ -1502,7 +1502,10 @@ export class Node extends RoSGNode implements BrsValue {
      * behave on a device and not here: the engine used to let the re-grab win the live focus while
      * the outer transaction still wrote its own chain, leaving `sgRoot.focused` and `focusedChild`
      * pointing at different nodes.
-     * @returns True when the in-flight notification is a focus loss, so the request is ignored.
+     * @param target Node the nested `setFocus(true)` is trying to focus.
+     * @returns True when the request is a backwards steal — the notifying owner has left the focus
+     *   chain, or it redirected focus into its own subtree and `target` sits outside it — so the
+     *   request is ignored.
      */
     private static isFocusRequestDropped(target: Node): boolean {
         const owner = Node.focusNotifyOwners.at(-1);
@@ -1559,11 +1562,47 @@ export class Node extends RoSGNode implements BrsValue {
         if (owner === focused) {
             return false;
         }
+        // A target that is not part of the owner's tree at all is not a steal — the subtree walk below
+        // could never reach the owner, so without this every such request would be dropped, silently
+        // swallowing two ordinary shapes:
+        //   - a component created inside the notification whose `init()` calls `m.top.setFocus(true)`.
+        //     `init` runs BEFORE `appendChild`, so the node is still parentless at that moment; the
+        //     ancestry is repaired by `restoreFocusChainOnAttach`, which only runs if focus moved.
+        //   - `m.top.dialog = d` followed by `d.setFocus(true)`. A dialog is the scene's modal
+        //     overlay, parented via `setNodeParent` straight to the Scene, so it is never inside the
+        //     owner's subtree — and focusing it is the whole point of showing it.
+        // Neither is pulling focus back out of the committed chain, which is the steal being dropped.
+        if (!(target.parent instanceof Node) || Node.isSceneDialog(target)) {
+            return false;
+        }
         let targetUnderOwner: BrsType = target;
         while (targetUnderOwner instanceof Node && targetUnderOwner !== owner) {
             targetUnderOwner = targetUnderOwner.parent;
         }
         return targetUnderOwner !== owner;
+    }
+
+    /**
+     * Whether `node` is the dialog the scene is currently showing (or sits inside it).
+     *
+     * `Scene.dialog` tracks the live modal directly, so this needs no `Dialog`/`StandardDialog`
+     * import — which would be a cycle, since both extend `Group`.
+     * @param node Node to test.
+     * @returns True when the node is the current scene dialog or one of its descendants.
+     */
+    private static isSceneDialog(node: Node): boolean {
+        const dialog = sgRoot.scene?.dialog;
+        if (!dialog) {
+            return false;
+        }
+        let ancestor: BrsType = node;
+        while (ancestor instanceof Node) {
+            if (ancestor === dialog) {
+                return true;
+            }
+            ancestor = ancestor.parent;
+        }
+        return false;
     }
 
     /**
