@@ -148,11 +148,10 @@ export class AnimatedImage extends Group {
                 BrsDevice.stderr.write(`warning,[AnimatedImage] Error loading uri:${uri} - ${err.message}`);
             }
         }
-        const source = data
-            ? mimeType.toLowerCase() === "video/lottie+json"
-                ? decodeLottie(data)
-                : decodeAnimatedWebP(data)
-            : undefined;
+        let source: AnimatedFrameSource | undefined;
+        if (data) {
+            source = mimeType.toLowerCase() === "video/lottie+json" ? decodeLottie(data) : decodeAnimatedWebP(data);
+        }
         this.frameSource?.dispose();
         this.frameSource = source;
         this.drawable.setFrameSource(source);

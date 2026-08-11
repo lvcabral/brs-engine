@@ -65,8 +65,8 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     scaleMode: number = 0;
     rgbaRedraw: boolean = true;
     private alphaEnable: boolean = false;
-    private canvas: BrsCanvas;
-    private context: BrsCanvasContext2D;
+    private readonly canvas: BrsCanvas;
+    private readonly context: BrsCanvasContext2D;
     private rgbaCanvas?: BrsCanvas;
     private rgbaLast: number = 0;
     private frameSource?: AnimatedFrameSource;

@@ -16,7 +16,6 @@
     "packages/*"
   ],
   "scripts": {
-    "postinstall": "patch-package",
     "build": "npm run build --workspaces",
     "build:api": "npm run build -w brs-engine",
     "build:web": "npm run build -w brs-engine && npm run build -w brs-scenegraph && npm run start -w brs-engine",
@@ -60,7 +59,7 @@
     "howler": "^2.2.3",
     "jpeg-js": "^0.4.4",
     "long": "^3.2.0",
-    "lottie.js": "^0.4.0",
+    "lottie.js": "^0.5.0",
     "mp3-parser": "^0.3.0",
     "nanomatch": "^1.2.13",
     "p-settle": "^5.1.1",
@@ -104,7 +103,6 @@
     "ifdef-loader": "^2.3.2",
     "javascript-obfuscator": "^4.0.2",
     "lint-staged": "^12.5.0",
-    "patch-package": "^8.0.1",
     "path-browserify": "^1.0.1",
     "prettier": "2",
     "process": "^0.11.10",
