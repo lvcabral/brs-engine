@@ -18,6 +18,9 @@ const partialDiffFixture = path.join(__dirname, "../resources/animated-partial-d
 // 0deg->360deg rotation) — same fixture validated visually in test/simulator/probes/lottie-spike/.
 const lottieFixture = path.join(__dirname, "../resources/sample.lottie.json");
 
+// Minimal open-polyline stroke fixture (lc=1/Butt) for the line-cap regression below.
+const buttCapFixture = path.join(__dirname, "../resources/sample-lottie-buttcap.json");
+
 describe("decodeAnimatedWebP", () => {
     it("returns undefined for non-WebP data", () => {
         expect(decodeAnimatedWebP(Buffer.from("not a webp"))).toBeUndefined();
@@ -125,6 +128,38 @@ describe("decodeLottie", () => {
 
         expect(pixelAt(0)).toEqual(pixelAt(2000));
         expect(pixelAt(0)).toEqual(pixelAt(4000));
+    });
+
+    it("respects a Butt (lc=1) line cap instead of rendering it rounded", () => {
+        // Regression for a real lottie.js bug (patched locally — see patches/lottie.js+0.4.0.patch
+        // and test/simulator/probes/lottie-spike/LOTTIE-JS-ISSUE-stroke-cap.md): its pure-pixel
+        // stroke rasterizer draws a full-radius round "join" disk at every polyline vertex near a
+        // path endpoint, even when the endpoint's cap is Butt (flat) or Square, not Round. When an
+        // endpoint-adjacent segment is shorter than the stroke's half-width (common on
+        // tightly-sampled curves — the reported symptom was an animated Trim Path "growing circle"
+        // border rendering with rounded ends despite a flat-capped stroke), those disks bulge past
+        // the intended flat cap plane, rendering a round end regardless of `lc`.
+        //
+        // A first fix only clipped the single nearest vertex to each endpoint, which was
+        // insufficient on curves finely-tessellated enough that SEVERAL consecutive vertices sit
+        // within the half-width (each with its own protruding disk) — a real device comparison
+        // caught the residual rounding, since a bezier-flattened ellipse arc has exactly this
+        // point density. Fixed by clipping every disk whose cumulative PATH distance to an
+        // endpoint is under the half-width, not just the nearest one.
+        //
+        // Fixture: an open 4-point straight polyline [[5,10],[6,10],[7,10],[8,10]] on a 20x20
+        // canvas, stroke width 6 (half-width 3), lc=1 (Butt). Both vertex 1 (path-distance 1 from
+        // the start) and vertex 2 (path-distance 2) are under the half-width of 3 — the disk at
+        // vertex 2 alone (centered at x=7, radius 3) reaches back to x=4, past the endpoint's flat
+        // cap plane at x=5, and was the exact case the single-nearest-vertex fix missed.
+        const source = decodeLottie(fs.readFileSync(buttCapFixture, "utf8"));
+        const canvas = source.renderAt(0);
+        const ctx = canvas.getContext("2d");
+        const pixelAt = (x, y) => Array.from(ctx.getImageData(x, y, 1, 1).data);
+
+        expect(pixelAt(3, 10)).toEqual([0, 0, 0, 0]); // behind the flat cap plane: transparent
+        expect(pixelAt(4, 10)).toEqual([0, 0, 0, 0]); // vertex 2's disk reach — the missed case
+        expect(pixelAt(7, 10)).toEqual([255, 0, 0, 255]); // inside the stroke body: opaque red
     });
 });
 

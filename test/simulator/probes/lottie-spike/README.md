@@ -86,3 +86,26 @@ did not — `lottie.js` via `ImageSurface` is the path forward for `decodeLottie
   app-authored Lottie assets (spinners/loaders are the common case) before considering it complete.
 - Image-asset color filters silently degrade to untinted outside a DOM/OffscreenCanvas context
   (see `scratch()` above) — acceptable for v1, worth a code comment where `decodeLottie` is added.
+- **Confirmed against a real Roku sample app** (`rokudev/dynamic-voice-enabled-keyboards`'s
+  `images/lottie.json`, layer 10 "Line" — a growing-circle Trim Path border): stroke line caps
+  (`lc`) other than Round render rounded anyway — see `LOTTIE-JS-ISSUE-stroke-cap.md` below.
+
+## Known bug: Butt/Square stroke caps render rounded (patched locally)
+
+`ImageSurface`'s stroke rasterizer always draws a full round join-disk at every polyline vertex,
+including ones near a path endpoint, even for `lc: 1` (Butt) or `lc: 3` (Square) — when one or more
+of those nearby vertices are within the stroke's half-width of the endpoint (common on
+tightly-sampled curves, e.g. an animated Trim Path on an ellipse — the "growing circular border"
+pattern — can pack several vertices within the half-width, not just the nearest one), each such
+disk bulges past the intended flat cap plane and the end renders rounded regardless of `lc`. Full
+writeup, repro, and suggested fix:
+[`LOTTIE-JS-ISSUE-stroke-cap.md`](LOTTIE-JS-ISSUE-stroke-cap.md) (file this upstream at
+https://github.com/sanyok12345/lottie.js/issues).
+
+- `trim-cap-repro.mjs` — the ellipse+Trim-Path repro; `stroke-cap-bug-frame10.png` /
+  `stroke-cap-fixed-frame10.png` show the before/after.
+- We're carrying the fix as a local `patches/lottie.js+0.4.0.patch` (via `patch-package`, applied
+  automatically on `npm install` through the root `postinstall` script) until it lands upstream —
+  drop the patch and this section once a released `lottie.js` version includes the fix. Regression
+  test: `test/brsTypes/components/AnimatedFrameSource.test.js`'s "respects a Butt (lc=1) line cap"
+  case, using `test/brsTypes/resources/sample-lottie-buttcap.json`.
