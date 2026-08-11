@@ -3,7 +3,7 @@ sub Main()
     screen = CreateObject("roScreen", true, 100, 100)
     screen.SetAlphaEnable(true)
 
-    animg = CreateObject("roAnimatedImage")
+    animg = CreateObject("roAnimatedImage")' bs:disable-line
     animg.SetMessagePort(msgport)
     ' DEVICE-CONFIRMED: real WebP apps never set mimeType at all (only Lottie apps set it, to
     ' "video/lottie+json") -- SetContent must default to WebP when it's absent.
