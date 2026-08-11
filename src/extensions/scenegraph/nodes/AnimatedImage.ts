@@ -32,7 +32,9 @@ import { Group } from "./Group";
  * `roAnimatedImage` component's `SetTargetState("loop")` — see `RoAnimatedImage.ts` — strongly
  * suggesting this node is a thin SceneGraph wrapper around one), `loadingBitmapUri`,
  * `loadingBitmapOpacity`, `failedBitmapUri`, `failedBitmapOpacity`, `audioGuideText` (all named and
- * shaped exactly like `Poster`'s equivalents).
+ * shaped exactly like `Poster`'s equivalents). DEVICE-CONFIRMED (live app testing): `mimeType` is
+ * only ever set by Lottie content (`"video/lottie+json"`) — WebP apps never set it at all, so a
+ * `uri` load must not wait on `mimeType` being present (see `maybeLoad`).
  * STILL INFERRED (not observed on device): `state`'s full vocabulary beyond "downloading" (assumed
  * "none" before load, "ready" on success, "failed" on error, paired with `error`'s message);
  * `control`'s full vocabulary beyond "loop" (assumed "play"/"pause"/"stop" by analogy — "play" taken
@@ -95,20 +97,27 @@ export class AnimatedImage extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
-    /** Attempts a (re)load whenever `uri` or `mimeType` changes, once both are non-empty — robust
-     *  to either declaration order (XML attributes apply in document order via `setValue`, so
-     *  either field may commit first; see `NodeFactory.addChildren`). */
+    /**
+     * Attempts a (re)load whenever `uri` or `mimeType` changes, as soon as `uri` is non-empty —
+     * `mimeType` is NOT required. DEVICE-CONFIRMED: real WebP apps never set `mimeType` at all
+     * (only Lottie apps set it, to `"video/lottie+json"`), so gating the load on both fields being
+     * present left every WebP `AnimatedImage` stuck at `state="none"` forever. Whatever `mimeType`
+     * currently holds (possibly still empty) is passed to `loadContent`, which defaults to the
+     * WebP decoder when it isn't the Lottie string — matching `RoAnimatedImage.loadContent`'s
+     * dispatch. Safe regardless of field write order (XML attributes apply in document order via
+     * `setValue`, see `NodeFactory.addChildren`; either field may commit first) — a `uri` write
+     * before `mimeType` decodes once as WebP (the common case, and correct for actual WebP
+     * content), then re-decodes correctly when `mimeType` commits moments later if it turns out to
+     * be Lottie.
+     */
     private maybeLoad() {
         const uri = (this.getValueJS("uri") as string) ?? "";
-        const mimeType = (this.getValueJS("mimeType") as string) ?? "";
         if (!uri.trim()) {
             this.clearContent();
             super.setValue("state", new BrsString("none"));
             return;
         }
-        if (!mimeType.trim()) {
-            return;
-        }
+        const mimeType = (this.getValueJS("mimeType") as string) ?? "";
         this.loadContent(uri, mimeType);
     }
 

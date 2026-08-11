@@ -5,7 +5,9 @@ sub Main()
 
     animg = CreateObject("roAnimatedImage")
     animg.SetMessagePort(msgport)
-    ok = animg.SetContent({uri: "pkg:/images/animated.webp", mimeType: "image/webp"})
+    ' DEVICE-CONFIRMED: real WebP apps never set mimeType at all (only Lottie apps set it, to
+    ' "video/lottie+json") -- SetContent must default to WebP when it's absent.
+    ok = animg.SetContent({uri: "pkg:/images/animated.webp"})
     print "SetContent returned:";ok
 
     msg = wait(0, msgport)

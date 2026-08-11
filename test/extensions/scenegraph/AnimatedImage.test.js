@@ -38,6 +38,8 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
         const fixture = fs.readFileSync(path.join(__dirname, "../../brsTypes/resources/animated.webp"));
         BrsDevice.fileSystem.mkdirSync("pkg:/images");
         BrsDevice.fileSystem.writeFileSync("pkg:/images/animated.webp", fixture);
+        const lottieFixture = fs.readFileSync(path.join(__dirname, "../../brsTypes/resources/sample.lottie.json"));
+        BrsDevice.fileSystem.writeFileSync("pkg:/images/lottie.json", lottieFixture);
     });
 
     beforeEach(() => {
@@ -53,30 +55,43 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
 
     function buildNode() {
         const node = SGNodeFactory.createNode("AnimatedImage");
-        // mimeType before uri, mirroring the device XML attribute order that confirmed these
-        // fields; maybeLoad() is order-independent regardless (see AnimatedImage.ts).
-        node.setValue("mimeType", new BrsString("image/webp"));
+        // DEVICE-CONFIRMED: real WebP apps never set `mimeType` at all — only Lottie apps do (see
+        // AnimatedImage.ts's class/maybeLoad doc comments). `uri` alone must be enough to load.
         node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
         return node;
     }
 
-    test("uri+mimeType load decodes the animated WebP fixture and reports ready", () => {
+    test("loads a WebP file from uri alone, with no mimeType set at all", () => {
         const node = buildNode();
+        expect(node.getValueJS("mimeType")).toBe("");
         expect(node.getValueJS("state")).toBe("ready");
         expect(node.getValueJS("mediaWidth")).toBe(4);
         expect(node.getValueJS("mediaHeight")).toBe(4);
         expect(node.getValueJS("error")).toBe("");
     });
 
-    test("does not attempt a load until both uri and mimeType are set", () => {
+    test("loads a Lottie file when mimeType is set, uri applied first (imperative write order)", () => {
         const node = SGNodeFactory.createNode("AnimatedImage");
-        node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
-        expect(node.getValueJS("state")).toBe("none");
+        node.setValue("uri", new BrsString("pkg:/images/lottie.json"));
+        node.setValue("mimeType", new BrsString("video/lottie+json"));
+
+        expect(node.getValueJS("state")).toBe("ready");
+        expect(node.getValueJS("mediaWidth")).toBe(200);
+        expect(node.getValueJS("mediaHeight")).toBe(200);
+    });
+
+    test("loads a Lottie file when mimeType is set before uri (XML attribute order)", () => {
+        const node = SGNodeFactory.createNode("AnimatedImage");
+        node.setValue("mimeType", new BrsString("video/lottie+json"));
+        node.setValue("uri", new BrsString("pkg:/images/lottie.json"));
+
+        expect(node.getValueJS("state")).toBe("ready");
+        expect(node.getValueJS("mediaWidth")).toBe(200);
+        expect(node.getValueJS("mediaHeight")).toBe(200);
     });
 
     test("reports failed for a non-existent uri", () => {
         const node = SGNodeFactory.createNode("AnimatedImage");
-        node.setValue("mimeType", new BrsString("image/webp"));
         node.setValue("uri", new BrsString("pkg:/images/does-not-exist.webp"));
         expect(node.getValueJS("state")).toBe("failed");
         expect(node.getValueJS("error")).not.toBe("");
