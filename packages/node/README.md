@@ -34,7 +34,7 @@ The **BrightScript Simulation Engine** provides a complete BrightScript interpre
 
 - Full BrightScript language interpreter, with specs aligned up to Roku OS 15.3
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
-- **SceneGraph Framework** - Experimental support for the Roku SceneGraph components (see section below)
+- **SceneGraph Framework** - Beta support for the Roku SceneGraph components (see section below)
 - **Video Playback** - Via `roVideoPlayer` and `Video` node
 - **Audio Playback** - Via `roAudioResources`, `roAudioPlayer` and `Audio` node
 - **Image Processing** - Support for PNG, JPEG, GIF, BMP and WEBP formats

@@ -24,7 +24,7 @@ You have two options to install the CLI application:
 When running on an interactive terminal, the CLI checks the npm registry (at most once a day, in background) for a newer release of `brs-node`, and shows a notice with the command to upgrade the installation it detected (global, local or `npx`):
 
 ```console
-Update available: 2.3.0 -> 2.4.0
+Update available: 2.4.0 -> 2.5.0
 Run npm install -g brs-node@latest to update.
 ```
 
@@ -70,7 +70,7 @@ An interactive BrightScript REPL (Read-Execute-Print Loop) is available by runni
 ```console
 $ brs-cli
 
-BrightScript Simulation Engine CLI [v2.3.0]
+BrightScript Simulation Engine CLI [v2.4.0]
 
 type `help` to see the list of valid REPL commands.
 
@@ -437,7 +437,7 @@ If no password is provided the app will be executed and no encryption happens, b
 ```console
 $ brs-cli ../tests/test-sandbox.zip --pack b4bf93d0d5e547ca8edcc0f39c6bcc16 --out ./release
 
-BrightScript Simulation Engine CLI [v2.3.0]
+BrightScript Simulation Engine CLI [v2.4.0]
 
 Packaging ../tests/test-sandbox.zip...
 

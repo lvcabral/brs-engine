@@ -2,6 +2,71 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.4.0"></a>
+
+## [v0.4.0 (beta) - Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.4.0) - 10 August 2026
+
+This release hardens the multi-threaded `Task` runtime: script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly. `renderNode` is split into separate layout and paint passes that prune settled subtrees for a major performance gain, and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Defer init-time `focusedChild` notifications to the message loop by [@lvcabral](https://github.com/lvcabral) in [#1090](https://github.com/lvcabral/brs-engine/pull/1090)
+* (rsg) Correct mid-render `boundingRect()` measurement of composite nodes by [@lvcabral](https://github.com/lvcabral) in [#1091](https://github.com/lvcabral/brs-engine/pull/1091)
+* (rsg) Carry a custom node's script-scope `m` across threads by [@lvcabral](https://github.com/lvcabral) in [#1092](https://github.com/lvcabral/brs-engine/pull/1092)
+* (rsg) Deliver a `Task`'s pre-launch port events to its thread by [@lvcabral](https://github.com/lvcabral) in [#1093](https://github.com/lvcabral/brs-engine/pull/1093)
+* (rsg) Let `m.global.findNode()` reach the scene tree by [@lvcabral](https://github.com/lvcabral) in [#1094](https://github.com/lvcabral/brs-engine/pull/1094)
+* (rsg) Parent the global node to the `Scene` by [@lvcabral](https://github.com/lvcabral) in [#1095](https://github.com/lvcabral/brs-engine/pull/1095)
+* (rsg) Keep `m.global`'s own descendants out of its `findNode()` search by [@lvcabral](https://github.com/lvcabral) in [#1096](https://github.com/lvcabral/brs-engine/pull/1096)
+* (rsg) Resolve `findNode()` against the executing component's scope by [@lvcabral](https://github.com/lvcabral) in [#1097](https://github.com/lvcabral/brs-engine/pull/1097)
+* (rsg) Cross script-scope `m` as live references, only on owner transfer by [@lvcabral](https://github.com/lvcabral) in [#1098](https://github.com/lvcabral/brs-engine/pull/1098)
+* (rsg) Repair the release build broken by the `findNode()` global check by [@lvcabral](https://github.com/lvcabral) in [#1099](https://github.com/lvcabral/brs-engine/pull/1099)
+* (rsg) Reference `m.global`'s node fields in the `Task` launch payload by [@lvcabral](https://github.com/lvcabral) in [#1100](https://github.com/lvcabral/brs-engine/pull/1100)
+* (rsg) Stop `findNode()` searching a node that has no component ancestor by [@lvcabral](https://github.com/lvcabral) in [#1101](https://github.com/lvcabral/brs-engine/pull/1101)
+* (rsg) Don't crash when a `Task` sets a node-valued field to invalid by [@lvcabral](https://github.com/lvcabral) in [#1102](https://github.com/lvcabral/brs-engine/pull/1102)
+* (rsg) Made cross-thread `Task` field sync and port observers work between threads by [@lvcabral](https://github.com/lvcabral) in [#1105](https://github.com/lvcabral/brs-engine/pull/1105)
+* (rsg) Notify observing `Task` threads when content held by a field changes by [@lvcabral](https://github.com/lvcabral) in [#1108](https://github.com/lvcabral/brs-engine/pull/1108)
+* (rsg) Deliver a `Task` field set made just before launch exactly once by [@lvcabral](https://github.com/lvcabral) in [#1110](https://github.com/lvcabral/brs-engine/pull/1110)
+* (rsg) Time out a rendezvous only when the render thread stops running by [@lvcabral](https://github.com/lvcabral) in [#1115](https://github.com/lvcabral/brs-engine/pull/1115)
+* (rsg) Split `renderNode` into layout/paint passes and prune settled subtrees (major performance gain) by [@lvcabral](https://github.com/lvcabral) in [#1120](https://github.com/lvcabral/brs-engine/pull/1120)
+* (rsg) Match device behavior for `LayoutGroup`'s enum fields, spacing and size by [@lvcabral](https://github.com/lvcabral) in [#1122](https://github.com/lvcabral/brs-engine/pull/1122)
+* (rsg) Keep script-scope references to `global`/`top` alive across a `Task` launch by [@lvcabral](https://github.com/lvcabral) in [#1123](https://github.com/lvcabral/brs-engine/pull/1123)
+* (rsg) Resolve script-scope references into the `top`/`global` subtrees on `Task` launch by [@lvcabral](https://github.com/lvcabral) in [#1124](https://github.com/lvcabral/brs-engine/pull/1124)
+* (rsg) Stop a directional key on an empty `RowList` from crashing the app by [@lvcabral](https://github.com/lvcabral) in [#1125](https://github.com/lvcabral/brs-engine/pull/1125)
+* (rsg) Commit a focus change before notifying, and ignore a re-grab from a focus-loss observer by [@lvcabral](https://github.com/lvcabral) in [#1127](https://github.com/lvcabral/brs-engine/pull/1127)
+* (rsg) Bind observer callback parameters the way a device does by [@lvcabral](https://github.com/lvcabral) in [#1129](https://github.com/lvcabral/brs-engine/pull/1129)
+* (rsg) Normalize hex-string elements in `colorarray` fields by [@lvcabral](https://github.com/lvcabral) in [#1130](https://github.com/lvcabral/brs-engine/pull/1130)
+* (rsg) `RowList` honors `vertFocusAnimationStyle` when scrolling rows by [@lvcabral](https://github.com/lvcabral) in [#1131](https://github.com/lvcabral/brs-engine/pull/1131)
+* (rsg) Emit `scrollingStatus` on `ArrayGrid` key navigation by [@lvcabral](https://github.com/lvcabral) in [#1132](https://github.com/lvcabral/brs-engine/pull/1132)
+* (rsg) Honor `clippingRect` on every renderable node by [@lvcabral](https://github.com/lvcabral) in [#1133](https://github.com/lvcabral/brs-engine/pull/1133)
+* (rsg) Report per-row extents in a grid's `boundingRect` by [@lvcabral](https://github.com/lvcabral) in [#1134](https://github.com/lvcabral/brs-engine/pull/1134)
+* (rsg) Made `Animation` `control` conform to a device by [@lvcabral](https://github.com/lvcabral) in [#1136](https://github.com/lvcabral/brs-engine/pull/1136)
+* (rsg) Honor per-row layout in `LabelList` and rotate every node's translation by [@lvcabral](https://github.com/lvcabral) in [#1137](https://github.com/lvcabral/brs-engine/pull/1137)
+* (rsg) Match a device's `PosterGrid` extent by [@lvcabral](https://github.com/lvcabral) in [#1138](https://github.com/lvcabral/brs-engine/pull/1138)
+* (rsg) Match Roku's console format for rendezvous tracing by [@lvcabral](https://github.com/lvcabral) in [#1140](https://github.com/lvcabral/brs-engine/pull/1140)
+* (rsg) Report a grid item's sub-rect as the bare item component by [@lvcabral](https://github.com/lvcabral) in [#1142](https://github.com/lvcabral/brs-engine/pull/1142)
+* (rsg) Report a `PosterGrid`'s asymmetric vertical outset by [@lvcabral](https://github.com/lvcabral) in [#1144](https://github.com/lvcabral/brs-engine/pull/1144)
+* (rsg) Report an alias field's own name in observer events by [@lvcabral](https://github.com/lvcabral) in [#1151](https://github.com/lvcabral/brs-engine/pull/1151)
+* (rsg) Add missing documented `ContentNode` fields by [@lvcabral](https://github.com/lvcabral) in [#1152](https://github.com/lvcabral/brs-engine/pull/1152)
+* (rsg) `ScrollingLabel` reports the full `maxWidth` as its measured width by [@lvcabral](https://github.com/lvcabral) in [#1154](https://github.com/lvcabral/brs-engine/pull/1154)
+* (rsg) Fixed a `PosterGrid` caption placement regression from [#1144](https://github.com/lvcabral/brs-engine/pull/1144) by [@lvcabral](https://github.com/lvcabral) in [#1156](https://github.com/lvcabral/brs-engine/pull/1156)
+* (rsg) Fixed the `Overhang` default logo overlapping the title/divider on a resolution-mismatched device by [@lvcabral](https://github.com/lvcabral) in [#1157](https://github.com/lvcabral/brs-engine/pull/1157)
+* (rsg) `LayoutGroup` counts a hidden child's height in a vertical stack by [@lvcabral](https://github.com/lvcabral) in [#1158](https://github.com/lvcabral/brs-engine/pull/1158)
+* (rsg) Fixed cross-thread `AppendChildren` duplicating a node instead of moving it by [@lvcabral](https://github.com/lvcabral) in [#1160](https://github.com/lvcabral/brs-engine/pull/1160)
+* (rsg) Fixed stale item visuals after an in-place `ArrayGrid`/`RowList` content reorder by [@lvcabral](https://github.com/lvcabral) in [#1161](https://github.com/lvcabral/brs-engine/pull/1161)
+* (rsg) Fixed `TimeGrid` content-mutation staleness, navigation, and loading feedback by [@lvcabral](https://github.com/lvcabral) in [#1162](https://github.com/lvcabral/brs-engine/pull/1162)
+* (rsg) Fixed `TextEditBox` text/cursor mispositioning with a custom `backgroundUri` by [@lvcabral](https://github.com/lvcabral) in [#1165](https://github.com/lvcabral/brs-engine/pull/1165)
+* (rsg) Fixed `TextEditBox` discarding the app-provided height with a custom background by [@lvcabral](https://github.com/lvcabral) in [#1167](https://github.com/lvcabral/brs-engine/pull/1167)
+* (rsg) Update `currFocusRow`/`currFocusColumn` before `itemFocused` fires by [@lvcabral](https://github.com/lvcabral) in [#1168](https://github.com/lvcabral/brs-engine/pull/1168)
+* (rsg) Normalize key actions/icons and add a `keySelected()` handler for the Dynamic Keyboards by [@lvcabral](https://github.com/lvcabral) in [#1169](https://github.com/lvcabral/brs-engine/pull/1169)
+* (rsg) Stop painting fully transparent subtrees, and honor a 0-alpha blend color by [@lvcabral](https://github.com/lvcabral) in [#1172](https://github.com/lvcabral/brs-engine/pull/1172)
+* (rsg) Gave `ArrayGrid` a `focusRect` hook so subclasses specialize geometry only by [@lvcabral](https://github.com/lvcabral) in [#1174](https://github.com/lvcabral/brs-engine/pull/1174)
+* (rsg) Distinguish a layout pass from a paint frame whose drawing was suppressed by [@lvcabral](https://github.com/lvcabral) in [#1175](https://github.com/lvcabral/brs-engine/pull/1175)
+* (rsg) Drop a backwards focus steal raised via a container redirect by [@lvcabral](https://github.com/lvcabral) in [#1177](https://github.com/lvcabral/brs-engine/pull/1177)
+* (rsg) Apply the `scale` field to drawn content, bounding rect, and remaining text nodes by [@lvcabral](https://github.com/lvcabral) in [#1179](https://github.com/lvcabral/brs-engine/pull/1179)
+* (rsg) Implemented `Poster` `loadDisplayMode="limitSize"` by [@lvcabral](https://github.com/lvcabral) in [#1180](https://github.com/lvcabral/brs-engine/pull/1180)
+
+[Full Changelog][v0.4.0]
+
 <a name="v0.3.0"></a>
 
 ## [v0.3.0 (beta) - SceneGraph Node Complete](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.3.0) - 25 July 2026
@@ -296,6 +361,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.4.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.3.0...brs-sg-v0.4.0
 [v0.3.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.2.0...brs-sg-v0.3.0
 [v0.2.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.1.0...brs-sg-v0.2.0
 [v0.1.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.0.5...brs-sg-v0.1.0
