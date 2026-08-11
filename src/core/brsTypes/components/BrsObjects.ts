@@ -27,6 +27,7 @@ import { getFontRegistry } from "./RoFontRegistry";
 import { RoCompositor } from "./RoCompositor";
 import { RoPath } from "./RoPath";
 import { RoBitmap, createBitmap } from "./RoBitmap";
+import { RoAnimatedImage } from "./RoAnimatedImage";
 import { createRegion } from "./RoRegion";
 import { createScreen, RoScreen } from "./RoScreen";
 import { getTextureManager } from "./RoTextureManager";
@@ -150,6 +151,7 @@ export const BrsObjects = new BrsObjectsMap([
     ["roFunction", (_: Interpreter, sub: Callable) => new RoFunction(sub)],
     ["roPath", (_: Interpreter, path: BrsString) => new RoPath(path), 1],
     ["roBitmap", (_: Interpreter, param: BrsType) => createBitmap(param), 1],
+    ["roAnimatedImage", (_?: Interpreter) => new RoAnimatedImage()],
     ["roTextureRequest", (_: Interpreter, url: BrsString) => new RoTextureRequest(url), 1],
     ["roTextureManager", (_?: Interpreter) => getTextureManager()],
     ["roImageMetadata", (_?: Interpreter) => new RoImageMetadata()],

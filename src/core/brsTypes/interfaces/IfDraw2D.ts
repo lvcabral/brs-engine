@@ -4,6 +4,7 @@ import {
     BrsString,
     Callable,
     Float,
+    RoAnimatedImage,
     RoBitmap,
     RoByteArray,
     RoFont,
@@ -49,7 +50,7 @@ export class IfDraw2D {
         y: number,
         scaleX: number,
         scaleY: number,
-        object: RoBitmap,
+        object: RoBitmap | RoAnimatedImage,
         rgba?: number,
         opacity?: number
     ): boolean {
@@ -57,7 +58,13 @@ export class IfDraw2D {
         return this.component.drawImage(object, x, y, scaleX, scaleY, style.rgba, style.alpha);
     }
 
-    doDrawCroppedBitmap(object: RoBitmap, sourceRect: Rect, destRect: Rect, rgba?: number, opacity?: number): boolean {
+    doDrawCroppedBitmap(
+        object: RoBitmap | RoAnimatedImage,
+        sourceRect: Rect,
+        destRect: Rect,
+        rgba?: number,
+        opacity?: number
+    ): boolean {
         const ctx = this.component.getContext();
         const style = resolveBlitStyle(rgba, opacity);
         const image = getCanvasFromDraw2d(object, style.rgba);
@@ -92,7 +99,7 @@ export class IfDraw2D {
         scaleX: number,
         scaleY: number,
         rotation: number,
-        object: RoBitmap,
+        object: RoBitmap | RoAnimatedImage,
         centerX?: number,
         centerY?: number,
         rgba?: number,
@@ -856,7 +863,7 @@ export function getDrawOffset(object: BrsDraw2D | RoCompositor): DrawOffset {
 function getPreTranslation(object: BrsDraw2D): DrawOffset {
     let x = 0,
         y = 0;
-    if (object instanceof RoRegion) {
+    if (object instanceof RoRegion || object instanceof RoAnimatedImage) {
         x = object.getTransX();
         y = object.getTransY();
     }
@@ -1003,7 +1010,14 @@ export function drawObjectToComponent(
     scaleMode?: number
 ): boolean {
     const ctx = component.getContext();
-    if (!(object instanceof RoBitmap || object instanceof RoRegion || object instanceof RoScreen)) {
+    if (
+        !(
+            object instanceof RoBitmap ||
+            object instanceof RoRegion ||
+            object instanceof RoScreen ||
+            object instanceof RoAnimatedImage
+        )
+    ) {
         return false;
     }
     // Resolved and checked BEFORE the tint: a fully transparent blit contributes nothing, and
