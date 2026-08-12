@@ -6,7 +6,7 @@ All notable changes to `brs-scenegraph` extension will be documented in this fil
 
 ## [v0.4.0 (beta) - Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.4.0) - 10 August 2026
 
-This release hardens the multi-threaded `Task` runtime: script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly. `renderNode` is split into separate layout and paint passes that prune settled subtrees for a major performance gain, and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. Read the full release notes below for more details.
+This release hardens the multi-threaded `Task` runtime: script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly. `renderNode` is split into separate layout and paint passes that prune settled subtrees for a major performance gain, and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. A preliminary `AnimatedImage` node adds animated WebP and Lottie playback ahead of Roku OS 15.3's official documentation. Read the full release notes below for more details.
 
 ### Release Changes
 
@@ -64,6 +64,7 @@ This release hardens the multi-threaded `Task` runtime: script-scope `m`, `m.glo
 * (rsg) Drop a backwards focus steal raised via a container redirect by [@lvcabral](https://github.com/lvcabral) in [#1177](https://github.com/lvcabral/brs-engine/pull/1177)
 * (rsg) Apply the `scale` field to drawn content, bounding rect, and remaining text nodes by [@lvcabral](https://github.com/lvcabral) in [#1179](https://github.com/lvcabral/brs-engine/pull/1179)
 * (rsg) Implemented `Poster` `loadDisplayMode="limitSize"` by [@lvcabral](https://github.com/lvcabral) in [#1180](https://github.com/lvcabral/brs-engine/pull/1180)
+* (rsg) Implemented the SceneGraph `AnimatedImage` node, a preliminary build ahead of Roku OS 15.3's published spec by [@lvcabral](https://github.com/lvcabral) in [#1182](https://github.com/lvcabral/brs-engine/pull/1182)
 
 [Full Changelog][v0.4.0]
 

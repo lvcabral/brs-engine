@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v2.4.0 - Real Sockets, Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.4.0) - 10 August 2026
 
-This release brings 85+ improvements and fixes, focused on hardening the multi-threaded SceneGraph runtime and adding real network I/O. The engine gains fully functional `roStreamSocket` (TCP) and `roDataGramSocket` (UDP) support on the Node.js/CLI package, ECP `sgrendezvous` rendezvous tracking, and a `--log-level` CLI flag for quieter or more verbose console output. The SceneGraph extension's `renderNode` is now split into separate layout and paint passes that prune settled subtrees for a major performance gain, cross-thread `Task` handling is hardened (script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly), and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. The browser API adds frame-change notifications with direct display-buffer access and a `loading` startup event. Read the full release notes below for more details.
+This release brings 86+ improvements and fixes, focused on hardening the multi-threaded SceneGraph runtime and adding real network I/O. The engine gains fully functional `roStreamSocket` (TCP) and `roDataGramSocket` (UDP) support on the Node.js/CLI package, ECP `sgrendezvous` rendezvous tracking, and a `--log-level` CLI flag for quieter or more verbose console output. The SceneGraph extension's `renderNode` is now split into separate layout and paint passes that prune settled subtrees for a major performance gain, cross-thread `Task` handling is hardened (script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly), and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. A preliminary `roAnimatedImage`/`AnimatedImage` implementation adds animated WebP and Lottie playback ahead of Roku OS 15.3's official documentation. The browser API adds frame-change notifications with direct display-buffer access and a `loading` startup event. Read the full release notes below for more details.
 
 ### Release Changes
 
@@ -21,6 +21,7 @@ This release brings 85+ improvements and fixes, focused on hardening the multi-t
 * (brs) Real UDP send/receive/broadcast for `roDataGramSocket` on the Node.js/CLI package by [@lvcabral](https://github.com/lvcabral) in [#1164](https://github.com/lvcabral/brs-engine/pull/1164)
 * (brs) Implemented real TCP support for `roStreamSocket` on the Node.js/CLI package by [@lvcabral](https://github.com/lvcabral) in [#1170](https://github.com/lvcabral/brs-engine/pull/1170)
 * (draw2d) Made `blendColor`'s multiply a true multiply instead of fabricating one by [@lvcabral](https://github.com/lvcabral) in [#1173](https://github.com/lvcabral/brs-engine/pull/1173)
+* (brs) Implemented `roAnimatedImage` for animated WebP/Lottie playback, a preliminary build ahead of Roku OS 15.3's published spec by [@lvcabral](https://github.com/lvcabral) in [#1182](https://github.com/lvcabral/brs-engine/pull/1182)
 
 #### Browser API
 
@@ -96,6 +97,7 @@ This release brings 85+ improvements and fixes, focused on hardening the multi-t
 * (rsg) Drop a backwards focus steal raised via a container redirect by [@lvcabral](https://github.com/lvcabral) in [#1177](https://github.com/lvcabral/brs-engine/pull/1177)
 * (rsg) Apply the `scale` field to drawn content, bounding rect, and remaining text nodes by [@lvcabral](https://github.com/lvcabral) in [#1179](https://github.com/lvcabral/brs-engine/pull/1179)
 * (rsg) Implemented `Poster` `loadDisplayMode="limitSize"` by [@lvcabral](https://github.com/lvcabral) in [#1180](https://github.com/lvcabral/brs-engine/pull/1180)
+* (rsg) Implemented the SceneGraph `AnimatedImage` node, a preliminary build ahead of Roku OS 15.3's published spec by [@lvcabral](https://github.com/lvcabral) in [#1182](https://github.com/lvcabral/brs-engine/pull/1182)
 
 #### Chores, Build and Dependencies
 
