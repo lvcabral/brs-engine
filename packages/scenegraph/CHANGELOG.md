@@ -4,7 +4,7 @@ All notable changes to `brs-scenegraph` extension will be documented in this fil
 
 <a name="v0.4.0"></a>
 
-## [v0.4.0 (beta) - Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.4.0) - 10 August 2026
+## [v0.4.0 (beta) - Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.4.0) - 11 August 2026
 
 This release hardens the multi-threaded `Task` runtime: script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly. `renderNode` is split into separate layout and paint passes that prune settled subtrees for a major performance gain, and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. A preliminary `AnimatedImage` node adds animated WebP and Lottie playback ahead of Roku OS 15.3's official documentation. Read the full release notes below for more details.
 

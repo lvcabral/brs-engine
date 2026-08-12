@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 <a name="v2.4.0"></a>
 
-## [v2.4.0 - Real Sockets, Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.4.0) - 10 August 2026
+## [v2.4.0 - Real Sockets, Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.4.0) - 11 August 2026
 
 This release brings 86+ improvements and fixes, focused on hardening the multi-threaded SceneGraph runtime and adding real network I/O. The engine gains fully functional `roStreamSocket` (TCP) and `roDataGramSocket` (UDP) support on the Node.js/CLI package, ECP `sgrendezvous` rendezvous tracking, and a `--log-level` CLI flag for quieter or more verbose console output. The SceneGraph extension's `renderNode` is now split into separate layout and paint passes that prune settled subtrees for a major performance gain, cross-thread `Task` handling is hardened (script-scope `m`, `m.global`/`m.top` references, `findNode()`, field sync and pre-launch port delivery all now survive a `Task` launch correctly), and dozens of focus, layout and rendering fixes land across `LayoutGroup`, `PosterGrid`, `RowList`, `ArrayGrid`, `TextEditBox`, `ScrollingLabel`, `TimeGrid`, `Animation` and the Dynamic Keyboards. A preliminary `roAnimatedImage`/`AnimatedImage` implementation adds animated WebP and Lottie playback ahead of Roku OS 15.3's official documentation. The browser API adds frame-change notifications with direct display-buffer access and a `loading` startup event. Read the full release notes below for more details.
 
