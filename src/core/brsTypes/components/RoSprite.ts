@@ -12,7 +12,7 @@ import { BrsImageData, Circle, Rect } from "../interfaces/IfDraw2D";
 export class RoSprite extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly id: number;
-    private readonly regions?: RoArray;
+    private regions?: RoArray;
     private region: RoRegion;
     private x: number;
     private y: number;
@@ -384,6 +384,14 @@ export class RoSprite extends BrsComponent implements BrsValue {
             region.addReference();
             this.region.removeReference();
             this.region = region;
+            if (this.regions) {
+                // An explicit SetRegion() detaches the sprite from its animated-frame array, so
+                // AnimationTick()/nextFrame() no longer overwrites this region on the next tick.
+                this.regions.removeReference();
+                this.regions = undefined;
+                this.frame = 0;
+                this.tickSum = 0;
+            }
             return BrsInvalid.Instance;
         },
     });
