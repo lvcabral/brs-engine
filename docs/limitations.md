@@ -17,12 +17,15 @@ The **BrightScript Engine** implements the BrightScript language specification u
     * Inside a library, `pkg:/` still resolves to the host app's package (not the library's own); reference a library's bundled scripts with relative `uri` paths in its component XML.
     * Library `source/` global functions and intra-library component inheritance (a library component extending another library component) are not supported yet.
     * Encrypted/signed libraries are not supported (plain `.zip` only).
+* The complete **Roku OS** file system is available and shared among threads.
+  * Supports all volumes: `pkg:`, `common:`, `tmp:`, `cachefs:` and `ext1:`. 
+  * By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each.
+  * The writable volumes `tmp:` and `cachefs:` limits are configurable, see [customization documentation](./customization.md); 
+  * The `ext1:` limit is fixed.
 * Audio playback is implemented via `roAudioResources`, `roAudioPlayer` components and `SoundEffect`, `Audio` nodes, but with some limitations:
   * Only one instance of `roAudioPlayer` component or `Audio` node should be used, if more are created those will share the content playlist.
   * If the `roAudioPlayer` component or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
   * No `Timed Metadata` support.
-* The component `roAudioMetadata` only supports MP3 (for now).
-* The component `roImageMetadata` only supports JPEG images (for now).
 * Video playback is implemented via `roVideoPlayer` component and `Video` node, but with some limitations:
   * If the instance of `roVideoPlayer` or `Video` is destroyed the video keeps playing, make sure to `stop` before discarding the object.
   * The following `roVideoPlayer` methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
@@ -49,12 +52,13 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Supports binding, broadcast, send and receive, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()`, backed by a small per-socket helper process.
   * Real multicast group membership (`JoinGroup`/`DropGroup`) is not implemented on either platform.
   * On the browser package `roDataGramSocket` remains mocked, as browsers cannot open raw sockets.
-* The complete **Roku OS** file system is available and shared among threads.
-  * Supports all volumes: `pkg:`, `common:`, `tmp:`, `cachefs:` and `ext1:`. 
-  * By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each.
-  * The writable volumes `tmp:` and `cachefs:` limits are configurable, see [customization documentation](./customization.md); 
-  * The `ext1:` limit is fixed.
+* The new **`roAnimatedImage`** (BrightScript component) and **`AnimatedImage`** (SceneGraph node), added by Roku OS 15.3, are a **preliminary implementation** built ahead of Roku's official documentation, which was not published at the time of this release. Field names, default values, and the `control`/`state` vocabulary come from a real device dump and a partial OS 15.3 release-notes example where confirmed, and from established engine conventions (mirroring `Poster`) elsewhere — expect some field names, defaults, or behaviors to change once Roku documents the full spec.
+  * Animated WebP frames are decoded and composited (including `dispose`/`blend` semantics) directly by the engine.
+  * Lottie/Bodymovin JSON is rendered via the third-party [`lottie.js`](https://lottie.js.org) library (pre-1.0, "covers a growing subset of the format" per its own documentation) — not every Lottie feature (precomps, mattes, masks, expressions) is confirmed supported.
+  * `loadWidth`/`loadHeight` (resize on load) and `loadingBitmapUri`/`failedBitmapUri` (placeholder image swap while loading/on failure) are accepted fields but not yet functional.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not available yet.
+* The component `roAudioMetadata` only supports MP3 (for now).
+* The component `roImageMetadata` only supports JPEG images (for now).
 * The component `roAppMemoryMonitor` will only return measured data in Node.JS and Chromium browsers. For browsers the memory heap info only accounts for the main thread, as WebWorkers do not have support for `performance.memory` API. The `roAppMemoryMonitorEvent` is not yet implemented.
 * The global functions `Eval()`, `GetLastRunCompileError()` and `GetLastRunRuntimeError()` are not available.
 * The string `mod` cannot be used as variable or function parameter name, because it conflicts with remainder operator `Mod` (Roku devices allows that).

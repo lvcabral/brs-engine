@@ -21,6 +21,7 @@ import {
     RuntimeError,
 } from "brs-engine";
 import {
+    AnimatedImage,
     ArrayGrid,
     Audio,
     BusySpinner,
@@ -208,6 +209,8 @@ export class SGNodeFactory {
                 return new Font([], name);
             case SGNodeType.Poster.toLowerCase():
                 return new Poster([], name);
+            case SGNodeType.AnimatedImage.toLowerCase():
+                return new AnimatedImage([], name);
             case SGNodeType.PosterGrid.toLowerCase():
                 return new PosterGrid([], name);
             case SGNodeType.ArrayGrid.toLowerCase():

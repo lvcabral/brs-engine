@@ -78,6 +78,33 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("roAnimatedImage: SetContent/SetPretranslation/Draw*Object end-to-end (PROVISIONAL API)", async () => {
+        // roAnimatedImage's real field/method spec isn't published yet (Roku OS 15.3 release
+        // notes only confirm SetPretranslation/GetPretranslationX/Y and a SetContent/ready-event
+        // example) — see .claude/plans/the-roku-os-15-3-cryptic-curry.md. This proves the known
+        // subset works end-to-end against a real animated WebP: local pkg: load, ready event,
+        // GetWidth/Height, pretranslation, and compatibility as a DrawObject/DrawRotatedObject/
+        // DrawScaledObject source.
+        let command = ["node", brsCliPath, "--root .", "roAnimatedImage.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "SetContent returned:true",
+            "ready state: 2",
+            "ready uri:pkg:/images/animated.webp",
+            "width: 4",
+            "height: 4",
+            "pretranslation x:-2",
+            "pretranslation y:-2",
+            "drew roAnimatedImage via DrawObject/DrawRotatedObject/DrawScaledObject",
+            "------ Finished 'roAnimatedImage.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("follows HTTP redirects when downloading a texture", async () => {
         // Regression: the synchronous download() path (roTextureManager -> loadTexture)
         // must follow HTTP redirects. Many CDNs 302 image URLs; before the fix the sync

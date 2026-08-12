@@ -60,6 +60,8 @@ export * from "./components/RoFunction";
 export * from "./components/RoRegex";
 export * from "./components/RoString";
 export * from "./components/RoBitmap";
+export * from "./components/AnimatedFrameSource";
+export * from "./components/RoAnimatedImage";
 export * from "./components/RoRegion";
 export * from "./components/RoScreen";
 export * from "./components/RoSprite";
