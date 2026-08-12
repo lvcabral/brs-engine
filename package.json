@@ -59,6 +59,7 @@
     "howler": "^2.2.3",
     "jpeg-js": "^0.4.4",
     "long": "^3.2.0",
+    "lottie.js": "^0.5.0",
     "mp3-parser": "^0.3.0",
     "nanomatch": "^1.2.13",
     "p-settle": "^5.1.1",

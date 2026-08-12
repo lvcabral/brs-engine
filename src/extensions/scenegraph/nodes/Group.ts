@@ -9,6 +9,7 @@ import {
     Int32,
     isAnyNumber,
     isBrsString,
+    RoAnimatedImage,
     RoArray,
     RoAssociativeArray,
     RoBitmap,
@@ -642,20 +643,22 @@ export class Group extends Node {
     }
 
     protected drawImage(
-        bitmap: RoBitmap,
+        bitmap: RoBitmap | RoAnimatedImage,
         rect: Rect,
         rotation: number,
         opacity: number,
         draw2D?: IfDraw2D,
         rgba?: number
     ) {
-        if (bitmap.isValid()) {
+        // `RoAnimatedImage` content (animated WebP/Lottie) has no 9-patch marker concept — the
+        // `isValid()`/`ninePatch` checks below are `RoBitmap`-only.
+        if (!(bitmap instanceof RoBitmap) || bitmap.isValid()) {
             bitmap.scaleMode = 1;
             rgba = normalizeBlendColor(rgba);
             if (opacity < 0 || opacity > 1) {
                 opacity = 1;
             }
-            if (bitmap.ninePatch) {
+            if (bitmap instanceof RoBitmap && bitmap.ninePatch) {
                 draw2D?.drawNinePatch(bitmap, rect, rgba, opacity);
                 // TODO: Handle 9-patch rotation, scaling
                 return rect;
