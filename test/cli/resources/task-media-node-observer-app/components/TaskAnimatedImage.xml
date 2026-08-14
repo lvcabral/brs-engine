@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- uri/control are XML attributes, applied during this component's own construction, before
+     init() runs, created on a Task thread. See MediaTask.xml. -->
+<component name="TaskAnimatedImage" extends="Group">
+    <interface>
+        <field id="observedCount" type="integer" value="0" />
+    </interface>
+    <children>
+        <AnimatedImage id="a" uri="pkg:/images/animated.webp" control="loop" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.a = m.top.findNode("a")
+        m.a.observeField("state", "onState")
+    end sub
+
+    sub onState()
+        m.top.observedCount = m.top.observedCount + 1
+    end sub
+    ]]></script>
+</component>

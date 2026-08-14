@@ -1,0 +1,103 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=15.0
+PROBE|010|poster-direct|create|begin=
+PROBE|011|poster-direct|create|subtype=Poster
+PROBE|013|poster-direct|before-uri|loadStatus=none
+PROBE|016a|poster-direct|observer|m-count=4
+PROBE|016b|poster-direct|observer|has-posterObservedCount=true
+PROBE|016c|poster-direct|observer|has-p=true
+PROBE|016|poster-direct|observer|loadStatus=loading
+PROBE|016a|poster-direct|observer|m-count=4
+PROBE|016b|poster-direct|observer|has-posterObservedCount=true
+PROBE|016c|poster-direct|observer|has-p=true
+PROBE|016|poster-direct|observer|loadStatus=ready
+PROBE|014|poster-direct|uri-write|ok
+PROBE|015|poster-direct|after-uri-sync|loadStatus=ready
+PROBE|017|poster-direct|poll|elapsedMs=30 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=60 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=90 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=120 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=150 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=180 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=210 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=240 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=270 value=ready
+PROBE|017|poster-direct|poll|elapsedMs=300 value=ready
+PROBE|018|poster-direct|after-settle|loadStatus=ready observedCount=2
+PROBE|020|animatedimage-direct|create|begin=
+PROBE|021|animatedimage-direct|create|subtype=AnimatedImage
+PROBE|023|animatedimage-direct|before-uri|state=stop
+PROBE|026a|animatedimage-direct|observer|m-count=6
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=true
+PROBE|026c|animatedimage-direct|observer|has-a=true
+PROBE|026|animatedimage-direct|observer|state=downloading
+PROBE|026a|animatedimage-direct|observer|m-count=6
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=true
+PROBE|026c|animatedimage-direct|observer|has-a=true
+PROBE|026|animatedimage-direct|observer|state=init
+PROBE|026a|animatedimage-direct|observer|m-count=6
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=true
+PROBE|026c|animatedimage-direct|observer|has-a=true
+PROBE|026|animatedimage-direct|observer|state=first
+PROBE|026a|animatedimage-direct|observer|m-count=6
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=true
+PROBE|026c|animatedimage-direct|observer|has-a=true
+PROBE|026|animatedimage-direct|observer|state=decode
+PROBE|024|animatedimage-direct|uri-write|ok
+PROBE|025|animatedimage-direct|after-uri-sync|state=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=30 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=60 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=90 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=120 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=150 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=180 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=210 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=240 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=270 value=decode
+PROBE|027|animatedimage-direct|poll|elapsedMs=300 value=decode
+PROBE|028|animatedimage-direct|after-settle|state=decode observedCount=4
+PROBE|030|poster-xmlattr|create|begin=
+PROBE|031|poster-xmlattr|before-observe|loadStatus=loading
+PROBE|032a|poster-xmlattr|observer|m-count=3
+PROBE|032b|poster-xmlattr|observer|has-p=true
+PROBE|032c|poster-xmlattr|observer|has-top=true
+PROBE|032|poster-xmlattr|observer|loadStatus=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=30 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=60 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=90 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=120 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=150 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=180 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=210 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=240 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=270 value=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=300 value=ready
+PROBE|033|poster-xmlattr|after-settle|loadStatus=ready observed=true
+PROBE|040|animatedimage-xmlattr|create|begin=
+PROBE|041|animatedimage-xmlattr|before-observe|state=downloading
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=init
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=first
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=30 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=60 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=90 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=120 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=150 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=180 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=210 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=240 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=270 value=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=300 value=decode
+PROBE|043|animatedimage-xmlattr|after-settle|state=decode observedCount=3
+PROBE|999|boot|end|
+------ Finished 'main.brs' execution [EXIT_USER_NAV] ------
+

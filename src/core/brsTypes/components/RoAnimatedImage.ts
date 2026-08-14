@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, isStringComp } from "..";
+import { BrsType, isBrsNumber, isStringComp } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -19,23 +19,16 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
-import { AnimatedFrameSource, decodeAnimatedWebP, decodeLottie } from "./AnimatedFrameSource";
+import { advanceElapsed, AnimatedFrameSource, applyLoadSize, decodeAnimatedContent } from "./AnimatedFrameSource";
 import { RoAnimatedImageEvent } from "../events/RoAnimatedImageEvent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
 
-/**
- * PROVISIONAL: the exact state vocabulary and readback method for `roAnimatedImage` aren't
- * published yet (Roku's OS 15.3 release notes only show a "ready event", no state getter).
- * Modeled on `RoTextureRequest`'s `RequestState` until the official spec confirms the real one.
- */
-export enum AnimatedImageState {
-    None = 0,
-    Loading = 1,
-    Ready = 2,
-    Failed = 3,
-}
+/** `ifAnimatedImage.GetState()`'s documented vocabulary. */
+export type AnimatedImageState = "init" | "first" | "decode" | "stop" | "error";
+
+const validTargetStates = new Set(["play", "pause", "loop", "rewind"]);
 
 /**
  * Per-channel `value * multiplier / 255` lookup table for the blend-color multiply in
@@ -56,10 +49,13 @@ function channelScale(multiplier: number): Uint8ClampedArray {
     return table;
 }
 
+let nextIdentity = 1;
+
 export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
+    readonly identity: number;
     width: number = 1;
     height: number = 1;
     scaleMode: number = 0;
@@ -75,15 +71,22 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     private sgDriven = false;
     private uri: string = "";
     private mimeType: string = "";
-    private targetState: string = "none";
-    private playStartTime?: number;
-    private state: AnimatedImageState = AnimatedImageState.None;
+    private animationStrategy: string = "automatic";
+    private valid: boolean = false;
+    private state: AnimatedImageState = "init";
+    private playing: boolean = false;
+    /** True for `SetTargetState("play")` (single-shot, stops once the source's duration elapses);
+     *  false for `SetTargetState("loop")`. */
+    private singleShot: boolean = false;
+    private elapsedMs: number = 0;
+    private lastTickTime?: number;
     private translationX: number = 0;
     private translationY: number = 0;
     private port?: RoMessagePort;
 
     constructor() {
         super("roAnimatedImage");
+        this.identity = nextIdentity++;
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         const ifDraw2D = new IfDraw2D(this);
@@ -110,8 +113,11 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
             ],
             ifAnimatedImage: [
                 this.setContent,
+                this.getId,
+                this.isValid,
                 this.setTargetState,
                 this.getState,
+                this.update,
                 this.setPretranslation,
                 this.getPretranslationX,
                 this.getPretranslationY,
@@ -243,16 +249,41 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     }
 
     /** Renders the current playback frame onto `this.canvas`, if content is loaded and playing.
-     *  Skipped once `sgDriven` (the SceneGraph `AnimatedImage` node owns this instance's elapsed
-     *  time via `renderAtElapsed`; this wall-clock path would otherwise clobber it back to
-     *  elapsed=0 on every `getCanvas()`/`getContext()`/`getRgbaCanvas()` call, since `playStartTime`
-     *  is never set on the SG-owned path). */
+     *  Skipped once `sgDriven` (the SceneGraph `AnimatedImage` node's entry points own this
+     *  instance's elapsed time via `renderAtElapsed`; this wall-clock path would otherwise clobber
+     *  it) or while `animationStrategy` is "manual" (playback is driven exclusively by `Update()`
+     *  in that mode, per `ifAnimatedImage`). */
     private refreshFrame() {
         if (!this.frameSource || this.sgDriven) {
             return;
         }
-        const elapsedMs = this.playStartTime === undefined ? 0 : performance.now() - this.playStartTime;
-        this.applyFrame(this.frameSource.renderAt(elapsedMs));
+        if (this.animationStrategy !== "manual") {
+            const now = performance.now();
+            const deltaMs = this.playing && this.lastTickTime !== undefined ? now - this.lastTickTime : 0;
+            if (this.playing) {
+                this.lastTickTime = now;
+            }
+            this.advancePlayback(deltaMs);
+        }
+        this.applyFrame(this.frameSource.renderAt(this.elapsedMs));
+    }
+
+    /** Advances `elapsedMs` by `deltaMs` while playing, and settles the single-shot completion
+     *  (holding the last frame, `state` -> "stop") and `state` -> "decode" transitions. Shared by
+     *  the automatic wall-clock path (`refreshFrame`) and manual mode's `Update()`. */
+    private advancePlayback(deltaMs: number) {
+        if (!this.frameSource || !this.playing) {
+            return;
+        }
+        const advance = advanceElapsed(this.elapsedMs, deltaMs, this.frameSource.durationMs, this.singleShot);
+        this.elapsedMs = advance.elapsedMs;
+        if (advance.completed) {
+            this.playing = false;
+            this.lastTickTime = undefined;
+            this.state = "stop";
+        } else {
+            this.state = "decode";
+        }
     }
 
     /**
@@ -298,27 +329,39 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         this.applyFrame(this.frameSource.renderAt(elapsedMs));
     }
 
-    private pushReadyEvent() {
-        this.port?.pushMessage(new RoAnimatedImageEvent(this.state, this.uri));
+    private pushReadyEvent(error?: string) {
+        const message = this.valid ? "ready" : "failed";
+        this.port?.pushMessage(new RoAnimatedImageEvent(this.identity, message, error));
     }
 
-    /** Loads and decodes `uri`/`mimeType` off the content AA. Returns whether it became ready. */
+    /** Loads and decodes `uri`/`mimeType`/`loadWidth`/`loadHeight`/`animationStrategy` off the
+     *  content AA. Returns whether it became ready. */
     private loadContent(content: BrsType): boolean {
         this.frameSource?.dispose();
         this.frameSource = undefined;
-        this.state = AnimatedImageState.Loading;
+        this.playing = false;
+        this.singleShot = false;
+        this.elapsedMs = 0;
+        this.lastTickTime = undefined;
+        this.valid = false;
+        this.state = "init";
         if (!(content instanceof RoAssociativeArray)) {
-            this.state = AnimatedImageState.Failed;
-            this.pushReadyEvent();
+            this.pushReadyEvent("Invalid content");
             return false;
         }
         const uriField = content.get(new BrsString("uri"));
         const mimeField = content.get(new BrsString("mimeType"));
+        const loadWidthField = content.get(new BrsString("loadWidth"));
+        const loadHeightField = content.get(new BrsString("loadHeight"));
+        const strategyField = content.get(new BrsString("animationStrategy"));
         this.uri = isStringComp(uriField) ? uriField.getValue() : "";
         this.mimeType = isStringComp(mimeField) ? mimeField.getValue() : "";
+        const loadWidth = isBrsNumber(loadWidthField) ? Number(loadWidthField.getValue()) : 0;
+        const loadHeight = isBrsNumber(loadHeightField) ? Number(loadHeightField.getValue()) : 0;
+        this.animationStrategy =
+            isStringComp(strategyField) && strategyField.getValue().toLowerCase() === "manual" ? "manual" : "automatic";
         if (!validUri(this.uri)) {
-            this.state = AnimatedImageState.Failed;
-            this.pushReadyEvent();
+            this.pushReadyEvent("Invalid or missing uri");
             return false;
         }
         let data: Buffer | undefined;
@@ -331,25 +374,27 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
                 BrsDevice.stderr.write(`warning,[roAnimatedImage] Error loading content:${this.uri} - ${err.message}`);
             }
         }
-        // "video/lottie+json" is confirmed by the OS 15.3 release notes; the animated-WebP
-        // mimeType string is not (see AnimatedImageState's doc comment) — anything else falls
-        // through to the WebP decoder, which itself returns undefined for non-WebP bytes.
+        // mimeType is a hint, not an authoritative switch (see decodeAnimatedContent's doc
+        // comment) — omitted, the format is auto-detected; given, it's validated against the
+        // actual content and a mismatch (or an unrecognized value) fails rather than guesses.
         let frameSource: AnimatedFrameSource | undefined;
         if (data) {
-            frameSource = this.mimeType === "video/lottie+json" ? decodeLottie(data) : decodeAnimatedWebP(data);
+            frameSource = decodeAnimatedContent(data, this.mimeType);
         }
         if (frameSource) {
+            frameSource = applyLoadSize(frameSource, loadWidth, loadHeight);
             this.frameSource = frameSource;
             this.width = frameSource.width;
             this.height = frameSource.height;
             this.canvas.width = this.width;
             this.canvas.height = this.height;
-            this.state = AnimatedImageState.Ready;
-        } else {
-            this.state = AnimatedImageState.Failed;
+            this.valid = true;
+            this.state = "first";
+            this.pushReadyEvent();
+            return true;
         }
-        this.pushReadyEvent();
-        return this.state === AnimatedImageState.Ready;
+        this.pushReadyEvent(`Unable to load/decode ${this.uri}`);
+        return false;
     }
 
     // ifAnimatedImage  ------------------------------------------------------------------------
@@ -364,34 +409,78 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         },
     });
 
-    /** PROVISIONAL: only `"loop"` is confirmed by the OS 15.3 example; other values (`"play"`,
-     *  `"stop"`, `"pause"`) are inferred, not confirmed. */
+    private readonly getId = new Callable("getId", {
+        signature: { args: [], returns: ValueKind.String },
+        impl: (_: Interpreter) => {
+            return new BrsString(String(this.identity));
+        },
+    });
+
+    private readonly isValid = new Callable("isValid", {
+        signature: { args: [], returns: ValueKind.Boolean },
+        impl: (_: Interpreter) => {
+            return BrsBoolean.from(this.valid);
+        },
+    });
+
+    /** Sets the desired playback state: "play" (start or resume), "pause", "loop" (play
+     *  continuously), or "rewind". Returns whether the requested state was accepted. */
     private readonly setTargetState = new Callable("setTargetState", {
         signature: {
             args: [new StdlibArgument("state", ValueKind.String)],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, state: BrsString) => {
-            this.targetState = state.value.toLowerCase();
-            // Self-driven wall-clock playback: the OS 15.3 example never calls a per-frame tick
-            // between SetTargetState and drawing, unlike roCompositor.AnimationTick() — inferred,
-            // not confirmed.
-            if (this.targetState === "loop" || this.targetState === "play") {
-                this.playStartTime = performance.now();
-            } else if (this.targetState === "stop") {
-                this.playStartTime = undefined;
+            const target = state.value.toLowerCase();
+            if (!validTargetStates.has(target)) {
+                return BrsBoolean.False;
             }
-            return BrsInvalid.Instance;
+            switch (target) {
+                case "loop":
+                case "play":
+                    this.singleShot = target === "play";
+                    this.playing = true;
+                    this.lastTickTime = performance.now();
+                    break;
+                case "pause":
+                    this.playing = false;
+                    this.lastTickTime = undefined;
+                    break;
+                case "rewind":
+                    this.elapsedMs = 0;
+                    this.lastTickTime = this.playing ? performance.now() : undefined;
+                    break;
+            }
+            if (this.frameSource) {
+                this.state = this.playing ? "decode" : "stop";
+            }
+            return BrsBoolean.True;
         },
     });
 
     private readonly getState = new Callable("getState", {
         signature: {
             args: [],
-            returns: ValueKind.Int32,
+            returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new Int32(this.state);
+            return new BrsString(this.state);
+        },
+    });
+
+    /** Advances the animation by the elapsed time; applies only when `animationStrategy` is
+     *  "manual" (per `ifAnimatedImage`, `Update()` is a no-op in automatic mode). */
+    private readonly update = new Callable("update", {
+        signature: {
+            args: [new StdlibArgument("elapsedMicroseconds", ValueKind.Int32)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, elapsedMicroseconds: Int32) => {
+            if (this.animationStrategy === "manual" && this.frameSource && !this.sgDriven) {
+                this.advancePlayback(elapsedMicroseconds.getValue() / 1000);
+                this.applyFrame(this.frameSource.renderAt(this.elapsedMs));
+            }
+            return BrsInvalid.Instance;
         },
     });
 

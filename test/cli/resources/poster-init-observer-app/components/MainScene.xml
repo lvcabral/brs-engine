@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors the same construction-vs-init() timing gap fixed for AnimatedImage (see
+    animatedimage-init-observer-app), applied to Poster.loadStatus: `uri` is set as an XML
+    attribute, applied during child construction, BEFORE this component's own init() runs. init()
+    registers a `loadStatus` observer AFTER that construction.
+
+    On a real device the load is genuinely asynchronous, so the observer (registered while init()
+    is still executing, before the async load has progressed at all) sees the "ready" transition.
+    This engine's load is fully synchronous, so without Poster.setLoadStatus's construction-time
+    replay (see Poster.ts) the observer would never fire at all.
+-->
+<component name="MainScene" extends="Scene">
+    <children>
+        <Poster id="poster" uri="common:/images/icon_options.png" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.poster = m.top.findNode("poster")
+        m.poster.observeField("loadStatus", "onLoadStatusChanged")
+        print "init done"
+    end sub
+
+    sub onLoadStatusChanged()
+        print "loadStatus changed: '" + m.poster.loadStatus + "'"
+    end sub
+    ]]></script>
+</component>

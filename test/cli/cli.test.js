@@ -78,13 +78,11 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
-    it("roAnimatedImage: SetContent/SetPretranslation/Draw*Object end-to-end (PROVISIONAL API)", async () => {
-        // roAnimatedImage's real field/method spec isn't published yet (Roku OS 15.3 release
-        // notes only confirm SetPretranslation/GetPretranslationX/Y and a SetContent/ready-event
-        // example) — see .claude/plans/the-roku-os-15-3-cryptic-curry.md. This proves the known
-        // subset works end-to-end against a real animated WebP: local pkg: load, ready event,
-        // GetWidth/Height, pretranslation, and compatibility as a DrawObject/DrawRotatedObject/
-        // DrawScaledObject source.
+    it("roAnimatedImage: SetContent/SetPretranslation/Draw*Object end-to-end", async () => {
+        // Proves the roAnimatedImage/ifAnimatedImage surface works end-to-end against a real
+        // animated WebP: local pkg: load, ready event (GetMessage/GetInfo), GetWidth/Height,
+        // pretranslation, and compatibility as a DrawObject/DrawRotatedObject/DrawScaledObject
+        // source.
         let command = ["node", brsCliPath, "--root .", "roAnimatedImage.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
@@ -92,8 +90,8 @@ describe.concurrent("cli", () => {
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "SetContent returned:true",
-            "ready state: 2",
-            "ready uri:pkg:/images/animated.webp",
+            "ready message:ready",
+            "ready id:true",
             "width: 4",
             "height: 4",
             "pretranslation x:-2",

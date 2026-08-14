@@ -122,6 +122,48 @@ export class Field {
      */
     private static readonly pendingInitFocusFields = new Set<Field>();
 
+    /**
+     * Callbacks to run once, after the outermost construction unwinds and no observer dispatch is
+     * in progress — a generic sibling of `pendingInitFocusFields`, deliberately kept separate from
+     * it. `Field` doesn't know or care what a callback does; used by `AnimatedImage.ts` to replay
+     * construction-time `state` transitions as separate observer notifications (matching a real,
+     * asynchronous device's timing) instead of the focus mechanism's coalesce-to-one-value
+     * semantics, which would be wrong for a value with more than two meaningful states.
+     */
+    private static readonly pendingConstructionCallbacks: (() => void)[] = [];
+
+    /** True while inside a component's `init()` hierarchy walk (construction). */
+    static isConstructing(): boolean {
+        return Field.initDepth > 0;
+    }
+
+    /**
+     * Queues a callback to run once, after the outermost construction unwinds (same trigger
+     * condition as `deliverPendingInitFocus`).
+     */
+    static runAfterConstruction(callback: () => void) {
+        Field.pendingConstructionCallbacks.push(callback);
+    }
+
+    /**
+     * Sibling of `deliverPendingInitFocus`, called from the same tick site. Cheap no-op unless
+     * there is pending work and it is safe to dispatch (not mid-init, not inside another observer,
+     * not already draining).
+     */
+    static deliverPendingConstructionCallbacks() {
+        if (
+            Field.pendingConstructionCallbacks.length > 0 &&
+            Field.initDepth === 0 &&
+            Field.observerDepth === 0 &&
+            !Field.draining
+        ) {
+            const callbacks = Field.pendingConstructionCallbacks.splice(0);
+            for (const callback of callbacks) {
+                callback();
+            }
+        }
+    }
+
     /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
     static enterParentCascade() {
         Field.parentCascadeDepth++;
@@ -213,6 +255,7 @@ export class Field {
         Field.draining = false;
         Field.deferredQueue.length = 0;
         Field.pendingInitFocusFields.clear();
+        Field.pendingConstructionCallbacks.length = 0;
     }
 
     constructor(
@@ -252,6 +295,19 @@ export class Field {
 
     isAlwaysNotify() {
         return this.alwaysNotify;
+    }
+
+    /**
+     * True if this field currently has any observer registered, local (see `isObserved`) or a
+     * cross-thread port observer. Used by nodes like `AnimatedImage`/`Poster` to decide whether a
+     * construction-time transition needs deferring: if an observer already exists (e.g.
+     * `observeField` called before a direct field write, still within the same `init()` — the
+     * "preload and swap" pattern), Roku's set-then-read-back contract requires synchronous dispatch
+     * regardless of `Field.isConstructing()`; deferral is only for the case where none could
+     * possibly exist yet (an XML attribute applied to a node during its own construction).
+     */
+    hasObservers(): boolean {
+        return this.isObserved() || (this.remotePortObservers?.size ?? 0) > 0;
     }
 
     isValueRef() {
@@ -954,5 +1010,45 @@ export class Field {
             callback.running = false;
             return BrsInvalid.Instance;
         }, environment);
+    }
+}
+
+/**
+ * Commits a value via `commit` immediately — except while construction is in progress and the
+ * field has no observer yet, when each value is queued instead and replayed as separate,
+ * normally-dispatched `commit` calls once construction unwinds. For a node whose synchronous load
+ * finishes before the owning component's `init()` can attach an observer (a real device's async
+ * load would still be in progress at that point) — see `AnimatedImage.setState`/
+ * `Poster.setLoadStatus`, which share this exact construction-vs-`init()` timing gap.
+ *
+ * The field is left at its last real value while queued (never pre-committed via `commit`):
+ * `Field.setValue` only notifies on an actual change, so pre-committing ahead of the replay would
+ * make the replay's own write a no-op.
+ */
+export class DeferredFieldWrites {
+    private pending: string[] = [];
+
+    constructor(
+        private readonly resolveField: () => Field | undefined,
+        private readonly commit: (value: string) => void
+    ) {}
+
+    set(value: string) {
+        if (Field.isConstructing() && !this.resolveField()?.hasObservers()) {
+            if (this.pending.length === 0) {
+                Field.runAfterConstruction(() => this.flush());
+            }
+            this.pending.push(value);
+        } else {
+            this.commit(value);
+        }
+    }
+
+    private flush() {
+        const values = this.pending;
+        this.pending = [];
+        for (const value of values) {
+            this.commit(value);
+        }
     }
 }

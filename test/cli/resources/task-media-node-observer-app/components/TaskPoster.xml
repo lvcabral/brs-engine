@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- uri is an XML attribute, applied during this component's own construction, before init()
+     runs, created on a Task thread. See MediaTask.xml. -->
+<component name="TaskPoster" extends="Group">
+    <interface>
+        <field id="observed" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Poster id="p" uri="common:/images/icon_options.png" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.p = m.top.findNode("p")
+        m.p.observeField("loadStatus", "onStatus")
+    end sub
+
+    sub onStatus()
+        m.top.observed = true
+    end sub
+    ]]></script>
+</component>

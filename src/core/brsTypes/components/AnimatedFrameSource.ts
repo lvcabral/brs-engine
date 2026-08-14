@@ -1,9 +1,12 @@
 import { WebPRiffParser, WebPDecoder } from "@lvcabral/libwebp";
 import { parse as parseLottie, Animation as LottieAnimation, ImageSurface as LottieImageSurface } from "lottie.js";
+import fileType from "file-type";
+import { ZIP_MAGIC } from "../../packageEncryption";
 import {
     BrsCanvas,
     BrsCanvasContext2D,
     createNewCanvas,
+    drawCanvasRegion,
     drawImageAtPos,
     putImageAtPos,
     releaseCanvas,
@@ -26,6 +29,32 @@ export interface AnimatedFrameSource {
      *  returning the canvas it was rendered onto. Re-rendering the same elapsed frame is a no-op. */
     renderAt(elapsedMs: number): BrsCanvas;
     dispose(): void;
+}
+
+export interface PlaybackAdvance {
+    readonly elapsedMs: number;
+    /** True once a single-shot source has reached its duration and should hold on the last frame. */
+    readonly completed: boolean;
+}
+
+/**
+ * Advances `elapsedMs` by `deltaMs`, and settles single-shot completion: once `singleShot` playback
+ * reaches `durationMs`, holds 1ms short of it (not `durationMs` itself, since `renderAt` wraps
+ * elapsed time via `% durationMs`, so landing exactly on the boundary would read back as elapsed=0)
+ * and reports completion. Shared by `RoAnimatedImage` and the SceneGraph `AnimatedImage` node —
+ * their two independent playback state machines both need this same boundary handling.
+ */
+export function advanceElapsed(
+    elapsedMs: number,
+    deltaMs: number,
+    durationMs: number,
+    singleShot: boolean
+): PlaybackAdvance {
+    elapsedMs += deltaMs;
+    if (singleShot && durationMs > 0 && elapsedMs >= durationMs) {
+        return { elapsedMs: Math.max(0, durationMs - 1), completed: true };
+    }
+    return { elapsedMs, completed: false };
 }
 
 // Exported (alongside `WebPFrameSource` below) so the frame-compositing algorithm — dispose/blend
@@ -127,6 +156,62 @@ export class WebPFrameSource implements AnimatedFrameSource {
     dispose() {
         releaseCanvas(this.canvas);
     }
+}
+
+/**
+ * Wraps a decoded `AnimatedFrameSource` at a different pixel size, scaling each rendered frame to
+ * fit — used for `ifAnimatedImage`'s `loadWidth`/`loadHeight` ("Scales to fit, preserving aspect
+ * ratio"), which is a decode-size hint independent of `loadDisplayMode`'s node-level display fit.
+ */
+class ScaledFrameSource implements AnimatedFrameSource {
+    readonly durationMs: number;
+    readonly loopCount: number;
+    private readonly canvas: BrsCanvas;
+    private readonly context: BrsCanvasContext2D;
+    private lastElapsedMs = -1;
+
+    constructor(private readonly inner: AnimatedFrameSource, readonly width: number, readonly height: number) {
+        this.durationMs = inner.durationMs;
+        this.loopCount = inner.loopCount;
+        this.canvas = createNewCanvas(width, height);
+        this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
+    }
+
+    renderAt(elapsedMs: number): BrsCanvas {
+        if (elapsedMs === this.lastElapsedMs) {
+            return this.canvas;
+        }
+        const frame = this.inner.renderAt(elapsedMs);
+        this.context.clearRect(0, 0, this.width, this.height);
+        drawCanvasRegion(this.context, frame, 0, 0, frame.width, frame.height, 0, 0, this.width, this.height);
+        this.lastElapsedMs = elapsedMs;
+        return this.canvas;
+    }
+
+    dispose() {
+        this.inner.dispose();
+        releaseCanvas(this.canvas);
+    }
+}
+
+/**
+ * Applies `ifAnimatedImage`'s `loadWidth`/`loadHeight` decode-size hint to an already-decoded
+ * source: scales to fit within the given bounds (0 in either dimension means "use the source's
+ * own size for that axis"), preserving aspect ratio. A no-op when both are `<= 0`.
+ */
+export function applyLoadSize(source: AnimatedFrameSource, loadWidth: number, loadHeight: number): AnimatedFrameSource {
+    if (loadWidth <= 0 && loadHeight <= 0) {
+        return source;
+    }
+    const scaleX = loadWidth > 0 ? loadWidth / source.width : Infinity;
+    const scaleY = loadHeight > 0 ? loadHeight / source.height : Infinity;
+    const scale = Math.min(scaleX, scaleY);
+    const targetWidth = Math.max(1, Math.round(source.width * scale));
+    const targetHeight = Math.max(1, Math.round(source.height * scale));
+    if (targetWidth === source.width && targetHeight === source.height) {
+        return source;
+    }
+    return new ScaledFrameSource(source, targetWidth, targetHeight);
 }
 
 /**
@@ -245,4 +330,81 @@ export function decodeLottie(source: Buffer | string): AnimatedFrameSource | und
         return undefined;
     }
     return new LottieFrameSource(anim, width, height);
+}
+
+type AnimatedContentType = "webp" | "lottie" | "mp4";
+
+/**
+ * `ifAnimatedImage`'s three documented `mimeType` values, mapped to the content family each one
+ * declares. Roku's own `"video/webp"` is non-standard — the WebP container format itself sniffs
+ * (and is registered) as `image/webp`; Roku just repurposes the (usually static-image) `video/`
+ * prefix to mean "this is meant to be played as a video-like animation."
+ */
+const declaredMimeTypes: Record<string, AnimatedContentType> = {
+    "video/webp": "webp",
+    "video/lottie+json": "lottie",
+    "video/mp4": "mp4",
+};
+
+/**
+ * Sniffs the actual content family from the raw bytes — a WebP RIFF container, a Lottie/Bodymovin
+ * JSON document (or a compressed dotLottie, itself a ZIP archive), or an MP4/ISO-BMFF container.
+ * Used both to auto-detect an omitted `mimeType` and to validate a declared one against reality.
+ */
+function sniffAnimatedContentType(data: Buffer): AnimatedContentType | undefined {
+    const type = fileType(data);
+    if (type?.mime === "image/webp") {
+        return "webp";
+    }
+    if (type?.mime === "video/mp4") {
+        return "mp4";
+    }
+    // ZIP local-file-header magic — a compressed dotLottie.
+    if (ZIP_MAGIC.every((byte, index) => data[index] === byte)) {
+        return "lottie";
+    }
+    // A JSON document (Lottie/Bodymovin) — not a magic-byte format `file-type` recognizes, so
+    // fall back to "starts with '{' or '[' after leading whitespace".
+    const text = data.subarray(0, 64).toString("utf8").trimStart();
+    return text.startsWith("{") || text.startsWith("[") ? "lottie" : undefined;
+}
+
+/**
+ * Decodes animated content per `ifAnimatedImage.SetContent`'s `mimeType` contract: "If omitted,
+ * the file type is auto-detected." DEVICE-CONFIRMED (real WebP apps never set `mimeType` at all —
+ * see `AnimatedImage.ts`'s class doc comment) that Roku's `mimeType` is a HINT, not an
+ * authoritative format switch: its own `"video/webp"` value doesn't match the format's real,
+ * sniffable MIME (`image/webp`). So:
+ * - `mimeType` omitted: the format is auto-detected from the content (`sniffAnimatedContentType`).
+ * - `mimeType` given: it is VALIDATED — an unrecognized value, or one that contradicts what the
+ *   content actually sniffs as, means the content does not play (returns `undefined`) rather than
+ *   guessing. A declared value that can't be checked against an inconclusive sniff (e.g. a
+ *   dotLottie ZIP whose contents this decoder doesn't parse further) is trusted and attempted.
+ */
+export function decodeAnimatedContent(data: Buffer, mimeType: string): AnimatedFrameSource | undefined {
+    const declared = mimeType.trim().toLowerCase();
+    let contentType: AnimatedContentType | undefined;
+    if (declared) {
+        const expected = declaredMimeTypes[declared];
+        if (!expected) {
+            return undefined;
+        }
+        const sniffed = sniffAnimatedContentType(data);
+        if (sniffed !== undefined && sniffed !== expected) {
+            return undefined;
+        }
+        contentType = expected;
+    } else {
+        contentType = sniffAnimatedContentType(data);
+    }
+    switch (contentType) {
+        case "webp":
+            return decodeAnimatedWebP(data);
+        case "lottie":
+            return decodeLottie(data);
+        default:
+            // "mp4" is a recognized/sniffed mimeType, but this engine has no MP4 decoder; anything
+            // else is genuinely unrecognized content.
+            return undefined;
+    }
 }

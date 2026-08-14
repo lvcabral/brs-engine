@@ -25,8 +25,9 @@
 const MAGIC = new Uint8Array([0x42, 0x52, 0x53, 0x42, 0x50, 0x4b, 0x31, 0x00]);
 /** AES-CTR initialization vector length, in bytes. */
 const IV_LENGTH = 16;
-/** Local-file-header signature ("PK\x03\x04") used to validate a successful decryption. */
-const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
+/** Local-file-header signature ("PK\x03\x04") — validates a successful decryption here, and
+ *  identifies a compressed dotLottie archive in `AnimatedFrameSource.sniffAnimatedContentType`. */
+export const ZIP_MAGIC = [0x50, 0x4b, 0x03, 0x04];
 
 /**
  * Web Crypto's `BufferSource` type is stricter about the backing buffer (`ArrayBuffer`) than our
