@@ -462,15 +462,6 @@ export function jsValueOf(value: BrsType, deep: boolean = true, visitedNodes?: W
 }
 
 /**
- * Checks if a BrsType value is invalid.
- * @param value The BrsType value to check.
- * @returns True if the value is invalid, false otherwise.
- */
-export function isInvalid(value: BrsType): boolean {
-    return value.equalTo(BrsInvalid.Instance).toBoolean();
-}
-
-/**
  * Checks if a string represents a number and returns its precision.
  * The precision is equivalent to the Number.toPrecision() parameter (total significant digits).
  * @param {string} str - The string to check

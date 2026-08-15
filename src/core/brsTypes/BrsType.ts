@@ -400,7 +400,7 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
      * @returns True if other is also invalid, false otherwise
      */
     equalTo(other: BrsType): BrsBoolean {
-        if (other.kind === ValueKind.Invalid || other instanceof RoInvalid) {
+        if (isInvalid(other)) {
             return BrsBoolean.True;
         }
         return BrsBoolean.False;
@@ -491,4 +491,13 @@ export class Uninitialized implements BrsValue, Comparable {
     toString(parent?: BrsType) {
         return "<UNINITIALIZED>";
     }
+}
+
+/**
+ * Checks if a value is invalid.
+ * @param value BrightScript value to check
+ * @returns True if value is invalid, false otherwise
+ */
+export function isInvalid(value: BrsType): boolean {
+    return value.kind === ValueKind.Invalid || value instanceof RoInvalid;
 }

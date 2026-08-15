@@ -428,6 +428,8 @@ describe("end to end syntax", () => {
             "optional chaining works",
             "param test result was: success",
             "literal test result was: success",
+            "checking indexed access, unboxed:invalid",
+            "checking indexed access, boxed:<Component: roInvalid>",
         ]);
     });
 
