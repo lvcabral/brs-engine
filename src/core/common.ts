@@ -120,7 +120,7 @@ export const DefaultDeviceInfo: DeviceInfo = {
     developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As in Roku devices, segregates Registry data (can't have a dot)
     friendlyName: "BrightScript Engine Library",
     deviceModel: "8000X", // Roku TV (Midland)
-    firmwareVersion: "48G.04E05531A", // v15.0
+    firmwareVersion: "JWG.34E00841A", // v15.3
     serialNumber: "", // Will be set dynamically
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
