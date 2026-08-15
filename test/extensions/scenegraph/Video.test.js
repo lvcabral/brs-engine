@@ -109,6 +109,33 @@ describe("Video bufferingBar and retrievingBar fields", () => {
         });
     });
 
+    test("captionRenderArea forwards the documented camelCase keys with their original case (Roku OS 15.3)", () => {
+        const video = SGNodeFactory.createNode("Video");
+        // Ignore the messages posted during construction (control/caption defaults).
+        global.postMessage.mockClear();
+
+        // Roku's docs name these sub-fields `overridePlacement`, `scaleFonts`, and
+        // `keepSafeMargins` (camelCase). RoAssociativeArray literals are case-preserving, so
+        // the render thread must receive (and read) those exact keys, not a lowercased form.
+        const area = new RoAssociativeArray([
+            { name: new BrsString("mode"), value: new BrsString("override") },
+            { name: new BrsString("overridePlacement"), value: BrsBoolean.False },
+            { name: new BrsString("scaleFonts"), value: new BrsString("by-height") },
+            { name: new BrsString("keepSafeMargins"), value: BrsBoolean.True },
+        ]);
+
+        video.setValue("captionRenderArea", area);
+
+        expect(global.postMessage).toHaveBeenCalledWith({
+            captionRenderArea: {
+                mode: "override",
+                overridePlacement: false,
+                scaleFonts: "by-height",
+                keepSafeMargins: true,
+            },
+        });
+    });
+
     afterAll(() => {
         sgRoot.setVideo();
     });

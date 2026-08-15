@@ -56,7 +56,7 @@ let trickPlayBar = false;
 let supportCaptions = false;
 
 /** OS 15.3 `Video.captionRenderArea` — where/how captions are rendered on screen. */
-interface CaptionRenderArea {
+export interface CaptionRenderArea {
     mode: "fullscreen" | "auto" | "override";
     overridePlacement: boolean;
     scaleFonts: "off" | "by-width" | "by-height";
@@ -874,25 +874,41 @@ function getCaptionArea(canvasW: number, canvasH: number) {
 
 /**
  * Sets the OS 15.3 `Video.captionRenderArea`, normalizing its attributes with the documented
- * per-mode defaults. Keys arrive lowercased from the SceneGraph associative-array serializer.
+ * per-mode defaults. `RoAssociativeArray` literals are case-preserving (see
+ * `fromAssociativeArray`), so an app writing the documented camelCase keys (`scaleFonts`,
+ * `overridePlacement`, `keepSafeMargins`) arrives here with that exact casing — keys are
+ * looked up case-insensitively below rather than assumed lowercase.
  * @param area Render-area object posted from the worker (or a bare `{ mode }` reset)
  */
 export function setCaptionRenderArea(area: { [key: string]: any }) {
-    const rawMode = typeof area?.mode === "string" ? area.mode.toLowerCase() : "fullscreen";
+    const normalized: { [key: string]: any } = {};
+    for (const key of Object.keys(area ?? {})) {
+        normalized[key.toLowerCase()] = area[key];
+    }
+    const rawMode = typeof normalized.mode === "string" ? normalized.mode.toLowerCase() : "fullscreen";
     const mode = rawMode === "auto" || rawMode === "override" ? rawMode : "fullscreen";
     const isOverride = mode === "override";
-    const rawScale = typeof area?.scalefonts === "string" ? area.scalefonts.toLowerCase() : "by-width";
+    const rawScale = typeof normalized.scalefonts === "string" ? normalized.scalefonts.toLowerCase() : "by-width";
     const scaleFonts = rawScale === "off" || rawScale === "by-height" ? rawScale : "by-width";
     captionRenderArea = {
         mode,
-        overridePlacement: typeof area?.overrideplacement === "boolean" ? area.overrideplacement : isOverride,
+        overridePlacement:
+            typeof normalized.overrideplacement === "boolean" ? normalized.overrideplacement : isOverride,
         scaleFonts,
-        keepSafeMargins: typeof area?.keepsafemargins === "boolean" ? area.keepsafemargins : !isOverride,
-        x: Math.trunc(area?.x ?? 0),
-        y: Math.trunc(area?.y ?? 0),
-        width: Math.trunc(area?.width ?? 0),
-        height: Math.trunc(area?.height ?? 0),
+        keepSafeMargins: typeof normalized.keepsafemargins === "boolean" ? normalized.keepsafemargins : !isOverride,
+        x: Math.trunc(normalized.x ?? 0),
+        y: Math.trunc(normalized.y ?? 0),
+        width: Math.trunc(normalized.width ?? 0),
+        height: Math.trunc(normalized.height ?? 0),
     };
+}
+
+/**
+ * Gets the current OS 15.3 `Video.captionRenderArea` state.
+ * @returns A copy of the current caption render area
+ */
+export function getCaptionRenderArea(): CaptionRenderArea {
+    return { ...captionRenderArea };
 }
 
 /**
