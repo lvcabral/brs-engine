@@ -12,6 +12,7 @@ import {
     isBrsBoolean,
     isBrsCallable,
     isIterable,
+    isInvalid,
     isComparable,
     isBoxable,
     isUnboxable,
@@ -1209,7 +1210,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     const foundErr = findErrorDetail(element.getValue());
                     errDetail.message = foundErr ? foundErr.message : "UNKNOWN ERROR";
                 }
-            } else if (!(element instanceof BrsInvalid)) {
+            } else if (!isInvalid(element)) {
                 return {
                     errno: RuntimeErrorDetail.MalformedThrow.errno,
                     message: `Thrown "number" is not an integer.`,
@@ -1220,7 +1221,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         function validateErrorMessage(element: BrsType, errDetail: ErrorDetail): ErrorDetail {
             if (element instanceof BrsString) {
                 errDetail.message = element.toString();
-            } else if (!(element instanceof BrsInvalid)) {
+            } else if (!isInvalid(element)) {
                 return {
                     errno: RuntimeErrorDetail.MalformedThrow.errno,
                     message: `Thrown "message" is not a string.`,
@@ -1272,8 +1273,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         let args = expression.args.map(this.evaluate, this);
 
         if (!isBrsCallable(callee)) {
-            const invalidCallee = BrsInvalid.Instance.equalTo(callee).toBoolean();
-            if (invalidCallee && expression.optional) {
+            if (isInvalid(callee) && expression.optional) {
                 return callee;
             }
             this.addError(new RuntimeError(RuntimeErrorDetail.NotAFunction, expression.closingParen.location));
@@ -1288,7 +1288,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
     visitAtSignGet(expression: Expr.AtSignGet) {
         let source = this.evaluate(expression.obj);
-        if (source instanceof BrsInvalid && expression.optional) {
+        if (isInvalid(source) && expression.optional) {
             return source;
         }
         if (source instanceof RoXMLElement || source instanceof RoXMLList) {
@@ -1364,11 +1364,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 // An AA member read never yields an interface method on Roku (`aa.items` with no
                 // such key is invalid); the method resolves only at a call site (`aa.items()`),
                 // where a stored element still shadows it (the classic `aa.count` gotcha).
-                if (
-                    target instanceof BrsInvalid &&
-                    this._activeCallee === expression &&
-                    source instanceof RoAssociativeArray
-                ) {
+                if (isInvalid(target) && this._activeCallee === expression && source instanceof RoAssociativeArray) {
                     const method = source.getMethod(expression.name.text);
                     if (method) {
                         return method;
@@ -1382,7 +1378,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         let errorDetail = RuntimeErrorDetail.DotOnNonObject;
         if (boxedSource instanceof BrsComponent) {
-            const invalidSource = BrsInvalid.Instance.equalTo(source).toBoolean();
+            const invalidSource = isInvalid(source);
             // This check is supposed to be placed after method check,
             // but it's here to mimic the behavior of Roku, if they fix, we move it.
             if (invalidSource && expression.optional) {
@@ -1401,7 +1397,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     visitIndexedGet(expression: Expr.IndexedGet): BrsType {
         let source = this.evaluate(expression.obj);
         if (!isCollection(source)) {
-            if (source instanceof BrsInvalid && expression.optional) {
+            if (isInvalid(source) && expression.optional) {
                 return source;
             }
             this.addError(new RuntimeError(RuntimeErrorDetail.UndimmedArray, expression.location));

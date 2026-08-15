@@ -12,6 +12,7 @@ import {
     RuntimeError,
     DebugMode,
     BrsDevice,
+    isInvalid,
 } from "brs-engine";
 import { toAssociativeArray } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
@@ -84,7 +85,7 @@ export class Scene extends Group {
                     value.setNodeParent(this);
                 }
                 this.dialog = value;
-            } else if (value instanceof BrsInvalid) {
+            } else if (isInvalid(value)) {
                 this.dialog?.removeParent();
                 this.dialog?.setValue("close", BrsBoolean.True);
             } else {

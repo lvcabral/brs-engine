@@ -1,5 +1,5 @@
 import { BrsComponent } from "./BrsComponent";
-import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
+import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, isInvalid } from "../BrsType";
 import { BrsType } from "..";
 import { Unboxable } from "../Boxing";
 import { IfToStr } from "../interfaces/IfToStr";
@@ -30,14 +30,9 @@ export class RoInvalid extends BrsComponent implements BrsValue, Unboxable {
     }
 
     equalTo(other: BrsType): BrsBoolean {
-        if (other instanceof BrsInvalid) {
+        if (isInvalid(other)) {
             return BrsBoolean.True;
         }
-
-        if (other instanceof RoInvalid) {
-            return BrsBoolean.True;
-        }
-
         return BrsBoolean.False;
     }
 

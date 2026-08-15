@@ -16,6 +16,10 @@ sub main()
         print createLevel2().testResult("literal test result was: ")
     end sub
     level1.run()
+    invalidVar = invalid
+    print "checking indexed access, unboxed:"; invalidVar?.options?[0]
+    boxedVar = box(invalidVar)
+    print "checking indexed access, boxed:"; boxedVar?.options?[0]
 end sub
 
 function createLevel2()

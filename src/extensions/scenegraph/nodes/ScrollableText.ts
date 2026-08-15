@@ -2,7 +2,6 @@ import {
     AAMember,
     Interpreter,
     BrsBoolean,
-    BrsInvalid,
     isBrsString,
     BrsType,
     Float,
@@ -10,6 +9,7 @@ import {
     RoBitmap,
     RoFont,
     Rect,
+    isInvalid,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -90,7 +90,7 @@ export class ScrollableText extends Group {
 
         if (fieldName === "focusedchild") {
             // Track focus state: focusedChild is set to `this` when focused, BrsInvalid when unfocused
-            this.focused = !(value instanceof BrsInvalid) && value !== null && value !== undefined;
+            this.focused = !isInvalid(value) && value !== null && value !== undefined;
         } else if (fieldName === "scrollbartrackbitmapuri") {
             const uri = isBrsString(value) ? value.getValue() : "";
             this.customTrackBitmap = uri ? this.loadBitmap(uri) : undefined;

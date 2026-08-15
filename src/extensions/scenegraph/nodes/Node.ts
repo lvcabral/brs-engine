@@ -1878,7 +1878,7 @@ export class Node extends RoSGNode implements BrsValue {
         value: RoAssociativeArray,
         createFields: boolean
     ): boolean {
-        if (value.get(new BrsString("subtype")) instanceof BrsInvalid) {
+        if (isInvalid(value.get(new BrsString("subtype")))) {
             return false;
         }
         const field = node.resolveField(fieldName);
