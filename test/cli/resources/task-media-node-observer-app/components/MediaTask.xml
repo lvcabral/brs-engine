@@ -16,11 +16,11 @@
     end sub
 
     sub runTask()
+        ' No settle delay needed: the extension tick() that drains the construction-time replay
+        ' queue runs before every subsequent statement (deterministic, not time-based), so by the
+        ' time these fields are read a few statements later, both nodes have already settled.
         poster = CreateObject("roSGNode", "TaskPoster")
         anim = CreateObject("roSGNode", "TaskAnimatedImage")
-        for i = 0 to 10
-            sleep(30)
-        end for
         print "poster loadStatus:" + poster.findNode("p").loadStatus
         print "poster observed:" + poster.observed.toStr()
         print "anim state:" + anim.findNode("a").state
