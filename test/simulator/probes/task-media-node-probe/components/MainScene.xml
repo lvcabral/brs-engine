@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = CreateObject("roSGNode", "MediaTaskProbe")
+        m.task.observeField("finished", "onFinished")
+        m.task.control = "run"
+    end sub
+
+    sub onFinished()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

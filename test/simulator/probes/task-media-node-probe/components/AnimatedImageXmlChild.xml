@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- uri/control are XML attributes, applied during this component's own construction, before
+     init() runs: see PosterXmlChild. Reports whether a state observer registered in init() still
+     catches the load/playback transitions, on a Task thread. -->
+<component name="AnimatedImageXmlChild" extends="Group">
+    <interface>
+        <field id="observedCount" type="integer" value="0" />
+        <field id="stateAtObserve" type="string" value="" />
+    </interface>
+    <children>
+        <AnimatedImage id="a" uri="pkg:/images/animated.webp" control="loop" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.a = m.top.findNode("a")
+        print "PROBE|041|animatedimage-xmlattr|before-observe|state=" + safeState()
+        m.a.observeField("state", "onState")
+    end sub
+
+    ' Same theory as MediaTaskProbe's onPosterStatus/PosterXmlChild's onStatus: nothing here is
+    ' assumed to still be present in `m` -- diagnostic-first, every risky access guarded.
+    sub onState()
+        print "PROBE|042a|animatedimage-xmlattr|observer|m-count=" + m.count().toStr()
+        print "PROBE|042b|animatedimage-xmlattr|observer|has-a=" + m.DoesExist("a").toStr()
+        print "PROBE|042c|animatedimage-xmlattr|observer|has-top=" + m.DoesExist("top").toStr()
+        state = "no-a-in-m"
+        if m.DoesExist("a")
+            state = safeState()
+        end if
+        try
+            m.top.observedCount = m.top.observedCount + 1
+            m.top.stateAtObserve = state
+        catch e
+            print "PROBE|042d|animatedimage-xmlattr|observer|set-top-fields|CRASH:" + e.message
+        end try
+        print "PROBE|042|animatedimage-xmlattr|observer|state=" + state
+    end sub
+
+    function safeState() as string
+        result = "?"
+        try
+            result = m.a.state
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+    ]]></script>
+</component>

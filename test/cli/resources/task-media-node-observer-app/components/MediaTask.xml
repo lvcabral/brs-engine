@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Device-confirmed (test/simulator/probes/task-media-node-probe): a rendering node
+    (Poster/AnimatedImage) declared as an XML attribute on a child of a Task-created custom
+    component loads and notifies normally on a real device, observed from that child's own init().
+    Regression for Field.deliverPendingConstructionCallbacks() not draining on Task threads
+    (src/extensions/scenegraph/index.ts's tick()).
+-->
+<component name="MediaTask" extends="Task">
+    <interface>
+        <field id="finished" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    sub runTask()
+        ' No settle delay needed: the extension tick() that drains the construction-time replay
+        ' queue runs before every subsequent statement (deterministic, not time-based), so by the
+        ' time these fields are read a few statements later, both nodes have already settled.
+        poster = CreateObject("roSGNode", "TaskPoster")
+        anim = CreateObject("roSGNode", "TaskAnimatedImage")
+        print "poster loadStatus:" + poster.findNode("p").loadStatus
+        print "poster observed:" + poster.observed.toStr()
+        print "anim state:" + anim.findNode("a").state
+        print "anim observedCount:" + anim.observedCount.toStr()
+        m.top.finished = true
+    end sub
+    ]]></script>
+</component>

@@ -12,6 +12,7 @@ import {
     Rect,
     BrsDevice,
 } from "brs-engine";
+import { DeferredFieldWrites } from "./Field";
 import { Group } from "./Group";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
@@ -48,6 +49,16 @@ export class Poster extends Group {
      * and keeps `noScaling` pinned `true` across every subsequent `uri` change.
      */
     private forcedNoScaling: boolean = false;
+    /** Commits `loadStatus`, queuing it instead when construction is in progress and no observer
+     *  exists yet (e.g. `uri` set as an XML attribute, loaded before the owning component's
+     *  `init()` can `observeField`) — see `DeferredFieldWrites`. An observer registered before the
+     *  write (e.g. the "preload and swap" pattern) still dispatches synchronously. Mirrors
+     *  `AnimatedImage.setState`. The `"loading"` write (`setValue`'s `uri` branch) is never
+     *  deferred this way — it happens in the same instant as the `uri` write itself. */
+    private readonly loadStatusWrites = new DeferredFieldWrites(
+        () => this.resolveField("loadstatus"),
+        (value) => super.setValue("loadStatus", new BrsString(value))
+    );
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Poster) {
         super([], name);
@@ -91,12 +102,12 @@ export class Poster extends Group {
                     const failedUri = this.getValueJS("failedBitmapUri") as string;
                     this.loadUri(failedUri);
                 }
-                super.setValue("loadStatus", new BrsString(loadStatus));
+                this.loadStatusWrites.set(loadStatus);
                 return;
             } else if (typeof uri !== "string" || uri.trim() === "") {
                 this.uri = "";
                 this.bitmap = undefined;
-                super.setValue("loadStatus", new BrsString("none"));
+                this.loadStatusWrites.set("none");
                 super.setValue("bitmapWidth", new Float(0));
                 super.setValue("bitmapHeight", new Float(0));
                 const margins = { left: 0, right: 0, top: 0, bottom: 0 };

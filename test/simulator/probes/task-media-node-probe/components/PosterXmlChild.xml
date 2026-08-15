@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- uri is an XML attribute, applied during this component's own construction, before init()
+     runs: the same shape as AnimatedImageXmlChild and as the render-thread case fixed in
+     AnimatedImage.ts/Poster.ts (setState/setLoadStatus). Reports whether a loadStatus observer
+     registered in init() still catches the load, on a Task thread. -->
+<component name="PosterXmlChild" extends="Group">
+    <interface>
+        <field id="observed" type="boolean" value="false" />
+        <field id="statusAtObserve" type="string" value="" />
+    </interface>
+    <children>
+        <Poster id="p" uri="pkg:/images/probe.png" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.p = m.top.findNode("p")
+        print "PROBE|031|poster-xmlattr|before-observe|loadStatus=" + safeStatus()
+        m.p.observeField("loadStatus", "onStatus")
+    end sub
+
+    ' Same theory as MediaTaskProbe's onPosterStatus: the observer body may run with a different
+    ' `m` than init() used (this component contains a rendering Poster child), so nothing here is
+    ' assumed to still be present -- diagnostic-first, every risky access guarded.
+    sub onStatus()
+        print "PROBE|032a|poster-xmlattr|observer|m-count=" + m.count().toStr()
+        print "PROBE|032b|poster-xmlattr|observer|has-p=" + m.DoesExist("p").toStr()
+        print "PROBE|032c|poster-xmlattr|observer|has-top=" + m.DoesExist("top").toStr()
+        status = "no-p-in-m"
+        if m.DoesExist("p")
+            status = safeStatus()
+        end if
+        try
+            m.top.observed = true
+            m.top.statusAtObserve = status
+        catch e
+            print "PROBE|032d|poster-xmlattr|observer|set-top-fields|CRASH:" + e.message
+        end try
+        print "PROBE|032|poster-xmlattr|observer|loadStatus=" + status
+    end sub
+
+    function safeStatus() as string
+        result = "?"
+        try
+            result = m.p.loadStatus
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+    ]]></script>
+</component>

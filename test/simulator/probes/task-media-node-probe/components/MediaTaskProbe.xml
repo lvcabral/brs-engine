@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MediaTaskProbe" extends="Task">
+    <interface>
+        <field id="finished" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runProbe"
+    end sub
+
+    sub runProbe()
+        ' Each phase is wrapped so one crashing/invalidated node can't stop the rest of the probe
+        ' from running and reporting.
+        try
+            probeDirectPoster()
+        catch e
+            print "PROBE|019|poster-direct|phase-crash|" + e.message
+        end try
+        try
+            probeDirectAnimatedImage()
+        catch e
+            print "PROBE|029|animatedimage-direct|phase-crash|" + e.message
+        end try
+        try
+            probeXmlAttrPoster()
+        catch e
+            print "PROBE|039|poster-xmlattr|phase-crash|" + e.message
+        end try
+        try
+            probeXmlAttrAnimatedImage()
+        catch e
+            print "PROBE|049|animatedimage-xmlattr|phase-crash|" + e.message
+        end try
+        m.top.finished = true
+    end sub
+
+    ' Reads p.loadStatus without ever letting a dead/invalidated node crash the caller.
+    function safeLoadStatus(p as object) as string
+        result = "?"
+        try
+            result = p.loadStatus
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+
+    function safeState(a as object) as string
+        result = "?"
+        try
+            result = a.state
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+
+    ' Polls fieldReader(node) every 30ms for up to durationMs, logging each tick under `tag` --
+    ' brackets exactly when a node stops being safely accessible, without needing the debugger.
+    sub pollField(tag as string, node as object, fieldReader as function, durationMs as integer)
+        elapsed = 0
+        while elapsed < durationMs
+            sleep(30)
+            elapsed = elapsed + 30
+            print "PROBE|" + tag + "|poll|elapsedMs=" + elapsed.toStr() + " value=" + fieldReader(node)
+        end while
+    end sub
+
+    ' Direct CreateObject + imperative uri write (no XML attribute involved) -- the baseline: does
+    ' a Task-created Poster load at all, stay valid, and does its observer fire on this thread?
+    sub probeDirectPoster()
+        print "PROBE|010|poster-direct|create|begin="
+        p = CreateObject("roSGNode", "Poster")
+        print "PROBE|011|poster-direct|create|subtype=" + p.subtype()
+        if p.subtype() <> "Poster"
+            print "PROBE|012|poster-direct|create|end=not-a-node"
+            return
+        end if
+        m.posterObservedCount = 0
+        m.p = p
+        p.observeField("loadStatus", "onPosterStatus")
+        print "PROBE|013|poster-direct|before-uri|loadStatus=" + safeLoadStatus(p)
+        try
+            p.uri = "pkg:/images/probe.png"
+            print "PROBE|014|poster-direct|uri-write|ok"
+        catch e
+            print "PROBE|014|poster-direct|uri-write|CRASH:" + e.message
+        end try
+        print "PROBE|015|poster-direct|after-uri-sync|loadStatus=" + safeLoadStatus(p)
+        pollField("017|poster-direct", p, safeLoadStatus, 300)
+        print "PROBE|018|poster-direct|after-settle|loadStatus=" + safeLoadStatus(p) + " observedCount=" + m.posterObservedCount.toStr()
+    end sub
+
+    ' The observer body itself may run with a DIFFERENT `m` than the one runProbe()/
+    ' probeDirectPoster() used (theory: a rendering node's observer dispatches on the render
+    ' thread, with its own `m`, not the Task's) -- so every access is diagnostic-first, never
+    ' assuming `m` still has what the creating code put there.
+    sub onPosterStatus()
+        print "PROBE|016a|poster-direct|observer|m-count=" + m.count().toStr()
+        print "PROBE|016b|poster-direct|observer|has-posterObservedCount=" + m.DoesExist("posterObservedCount").toStr()
+        print "PROBE|016c|poster-direct|observer|has-p=" + m.DoesExist("p").toStr()
+        if m.DoesExist("posterObservedCount")
+            m.posterObservedCount = m.posterObservedCount + 1
+        end if
+        status = "no-p-in-m"
+        if m.DoesExist("p")
+            status = safeLoadStatus(m.p)
+        end if
+        print "PROBE|016|poster-direct|observer|loadStatus=" + status
+    end sub
+
+    sub probeDirectAnimatedImage()
+        print "PROBE|020|animatedimage-direct|create|begin="
+        a = CreateObject("roSGNode", "AnimatedImage")
+        print "PROBE|021|animatedimage-direct|create|subtype=" + a.subtype()
+        if a.subtype() <> "AnimatedImage"
+            print "PROBE|022|animatedimage-direct|create|end=not-a-node"
+            return
+        end if
+        m.animObservedCount = 0
+        m.a = a
+        a.observeField("state", "onAnimState")
+        print "PROBE|023|animatedimage-direct|before-uri|state=" + safeState(a)
+        try
+            a.uri = "pkg:/images/animated.webp"
+            a.control = "loop"
+            print "PROBE|024|animatedimage-direct|uri-write|ok"
+        catch e
+            print "PROBE|024|animatedimage-direct|uri-write|CRASH:" + e.message
+        end try
+        print "PROBE|025|animatedimage-direct|after-uri-sync|state=" + safeState(a)
+        pollField("027|animatedimage-direct", a, safeState, 300)
+        print "PROBE|028|animatedimage-direct|after-settle|state=" + safeState(a) + " observedCount=" + m.animObservedCount.toStr()
+    end sub
+
+    sub onAnimState()
+        print "PROBE|026a|animatedimage-direct|observer|m-count=" + m.count().toStr()
+        print "PROBE|026b|animatedimage-direct|observer|has-animObservedCount=" + m.DoesExist("animObservedCount").toStr()
+        print "PROBE|026c|animatedimage-direct|observer|has-a=" + m.DoesExist("a").toStr()
+        if m.DoesExist("animObservedCount")
+            m.animObservedCount = m.animObservedCount + 1
+        end if
+        status = "no-a-in-m"
+        if m.DoesExist("a")
+            status = safeState(m.a)
+        end if
+        print "PROBE|026|animatedimage-direct|observer|state=" + status
+    end sub
+
+    ' uri is an XML attribute on the child -- applied during ITS construction, before its own
+    ' init() can observeField. See PosterXmlChild.xml for the case this reproduces.
+    sub probeXmlAttrPoster()
+        print "PROBE|030|poster-xmlattr|create|begin="
+        c = CreateObject("roSGNode", "PosterXmlChild")
+        pollField("034|poster-xmlattr", c, safeChildPosterStatus, 300)
+        print "PROBE|033|poster-xmlattr|after-settle|loadStatus=" + safeChildPosterStatus(c) + " observed=" + safeChildObserved(c)
+    end sub
+
+    function safeChildObserved(c as object) as string
+        result = "?"
+        try
+            result = c.observed.toStr()
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+
+    function safeChildPosterStatus(c as object) as string
+        result = "?"
+        try
+            result = c.findNode("p").loadStatus
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+
+    sub probeXmlAttrAnimatedImage()
+        print "PROBE|040|animatedimage-xmlattr|create|begin="
+        c = CreateObject("roSGNode", "AnimatedImageXmlChild")
+        pollField("044|animatedimage-xmlattr", c, safeChildAnimState, 300)
+        print "PROBE|043|animatedimage-xmlattr|after-settle|state=" + safeChildAnimState(c) + " observedCount=" + safeChildObservedCount(c)
+    end sub
+
+    function safeChildObservedCount(c as object) as string
+        result = "?"
+        try
+            result = c.observedCount.toStr()
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+
+    function safeChildAnimState(c as object) as string
+        result = "?"
+        try
+            result = c.findNode("a").state
+        catch e
+            result = "CRASH:" + e.message
+        end try
+        return result
+    end function
+    ]]></script>
+</component>

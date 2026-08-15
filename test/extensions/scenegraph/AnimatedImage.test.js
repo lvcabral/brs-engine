@@ -3,8 +3,8 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, sgRoot, sgClock } = scenegraph;
-const { BrsDevice, BrsString, Interpreter } = core;
+const { Field, SGNodeFactory, sgRoot, sgClock } = scenegraph;
+const { BrsDevice, BrsString, Float, Interpreter } = core;
 
 /**
  * AnimatedImage (field list device-confirmed, some vocabulary still inferred — see
@@ -64,7 +64,8 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
     test("loads a WebP file from uri alone, with no mimeType set at all", () => {
         const node = buildNode();
         expect(node.getValueJS("mimeType")).toBe("");
-        expect(node.getValueJS("state")).toBe("ready");
+        // Loaded but not yet playing (no `control` set): the first frame is ready and displayed.
+        expect(node.getValueJS("state")).toBe("first");
         expect(node.getValueJS("mediaWidth")).toBe(4);
         expect(node.getValueJS("mediaHeight")).toBe(4);
         expect(node.getValueJS("error")).toBe("");
@@ -75,7 +76,7 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
         node.setValue("uri", new BrsString("pkg:/images/lottie.json"));
         node.setValue("mimeType", new BrsString("video/lottie+json"));
 
-        expect(node.getValueJS("state")).toBe("ready");
+        expect(node.getValueJS("state")).toBe("first");
         expect(node.getValueJS("mediaWidth")).toBe(200);
         expect(node.getValueJS("mediaHeight")).toBe(200);
     });
@@ -85,16 +86,76 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
         node.setValue("mimeType", new BrsString("video/lottie+json"));
         node.setValue("uri", new BrsString("pkg:/images/lottie.json"));
 
-        expect(node.getValueJS("state")).toBe("ready");
+        expect(node.getValueJS("state")).toBe("first");
         expect(node.getValueJS("mediaWidth")).toBe(200);
         expect(node.getValueJS("mediaHeight")).toBe(200);
     });
 
-    test("reports failed for a non-existent uri", () => {
+    test("reports error for a non-existent uri", () => {
         const node = SGNodeFactory.createNode("AnimatedImage");
         node.setValue("uri", new BrsString("pkg:/images/does-not-exist.webp"));
-        expect(node.getValueJS("state")).toBe("failed");
+        expect(node.getValueJS("state")).toBe("error");
         expect(node.getValueJS("error")).not.toBe("");
+    });
+
+    // mimeType is a hint, not an authoritative format switch (Roku's own "video/webp" is
+    // non-standard — the container's real, sniffable MIME is "image/webp"). Omitted, the format
+    // is auto-detected; given, it's validated against the actual content.
+    describe("mimeType is a hint, validated against the actual content", () => {
+        test("Roku's non-standard 'video/webp' mimeType loads a real WebP file", () => {
+            const node = SGNodeFactory.createNode("AnimatedImage");
+            node.setValue("mimeType", new BrsString("video/webp"));
+            node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
+
+            expect(node.getValueJS("state")).toBe("first");
+            expect(node.getValueJS("mediaWidth")).toBe(4);
+        });
+
+        test("an unrecognized mimeType fails rather than guessing the format", () => {
+            const node = SGNodeFactory.createNode("AnimatedImage");
+            node.setValue("mimeType", new BrsString("image/webp")); // NOT one of the 3 documented values
+            node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
+
+            expect(node.getValueJS("state")).toBe("error");
+            expect(node.getValueJS("error")).not.toBe("");
+        });
+
+        test("a mimeType that contradicts the actual content fails instead of decoding the wrong way", () => {
+            const node = SGNodeFactory.createNode("AnimatedImage");
+            node.setValue("mimeType", new BrsString("video/lottie+json")); // real content is WebP
+            node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
+
+            expect(node.getValueJS("state")).toBe("error");
+            expect(node.getValueJS("error")).not.toBe("");
+        });
+    });
+
+    test("field defaults match the published spec (loadDisplayMode/control/state)", () => {
+        const node = SGNodeFactory.createNode("AnimatedImage");
+        expect(node.getValueJS("loadDisplayMode")).toBe("scaleToFit");
+        expect(node.getValueJS("control")).toBe("");
+        expect(node.getValueJS("state")).toBe("stop");
+    });
+
+    test("control=loop/pause moves state between decode and stop once content is loaded", () => {
+        const node = buildNode();
+        expect(node.getValueJS("state")).toBe("first");
+
+        node.setValue("control", new BrsString("loop"));
+        expect(node.getValueJS("state")).toBe("decode");
+
+        node.setValue("control", new BrsString("pause"));
+        expect(node.getValueJS("state")).toBe("stop");
+    });
+
+    test("loadWidth/loadHeight scale the decoded media size, preserving aspect ratio", () => {
+        const node = SGNodeFactory.createNode("AnimatedImage");
+        node.setValue("loadWidth", new Float(2));
+        node.setValue("loadHeight", new Float(2));
+        node.setValue("uri", new BrsString("pkg:/images/animated.webp"));
+
+        expect(node.getValueJS("mediaWidth")).toBe(2);
+        expect(node.getValueJS("mediaHeight")).toBe(2);
     });
 
     test("frame advances only on paint, not on layout, and holds the frame across a layout pass", () => {

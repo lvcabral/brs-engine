@@ -1,7 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const brs = require("../../../packages/node/bin/brs.node");
-const { decodeAnimatedWebP, decodeLottie, WebPFrameSource } = brs.types;
+const { applyLoadSize, decodeAnimatedContent, decodeAnimatedWebP, decodeLottie, WebPFrameSource } = brs.types;
 
 // 4x4, 3-frame, lossless animated WebP (solid red/green/blue frames, durations 100/150/200ms,
 // full-canvas frames with blend=1) generated with Pillow — see git history for the generator script.
@@ -160,6 +160,86 @@ describe("decodeLottie", () => {
         expect(pixelAt(3, 10)).toEqual([0, 0, 0, 0]); // behind the flat cap plane: transparent
         expect(pixelAt(4, 10)).toEqual([0, 0, 0, 0]); // vertex 2's disk reach — the missed case
         expect(pixelAt(7, 10)).toEqual([255, 0, 0, 255]); // inside the stroke body: opaque red
+    });
+});
+
+describe("applyLoadSize", () => {
+    it("returns the source unchanged when both dimensions are 0", () => {
+        const source = decodeAnimatedWebP(fs.readFileSync(fixture));
+        expect(applyLoadSize(source, 0, 0)).toBe(source);
+    });
+
+    it("scales to fit within the given bounds, preserving aspect ratio", () => {
+        const source = decodeAnimatedWebP(fs.readFileSync(fixture)); // 4x4
+        const scaled = applyLoadSize(source, 2, 2);
+        expect(scaled.width).toBe(2);
+        expect(scaled.height).toBe(2);
+    });
+
+    it("does not re-render the wrapped source when elapsedMs repeats", () => {
+        const inner = decodeAnimatedWebP(fs.readFileSync(fixture));
+        let renderCount = 0;
+        const spy = {
+            width: inner.width,
+            height: inner.height,
+            durationMs: inner.durationMs,
+            loopCount: inner.loopCount,
+            renderAt: (elapsedMs) => {
+                renderCount++;
+                return inner.renderAt(elapsedMs);
+            },
+            dispose: () => inner.dispose(),
+        };
+
+        const scaled = applyLoadSize(spy, 2, 2);
+        scaled.renderAt(0);
+        scaled.renderAt(0);
+        scaled.renderAt(0);
+        expect(renderCount).toBe(1);
+
+        scaled.renderAt(100);
+        expect(renderCount).toBe(2);
+    });
+});
+
+describe("decodeAnimatedContent", () => {
+    // ifAnimatedImage's mimeType is a HINT, not an authoritative format switch: Roku's own
+    // "video/webp" value is non-standard (the container's real, sniffable MIME is "image/webp").
+    // Omitted, the format is auto-detected from the content; given, it's validated against the
+    // actual content and a mismatch (or an unrecognized value) fails rather than guesses.
+    const webp = () => fs.readFileSync(fixture);
+    const lottie = () => fs.readFileSync(lottieFixture);
+
+    it("auto-detects a WebP file when mimeType is omitted", () => {
+        expect(decodeAnimatedContent(webp(), "")).toBeDefined();
+    });
+
+    it("auto-detects a Lottie JSON document when mimeType is omitted", () => {
+        expect(decodeAnimatedContent(lottie(), "")).toBeDefined();
+    });
+
+    it("accepts Roku's non-standard 'video/webp' mimeType for a real WebP file", () => {
+        expect(decodeAnimatedContent(webp(), "video/webp")).toBeDefined();
+    });
+
+    it("accepts 'video/lottie+json' for a real Lottie document", () => {
+        expect(decodeAnimatedContent(lottie(), "video/lottie+json")).toBeDefined();
+    });
+
+    it("rejects an unrecognized mimeType instead of guessing the format", () => {
+        // "image/webp" is the real sniffable MIME, but NOT one of ifAnimatedImage's 3 documented
+        // values — declaring it must fail, not silently fall back to auto-detection.
+        expect(decodeAnimatedContent(webp(), "image/webp")).toBeUndefined();
+        expect(decodeAnimatedContent(webp(), "bogus/type")).toBeUndefined();
+    });
+
+    it("rejects a mimeType that contradicts the actual content", () => {
+        expect(decodeAnimatedContent(webp(), "video/lottie+json")).toBeUndefined();
+        expect(decodeAnimatedContent(lottie(), "video/webp")).toBeUndefined();
+    });
+
+    it("rejects content that doesn't sniff as anything recognized when mimeType is omitted", () => {
+        expect(decodeAnimatedContent(Buffer.from("not animated content"), "")).toBeUndefined();
     });
 });
 

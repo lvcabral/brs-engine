@@ -8,8 +8,9 @@ import {
     Rect,
     RoAnimatedImage,
     AnimatedFrameSource,
-    decodeAnimatedWebP,
-    decodeLottie,
+    advanceElapsed,
+    applyLoadSize,
+    decodeAnimatedContent,
     BrsDevice,
     netlib,
 } from "brs-engine";
@@ -17,46 +18,46 @@ import { sgClock } from "../SGClock";
 import { sgRoot } from "../SGRoot";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
+import { DeferredFieldWrites } from "./Field";
 import { Group } from "./Group";
 
 /**
- * SceneGraph node for Roku OS 15.3's `AnimatedImage` (animated WebP / Lottie playback). Roku has
- * not published a written spec for this node — the field list and defaults below are taken from a
- * real Streaming Stick device's node dump for a working `<AnimatedImage>` instance, e.g.:
- * ```
- * <AnimatedImage translation="[100, 200]" mimeType="video/lottie+json" uri="pkg:/images/lottie.json" control="loop" />
- * ```
- * Device-confirmed fields/values: `width`, `height`, `loadWidth`, `loadHeight`, `loadDisplayMode`
- * ("noscale" default), `state` ("downloading" observed mid-load), `error`, `mediaWidth`,
- * `mediaHeight`, `uri`, `mimeType`, `control` (confirmed value `"loop"`, matching the standalone
- * `roAnimatedImage` component's `SetTargetState("loop")` — see `RoAnimatedImage.ts` — strongly
- * suggesting this node is a thin SceneGraph wrapper around one), `loadingBitmapUri`,
- * `loadingBitmapOpacity`, `failedBitmapUri`, `failedBitmapOpacity`, `audioGuideText` (all named and
- * shaped exactly like `Poster`'s equivalents). DEVICE-CONFIRMED (live app testing): `mimeType` is
- * only ever set by Lottie content (`"video/lottie+json"`) — WebP apps never set it at all, so a
- * `uri` load must not wait on `mimeType` being present (see `maybeLoad`).
- * STILL INFERRED (not observed on device): `state`'s full vocabulary beyond "downloading" (assumed
- * "none" before load, "ready" on success, "failed" on error, paired with `error`'s message);
- * `control`'s full vocabulary beyond "loop" (assumed "play"/"pause"/"stop" by analogy — "play" taken
- * as the non-looping single-shot counterpart to "loop"); whether `loadWidth`/`loadHeight` resize the
- * decoded content (NOT implemented — the fields are stored but inert) and whether
- * `loadingBitmapUri`/`failedBitmapUri` render a placeholder (NOT implemented — stored but inert,
- * unlike `Poster`'s real placeholder-swap behavior). Revisit once Roku publishes an official spec
- * (re-sync `external/dev-doc`, `brs-reference` skill) — see
- * `.claude/plans/the-roku-os-15-3-cryptic-curry.md`.
+ * SceneGraph node for Roku's `AnimatedImage` (animated WebP / Lottie playback). Field
+ * names/types/defaults for `width`, `height`, `loadWidth`, `loadHeight`, `loadDisplayMode`, `uri`,
+ * `mimeType`, `control`, `state`, `error`, `mediaWidth`, `mediaHeight` match the published spec.
+ * `loadingBitmapUri`, `loadingBitmapOpacity`, `failedBitmapUri`, `failedBitmapOpacity`,
+ * `audioGuideText` aren't part of that spec but are kept (shaped like `Poster`'s equivalents);
+ * their placeholder-swap behavior isn't implemented.
+ *
+ * `mimeType` is a hint, not an authoritative format switch (Roku's own `"video/webp"` value is
+ * non-standard). `decodeAnimatedContent` auto-detects the format when it's omitted and validates
+ * it against the real content when given — a mismatch or unrecognized value fails to play rather
+ * than guessing.
+ *
+ * `state` vocabulary: no `uri` -> `"stop"`; loading -> `"downloading"`; load complete -> `"init"`;
+ * loaded, not playing -> `"first"`; playing -> `"decode"`; halted after having played -> `"stop"`;
+ * load failure -> `"error"`. `control` vocabulary: `"loop"|"pause"|"play"|"rewind"` — `"play"` is
+ * the single-shot counterpart to `"loop"`.
+ *
+ * This engine's load is fully synchronous, so `uri`/`control` set as XML attributes finish loading
+ * before the owning component's `init()` gets a chance to `observeField("state", ...)` — on a real
+ * (asynchronous) device the observer is already registered by then. `stateWrites` compensates: while
+ * construction is in progress and `state` has no observer yet, transitions are queued instead of
+ * dispatched, then replayed as separate writes once construction unwinds, reproducing the sequence
+ * of observer callbacks a device would deliver.
  */
 export class AnimatedImage extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "uri", type: "uri" },
         { name: "mimeType", type: "string" },
-        { name: "control", type: "string", value: "none" },
-        { name: "state", type: "string", value: "none" },
+        { name: "control", type: "string" },
+        { name: "state", type: "string", value: "stop" },
         { name: "error", type: "string" },
         { name: "width", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "0.0" },
         { name: "loadWidth", type: "float", value: "0.0" },
         { name: "loadHeight", type: "float", value: "0.0" },
-        { name: "loadDisplayMode", type: "string", value: "noscale" },
+        { name: "loadDisplayMode", type: "string", value: "scaleToFit" },
         { name: "mediaWidth", type: "float", value: "0.0" },
         { name: "mediaHeight", type: "float", value: "0.0" },
         { name: "loadingBitmapUri", type: "uri" },
@@ -65,18 +66,20 @@ export class AnimatedImage extends Group {
         { name: "failedBitmapOpacity", type: "float", value: "1.0" },
         { name: "audioGuideText", type: "string" },
     ];
-    /** `RoAnimatedImage` is reused purely as the `BrsDraw2D`-compatible current-frame canvas
-     *  holder that `doDrawScaledObject`/`doDrawRotatedBitmap`/`doDrawCroppedBitmap` already accept
-     *  — see the "Used only by the SceneGraph AnimatedImage node" doc comments on its
-     *  `setFrameSource`/`renderAtElapsed`. */
+    /** Reused purely as the `BrsDraw2D`-compatible current-frame canvas holder that
+     *  `doDrawScaledObject`/`doDrawRotatedBitmap`/`doDrawCroppedBitmap` already accept. */
     private readonly drawable = new RoAnimatedImage();
     private frameSource?: AnimatedFrameSource;
     private playing: boolean = false;
-    /** True for control="play" (single-shot, stops once the source's duration elapses); false for
-     *  control="loop". Vocabulary/behavior inferred — see the class doc comment. */
+    /** True for control="play" (single-shot, stops once the duration elapses); false for
+     *  control="loop". */
     private singleShot: boolean = false;
     private elapsedMs: number = 0;
     private lastTickTime?: number;
+    private readonly stateWrites = new DeferredFieldWrites(
+        () => this.resolveField("state"),
+        (value) => super.setValue("state", new BrsString(value))
+    );
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.AnimatedImage) {
         super([], name);
@@ -99,22 +102,15 @@ export class AnimatedImage extends Group {
 
     /**
      * Attempts a (re)load whenever `uri` or `mimeType` changes, as soon as `uri` is non-empty —
-     * `mimeType` is NOT required. DEVICE-CONFIRMED: real WebP apps never set `mimeType` at all
-     * (only Lottie apps set it, to `"video/lottie+json"`), so gating the load on both fields being
-     * present left every WebP `AnimatedImage` stuck at `state="none"` forever. Whatever `mimeType`
-     * currently holds (possibly still empty) is passed to `loadContent`, which defaults to the
-     * WebP decoder when it isn't the Lottie string — matching `RoAnimatedImage.loadContent`'s
-     * dispatch. Safe regardless of field write order (XML attributes apply in document order via
-     * `setValue`, see `NodeFactory.addChildren`; either field may commit first) — a `uri` write
-     * before `mimeType` decodes once as WebP (the common case, and correct for actual WebP
-     * content), then re-decodes correctly when `mimeType` commits moments later if it turns out to
-     * be Lottie.
+     * `mimeType` is not required (real WebP content never sets it). Safe regardless of field write
+     * order: a `uri` write before `mimeType` decodes once, then re-decodes if `mimeType` commits
+     * moments later and changes the outcome.
      */
     private maybeLoad() {
         const uri = (this.getValueJS("uri") as string) ?? "";
         if (!uri.trim()) {
             this.clearContent();
-            super.setValue("state", new BrsString("none"));
+            this.stateWrites.set("stop");
             return;
         }
         const mimeType = (this.getValueJS("mimeType") as string) ?? "";
@@ -133,9 +129,9 @@ export class AnimatedImage extends Group {
     }
 
     /** Loads and decodes synchronously (mirrors `Poster.loadUri`'s local/remote pattern), then
-     *  commits `mediaWidth`/`mediaHeight`/`state`/`error` — this engine has no async load path, so
-     *  the "downloading" state (device-confirmed) is only ever observable as a transient value a
-     *  same-tick observer on `state` would see fire before "ready"/"failed". */
+     *  commits `mediaWidth`/`mediaHeight`/`state`/`error`. `"downloading"` is written directly
+     *  (unbuffered — it happens in the same instant as the `uri` write, so no observer could exist
+     *  for it either way); every later transition goes through `stateWrites`. */
     private loadContent(uri: string, mimeType: string) {
         super.setValue("state", new BrsString("downloading"));
         let data: Buffer | undefined;
@@ -148,10 +144,18 @@ export class AnimatedImage extends Group {
                 BrsDevice.stderr.write(`warning,[AnimatedImage] Error loading uri:${uri} - ${err.message}`);
             }
         }
+        // mimeType is a hint (see decodeAnimatedContent): auto-detected if omitted, validated
+        // against the real content if given.
         let source: AnimatedFrameSource | undefined;
         if (data) {
-            source = mimeType.toLowerCase() === "video/lottie+json" ? decodeLottie(data) : decodeAnimatedWebP(data);
+            source = decodeAnimatedContent(data, mimeType);
         }
+        if (source) {
+            const loadWidth = this.getValueJS("loadWidth") as number;
+            const loadHeight = this.getValueJS("loadHeight") as number;
+            source = applyLoadSize(source, loadWidth, loadHeight);
+        }
+        this.stateWrites.set("init");
         this.frameSource?.dispose();
         this.frameSource = source;
         this.drawable.setFrameSource(source);
@@ -161,12 +165,12 @@ export class AnimatedImage extends Group {
             super.setValue("mediaWidth", new Float(source.width));
             super.setValue("mediaHeight", new Float(source.height));
             super.setValue("error", new BrsString(""));
-            super.setValue("state", new BrsString("ready"));
+            this.stateWrites.set(this.playing ? "decode" : "first");
         } else {
             super.setValue("mediaWidth", new Float(0));
             super.setValue("mediaHeight", new Float(0));
             super.setValue("error", new BrsString(`Unable to load/decode ${uri}`));
-            super.setValue("state", new BrsString("failed"));
+            this.stateWrites.set("error");
         }
         if (this.playing) {
             this.drawable.renderAtElapsed(this.elapsedMs);
@@ -176,12 +180,8 @@ export class AnimatedImage extends Group {
     private handleControl(control: string) {
         switch (control) {
             case "loop":
-                this.singleShot = false;
-                this.playing = true;
-                this.lastTickTime = sgClock.now();
-                break;
             case "play":
-                this.singleShot = true;
+                this.singleShot = control === "play";
                 this.playing = true;
                 this.lastTickTime = sgClock.now();
                 break;
@@ -193,13 +193,17 @@ export class AnimatedImage extends Group {
                 this.playing = false;
                 this.elapsedMs = 0;
                 this.lastTickTime = undefined;
-                // Not gated by isPaintPass: "stop" is a discrete control write (not a per-frame
-                // clock advance), so it's exempt from the layout-purity rule — same category as
-                // BusySpinner's control="stop" flipping `active` directly in setValue.
+                // A discrete control write, not a per-frame clock advance, so it's exempt from the
+                // isPaintPass layout-purity rule.
                 this.drawable.renderAtElapsed(0);
                 break;
             default:
-                break;
+                return;
+        }
+        // Only once content is loaded — an early control write (uri not yet set) must not override
+        // the "stop" default; loadContent's own state write accounts for `playing` once it loads.
+        if (this.frameSource) {
+            this.stateWrites.set(this.playing ? "decode" : "stop");
         }
     }
 
@@ -238,6 +242,15 @@ export class AnimatedImage extends Group {
         return { x: sourceX, y: sourceY, width: sourceWidth, height: sourceHeight };
     }
 
+    /** Aspect-preserving fit within `rect` that never upscales, mirroring `Poster`'s `limitsize`
+     *  (`clampLoadSize`) behavior: "Only scale down, if needed. Does not scale up." */
+    private limitSize(rect: Rect): Rect {
+        const scale = Math.min(rect.width / this.drawable.width, rect.height / this.drawable.height, 1);
+        const width = this.drawable.width * scale;
+        const height = this.drawable.height * scale;
+        return { x: rect.x + (rect.width - width) / 2, y: rect.y + (rect.height - height) / 2, width, height };
+    }
+
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],
@@ -252,23 +265,18 @@ export class AnimatedImage extends Group {
         const drawTrans = this.getDrawTranslation(origin, angle);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        // Advance playback only on a paint pass: a layout pass (a bounding-rect refresh) must be
-        // pure and clock-free — it draws the already-rendered frame, never advances it. See the
-        // isPaintPass invariant in .claude/docs/scenegraph-invariants.md (same rule as BusySpinner).
+        // Advance playback only on a paint pass; a layout pass draws the already-rendered frame
+        // without advancing it (isPaintPass invariant, .claude/docs/scenegraph-invariants.md).
         if (this.playing && this.frameSource && this.isPaintPass(draw2D)) {
             const now = sgClock.now();
-            if (this.lastTickTime !== undefined) {
-                this.elapsedMs += now - this.lastTickTime;
-            }
+            const deltaMs = this.lastTickTime === undefined ? 0 : now - this.lastTickTime;
             this.lastTickTime = now;
-            if (this.singleShot && this.frameSource.durationMs > 0 && this.elapsedMs >= this.frameSource.durationMs) {
-                // 1ms short of durationMs, not durationMs itself: AnimatedFrameSource.renderAt
-                // wraps elapsed time via `elapsedMs % durationMs`, so landing exactly on the
-                // boundary reads back as elapsed=0 (the start of the next loop) instead of
-                // holding the last frame.
-                this.elapsedMs = Math.max(0, this.frameSource.durationMs - 1);
+            const advance = advanceElapsed(this.elapsedMs, deltaMs, this.frameSource.durationMs, this.singleShot);
+            this.elapsedMs = advance.elapsedMs;
+            if (advance.completed) {
                 this.playing = false;
                 this.lastTickTime = undefined;
+                this.stateWrites.set("stop");
             }
             this.drawable.renderAtElapsed(this.elapsedMs);
             sgRoot.makeDirty();
@@ -280,6 +288,16 @@ export class AnimatedImage extends Group {
                 this.drawImage(this.drawable, this.scaleToFit(rect), rotation, opacity, draw2D);
             } else if (mode === "scaletozoom") {
                 draw2D?.doDrawCroppedBitmap(this.drawable, this.scaleToZoom(rect), rect, undefined, opacity);
+            } else if (mode === "noscale") {
+                const naturalRect: Rect = {
+                    x: rect.x,
+                    y: rect.y,
+                    width: this.drawable.width,
+                    height: this.drawable.height,
+                };
+                this.drawImage(this.drawable, naturalRect, rotation, opacity, draw2D);
+            } else if (mode === "limitsize") {
+                this.drawImage(this.drawable, this.limitSize(rect), rotation, opacity, draw2D);
             } else {
                 this.drawImage(this.drawable, rect, rotation, opacity, draw2D);
             }

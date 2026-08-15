@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors a real app (reported issue, user sample "animigtest"): an AnimatedImage's `uri`/`control`
+    are set as XML attributes, applied during child construction, BEFORE this component's own init()
+    runs. init() registers a `state` observer AFTER that construction.
+
+    On a real device the load is genuinely asynchronous, so the observer (registered while init() is
+    still executing, i.e. before the async load has progressed at all) sees every transition. This
+    engine's load is fully synchronous, so without AnimatedImage.setState's construction-time replay
+    (see AnimatedImage.ts's class doc comment) the observer would never fire at all - the whole load
+    completes before init() gets a chance to call observeField.
+-->
+<component name="MainScene" extends="Scene">
+    <children>
+        <AnimatedImage id="anim" uri="pkg:/images/animated.webp" control="loop" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.anim = m.top.findNode("anim")
+        m.anim.observeField("state", "onStateChanged")
+        print "init done"
+    end sub
+
+    sub onStateChanged()
+        print "state changed: '" + m.anim.state + "'"
+    end sub
+    ]]></script>
+</component>

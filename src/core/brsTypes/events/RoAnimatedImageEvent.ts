@@ -1,54 +1,53 @@
-import { ValueKind, BrsString } from "..";
+import { ValueKind, BrsString, toAssociativeArray } from "..";
 import { BrsEvent } from "./BrsEvent";
 import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
-import { Int32 } from "../Int32";
-import { AnimatedImageState } from "../components/RoAnimatedImage";
 
 /**
- * Delivered through `roAnimatedImage`'s message port after `SetContent` finishes decoding.
- * PROVISIONAL: Roku's OS 15.3 release notes only confirm a "ready event" is fired
- * (`' ... wait for ready event ...'` in the documented example) without naming this event or its
- * methods — shaped after `RoTextureRequestEvent`, the closest existing async-load precedent, until
- * the official spec is available.
+ * Delivered through `roAnimatedImage`'s message port after `SetContent` finishes loading. Per
+ * `ifAnimatedImage`: `GetMessage()` reports "ready"/"failed", and `GetInfo()` returns an
+ * associative array whose `id` field matches the source `roAnimatedImage`'s `GetID()`, with an
+ * `error` field present only on failure.
  */
 export class RoAnimatedImageEvent extends BrsEvent {
-    private readonly state: AnimatedImageState;
-    private readonly uri: string;
+    private readonly id: string;
+    private readonly message: "ready" | "failed";
+    private readonly error?: string;
 
-    constructor(state: AnimatedImageState, uri: string) {
+    constructor(id: number, message: "ready" | "failed", error?: string) {
         super("roAnimatedImageEvent");
-        this.state = state;
-        this.uri = uri;
+        this.id = String(id);
+        this.message = message;
+        this.error = error;
 
         this.registerMethods({
-            ifAnimatedImageEvent: [this.getState, this.getURI],
+            ifAnimatedImageEvent: [this.getMessage, this.getInfo],
         });
     }
 
     getValue() {
-        return this.uri;
+        return this.message;
     }
 
-    /** Returns the state of the content load (see `AnimatedImageState`). */
-    private readonly getState = new Callable("getState", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.state);
-        },
-    });
-
-    /** Returns the uri passed to SetContent. */
-    private readonly getURI = new Callable("getURI", {
+    /** Returns "ready" on success or "failed" on failure. */
+    private readonly getMessage = new Callable("getMessage", {
         signature: {
             args: [],
             returns: ValueKind.String,
         },
         impl: (_: Interpreter) => {
-            return new BrsString(this.uri);
+            return new BrsString(this.message);
+        },
+    });
+
+    /** Returns an associative array with `id` (matching GetID()) and, on failure, `error`. */
+    private readonly getInfo = new Callable("getInfo", {
+        signature: {
+            args: [],
+            returns: ValueKind.Object,
+        },
+        impl: (_: Interpreter) => {
+            return toAssociativeArray(this.error ? { id: this.id, error: this.error } : { id: this.id });
         },
     });
 }

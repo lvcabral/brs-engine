@@ -1,0 +1,202 @@
+Device: Roku Express 4K+, Roku OS 15.3
+Probe version: v1 (before the try/catch-hardened redesign -- see README "Redesign after v1 crash")
+
+------ Running dev 'Task Media Node Probe' main ------
+08-14 22:17:40.640 sdkl [scrpt.ctx.run.enter] UI: Entering 'Task Media Node Probe', id 'dev', thrd 32305
+08-14 22:17:40.643 sdkl [beacon.signal] |AppLaunchChainComplete ----> Duration(570 ms)
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=15.3
+PROBE|010|poster-direct|create|begin=
+PROBE|011|poster-direct|create|subtype=Poster
+PROBE|013|poster-direct|before-uri|loadStatus=none
+BrightScript Micro Debugger.
+Enter any BrightScript statement, debug commands, or HELP.
+Suspending threads...
+Thread selected:  1*   ...components/MediaTaskProbe.xml(41)           print "PROBE|016|poster-direct|observer|loadStatus=" + m.p.loadStatus
+Current Function:
+039:      sub onPosterStatus()
+040:          m.posterObserved = true
+041:*         print "PROBE|016|poster-direct|observer|loadStatus=" + m.p.loadStatus
+042:      end sub
+Source Digest(s):
+pkg:    dev 1.0.1 f579c1af Task Media Node Probe
+pkg: 632126 1.1.5 219f5fe9 libplayready
+'Dot' Operator attempted with invalid BrightScript Component or interface reference. (runtime error &hec) in pkg:/components/MediaTaskProbe.xml(41)
+Backtrace:
+#0  Function onposterstatus() As Void
+   file/line: pkg:/components/MediaTaskProbe.xml(41)
+Local Variables:
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=2 count:3
+Threads:
+ID    Location                                Source Code
+ 0    pkg:/source/main.brs(25)                       msg = wait(20, port)
+ 1*   ...components/MediaTaskProbe.xml(41)           print "PROBE|016|poster-direct|observer|loadStatus=" + m.p.loadStatus
+ 2[u] ??
+  *selected   [u]unattached(not debuggable)
+
+--- Analysis (v1, at the time) ---
+The loadStatus observer DID fire on the Task thread (proving field/observer dispatch works
+cross-thread for a Task-owned node). Reading `m.p.loadStatus` inside the observer raised runtime
+error &hec ("Dot operator on invalid component"). Initial read: `p` itself had become invalid.
+
+Notably, `PROBE|014` (the line immediately after the `p.uri = ...` write, in the SAME calling
+function) never printed -- the asynchronous observer callback preempted the main probe thread
+before it reached its own very next statement.
+
+--- REVISED after the v2 crash (see below) ---
+v2 (same class of bug, a different line) shows `m.posterObservedCount = m.posterObservedCount + 1`
+raising "Type Mismatch. Operator '+' can't be applied to 'Invalid' and 'Integer'" -- a plain missing
+-AA-key read (`Invalid`), not a dead-COM-reference error. That reframes v1 too: `m.p` was most likely
+just ABSENT from the observer's `m` (a normal missing-key read returns `Invalid`), and the dot
+operator on that `Invalid` value is what raised &hec -- not that the live `Poster` node itself had
+been destroyed.
+
+The real finding: **the observer callback body runs with a DIFFERENT `m` than the code that called
+`observeField()`/set the local variables** -- theory (user-proposed, matches the evidence): a
+rendering node like `Poster` is owned by the render thread, so its field observers dispatch there
+too, using a fresh/separate `m` for the Task component (seeded with only `top`/`global`, matching
+`count:2`-3 in both crash dumps) rather than the Task's own live execution-thread closure. Runtime
+locals set procedurally on the Task thread (`m.p = p`, `m.posterObservedCount = 0`) never appear in
+that other `m`; only the actual component instance (`m.top`) and its declared interface fields
+would be expected to carry over consistently.
+
+The probe was hardened after each crash (see README) to diagnose this without needing the debugger:
+`try`/`catch` around every risky access, and printing `m.count()`/`m.DoesExist(key)` at the top of
+every observer body to show exactly what that `m` actually contains before touching it.
+
+===================================================================================================
+
+Device: Roku Express 4K+, Roku OS 15.3
+Probe version: v2 (guarded node-field reads, but NOT yet the m.count()/DoesExist() diagnostic
+reads or the guard around the `m.posterObservedCount + 1` increment -- see README "Redesign after
+the v2 crash")
+
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=15.3
+PROBE|010|poster-direct|create|begin=
+PROBE|011|poster-direct|create|subtype=Poster
+PROBE|013|poster-direct|before-uri|loadStatus=none
+BrightScript Micro Debugger.
+Enter any BrightScript statement, debug commands, or HELP.
+Suspending threads...
+Thread selected:  1*   ...components/MediaTaskProbe.xml(95)           m.posterObservedCount = m.posterObservedCount + 1
+Current Function:
+094:      sub onPosterStatus()
+095:*         m.posterObservedCount = m.posterObservedCount + 1
+096:          print "PROBE|016|poster-direct|observer|loadStatus=" + safeLoadStatus(m.p)
+097:      end sub
+Source Digest(s):
+pkg:    dev 1.0.1 f874f2b2 Task Media Node Probe
+pkg: 632126 1.1.5 219f5fe9 libplayready
+Type Mismatch. Operator "+" can't be applied to "Invalid" and "Integer". (runtime error &h18) in pkg:/components/MediaTaskProbe.xml(95)
+Backtrace:
+#0  Function onposterstatus() As Void
+   file/line: pkg:/components/MediaTaskProbe.xml(95)
+Local Variables:
+global           Interface:ifGlobal
+m                roAssociativeArray refcnt=2 count:2
+Threads:
+ID    Location                                Source Code
+ 0    pkg:/source/main.brs(25)                       msg = wait(20, port)
+ 1*   ...components/MediaTaskProbe.xml(95)           m.posterObservedCount = m.posterObservedCount + 1
+ 2[u] ??
+  *selected   [u]unattached(not debuggable)
+
+--- Analysis: see the REVISED section above -- this is the crash that drove the revision. ---
+
+===================================================================================================
+
+Device: Roku Express 4K+, Roku OS 15.3
+Probe version: v3 (fully diagnostic/guarded -- ran to completion, no crash)
+
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=15.3
+PROBE|010|poster-direct|create|begin=
+PROBE|011|poster-direct|create|subtype=Poster
+PROBE|013|poster-direct|before-uri|loadStatus=none
+PROBE|016a|poster-direct|observer|m-count=2
+PROBE|016b|poster-direct|observer|has-posterObservedCount=false
+PROBE|016c|poster-direct|observer|has-p=false
+PROBE|016|poster-direct|observer|loadStatus=no-p-in-m
+PROBE|014|poster-direct|uri-write|ok
+PROBE|015|poster-direct|after-uri-sync|loadStatus=loading
+PROBE|016a|poster-direct|observer|m-count=2
+PROBE|016b|poster-direct|observer|has-posterObservedCount=false
+PROBE|016c|poster-direct|observer|has-p=false
+PROBE|016|poster-direct|observer|loadStatus=no-p-in-m
+PROBE|017|poster-direct|poll|elapsedMs=30 value=ready
+...(elapsedMs=60..300, all value=ready)...
+PROBE|018|poster-direct|after-settle|loadStatus=ready observedCount=0
+PROBE|020|animatedimage-direct|create|begin=
+PROBE|021|animatedimage-direct|create|subtype=AnimatedImage
+PROBE|023|animatedimage-direct|before-uri|state=stop
+PROBE|026a|animatedimage-direct|observer|m-count=2
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=false
+PROBE|026c|animatedimage-direct|observer|has-a=false
+PROBE|026|animatedimage-direct|observer|state=no-a-in-m
+...(observer fires 3 times total before the next line, same m-count=2/has-a=false each time)...
+PROBE|024|animatedimage-direct|uri-write|ok
+PROBE|025|animatedimage-direct|after-uri-sync|state=first
+PROBE|026a|animatedimage-direct|observer|m-count=2
+PROBE|026b|animatedimage-direct|observer|has-animObservedCount=false
+PROBE|026c|animatedimage-direct|observer|has-a=false
+PROBE|026|animatedimage-direct|observer|state=no-a-in-m
+PROBE|027|animatedimage-direct|poll|elapsedMs=30 value=decode
+...(elapsedMs=60..300, all value=decode)...
+PROBE|028|animatedimage-direct|after-settle|state=decode observedCount=0
+PROBE|030|poster-xmlattr|create|begin=
+PROBE|031|poster-xmlattr|before-observe|loadStatus=loading
+PROBE|032a|poster-xmlattr|observer|m-count=3
+PROBE|032b|poster-xmlattr|observer|has-p=true
+PROBE|032c|poster-xmlattr|observer|has-top=true
+PROBE|032|poster-xmlattr|observer|loadStatus=ready
+PROBE|034|poster-xmlattr|poll|elapsedMs=30 value=ready
+...(elapsedMs=60..300, all value=ready)...
+PROBE|033|poster-xmlattr|after-settle|loadStatus=ready observed=true
+PROBE|040|animatedimage-xmlattr|create|begin=
+PROBE|041|animatedimage-xmlattr|before-observe|state=downloading
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=init
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=first
+PROBE|042a|animatedimage-xmlattr|observer|m-count=3
+PROBE|042b|animatedimage-xmlattr|observer|has-a=true
+PROBE|042c|animatedimage-xmlattr|observer|has-top=true
+PROBE|042|animatedimage-xmlattr|observer|state=decode
+PROBE|044|animatedimage-xmlattr|poll|elapsedMs=30 value=decode
+...(elapsedMs=60..300, all value=decode)...
+PROBE|043|animatedimage-xmlattr|after-settle|state=decode observedCount=3
+PROBE|999|boot|end|
+
+--- Analysis: this is the answer ---
+
+Full run, zero crashes, all four phases complete. Two clearly different behaviors:
+
+1. **`poster-direct`/`animatedimage-direct` (direct CreateObject + observeField from the Task's own
+   top-level script): the `m`-divorce theory is CONFIRMED.** Every observer firing shows
+   `m-count=2`, `has-p=false`/`has-a=false`, `has-posterObservedCount=false`/`has-animObservedCount=
+   false` -- the observer body runs with a separate, near-empty `m` (just `top`/`global`), so it can
+   never see script locals the creating code set. The underlying NODE itself is fine, though: the
+   creating script's own synchronous reads (`PROBE|015`, `PROBE|025`) and the poll loop (which reads
+   through the ORIGINAL `p`/`a` reference, not through the observer) show completely normal
+   progression (`loading`->`ready`; `stop`->...->`decode`, settling and staying correct). This is a
+   real Roku quirk for this exact usage shape -- a genuine pitfall for app authors, but not a
+   simulator correctness gap: it's about which `m` a callback runs with, not about whether the node
+   loads or the field ends up right.
+
+2. **`poster-xmlattr`/`animatedimage-xmlattr` (uri as an XML attribute on a child of a Task-created
+   custom component, observed from that CHILD's own init()): works completely normally.** `m-count=
+   3`, `has-p=true`/`has-a=true`, `has-top=true` -- full, correct `m` context every time. Values
+   progress exactly like the render thread (`init`->`first`->`decode` for AnimatedImage, matching
+   the render-thread-fixed vocabulary exactly), the observer fires the expected number of times
+   (`observedCount=3`), and NOTHING gets stuck.
+
+Conclusion: engine finding #1 (Field.deliverPendingConstructionCallbacks() never draining on Task
+threads) is a REAL, reachable divergence after all -- this is exactly the "xmlattr" shape, a common,
+idiomatic pattern (a Task-owned wrapper component around a preloaded rendering node), and on device
+it just works. The engine currently leaves it stuck forever instead. This should be fixed.

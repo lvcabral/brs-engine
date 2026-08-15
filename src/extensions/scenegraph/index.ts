@@ -179,12 +179,16 @@ export class BrightScriptExtension implements BrsExtension {
         if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
             task?.processThreadUpdate();
+            Field.deliverPendingConstructionCallbacks();
         } else {
             // Deliver focus notifications deferred during a component's init() from the message loop
             // (once init has fully unwound), matching Roku dispatching them after init returns rather
             // than synchronously at the end of init. Render-thread only — focus is a render-thread
             // concern and Task threads never establish it. No-op unless there is pending work.
             Field.deliverPendingInitFocus();
+            // Sibling drain for construction-time state replays (e.g. AnimatedImage.setState) —
+            // see Field.runAfterConstruction/deliverPendingConstructionCallbacks.
+            Field.deliverPendingConstructionCallbacks();
         }
     }
 

@@ -12,8 +12,8 @@ sub Main()
 
     msg = wait(0, msgport)
     if type(msg) = "roAnimatedImageEvent"
-        print "ready state:";msg.GetState()
-        print "ready uri:";msg.GetURI()
+        print "ready message:";msg.GetMessage()
+        print "ready id:";msg.GetInfo()["id"] = animg.GetID()
     end if
 
     print "width:";animg.GetWidth()

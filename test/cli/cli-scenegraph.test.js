@@ -401,6 +401,77 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("AnimatedImage replays construction-time state transitions once init() unwinds, matching device timing", async () => {
+        let command = ["node", brsCliPath, "-r animatedimage-init-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // uri/control are XML attributes, applied during child construction (before init() runs).
+        // This engine's load is fully synchronous, so without AnimatedImage.setState's
+        // construction-time replay, "init"/"first"/"decode" would all fire (and finish) before
+        // init() calls observeField, and the observer would never see them at all. Device-confirmed
+        // (real Roku console, same app shape): the async load lets observeField register before any
+        // transition happens, so all three fire, in order, from the message loop after init returns.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== AnimatedImage Init Observer Repro ===",
+            "init done",
+            "state changed: 'init'",
+            "state changed: 'first'",
+            "state changed: 'decode'",
+            "=== AnimatedImage Init Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Poster replays a construction-time loadStatus transition once init() unwinds, matching device timing", async () => {
+        let command = ["node", brsCliPath, "-r poster-init-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Same construction-vs-init() timing gap as AnimatedImage (see the test above), applied to
+        // Poster.loadStatus: uri is an XML attribute, applied during child construction before
+        // init() runs. Without Poster.setLoadStatus's construction-time replay, "ready" would fire
+        // (and finish) before init() calls observeField, and the observer would never see it.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Poster Init Observer Repro ===",
+            "init done",
+            "loadStatus changed: 'ready'",
+            "=== Poster Init Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Drains construction-time state/loadStatus replays on a Task thread too, matching device behavior", async () => {
+        let command = ["node", brsCliPath, "-r task-media-node-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-confirmed (test/simulator/probes/task-media-node-probe): a rendering node
+        // (Poster/AnimatedImage) declared as an XML attribute on a child of a Task-created custom
+        // component loads and notifies normally on a real device, observed from that child's own
+        // init(). Regression for Field.deliverPendingConstructionCallbacks() only draining on the
+        // render thread (src/extensions/scenegraph/index.ts's tick()) -- before the fix, both
+        // nodes stayed stuck at their first transition and neither observer ever fired.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Task Media Node Observer Repro ===",
+            "poster loadStatus:ready",
+            "poster observed:true",
+            "anim state:decode",
+            "anim observedCount:3",
+            "=== Task Media Node Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("A reentrant observer that rewrites its own alwaysNotify field does not loop", async () => {
         let command = ["node", brsCliPath, "-r observer-loop-app", "source/main.brs", "-c 0"].join(" ");
 
