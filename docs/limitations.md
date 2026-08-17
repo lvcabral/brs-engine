@@ -31,8 +31,8 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * The following `roVideoPlayer` methods are not supported, implemented as mock: `setCGMS`, `setMaxVideoDecodeResolution`, `setTimedMetadataForKeys`, `getCaptionRenderer`
   * Check what formats (container and codec) can be used on each browser, using `roDeviceInfo.canDecodeVideo()`, to make sure your video can be played.
   * Under **Node.js/CLI** there is no audio or video output: `autoPlayEnabled` is forced off and media events are only simulated, so apps behave as if playback never starts.
-  * Subtitles are only supported for HLS streams and only in `Video` node, the `roVideoPlayer` does not support subtitles until `roCaptionRenderer` is implemented.
-  * DASH streams and BIF (Base Index Frames) thumbnails are not yet supported.
+  * Subtitles are only supported for HLS and DASH streams and only in `Video` node, the `roVideoPlayer` does not support subtitles until `roCaptionRenderer` is implemented.
+  * BIF (Base Index Frames) thumbnails are not yet supported.
 * The component `roUrlTransfer` is implemented with basic functionality but with the following limitations:
   * To make a **web app** access urls from domains other than the one it is hosted, the Cross-Origin Resource Sharing (CORS) browser policy requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
     * A simple way to overcome this limitation is to use a CORS proxy like the [cors-anywhere](https://github.com/Rob--W/cors-anywhere), see [customization documentation](./customization.md) to learn how to configure `brs-engine` to use it.
