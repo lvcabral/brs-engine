@@ -75,7 +75,7 @@ export class Overhang extends Group {
             this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(defaultLogo, [102, 63], undefined, undefined, true);
+            this.logo = this.addPoster(defaultLogo, [102, 63]);
             this.leftDivider = this.addPoster(divider, [261, 59], 12, 51);
             this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
@@ -89,7 +89,7 @@ export class Overhang extends Group {
             this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(defaultLogo, [68, 42], undefined, undefined, true);
+            this.logo = this.addPoster(defaultLogo, [68, 42]);
             this.leftDivider = this.addPoster(divider, [174, 39], 8, 34);
             this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
@@ -97,6 +97,7 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
+        this.logo.noScaling = true;
         this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
