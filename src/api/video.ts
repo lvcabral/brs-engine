@@ -17,10 +17,23 @@ import {
     DrmInfoEntry,
 } from "../core/common";
 import Hls from "hls.js";
+import type { MediaPlayerClass, MediaInfo } from "dashjs";
+
+// dash.js touches `window` at module-load time (imsc/TTML dependency), which breaks a static
+// import outside a browser (e.g. the Node test suite). Deferred to a dynamic import instead.
+// `webpackMode: "eager"` keeps it in the main bundle rather than a separate chunk, since
+// brs-engine's deployment contract is exactly `brs.api.js` + `brs.worker.js` (docs/integrating.md).
+async function loadDashjs() {
+    return import(/* webpackMode: "eager" */ "dashjs");
+}
 
 // Video Objects
 export let player: HTMLVideoElement;
 let hls: Hls | undefined;
+let dash: MediaPlayerClass | undefined;
+// Bumped by loadVideo()/stopVideo() so a loadDash() suspended on the dashjs import can detect
+// it was superseded and must not attach a stale instance.
+let dashLoadToken = 0;
 let deviceData: DeviceInfo;
 let packageVideos = new Map();
 let currentFrame = 0;
@@ -47,6 +60,10 @@ let playFloorTimer: ReturnType<typeof setTimeout> | undefined; // pending deferr
 let priming = false; // HLS audio-track priming play in flight; suppress its "playing" side effects
 const audioTracks: MediaTrack[] = [];
 const textTracks: MediaTrack[] = [];
+// dash.js MediaInfo objects backing audioTracks/textTracks (same index); dash.setCurrentTrack()
+// takes the track object itself, not an index.
+const dashAudioTrackInfos: MediaInfo[] = [];
+const dashTextTrackInfos: MediaInfo[] = [];
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -131,7 +148,7 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
  * @param e Progress event from video player
  */
 function calculateBandwidth(e: Event) {
-    if (hls === undefined && player && player.buffered.length > 0) {
+    if (hls === undefined && dash === undefined && player && player.buffered.length > 0) {
         let totalBuffered = 0;
         for (let i = 0; i < player.buffered.length; i++) {
             totalBuffered += player.buffered.end(i) - player.buffered.start(i);
@@ -305,6 +322,10 @@ export function videoFormats() {
         if (player.canPlayType("application/vnd.apple.mpegurl") || Hls.isSupported()) {
             containers.push("hls");
         }
+        if (typeof MediaSource !== "undefined") {
+            // Equivalent to dash.js's supportsMediaSource(), checked natively to avoid loading it here.
+            containers.push("dash");
+        }
         if (player.canPlayType("video/mp2t") !== "") {
             containers.push("ts");
         }
@@ -339,6 +360,12 @@ export function addVideoPlaylist(newList: any[]) {
     playIndex = 0;
     playNext = -1;
     startPosition = 0;
+    if (newList.some((item) => item.streamFormat === "dash")) {
+        // Warm the dash.js import ahead of the play/prebuffer command that triggers loadDash(),
+        // shortening the delay before it attaches to the video element. Failure is reported later
+        // when loadDash() retries the same import.
+        loadDashjs().catch(() => {});
+    }
 }
 
 /**
@@ -351,9 +378,7 @@ export function resetVideo() {
         // (playerState === "stop"), which leaves the previous video's source, buffered
         // frames and text tracks attached to the shared player element. Release them
         // unconditionally here so nothing bleeds into the next app that gets loaded.
-        if (hls) {
-            destroyHls();
-        }
+        destroyActiveEngine();
         if (player.src.startsWith("blob:")) {
             revokeVideoURL(player.src);
         }
@@ -419,18 +444,62 @@ function setDuration(e: Event) {
 }
 
 /**
- * Loads audio tracks from HLS stream and selects preferred track.
- * Prioritizes: audio language > device locale > English.
+ * Picks the best-matching track id/index by priority: preferred locale > device locale > English.
+ * Shared by the HLS/DASH audio and subtitle track loaders, which differ only in how they build
+ * their candidate list and what id/index they key selection by.
+ * @param langs Formatted (via formatLocale) language code per candidate track, in source order
+ * @param preferredLocale Two-letter locale to prioritize (audio or caption language)
+ * @param idOf Maps a candidate's index to the id/index value the caller selects by
+ * @returns The selected id/index, or 0 if no candidate matched any priority
+ */
+function selectPreferredTrack(langs: string[], preferredLocale: string, idOf: (index: number) => number): number {
+    let preferredTrackId = -1;
+    let deviceTrackId = -1;
+    let englishTrackId = -1;
+    const deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
+    for (const [index, lang] of langs.entries()) {
+        if (preferredTrackId === -1 && lang === preferredLocale) {
+            preferredTrackId = idOf(index);
+        } else if (deviceTrackId === -1 && lang === deviceLocale) {
+            deviceTrackId = idOf(index);
+        } else if (englishTrackId === -1 && lang === "en") {
+            englishTrackId = idOf(index);
+        }
+    }
+    if (preferredTrackId > -1) {
+        return preferredTrackId;
+    } else if (deviceTrackId > -1) {
+        return deviceTrackId;
+    } else if (englishTrackId > -1) {
+        return englishTrackId;
+    }
+    return 0;
+}
+
+/**
+ * Loads audio tracks from the active HLS/DASH stream and selects the preferred track.
  * @returns Active audio track index
  */
 function loadAudioTracks() {
     audioTracks.length = 0;
+    if (hls) {
+        return loadHlsAudioTracks();
+    } else if (dash) {
+        return loadDashAudioTracks();
+    }
+    return -1;
+}
+
+/**
+ * Loads audio tracks from HLS stream and selects preferred track.
+ * Prioritizes: audio language > device locale > English.
+ * @returns Active audio track index
+ */
+function loadHlsAudioTracks() {
     if (!hls) {
         return -1;
     }
-    let preferredTrackId = -1;
-    let deviceTrackId = -1;
-    let englishTrackId = -1;
+    const langs: string[] = [];
     for (const [index, track] of hls.audioTracks.entries()) {
         const audioTrack: MediaTrack = {
             id: `${index + 1}`,
@@ -439,45 +508,73 @@ function loadAudioTracks() {
             codec: track.audioCodec,
         };
         audioTracks.push(audioTrack);
-        // Format the language code
-        const lang = formatLocale(audioTrack.lang);
-        // Save the track ids for preferred locale, device locale and english
-        let deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
-        let audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
-
-        if (preferredTrackId === -1 && lang === audioLocale) {
-            preferredTrackId = track.id;
-        } else if (deviceTrackId === -1 && lang === deviceLocale) {
-            deviceTrackId = track.id;
-        } else if (englishTrackId === -1 && lang === "en") {
-            englishTrackId = track.id;
-        }
+        langs.push(formatLocale(audioTrack.lang));
     }
-    let activeTrack = 0;
-    if (audioTracks.length > 0) {
-        // Set the active track prioritizing preferred locale, device locale and english
-        if (preferredTrackId > -1) {
-            activeTrack = preferredTrackId;
-        } else if (deviceTrackId > -1) {
-            activeTrack = deviceTrackId;
-        } else if (englishTrackId > -1) {
-            activeTrack = englishTrackId;
-        }
-        hls.audioTrack = activeTrack;
-        playList[playIndex].audioTrack = activeTrack;
-        if (activeTrack > -1 && playerState !== "play") {
-            player.currentTime = 1; // Force HLS to load audio track
-            // This play() only primes the audio-track load; the "playing" handler pauses it and
-            // swallows its side effects (priming flag), so the real start still goes through the
-            // buffering floor and prebuffer never starts audible playback.
-            priming = true;
-            const promise = player.play();
-            promise?.catch(() => {
-                priming = false; // autoplay rejection: no "playing" event will fire to swallow
-            });
-        }
+    if (audioTracks.length === 0) {
+        return 0;
+    }
+    const audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
+    const activeTrack = selectPreferredTrack(langs, audioLocale, (index) => hls!.audioTracks[index].id);
+    hls.audioTrack = activeTrack;
+    playList[playIndex].audioTrack = activeTrack;
+    if (activeTrack > -1 && playerState !== "play") {
+        player.currentTime = 1; // Force HLS to load audio track
+        // This play() only primes the audio-track load; the "playing" handler pauses it and
+        // swallows its side effects (priming flag), so the real start still goes through the
+        // buffering floor and prebuffer never starts audible playback.
+        priming = true;
+        const promise = player.play();
+        promise?.catch(() => {
+            priming = false; // autoplay rejection: no "playing" event will fire to swallow
+        });
     }
     return activeTrack;
+}
+
+/**
+ * Loads audio tracks from a dash.js stream and selects the preferred track.
+ * Prioritizes: audio language > device locale > English.
+ * @returns Active audio track index
+ */
+function loadDashAudioTracks() {
+    dashAudioTrackInfos.length = 0;
+    if (!dash) {
+        return -1;
+    }
+    const langs: string[] = [];
+    for (const track of dash.getTracksFor("audio")) {
+        const audioTrack: MediaTrack = {
+            id: `${dashAudioTrackInfos.length + 1}`,
+            name: track.labels?.[0]?.text ?? track.lang ?? "",
+            lang: track.lang ?? "",
+            codec: track.codec ?? undefined,
+        };
+        audioTracks.push(audioTrack);
+        dashAudioTrackInfos.push(track);
+        langs.push(formatLocale(audioTrack.lang));
+    }
+    if (audioTracks.length === 0) {
+        return 0;
+    }
+    const audioLocale = deviceData.audioLanguage.toLowerCase().slice(0, 2);
+    const activeTrack = selectPreferredTrack(langs, audioLocale, (index) => index);
+    dash.setCurrentTrack(dashAudioTrackInfos[activeTrack]);
+    playList[playIndex].audioTrack = activeTrack;
+    return activeTrack;
+}
+
+/**
+ * Loads subtitle tracks from the active HLS/DASH stream and selects the preferred track.
+ * @returns Active subtitle track index
+ */
+function loadSubtitleTracks() {
+    textTracks.length = 0;
+    if (hls) {
+        return loadHlsSubtitleTracks();
+    } else if (dash) {
+        return loadDashSubtitleTracks();
+    }
+    return -1;
 }
 
 /**
@@ -485,14 +582,11 @@ function loadAudioTracks() {
  * Prioritizes: caption language > device locale > English.
  * @returns Active subtitle track index
  */
-function loadSubtitleTracks() {
-    textTracks.length = 0;
+function loadHlsSubtitleTracks() {
     if (!hls?.subtitleTracks?.length) {
         return -1;
     }
-    let preferredTrackId = -1;
-    let deviceTrackId = -1;
-    let englishTrackId = -1;
+    const langs: string[] = [];
     for (const [index, track] of hls.subtitleTracks.entries()) {
         const textTrack: MediaTrack = {
             id: `webvtt/${index + 1}`,
@@ -500,56 +594,82 @@ function loadSubtitleTracks() {
             lang: track.lang ?? "",
         };
         textTracks.push(textTrack);
-        // Format the language code
-        const lang = formatLocale(textTrack.lang);
-        // Save the track ids for preferred locale, device locale and english
-        let deviceLocale = deviceData.locale.toLowerCase().slice(0, 2);
-        let captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
-        if (preferredTrackId === -1 && lang === captionLocale) {
-            preferredTrackId = index;
-        } else if (deviceTrackId === -1 && lang === deviceLocale) {
-            deviceTrackId = index;
-        } else if (englishTrackId === -1 && lang === "en") {
-            englishTrackId = index;
-        }
+        langs.push(formatLocale(textTrack.lang));
     }
-    let activeTrack = 0;
-    if (textTracks.length > 0) {
-        // Set the active track prioritizing preferred locale, device locale and english
-        if (preferredTrackId > -1) {
-            activeTrack = preferredTrackId;
-        } else if (deviceTrackId > -1) {
-            activeTrack = deviceTrackId;
-        } else if (englishTrackId > -1) {
-            activeTrack = englishTrackId;
-        }
-        hls.subtitleTrack = activeTrack;
-        playList[playIndex].subtitleTrack = activeTrack;
-    }
+    const captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
+    const activeTrack = selectPreferredTrack(langs, captionLocale, (index) => index);
+    hls.subtitleTrack = activeTrack;
+    playList[playIndex].subtitleTrack = activeTrack;
     return activeTrack;
 }
 
 /**
- * Sets the active audio track for HLS playback.
+ * Loads subtitle tracks from a dash.js stream and selects the preferred track.
+ * Prioritizes: caption language > device locale > English.
+ * @returns Active subtitle track index
+ */
+function loadDashSubtitleTracks() {
+    dashTextTrackInfos.length = 0;
+    if (!dash) {
+        return -1;
+    }
+    const tracks = dash.getTracksFor("text");
+    if (!tracks.length) {
+        return -1;
+    }
+    const langs: string[] = [];
+    for (const track of tracks) {
+        const textTrack: MediaTrack = {
+            id: `webvtt/${dashTextTrackInfos.length + 1}`,
+            name: track.labels?.[0]?.text ?? track.lang ?? "",
+            lang: track.lang ?? "",
+        };
+        textTracks.push(textTrack);
+        dashTextTrackInfos.push(track);
+        langs.push(formatLocale(textTrack.lang));
+    }
+    const captionLocale = deviceData.captionLanguage.toLowerCase().slice(0, 2);
+    const activeTrack = selectPreferredTrack(langs, captionLocale, (index) => index);
+    dash.setCurrentTrack(dashTextTrackInfos[activeTrack]);
+    playList[playIndex].subtitleTrack = activeTrack;
+    return activeTrack;
+}
+
+/**
+ * Sets the active audio track for HLS/DASH playback.
  * @param index Audio track index to activate
  */
 function setAudioTrack(index: number) {
-    if (hls && audioTracks.length && index > -1 && index < audioTracks.length) {
+    if (!audioTracks.length || index < 0 || index >= audioTracks.length) {
+        return;
+    }
+    if (hls) {
         hls.audioTrack = index;
         playList[playIndex].audioTrack = index;
         Atomics.store(sharedArray, DataType.VAT, hls.audioTrack);
+    } else if (dash && dashAudioTrackInfos[index]) {
+        dash.setCurrentTrack(dashAudioTrackInfos[index]);
+        playList[playIndex].audioTrack = index;
+        Atomics.store(sharedArray, DataType.VAT, index);
     }
 }
 
 /**
- * Sets the active subtitle track for HLS playback.
+ * Sets the active subtitle track for HLS/DASH playback.
  * @param index Subtitle track index to activate
  */
 function setSubtitleTrack(index: number) {
-    if (hls && textTracks.length && index > -1 && index < textTracks.length) {
+    if (!textTracks.length || index < 0 || index >= textTracks.length) {
+        return;
+    }
+    if (hls) {
         hls.subtitleTrack = index;
         playList[playIndex].subtitleTrack = index;
         Atomics.store(sharedArray, DataType.VTT, hls.subtitleTrack);
+    } else if (dash && dashTextTrackInfos[index]) {
+        dash.setCurrentTrack(dashTextTrackInfos[index]);
+        playList[playIndex].subtitleTrack = index;
+        Atomics.store(sharedArray, DataType.VTT, index);
     }
 }
 
@@ -563,6 +683,8 @@ function clearVideoTracking() {
     currentFrame = 0;
     audioTracks.length = 0;
     textTracks.length = 0;
+    dashAudioTrackInfos.length = 0;
+    dashTextTrackInfos.length = 0;
     if (player.textTracks?.length) {
         // Disable all text tracks
         for (const track of player.textTracks) {
@@ -572,12 +694,26 @@ function clearVideoTracking() {
 }
 
 /**
+ * Publishes a fatal media failure: stores the error code, marks the event as failed, and warns.
+ * @param code MediaErrorCode to report
+ * @param message Warning message logged via notifyAll
+ */
+function reportMediaFailure(code: MediaErrorCode, message: string) {
+    Atomics.store(sharedArray, DataType.VDX, code);
+    Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
+    notifyAll("warning", message);
+}
+
+/**
  * Loads a video from the playlist into the player.
  * Handles different formats (mp4, mkv, hls) and sets up source.
  * @param buffer Whether to only buffer without playing (defaults to false)
  */
 function loadVideo(buffer = false) {
     canPlay = false;
+    dashLoadToken++; // invalidate any loadDash() still awaiting the dashjs import from a prior load
+    destroyHls(); // no-op when inactive; at most one adaptive backend is ever attached
+    destroyDash();
     const video = playList[playIndex];
     if (video && player) {
         notifyAll("load");
@@ -590,12 +726,14 @@ function loadVideo(buffer = false) {
         clearVideoTracking();
         bufferOnly = buffer;
         if (["mp4", "mkv"].includes(video.streamFormat)) {
-            destroyHls();
             player.setAttribute("type", "video/mp4");
         } else if (video.streamFormat === "hls") {
             if (!loadHls(videoSrc)) {
                 return;
             }
+        } else if (video.streamFormat === "dash") {
+            loadDash(videoSrc);
+            return; // dash.js owns the media source; never fall through to player.src = videoSrc
         } else {
             player.removeAttribute("type");
         }
@@ -604,9 +742,7 @@ function loadVideo(buffer = false) {
             player.load();
         }
     } else if (player) {
-        Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.EmptyList);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
-        notifyAll("warning", `[video] Can't find video index: ${playIndex}`);
+        reportMediaFailure(MediaErrorCode.EmptyList, `[video] Can't find video index: ${playIndex}`);
     } else {
         notifyAll("error", `[video] Can't find a video player!`);
     }
@@ -628,11 +764,34 @@ function loadHls(videoSrc: string): boolean {
         player.setAttribute("type", "application/vnd.apple.mpegurl");
         native = true;
     } else {
-        Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Unsupported);
-        Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
-        notifyAll("warning", "[video] HLS is not supported");
+        reportMediaFailure(MediaErrorCode.Unsupported, "[video] HLS is not supported");
     }
     return native;
+}
+
+/**
+ * Loads a DASH stream using dash.js (no browser has native DASH support).
+ * @param videoSrc URL of the DASH manifest (.mpd)
+ */
+async function loadDash(videoSrc: string) {
+    if (typeof MediaSource === "undefined") {
+        reportMediaFailure(MediaErrorCode.Unsupported, "[video] DASH is not supported");
+        return;
+    }
+    const token = dashLoadToken;
+    try {
+        const dashjs = await loadDashjs();
+        if (token !== dashLoadToken) {
+            return; // superseded by a newer loadVideo()/stopVideo() while the import was in flight
+        }
+        createDashInstance(dashjs);
+        dash?.initialize(player, videoSrc, false);
+    } catch (error: any) {
+        if (token !== dashLoadToken) {
+            return;
+        }
+        reportMediaFailure(MediaErrorCode.Unsupported, `[video] Failed to load dash.js: ${error?.message ?? error}`);
+    }
 }
 
 /**
@@ -784,11 +943,10 @@ function nextVideo() {
  * @param error Whether video stopped due to error (defaults to false)
  */
 function stopVideo(error?: boolean) {
+    dashLoadToken++; // placed before the guard below: playerState can still read "stop" while a load is in flight
     if (player && (playerState !== "stop" || error)) {
         player.pause();
-        if (hls) {
-            destroyHls();
-        } else {
+        if (!destroyActiveEngine()) {
             player.removeAttribute("src"); // empty source
             player.load();
         }
@@ -954,6 +1112,77 @@ function destroyHls() {
     hls?.detachMedia();
     hls?.destroy();
     hls = undefined;
+}
+
+/**
+ * Creates and configures a new dash.js instance with error handlers.
+ * Sets up event listeners for errors and bandwidth reporting.
+ * @param dashjs The lazily-loaded dash.js module (see `loadDashjs`)
+ */
+function createDashInstance(dashjs: typeof import("dashjs")) {
+    // destroy(), not reset(): reset() reconfigures for reuse but does not free the instance's
+    // memory; a new MediaPlayer is created on every load, so the outgoing one must be destroyed.
+    dash?.destroy();
+    dash = dashjs.MediaPlayer().create();
+    dash.on(dashjs.MediaPlayer.events.ERROR, function (event) {
+        if (typeof event.error === "string") {
+            switch (event.error) {
+                case "capability":
+                case "mediasource":
+                    reportMediaFailure(
+                        MediaErrorCode.Unsupported,
+                        `[video] fatal dash error encountered: ${event.error}`
+                    );
+                    break;
+                case "download":
+                    // All retries and media options have been exhausted.
+                    reportMediaFailure(
+                        MediaErrorCode.Http,
+                        `[video] fatal dash download error encountered: ${event.event.url}`
+                    );
+                    break;
+                default:
+                    // cannot recover
+                    reportMediaFailure(MediaErrorCode.Unknown, "[video] fatal dash error encountered, cannot recover");
+                    break;
+            }
+        } else {
+            reportMediaFailure(
+                MediaErrorCode.Unknown,
+                `[video] fatal dash error ${event.error.code}: ${event.error.message}`
+            );
+        }
+    });
+
+    dash.on(dashjs.MediaPlayer.events.FRAGMENT_LOADING_COMPLETED, () => {
+        const bandwidth = dash?.getAverageThroughput("video");
+        if (bandwidth && !Number.isNaN(bandwidth)) {
+            notifyAll("bandwidth", Math.round(bandwidth));
+        }
+    });
+}
+
+/**
+ * Destroys the dash.js instance and frees resources.
+ */
+function destroyDash() {
+    dash?.destroy();
+    dash = undefined;
+}
+
+/**
+ * Tears down whichever adaptive-streaming backend (HLS or DASH) is currently active.
+ * @returns True if a backend was torn down, false if neither was active.
+ */
+function destroyActiveEngine(): boolean {
+    if (hls) {
+        destroyHls();
+        return true;
+    } else if (dash) {
+        destroyDash();
+        return true;
+    }
+    return false;
 }
 
 /**

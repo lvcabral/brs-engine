@@ -59,6 +59,20 @@ describe("RoVideoPlayer", () => {
             ]);
         });
 
+        it("reads the url from a boxed string inside a stream object (dash)", () => {
+            let player = new RoVideoPlayer();
+            player.contentList = [
+                contentItem({
+                    stream: contentItem({ url: new RoString(new BrsString("http://example.com/stream.mpd")) }),
+                    streamFormat: new BrsString("dash"),
+                }),
+            ];
+
+            expect(player.getContent()).toEqual([
+                { url: "http://example.com/stream.mpd", streamFormat: "dash", audioTrack: -1 },
+            ]);
+        });
+
         it("lowercases a boxed streamFormat", () => {
             let player = new RoVideoPlayer();
             player.contentList = [
