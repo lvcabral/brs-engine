@@ -57,6 +57,7 @@ export class Overhang extends Group {
     private readonly optionsOff: string = "common:/images/icon_options_off.png";
     private readonly width: number;
     private height: number;
+    private customLogo: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
@@ -64,8 +65,8 @@ export class Overhang extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-
-        const defaultLogo: string = `common:/images/${this.resolution}/logo_roku.png`;
+        const displayMode = BrsDevice.getDisplayMode();
+        const defaultLogo: string = `common:/images/${displayMode}/logo_roku.png`;
         const divider: string = `common:/images/${this.resolution}/divider_vertical.png`;
 
         if (this.resolution === "FHD") {
@@ -75,7 +76,7 @@ export class Overhang extends Group {
             this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(defaultLogo, [102, 63]);
+            this.logo = this.addPoster(defaultLogo, [102, 63], undefined, undefined, true);
             this.leftDivider = this.addPoster(divider, [261, 59], 12, 51);
             this.title = this.addLabel("titleColor", [297, 58], 0, 50, 45, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [1421, 67], 30, 30);
@@ -89,7 +90,7 @@ export class Overhang extends Group {
             this.setValueSilent("height", new Float(this.height));
             this.backRect = this.addRectangle("color", [0, 0], this.width, this.height);
             this.backPoster = this.addPoster("", [0, 0], this.width, this.height);
-            this.logo = this.addPoster(defaultLogo, [68, 42]);
+            this.logo = this.addPoster(defaultLogo, [68, 42], undefined, undefined, true);
             this.leftDivider = this.addPoster(divider, [174, 39], 8, 34);
             this.title = this.addLabel("titleColor", [196, 39], 0, 35, 30, "bottom");
             this.optionsIcon = this.addPoster(this.optionsOff, [959, 46], 20, 20);
@@ -97,7 +98,6 @@ export class Overhang extends Group {
             this.rightDivider = this.addPoster(divider, [1109, 39], 8, 34);
             this.clockText = this.addLabel("clockColor", [1133, 44], 0, 27, 22, "center");
         }
-        this.logo.noScaling = true;
         this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
@@ -120,6 +120,7 @@ export class Overhang extends Group {
         const logoUri = this.getValueJS("logoUri") as string;
         if (logoUri) {
             this.logo.setValue("uri", new BrsString(logoUri));
+            this.customLogo = true;
         } else if (color) {
             this.copyField(this.backRect, "color");
             this.backRect.setValueSilent("visible", BrsBoolean.True);
@@ -189,6 +190,7 @@ export class Overhang extends Group {
         const leftAlignX = isFHD ? 102 : 68;
         const topAlignY = isFHD ? 60 : 40;
         const logoWidth = this.logo.getValueJS("bitmapWidth") as number;
+        const logoHeight = this.logo.getValueJS("bitmapHeight") as number;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
         const showClock = this.getValueJS("showClock") as boolean;
         const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
@@ -196,23 +198,25 @@ export class Overhang extends Group {
         const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
         if (isFHD) {
+            const topOffset = (logoHeight - 44) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY + 3]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY]);
-            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + 9]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 3]);
-            this.rightDivider.setTranslation([rightAlignX - 36, topAlignY]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + 3]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY + topOffset]);
+            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY + topOffset]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + topOffset + 9]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 6]);
+            this.rightDivider.setTranslation([rightAlignX - 36, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 6]);
         } else {
+            const topOffset = (logoHeight - 29) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY]);
-            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY - 2]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + 6]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 2]);
-            this.rightDivider.setTranslation([rightAlignX - 24, topAlignY]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + 2]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY + topOffset]);
+            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY + topOffset - 2]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + topOffset + 6]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 4]);
+            this.rightDivider.setTranslation([rightAlignX - 24, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 4]);
         }
-        if (isDeviceFHD !== isFHD) {
+        if (isDeviceFHD && !isFHD && !this.customLogo) {
             this.logo.setTranslation([leftAlignX, topAlignY]);
         }
     }

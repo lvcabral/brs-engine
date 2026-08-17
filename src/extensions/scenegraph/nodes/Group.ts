@@ -151,9 +151,12 @@ export class Group extends Node {
         return (this.getValueJS("visible") as boolean) ?? true;
     }
 
-    protected addPoster(uri: string, translation: number[], width?: number, height?: number) {
+    protected addPoster(uri: string, translation: number[], width?: number, height?: number, noScaling?: boolean) {
         const poster = SGNodeFactory.createNode(SGNodeType.Poster) as Poster;
-        if (uri) {
+        if (noScaling) {
+            poster.noScaling = true;
+        }
+        if (uri.trim()) {
             poster.setValue("uri", new BrsString(uri));
         }
         poster.setTranslation(translation);
