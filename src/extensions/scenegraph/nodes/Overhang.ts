@@ -57,6 +57,7 @@ export class Overhang extends Group {
     private readonly optionsOff: string = "common:/images/icon_options_off.png";
     private readonly width: number;
     private height: number;
+    private customLogo: boolean = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
@@ -64,8 +65,8 @@ export class Overhang extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-
-        const defaultLogo: string = `common:/images/${this.resolution}/logo_roku.png`;
+        const displayMode = BrsDevice.getDisplayMode();
+        const defaultLogo: string = `common:/images/${displayMode}/logo_roku.png`;
         const divider: string = `common:/images/${this.resolution}/divider_vertical.png`;
 
         if (this.resolution === "FHD") {
@@ -119,6 +120,7 @@ export class Overhang extends Group {
         const logoUri = this.getValueJS("logoUri") as string;
         if (logoUri) {
             this.logo.setValue("uri", new BrsString(logoUri));
+            this.customLogo = true;
         } else if (color) {
             this.copyField(this.backRect, "color");
             this.backRect.setValueSilent("visible", BrsBoolean.True);
@@ -188,6 +190,7 @@ export class Overhang extends Group {
         const leftAlignX = isFHD ? 102 : 68;
         const topAlignY = isFHD ? 60 : 40;
         const logoWidth = this.logo.getValueJS("bitmapWidth") as number;
+        const logoHeight = this.logo.getValueJS("bitmapHeight") as number;
         const optionsWidth = this.optionsText.rectLocal.width ?? (isFHD ? 168 : 112);
         const showClock = this.getValueJS("showClock") as boolean;
         const clockTextWidth = showClock ? this.clockText.rectLocal.width : 0;
@@ -195,23 +198,25 @@ export class Overhang extends Group {
         const optionsOffset = showClock ? optionsWidth + clockOffset : optionsWidth;
         const rightAlignX = this.width - leftAlignX - clockTextWidth;
         if (isFHD) {
+            const topOffset = (logoHeight - 44) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY + 3]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY]);
-            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + 9]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 3]);
-            this.rightDivider.setTranslation([rightAlignX - 36, topAlignY]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + 3]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY + topOffset]);
+            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY + topOffset]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + topOffset + 9]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 6]);
+            this.rightDivider.setTranslation([rightAlignX - 36, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 6]);
         } else {
+            const topOffset = (logoHeight - 29) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY]);
-            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY]);
-            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY - 2]);
-            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + 6]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + 2]);
-            this.rightDivider.setTranslation([rightAlignX - 24, topAlignY]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + 2]);
+            this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY + topOffset]);
+            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY + topOffset - 2]);
+            this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + topOffset + 6]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 4]);
+            this.rightDivider.setTranslation([rightAlignX - 24, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 4]);
         }
-        if (isDeviceFHD !== isFHD) {
+        if (isDeviceFHD && !isFHD && !this.customLogo) {
             this.logo.setTranslation([leftAlignX, topAlignY]);
         }
     }

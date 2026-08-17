@@ -41,14 +41,6 @@ export class Poster extends Group {
     protected uri: string = "";
     protected bitmap?: RoBitmap;
     noScaling: boolean = false;
-    /**
-     * Set by `forceNoScaling()` for built-in Posters whose asset was already picked for the
-     * correct resolution (e.g. Overhang's default logo, TrickPlayBar's ticker). Unlike
-     * `noScaling` itself — which `loadUri()` recomputes from the `uri_resolution_autosub` match
-     * on every load, clobbering any value set beforehand or in between loads — this flag persists
-     * and keeps `noScaling` pinned `true` across every subsequent `uri` change.
-     */
-    private forcedNoScaling: boolean = false;
     /** Commits `loadStatus`, queuing it instead when construction is in progress and no observer
      *  exists yet (e.g. `uri` set as an XML attribute, loaded before the owning component's
      *  `init()` can `observeField`) — see `DeferredFieldWrites`. An observer registered before the
@@ -66,11 +58,6 @@ export class Poster extends Group {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
-    }
-
-    forceNoScaling() {
-        this.forcedNoScaling = true;
-        this.noScaling = true;
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -213,7 +200,7 @@ export class Poster extends Group {
                 }
             }
             const subSearch = sgRoot.autoSub.search.toLowerCase();
-            this.noScaling = this.forcedNoScaling || (subSearch !== "" && uri.toLowerCase().includes(subSearch));
+            this.noScaling = subSearch !== "" && uri.toLowerCase().includes(subSearch);
             if (this.noScaling) {
                 super.setValue("bitmapWidth", new Float(this.bitmap.width));
                 super.setValue("bitmapHeight", new Float(this.bitmap.height));
