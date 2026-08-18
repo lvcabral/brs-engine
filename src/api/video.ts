@@ -31,6 +31,9 @@ async function loadDashjs() {
 export let player: HTMLVideoElement;
 let hls: Hls | undefined;
 let dash: MediaPlayerClass | undefined;
+let dashjsModule: typeof import("dashjs") | undefined; // needed by destroyDash() to unregister listeners
+let dashCueEnterHandler: ((cue: any) => void) | undefined;
+let dashCueExitHandler: ((event: any) => void) | undefined;
 // Bumped by loadVideo()/stopVideo() so a loadDash() suspended on the dashjs import can detect
 // it was superseded and must not attach a stale instance.
 let dashLoadToken = 0;
@@ -64,6 +67,9 @@ const textTracks: MediaTrack[] = [];
 // takes the track object itself, not an index.
 const dashAudioTrackInfos: MediaInfo[] = [];
 const dashTextTrackInfos: MediaInfo[] = [];
+// Active dash.js subtitle cues, keyed by cueID (see createDashInstance/onDashCueEnter). Kept as
+// plain JS state rather than a native TextTrack on `player` - that stalled playback outright.
+const dashActiveCues = new Map<string, string>();
 
 // Initialize Video Module
 if (typeof document !== "undefined") {
@@ -614,6 +620,7 @@ function loadDashSubtitleTracks() {
         return -1;
     }
     const tracks = dash.getTracksFor("text");
+    notifyAll("debug", `[video] dash text tracks found: ${tracks.length}`);
     if (!tracks.length) {
         return -1;
     }
@@ -632,6 +639,10 @@ function loadDashSubtitleTracks() {
     const activeTrack = selectPreferredTrack(langs, captionLocale, (index) => index);
     dash.setCurrentTrack(dashTextTrackInfos[activeTrack]);
     playList[playIndex].subtitleTrack = activeTrack;
+    notifyAll(
+        "debug",
+        `[video] dash subtitle track selected: index=${activeTrack} lang=${langs[activeTrack]} mimeType=${dashTextTrackInfos[activeTrack]?.mimeType} codec=${dashTextTrackInfos[activeTrack]?.codec}`
+    );
     return activeTrack;
 }
 
@@ -667,10 +678,34 @@ function setSubtitleTrack(index: number) {
         playList[playIndex].subtitleTrack = index;
         Atomics.store(sharedArray, DataType.VTT, hls.subtitleTrack);
     } else if (dash && dashTextTrackInfos[index]) {
+        dashActiveCues.clear(); // drop the outgoing track's cues so its captions can't linger
         dash.setCurrentTrack(dashTextTrackInfos[index]);
         playList[playIndex].subtitleTrack = index;
         Atomics.store(sharedArray, DataType.VTT, index);
     }
+}
+
+/**
+ * Returns the text of every active subtitle cue, from both player.textTracks (HLS) and dashActiveCues.
+ */
+export function getActiveSubtitleLines(): string[] {
+    const lines: string[] = [];
+    for (const track of player.textTracks) {
+        if (track.mode !== "showing" || !track.activeCues?.length) {
+            continue;
+        }
+        for (const cue of track.activeCues) {
+            // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
+            const cueText = (cue as any)?.text ?? "";
+            if (cueText) {
+                lines.push(cueText);
+            }
+        }
+    }
+    for (const text of dashActiveCues.values()) {
+        lines.push(text);
+    }
+    return lines;
 }
 
 /**
@@ -691,6 +726,7 @@ function clearVideoTracking() {
             track.mode = "disabled";
         }
     }
+    dashActiveCues.clear();
 }
 
 /**
@@ -1124,6 +1160,23 @@ function createDashInstance(dashjs: typeof import("dashjs")) {
     // memory; a new MediaPlayer is created on every load, so the outgoing one must be destroyed.
     dash?.destroy();
     dash = dashjs.MediaPlayer().create();
+    dashjsModule = dashjs;
+    // We have no attachTTMLRenderingDiv() container, so dispatchForManualRendering makes dash.js
+    // fire CUE_ENTER/CUE_EXIT (see onDashCueEnter/onDashCueExit) instead of rendering TTML itself.
+    dash.updateSettings({ streaming: { text: { dispatchForManualRendering: true } } });
+    // destroyDash() unregisters these handlers before destroy(), but dash.js can't remove its own
+    // native TextTrack from `player`, so this token guard also drops any cue that still slips
+    // through from a superseded instance.
+    const token = dashLoadToken;
+    const guardCue = (handler: (arg: any) => void) => (arg: any) => {
+        if (token === dashLoadToken) {
+            handler(arg);
+        }
+    };
+    dashCueEnterHandler = guardCue(onDashCueEnter);
+    dashCueExitHandler = guardCue(onDashCueExit);
+    dash.on(dashjs.MediaPlayer.events.CUE_ENTER, dashCueEnterHandler);
+    dash.on(dashjs.MediaPlayer.events.CUE_EXIT, dashCueExitHandler);
     dash.on(dashjs.MediaPlayer.events.ERROR, function (event) {
         if (typeof event.error === "string") {
             switch (event.error) {
@@ -1163,11 +1216,77 @@ function createDashInstance(dashjs: typeof import("dashjs")) {
 }
 
 /**
- * Destroys the dash.js instance and frees resources.
+ * Flattens an imsc.js ISD content tree (region/body/div/p/span/br) to plain text - dash.js only
+ * renders TTML through its own DOM path, which dispatchForManualRendering skips.
+ * @param node An ISD element (or the ISD root, which has `contents` but no `kind`)
+ */
+function isdToText(node: any): string {
+    if (!node) {
+        return "";
+    }
+    if (node.kind === "br") {
+        return "\n";
+    }
+    if (typeof node.text === "string") {
+        return node.text;
+    }
+    if (!Array.isArray(node.contents)) {
+        return "";
+    }
+    const text = node.contents.map(isdToText).join("");
+    // Newline after each block container so simultaneous regions don't run together.
+    return ["region", "body", "div", "p"].includes(node.kind) ? `${text}\n` : text;
+}
+
+/**
+ * Records a dash.js CUE_ENTER into dashActiveCues. The event *is* the cue (a VTTCue plus dash.js
+ * extensions like cueID/cueHTMLElement/isd), read untyped since dash.js's public types don't match.
+ * @param cue The dash.js cue entering its active window
+ */
+function onDashCueEnter(cue: any) {
+    // dash.js re-adds cues to its native TextTrack periodically, re-firing onenter for a cue
+    // that's already active - dedupe by cueID since it's the same cue object each time.
+    if (dashActiveCues.has(cue.cueID)) {
+        return;
+    }
+    if (!cue.text && cue.cueHTMLElement instanceof HTMLElement) {
+        // CEA-608 cue: dash.js pre-builds a styled DOM fragment instead of `isd`.
+        cue.text = cue.cueHTMLElement.textContent ?? "";
+    } else if (!cue.text && cue.isd) {
+        cue.text = isdToText(cue.isd).trim();
+    }
+    const start = cue.startTime?.toFixed?.(2);
+    const end = cue.endTime?.toFixed?.(2);
+    notifyAll("debug", `[video] dash cue enter id=${cue.cueID} start=${start} end=${end} text="${cue.text}"`);
+    if (cue.text) {
+        dashActiveCues.set(cue.cueID, cue.text);
+    }
+}
+
+/**
+ * Drops a dash.js cue from dashActiveCues on CUE_EXIT, matched by cueID.
+ * @param event Event payload containing the exiting cue's `cueID`
+ */
+function onDashCueExit(event: any) {
+    if (dashActiveCues.delete(event.cueID)) {
+        notifyAll("debug", `[video] dash cue exit id=${event.cueID}`);
+    }
+}
+
+/**
+ * Destroys the dash.js instance. Unregisters the CUE listeners first, since dash.js can't remove
+ * its native TextTrack from `player` and could otherwise keep firing after destroy().
  */
 function destroyDash() {
+    if (dash && dashjsModule && dashCueEnterHandler && dashCueExitHandler) {
+        dash.off(dashjsModule.MediaPlayer.events.CUE_ENTER, dashCueEnterHandler);
+        dash.off(dashjsModule.MediaPlayer.events.CUE_EXIT, dashCueExitHandler);
+    }
     dash?.destroy();
     dash = undefined;
+    dashCueEnterHandler = undefined;
+    dashCueExitHandler = undefined;
+    dashActiveCues.clear();
 }
 
 /**
