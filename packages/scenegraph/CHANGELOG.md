@@ -2,6 +2,19 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.5.0"></a>
+
+## [v0.5.0 (beta) - AnimatedImage Spec Compliance](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.0) - 17 August 2026
+
+`AnimatedImage` node is now spec-compliant against Roku OS 15.3's newly-published documentation: `GetState()`/`state` use the documented string vocabulary, `GetID`/`IsValid`/`Update` and `loadWidth`/`loadHeight` resizing are implemented, and construction-time state transitions are now buffered and replayed once `init()` unwinds so an observer attached there sees the same sequence of callbacks a device delivers. Also partially reverts [#1157](https://github.com/lvcabral/brs-engine/pull/1157)'s `Poster`/`Overhang` scaling change, fixing the default Roku logo a different way. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Made `roAnimatedImage`/`AnimatedImage` spec-compliant and device-accurate, buffering construction-time state transitions for observers by [@lvcabral](https://github.com/lvcabral) in [#1184](https://github.com/lvcabral/brs-engine/pull/1184)
+* (rsg) Partially reverted [#1157](https://github.com/lvcabral/brs-engine/pull/1157)'s `Poster`/`Overhang` scaling change and fixed the default Roku logo differently by [@lvcabral](https://github.com/lvcabral) in [#1188](https://github.com/lvcabral/brs-engine/pull/1188)
+
+[Full Changelog][v0.5.0]
+
 <a name="v0.4.0"></a>
 
 ## [v0.4.0 (beta) - Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.4.0) - 11 August 2026
@@ -362,6 +375,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.5.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.4.0...brs-sg-v0.5.0
 [v0.4.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.3.0...brs-sg-v0.4.0
 [v0.3.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.2.0...brs-sg-v0.3.0
 [v0.2.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.1.0...brs-sg-v0.2.0

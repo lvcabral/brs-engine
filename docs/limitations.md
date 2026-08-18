@@ -52,10 +52,11 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Supports binding, broadcast, send and receive, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()`, backed by a small per-socket helper process.
   * Real multicast group membership (`JoinGroup`/`DropGroup`) is not implemented on either platform.
   * On the browser package `roDataGramSocket` remains mocked, as browsers cannot open raw sockets.
-* The new **`roAnimatedImage`** (BrightScript component) and **`AnimatedImage`** (SceneGraph node), added by Roku OS 15.3, are a **preliminary implementation** built ahead of Roku's official documentation, which was not published at the time of this release. Field names, default values, and the `control`/`state` vocabulary come from a real device dump and a partial OS 15.3 release-notes example where confirmed, and from established engine conventions (mirroring `Poster`) elsewhere — expect some field names, defaults, or behaviors to change once Roku documents the full spec.
+* The new **`roAnimatedImage`** (BrightScript component) and **`AnimatedImage`** (SceneGraph node), added by Roku OS 15.3, now follow Roku's published specification (field names, defaults, and the `control`/`state` vocabulary).
   * Animated WebP frames are decoded and composited (including `dispose`/`blend` semantics) directly by the engine.
   * Lottie/Bodymovin JSON is rendered via the third-party [`lottie.js`](https://lottie.js.org) library (pre-1.0, "covers a growing subset of the format" per its own documentation) — not every Lottie feature (precomps, mattes, masks, expressions) is confirmed supported.
-  * `loadWidth`/`loadHeight` (resize on load) and `loadingBitmapUri`/`failedBitmapUri` (placeholder image swap while loading/on failure) are accepted fields but not yet functional.
+  * `video/mp4` is a documented `mimeType`, but MP4-encoded animated content is not yet decoded — content that sniffs or declares as MP4 fails to load.
+  * `loadingBitmapUri`/`failedBitmapUri` (placeholder image swap while loading/on failure) are accepted fields but not yet functional.
 * The `roInput` deep link events are supported, but the events related to Voice Commands are not available yet.
 * The component `roAudioMetadata` only supports MP3 (for now).
 * The component `roImageMetadata` only supports JPEG images (for now).
