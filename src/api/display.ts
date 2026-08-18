@@ -5,7 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { isVideoMuted, player, subscribeVideo } from "./video";
+import { getActiveSubtitleLines, isVideoMuted, player, subscribeVideo } from "./video";
 import { SubscribeCallback } from "./util";
 import {
     DeviceInfo,
@@ -123,7 +123,9 @@ export function initDisplayModule(deviceInfo: DeviceInfo, perfStats = false) {
         } else if (event === "load") {
             resetSubtitleCache();
             return;
-        } else if (["bandwidth", "http.connect", "warning", "error"].includes(event)) {
+        } else if (["bandwidth", "http.connect", "warning", "error", "debug"].includes(event)) {
+            // Not a player-state transition - falling through would set videoState to the literal
+            // event name and break the play/pause check in drawVideoFrame().
             return;
         }
         videoState = event;
@@ -508,66 +510,56 @@ function drawSubtitles(ctx: CanvasRenderingContext2D) {
     const anchorBottom = captionRenderArea.overridePlacement || captionRenderArea.mode !== "override";
     let y = anchorBottom ? area.y + area.height - lineHeight / 2 : area.y + area.height / 2 - lineHeight / 2;
 
-    for (const track of player.textTracks) {
-        if (track.mode !== "showing" || !track.activeCues?.length) {
-            continue;
-        }
-        for (const cue of track.activeCues) {
-            // Safely access cue.text if it exists (VTTCue/WebKitTextTrackCue)
-            const cueText = (cue as any)?.text ?? "";
-            if (!cueText) {
-                continue;
+    for (const cueText of getActiveSubtitleLines()) {
+        // Split cueText into lines by line breaks
+        const lines = cueText.split(/\r?\n/);
+        let currentLineY = y;
+
+        for (let k = lines.length - 1; k >= 0; k--) {
+            const currentLineText = lines[k];
+            const cacheKey = `${currentLineText}:${fontSize}:${fontFamily}`;
+            let lineMetricsWidth: number;
+            let lineCalculatedBoxWidth: number;
+            const padding = fontSize * 0.4;
+
+            const cachedMeasurement = subtitleMeasurementCache.get(cacheKey);
+            if (cachedMeasurement) {
+                lineMetricsWidth = cachedMeasurement.metricsWidth;
+                lineCalculatedBoxWidth = cachedMeasurement.calculatedBoxWidth;
+            } else {
+                notifyAll("debug", `[display] caching subtitle measurement: ${cacheKey}`);
+                const metrics = ctx.measureText(currentLineText);
+                lineMetricsWidth = metrics.width;
+                lineCalculatedBoxWidth = lineMetricsWidth + padding * 2;
+                subtitleMeasurementCache.set(cacheKey, {
+                    metricsWidth: lineMetricsWidth,
+                    calculatedBoxWidth: lineCalculatedBoxWidth,
+                });
             }
-            // Split cueText into lines by line breaks
-            const lines = cueText.split(/\r?\n/);
-            let currentLineY = y;
 
-            for (let k = lines.length - 1; k >= 0; k--) {
-                const currentLineText = lines[k];
-                const cacheKey = `${currentLineText}:${fontSize}:${fontFamily}`;
-                let lineMetricsWidth: number;
-                let lineCalculatedBoxWidth: number;
-                const padding = fontSize * 0.4;
+            // Draw background box behind the text
+            const boxWidth = lineCalculatedBoxWidth;
+            const boxHeight = lineHeight;
 
-                const cachedMeasurement = subtitleMeasurementCache.get(cacheKey);
-                if (cachedMeasurement) {
-                    lineMetricsWidth = cachedMeasurement.metricsWidth;
-                    lineCalculatedBoxWidth = cachedMeasurement.calculatedBoxWidth;
-                } else {
-                    notifyAll("debug", `[display] caching subtitle measurement: ${cacheKey}`);
-                    const metrics = ctx.measureText(currentLineText);
-                    lineMetricsWidth = metrics.width;
-                    lineCalculatedBoxWidth = lineMetricsWidth + padding * 2;
-                    subtitleMeasurementCache.set(cacheKey, {
-                        metricsWidth: lineMetricsWidth,
-                        calculatedBoxWidth: lineCalculatedBoxWidth,
-                    });
-                }
+            // Calculate rounded coordinates and dimensions for the background box
+            const boxLeft = Math.round(baseX - boxWidth / 2);
+            const boxRight = Math.round(baseX + boxWidth / 2);
+            const finalBoxWidth = boxRight - boxLeft;
 
-                // Draw background box behind the text
-                const boxWidth = lineCalculatedBoxWidth;
-                const boxHeight = lineHeight;
+            const lineBoxBottomY = Math.round(currentLineY + boxHeight / 2);
+            const lineBoxTopY = Math.round(currentLineY - boxHeight / 2);
+            const finalBoxHeight = lineBoxBottomY - lineBoxTopY;
 
-                // Calculate rounded coordinates and dimensions for the background box
-                const boxLeft = Math.round(baseX - boxWidth / 2);
-                const boxRight = Math.round(baseX + boxWidth / 2);
-                const finalBoxWidth = boxRight - boxLeft;
+            ctx.save();
+            ctx.globalAlpha = backOpacity;
+            ctx.fillStyle = backColor!;
+            ctx.fillRect(boxLeft, lineBoxTopY, finalBoxWidth, finalBoxHeight);
+            ctx.restore();
 
-                const lineBoxBottomY = Math.round(currentLineY + boxHeight / 2);
-                const lineBoxTopY = Math.round(currentLineY - boxHeight / 2);
-                const finalBoxHeight = lineBoxBottomY - lineBoxTopY;
-
-                ctx.save();
-                ctx.globalAlpha = backOpacity;
-                ctx.fillStyle = backColor!;
-                ctx.fillRect(boxLeft, lineBoxTopY, finalBoxWidth, finalBoxHeight);
-                ctx.restore();
-
-                const textDrawX = Math.round(baseX);
-                const textDrawY = Math.round(currentLineY);
-                drawText(ctx, currentLineText, textDrawX, textDrawY, textOpacity, textEffect);
-                currentLineY -= lineHeight;
-            }
+            const textDrawX = Math.round(baseX);
+            const textDrawY = Math.round(currentLineY);
+            drawText(ctx, currentLineText, textDrawX, textDrawY, textOpacity, textEffect);
+            currentLineY -= lineHeight;
         }
     }
 }
