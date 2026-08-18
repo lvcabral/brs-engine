@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.5.1"></a>
+
+## [v2.5.1 - DASH/HLS Playback Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.1) - 18 August 2026
+
+This patch release fixes two browser API playback issues introduced with v2.5.0's DASH streaming support: DASH subtitles being silently dropped, and playback stalling on a transient decoder error. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Browser API
+
+* (api) Render DASH subtitles via manual cue dispatch by [@lvcabral](https://github.com/lvcabral) in [#1192](https://github.com/lvcabral/brs-engine/pull/1192)
+* (api) Let dash.js/hls.js self-heal `MEDIA_ERR_DECODE` instead of failing playback by [@lvcabral](https://github.com/lvcabral) in [#1193](https://github.com/lvcabral/brs-engine/pull/1193)
+
+[Full Changelog][v2.5.1]
+
 <a name="v2.5.0"></a>
 
 ## [v2.5.0 - DASH Streaming and AnimatedImage Spec Compliance](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.0) - 17 August 2026
@@ -1790,6 +1805,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.5.1]: https://github.com/lvcabral/brs-engine/compare/v2.5.0...v2.5.1
 [v2.5.0]: https://github.com/lvcabral/brs-engine/compare/v2.4.0...v2.5.0
 [v2.4.0]: https://github.com/lvcabral/brs-engine/compare/v2.3.0...v2.4.0
 [v2.3.0]: https://github.com/lvcabral/brs-engine/compare/v2.2.0...v2.3.0
