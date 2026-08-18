@@ -2,6 +2,37 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.5.0"></a>
+
+## [v2.5.0 - DASH Streaming and AnimatedImage Spec Compliance](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.0) - 17 August 2026
+
+This release adds full **MPEG-DASH** adaptive streaming support to the browser package via `dash.js`, alongside the existing `hls.js` integration (upgraded to v1.7.0), and `roDeviceInfo.canDecodeVideo()`/`videoFormats()` now report DASH container support. The preliminary `roAnimatedImage`/`AnimatedImage` implementation is now spec-compliant against Roku OS 15.3's newly-published documentation. Also included: a fix for `roSprite.SetRegion()` being overwritten by stale animated-sprite frames, a fix for `Video.captionRenderArea` sub-fields being silently dropped when read from a case-preserved associative array, and several other fixes and improvements. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Fixed `roSprite.SetRegion()` being overwritten by stale animated-sprite frames by [@lvcabral](https://github.com/lvcabral) in [#1183](https://github.com/lvcabral/brs-engine/pull/1183)
+* (brs) Fixed optional chaining for boxed `roInvalid` failing on indexed access by [@lvcabral](https://github.com/lvcabral) in [#1185](https://github.com/lvcabral/brs-engine/pull/1185)
+* (brs) Updated the firmware version to v15.3 in `DefaultDeviceInfo` by [@lvcabral](https://github.com/lvcabral) in [#1187](https://github.com/lvcabral/brs-engine/pull/1187)
+
+#### Browser API
+
+* (api) Read `Video.captionRenderArea` sub-fields case-insensitively by [@lvcabral](https://github.com/lvcabral) in [#1186](https://github.com/lvcabral/brs-engine/pull/1186)
+* (api) Upgraded `hls.js` to v1.7.0 by [@lvcabral](https://github.com/lvcabral) in [#1189](https://github.com/lvcabral/brs-engine/pull/1189)
+* (api) Added MPEG-DASH streaming support via `dash.js` by [@lvcabral](https://github.com/lvcabral) in [#1190](https://github.com/lvcabral/brs-engine/pull/1190)
+
+#### Node.js Library and CLI
+
+* (cli) Updated `node-canvas` to v4.0.0-rc3 by [@lvcabral](https://github.com/lvcabral) in [15e6e0a](https://github.com/lvcabral/brs-engine/commit/15e6e0af7e10c6e397546965ee4d1f3f7d53669f)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.5.0)
+
+* (rsg) Made `roAnimatedImage`/`AnimatedImage` spec-compliant and device-accurate, buffering construction-time state transitions for observers by [@lvcabral](https://github.com/lvcabral) in [#1184](https://github.com/lvcabral/brs-engine/pull/1184)
+* (rsg) Partially reverted [#1157](https://github.com/lvcabral/brs-engine/pull/1157)'s `Poster`/`Overhang` scaling change and fixed the default Roku logo differently by [@lvcabral](https://github.com/lvcabral) in [#1188](https://github.com/lvcabral/brs-engine/pull/1188)
+
+[Full Changelog][v2.5.0]
+
 <a name="v2.4.0"></a>
 
 ## [v2.4.0 - Real Sockets, Task Hardening and Rendering Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.4.0) - 11 August 2026
@@ -1759,6 +1790,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.5.0]: https://github.com/lvcabral/brs-engine/compare/v2.4.0...v2.5.0
 [v2.4.0]: https://github.com/lvcabral/brs-engine/compare/v2.3.0...v2.4.0
 [v2.3.0]: https://github.com/lvcabral/brs-engine/compare/v2.2.0...v2.3.0
 [v2.2.0]: https://github.com/lvcabral/brs-engine/compare/v2.1.0...v2.2.0
