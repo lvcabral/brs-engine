@@ -61,6 +61,10 @@ const DEFAULT_MIN_VIDEO_BUFFER_MS = 700; // fallback floor if DeviceInfo omits m
 let bufferFloorStart = 0; // Date.now() when the current load began
 let playFloorTimer: ReturnType<typeof setTimeout> | undefined; // pending deferred play
 let priming = false; // HLS audio-track priming play in flight; suppress its "playing" side effects
+// Set by the "error" listener while a dash.js/hls.js decode-error recovery is in flight, so the
+// next "canplay" refire knows to force-resume playback (see that listener for why this can't be
+// inferred from player.paused alone). Cleared once consumed, or by a fresh load/stop.
+let recoveringDecodeError = false;
 const audioTracks: MediaTrack[] = [];
 const textTracks: MediaTrack[] = [];
 // dash.js MediaInfo objects backing audioTracks/textTracks (same index); dash.setCurrentTrack()
@@ -96,7 +100,17 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
                 Atomics.store(sharedArray, DataType.VLP, loadProgress);
             }
             canPlay = true;
-            if (playerState !== "play" && !bufferOnly) {
+            // recoveringDecodeError (see the "error" listener below) catches a dash.js/hls.js
+            // decode-error recovery: resetting the MediaSource detaches/reattaches player.src,
+            // which pauses the element even though playerState never left "play" - without this,
+            // the resource-selection algorithm's canplay refire is ignored (since playerState
+            // already says "play") and playback stays silently paused until the app pause/plays
+            // it. Gated on the flag rather than a bare player.paused check, which would also fire
+            // on switchVideoState's debugger-pause (src/api/index.ts "command,pause"), which pauses
+            // the element while intentionally leaving playerState at "play" - a bare paused check
+            // would resume playback out from under an active debugger break.
+            if ((playerState !== "play" || recoveringDecodeError) && !bufferOnly) {
+                recoveringDecodeError = false;
                 playVideo();
             }
         });
@@ -124,11 +138,25 @@ export function initVideoModule(array: Int32Array, deviceInfo: DeviceInfo, mute:
             }
         });
         player.addEventListener("error", (e: Event) => {
-            canPlay = false;
-            let errorCode = MediaErrorCode.Http;
-            if (player.error?.code === MediaError.MEDIA_ERR_DECODE) {
-                errorCode = MediaErrorCode.Unsupported;
+            const isDecodeError = player.error?.code === MediaError.MEDIA_ERR_DECODE;
+            if (isDecodeError && (dash !== undefined || hls !== undefined)) {
+                // dash.js/hls.js also listen for this same native event and self-heal a decode
+                // error (dash.js resets the MediaSource internally, bounded by its own retry
+                // count; hls.js's fatal MEDIA_ERROR path calls recoverMediaError() - see
+                // createHlsInstance). If recovery is ultimately exhausted, the backend raises its
+                // own fatal error, which is already routed to reportMediaFailure() separately.
+                // Reporting failure here too would race ahead of that recovery and stop playback
+                // (this is the dominant cause of the intermittent "PIPELINE_ERROR_DECODE" on the
+                // first DASH playback attempt - the stream recovers on its own within a second).
+                recoveringDecodeError = true;
+                notifyAll(
+                    "warning",
+                    `[video] Player Media Error ${player.error?.code}; ${player.error?.message} (recovering)`
+                );
+                return;
             }
+            canPlay = false;
+            const errorCode = isDecodeError ? MediaErrorCode.Unsupported : MediaErrorCode.Http;
             Atomics.store(sharedArray, DataType.VDX, errorCode);
             Atomics.store(sharedArray, DataType.VDO, MediaEvent.Failed);
             notifyAll("warning", `[video] Player Media Error ${player.error?.code}; ${player.error?.message}`);
@@ -758,6 +786,7 @@ function loadVideo(buffer = false) {
         bufferFloorStart = Date.now();
         clearPlayFloor();
         priming = false; // a stale armed priming flag would swallow this load's first real "playing"
+        recoveringDecodeError = false; // a stale flag would force-resume this fresh load's first canplay
         let videoSrc = getVideoUrl(video);
         clearVideoTracking();
         bufferOnly = buffer;
@@ -994,6 +1023,7 @@ function stopVideo(error?: boolean) {
         canPlay = false;
         clearPlayFloor(); // drop any pending deferred play so it can't fire after stop
         priming = false; // a stop before the priming "playing" fires must not leave the flag armed
+        recoveringDecodeError = false; // a stop mid-recovery must not leave the flag armed
     }
 }
 
@@ -1097,12 +1127,33 @@ function createHlsInstance() {
     hls?.detachMedia();
     hls?.destroy();
     hls = new Hls();
+    // Unlike dash.js (bounded internally at 5 MediaSource resets, see createDashInstance), hls.js
+    // places no cap of its own on a fatal MEDIA_ERROR - calling recoverMediaError() forever on a
+    // persistently failing stream would silently stall playback with no Failed event ever
+    // reported. Mirror hls.js's own documented recovery ladder instead: reset, then swap the
+    // audio codec once, then give up and report failure.
+    let mediaErrorRecoverAt = 0;
+    let mediaErrorSwapAt = 0;
     hls.on(Hls.Events.ERROR, function (event, data) {
         if (data.fatal) {
             switch (data.type) {
-                case Hls.ErrorTypes.MEDIA_ERROR:
-                    hls?.recoverMediaError();
+                case Hls.ErrorTypes.MEDIA_ERROR: {
+                    const now = Date.now();
+                    if (now - mediaErrorRecoverAt > 3000) {
+                        mediaErrorRecoverAt = now;
+                        hls?.recoverMediaError();
+                    } else if (now - mediaErrorSwapAt > 3000) {
+                        mediaErrorSwapAt = now;
+                        hls?.swapAudioCodec();
+                        hls?.recoverMediaError();
+                    } else {
+                        reportMediaFailure(
+                            MediaErrorCode.Unsupported,
+                            "[video] fatal media error encountered, cannot recover"
+                        );
+                    }
                     break;
+                }
                 case Hls.ErrorTypes.NETWORK_ERROR:
                     // All retries and media options have been exhausted.
                     Atomics.store(sharedArray, DataType.VDX, MediaErrorCode.Http);
