@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v2.5.1 - DASH/HLS Playback Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.1) - 18 August 2026
 
-This patch release fixes two browser API playback issues introduced with v2.5.0's DASH streaming support: DASH subtitles being silently dropped, and playback stalling on a transient decoder error. Read the full release notes below for more details.
+This patch release fixes two browser API playback issues introduced with v2.5.0's DASH streaming support: DASH subtitles being silently dropped, and playback stalling on a transient decoder error. Also fixes two SceneGraph regressions affecting `fhd` manifest apps running on an `hd` (720p) device display. Read the full release notes below for more details.
 
 ### Release Changes
 
@@ -14,6 +14,11 @@ This patch release fixes two browser API playback issues introduced with v2.5.0'
 
 * (api) Render DASH subtitles via manual cue dispatch by [@lvcabral](https://github.com/lvcabral) in [#1192](https://github.com/lvcabral/brs-engine/pull/1192)
 * (api) Let dash.js/hls.js self-heal `MEDIA_ERR_DECODE` instead of failing playback by [@lvcabral](https://github.com/lvcabral) in [#1193](https://github.com/lvcabral/brs-engine/pull/1193)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.5.1)
+
+* (rsg) Reverted a `TrickPlayBar` change that caused a regression on the ticker scale by [@lvcabral](https://github.com/lvcabral) in [#1195](https://github.com/lvcabral/brs-engine/pull/1195)
+* (rsg) Fixed `limitsize` `Poster` display mode to adjust image dimensions correctly in 720p by [@lvcabral](https://github.com/lvcabral) in [#1196](https://github.com/lvcabral/brs-engine/pull/1196)
 
 [Full Changelog][v2.5.1]
 

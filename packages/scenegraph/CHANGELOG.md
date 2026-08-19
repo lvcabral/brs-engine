@@ -2,6 +2,19 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.5.1"></a>
+
+## [v0.5.1 (beta) - Poster and TrickPlayBar Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.1) - 19 August 2026
+
+This patch release fixes two regressions affecting `fhd` manifest apps running on an `hd` (720p) device display, Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Reverted a `TrickPlayBar` change that caused a regression on the ticker scale by [@lvcabral](https://github.com/lvcabral) in [#1195](https://github.com/lvcabral/brs-engine/pull/1195)
+* (rsg) Fixed `limitsize` `Poster` display mode to adjust image dimensions correctly in 720p by [@lvcabral](https://github.com/lvcabral) in [#1196](https://github.com/lvcabral/brs-engine/pull/1196)
+
+[Full Changelog][v0.5.1]
+
 <a name="v0.5.0"></a>
 
 ## [v0.5.0 (beta) - AnimatedImage Spec Compliance](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.0) - 17 August 2026
@@ -375,6 +388,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.5.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.0...brs-sg-v0.5.1
 [v0.5.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.4.0...brs-sg-v0.5.0
 [v0.4.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.3.0...brs-sg-v0.4.0
 [v0.3.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.2.0...brs-sg-v0.3.0
