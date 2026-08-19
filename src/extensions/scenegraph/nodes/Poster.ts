@@ -150,6 +150,15 @@ export class Poster extends Group {
                 this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
             } else if (mode === "scaletozoom") {
                 draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
+            } else if (mode === "limitsize") {
+                const loadWidth = this.getValueJS("loadWidth") as number;
+                const loadHeight = this.getValueJS("loadHeight") as number;
+                if (loadWidth > 0 && loadHeight > 0) {
+                    const size = this.clampLoadSize(this.bitmap.width, this.bitmap.height, loadWidth, loadHeight);
+                    rect.width = size.width;
+                    rect.height = size.height;
+                }
+                this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
             } else {
                 this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
             }
