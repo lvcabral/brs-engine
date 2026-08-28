@@ -179,6 +179,7 @@ export class Parser {
         function brightScriptChunk(): CC.BrightScript | undefined {
             let chunkTokens: Token[] = [];
             while (
+                !isAtEnd() &&
                 !check(
                     Lexeme.HashIf,
                     Lexeme.HashElseIf,
@@ -189,10 +190,6 @@ export class Parser {
                 )
             ) {
                 chunkTokens.push(advance());
-
-                if (isAtEnd()) {
-                    break;
-                }
             }
 
             if (chunkTokens.length > 0) {

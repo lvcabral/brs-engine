@@ -920,9 +920,17 @@ interface SerializedPCode {
     pcode: Token[];
     /**
      * Decrypted raw-text pkg: files that were stripped from the package and folded into the
-     * encrypted blob (SceneGraph component .brs/.xml). Absent in legacy packages.
+     * encrypted blob (SceneGraph component .brs/.xml). Restored into the transient overlay, cleared
+     * once the initial component scan completes. Absent in legacy packages.
      */
     files?: Record<string, string>;
+    /**
+     * Decrypted pkg:/source/*.brs raw text, kept separate from `files` because it must be restored
+     * into the permanent `protectedSource` store instead — general-purpose overlay lookups
+     * (existsSync/readFileSync/findSync, i.e. the app's own file-reading BrightScript APIs) must
+     * never see it. Absent in legacy packages and in packages with no SceneGraph components.
+     */
+    sourceFiles?: Record<string, string>;
 }
 
 /**
@@ -1061,40 +1069,62 @@ export interface RunResult {
     packedFiles?: string[];
 }
 /**
- * Collects the SceneGraph component source files (.brs and .xml under pkg:/components) so they can
- * be folded into the encrypted package blob and stripped from the distributed zip.
- * @returns the raw-text file contents keyed by relative lowercase path, plus the list of those paths.
+ * Collects the SceneGraph component source files (.brs and .xml under pkg:/components), plus every
+ * pkg:/source/**\/*.brs file already loaded into `sourceMap`, so they can be folded into the
+ * encrypted package blob. Component files are also stripped from the distributed zip (returned in
+ * `packedFiles`); `pkg:/source/**` is already unconditionally dropped by `updateAppZip`, but its raw
+ * text is still needed in the blob because SceneGraph component `<script uri="pkg:/source/...">`
+ * references (including ones loaded lazily by a component library, main or bundled) are resolved by
+ * reading the file directly, independent of the tokenized pcode used to run the main thread. Only
+ * collected when the app has SceneGraph components at all (`pkg:/components` exists) — a plain non-SG
+ * app has no consumer for it.
+ * @param fsys the interpreter file system, used to walk pkg:/components.
+ * @param sourceMap the app's already-loaded pkg:/source/*.brs text (same content that was tokenized),
+ *                   reused here instead of re-reading those files from disk.
+ * @returns the component files (also stripped from the zip) and pkg:/source files (blob-only, kept out
+ *          of the strip list) separately, both keyed by relative lowercase path.
  */
-function collectComponentFiles(fsys: typeof BrsDevice.fileSystem): {
-    files: Record<string, string>;
+function collectComponentFiles(
+    fsys: typeof BrsDevice.fileSystem,
+    sourceMap: Map<string, string>
+): {
+    componentFiles: Record<string, string>;
+    sourceFiles: Record<string, string>;
     packedFiles: string[];
 } {
-    const files: Record<string, string> = {};
+    const componentFiles: Record<string, string> = {};
+    const sourceFiles: Record<string, string> = {};
     const packedFiles: string[] = [];
     if (!fsys?.existsSync("pkg:/components")) {
-        return { files, packedFiles };
+        return { componentFiles, sourceFiles, packedFiles };
     }
     const root = fsys.root;
+    const toRelKey = (fsPath: string) => {
+        // findSync returns backend paths: "pkg:/xxx/..." for zip-mounted packages, or an absolute
+        // "<root>/xxx/..." path in --root folder mode. Reduce both to the package-relative, lowercase
+        // key used for the encrypted blob and the strip list.
+        let rel = fsPath;
+        if (root && rel.toLowerCase().startsWith(root.toLowerCase())) {
+            rel = rel.slice(root.length);
+        } else {
+            rel = rel.replace(/^pkg:\//i, "");
+        }
+        return rel.replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
+    };
     const found = [...fsys.findSync("pkg:/components", "xml"), ...fsys.findSync("pkg:/components", "brs")];
     for (const fsPath of found) {
         try {
-            // findSync returns backend paths: "pkg:/components/..." for zip-mounted packages, or an
-            // absolute "<root>/components/..." path in --root folder mode. Reduce both to the
-            // package-relative, lowercase key used for the encrypted blob and the strip list.
-            let rel = fsPath;
-            if (root && rel.toLowerCase().startsWith(root.toLowerCase())) {
-                rel = rel.slice(root.length);
-            } else {
-                rel = rel.replace(/^pkg:\//i, "");
-            }
-            rel = rel.replaceAll("\\", "/").replace(/^\/+/, "").toLowerCase();
-            files[rel] = fsys.readFileSync(fsPath, "utf8") as string;
+            const rel = toRelKey(fsPath);
+            componentFiles[rel] = fsys.readFileSync(fsPath, "utf8") as string;
             packedFiles.push(rel);
         } catch (err: any) {
             BrsDevice.stderr.write(`error,Error reading component file ${fsPath} - ${err.message}`);
         }
     }
-    return { files, packedFiles };
+    for (const [pkgPath, text] of sourceMap) {
+        sourceFiles[pkgPath.replace(/^pkg:\//i, "").toLowerCase()] = text;
+    }
+    return { componentFiles, sourceFiles, packedFiles };
 }
 
 /**
@@ -1112,6 +1142,13 @@ function restoreEncryptedFiles(pcode: Buffer, iv: string, password: string): Map
     if (spcode.files && Object.keys(spcode.files).length > 0) {
         BrsDevice.fileSystem.setSourceOverlay(spcode.files);
     }
+    if (spcode.sourceFiles && Object.keys(spcode.sourceFiles).length > 0) {
+        // Kept out of setSourceOverlay (never reachable via existsSync/readFileSync/findSync) and
+        // never cleared: a SceneGraph component library can be loaded lazily at any point during
+        // the run, and its components may reference these pkg:/source/*.brs files via
+        // <script uri="pkg:/source/...">, long after the post-startup clearSourceOverlay() runs.
+        BrsDevice.fileSystem.setProtectedSource(spcode.sourceFiles);
+    }
     return new Map(Object.entries(spcode.pcode));
 }
 
@@ -1127,12 +1164,15 @@ async function runSource(
     if (exitReason !== AppExitReason.Crashed) {
         if (password.length > 0) {
             const tokens = parseResult.tokens;
-            const { files, packedFiles } = collectComponentFiles(BrsDevice.fileSystem);
+            const { componentFiles, sourceFiles, packedFiles } = collectComponentFiles(BrsDevice.fileSystem, sourceMap);
             const iv = crypto.randomBytes(12).toString("base64");
             const cipher = crypto.createCipheriv(algorithm, password, iv);
             const payloadToEncode: SerializedPCode = { pcode: tokens };
-            if (Object.keys(files).length > 0) {
-                payloadToEncode.files = files;
+            if (Object.keys(componentFiles).length > 0) {
+                payloadToEncode.files = componentFiles;
+            }
+            if (Object.keys(sourceFiles).length > 0) {
+                payloadToEncode.sourceFiles = sourceFiles;
             }
             const deflated = zlibSync(encode(payloadToEncode));
             const source = Buffer.from(deflated);

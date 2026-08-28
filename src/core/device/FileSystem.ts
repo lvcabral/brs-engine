@@ -42,6 +42,15 @@ export class FileSystem {
      * are completely unaffected.
      */
     private readonly overlay: Map<string, string> = new Map();
+    /**
+     * Permanent, session-lifetime store of decrypted `pkg:/source/*.brs` text, separate from
+     * `overlay`. SceneGraph component libraries can be loaded lazily at any point during a run
+     * (long after `overlay` is cleared post-startup), and their components may reference the host
+     * app's own `pkg:/source/*.brs` files via `<script>` tags. This store is only ever consulted by
+     * `readProtectedSource` — never by `existsSync`/`readFileSync`/`findSync` — so it does not
+     * reopen the app's own BrightScript source to `ReadAsciiFile`/`roFileSystem`/`MatchFiles`.
+     */
+    private readonly protectedSource: Map<string, string> = new Map();
     private _root?: string;
     private _ext?: string;
 
@@ -91,6 +100,7 @@ export class FileSystem {
         ext?: string
     ) {
         this.overlay.clear();
+        this.protectedSource.clear();
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
         // Basic mounts: common:, tmp:, cachefs:, pkg:
         if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
@@ -329,22 +339,55 @@ export class FileSystem {
     }
 
     /**
+     * Normalizes an overlay/protected-source key to a lowercase `pkg:/...` path. Keys may be
+     * relative (e.g. "components/foo.xml") or full pkg: URIs.
+     */
+    private normalizeSourceKey(key: string): string {
+        let normalized = key.trim().toLowerCase().replaceAll("\\", "/");
+        if (!normalized.startsWith("pkg:/")) {
+            normalized = `pkg:/${normalized.replace(/^\/+/, "")}`;
+        }
+        return normalized.replaceAll(/\/+/g, "/");
+    }
+
+    /** Normalizes and copies `files` into `target`, keyed by `normalizeSourceKey`. */
+    private loadNormalized(target: Map<string, string>, files: Map<string, string> | Record<string, string>) {
+        const entries = files instanceof Map ? files.entries() : Object.entries(files);
+        for (const [key, content] of entries) {
+            target.set(this.normalizeSourceKey(key), content);
+        }
+    }
+
+    /**
      * Restores a set of decrypted pkg: files into the in-memory overlay so they can be read as if
      * they were present in the package. Used when running an encrypted package whose component
-     * files were stripped from the zip. Keys may be relative (e.g. "components/foo.xml") or full
-     * pkg: URIs; both are normalized to lowercase `pkg:/...`.
+     * files were stripped from the zip.
      * @param files Map (or record) of file path to text content.
      */
     setSourceOverlay(files: Map<string, string> | Record<string, string>) {
-        const entries = files instanceof Map ? files.entries() : Object.entries(files);
-        for (const [key, content] of entries) {
-            let normalized = key.trim().toLowerCase().replaceAll("\\", "/");
-            if (!normalized.startsWith("pkg:/")) {
-                normalized = `pkg:/${normalized.replace(/^\/+/, "")}`;
-            }
-            normalized = normalized.replaceAll(/\/+/g, "/");
-            this.overlay.set(normalized, content);
-        }
+        this.loadNormalized(this.overlay, files);
+    }
+
+    /**
+     * Populates the permanent, session-lifetime protected-source store (see `protectedSource`).
+     * Unlike `setSourceOverlay`, this is never cleared mid-run and is only ever consulted via
+     * `readProtectedSource`, so it stays invisible to the app's own file-reading BrightScript APIs.
+     * @param files Map (or record) of file path to text content.
+     */
+    setProtectedSource(files: Map<string, string> | Record<string, string>) {
+        this.loadNormalized(this.protectedSource, files);
+    }
+
+    /**
+     * Reads a decrypted `pkg:/source/*.brs` file from the permanent protected-source store. For use
+     * only by internal SceneGraph component-script resolution (e.g. a lazily-loaded component
+     * library's `<script uri="pkg:/source/...">` reference) — never wire this into a BrightScript-
+     * facing file API.
+     * @param uri File URI (relative or full `pkg:/...`).
+     * @returns The file's text content, or undefined if not present.
+     */
+    readProtectedSource(uri: string): string | undefined {
+        return this.protectedSource.get(this.normalizeSourceKey(uri));
     }
 
     /** Clears the decrypted pkg: file overlay. */
