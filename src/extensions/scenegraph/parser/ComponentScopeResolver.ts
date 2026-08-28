@@ -179,11 +179,17 @@ export class ComponentScopeResolver {
                     filename = script.uri.replaceAll(/[/\\]+/g, path.posix.sep);
                     try {
                         contents = fs.readFileSync(filename, "utf-8");
-                        script.content = contents;
                     } catch (err) {
-                        let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
-                        throw new Error(`brs: can't open file '${filename}': [Errno ${errno}]`);
+                        // A lazily-loaded component library's script can reference the host app's
+                        // own pkg:/source/*.brs after clearSourceOverlay() already ran; those
+                        // survive in the permanent protected-source store instead.
+                        contents = fs.readProtectedSource(filename);
+                        if (contents === undefined) {
+                            let errno = (err as NodeJS.ErrnoException)?.errno || -4858;
+                            throw new Error(`brs: can't open file '${filename}': [Errno ${errno}]`);
+                        }
                     }
+                    script.content = contents;
                 } else if (script.content === undefined) {
                     throw new Error("brs: invalid script object");
                 } else {

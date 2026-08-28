@@ -116,6 +116,12 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
     let tokens: Token[] = [];
     for (let [, value] of decodedTokens) {
         const token: any = value;
+        if (token === null || token === undefined) {
+            // Packages produced before the empty-source-file preprocessor fix can carry a stray
+            // null/undefined entry in the pcode stream (an artifact of a fully empty/preprocessed-
+            // away .brs file). Skip it rather than crash, so already-packed .bpk apps keep working.
+            continue;
+        }
         if (token.literal) {
             if (token.kind === "Integer") {
                 const literal: number = token.literal.value;
@@ -137,7 +143,7 @@ export function parseDecodedTokens(fs: FileSystem, manifest: Map<string, any>, d
         tokens.push(token);
         if (token.kind === "Eof") {
             const parseResults = parser.parse(tokens);
-            if (parseResults.errors.length > 0 || parseResults.statements.length === 0) {
+            if (parseResults.errors.length > 0) {
                 throw new Error("Error parsing the tokens!");
             }
             parseLibraries(fs, parseResults, lib, manifest);
