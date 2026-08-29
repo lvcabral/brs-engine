@@ -285,9 +285,8 @@ export class ContentNode extends Node {
     /** @override */
     getValues() {
         return this.getVisibleFields()
-            .map(([key, value]) => value)
-            .sort()
-            .map((field: Field) => field.getValue());
+            .sort(([keyA], [keyB]) => (keyA < keyB ? -1 : keyA > keyB ? 1 : 0))
+            .map(([, field]) => field.getValue());
     }
 
     /**
