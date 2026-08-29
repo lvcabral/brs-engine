@@ -201,20 +201,20 @@ export class Overhang extends Group {
             const topOffset = (logoHeight - 44) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY + 3]);
             this.leftDivider.setTranslation([leftAlignX + logoWidth + 24, topAlignY + topOffset]);
-            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY + topOffset - 6]);
+            this.title.setTranslation([leftAlignX + logoWidth + 56, topAlignY + topOffset]);
             this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 36, topAlignY + topOffset + 9]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 6]);
             this.rightDivider.setTranslation([rightAlignX - 36, topAlignY + topOffset]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 6]);
         } else {
             const topOffset = (logoHeight - 29) / 2;
             this.logo.setTranslation([leftAlignX, topAlignY]);
             this.leftDivider.setTranslation([leftAlignX + logoWidth + 16, topAlignY + topOffset]);
-            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY + topOffset - 4]);
+            this.title.setTranslation([leftAlignX + logoWidth + 38, topAlignY + topOffset - 2]);
             this.optionsIcon.setTranslation([rightAlignX - optionsOffset - 24, topAlignY + topOffset + 6]);
-            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset]);
+            this.optionsText.setTranslation([rightAlignX - optionsOffset, topAlignY + topOffset + 4]);
             this.rightDivider.setTranslation([rightAlignX - 24, topAlignY + topOffset]);
-            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset]);
+            this.clockText.setTranslation([rightAlignX, topAlignY + topOffset + 4]);
         }
         if (isDeviceFHD && !isFHD && !this.customLogo) {
             this.logo.setTranslation([leftAlignX, topAlignY]);
