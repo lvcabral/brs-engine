@@ -294,8 +294,9 @@ export class Node extends RoSGNode implements BrsValue {
      */
     getValues() {
         return Array.from(this.fields.values())
-            .sort()
-            .map((field: Field) => field.getValue());
+            .map((field: Field) => ({ field, name: field.getName().toLowerCase() }))
+            .toSorted((a, b) => a.name.localeCompare(b.name))
+            .map(({ field }) => field.getValue());
     }
 
     /**

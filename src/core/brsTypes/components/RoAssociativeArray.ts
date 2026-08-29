@@ -68,9 +68,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return [
             "<Component: roAssociativeArray> =",
             "{",
-            ...Array.from(this.elements.entries())
+            ...Array.from(this.elements.keys())
                 .sort()
-                .map(([key, value]) => `    ${key}: ${value.toString(this)}`),
+                .map((key) => `    ${key}: ${this.elements.get(key)!.toString(this)}`),
             "}",
         ].join("\n");
     }
@@ -90,9 +90,9 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     getValues() {
-        return Array.from(this.elements.values())
+        return Array.from(this.elements.keys())
             .sort()
-            .map((value: BrsType) => value);
+            .map((key) => this.elements.get(key)!);
     }
 
     clearElements() {
