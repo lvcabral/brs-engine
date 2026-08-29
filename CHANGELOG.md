@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.5.2"></a>
+
+## [v2.5.2 - Text Baseline, Packaging and Stability Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.2) - 29 August 2026
+
+This patch release fixes single-line text sitting too close to the top of its box across every SceneGraph `Label`, grid caption, keyboard and PIN pad — text now draws against the alphabetic baseline using a font-metric constant instead of an approximation of the font's max ascent, and a related regression that clipped descenders under that constant is also fixed. Also fixes a crash on encrypted `.bpk` startup and missing `pkg:/source/*.brs` component-library scripts once decrypted, a stack overflow printing a self- or mutually-referencing associative array, and SceneGraph apps driving their main loop with `sleep()`+`getMessage()`/`peekMessage()` instead of `wait()` never rendering a frame. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Fixed a stack overflow printing a self- or mutually-referencing associative array by [@lvcabral](https://github.com/lvcabral) in [#1201](https://github.com/lvcabral/brs-engine/pull/1201)
+* (draw2d) Center single-line text on the alphabetic baseline via a font-metric constant, fixing both top-heavy centering and descender clipping by [@lvcabral](https://github.com/lvcabral) in [#1202](https://github.com/lvcabral/brs-engine/pull/1202)
+
+#### Node.js Library and CLI
+
+* (cli) Fixed an encrypted `.bpk` startup crash and missing `pkg:/source/*.brs` component-library scripts by [@lvcabral](https://github.com/lvcabral) in [#1199](https://github.com/lvcabral/brs-engine/pull/1199)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.5.2)
+
+* (rsg) Service SceneGraph timers/rendering through `sleep()`+`getMessage()` poll loops, not just `wait()` by [@lvcabral](https://github.com/lvcabral) in [#1200](https://github.com/lvcabral/brs-engine/pull/1200)
+
+[Full Changelog][v2.5.2]
+
 <a name="v2.5.1"></a>
 
 ## [v2.5.1 - DASH/HLS Playback Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.1) - 18 August 2026
@@ -1810,6 +1833,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.5.2]: https://github.com/lvcabral/brs-engine/compare/v2.5.1...v2.5.2
 [v2.5.1]: https://github.com/lvcabral/brs-engine/compare/v2.5.0...v2.5.1
 [v2.5.0]: https://github.com/lvcabral/brs-engine/compare/v2.4.0...v2.5.0
 [v2.4.0]: https://github.com/lvcabral/brs-engine/compare/v2.3.0...v2.4.0
