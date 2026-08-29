@@ -204,11 +204,6 @@ export class MultiStyleLabel extends Group {
         // Roku keeps a constant line advance based on the label's leading text and
         // baseline-aligns each span, so larger inline fonts overflow upward rather than
         // pushing the lines apart. Use the first run's font as the baseline reference.
-        //
-        // getTopAdjust() (font-metric ascent/descent), not getBaselineOffset() (per-string ink): line
-        // pitch must stay stable regardless of which glyphs a run happens to contain, or editing text
-        // to add/remove a descender would shift every line below it. Only the actual per-token draw
-        // position (below) needs the real ink extents.
         const baseToken = tokens.find((token) => !token.newline) ?? tokens[0];
         const baseLineHeight = baseToken.height;
         const baseAscent = baseLineHeight - 2 * baseToken.font.getTopAdjust();
@@ -288,10 +283,10 @@ export class MultiStyleLabel extends Group {
                 }
                 for (const token of line.tokens) {
                     if (token.text.length > 0) {
-                        // Place this span's baseline on the line baseline (the layout pass above still
-                        // stacks lines by font metrics, deliberately — a stable, content-independent
-                        // line pitch, not one that jumps with which glyphs happen to appear).
-                        const drawY = token.font.getBaselineDrawY(baseline, token.text);
+                        // Place this span's baseline on the line baseline (the layout pass above
+                        // still stacks lines by font metrics — a stable, content-independent line
+                        // pitch).
+                        const drawY = token.font.getBaselineDrawY(baseline);
                         draw2D?.doDrawRotatedText(token.text, x, drawY, token.color, opacity, token.font, rotation);
                     }
                     x += token.width;

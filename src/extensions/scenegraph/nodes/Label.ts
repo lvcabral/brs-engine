@@ -143,7 +143,6 @@ export class Label extends Group {
                 draw2D,
                 ellipsis,
                 0,
-                undefined,
                 scale
             );
         }

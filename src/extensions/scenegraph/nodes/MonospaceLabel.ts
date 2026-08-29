@@ -101,19 +101,12 @@ export class MonospaceLabel extends Label {
         if (draw2D) {
             scale ??= this.getValueJS("scale") as number[];
             const chars = [...text];
-            // Every character must sit on the same visual baseline regardless of its own ink (a
-            // digit next to a "g" next to a ":"), or the row reads as wobbly instead of straight —
-            // see RoFont.getMetricBaselineOffset. Fix one shared target baseline for the whole run
-            // and pre-compensate each glyph's draw Y so doDrawRotatedText's per-glyph offset lands
-            // it back at that same target.
-            const baselineTarget = startY + drawFont.getMetricBaselineOffset();
             this.withScale(draw2D, rect.x, rect.y, scale, () => {
                 for (let i = 0; i < chars.length; i++) {
                     const char = chars[i];
                     const centerOffset =
                         i === 0 && firstCharTrueLeftAlign ? 0 : (cellWidth - drawFont.measureTextWidth(char).width) / 2;
-                    const charY = drawFont.getBaselineDrawY(baselineTarget, char);
-                    const local = [startX + i * cellWidth + centerOffset, charY];
+                    const local = [startX + i * cellWidth + centerOffset, startY];
                     const screen = rotation === 0 ? local : rotateTranslation(local, rotation);
                     draw2D.doDrawRotatedText(
                         char,

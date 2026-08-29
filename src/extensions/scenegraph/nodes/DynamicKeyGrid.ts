@@ -629,12 +629,11 @@ export class DynamicKeyGrid extends Group {
                 return;
             }
             const glyph = resolveKeyIcon(key.strOut)?.glyph ?? key.strOut;
-            // uniformBaseline: keys across the row must share one baseline, not each center its own ink.
-            this.drawText(glyph, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index, true);
+            this.drawText(glyph, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index);
             return;
         }
         if (key.label.length > 0) {
-            this.drawText(key.label, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index, true);
+            this.drawText(key.label, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index);
         }
     }
 

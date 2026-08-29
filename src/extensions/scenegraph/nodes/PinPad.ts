@@ -337,8 +337,7 @@ export class PinPad extends Group {
                         );
                     }
                 } else {
-                    // Always show digit when not in secure mode. uniformBaseline: digits across the
-                    // row of entry boxes must share one baseline, not each center its own ink.
+                    // Always show digit when not in secure mode
                     this.drawText(
                         this.pin[i],
                         this.font,
@@ -350,8 +349,7 @@ export class PinPad extends Group {
                         0,
                         draw2D,
                         "",
-                        100 + i, // offset past key cache slots (0-11) to avoid collisions
-                        true
+                        100 + i // offset past key cache slots (0-11) to avoid collisions
                     );
                 }
             }
@@ -402,7 +400,6 @@ export class PinPad extends Group {
                         );
                     }
                 } else if (key.length) {
-                    // uniformBaseline: keys across the row must share one baseline, not each center its own ink.
                     this.drawText(
                         key,
                         this.font,
@@ -414,8 +411,7 @@ export class PinPad extends Group {
                         0,
                         draw2D,
                         "",
-                        keyIndex,
-                        true
+                        keyIndex
                     );
                 }
             }

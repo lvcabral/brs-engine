@@ -406,7 +406,6 @@ export class Group extends Node {
         draw2D?: IfDraw2D,
         ellipsis: string = "...",
         index: number = 0,
-        uniformBaseline: boolean = false,
         scale?: number[]
     ) {
         const drawFont = font.createDrawFont();
@@ -451,11 +450,6 @@ export class Group extends Node {
             } else if (vertAlign === "bottom") {
                 textY += rect.height - measured.height;
             }
-        }
-        if (uniformBaseline) {
-            // Several independently-drawn calls (sibling grid cells, keys in a row) need to share one
-            // visual baseline instead of each one centering its own ink — see getMetricBaselineOffset.
-            textY = drawFont.getBaselineDrawY(textY + drawFont.getMetricBaselineOffset(), text);
         }
         scale ??= this.getValueJS("scale") as number[];
         this.withScale(draw2D, rect.x, rect.y, scale, () => {
