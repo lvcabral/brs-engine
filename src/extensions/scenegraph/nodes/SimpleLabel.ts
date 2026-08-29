@@ -142,8 +142,7 @@ export class SimpleLabel extends Group {
         } else if (vertOrigin === "bottom") {
             rect.y -= measured.height;
         } else if (vertOrigin === "baseline") {
-            const ascent = measured.height - 2 * drawFont.getTopAdjust();
-            rect.y -= ascent;
+            rect.y = drawFont.getBaselineDrawY(rect.y);
         }
         scale ??= this.getValueJS("scale") as number[];
         this.withScale(draw2D, pivotX, pivotY, scale, () => {

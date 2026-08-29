@@ -113,6 +113,50 @@ export class RoFont extends BrsComponent implements BrsValue {
         return (height - ascent) / 2;
     }
 
+    /**
+     * The Y offset from the top of this font's line-height box (`measureTextHeight()`) to where a
+     * baseline draw (`textBaseline = "alphabetic"`) should land, built from this font's own declared
+     * ascent/descent — not one string's ink — so that any two strings drawn with the same font/size
+     * land on the exact same visual baseline, regardless of content. That's required whenever
+     * independently-drawn text needs to line up: two separate Labels, grid cells, a keyboard row, a
+     * PIN pad, an EPG time bar — a per-string-ink offset would put a "0" and a "g" at different
+     * heights in the same row (real ink ascent for a 20px "0"/"g" pair differs by several px), and
+     * two sibling components with/without a descender would visibly drift apart. Replaces the old
+     * `textBaseline = "top"` + `getTopAdjust()` combo, which also had a `textBaseline = "top"`
+     * cross-engine inconsistency (browsers don't agree on exactly which font-internal metric it
+     * anchors to) that `"alphabetic"` sidesteps.
+     *
+     * Deliberately does NOT clamp ascent to a minimum of `size` the way `getTopAdjust()` does:
+     * `RoFontRegistry` always derives `lineHeight` as `ascent + descent (+ lineGap)`, so the raw,
+     * unclamped ascent/descent pair fits `lineHeight` exactly (`topSlack` is just half the line gap).
+     * Reusing `getTopAdjust()`'s clamp here — combined with an explicit descent term this method has
+     * and `getTopAdjust()` doesn't — inflates `ascent + descent` past `lineHeight` for any font whose
+     * real ascent ratio is below 1.0 (both bundled fonts qualify), which pushes the drawn baseline low
+     * enough to clip a descender (a "g", "y", …) past the bottom of `measureTextHeight()` — most
+     * visible where a caller's box has little slack above `measureTextHeight()` already, e.g.
+     * `PosterGrid`'s caption zone.
+     */
+    getBaselineOffset(): number {
+        const lineHeight = this.metrics.lineHeight * this.size;
+        const ascent = this.metrics.ascent * this.size;
+        const descent = this.metrics.descent * this.size;
+        const topSlack = Math.max(0, (lineHeight - ascent - descent) / 2);
+        return topSlack + ascent;
+    }
+
+    /**
+     * The Y to feed `doDrawText`/`doDrawRotatedText` (or an equivalent draw call) so that this
+     * font's baseline lands exactly at `targetBaselineY`, in whatever coordinate space
+     * `targetBaselineY` is expressed in — `doDrawRotatedText` adds `getBaselineOffset()` back
+     * internally, so this is just that subtraction, named once instead of re-derived at each call
+     * site. `targetBaselineY` itself is the caller's choice: a fixed anchor point (`SimpleLabel`'s
+     * `vertOrigin="baseline"`) or an already-laid-out shared line baseline (`MultiStyleLabel`'s
+     * per-token placement).
+     */
+    getBaselineDrawY(targetBaselineY: number): number {
+        return targetBaselineY - this.getBaselineOffset();
+    }
+
     toFontString(): string {
         let si = this.italic ? "italic" : "";
         let sb = this.bold ? "bold" : "";

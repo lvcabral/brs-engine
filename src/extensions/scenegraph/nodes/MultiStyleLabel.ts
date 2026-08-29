@@ -283,9 +283,10 @@ export class MultiStyleLabel extends Group {
                 }
                 for (const token of line.tokens) {
                     if (token.text.length > 0) {
-                        // Place this span's baseline on the line baseline.
-                        const topAdjust = token.font.getTopAdjust();
-                        const drawY = baseline - (token.height - 2 * topAdjust) - topAdjust;
+                        // Place this span's baseline on the line baseline (the layout pass above
+                        // still stacks lines by font metrics — a stable, content-independent line
+                        // pitch).
+                        const drawY = token.font.getBaselineDrawY(baseline);
                         draw2D?.doDrawRotatedText(token.text, x, drawY, token.color, opacity, token.font, rotation);
                     }
                     x += token.width;
