@@ -7,6 +7,10 @@ import { Int32 } from "../Int32";
 import { DebugCommand } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
 
+/** Sentinel passed as the callback `wait` argument for a non-blocking poll (`GetMessage`/`PeekMessage`).
+ *  Distinct from `0`, which by convention (see `wait()` below) means "block indefinitely". */
+export const PORT_NO_WAIT = -1;
+
 export class RoMessagePort extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     private readonly messageQueue: BrsEvent[];
@@ -136,8 +140,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            this.updateMessageQueue();
+        impl: (interpreter: Interpreter) => {
+            this.updateMessageQueue(interpreter, PORT_NO_WAIT);
             return this.getNextMessage();
         },
     });
@@ -148,8 +152,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             args: [],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter) => {
-            this.updateMessageQueue();
+        impl: (interpreter: Interpreter) => {
+            this.updateMessageQueue(interpreter, PORT_NO_WAIT);
             if (this.messageQueue.length > 0) {
                 return this.messageQueue[0];
             }

@@ -90,6 +90,10 @@ let finishApp: ((result: AppResult) => void) | undefined;
 // overrides the reason the worker posts, mirroring the browser API's terminate(reason) —
 // the worker only knows it was told to EXIT, not that the user pressed home.
 let terminateReason: AppExitReason | undefined;
+// Fallback force-terminate timer armed by terminateApp(); cleared in cleanupApp() so a graceful
+// exit (the worker's own "end" message) doesn't leave a stale timer that could fire against a
+// later, unrelated app run once this one has already finished.
+let terminateTimer: NodeJS.Timeout | undefined;
 
 /**
  * Executes a BrightScript app on a dedicated worker thread, with SceneGraph Task support.
@@ -155,10 +159,10 @@ export function terminateApp(reason: AppExitReason = AppExitReason.UserNav, time
     terminateReason = reason;
     Atomics.store(controlArray, DataType.DBG, DebugCommand.EXIT);
     Atomics.notify(controlArray, DataType.DBG);
-    const timer = setTimeout(() => {
+    terminateTimer = setTimeout(() => {
         finishApp?.({ exitReason: reason });
     }, timeoutMs);
-    timer.unref();
+    terminateTimer.unref();
 }
 
 /**
@@ -194,6 +198,8 @@ async function cleanupApp() {
     currentPayload = undefined;
     controlArray = undefined;
     terminateReason = undefined;
+    clearTimeout(terminateTimer);
+    terminateTimer = undefined;
     if (worker) {
         worker.removeAllListeners();
         await worker.terminate().catch(() => {});

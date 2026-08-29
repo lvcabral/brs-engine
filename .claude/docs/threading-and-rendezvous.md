@@ -38,6 +38,19 @@ Node-host invariants (all mirror the browser API):
   `Interpreter.checkDebugger` therefore **throws `BlockEnd("debug-exit")` when already in EXIT mode**
   instead of returning — otherwise an app in `while true : wait(0, port)` live-locks with `wait` returning
   instantly (the pre-fix home-key hang).
+- **`getMessage()`/`peekMessage()` must thread the live `Interpreter` through `updateMessageQueue`,
+  exactly like `wait()` does.** They dispatch through the same generic `callbackMap` as `wait()`
+  (`RoMessagePort.ts`), and `RoSGScreen`'s callback (`getNewEvents`) early-returns with no work done when
+  its `interpreter` argument is falsy — it needs a live interpreter to service timers/animations/
+  tasks/rendering. A refactor once made `getMessage`/`peekMessage` call `updateMessageQueue()` with no
+  arguments, which silently stopped SceneGraph from ever being serviced through those two calls (a real
+  app driving its main loop with `sleep()+getMessage()` instead of `wait()` never rendered a frame, with
+  no error) — nothing caught it because the only prior test only asserted `getMessage()` "doesn't crash."
+  A distinct non-blocking sentinel (`PORT_NO_WAIT`, not `0` — `0` already means "block indefinitely" by
+  this codebase's convention, see `wait()` above) marks the call as a poll rather than a wait; `Task.ts`'s
+  `getNewEvents` must treat that sentinel as "poll once, don't block" rather than converting it to an
+  infinite `Atomics.wait`. Regression: "Services SceneGraph timers/rendering through a sleep()+
+  getMessage() poll loop" in `test/cli/cli-scenegraph.test.js`.
 
 ## Rendezvous architecture (multi-threaded Tasks)
 

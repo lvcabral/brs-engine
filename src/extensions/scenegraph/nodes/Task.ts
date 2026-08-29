@@ -21,6 +21,7 @@ import {
     DataType,
     LogLevel,
     getNow,
+    PORT_NO_WAIT,
 } from "brs-engine";
 import { sgClock } from "../SGClock";
 import { sgRoot } from "../SGRoot";
@@ -736,8 +737,10 @@ export class Task extends Node {
             if (BrsDevice.pauseIfDebugging()) {
                 return new Array<BrsEvent>();
             }
-            const timeout = wait === 0 ? undefined : wait;
-            this.taskBuffer.waitVersion(0, timeout);
+            if (wait !== PORT_NO_WAIT) {
+                const timeout = wait === 0 ? undefined : wait;
+                this.taskBuffer.waitVersion(0, timeout);
+            }
             this.processThreadUpdate();
         }
         return new Array<BrsEvent>();

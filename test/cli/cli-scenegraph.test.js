@@ -1151,6 +1151,27 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Services SceneGraph timers/rendering through a sleep()+getMessage() poll loop, not just wait()", async () => {
+        let command = ["node", brsCliPath, "-r sleep-poll-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Some real-world apps drive their main loop with sleep()+getMessage()/peekMessage() instead
+        // of wait(timeout, port). getMessage()/peekMessage() used to call updateMessageQueue() with no
+        // Interpreter, so roSGScreen's port callback (which needs the live Interpreter to service
+        // timers/animations/tasks/rendering) silently no-opped - the scene never ran and "TIMER FIRED"
+        // never printed, even though the app didn't crash.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Sleep Poll Main Loop Repro ===",
+            "TIMER FIRED",
+            "=== Sleep Poll Main Loop Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     // This asserts a ~20ms wall-clock budget around a 125ms Timer chain, so it is opted out of the
     // suite's concurrency (not measured while sibling CLI child processes run) and retried: under a
     // fully loaded machine, scheduler noise alone can push a healthy run past the bound. Retrying is
