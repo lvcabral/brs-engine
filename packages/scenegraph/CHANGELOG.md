@@ -2,6 +2,18 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.5.2"></a>
+
+## [v0.5.2 (beta) - Poll-Loop Rendering Fix](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.2) - 29 August 2026
+
+This patch release fixes SceneGraph apps that drive their main loop with `sleep()`+`getMessage()`/`peekMessage()` instead of `wait(timeout, port)` never rendering a frame — `RoSGScreen`'s port callback needs a live interpreter to service timers, animations, tasks and rendering, and it was silently getting none. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Service SceneGraph timers/rendering through `sleep()`+`getMessage()` poll loops, not just `wait()` by [@lvcabral](https://github.com/lvcabral) in [#1200](https://github.com/lvcabral/brs-engine/pull/1200)
+
+[Full Changelog][v0.5.2]
+
 <a name="v0.5.1"></a>
 
 ## [v0.5.1 (beta) - Poster and TrickPlayBar Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.1) - 19 August 2026
@@ -388,6 +400,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.5.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.1...brs-sg-v0.5.2
 [v0.5.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.0...brs-sg-v0.5.1
 [v0.5.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.4.0...brs-sg-v0.5.0
 [v0.4.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.3.0...brs-sg-v0.4.0
