@@ -342,7 +342,21 @@ export class Keyboard extends Group {
                     this.drawImage(this.bmpFocus!, focusRect, 0, opacity, draw2D, this.focusBlendColor);
                 }
                 if (key.length) {
-                    this.drawText(key, this.font, color, opacity, buttonRect, "center", "center", 0, draw2D, "", index);
+                    // uniformBaseline: keys across the row must share one baseline, not each center its own ink.
+                    this.drawText(
+                        key,
+                        this.font,
+                        color,
+                        opacity,
+                        buttonRect,
+                        "center",
+                        "center",
+                        0,
+                        draw2D,
+                        "",
+                        index,
+                        true
+                    );
                 }
             }
         }

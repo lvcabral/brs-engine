@@ -190,8 +190,8 @@ export class IfDraw2D {
         ctx.globalAlpha = opacity;
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.font = font.toFontString();
-        ctx.textBaseline = "top";
-        ctx.fillText(text, baseX + x, baseY + y + font.getTopAdjust());
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(text, baseX + x, baseY + y + font.getBaselineOffset(text));
         ctx.restore();
         this.component.makeDirty();
     }
@@ -220,8 +220,8 @@ export class IfDraw2D {
         }
         ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
         ctx.font = font.toFontString();
-        ctx.textBaseline = "top";
-        ctx.fillText(text, 0, font.getTopAdjust());
+        ctx.textBaseline = "alphabetic";
+        ctx.fillText(text, 0, font.getBaselineOffset(text));
         ctx.restore();
         this.component.makeDirty();
     }

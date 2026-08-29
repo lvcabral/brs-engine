@@ -107,7 +107,21 @@ export class VoiceTextEditBox extends TextEditBox {
                     width: 2 * pitch,
                     height: rect.height,
                 };
-                this.drawText(char, this.pinPadFont, color, opacity, charRect, "center", "center", 0, draw2D, "", i);
+                // uniformBaseline: entered digits across the slots must share one baseline.
+                this.drawText(
+                    char,
+                    this.pinPadFont,
+                    color,
+                    opacity,
+                    charRect,
+                    "center",
+                    "center",
+                    0,
+                    draw2D,
+                    "",
+                    i,
+                    true
+                );
             }
         }
 

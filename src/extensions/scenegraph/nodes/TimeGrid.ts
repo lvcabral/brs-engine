@@ -935,7 +935,8 @@ export class TimeGrid extends ArrayGrid {
                 0,
                 draw2D,
                 "...",
-                textIndex++
+                textIndex++,
+                true // uniformBaseline: successive time labels along the bar must share one baseline
             );
         }
 
@@ -1062,7 +1063,8 @@ export class TimeGrid extends ArrayGrid {
                         0,
                         draw2D,
                         "...",
-                        textIndex++
+                        textIndex++,
+                        true // uniformBaseline: adjacent program-title cells in a row must share one baseline
                     );
                 }
 
@@ -1173,6 +1175,8 @@ export class TimeGrid extends ArrayGrid {
                 width: infoRect.width - 2 * pad,
                 height: infoRect.height,
             };
+            // uniformBaseline: shares its row's y with the adjacent program-title cells, which are
+            // also uniformBaseline (below) — both must land on the same visual baseline.
             this.drawText(
                 title,
                 font,
@@ -1184,7 +1188,8 @@ export class TimeGrid extends ArrayGrid {
                 0,
                 draw2D,
                 "...",
-                textIndex
+                textIndex,
+                true
             );
         }
         if (this.inChannelInfoColumn && ch === this.channelIndex) {
