@@ -125,12 +125,22 @@ export class RoFont extends BrsComponent implements BrsValue {
      * `textBaseline = "top"` + `getTopAdjust()` combo, which also had a `textBaseline = "top"`
      * cross-engine inconsistency (browsers don't agree on exactly which font-internal metric it
      * anchors to) that `"alphabetic"` sidesteps.
+     *
+     * Deliberately does NOT clamp ascent to a minimum of `size` the way `getTopAdjust()` does:
+     * `RoFontRegistry` always derives `lineHeight` as `ascent + descent (+ lineGap)`, so the raw,
+     * unclamped ascent/descent pair fits `lineHeight` exactly (`topSlack` is just half the line gap).
+     * Reusing `getTopAdjust()`'s clamp here — combined with an explicit descent term this method has
+     * and `getTopAdjust()` doesn't — inflates `ascent + descent` past `lineHeight` for any font whose
+     * real ascent ratio is below 1.0 (both bundled fonts qualify), which pushes the drawn baseline low
+     * enough to clip a descender (a "g", "y", …) past the bottom of `measureTextHeight()` — most
+     * visible where a caller's box has little slack above `measureTextHeight()` already, e.g.
+     * `PosterGrid`'s caption zone.
      */
     getBaselineOffset(): number {
         const lineHeight = this.metrics.lineHeight * this.size;
-        const ascent = Math.max(this.metrics.ascent * this.size, this.size);
+        const ascent = this.metrics.ascent * this.size;
         const descent = this.metrics.descent * this.size;
-        const topSlack = (lineHeight - ascent - descent) / 2;
+        const topSlack = Math.max(0, (lineHeight - ascent - descent) / 2);
         return topSlack + ascent;
     }
 
