@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Exercises every command documented for the ChannelStore node against its fakeServer mock: the
+    order/deltaOrder inputs, getUserData's attribute filtering, the channel-credential pair, and the
+    partner-order (transactional purchase) pair. All of these complete synchronously when `command` is
+    assigned, so the results are read back on the next statement; `orderStatus` is read through an
+    observer instead, to prove the result fields still notify.
+-->
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        runDeltaOrder()
+        runOrderWithChildren()
+        runOrderRepublish()
+        runUserData()
+        runChannelCred()
+        runPartnerOrder()
+        runFakeServerOff()
+    end sub
+
+    function newStore(fake as boolean) as object
+        store = createObject("roSGNode", "ChannelStore")
+        store.fakeServer = fake
+        return store
+    end function
+
+    sub printOrder(order as object)
+        for i = 0 to order.getChildCount() - 1
+            item = order.getChild(i)
+            print "  item: " + item.code + " qty=" + item.qty.toStr()
+        end for
+    end sub
+
+    ' Lists a result node's own fields, skipping the base Node ones every node carries, so the
+    ' output shows only which account attributes the request actually returned.
+    function joinKeys(node as object) as string
+        baseFields = { change: true, focusable: true, focusedchild: true, id: true }
+        result = ""
+        for each key in node.keys()
+            if baseFields[key] = invalid
+                if result <> "" then result = result + ","
+                result = result + key
+            end if
+        end for
+        return result
+    end function
+
+    ' `deltaOrder` builds the order incrementally and republishes it, and a negative quantity
+    ' removes the line item.
+    sub runDeltaOrder()
+        print "-- deltaOrder --"
+        store = newStore(true)
+        store.deltaOrder = { code: "TCSMS1", qty: 1 }
+        store.deltaOrder = { code: "TS1", qty: 2 }
+        store.deltaOrder = { code: "TS1", qty: 1 }
+        print "order children: " + store.order.getChildCount().toStr()
+        printOrder(store.order)
+        store.deltaOrder = { code: "TS1", qty: -3 }
+        print "after remove: " + store.order.getChildCount().toStr()
+        printOrder(store.order)
+    end sub
+
+    ' An order carries one child per line item, and `action` on the top node is order metadata.
+    sub runOrderWithChildren()
+        print "-- order children --"
+        store = newStore(true)
+        store.observeFieldScoped("orderStatus", "onOrderStatus")
+        order = createObject("roSGNode", "ContentNode")
+        order.addFields({ action: "Upgrade" })
+        item = createObject("roSGNode", "ContentNode")
+        item.addFields({ code: "TS1", qty: 1 })
+        order.appendChild(item)
+        store.order = order
+        store.command = "doOrder"
+    end sub
+
+    sub onOrderStatus(event as object)
+        status = event.getData()
+        print "orderStatus: " + status.status.toStr() + " " + status.message
+        for i = 0 to status.getChildCount() - 1
+            purchased = status.getChild(i)
+            print "  purchased: " + purchased.code + " " + purchased.total
+        end for
+    end sub
+
+    ' Republishing the order after a deltaOrder write keeps the app's own node and its order-level
+    ' `action`, and a cart emptied by a negative quantity cannot be ordered.
+    sub runOrderRepublish()
+        print "-- order republish --"
+        store = newStore(true)
+        order = createObject("roSGNode", "ContentNode")
+        order.addFields({ action: "Upgrade" })
+        item = createObject("roSGNode", "ContentNode")
+        item.addFields({ code: "TS1", qty: 1 })
+        order.appendChild(item)
+        store.order = order
+        store.deltaOrder = { code: "TCSMS1", qty: 1 }
+        print "same node: "; store.order.isSameNode(order)
+        print "action kept: " + store.order.action
+        printOrder(store.order)
+
+        store.deltaOrder = { code: "TS1", qty: -1 }
+        store.deltaOrder = { code: "TCSMS1", qty: -1 }
+        store.command = "doOrder"
+        print "empty cart children: " + store.order.getChildCount().toStr()
+        print "empty cart order: " + store.orderStatus.status.toStr() + " " + store.orderStatus.message
+        print "empty cart items: " + store.orderStatus.getChildCount().toStr()
+    end sub
+
+    sub runUserData()
+        print "-- getUserData (all) --"
+        store = newStore(true)
+        store.command = "getUserData"
+        data = store.userData
+        print "firstName: " + data.firstName
+        print "email: " + data.email
+        print "street1: " + data.street1
+        print "gender: " + data.gender
+        print "fields: " + joinKeys(data)
+
+        print "-- getUserData (email,firstname) --"
+        store.requestedUserData = "email,firstname"
+        store.command = "getUserData"
+        print "fields: " + joinKeys(store.userData)
+
+        print "-- getUserData (signin context) --"
+        info = createObject("roSGNode", "ContentNode")
+        info.addFields({ context: "signin" })
+        store.requestedUserDataInfo = info
+        store.command = "getUserData"
+        print "fields: " + joinKeys(store.userData)
+
+        print "-- getUserRegionData --"
+        store.command = "getUserRegionData"
+        region = store.userRegionData
+        print "region: " + region.state + " " + region.zip + " " + region.country
+    end sub
+
+    sub runChannelCred()
+        print "-- storeChannelCredData --"
+        store = newStore(true)
+        store.channelCredData = "test app cred data"
+        store.command = "storeChannelCredData"
+        result = store.storeChannelCredDataStatus
+        print "status: " + result.status.toStr()
+        response = parseJson(result.response)
+        print "response.status: " + response.status
+        print "response.error: " + response.error
+
+        print "-- getChannelCred --"
+        store.command = "getChannelCred"
+        cred = store.channelCred
+        print "channelID: " + cred.channelID
+        print "status: " + cred.status.toStr()
+        print "errorCode is empty: "; (cred.errorCode = "")
+        json = parseJson(cred.json)
+        print "json parses: "; (json <> invalid)
+        print "token_type: " + json.token_type
+        print "channel_data: " + json.channel_data
+        print "pucid present: "; (json.roku_pucid <> invalid and json.roku_pucid <> "")
+
+        print "-- getChannelCred (nothing stored) --"
+        fresh = newStore(true)
+        fresh.command = "getChannelCred"
+        freshJson = parseJson(fresh.channelCred.json)
+        print "channel_data present: "; (freshJson.channel_data <> invalid)
+        print "pucid present: "; (freshJson.roku_pucid <> invalid)
+    end sub
+
+    sub runPartnerOrder()
+        print "-- requestPartnerOrder --"
+        store = newStore(true)
+        request = createObject("roSGNode", "ContentNode")
+        request.addFields({ code: "TS1", priceDisplay: "3.99", price: "2.99", title: "Test Movie", couponCode: "SAVE1", contentKey: "sku-1" })
+        store.requestPartnerOrder = request
+        store.command = "requestPartnerOrder"
+        reqStatus = store.requestPartnerOrderStatus
+        print "status: " + reqStatus.status
+        print "tax: " + reqStatus.tax
+        print "total matches price: "; (reqStatus.total = "2.99")
+        print "orderId present: "; (reqStatus.orderId <> "")
+
+        print "-- confirmPartnerOrder --"
+        confirm = createObject("roSGNode", "ContentNode")
+        confirm.addFields({ orderId: reqStatus.orderId, code: "TS1", price: "2.99", title: "Test Movie" })
+        store.confirmPartnerOrder = confirm
+        store.command = "confirmPartnerOrder"
+        confirmStatus = store.confirmPartnerOrderStatus
+        print "status: " + confirmStatus.status
+        print "purchaseId present: "; (confirmStatus.purchaseId <> "")
+
+        ' Confirming without a preceding billing check must fail.
+        print "-- confirmPartnerOrder without request --"
+        fresh = newStore(true)
+        fresh.confirmPartnerOrder = confirm
+        fresh.command = "confirmPartnerOrder"
+        print "status: " + fresh.confirmPartnerOrderStatus.status
+        print "errorCode: " + fresh.confirmPartnerOrderStatus.errorCode
+    end sub
+
+    ' Without fakeServer the store-backed commands report their documented failure payload, but the
+    ' credential store still works: it holds the app's own artifact rather than a mocked store
+    ' response, so a production app (which never enables fakeServer) must still be able to use it.
+    sub runFakeServerOff()
+        print "-- fakeServer off --"
+        store = newStore(false)
+        store.command = "getUserData"
+        print "userData invalid: "; (store.userData = invalid)
+        store.channelCredData = "prod token"
+        store.command = "storeChannelCredData"
+        print "storeChannelCredDataStatus.status: " + store.storeChannelCredDataStatus.status.toStr()
+        store.command = "getChannelCred"
+        print "channelCred.status: " + store.channelCred.status.toStr()
+        print "channelCred.channel_data: " + parseJson(store.channelCred.json).channel_data
+        request = createObject("roSGNode", "ContentNode")
+        request.addFields({ code: "TS1", price: "2.99" })
+        store.requestPartnerOrder = request
+        store.command = "requestPartnerOrder"
+        print "requestPartnerOrderStatus.status: " + store.requestPartnerOrderStatus.status
+        print "requestPartnerOrderStatus.errorCode: " + store.requestPartnerOrderStatus.errorCode
+    end sub
+    ]]></script>
+</component>

@@ -1136,8 +1136,12 @@ export function toContentNode(associativeArray: RoAssociativeArray): ContentNode
 export function fromContentNode(contentNode: ContentNode): RoAssociativeArray {
     const result: RoAssociativeArray = new RoAssociativeArray([], true);
 
-    for (const [key, value] of contentNode.getNodeFields()) {
-        result.set(new BrsString(key), value.getValue(false));
+    // Keyed by the field's DECLARED name, not the lowercased map key: the array is case-sensitive, so
+    // taking the map key would strip the casing an app declared (`priceDisplay` -> `pricedisplay`) and
+    // force every consumer to read back through a case-insensitive lookup. This matches how the base
+    // `Node.getElements`/`getNodeFieldsAsAA` already expose field names.
+    for (const field of contentNode.getNodeFields().values()) {
+        result.set(new BrsString(field.getName()), field.getValue(false));
     }
 
     return result;

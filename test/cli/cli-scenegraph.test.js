@@ -1423,4 +1423,107 @@ describe.concurrent("cli scenegraph", () => {
             "",
         ]);
     }, 30000);
+
+    it("Mocks every documented ChannelStore node command against the fakeServer data", async () => {
+        let command = ["node", brsCliPath, "-r channelstore-node-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Covers the whole command surface documented for the ChannelStore node. Values that come
+        // from a generated id are asserted as "present"/"matches" rather than literally, so the test
+        // does not pin an id; everything else is pinned by csfake/*.xml or the canned account table.
+        //
+        // deltaOrder: the reference spells the associative array { code, qty } (NOT { delta, qty }),
+        // each write republishes the `order` field, and a negative qty removes the line item.
+        // order: one child per line item, with `action` on the top node as order-level metadata.
+        // getUserData: `requestedUserData` selects attributes and a "signin" context narrows the
+        // result to email/phone only.
+        // Republishing keeps the app's own order node and its order-level `action`, and a cart
+        // emptied by a negative quantity cannot be ordered.
+        // getChannelCred: `json` must be real JSON, since the documented usage is ParseJson() on it;
+        // `channel_data` appears only after storeChannelCredData ran.
+        // confirmPartnerOrder must fail without a preceding requestPartnerOrder billing check.
+        // Without fakeServer the store-backed commands report their documented failure payload, but
+        // the credential store still works — it holds the app's own artifact, not a mocked store
+        // response, and a production app never enables fakeServer.
+        // The negative-qty semantics and the individual errorCode values are engine choices, not
+        // device measurements — a device probe may legitimately overturn them.
+        //
+        // The lowercased "fields:" names (firstname/lastname, where a device reports firstName/lastName)
+        // are a KNOWN engine deviation, not the behavior under test: `ContentNode.getElements` returns
+        // the field map's lowercased key rather than the declared field name. The unit suite asserts the
+        // documented casing at the associative-array layer. If `getElements` is ever fixed, update these
+        // two lines rather than assuming the change broke something.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== ChannelStore Node Test ===",
+            "-- deltaOrder --",
+            "order children: 2",
+            "  item: TCSMS1 qty=1",
+            "  item: TS1 qty=3",
+            "after remove: 1",
+            "  item: TCSMS1 qty=1",
+            "-- order children --",
+            "orderStatus: 1 Order Succeeded",
+            "  purchased: TS1 $1.99",
+            "  purchased: SKUTAX $0.00",
+            "-- order republish --",
+            "same node: true",
+            "action kept: Upgrade",
+            "  item: TS1 qty=1",
+            "  item: TCSMS1 qty=1",
+            "empty cart children: 0",
+            "empty cart order: -3 Invalid Order",
+            "empty cart items: 0",
+            "-- getUserData (all) --",
+            "firstName: John",
+            "email: john.doe@email.com",
+            "street1: 1155 Coleman Ave",
+            "gender: Male",
+            "fields: birth,city,country,email,firstname,gender,lastname,phone,state,street1,street2,zip",
+            "-- getUserData (email,firstname) --",
+            "fields: email,firstname",
+            "-- getUserData (signin context) --",
+            "fields: email",
+            "-- getUserRegionData --",
+            "region: CA 95110 USA",
+            "-- storeChannelCredData --",
+            "status: 0",
+            "response.status: success",
+            "response.error: none",
+            "-- getChannelCred --",
+            "channelID: dev",
+            "status: 0",
+            "errorCode is empty: true",
+            "json parses: true",
+            "token_type: urn:roku:pucid:token_type:pucid_token",
+            "channel_data: test app cred data",
+            "pucid present: true",
+            "-- getChannelCred (nothing stored) --",
+            "channel_data present: false",
+            "pucid present: true",
+            "-- requestPartnerOrder --",
+            "status: Success",
+            "tax: 0.00",
+            "total matches price: true",
+            "orderId present: true",
+            "-- confirmPartnerOrder --",
+            "status: Success",
+            "purchaseId present: true",
+            "-- confirmPartnerOrder without request --",
+            "status: Failure",
+            "errorCode: -3",
+            "-- fakeServer off --",
+            "userData invalid: true",
+            "storeChannelCredDataStatus.status: 0",
+            "channelCred.status: 0",
+            "channelCred.channel_data: prod token",
+            "requestPartnerOrderStatus.status: Failure",
+            "requestPartnerOrderStatus.errorCode: -1",
+            "=== ChannelStore Node Test Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
 });
