@@ -139,16 +139,17 @@ export class ChannelStore extends Node {
         const current = this.getValue("order");
         const order = current instanceof ContentNode ? current : new ContentNode();
         const children = order.getNodeChildren();
-        const index = children.findIndex(
-            (child) => child instanceof ContentNode && ChannelStore.textOf(child.getValue("code")) === code
+        const existing = children.find(
+            (child): child is ContentNode =>
+                child instanceof ContentNode && ChannelStore.textOf(child.getValue("code")) === code
         );
         if (quantity <= 0) {
             // Also the "non-positive delta on an item that was never in the cart" case, hence the guard.
-            if (index >= 0) {
-                order.removeChildrenAtIndex(index, 1);
+            if (existing) {
+                order.removeChildrenAtIndex(children.indexOf(existing), 1);
             }
-        } else if (children[index] instanceof ContentNode) {
-            (children[index] as ContentNode).setValue("qty", new Int32(quantity));
+        } else if (existing) {
+            existing.setValue("qty", new Int32(quantity));
         } else {
             order.appendChildToParent(toContentNode(toAssociativeArray({ code: code, qty: quantity })));
         }

@@ -377,9 +377,12 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     private mintPartnerOrderIds() {
         const hasFixture = BrsDevice.fileSystem.existsSync("pkg:/csfake/PlaceOrder.xml");
         const fixture = hasFixture ? this.getFakeOrderData("PlaceOrder") : {};
-        // The XML parser coerces numeric-looking ids to numbers, hence String(); getFakeOrderData
-        // reports a missing file by seeding `id` with the file name, which `hasFixture` rules out.
-        this.partnerOrderId = String(fixture.id ?? "") || genHexAddress();
+        // The XML parser coerces a numeric-looking id to a number, so accept both scalar shapes and
+        // ignore anything else; getFakeOrderData reports a missing file by seeding `id` with the file
+        // name, which `hasFixture` already rules out.
+        const id = fixture.id;
+        const fixtureId = typeof id === "string" || typeof id === "number" ? String(id) : "";
+        this.partnerOrderId = fixtureId || genHexAddress();
         const items = Array.isArray(fixture.order) ? fixture.order : [];
         const first = items[0];
         const purchaseId = first instanceof RoAssociativeArray ? RoChannelStore.textField(first, "purchaseId") : "";
