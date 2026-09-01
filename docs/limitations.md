@@ -70,7 +70,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
 
 * RAF (Roku Ads Framework) library that exposes `Roku_Ads` object is mocked with the most common methods available returning static values.
 * RED (Roku Event Dispatcher) and Google IMA3 libraries are also mocked.
-* Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature.
+* Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature: every documented command is implemented, with catalog, purchase, order and account data coming from the `csfake/*.xml` test files (or a canned account) only while `fakeServer` is enabled. The channel credential store (`storeChannelCredData`/`getChannelCred`) is the exception — it holds the app's own artifact in memory and works regardless of `fakeServer`, though the data does not persist between runs or across devices.
 * The Text to Speech components (`roAudioGuide`, `roTextToSpeech` and `roMicrophone`) and the Signing Algorithm components (`roDSA` and `roRSA`) are mocked: they expose their documented methods returning static values, but perform no real speech, recording or cryptographic signing.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 

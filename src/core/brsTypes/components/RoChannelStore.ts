@@ -1,15 +1,33 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, RoList, RoArray, RoMessagePort, toAssociativeArray, FlexObject } from "..";
+import {
+    BrsType,
+    RoList,
+    RoArray,
+    RoMessagePort,
+    toAssociativeArray,
+    FlexObject,
+    isBrsString,
+    isAnyNumber,
+    jsValueOf,
+} from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "../events/RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { AppData } from "../../common";
+import { AppData, genHexAddress } from "../../common";
 import { XmlDocument, XmlElement, XmlNode } from "xmldoc";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
+import { v5 as uuidv5 } from "uuid";
+
+/**
+ * Payload of a mocked partner-order step (the transactional/TVOD purchase flow), keyed exactly as
+ * `ifChannelStore` documents it. The ChannelStore node publishes the same values but names the order
+ * id `orderId` rather than `id`, and renames that one key at its own edge.
+ */
+type PartnerOrderPayload = Record<string, string>;
 
 export class RoChannelStore extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -17,6 +35,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     private readonly order: RoAssociativeArray[];
     private orderInfo: RoAssociativeArray | BrsInvalid;
     private credData: string;
+    private partnerOrderId: string;
+    private partnerPurchaseId: string;
     private fakeServerEnabled: boolean;
     private port?: RoMessagePort;
 
@@ -26,6 +46,8 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.order = [];
         this.orderInfo = BrsInvalid.Instance;
         this.credData = "";
+        this.partnerOrderId = "";
+        this.partnerPurchaseId = "";
         this.fakeServerEnabled = false;
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
@@ -60,22 +82,62 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.fakeServerEnabled = enable;
     }
 
-    setNewOrder(order: RoAssociativeArray[]) {
+    /**
+     * Replaces the current order (shopping cart).
+     * @param order The new order items; an empty array clears the order.
+     * @param orderInfo Order-level metadata (the ChannelStore node's top-level `action` field, i.e.
+     *                  "Upgrade"/"Downgrade"). Omit it to leave the current metadata untouched.
+     */
+    setNewOrder(order: RoAssociativeArray[], orderInfo: RoAssociativeArray | BrsInvalid = BrsInvalid.Instance) {
         this.order.length = 0;
-        if (order.length > 0) this.order.push(...order);
+        this.order.push(...order);
+        this.orderInfo =
+            this.order.length > 0 && orderInfo instanceof RoAssociativeArray ? orderInfo : BrsInvalid.Instance;
     }
 
-    setDeltaOrder(codeValue: string, qtyValue: number) {
-        for (let item of this.order) {
-            const code = item.get(new BrsString("code"));
-            const qty = item.get(new BrsString("qty"));
-            if (code instanceof BrsString && code.value === codeValue && qty instanceof Int32) {
-                item.set(new BrsString("qty"), new Int32(qty.getValue() + qtyValue));
-                return;
+    /**
+     * Applies a quantity delta to one item of the current order.
+     *
+     * A negative quantity reduces the item and removes it from the cart once its running quantity
+     * reaches zero — documented both on the node's `deltaOrder` field and on `ifChannelStore.DeltaOrder`.
+     * @param codeValue Product identifier of the item to change.
+     * @param qtyValue Quantity to add; may be negative.
+     * @returns The item's remaining quantity, or 0 when it was removed or is not in the cart.
+     */
+    setDeltaOrder(codeValue: string, qtyValue: number): number {
+        const codeKey = new BrsString("code");
+        const qtyKey = new BrsString("qty");
+        for (let index = 0; index < this.order.length; index++) {
+            const item = this.order[index];
+            const code = item.get(codeKey);
+            // Match on the code alone: an item whose `qty` is not numeric (an app can set it as a
+            // string on the order ContentNode) still has to update in place rather than be appended
+            // a second time under the same code.
+            if (!isBrsString(code) || code.getValue() !== codeValue) {
+                continue;
             }
+            const qty = item.get(qtyKey);
+            const newQty = (isAnyNumber(qty) ? jsValueOf(qty) : 0) + qtyValue;
+            if (newQty <= 0) {
+                this.order.splice(index, 1);
+                if (this.order.length === 0) this.orderInfo = BrsInvalid.Instance;
+                return 0;
+            }
+            item.set(qtyKey, new Int32(newQty));
+            return newQty;
+        }
+        // A non-positive delta on an item that is not in the cart is a no-op, not a negative line item.
+        if (qtyValue <= 0) {
+            return 0;
         }
         // Add new item to order if not already in the cart
         this.order.push(toAssociativeArray({ code: codeValue, qty: qtyValue }));
+        return qtyValue;
+    }
+
+    /** Returns a snapshot of the current order items, mirroring `ifChannelStore.GetOrder()`. */
+    getOrderItems(): RoAssociativeArray[] {
+        return [...this.order];
     }
 
     getProductData(type: string, status: { code: number; message: string }) {
@@ -90,6 +152,13 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
 
     placeOrder(status: { code: number; message: string }) {
         let order: RoAssociativeArray[] = [];
+        // An empty cart can never be ordered — `DoOrder()` guards this too, but the guard has to live
+        // here as well or the fake order XML's items get reported as purchased for an empty order.
+        if (this.order.length === 0) {
+            status.code = -3;
+            status.message = "Invalid Order";
+            return order;
+        }
         status.code = 1;
         status.message = "Order Succeeded";
         const catalog = this.getFakeProductData("GetCatalog");
@@ -112,6 +181,212 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             }
         }
         return order;
+    }
+
+    /**
+     * Canned Roku account data backing the mocked user-data commands, keyed by the `requestedUserData`
+     * name (always lowercase) that yields it and holding the result fields that name expands to. The
+     * two key spaces differ: `street` yields both `street1` and `street2`, `firstname` yields
+     * `firstName`. Declared in the reference's table order so an "all" request produces stable output.
+     */
+    private static readonly fakeUserData = new Map<string, Record<string, string>>([
+        ["firstname", { firstName: "John" }],
+        ["lastname", { lastName: "Doe" }],
+        ["email", { email: "john.doe@email.com" }],
+        ["street", { street1: "1155 Coleman Ave", street2: "" }],
+        ["city", { city: "San Jose" }],
+        ["state", { state: "CA" }],
+        ["zip", { zip: "95110" }],
+        ["country", { country: "USA" }],
+        ["phone", { phone: "4085551212" }],
+        ["birth", { birth: "1970-01" }],
+        ["gender", { gender: "Male" }],
+    ]);
+
+    /** Merges the canned account data for the given request names, skipping any unknown one. */
+    private static accountFields(names: Iterable<string>): FlexObject {
+        const data: FlexObject = {};
+        for (const name of names) {
+            Object.assign(data, RoChannelStore.fakeUserData.get(name));
+        }
+        return data;
+    }
+
+    /**
+     * Mocks the account data returned by `GetUserData`/`GetPartialUserData` and by the ChannelStore
+     * node's `getUserData` command.
+     * @param requested "all" (the default) or a comma-separated list of request names.
+     * @param context "signup" (the default) or "signin"; a sign-in RFI screen lists only email/phone
+     *                and ignores any other requested attribute.
+     * @returns The account data, or `undefined` when fakeServer is disabled — callers then report the
+     *          same `invalid` a device returns when the user declines to share their information.
+     */
+    getUserAccountData(requested: string = "all", context: string = "signup"): RoAssociativeArray | undefined {
+        if (!this.fakeServerEnabled) {
+            return undefined;
+        }
+        const names =
+            requested.trim().toLowerCase() === "all"
+                ? [...RoChannelStore.fakeUserData.keys()]
+                : requested.split(",").map((name) => name.trim().toLowerCase());
+        // A sign-in RFI screen lists only email/phone; any other attribute requested is ignored.
+        const signIn = context.trim().toLowerCase() === "signin";
+        const requestNames = signIn ? names.filter((name) => name === "email" || name === "phone") : names;
+        return toAssociativeArray(RoChannelStore.accountFields(requestNames));
+    }
+
+    /**
+     * Mocks `GetUserRegionData` and the node's `getUserRegionData` command.
+     * @returns The region of the mocked account, or `undefined` when fakeServer is disabled.
+     */
+    getRegionData(): RoAssociativeArray | undefined {
+        if (!this.fakeServerEnabled) {
+            return undefined;
+        }
+        return toAssociativeArray(RoChannelStore.accountFields(["state", "zip", "country"]));
+    }
+
+    /**
+     * Mocks `StoreChannelCredData`: stores the artifact that `GetChannelCred` later returns as
+     * `channel_data`.
+     *
+     * Deliberately NOT gated on `fakeServer`, unlike the catalog/order commands: this is the Roku
+     * cloud credential store behind account linking, not a Streaming Store response, and the artifact
+     * it round-trips is the app's own. Gating it would silently discard tokens in production.
+     * @param data The artifact to store.
+     * @returns The documented `{ response, status }` payload, where `response` is a JSON *string* and
+     *          `status` is 0 on success (the inverse of the catalog/order convention).
+     */
+    storeCredData(data: string): RoAssociativeArray {
+        this.credData = data;
+        // `error_detail` is documented as uninitialized on success, so it is omitted entirely.
+        return toAssociativeArray({ response: JSON.stringify({ status: "success", error: "none" }), status: 0 });
+    }
+
+    /**
+     * Mocks `GetChannelCred` and the node's `getChannelCred` command. Not gated on `fakeServer`, for
+     * the reason given on {@link storeCredData}.
+     * @returns The documented `{ channelID, errorCode, json, publisherDeviceID, status }` payload.
+     *          `json` is built with `JSON.stringify` so the documented `ParseJson(channelCred.json)`
+     *          usage succeeds.
+     */
+    getChannelCredData(): RoAssociativeArray {
+        const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
+        const channelId = app?.id ?? "dev";
+        const deviceId = BrsDevice.deviceInfo.clientId;
+        const payload: FlexObject = {
+            // A PUCID identifies the same user and app across every device linked to one Roku
+            // account, so derive it deterministically rather than minting a fresh uuid per call.
+            roku_pucid: uuidv5(`${channelId}:${deviceId}`, uuidv5.URL),
+            token_type: "urn:roku:pucid:token_type:pucid_token",
+        };
+        // Returned only when the app actually stored something with StoreChannelCredData().
+        if (this.credData !== "") {
+            payload.channel_data = this.credData;
+        }
+        return toAssociativeArray({
+            channelID: channelId,
+            errorCode: "",
+            json: JSON.stringify(payload),
+            publisherDeviceID: deviceId,
+            status: 0,
+        });
+    }
+
+    /**
+     * Mocks `RequestPartnerOrder`: the billing check that must precede a partner order confirmation.
+     * A successful check remembers its order id so `confirmPartnerOrderData` can validate it.
+     * @param orderInfo The order details; expected to be an associative array.
+     * @param productId The product identifier, when supplied separately from `orderInfo`.
+     * @returns The check result. Every failure code here is an engine choice, not a device
+     *          measurement; they reuse the node's documented status table (-1 unavailable,
+     *          -3 order error, -4 invalid request).
+     */
+    requestPartnerOrderData(orderInfo: BrsType, productId: string): PartnerOrderPayload {
+        if (!this.fakeServerEnabled) {
+            return RoChannelStore.partnerOrderFailure("-1", "fakeServer is not enabled");
+        }
+        if (!(orderInfo instanceof RoAssociativeArray)) {
+            return RoChannelStore.partnerOrderFailure("-4", "Invalid request");
+        }
+        const code = productId.trim() || RoChannelStore.textField(orderInfo, "code");
+        if (code === "") {
+            return RoChannelStore.partnerOrderFailure("-4", "Missing required order field: code");
+        }
+        const price = RoChannelStore.textField(orderInfo, "price");
+        if (price === "") {
+            return RoChannelStore.partnerOrderFailure("-4", "Missing required order field: price");
+        }
+        this.mintPartnerOrderIds();
+        // Prices carry no currency symbol, matching the documented convention for the request fields.
+        return { id: this.partnerOrderId, status: "Success", tax: "0.00", total: price };
+    }
+
+    /**
+     * Mocks `ConfirmPartnerOrder`, the transactional-purchase equivalent of `DoOrder`.
+     * @param orderInfo The confirmation details; must carry the `orderId` from the preceding check.
+     * @param productId The product identifier, when supplied separately from `orderInfo`.
+     * @returns The confirmation payload; fails unless a matching billing check ran first.
+     */
+    confirmPartnerOrderData(orderInfo: BrsType, productId: string): PartnerOrderPayload {
+        if (!this.fakeServerEnabled) {
+            return RoChannelStore.partnerOrderFailure("-1", "fakeServer is not enabled");
+        }
+        if (!(orderInfo instanceof RoAssociativeArray)) {
+            return RoChannelStore.partnerOrderFailure("-4", "Invalid request");
+        }
+        if (this.partnerOrderId === "") {
+            return RoChannelStore.partnerOrderFailure("-3", "requestPartnerOrder must be called first");
+        }
+        if (RoChannelStore.textField(orderInfo, "orderId") !== this.partnerOrderId) {
+            return RoChannelStore.partnerOrderFailure("-3", "Order ID mismatch");
+        }
+        const purchaseId = this.partnerPurchaseId;
+        // An order id is single use: confirming again requires a fresh billing check.
+        this.partnerOrderId = "";
+        this.partnerPurchaseId = "";
+        return { purchaseId, status: "Success" };
+    }
+
+    /** Builds a failed partner-order payload with the documented error keys populated. */
+    private static partnerOrderFailure(errorCode: string, errorMessage: string): PartnerOrderPayload {
+        return { errorCode, errorMessage, status: "Failure" };
+    }
+
+    /**
+     * Reads an entry off an associative array as text, returning "" when it is absent.
+     * A numeric value is accepted: the fields read this way are only ever compared and echoed as
+     * strings, so rejecting the number the XML parser produces would fail a valid order.
+     */
+    private static textField(source: RoAssociativeArray, name: string): string {
+        const value = source.get(new BrsString(name));
+        if (isBrsString(value)) {
+            return value.getValue().trim();
+        }
+        return isAnyNumber(value) ? jsValueOf(value).toString() : "";
+    }
+
+    /**
+     * Mints the pair of ids a partner order reports, from a single read of `csfake/PlaceOrder.xml`.
+     *
+     * Both come from that one fixture, so they are derived together: reading it again at confirm time
+     * would re-stat, re-read and re-parse the same file for one more string. Taking the ids from the
+     * fixture (rather than generating them) is what keeps test output deterministic; with no fixture
+     * present, fall back to the engine's unique-id helper.
+     */
+    private mintPartnerOrderIds() {
+        const hasFixture = BrsDevice.fileSystem.existsSync("pkg:/csfake/PlaceOrder.xml");
+        const fixture = hasFixture ? this.getFakeOrderData("PlaceOrder") : {};
+        // The XML parser coerces a numeric-looking id to a number, so accept both scalar shapes and
+        // ignore anything else; getFakeOrderData reports a missing file by seeding `id` with the file
+        // name, which `hasFixture` already rules out.
+        const id = fixture.id;
+        const fixtureId = typeof id === "string" || typeof id === "number" ? String(id) : "";
+        this.partnerOrderId = fixtureId || genHexAddress();
+        const items = Array.isArray(fixture.order) ? fixture.order : [];
+        const first = items[0];
+        const purchaseId = first instanceof RoAssociativeArray ? RoChannelStore.textField(first, "purchaseId") : "";
+        this.partnerPurchaseId = purchaseId || `${this.partnerOrderId}-1`;
     }
 
     getAttestationToken() {
@@ -270,16 +545,19 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
     }
 
     private isValidProductOrder(catalog: RoAssociativeArray[], item: RoAssociativeArray) {
+        // Order items assembled from a ContentNode hold BOXED values (`roString`/`roInt`), because
+        // that is what `addFields` stores — so match on the unwrapped value, never on `instanceof`.
         const qty = item.get(new BrsString("qty"));
-        if (qty instanceof Int32 && qty.getValue() <= 0) {
+        if (isAnyNumber(qty) && jsValueOf(qty) <= 0) {
+            return false;
+        }
+        const orderCode = item.get(new BrsString("code"));
+        if (!isBrsString(orderCode)) {
             return false;
         }
         return catalog.some((prod) => {
             const prodCode = prod.get(new BrsString("code"));
-            const orderCode = item.get(new BrsString("code"));
-            return (
-                prodCode instanceof BrsString && orderCode instanceof BrsString && prodCode.value === orderCode.value
-            );
+            return isBrsString(prodCode) && prodCode.getValue() === orderCode.getValue();
         });
     }
 
@@ -371,12 +649,8 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
         },
         impl: (_: Interpreter, order: BrsComponent, orderInfo: RoAssociativeArray | BrsInvalid) => {
             if (order instanceof RoList || order instanceof RoArray) {
-                this.setNewOrder(order.getElements().filter((item) => item instanceof RoAssociativeArray));
-                if (this.order.length > 0 && orderInfo instanceof RoAssociativeArray) {
-                    this.orderInfo = orderInfo;
-                } else {
-                    this.orderInfo = BrsInvalid.Instance;
-                }
+                const items = order.getElements().filter((item) => item instanceof RoAssociativeArray);
+                this.setNewOrder(items, orderInfo);
             }
             return BrsInvalid.Instance;
         },
@@ -389,8 +663,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            this.order.length = 0;
-            this.orderInfo = BrsInvalid.Instance;
+            this.setNewOrder([], BrsInvalid.Instance);
             return BrsInvalid.Instance;
         },
     });
@@ -402,8 +675,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, code: BrsString, qty: Int32) => {
-            this.setDeltaOrder(code.value, qty.getValue());
-            return new Int32(this.order.length);
+            return new Int32(this.setDeltaOrder(code.value, qty.getValue()));
         },
     });
 
@@ -428,12 +700,10 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             if (!this.port) {
                 return BrsBoolean.False;
             }
+            // placeOrder rejects an empty cart itself; the fakeServer check has to stay here, or with
+            // fakeServer off but a csfake/ folder present it would report "Invalid Product Order".
             const status = { code: -3, message: "Invalid Order" };
-            if (!this.fakeServerEnabled || this.order.length === 0) {
-                this.port.pushMessage(new RoChannelStoreEvent(this.id, [], status));
-                return BrsBoolean.False;
-            }
-            const order = this.placeOrder(status);
+            const order = this.fakeServerEnabled ? this.placeOrder(status) : [];
             this.port.pushMessage(new RoChannelStoreEvent(this.id, order, status));
             return BrsBoolean.from(status.code === 1);
         },
@@ -458,7 +728,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return BrsInvalid.Instance;
+            return this.getUserAccountData() ?? BrsInvalid.Instance;
         },
     });
 
@@ -469,18 +739,23 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return toAssociativeArray({ state: "", zip: "", country: "" });
+            return this.getRegionData() ?? toAssociativeArray({ state: "", zip: "", country: "" });
         },
     });
 
     /** Provides a way to request user authorization to share his account information with the calling channel. */
     private readonly getPartialUserData = new Callable("getPartialUserData", {
         signature: {
-            args: [new StdlibArgument("properties", ValueKind.String)],
+            args: [
+                new StdlibArgument("properties", ValueKind.String),
+                new StdlibArgument("requestInfo", ValueKind.Object, BrsInvalid.Instance),
+            ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, properties: BrsString) => {
-            return BrsInvalid.Instance;
+        impl: (_: Interpreter, properties: BrsString, requestInfo: BrsType) => {
+            const context =
+                requestInfo instanceof RoAssociativeArray ? RoChannelStore.textField(requestInfo, "context") : "";
+            return this.getUserAccountData(properties.value, context || "signup") ?? BrsInvalid.Instance;
         },
     });
 
@@ -491,8 +766,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, data: BrsString) => {
-            this.credData = data.value;
-            return toAssociativeArray({ status: 0 });
+            return this.storeCredData(data.value);
         },
     });
 
@@ -503,20 +777,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            let json = "";
-            let status = 400;
-            if (this.credData !== "") {
-                json = `{channel_data="${this.credData}"}`;
-                status = 0;
-            }
-            const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
-            const channelCred = {
-                channelId: app?.id ?? "dev",
-                json: json,
-                publisherDeviceId: BrsDevice.deviceInfo.clientId,
-                status: status,
-            };
-            return toAssociativeArray(channelCred);
+            return this.getChannelCredData();
         },
     });
 
@@ -541,7 +802,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, orderInfo: RoAssociativeArray, productId: BrsString) => {
-            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
+            return toAssociativeArray(this.requestPartnerOrderData(orderInfo, productId.value));
         },
     });
 
@@ -555,7 +816,7 @@ ZZwGPYCKEHMPrIOOXJ-S9ZjArgaEpBUpMXWJibFxnkpVUVzbC22GEaqz_SjOJXFMQU7TaCKkDeCYVKyl
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, confirmOrderInfo: RoAssociativeArray, productId: BrsString) => {
-            return toAssociativeArray({ errorCode: -1, errorMessage: "", status: "Failure" });
+            return toAssociativeArray(this.confirmPartnerOrderData(confirmOrderInfo, productId.value));
         },
     });
 }
