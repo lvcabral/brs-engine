@@ -205,10 +205,13 @@ describe("end to end standard library", () => {
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
             "<Interface: ifFloat>",
             "<Interface: ifAssociativeArray>",
+            "<Interface: ifArray>",
+            "<Interface: ifList>",
             "<Interface: ifToStr>",
             "<Interface: ifBoolean>",
             "invalid",
             "<Interface: ifAssociativeArray>",
+            "<Interface: ifArray>",
             "<Interface: ifStringOps>",
             "<Interface: ifStringOps>",
             "<Interface: ifIntOps>",

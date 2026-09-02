@@ -52,6 +52,15 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             throw new Error(`BRIGHTSCRIPT: ERROR: Runtime: "roArray": invalid number of parameters:`);
         }
         this.enumIndex = this.elements.length ? 0 : -1;
+    }
+
+    /**
+     * Built on the first method/interface lookup rather than in the constructor: an `roArray` is one of
+     * the most frequently allocated components in the engine (every `[...]` literal, every container
+     * copy, every `vector2d`/`rect2d` field write), and the great majority never have a method called
+     * on them. Registering eagerly allocated four interface objects and ~13 `Callable`s per instance.
+     */
+    protected buildMethods() {
         const ifArray = new IfArray(this);
         const ifArrayGet = new IfArrayGet(this);
         const ifArraySet = new IfArraySet(this);

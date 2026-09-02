@@ -77,6 +77,15 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         if (this.x + this.width <= bitmap.width && this.y + this.height <= bitmap.height) {
             this.valid = true;
         }
+    }
+
+    /**
+     * Built on the first method/interface lookup rather than in the constructor. A region is allocated
+     * per sprite and per `getSubRegion()` call — games create them in bulk — and its surface is 21 own
+     * methods plus `IfDraw2D`'s 16, i.e. 37 `Callable`s that most instances never use. The own methods
+     * are getters below for the same reason: a property initializer would run regardless of this hook.
+     */
+    protected buildMethods() {
         const ifDraw2D = new IfDraw2D(this);
         this.registerMethods({
             ifRegion: [
@@ -292,295 +301,337 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     /** Returns a newly created copy of the region as a new roRegion object */
-    private readonly copy = new Callable("copy", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return new RoRegion(
-                this.bitmap,
-                new Int32(this.x),
-                new Int32(this.y),
-                new Int32(this.width),
-                new Int32(this.height)
-            );
-        },
-    });
+    private get copy(): Callable {
+        return new Callable("copy", {
+            signature: {
+                args: [],
+                returns: ValueKind.Object,
+            },
+            impl: (_: Interpreter) => {
+                return new RoRegion(
+                    this.bitmap,
+                    new Int32(this.x),
+                    new Int32(this.y),
+                    new Int32(this.width),
+                    new Int32(this.height)
+                );
+            },
+        });
+    }
 
     /** Returns the roBitmap object of the bitmap this region refers to	 */
-    private readonly getBitmap = new Callable("getBitmap", {
-        signature: {
-            args: [],
-            returns: ValueKind.Object,
-        },
-        impl: (_: Interpreter) => {
-            return this.bitmap;
-        },
-    });
+    private get getBitmap(): Callable {
+        return new Callable("getBitmap", {
+            signature: {
+                args: [],
+                returns: ValueKind.Object,
+            },
+            impl: (_: Interpreter) => {
+                return this.bitmap;
+            },
+        });
+    }
 
     /** Gets the type of region to be used for collision tests with the sprite */
-    private readonly getCollisionType = new Callable("getCollisionType", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.collisionType);
-        },
-    });
+    private get getCollisionType(): Callable {
+        return new Callable("getCollisionType", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.collisionType);
+            },
+        });
+    }
 
     /** Returns the height of the region */
-    private readonly getHeight = new Callable("getHeight", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.height);
-        },
-    });
+    private get getHeight(): Callable {
+        return new Callable("getHeight", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.height);
+            },
+        });
+    }
 
     /** Returns the pretranslation x value */
-    private readonly getPretranslationX = new Callable("getPretranslationX", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.translationX);
-        },
-    });
+    private get getPretranslationX(): Callable {
+        return new Callable("getPretranslationX", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.translationX);
+            },
+        });
+    }
 
     /** Returns the pretranslation y value */
-    private readonly getPretranslationY = new Callable("getPretranslationY", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.translationY);
-        },
-    });
+    private get getPretranslationY(): Callable {
+        return new Callable("getPretranslationY", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.translationY);
+            },
+        });
+    }
 
     /** Returns the scaling mode of the region */
-    private readonly getScaleMode = new Callable("getScaleMode", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.scaleMode);
-        },
-    });
+    private get getScaleMode(): Callable {
+        return new Callable("getScaleMode", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.scaleMode);
+            },
+        });
+    }
 
     /** Returns the "frame hold time" in milliseconds */
-    private readonly getTime = new Callable("getTime", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.time);
-        },
-    });
+    private get getTime(): Callable {
+        return new Callable("getTime", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.time);
+            },
+        });
+    }
 
     /** Returns the width of the region */
-    private readonly getWidth = new Callable("getWidth", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.width);
-        },
-    });
+    private get getWidth(): Callable {
+        return new Callable("getWidth", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.width);
+            },
+        });
+    }
 
     /** Returns true if the region can be wrapped */
-    private readonly getWrap = new Callable("getWrap", {
-        signature: {
-            args: [],
-            returns: ValueKind.Boolean,
-        },
-        impl: (_: Interpreter) => {
-            return BrsBoolean.from(this.wrap);
-        },
-    });
+    private get getWrap(): Callable {
+        return new Callable("getWrap", {
+            signature: {
+                args: [],
+                returns: ValueKind.Boolean,
+            },
+            impl: (_: Interpreter) => {
+                return BrsBoolean.from(this.wrap);
+            },
+        });
+    }
 
     /** Returns the x coordinate of the region in its bitmap */
-    private readonly getX = new Callable("getX", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.x);
-        },
-    });
+    private get getX(): Callable {
+        return new Callable("getX", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.x);
+            },
+        });
+    }
 
     /** Returns the y coordinate of the region in its bitmap */
-    private readonly getY = new Callable("getY", {
-        signature: {
-            args: [],
-            returns: ValueKind.Int32,
-        },
-        impl: (_: Interpreter) => {
-            return new Int32(this.y);
-        },
-    });
+    private get getY(): Callable {
+        return new Callable("getY", {
+            signature: {
+                args: [],
+                returns: ValueKind.Int32,
+            },
+            impl: (_: Interpreter) => {
+                return new Int32(this.y);
+            },
+        });
+    }
 
     /** Adds the passed parameters x,y, w, and h to the values of those roRegion fields. */
-    private readonly offset = new Callable("offset", {
-        signature: {
-            args: [
-                new StdlibArgument("x", ValueKind.Dynamic),
-                new StdlibArgument("y", ValueKind.Dynamic),
-                new StdlibArgument("w", ValueKind.Dynamic),
-                new StdlibArgument("h", ValueKind.Dynamic),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, x: Float, y: Float, w: Float, h: Float) => {
-            this.applyOffset(x.getValue(), y.getValue(), w.getValue(), h.getValue());
-            return BrsInvalid.Instance;
-        },
-    });
+    private get offset(): Callable {
+        return new Callable("offset", {
+            signature: {
+                args: [
+                    new StdlibArgument("x", ValueKind.Dynamic),
+                    new StdlibArgument("y", ValueKind.Dynamic),
+                    new StdlibArgument("w", ValueKind.Dynamic),
+                    new StdlibArgument("h", ValueKind.Dynamic),
+                ],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, x: Float, y: Float, w: Float, h: Float) => {
+                this.applyOffset(x.getValue(), y.getValue(), w.getValue(), h.getValue());
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Initializes the fields of the region with the values of the fields in the srcRegion */
-    private readonly set = new Callable("set", {
-        signature: {
-            args: [new StdlibArgument("srcRegion", ValueKind.Object)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, srcRegion: RoRegion) => {
-            this.x = srcRegion.x;
-            this.y = srcRegion.y;
-            this.width = srcRegion.width;
-            this.height = srcRegion.height;
-            srcRegion.bitmap?.addReference();
-            this.bitmap?.removeReference();
-            this.bitmap = srcRegion.bitmap;
-            this.collisionType = srcRegion.collisionType;
-            this.translationX = srcRegion.translationX;
-            this.translationY = srcRegion.translationY;
-            this.scaleMode = srcRegion.scaleMode;
-            this.time = srcRegion.time;
-            this.wrap = srcRegion.wrap;
-            this.collisionCircle = srcRegion.collisionCircle;
-            this.collisionRect = srcRegion.collisionRect;
-            this.bitmap.makeDirty();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get set(): Callable {
+        return new Callable("set", {
+            signature: {
+                args: [new StdlibArgument("srcRegion", ValueKind.Object)],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, srcRegion: RoRegion) => {
+                this.x = srcRegion.x;
+                this.y = srcRegion.y;
+                this.width = srcRegion.width;
+                this.height = srcRegion.height;
+                srcRegion.bitmap?.addReference();
+                this.bitmap?.removeReference();
+                this.bitmap = srcRegion.bitmap;
+                this.collisionType = srcRegion.collisionType;
+                this.translationX = srcRegion.translationX;
+                this.translationY = srcRegion.translationY;
+                this.scaleMode = srcRegion.scaleMode;
+                this.time = srcRegion.time;
+                this.wrap = srcRegion.wrap;
+                this.collisionCircle = srcRegion.collisionCircle;
+                this.collisionRect = srcRegion.collisionRect;
+                this.bitmap.makeDirty();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Sets the type of region to be used for collision tests with the sprite */
-    private readonly setCollisionType = new Callable("setCollisionType", {
-        signature: {
-            args: [new StdlibArgument("collisionType", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, collisionType: Int32) => {
-            this.collisionType = collisionType.getValue();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setCollisionType(): Callable {
+        return new Callable("setCollisionType", {
+            signature: {
+                args: [new StdlibArgument("collisionType", ValueKind.Int32)],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, collisionType: Int32) => {
+                this.collisionType = collisionType.getValue();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Sets the collision circle used for type 2 collision tests. */
-    private readonly setCollisionCircle = new Callable("setCollisionCircle", {
-        signature: {
-            args: [
-                new StdlibArgument("xOffset", ValueKind.Int32),
-                new StdlibArgument("yOffset", ValueKind.Int32),
-                new StdlibArgument("radius", ValueKind.Int32),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, radius: Int32) => {
-            this.collisionCircle = {
-                x: xOffset.getValue(),
-                y: yOffset.getValue(),
-                r: radius.getValue(),
-            };
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setCollisionCircle(): Callable {
+        return new Callable("setCollisionCircle", {
+            signature: {
+                args: [
+                    new StdlibArgument("xOffset", ValueKind.Int32),
+                    new StdlibArgument("yOffset", ValueKind.Int32),
+                    new StdlibArgument("radius", ValueKind.Int32),
+                ],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, radius: Int32) => {
+                this.collisionCircle = {
+                    x: xOffset.getValue(),
+                    y: yOffset.getValue(),
+                    r: radius.getValue(),
+                };
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Sets the collision rectangle used for type 1 collision tests. */
-    private readonly setCollisionRectangle = new Callable("setCollisionRectangle", {
-        signature: {
-            args: [
-                new StdlibArgument("xOffset", ValueKind.Int32),
-                new StdlibArgument("yOffset", ValueKind.Int32),
-                new StdlibArgument("width", ValueKind.Int32),
-                new StdlibArgument("height", ValueKind.Int32),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, width: Int32, height: Int32) => {
-            this.collisionRect = {
-                x: xOffset.getValue(),
-                y: yOffset.getValue(),
-                width: width.getValue(),
-                height: height.getValue(),
-            };
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setCollisionRectangle(): Callable {
+        return new Callable("setCollisionRectangle", {
+            signature: {
+                args: [
+                    new StdlibArgument("xOffset", ValueKind.Int32),
+                    new StdlibArgument("yOffset", ValueKind.Int32),
+                    new StdlibArgument("width", ValueKind.Int32),
+                    new StdlibArgument("height", ValueKind.Int32),
+                ],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, xOffset: Int32, yOffset: Int32, width: Int32, height: Int32) => {
+                this.collisionRect = {
+                    x: xOffset.getValue(),
+                    y: yOffset.getValue(),
+                    width: width.getValue(),
+                    height: height.getValue(),
+                };
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Set the pretranslation for DrawObject, DrawRotatedObject and DrawScaledObject */
-    private readonly setPretranslation = new Callable("setPretranslation", {
-        signature: {
-            args: [
-                new StdlibArgument("translationX", ValueKind.Int32),
-                new StdlibArgument("translationX", ValueKind.Int32),
-            ],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, translationX: Int32, translationY: Int32) => {
-            this.translationX = translationX.getValue();
-            this.translationY = translationY.getValue();
-            this.bitmap.makeDirty();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setPretranslation(): Callable {
+        return new Callable("setPretranslation", {
+            signature: {
+                args: [
+                    new StdlibArgument("translationX", ValueKind.Int32),
+                    new StdlibArgument("translationX", ValueKind.Int32),
+                ],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, translationX: Int32, translationY: Int32) => {
+                this.translationX = translationX.getValue();
+                this.translationY = translationY.getValue();
+                this.bitmap.makeDirty();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Sets the scaling mode of the region  */
-    private readonly setScaleMode = new Callable("setScaleMode", {
-        signature: {
-            args: [new StdlibArgument("scaleMode", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, scaleMode: Int32) => {
-            this.scaleMode = scaleMode.getValue();
-            this.bitmap.makeDirty();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setScaleMode(): Callable {
+        return new Callable("setScaleMode", {
+            signature: {
+                args: [new StdlibArgument("scaleMode", ValueKind.Int32)],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, scaleMode: Int32) => {
+                this.scaleMode = scaleMode.getValue();
+                this.bitmap.makeDirty();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** Returns the "frame hold time" in milliseconds  */
-    private readonly setTime = new Callable("setTime", {
-        signature: {
-            args: [new StdlibArgument("time", ValueKind.Int32)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, time: Int32) => {
-            this.time = time.getValue();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setTime(): Callable {
+        return new Callable("setTime", {
+            signature: {
+                args: [new StdlibArgument("time", ValueKind.Int32)],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, time: Int32) => {
+                this.time = time.getValue();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 
     /** If true, any part of region that goes beyond the bounds of its bitmap "wraps" to the other side of the bitmap and is rendered there. */
-    private readonly setWrap = new Callable("setWrap", {
-        signature: {
-            args: [new StdlibArgument("wrap", ValueKind.Boolean)],
-            returns: ValueKind.Void,
-        },
-        impl: (_: Interpreter, wrap: BrsBoolean) => {
-            this.wrap = wrap.toBoolean();
-            this.bitmap.makeDirty();
-            return BrsInvalid.Instance;
-        },
-    });
+    private get setWrap(): Callable {
+        return new Callable("setWrap", {
+            signature: {
+                args: [new StdlibArgument("wrap", ValueKind.Boolean)],
+                returns: ValueKind.Void,
+            },
+            impl: (_: Interpreter, wrap: BrsBoolean) => {
+                this.wrap = wrap.toBoolean();
+                this.bitmap.makeDirty();
+                return BrsInvalid.Instance;
+            },
+        });
+    }
 }
 
 export function createRegion(bitmap: RoBitmap | RoScreen, x: Int32, y: Int32, width: Int32, height: Int32) {

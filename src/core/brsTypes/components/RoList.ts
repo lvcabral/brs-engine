@@ -24,6 +24,16 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         }
         this.listIndex = -1;
         this.enumIndex = -1;
+    }
+
+    /**
+     * Built on the first method/interface lookup rather than in the constructor: an `roList` carries no
+     * methods of its own — its whole surface comes from six interface objects (`ifList`, `ifListToArray`,
+     * `ifArray`, `ifArrayGet`, `ifArraySet`, `ifEnum`, ~30 `Callable`s in total) — and the engine mints
+     * one for every XML query, registry/filesystem listing and `roXMLList`, most of which are only
+     * iterated or converted.
+     */
+    protected buildMethods() {
         const ifList = new IfList(this);
         const ifListToArray = new IfListToArray(this);
         const ifArray = new IfArray(this);
