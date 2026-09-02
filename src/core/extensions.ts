@@ -1,4 +1,4 @@
-import { BrsComponent, BrsType } from "./brsTypes";
+import { BrsComponent } from "./brsTypes";
 import { AppPayload, TaskPayload } from "./common";
 import { Interpreter } from "./interpreter";
 
@@ -61,8 +61,8 @@ export interface ISGNode extends BrsComponent {
     readonly nodeSubtype: string;
     /** Location information for the node, useful for debugging and error reporting. */
     location?: string;
-    /** Creates a deep copy of this SceneGraph node and its children. */
-    deepCopy(): BrsType;
+    // No node-duplication member on purpose: no device copy path duplicates a node, so cloning one
+    // from core must stay a compile error. See `.claude/docs/scenegraph-invariants.md`.
 }
 
 /**

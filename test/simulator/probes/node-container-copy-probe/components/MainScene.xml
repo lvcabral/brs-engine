@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="services" type="assocarray" />
+        <field id="agents" type="array" />
+        <field id="agentNode" type="node" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+    end sub
+    ]]></script>
+</component>

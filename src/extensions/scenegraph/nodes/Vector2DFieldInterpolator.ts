@@ -17,18 +17,23 @@ export class Vector2DFieldInterpolator extends Interpolator {
     }
 
     /**
-     * Generates an interpolated 2D point for the supplied fraction. Values are copied to new arrays so
-     * calling code can mutate the result without affecting cached key data.
+     * Generates an interpolated 2D point for the supplied fraction. Interpolated points are freshly
+     * built; the single-key shortcut returns the cached array itself, because the field write that
+     * consumes it copies (`Node.setValue`) and this runs every frame per animated target.
      */
     interpolate(fraction: number): BrsType | undefined {
         const keyValues = this.getValue("keyValue");
-        if (!(keyValues instanceof RoArray) || keyValues.getElements().length === 0) {
+        if (!(keyValues instanceof RoArray)) {
             return undefined;
         }
-
-        const elements = keyValues.getElements();
+        // `elements` directly, not `getElements()`: the latter slices a throwaway copy, and this is a
+        // per-frame path.
+        const elements = keyValues.elements;
+        if (elements.length === 0) {
+            return undefined;
+        }
         if (elements.length === 1 && elements[0] instanceof RoArray) {
-            return elements[0].deepCopy();
+            return elements[0];
         }
 
         const { index, localT } = this.resolveSegment(fraction);

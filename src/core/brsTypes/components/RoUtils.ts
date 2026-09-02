@@ -48,7 +48,12 @@ export class RoUtils extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter, data: BrsType) => {
-            if (data instanceof RoArray || data instanceof RoAssociativeArray || isSceneGraphNode(data)) {
+            if (isSceneGraphNode(data)) {
+                // An roSGNode is not copyable: a device hands the same node back, live (probe S6).
+                return data;
+            } else if (data instanceof RoArray || data instanceof RoAssociativeArray) {
+                // Same drop/carry policy as a node-field copy (probe S11); the boxing differs, since a
+                // field read passes `boxContent`. See `RoAssociativeArray.deepCopy`.
                 return data.deepCopy();
             }
             return new RoInvalid();
