@@ -319,6 +319,22 @@ export class Field {
     }
 
     /**
+     * Builds an independent Field with this one's metadata and value — every attribute travels by
+     * construction, so a newly added one cannot silently vanish from a copy the way hand-passing the
+     * 7 positional constructor arguments dropped `valueRef`. A container value is copied so the new
+     * Field owns its storage (a by-ref field would otherwise hand the same AA to both
+     * `orig.getRef()` and `clone.getRef()`). NOT carried: `container` and the observer collections.
+     * @returns An independent Field with this field's name, type, flags and value.
+     */
+    copy(): Field {
+        const owned =
+            this.value instanceof RoAssociativeArray || this.value instanceof RoArray
+                ? this.value.deepCopy()
+                : this.value;
+        return new Field(this.name, owned, this.type, this.alwaysNotify, this.system, this.hidden, this.valueRef);
+    }
+
+    /**
      * Node this field belongs to, recorded the first time the owning node writes it.
      *
      * A `Field` is otherwise anonymous — it knows its name and value but not who holds it — which

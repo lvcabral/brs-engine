@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="DerivedAgent" extends="GroupAgent">
+    <interface>
+        <field id="derivedMarker" type="string" value="orig-derived" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/agentlib.brs" />
+</component>

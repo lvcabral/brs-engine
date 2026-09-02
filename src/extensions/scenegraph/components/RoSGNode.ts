@@ -179,7 +179,6 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         this.setValue(index.getValue(), value);
         return BrsInvalid.Instance;
     }
-    abstract deepCopy(): BrsType;
 
     // Abstract methods to be implemented by subclasses
     abstract getElements(): BrsString[];

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="NodeAgent" extends="Node">
+    <interface>
+        <field id="marker" type="string" value="orig-marker" />
+        <function name="configure" />
+        <function name="readToken" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/agentlib.brs" />
+</component>

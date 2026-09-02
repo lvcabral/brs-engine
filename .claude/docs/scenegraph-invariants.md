@@ -356,6 +356,104 @@ When `addFields` builds a custom component's fields, a `<field>` whose name alre
 the XML default is applied by the subsequent `setValueSilent`. Regression:
 `duplicate-system-field-app` in `test/cli/cli-scenegraph.test.js`.
 
+## Copying a container NEVER clones a SceneGraph node inside it
+
+Reading a node field whose value is an `assocarray` or `array` hands the app a copy, so it cannot
+mutate the stored value in place (`Node.get` → `value.deepCopy(true)`). The copy is of the
+**container only**: any `roSGNode` inside is carried over as-is. Same for `roUtils.DeepCopy` — its
+"copies nested objects" contract stops at nodes.
+
+Cloning them instead is silently destructive. A clone is built by `createFlatNode`
+(`factory/NodeFactory.ts`), which never runs `init()`, so its `m` holds only `top`/`global` — every
+value the component cached in its own script scope reads back as `invalid` on the next `callFunc`.
+The pattern that trips over it is ordinary: an app stashes a component handle (an analytics agent, a
+service/manager object) in an AA field, reads the field back, and `callFunc`s through it. The failure
+surfaces *inside the component*, far from the field read:
+
+```
+pkg:/components/<Agent>.brs(NNN): Invalid value for left-side of expression.
+```
+
+**Device-confirmed** (`test/simulator/probes/node-container-copy-probe`): a component read back out of
+an `assocarray` field, an `array` field, or `roUtils.DeepCopy` still answers with its cached script
+scope on all three paths. Regression: "Keeps a component's script scope intact when it is read back
+out of an assocarray/array field or roUtils.DeepCopy" in `test/cli/cli-scenegraph.test.js`
+(`aa-field-node-ref-app`); wider end-to-end shape in `test/simulator/probes/detached-agent-probe`.
+
+Two identity traps when debugging this area:
+
+- `roUtils.IsSameObject` compares the **BrightScript handle, not the node**. A device mints a fresh
+  handle on *every* retrieval that crosses the SceneGraph boundary — a `node`-field read, `getField`,
+  `findNode`, `getChild`, `getParent`, even a node returned from `roUtils.DeepCopy` — so for two node
+  values it answers `false` in essentially every real shape, and `true` only when the same node is
+  aliased through a plain variable / plain AA / plain array (probe S1 vs S2). The engine answers `true`
+  whenever both values are the same node: a **known deviation**, since matching it needs a
+  per-retrieval handle object and one JS instance per node is load-bearing here for `isSameNode`, the
+  focus chain and the address-keyed cross-thread registry. Use `isSameNode` for node identity — it
+  matches the device on every probe line. The affected expectations are marked inline in the
+  `components/roUtils.brs` block of `test/e2e/BrsComponents.test.js`.
+
+The copy runs on **both** directions of an `assocarray`/`array` field: reading returns a copy of the
+container, and **assigning copies the source** (`Field.setValue`, guarded by `!byRef` — device-confirmed,
+probe S3.1), so mutating the caller's container afterwards cannot rewrite the field. `setRef` opts out
+by construction, which is what it is for. Two consequences worth knowing:
+
+- The copy sits in **`Node.setValue`**, the app-facing funnel — `node.f = x`, `setField`, `setFields`,
+  `addFields`, `update` all reach it, including its new-field branch. Deliberately NOT in
+  `Field.setValue`: that is the storage primitive, and keeping it clean leaves engine-internal writes
+  (`setValueSilent`, cross-thread mirrors) and `moveIntoField` (the documented no-copy path) uncharged.
+  Cost measured at ~4.2 µs per container write and 0 on `layout-perf-app`; an animation writing 30
+  interpolated containers per frame pays ~0.75% of a frame.
+- `moveIntoField` does its own copy of nested containers, because `ifSGNodeField` says a nested object
+  holding external references is "preserved by copying it instead" of moved — pinned by the
+  device-derived `node.aa.bar` expectation in `test/e2e/resources/components/roUtils.brs`.
+- **The container copy DROPS what it cannot copy, and must guard cycles.** A member that is neither a
+  container, a node, boxable nor unboxable — a function reference, `roDateTime`, `roByteArray`,
+  `roMessagePort`, … — is **dropped**. Device-confirmed for a field assignment/read *and* for
+  `roUtils.DeepCopy` (probe S11: 8 members in, 3 out, and the two paths are byte-identical — so there is
+  one policy and no flag; an earlier pass added a `dropUncopyable` flag on the guess that the field path
+  should carry them, which the device disproved). An **associative array drops the key**; an **array keeps
+  the slot and stores `invalid`**, so `Count()` is unchanged (S11.10). A **node is the one non-copyable
+  that is carried**, on every path (S11.4/S11.16/S7.2), so its branch sits ahead of the drop. Both
+  `deepCopy`s also take a `visited` map that registers the empty copy before recursing: a back-pointer
+  (`parent.child.parent`) used to overflow the JS stack on assignment, and a device copies it with the
+  cycle intact (S12). Regression: "Copies a container into/out of a field without dropping uncopyable
+  members or looping on cycles" in `test/cli/cli-scenegraph.test.js`.
+- Because the stored value is now always a distinct object and `RoAssociativeArray.equalTo` is always
+  false, assigning the *same* AA twice notifies observers both times, where it previously suppressed the
+  second. That matches a device, where the field likewise holds a fresh copy each time.
+
+**No path duplicates a node** — device-confirmed across all of them, so there is no longer a
+node-duplication primitive at all (`Node.deepCopy` was deleted once its last caller went away):
+
+- container copies and `roUtils.DeepCopy` carry the node over (probe S4-S7);
+- `moveIntoField` carries it over (S9);
+- `clone()` duplicates the node's own field storage and its **children**, but a **node-valued field
+  points at the same node** (S10.2/S10.4/S10.5) — so `clone` is not a deep copy of the whole graph.
+
+When building a `Field` for a copy, use **`Field.copyWith(value)`** rather than the constructor: the 7
+positional arguments include `valueRef`, which defaults to `false`, so passing them by hand silently
+stripped `setRef`/`getRef` from the copy.
+
+Two measured deviations remain here, both recorded in `docs/limitations.md` and
+`test/simulator/probes/clone-and-setref-probe`:
+
+- **`clone()` of a custom component** drops the component layer **only when the built-in base is exactly
+  `Node`** — device-measured, `test/simulator/probes/clone-basetype-probe` D0 vs D1-D4. The bare clone is
+  a plain `Node` with just `id`/`focusable`/`focusedChild`/`change`, carrying the instance's values;
+  `subtype()` reports `Node`, declared and `addField` fields are gone, `callFunc` returns `invalid`. Over
+  any other base (`Group`, `Label`, `ContentNode`, or another custom component) everything is preserved
+  and `callFunc` resolves against an **empty** `m` (`init()` is never re-run), which is what the engine
+  always did. No reason for the asymmetry is documented; `Node.cloneNode`'s `bareClone` condition encodes
+  it as the quirk it is. Do not generalise it into "collapse to the base type" — that was an early wrong
+  guess from one data point, and `clone-callfunc-app` (a `ContentNode`-based component) is correct as
+  written.
+- **`setRef`/`getRef`/`canGetRef` are render-thread-only on a device** and fail from `Main` (returning
+  false, field unassigned). Their render-thread semantics match the engine line for line — including that
+  a normal assignment does *not* make a field ref-gettable, and that `canGetRef` does not care whether
+  another reference to the source AA is alive. The engine accepts them from `Main` only because it has no
+  main/render ScriptEngine split.
+
 ## `ArrayGrid`/`RowList` item-component caches are position-keyed, not content-keyed
 
 `ArrayGrid.itemComps[]` and `RowList.rowItemComps[][]` are reused across frames, indexed purely by

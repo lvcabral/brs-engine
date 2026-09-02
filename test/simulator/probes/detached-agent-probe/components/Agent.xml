@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  A plain `Node` component (not a Group, never appended to the Scene) whose XML `<children>`
+  interleave Timers and custom Task children. Child order is deliberate: if creating child N throws,
+  every later sibling is silently dropped and only the *later* findNode() misses.
+-->
+<component name="probe.agent.Agent" extends="Node">
+    <interface>
+        <field id="version" type="string" value="1.0.0" />
+        <function name="agentActivateLogging" />
+        <function name="agentInit" />
+        <function name="agentSetInterval" />
+        <function name="agentSetIntervalPrimary" />
+        <function name="agentCheckLogging" />
+        <function name="agentTakeSamples" />
+        <function name="agentReport" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/Agent.brs" />
+    <children>
+        <Timer id="heartbeatTimer" repeat="true" duration="30" />
+        <probe.agent.AgentTask id="PrimaryTask" />
+        <Timer id="primaryTimer" repeat="true" />
+        <probe.agent.AgentTask id="SecondaryTask" />
+        <Timer id="secondaryTimer" repeat="true" />
+        <probe.agent.AgentTask id="TertiaryTask" />
+        <Timer id="tertiaryTimer" repeat="true" />
+    </children>
+</component>

@@ -15,7 +15,6 @@ import {
     RoArray,
     RoAssociativeArray,
     RoFunction,
-    RoInvalid,
     RoMessagePort,
     Uninitialized,
     ValueKind,
@@ -444,6 +443,10 @@ export class Node extends RoSGNode implements BrsValue {
         if (field) {
             const value = field.getValue();
             if (value instanceof RoAssociativeArray || value instanceof RoArray) {
+                // Reading an `assocarray`/`array` field hands back a copy of the *container* (Roku
+                // does not let the app mutate the stored value in place), but any node inside stays
+                // the same node — apps stash component handles in such a field and `callFunc` them
+                // after reading it back, which a clone (empty script scope) would break.
                 return value.deepCopy(true);
             } else if (isUnboxable(value)) {
                 return value.copy();
@@ -485,6 +488,16 @@ export class Node extends RoSGNode implements BrsValue {
      * @param sync Optional flag indicating whether to synchronize this field change with other threads.
      */
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
+        // A device COPIES an assigned assocarray/array into the field — `setRef` exists to opt out
+        // (probe S3.1) — so mutating the caller's container afterwards cannot rewrite the field. This
+        // sits at the app-facing funnel, which every app write reaches (`node.f = x`, `setField`,
+        // `setFields`, `addFields`, `update`), INCLUDING the new-field branch below that builds its
+        // `Field` directly. Keeping it out of `Field.setValue` leaves the storage primitive free for
+        // engine-internal writes (`setValueSilent`, cross-thread mirrors) and for `moveIntoField`,
+        // which `ifSGNodeField` defines as the no-copy path. Nodes inside are carried, not cloned.
+        if (value instanceof RoAssociativeArray || value instanceof RoArray) {
+            value = value.deepCopy();
+        }
         const mapKey = index.toLowerCase();
         const fieldType = kind ?? FieldKind.fromBrsType(value);
         let field = this.resolveField(mapKey);
@@ -595,13 +608,24 @@ export class Node extends RoSGNode implements BrsValue {
         if (visitedNodes.has(this)) {
             return visitedNodes.get(this)!;
         }
-        const clonedNode = createFlatNode(this.nodeType, this.nodeSubtype);
+        // Device quirk (probe `clone-basetype-probe`, D0 vs D1-D4): a custom component whose ROOT
+        // built-in base is `Node` clones to a BARE `Node` — subtype, fields, functions and script scope
+        // all dropped. Any other root preserves everything. `nodeType` is the root (`getNodeType` walks
+        // the chain), so a `Node`-rooted custom-extends-custom chain also bare-clones — inferred from
+        // the rule, not measured. Do NOT generalise; see `.claude/docs/scenegraph-invariants.md`.
+        const bareClone = this.nodeType === SGNodeType.Node && this.componentDef !== undefined;
+        const clonedNode = createFlatNode(this.nodeType, bareClone ? this.nodeType : this.nodeSubtype);
         if (!(clonedNode instanceof RoSGNode)) {
             return BrsInvalid.Instance;
         }
         visitedNodes.set(this, clonedNode);
         // Clone fields
         for (const [key, field] of this.fields) {
+            // Before the alias check: a bare clone drops this key entirely, so an aliased field must
+            // not abort the clone with "No such field" — a device still returns the bare `Node`.
+            if (bareClone && !clonedNode.fields.has(key)) {
+                continue;
+            }
             if (this.aliases.has(key) && interpreter) {
                 const parentType = subtypeHierarchy.get(this.nodeSubtype) ?? "Node";
                 BrsDevice.stderr.write(
@@ -611,19 +635,11 @@ export class Node extends RoSGNode implements BrsValue {
                 );
                 return BrsInvalid.Instance;
             }
-            let fieldValue = field.getValue(false);
-            if (fieldValue instanceof RoSGNode) {
-                fieldValue = fieldValue.deepCopy();
-            }
-            const clonedField = new Field(
-                field.getName(),
-                fieldValue,
-                field.getType(),
-                field.isAlwaysNotify(),
-                field.isSystem(),
-                field.isHidden()
-            );
-            clonedNode.fields.set(key, clonedField);
+            // Own `Field` per key so a write through the clone cannot reach the original, but a
+            // node-valued field keeps pointing at the SAME node — device-confirmed (probe S10):
+            // `clone.nodeField` is `isSameNode` with the original's, its script scope is intact, and
+            // a write through it lands on the shared node. Only CHILDREN are duplicated, below.
+            clonedNode.fields.set(key, field.copy());
         }
         // Clone children if deep copy param is set
         if (isDeepCopy) {
@@ -636,53 +652,6 @@ export class Node extends RoSGNode implements BrsValue {
             }
         }
         return clonedNode;
-    }
-
-    /**
-     * Creates a deep copy of this node suitable for returning into BrightScript.
-     * @param visitedNodes Graph cache preventing repeated copies of shared nodes.
-     * @returns Deep copied node or invalid on failure.
-     */
-    deepCopy(visitedNodes?: WeakMap<Node, Node>): BrsType {
-        visitedNodes ??= new WeakMap<Node, Node>();
-        const copiedNode = createFlatNode(this.nodeType, this.nodeSubtype);
-        if (!(copiedNode instanceof Node)) {
-            return new RoInvalid();
-        }
-        copiedNode.address = this.address;
-        visitedNodes.set(this, copiedNode);
-        for (const [key, field] of this.fields) {
-            let fieldObject = field;
-            let fieldValue = field.getValue(false);
-            if (fieldValue instanceof Node) {
-                if (visitedNodes.has(fieldValue)) {
-                    fieldValue = visitedNodes.get(fieldValue)!;
-                } else {
-                    fieldValue = fieldValue.deepCopy(visitedNodes);
-                }
-                fieldObject = new Field(
-                    field.getName(),
-                    fieldValue,
-                    field.getType(),
-                    field.isAlwaysNotify(),
-                    field.isSystem(),
-                    field.isHidden()
-                );
-            }
-            copiedNode.fields.set(key, fieldObject);
-        }
-        for (const child of this.children) {
-            let newChild: BrsType = BrsInvalid.Instance;
-            if (child instanceof Node) {
-                if (visitedNodes.has(child)) {
-                    newChild = visitedNodes.get(child)!;
-                } else {
-                    newChild = child.deepCopy(visitedNodes);
-                }
-            }
-            copiedNode.appendChildToParent(newChild);
-        }
-        return copiedNode;
     }
 
     /**
@@ -700,16 +669,25 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const moved: AAMember[] = [];
         for (const [key, value] of data.elements) {
-            if (value instanceof RoArray || value instanceof RoAssociativeArray || value instanceof RoSGNode) {
+            if (value instanceof RoSGNode) {
+                // A node is moved, not duplicated — device-confirmed (probe S9): the moved value is the
+                // same node, script scope included. Listed explicitly because a node is neither boxable
+                // nor unboxable, so it would otherwise fall through and be dropped.
+                moved.push({ name: new BrsString(key), value });
+            } else if (value instanceof RoArray || value instanceof RoAssociativeArray) {
+                // `ifSGNodeField`: a nested object holding external references is "preserved by copying
+                // it instead" of moved. This is the only copy on this path — `Field.setValue` is the
+                // storage primitive and does not copy — and it is pinned by the device-derived
+                // `node.aa.bar` expectation in `test/e2e/resources/components/roUtils.brs`.
                 moved.push({ name: new BrsString(key), value: value.deepCopy() });
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                moved.push({ name: new BrsString(key), value: value });
+                moved.push({ name: new BrsString(key), value });
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 moved.push({ name: new BrsString(key), value: value.copy() });
             }
         }
         const refs = data.clearElements();
-        field.setValue(new RoAssociativeArray(moved), true);
+        field.setValue(new RoAssociativeArray(moved, data.isCaseSensitive()), true);
         this.makeDirty();
         return { code: refs };
     }

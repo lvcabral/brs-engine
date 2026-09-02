@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="GroupAgent" extends="Group">
+    <interface>
+        <field id="marker" type="string" value="orig-marker" />
+        <function name="configure" />
+        <function name="readToken" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/agentlib.brs" />
+    <children>
+        <Rectangle id="xmlKid1" width="10" height="10" />
+        <Rectangle id="xmlKid2" width="10" height="10" />
+    </children>
+</component>

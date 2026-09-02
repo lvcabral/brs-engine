@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A custom component with an XML <interface> field, a function, and script-scope state. -->
+<component name="Agent" extends="Node">
+    <interface>
+        <field id="marker" type="string" value="orig-marker" />
+        <function name="configure" />
+        <function name="readToken" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.token = "init-default"
+    end sub
+    sub configure(token as String)
+        m.token = token
+    end sub
+    function readToken() as String
+        if m.token = invalid then return "UNSET"
+        return m.token
+    end function
+    ]]></script>
+</component>

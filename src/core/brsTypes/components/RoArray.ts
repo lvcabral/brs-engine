@@ -12,6 +12,7 @@ import {
     jsValueOf,
     isNumberKind,
 } from "..";
+import { boxForFieldCopy, CopyVisited } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -140,31 +141,45 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         return this.elements.length - 1;
     }
 
-    deepCopy(boxContent = false): BrsType {
-        const copiedElements: BrsType[] = [];
+    /** Boxing kinds for a node-field copy; deliberately differ from `RoAssociativeArray`'s (device-derived, #979). */
+    private static readonly noBoxKinds = [ValueKind.Float, ValueKind.Double, ValueKind.Boolean];
+    private static readonly toBoxKinds = [ValueKind.Int32, ValueKind.Int64, ValueKind.String];
+
+    /**
+     * Copies this array and, recursively, the arrays/associative arrays inside it.
+     *
+     * A nested SceneGraph node is carried over as-is — never cloned. See
+     * `RoAssociativeArray.deepCopy` for the device-confirmed reasoning and the `visited` cycle guard.
+     *
+     * An element this cannot copy becomes **`invalid` in place**, so `Count()` is unchanged — unlike an
+     * associative array, which drops the key outright. Device-confirmed (probe S11.10-S11.13: 3
+     * elements in, 3 out, with the uncopyable ones reading back `invalid`).
+     * @param boxContent Box the intrinsic values the way Roku does when copying a node field.
+     * @param visited Cycle guard; see `RoAssociativeArray.deepCopy`.
+     */
+    deepCopy(boxContent = false, visited?: CopyVisited): RoArray {
+        visited ??= new WeakMap();
+        const seen = visited.get(this);
+        if (seen instanceof RoArray) {
+            return seen;
+        }
+        const copy = new RoArray([]);
+        visited.set(this, copy);
         for (const value of this.elements) {
             if (value instanceof RoArray || value instanceof RoAssociativeArray) {
-                copiedElements.push(value.deepCopy(boxContent));
+                copy.add(value.deepCopy(boxContent, visited));
             } else if (isSceneGraphNode(value)) {
-                copiedElements.push(value.deepCopy());
+                copy.add(value);
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                let boxValue = false;
-                if (boxContent) {
-                    // Handling cases where Roku treats certain values as boxed and others keep their original type.
-                    const noBox = [ValueKind.Float, ValueKind.Double, ValueKind.Boolean];
-                    if (noBox.includes(value.kind)) {
-                        value.literal = true;
-                        value.legacy = true;
-                    }
-                    const toBox = [ValueKind.Int32, ValueKind.Int64, ValueKind.String];
-                    boxValue = !value.literal || toBox.includes(value.kind);
-                }
-                copiedElements.push(boxValue ? value.box() : value);
+                const boxValue = boxContent && boxForFieldCopy(value, RoArray.noBoxKinds, RoArray.toBoxKinds);
+                copy.add(boxValue ? value.box() : value);
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
-                copiedElements.push(value.copy());
+                copy.add(value.copy());
+            } else {
+                copy.add(BrsInvalid.Instance);
             }
         }
-        return new RoArray(copiedElements);
+        return copy;
     }
 
     boxLiterals() {

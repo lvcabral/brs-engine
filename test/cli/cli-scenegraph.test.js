@@ -612,6 +612,116 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Keeps a component's script scope intact when it is read back out of an assocarray/array field or roUtils.DeepCopy", async () => {
+        let command = ["node", brsCliPath, "-r aa-field-node-ref-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Copying a container must never clone a SceneGraph node inside it: a clone comes from
+        // createFlatNode, which never runs init(), so the component's cached `m` is lost and every
+        // value it had cached reads back invalid. All values here are device-confirmed
+        // (test/simulator/probes/node-container-copy-probe).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== AA Field Node Ref ===",
+            "direct = cached-token",
+            "aaField = cached-token",
+            "arrayField = cached-token",
+            "deepCopy = cached-token",
+            "container copied on read = true",
+            "container copied on set = true",
+            "write reached original = written-through",
+            "=== AA Field Node Ref Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Clones own their field storage but SHARE node-valued fields, and moveIntoField carries a node through", async () => {
+        let command = ["node", brsCliPath, "-r clone-field-copy-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // `clone` builds its own `Field` per key (via `Field.copyWith`), so a write through the clone
+        // cannot reach the original -- but a node-valued field points at the SAME node, and
+        // `moveIntoField` likewise carries a node over rather than duplicating it. Both
+        // device-confirmed (probe S9/S10); only CHILDREN are duplicated by clone.
+        //
+        // The `bare clone` lines pin a measured device quirk (probe clone-basetype-probe, D0 vs D1-D4):
+        // a custom component whose built-in base is exactly `Node` clones to a BARE `Node` -- subtype,
+        // declared/added fields, functions and script scope all dropped. Over any OTHER base
+        // (Group/Label/ContentNode/custom) the clone keeps everything, which D1-D4 confirm.
+        //
+        // The two `canGetRef` lines guard that `Field.copyWith` carries the by-ref flag (a
+        // hand-rolled 7-positional-argument `new Field(...)` silently dropped it). They are
+        // ENGINE-INTERNAL, not device fidelity: a device answers `false` for the *original* too, so
+        // our `setRef`/`canGetRef` diverges upstream of the clone -- see probe S10.6/S10.7.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Clone Field Copy ===",
+            "clone plain = orig-plain",
+            "orig plain after clone write = orig-plain",
+            "orig canGetRef = true",
+            "clone canGetRef = true",
+            "clone getRef type = roAssociativeArray",
+            "clone.kid isSameNode = true",
+            "orig kid token after clone write = written-via-clone",
+            "moveIntoField readToken = written-via-clone",
+            "moveIntoField isSameNode = true",
+            "bare clone subtype = Node",
+            "bare clone isSubtype(Agent) = false",
+            "bare clone hasField(extra) = false",
+            "bare clone callFunc = invalid",
+            "=== Clone Field Copy Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Copies a container into/out of a field without dropping uncopyable members or looping on cycles", async () => {
+        let command = ["node", brsCliPath, "-r field-container-copy-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // All device-confirmed (probe S11/S12 in test/simulator/probes/node-container-copy-probe):
+        //  - a member the copy cannot handle (function reference, roDateTime, roByteArray, ...) has its
+        //    KEY DROPPED from an assocarray, so `keys` shrinks;
+        //  - an ARRAY keeps the slot and stores invalid instead, so Count() is unchanged;
+        //  - a nested node is the one non-copyable that is carried, on every path;
+        //  - `roUtils.DeepCopy` applies the identical policy -- there is no second behaviour;
+        //  - a cycle (`parent.child.parent`) is copied WITH the cycle intact, not flattened and not
+        //    stack-overflowing (which it did before `deepCopy` got a `visited` guard).
+        // These assert invalid-NESS rather than `type()`, because the probe's helper compared against
+        // `invalid`, so the device evidence does not distinguish `invalid` from a boxed `roInvalid`.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Field Container Copy ===",
+            "keys = nested,url",
+            "onDone invalid = true",
+            "when invalid = true",
+            "ba invalid = true",
+            "nested.k = v",
+            "cycle name = p",
+            "cycle child.name = c",
+            "cycle child.parent.name = p",
+            "cycle closed = true",
+            "array count =  3",
+            "array[0] invalid = true",
+            "array[1] invalid = true",
+            "array[2] = plain",
+            "deepCopy s = keep",
+            "deepCopy node = roSGNode",
+            "deepCopy when invalid = true",
+            "deepCopy onDone invalid = true",
+            "=== Field Container Copy Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Boxes a computed string argument crossing callFunc the same way a node field get/set already does", async () => {
         let command = ["node", brsCliPath, "-r callfunc-string-boxing-app", "source/main.brs", "-c 0"].join(" ");
 
