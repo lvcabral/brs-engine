@@ -78,6 +78,36 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("roBitmap: ifBitmap/ifDraw2D surface and reflection end-to-end", async () => {
+        let command = ["node", brsCliPath, "roBitmap.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The ifDraw2D drawing calls were already exercised by other fixtures, but `ifBitmap.GetName`
+        // (a bitmap's only own method), the PNG/byte-array getters and the `GetInterface`/
+        // `FindMemberFunction` reflection paths were not -- and reflection reads the interface map
+        // directly, so it is what a lazily-built surface could break silently.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "valid         true",
+            "width          40",
+            "height         24",
+            "name          pkg:/images/test.png",
+            "alphaEnable   true",
+            "alphaEnable   false",
+            "png type      roByteArray",
+            "byteArray typeroByteArray",
+            "drawObject    true",
+            "ifDraw2D      ifDraw2D",
+            "ifBitmap      ifBitmap",
+            "findMember    ifBitmap",
+            "unknown iface Invalid",
+            "------ Finished 'roBitmap.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("roRegion: ifRegion/ifDraw2D surface and reflection end-to-end", async () => {
         let command = ["node", brsCliPath, "roRegion.brs", "-c 0"].join(" ");
 

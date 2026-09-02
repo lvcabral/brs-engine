@@ -197,6 +197,28 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.valid = false;
             }
         }
+        if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
+            const sizes = this.parsePatchSizes();
+            if (sizes) {
+                this.ninePatch = true;
+                this.patchSizes = sizes;
+            }
+        }
+        if (this.valid && BrsDevice.tracking) {
+            // Track this bitmap in the global texture-memory registry (r2d2-bitmaps).
+            registerTexture(this);
+        }
+    }
+
+    /**
+     * Built on the first method/interface lookup rather than in the constructor. All but one of a
+     * bitmap's methods come from `IfDraw2D` (16 `Callable`s), and the bitmaps the engine mints for
+     * SceneGraph textures, 9-patches and `MaskGroup` offscreens are drawn through TypeScript, so most
+     * never need the BrightScript surface at all. `MaskGroup.renderNodeContent` is the clearest case: it
+     * allocates a scene-sized bitmap every frame and then builds its OWN `IfDraw2D` over it, so the
+     * eagerly-registered one was constructed and thrown away.
+     */
+    protected buildMethods() {
         const ifDraw2D = new IfDraw2D(this);
         this.registerMethods({
             ifDraw2D: [
@@ -219,17 +241,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
             ifBitmap: [this.getName],
         });
-        if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
-            const sizes = this.parsePatchSizes();
-            if (sizes) {
-                this.ninePatch = true;
-                this.patchSizes = sizes;
-            }
-        }
-        if (this.valid && BrsDevice.tracking) {
-            // Track this bitmap in the global texture-memory registry (r2d2-bitmaps).
-            registerTexture(this);
-        }
     }
 
     /** Returns whether this bitmap is stored with an alpha channel. */
