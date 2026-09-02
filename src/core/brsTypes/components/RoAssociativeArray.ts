@@ -41,6 +41,14 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             this.set(member.name, element, true);
         }
         this.enumIndex = elements.length ? 0 : -1;
+    }
+
+    /**
+     * Built on the first method/interface lookup rather than in the constructor — see
+     * `RoArray.buildMethods`. An `roAssociativeArray` is allocated for every `{...}` literal and every
+     * container copy, and most instances never have a method called on them.
+     */
+    protected buildMethods() {
         const ifEnum = new IfEnum(this);
         this.registerMethods({
             ifAssociativeArray: [
