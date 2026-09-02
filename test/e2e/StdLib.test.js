@@ -206,6 +206,7 @@ describe("end to end standard library", () => {
             "<Interface: ifFloat>",
             "<Interface: ifAssociativeArray>",
             "<Interface: ifArray>",
+            "<Interface: ifList>",
             "<Interface: ifToStr>",
             "<Interface: ifBoolean>",
             "invalid",

@@ -78,6 +78,46 @@ describe.concurrent("cli", () => {
         ]);
     }, 30000);
 
+    it("roRegion: ifRegion/ifDraw2D surface and reflection end-to-end", async () => {
+        let command = ["node", brsCliPath, "roRegion.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // roRegion had no automated coverage, which matters now that its method surface is built on
+        // first lookup (`buildMethods`) rather than in the constructor: the ifRegion methods are
+        // getters and ifDraw2D is allocated on demand. This pins the whole surface plus the reflection
+        // paths (`GetInterface`/`FindMemberFunction`) that read the interface map directly.
+        //
+        // Characterization, not a device-verified spec: `Copy()` returning a region with the default
+        // `wrap` rather than the source's is pre-existing behaviour, captured here as-is.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "valid          true",
+            "width           32",
+            "height          24",
+            "x               4",
+            "y               6",
+            "wrap           true",
+            "time            42",
+            "scaleMode       1",
+            "pretranslation  7  9",
+            "collisionType   1",
+            "after offset    5  8  35  28",
+            "copy width      35",
+            "copy wrap      false",
+            "getBitmap w/h   64  48",
+            "alphaEnable    true",
+            "alphaEnable    true",
+            "ifRegion       ifRegion",
+            "ifDraw2D       ifDraw2D",
+            "findMember     ifRegion",
+            "unknown iface  Invalid",
+            "------ Finished 'roRegion.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("roAnimatedImage: SetContent/SetPretranslation/Draw*Object end-to-end", async () => {
         // Proves the roAnimatedImage/ifAnimatedImage surface works end-to-end against a real
         // animated WebP: local pkg: load, ready event (GetMessage/GetInfo), GetWidth/Height,
