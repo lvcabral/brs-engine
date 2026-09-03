@@ -83,7 +83,7 @@ export class AnimatedImage extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.AnimatedImage) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.AnimatedImage, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
     }

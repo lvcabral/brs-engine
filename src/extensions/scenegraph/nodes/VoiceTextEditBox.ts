@@ -23,7 +23,7 @@ export class VoiceTextEditBox extends TextEditBox {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.VoiceTextEditBox) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.TextEditBox);
+        this.setExtendsType(SGNodeType.VoiceTextEditBox, SGNodeType.TextEditBox);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -12,7 +12,7 @@ export class OverhangPanelSetScene extends Scene {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.OverhangPanelSetScene) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Scene);
+        this.setExtendsType(SGNodeType.OverhangPanelSetScene, SGNodeType.Scene);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

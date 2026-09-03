@@ -28,7 +28,7 @@ export class StdDlgTitleArea extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgTitleArea) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgTitleArea, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

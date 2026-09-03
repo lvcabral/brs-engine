@@ -1,0 +1,63 @@
+=== Group Subtype Hierarchy Probe ===
+PROBE|env|model=8000X os=15.3
+PROBE|Rectangle|subtype=Rectangle|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Poster|subtype=Poster|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Label|subtype=Label|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ArrayGrid|subtype=ArrayGrid|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|RowList|subtype=RowList|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ZoomRowList|subtype=ZoomRowList|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|MarkupGrid|subtype=MarkupGrid|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|MarkupList|subtype=MarkupList|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|TimeGrid|subtype=TimeGrid|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|PosterGrid|subtype=PosterGrid|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|LabelList|subtype=LabelList|parentSubtype=ArrayGrid|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|CheckList|subtype=CheckList|parentSubtype=LabelList|isSubtype(LabelList)=true|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|RadioButtonList|subtype=RadioButtonList|parentSubtype=LabelList|isSubtype(LabelList)=true|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|LayoutGroup|subtype=LayoutGroup|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ButtonGroup|subtype=ButtonGroup|parentSubtype=LayoutGroup|isSubtype(LayoutGroup)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StdDlgButtonArea|subtype=StdDlgButtonArea|parentSubtype=ButtonGroup|isSubtype(ButtonGroup)=true|isSubtype(LayoutGroup)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|MonospaceLabel|subtype=MonospaceLabel|parentSubtype=Label|isSubtype(Label)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ScrollingLabel|subtype=ScrollingLabel|parentSubtype=Label|isSubtype(Label)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|TextEditBox|subtype=TextEditBox|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|VoiceTextEditBox|subtype=VoiceTextEditBox|parentSubtype=TextEditBox|isSubtype(TextEditBox)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|TargetGroup|subtype=TargetGroup|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|TargetList|subtype=TargetList|parentSubtype=TargetGroup|isSubtype(TargetGroup)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Scene|subtype=Scene|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|OverhangPanelSetScene|subtype=OverhangPanelSetScene|parentSubtype=Scene|isSubtype(Scene)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|PinPad|subtype=PinPad|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ParentalControlPinPad|subtype=ParentalControlPinPad|parentSubtype=PinPad|isSubtype(PinPad)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Panel|subtype=Panel|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|GridPanel|subtype=GridPanel|parentSubtype=Panel|isSubtype(Panel)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ListPanel|subtype=ListPanel|parentSubtype=Panel|isSubtype(Panel)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Button|subtype=Button|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StdDlgButton|subtype=StdDlgButton|parentSubtype=Button|isSubtype(Button)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Dialog|subtype=Dialog|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|KeyboardDialog|subtype=KeyboardDialog|parentSubtype=Dialog|isSubtype(Dialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|PinDialog|subtype=PinDialog|parentSubtype=Dialog|isSubtype(Dialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|ProgressDialog|subtype=ProgressDialog|parentSubtype=Dialog|isSubtype(Dialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StandardDialog|subtype=StandardDialog|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StandardPinPadDialog|subtype=StandardPinPadDialog|parentSubtype=StandardDialog|isSubtype(StandardDialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StandardKeyboardDialog|subtype=StandardKeyboardDialog|parentSubtype=StandardDialog|isSubtype(StandardDialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StandardMessageDialog|subtype=StandardMessageDialog|parentSubtype=StandardDialog|isSubtype(StandardDialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|StandardProgressDialog|subtype=StandardProgressDialog|parentSubtype=StandardDialog|isSubtype(StandardDialog)=true|isSubtype(Group)=true|isSubtype(Node)=true
+Warning: The roSGNode with type "DynamicKeyboardBase" is not implemented yet, created as regular "Node".
+PROBE|DynamicKeyboardBase|subtype=DynamicKeyboardBase|parentSubtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|DynamicKeyboard|subtype=DynamicKeyboard|parentSubtype=DynamicKeyboardBase|isSubtype(DynamicKeyboardBase)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|DynamicPinPad|subtype=DynamicPinPad|parentSubtype=DynamicKeyboardBase|isSubtype(DynamicKeyboardBase)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|DynamicMiniKeyboard|subtype=DynamicMiniKeyboard|parentSubtype=DynamicKeyboardBase|isSubtype(DynamicKeyboardBase)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|DynamicCustomKeyboard|subtype=DynamicCustomKeyboard|parentSubtype=DynamicKeyboardBase|isSubtype(DynamicKeyboardBase)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Animation|subtype=Animation|parentSubtype=Node|isSubtype(AnimationBase)=false|isSubtype(Node)=true
+PROBE|ParallelAnimation|subtype=ParallelAnimation|parentSubtype=Node|isSubtype(AnimationBase)=false|isSubtype(Node)=true
+PROBE|SequentialAnimation|subtype=SequentialAnimation|parentSubtype=Node|isSubtype(AnimationBase)=false|isSubtype(Node)=true
+PROBE|Rectangle-not-ArrayGrid|isSubtype(ArrayGrid)=false (expect false)
+PROBE|RowList-not-Rectangle|isSubtype(Rectangle)=false (expect false)
+PROBE|RowList-not-LabelList|isSubtype(LabelList)=false (expect false)
+PROBE|CheckList-not-MarkupGrid|isSubtype(MarkupGrid)=false (expect false)
+PROBE|ButtonGroup-not-ArrayGrid|isSubtype(ArrayGrid)=false (expect false)
+PROBE|RenderableNode|subtype=Group|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|Group|isSubtype(RenderableNode)=true
+PROBE|MyRowList|subtype=MyRowList|isSubtype(RowList)=true|isSubtype(ArrayGrid)=true|isSubtype(Group)=true|isSubtype(Node)=true
+PROBE|MyRenderable|subtype=MyRenderable|isSubtype(RenderableNode)=true|isSubtype(Group)=true|isSubtype(Node)=true
+=== Group Subtype Hierarchy Probe Complete ===
+------ Finished 'group-subtype-hierarchy-probe' execution [EXIT_USER_NAV] ------
+

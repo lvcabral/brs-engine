@@ -44,7 +44,7 @@ export class MiniKeyboard extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MiniKeyboard) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.MiniKeyboard, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 

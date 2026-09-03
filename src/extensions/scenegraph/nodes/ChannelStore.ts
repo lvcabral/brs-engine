@@ -52,7 +52,7 @@ export class ChannelStore extends Node {
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.ChannelStore) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.ChannelStore, SGNodeType.Node);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

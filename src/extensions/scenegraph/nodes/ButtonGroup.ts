@@ -58,7 +58,7 @@ export class ButtonGroup extends LayoutGroup {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ButtonGroup) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.LayoutGroup);
+        this.setExtendsType(SGNodeType.ButtonGroup, SGNodeType.LayoutGroup);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

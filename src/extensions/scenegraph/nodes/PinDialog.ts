@@ -22,7 +22,7 @@ export class PinDialog extends Dialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PinDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Dialog);
+        this.setExtendsType(SGNodeType.PinDialog, SGNodeType.Dialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

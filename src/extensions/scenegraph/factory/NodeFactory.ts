@@ -163,6 +163,8 @@ export class SGNodeFactory {
         switch (nodeType.toLowerCase()) {
             case SGNodeType.Node.toLowerCase():
                 return new Node([], name);
+            case SGNodeType.RenderableNode.toLowerCase():
+                return new Group([], isRenderableNodeAlias(name.toLowerCase()) ? SGNodeType.Group : name);
             case SGNodeType.Group.toLowerCase():
             case SGNodeType.StdDlgGraphicItem.toLowerCase():
             case SGNodeType.StdDlgAreaBase.toLowerCase():
@@ -1010,6 +1012,18 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
 export const subtypeHierarchy = new Map<string, string>();
 
 /**
+ * RenderableNode and Group are the same underlying class under two names (device-confirmed: a
+ * bare `CreateObject("roSGNode", "RenderableNode")` node reports `subtype()` as "Group"), not a
+ * parent/child pair - so this alias can't be expressed as a normal entry in `subtypeHierarchy`
+ * (that would only make the walk work in one direction; see `isSubtypeCheck`'s "renderablenode"
+ * handling below, which normalizes both the type being checked and the type checked against).
+ * @param value Lowercased node type name to compare against the alias.
+ */
+function isRenderableNodeAlias(value: string): boolean {
+    return value === SGNodeType.RenderableNode.toLowerCase();
+}
+
+/**
  *  Checks the node sub type hierarchy to see if the current node is a sub component of the given node type
  *
  * @param {string} currentNodeType
@@ -1017,8 +1031,10 @@ export const subtypeHierarchy = new Map<string, string>();
  * @returns {boolean}
  */
 export function isSubtypeCheck(currentNodeType: string, checkType: string): boolean {
-    checkType = checkType.toLowerCase();
     currentNodeType = currentNodeType.toLowerCase();
+    currentNodeType = isRenderableNodeAlias(currentNodeType) ? SGNodeType.Group.toLowerCase() : currentNodeType;
+    checkType = checkType.toLowerCase();
+    checkType = isRenderableNodeAlias(checkType) ? SGNodeType.Group.toLowerCase() : checkType;
     if (currentNodeType === checkType) {
         return true;
     }

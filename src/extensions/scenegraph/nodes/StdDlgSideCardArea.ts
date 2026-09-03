@@ -24,7 +24,7 @@ export class StdDlgSideCardArea extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgSideCardArea) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgSideCardArea, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

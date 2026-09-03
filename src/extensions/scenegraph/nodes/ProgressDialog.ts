@@ -12,7 +12,7 @@ export class ProgressDialog extends Dialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ProgressDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Dialog);
+        this.setExtendsType(SGNodeType.ProgressDialog, SGNodeType.Dialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

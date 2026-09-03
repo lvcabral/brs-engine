@@ -39,7 +39,7 @@ export class ScrollingLabel extends Label {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ScrollingLabel) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Label);
+        this.setExtendsType(SGNodeType.ScrollingLabel, SGNodeType.Label);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

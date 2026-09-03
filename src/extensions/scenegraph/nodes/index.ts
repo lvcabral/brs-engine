@@ -96,6 +96,7 @@ export * from "./Vector2DFieldInterpolator";
 export enum SGNodeType {
     Node = "Node",
     ContentNode = "ContentNode",
+    RenderableNode = "RenderableNode", // Internal name for Group node in Roku
     Group = "Group",
     LayoutGroup = "LayoutGroup",
     MaskGroup = "MaskGroup",
@@ -139,8 +140,6 @@ export enum SGNodeType {
     StdDlgTitleArea = "StdDlgTitleArea",
     Rectangle = "Rectangle",
     Poster = "Poster",
-    // PROVISIONAL: field names not yet confirmed by Roku's official OS 15.3 spec — see
-    // AnimatedImage.ts's doc comment and .claude/plans/the-roku-os-15-3-cryptic-curry.md.
     AnimatedImage = "AnimatedImage",
     Label = "Label",
     SimpleLabel = "SimpleLabel",

@@ -26,7 +26,7 @@ export class SimpleLabel extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.SimpleLabel) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.SimpleLabel, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

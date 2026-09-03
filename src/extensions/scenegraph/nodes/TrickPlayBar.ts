@@ -33,7 +33,7 @@ export class TrickPlayBar extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TrickPlayBar) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.TrickPlayBar, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

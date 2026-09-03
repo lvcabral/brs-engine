@@ -99,7 +99,7 @@ export class MultiStyleLabel extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MultiStyleLabel) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.MultiStyleLabel, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

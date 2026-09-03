@@ -17,7 +17,7 @@ export class TargetSet extends Node {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TargetSet) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.TargetSet, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

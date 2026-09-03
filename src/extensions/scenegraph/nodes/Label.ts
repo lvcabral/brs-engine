@@ -28,7 +28,7 @@ export class Label extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Label) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Label, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

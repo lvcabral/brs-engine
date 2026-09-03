@@ -80,7 +80,7 @@ export class TextEditBox extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TextEditBox) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.TextEditBox, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

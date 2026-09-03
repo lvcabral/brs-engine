@@ -11,7 +11,7 @@ import { dynamicPinPadKDF } from "./kdf/builtinKDFs";
 export class DynamicPinPad extends DynamicKeyboardBase {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicPinPad) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.DynamicKeyboardBase);
+        this.setExtendsType(SGNodeType.DynamicPinPad, SGNodeType.DynamicKeyboardBase);
         this.registerInitializedFields(initializedFields);
 
         this.configureVoiceBox({ voiceEntryType: "numeric", voiceEnabled: true, maxTextLength: 4 });

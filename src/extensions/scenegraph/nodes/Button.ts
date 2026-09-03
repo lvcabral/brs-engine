@@ -44,7 +44,7 @@ export class Button extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Button) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Button, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

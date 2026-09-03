@@ -2178,12 +2178,39 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Records subtype hierarchy information for use with `isSubtype` checks.
-     * @param nodeName Child node type.
+     * Records built-in subtype hierarchy information for use with `isSubtype` checks.
+     *
+     * Every built-in class calls this with its OWN canonical type as `nodeName` (e.g. RowList's
+     * constructor always does `setExtendsType(SGNodeType.RowList, SGNodeType.ArrayGrid)`) - never
+     * the `name` threaded through `super([], name)`, which may be a subclass's own default, or a
+     * custom XML component's name when this class is constructed as that component's built-in
+     * base. Two reasons:
+     *
+     * 1. `name` is the SAME string at every level of a single construction's constructor chain
+     *    (base first, since each `super()` call runs before the rest of its own constructor body).
+     *    A RowList's chain would call Group's `setExtendsType(name, Node)`, then ArrayGrid's
+     *    `setExtendsType(name, Group)`, then RowList's own `setExtendsType(name, ArrayGrid)`, all
+     *    under the SAME key - collapsing every built-in node straight to "Node" (only the first
+     *    write survived) or, if made to overwrite instead, straight to its immediate built-in
+     *    parent but skipping "ArrayGrid" as a queryable link entirely, since "arraygrid" itself was
+     *    never a key unless something separately constructed a bare ArrayGrid. Keying by each
+     *    class's own canonical type instead means every level writes its OWN entry
+     *    (RowList->ArrayGrid, ArrayGrid->Group, Group->Node), so the chain is always walkable.
+     * 2. A custom XML component's `extends` relationship is registered separately, by
+     *    `updateTypeDefHierarchy()`, BEFORE the underlying built-in class is constructed (see
+     *    `initializeNode`). If this method used the threaded `name` here too, the built-in
+     *    constructor chain running afterward would silently overwrite that correct
+     *    "myComponent -> RowList" entry with "myComponent -> ArrayGrid" (RowList's own, unrelated
+     *    fact) - breaking `isSubtype("RowList")` for any component whose `extends` is a
+     *    multi-level built-in type.
+     * @param nodeName The class's own canonical node type (its `SGNodeType`), not `name`/`nodeSubtype`.
      * @param parentType Parent type it extends.
      */
     protected setExtendsType(nodeName: string, parentType: SGNodeType) {
         const typeKey = nodeName.toLowerCase();
+        // Every class now writes its own key with a fixed, unchanging value (see above), so the
+        // first write for a key is always correct - skip the redundant re-write on every later
+        // instance of the same class.
         if (!subtypeHierarchy.has(typeKey) && typeKey !== parentType.toLowerCase()) {
             subtypeHierarchy.set(typeKey, parentType);
         }

@@ -28,7 +28,7 @@ export class StandardPinPadDialog extends StandardDialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardPinPadDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.StandardDialog);
+        this.setExtendsType(SGNodeType.StandardPinPadDialog, SGNodeType.StandardDialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

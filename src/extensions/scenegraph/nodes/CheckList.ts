@@ -17,7 +17,7 @@ export class CheckList extends LabelList {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.CheckList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.LabelList);
+        this.setExtendsType(SGNodeType.CheckList, SGNodeType.LabelList);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

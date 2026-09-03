@@ -101,7 +101,7 @@ export class ZoomRowList extends ArrayGrid {
     private rowWidth: number;
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ZoomRowList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.ZoomRowList, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
