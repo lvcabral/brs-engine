@@ -71,11 +71,7 @@ export class IfDraw2D {
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextGlobalAlpha(ctx, style.alpha);
-        const smoothing = object.scaleMode === 1;
-        ctx.imageSmoothingEnabled = smoothing;
-        if (smoothing && "imageSmoothingQuality" in ctx) {
-            ctx.imageSmoothingQuality = "high";
-        }
+        applyScaleModeSmoothing(ctx, object.scaleMode);
         // Draw the cropped and scaled image using ctx.drawImage directly
         const chunk: DrawChunk = {
             sx: sourceRect.x,
@@ -105,8 +101,7 @@ export class IfDraw2D {
         rgba?: number,
         opacity?: number
     ) {
-        const baseX = this.component.x;
-        const baseY = this.component.y;
+        const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         const style = resolveBlitStyle(rgba, opacity);
         ctx.save();
@@ -137,8 +132,7 @@ export class IfDraw2D {
         scaleX: number = 1,
         scaleY: number = 1
     ) {
-        const baseX = this.component.x;
-        const baseY = this.component.y;
+        const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         ctx.save();
         // Default to top-left corner if centerX and centerY are not provided
@@ -183,8 +177,7 @@ export class IfDraw2D {
             // nothing to draw
             return;
         }
-        const baseX = this.component.x;
-        const baseY = this.component.y;
+        const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         ctx.save();
         ctx.globalAlpha = opacity;
@@ -209,8 +202,7 @@ export class IfDraw2D {
             // nothing to draw
             return;
         }
-        const baseX = this.component.x;
-        const baseY = this.component.y;
+        const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         ctx.save();
         ctx.globalAlpha = opacity;
@@ -351,62 +343,36 @@ export class IfDraw2D {
         const targetCW = Math.max(0, drawW - lw - rw); // Target center width
         const targetCH = Math.max(0, drawH - th - bh); // Target center height
 
-        const drawPart = (
-            sx: number,
-            sy: number,
-            sw: number,
-            sh: number,
-            dx: number,
-            dy: number,
-            dw: number,
-            dh: number
-        ) => {
-            // Ensure destination coords/dims are integers to potentially avoid sub-pixel gaps/overlaps
-            const i_dx = Math.round(dx);
-            const i_dy = Math.round(dy);
-            const i_dw = Math.round(dw);
-            const i_dh = Math.round(dh);
-            // Only draw if source and rounded destination dimensions are positive
-            if (sw > 0 && sh > 0 && i_dw > 0 && i_dh > 0) {
-                drawChunk(ctx, image, { sx, sy, sw, sh, dx: i_dx, dy: i_dy, dw: i_dw, dh: i_dh });
-            }
-        };
+        // The nine patches (corners fixed, edges/center stretched), in source and destination rects.
+        const patches: DrawChunk[] = [
+            { sx: 1, sy: 1, sw: lw, sh: th, dx: x, dy: y, dw: lw, dh: th }, // Top-left corner
+            { sx: 1 + lw, sy: 1, sw: cw, sh: th, dx: x + lw, dy: y, dw: targetCW, dh: th }, // Top edge
+            { sx: sw - 1 - rw, sy: 1, sw: rw, sh: th, dx: x + drawW - rw, dy: y, dw: rw, dh: th }, // Top-right corner
+            { sx: 1, sy: 1 + th, sw: lw, sh: ch, dx: x, dy: y + th, dw: lw, dh: targetCH }, // Left edge
+            { sx: 1 + lw, sy: 1 + th, sw: cw, sh: ch, dx: x + lw, dy: y + th, dw: targetCW, dh: targetCH }, // Center
+            { sx: sw - 1 - rw, sy: 1 + th, sw: rw, sh: ch, dx: x + drawW - rw, dy: y + th, dw: rw, dh: targetCH }, // Right edge
+            { sx: 1, sy: sh - 1 - bh, sw: lw, sh: bh, dx: x, dy: y + drawH - bh, dw: lw, dh: bh }, // Bottom-left corner
+            { sx: 1 + lw, sy: sh - 1 - bh, sw: cw, sh: bh, dx: x + lw, dy: y + drawH - bh, dw: targetCW, dh: bh }, // Bottom edge
+            {
+                sx: sw - 1 - rw,
+                sy: sh - 1 - bh,
+                sw: rw,
+                sh: bh,
+                dx: x + drawW - rw,
+                dy: y + drawH - bh,
+                dw: rw,
+                dh: bh,
+            }, // Bottom-right corner
+        ];
 
         ctx.save();
         // Set context properties (alpha blending, smoothing)
         setContextGlobalAlpha(ctx, style.alpha);
-        const smoothing = bitmap.scaleMode === 1;
-        ctx.imageSmoothingEnabled = smoothing;
-        if (smoothing && "imageSmoothingQuality" in ctx) {
-            ctx.imageSmoothingQuality = "high";
+        applyScaleModeSmoothing(ctx, bitmap.scaleMode);
+
+        for (const patch of patches) {
+            drawNinePatchPart(ctx, image, patch);
         }
-
-        // Top-left corner
-        drawPart(1, 1, lw, th, x, y, lw, th);
-
-        // Top edge
-        drawPart(1 + lw, 1, cw, th, x + lw, y, targetCW, th);
-
-        // Top-right corner
-        drawPart(sw - 1 - rw, 1, rw, th, x + drawW - rw, y, rw, th);
-
-        // Left edge
-        drawPart(1, 1 + th, lw, ch, x, y + th, lw, targetCH);
-
-        // Center
-        drawPart(1 + lw, 1 + th, cw, ch, x + lw, y + th, targetCW, targetCH);
-
-        // Right edge
-        drawPart(sw - 1 - rw, 1 + th, rw, ch, x + drawW - rw, y + th, rw, targetCH);
-
-        // Bottom-left corner
-        drawPart(1, sh - 1 - bh, lw, bh, x, y + drawH - bh, lw, bh);
-
-        // Bottom edge
-        drawPart(1 + lw, sh - 1 - bh, cw, bh, x + lw, y + drawH - bh, targetCW, bh);
-
-        // Bottom-right corner
-        drawPart(sw - 1 - rw, sh - 1 - bh, rw, bh, x + drawW - rw, y + drawH - bh, rw, bh);
 
         ctx.restore();
         this.component.makeDirty();
@@ -565,8 +531,7 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, xStart: Int32, yStart: Int32, xEnd: Int32, yEnd: Int32, rgba: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
+            const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
             ctx.beginPath();
             ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
@@ -590,8 +555,7 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
+            const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), size.getValue(), size.getValue());
@@ -615,14 +579,16 @@ export class IfDraw2D {
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
             const baseX = this.component.x + x.getValue();
             const baseY = this.component.y + y.getValue();
+            const w = width.getValue();
+            const h = height.getValue();
             const ctx = this.component.getContext();
             if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-                ctx.clearRect(baseX, baseY, width.getValue(), height.getValue());
+                ctx.clearRect(baseX, baseY, w, h);
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             } else {
                 ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             }
-            ctx.fillRect(baseX, baseY, width.getValue(), height.getValue());
+            ctx.fillRect(baseX, baseY, w, h);
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -715,15 +681,7 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
-            const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
-            const imgData = ctx.getImageData(
-                baseX + x.getValue(),
-                baseY + y.getValue(),
-                width.getValue(),
-                height.getValue()
-            );
+            const imgData = this.getImageDataRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             const byteArray = new Uint8Array(imgData.data.buffer);
             return new RoByteArray(byteArray);
         },
@@ -741,20 +699,19 @@ export class IfDraw2D {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32) => {
-            const baseX = this.component.x;
-            const baseY = this.component.y;
-            const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
-            const imgData = ctx.getImageData(
-                baseX + x.getValue(),
-                baseY + y.getValue(),
-                width.getValue(),
-                height.getValue()
-            );
+            const imgData = this.getImageDataRect(x.getValue(), y.getValue(), width.getValue(), height.getValue());
             return new RoByteArray(
                 new Uint8Array(UPNG.encode([imgData.data.buffer as ArrayBuffer], imgData.width, imgData.height, 0))
             );
         },
     });
+
+    /** Reads back the RGBA pixel data for a rectangle, offset by the component's origin. */
+    private getImageDataRect(x: number, y: number, width: number, height: number): BrsImageData {
+        const { x: baseX, y: baseY } = this.component;
+        const ctx = this.component.getCanvas().getContext("2d") as BrsCanvasContext2D;
+        return ctx.getImageData(baseX + x, baseY + y, width, height);
+    }
 }
 
 export interface BrsDraw2D {
@@ -825,6 +782,15 @@ function setContextGlobalAlpha(ctx: BrsCanvasContext2D, alpha: number): boolean 
         return true;
     }
     return false;
+}
+
+/** Applies the object's `scaleMode` (1 = smooth) to the context's image smoothing settings. */
+function applyScaleModeSmoothing(ctx: BrsCanvasContext2D, scaleMode: number) {
+    const smoothing = scaleMode === 1;
+    ctx.imageSmoothingEnabled = smoothing;
+    if (smoothing && "imageSmoothingQuality" in ctx) {
+        ctx.imageSmoothingQuality = "high";
+    }
 }
 
 function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
@@ -956,6 +922,9 @@ function getDrawChunks(
         return chunks;
     }
 
+    const rightDx = actualDrawWidth + dx;
+    const bottomDy = actualDrawHeight + dy;
+
     if (missingHorizontal > 0) {
         // missing right chunk
         chunks.push({
@@ -963,7 +932,7 @@ function getDrawChunks(
             sy: offset.y,
             sw: missingHorizontal,
             sh: actualDrawHeight,
-            dx: actualDrawWidth + dx,
+            dx: rightDx,
             dy,
             dw: missingHorizontal,
             dh: actualDrawHeight,
@@ -977,7 +946,7 @@ function getDrawChunks(
             sw: actualDrawWidth,
             sh: missingVertical,
             dx: dx,
-            dy: actualDrawHeight + dy,
+            dy: bottomDy,
             dw: actualDrawWidth,
             dh: missingVertical,
         });
@@ -989,8 +958,8 @@ function getDrawChunks(
             sy: 0,
             sw: missingHorizontal,
             sh: missingVertical,
-            dx: actualDrawWidth + dx,
-            dy: actualDrawHeight + dy,
+            dx: rightDx,
+            dy: bottomDy,
             dw: missingHorizontal,
             dh: missingVertical,
         });
@@ -1049,11 +1018,7 @@ export function drawObjectToComponent(
     // copies the whole drawing state on every single blit, and shares its stack with `pushClip`.
     const alphaSet = setContextGlobalAlpha(ctx, blitAlpha);
     try {
-        const smoothing = (scaleMode ?? object.scaleMode) === 1;
-        ctx.imageSmoothingEnabled = smoothing;
-        if (smoothing && "imageSmoothingQuality" in ctx) {
-            ctx.imageSmoothingQuality = "high";
-        }
+        applyScaleModeSmoothing(ctx, scaleMode ?? object.scaleMode);
 
         const destOffset = getDrawOffset(component);
 
@@ -1080,11 +1045,7 @@ export function drawBitmapOnBitmap(source: RoBitmap, destiny: RoBitmap, scaleMod
     const canvas = source.getCanvas();
     const ctx = destiny.getContext();
     ctx.save();
-    const smoothing = (scaleMode ?? destiny.scaleMode) === 1;
-    ctx.imageSmoothingEnabled = smoothing;
-    if (smoothing && "imageSmoothingQuality" in ctx) {
-        ctx.imageSmoothingQuality = "high";
-    }
+    applyScaleModeSmoothing(ctx, scaleMode ?? destiny.scaleMode);
     const chunk = {
         sx: 0,
         sy: 0,
@@ -1279,6 +1240,23 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
     }
     /// #endif
+}
+
+/**
+ * Draws one nine-patch corner/edge/center piece, rounding destination coords/dims to integers to
+ * potentially avoid sub-pixel gaps/overlaps between adjoining pieces, and skipping the draw if the
+ * source or rounded destination has no area.
+ */
+function drawNinePatchPart(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) {
+    const dw = Math.round(chunk.dw);
+    const dh = Math.round(chunk.dh);
+    if (chunk.sw > 0 && chunk.sh > 0 && dw > 0 && dh > 0) {
+        chunk.dx = Math.round(chunk.dx);
+        chunk.dy = Math.round(chunk.dy);
+        chunk.dw = dw;
+        chunk.dh = dh;
+        drawChunk(ctx, image, chunk);
+    }
 }
 
 /** The two independent things a blend color and a node opacity resolve to for one blit. */
