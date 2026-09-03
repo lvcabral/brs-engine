@@ -42,7 +42,7 @@ export class Audio extends Node {
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Audio) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.Audio, SGNodeType.Node);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

@@ -23,7 +23,7 @@ export class StdDlgMultiStyleTextItem extends Group implements StdDlgItem {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgMultiStyleTextItem) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgMultiStyleTextItem, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

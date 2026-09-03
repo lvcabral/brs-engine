@@ -19,7 +19,7 @@ export class MonospaceLabel extends Label {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MonospaceLabel) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Label);
+        this.setExtendsType(SGNodeType.MonospaceLabel, SGNodeType.Label);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

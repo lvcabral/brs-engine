@@ -48,7 +48,7 @@ export class TargetGroup extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TargetGroup) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.TargetGroup, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -24,7 +24,7 @@ export class MarkupGrid extends ArrayGrid {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MarkupGrid) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.MarkupGrid, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

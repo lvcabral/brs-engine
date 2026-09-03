@@ -70,7 +70,7 @@ export class Keyboard extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Keyboard) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Keyboard, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

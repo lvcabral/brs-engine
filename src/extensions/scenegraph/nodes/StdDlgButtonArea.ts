@@ -12,7 +12,7 @@ import { jsValueOf } from "../factory/Serializer";
 export class StdDlgButtonArea extends ButtonGroup {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgButtonArea) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ButtonGroup);
+        this.setExtendsType(SGNodeType.StdDlgButtonArea, SGNodeType.ButtonGroup);
 
         this.registerInitializedFields(initializedFields);
 

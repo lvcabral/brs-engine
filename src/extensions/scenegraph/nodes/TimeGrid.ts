@@ -173,7 +173,7 @@ export class TimeGrid extends ArrayGrid {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TimeGrid) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.TimeGrid, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

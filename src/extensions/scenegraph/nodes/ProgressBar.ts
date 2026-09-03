@@ -18,7 +18,7 @@ export class ProgressBar extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ProgressBar) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.ProgressBar, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

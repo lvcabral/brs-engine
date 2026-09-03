@@ -26,7 +26,7 @@ export class ParentalControlPinPad extends PinPad {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ParentalControlPinPad) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.PinPad);
+        this.setExtendsType(SGNodeType.ParentalControlPinPad, SGNodeType.PinPad);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

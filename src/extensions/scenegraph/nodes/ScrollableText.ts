@@ -63,7 +63,7 @@ export class ScrollableText extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ScrollableText) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.ScrollableText, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

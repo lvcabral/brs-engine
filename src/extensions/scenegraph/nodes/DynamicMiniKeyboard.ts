@@ -10,7 +10,7 @@ import { dynamicMiniKeyboardKDF } from "./kdf/builtinKDFs";
 export class DynamicMiniKeyboard extends DynamicKeyboardBase {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicMiniKeyboard) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.DynamicKeyboardBase);
+        this.setExtendsType(SGNodeType.DynamicMiniKeyboard, SGNodeType.DynamicKeyboardBase);
         this.registerInitializedFields(initializedFields);
 
         this.configureVoiceBox({ voiceEntryType: "alphanumeric", voiceEnabled: true, maxTextLength: 75 });

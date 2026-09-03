@@ -35,7 +35,7 @@ export class PanelSet extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PanelSet) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.PanelSet, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

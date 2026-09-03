@@ -73,7 +73,7 @@ export class PinPad extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.PinPad) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.PinPad, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 

@@ -103,7 +103,7 @@ export class DynamicKeyGrid extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicKeyGrid) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.DynamicKeyGrid, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 

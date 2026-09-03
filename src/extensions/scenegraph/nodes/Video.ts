@@ -154,7 +154,7 @@ export class Video extends Group {
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Video) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Video, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
 

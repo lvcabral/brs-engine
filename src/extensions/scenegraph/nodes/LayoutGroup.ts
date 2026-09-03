@@ -62,7 +62,7 @@ export class LayoutGroup extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.LayoutGroup) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.LayoutGroup, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

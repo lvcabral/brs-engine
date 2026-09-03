@@ -8,7 +8,7 @@ export class StdDlgContentArea extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgContentArea) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgContentArea, SGNodeType.Group);
 
         this.registerInitializedFields(initializedFields);
         this.itemGap = this.resolution === "FHD" ? 30 : 20;

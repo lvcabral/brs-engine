@@ -13,7 +13,7 @@ export class Rectangle extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Rectangle) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Rectangle, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

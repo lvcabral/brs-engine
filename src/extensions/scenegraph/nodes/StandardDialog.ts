@@ -85,7 +85,7 @@ export class StandardDialog extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StandardDialog, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

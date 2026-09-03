@@ -41,7 +41,7 @@ export class Scene extends Group {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Scene) {
         super([], name);
         this.syncType = "scene";
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Scene, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

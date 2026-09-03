@@ -22,7 +22,7 @@ export class MarkupList extends ArrayGrid {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MarkupList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.MarkupList, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

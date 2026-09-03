@@ -213,7 +213,7 @@ export class Task extends Node {
      */
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Task) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.Task, SGNodeType.Node);
         this.syncType = "task";
         this.threadId = -1; // Not activated yet
         this.active = false;

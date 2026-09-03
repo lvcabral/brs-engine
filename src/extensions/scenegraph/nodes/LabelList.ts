@@ -27,7 +27,7 @@ export class LabelList extends ArrayGrid {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.LabelList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.LabelList, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

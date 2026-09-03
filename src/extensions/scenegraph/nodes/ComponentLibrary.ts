@@ -31,7 +31,7 @@ export class ComponentLibrary extends Node {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ComponentLibrary) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.ComponentLibrary, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

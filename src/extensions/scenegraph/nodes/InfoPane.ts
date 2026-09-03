@@ -56,7 +56,7 @@ export class InfoPane extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.InfoPane) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.InfoPane, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

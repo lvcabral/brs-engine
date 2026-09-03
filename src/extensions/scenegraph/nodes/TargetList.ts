@@ -27,7 +27,7 @@ export class TargetList extends TargetGroup {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TargetList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.TargetGroup);
+        this.setExtendsType(SGNodeType.TargetList, SGNodeType.TargetGroup);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

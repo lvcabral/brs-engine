@@ -24,7 +24,7 @@ export class MaskGroup extends Group {
     ];
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MaskGroup) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.MaskGroup, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

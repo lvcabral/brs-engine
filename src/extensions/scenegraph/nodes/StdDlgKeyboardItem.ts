@@ -27,7 +27,7 @@ export class StdDlgKeyboardItem extends Group implements StdDlgItem {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgKeyboardItem) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgKeyboardItem, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

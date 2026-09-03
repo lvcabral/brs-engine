@@ -153,7 +153,7 @@ export class ContentNode extends Node {
 
     constructor(readonly name: string = SGNodeType.ContentNode) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.ContentNode, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
     }

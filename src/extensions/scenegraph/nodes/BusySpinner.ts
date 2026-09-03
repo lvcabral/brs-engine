@@ -23,7 +23,7 @@ export class BusySpinner extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.BusySpinner) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.BusySpinner, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

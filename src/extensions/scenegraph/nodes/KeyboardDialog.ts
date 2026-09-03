@@ -18,7 +18,7 @@ export class KeyboardDialog extends Dialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.KeyboardDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Dialog);
+        this.setExtendsType(SGNodeType.KeyboardDialog, SGNodeType.Dialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

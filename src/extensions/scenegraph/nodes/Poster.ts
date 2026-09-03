@@ -54,7 +54,7 @@ export class Poster extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Poster) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Poster, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

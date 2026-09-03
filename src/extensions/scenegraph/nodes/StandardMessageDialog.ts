@@ -27,7 +27,7 @@ export class StandardMessageDialog extends StandardDialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardMessageDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.StandardDialog);
+        this.setExtendsType(SGNodeType.StandardMessageDialog, SGNodeType.StandardDialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

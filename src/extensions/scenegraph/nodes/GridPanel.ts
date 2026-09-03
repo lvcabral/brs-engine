@@ -29,7 +29,7 @@ export class GridPanel extends Panel {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.GridPanel) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Panel);
+        this.setExtendsType(SGNodeType.GridPanel, SGNodeType.Panel);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

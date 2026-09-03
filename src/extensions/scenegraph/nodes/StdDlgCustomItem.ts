@@ -28,7 +28,7 @@ export class StdDlgCustomItem extends Group implements StdDlgItem {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgCustomItem) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgCustomItem, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

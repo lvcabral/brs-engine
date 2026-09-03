@@ -61,7 +61,7 @@ export class Overhang extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.Overhang, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

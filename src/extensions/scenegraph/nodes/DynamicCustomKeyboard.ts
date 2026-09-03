@@ -11,7 +11,7 @@ import { DynamicKeyboardBase } from "./DynamicKeyboardBase";
 export class DynamicCustomKeyboard extends DynamicKeyboardBase {
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicCustomKeyboard) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.DynamicKeyboardBase);
+        this.setExtendsType(SGNodeType.DynamicCustomKeyboard, SGNodeType.DynamicKeyboardBase);
         this.registerInitializedFields(initializedFields);
 
         this.configureVoiceBox({ voiceEntryType: "generic", voiceEnabled: true, maxTextLength: 75 });

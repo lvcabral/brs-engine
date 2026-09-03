@@ -29,7 +29,7 @@ export class StandardKeyboardDialog extends StandardDialog {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StandardKeyboardDialog) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.StandardDialog);
+        this.setExtendsType(SGNodeType.StandardKeyboardDialog, SGNodeType.StandardDialog);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

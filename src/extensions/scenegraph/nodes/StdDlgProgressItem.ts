@@ -21,7 +21,7 @@ export class StdDlgProgressItem extends Group implements StdDlgItem {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgProgressItem) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgProgressItem, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

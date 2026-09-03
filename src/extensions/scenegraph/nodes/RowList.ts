@@ -88,7 +88,7 @@ export class RowList extends ArrayGrid {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RowList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.ArrayGrid);
+        this.setExtendsType(SGNodeType.RowList, SGNodeType.ArrayGrid);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -15,7 +15,7 @@ export class StdDlgButton extends Button {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgButton) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Button);
+        this.setExtendsType(SGNodeType.StdDlgButton, SGNodeType.Button);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

@@ -19,7 +19,7 @@ export class Timer extends Node {
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.Timer) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.Timer, SGNodeType.Node);
         this.lastFireTime = 0;
         this.active = false;
 

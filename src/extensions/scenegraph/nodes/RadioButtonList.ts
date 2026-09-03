@@ -15,7 +15,7 @@ export class RadioButtonList extends LabelList {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RadioButtonList) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.LabelList);
+        this.setExtendsType(SGNodeType.RadioButtonList, SGNodeType.LabelList);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

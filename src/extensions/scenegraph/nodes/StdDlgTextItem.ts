@@ -31,7 +31,7 @@ export class StdDlgTextItem extends Group implements StdDlgItem {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.StdDlgTextItem) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.StdDlgTextItem, SGNodeType.Group);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);

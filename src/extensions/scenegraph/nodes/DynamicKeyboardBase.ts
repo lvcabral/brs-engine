@@ -31,7 +31,7 @@ export class DynamicKeyboardBase extends Group {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicKeyboardBase) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Group);
+        this.setExtendsType(SGNodeType.DynamicKeyboardBase, SGNodeType.Group);
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 

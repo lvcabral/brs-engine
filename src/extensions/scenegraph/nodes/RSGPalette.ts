@@ -8,7 +8,7 @@ export class RSGPalette extends Node {
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RSGPalette) {
         super([], name);
-        this.setExtendsType(name, SGNodeType.Node);
+        this.setExtendsType(SGNodeType.RSGPalette, SGNodeType.Node);
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
