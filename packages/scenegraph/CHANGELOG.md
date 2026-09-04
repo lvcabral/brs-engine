@@ -2,6 +2,20 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.5.3"></a>
+
+## [v0.5.3 (beta) - Copy Semantics and Node Hierarchy Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.3) - 03 September 2026
+
+This patch release fixes copying an `assocarray`/`array` containing a SceneGraph node: the node itself was being cloned rather than carried over, leaving a broken copy whose script scope read back `invalid` — verified against a real device across four new probes. A related fix corrects the class hierarchy so every built-in node beyond a direct `Group` child reports its full `isSubtype()`/`parentSubtype()` chain instead of collapsing to `"Node"`, and adds `RenderableNode` as a documented `Group` alias. The remaining documented `ChannelStore` node commands — Roku Pay credential storage and TVOD partner orders — are now mocked, along with several spec deviations in the commands already implemented. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Mocked the remaining documented `ChannelStore` node commands (Roku Pay credential storage and TVOD partner orders) and fixed spec deviations in existing ones by [@lvcabral](https://github.com/lvcabral) in [#1205](https://github.com/lvcabral/brs-engine/pull/1205)
+* (rsg) Aligned container and node copy semantics with the device, so copying an `assocarray`/`array` no longer clones a SceneGraph node inside it by [@lvcabral](https://github.com/lvcabral) in [#1207](https://github.com/lvcabral/brs-engine/pull/1207)
+* (rsg) Added `RenderableNode` as an alias for `Group` and fixed multi-level subtype hierarchy registration by [@lvcabral](https://github.com/lvcabral) in [#1210](https://github.com/lvcabral/brs-engine/pull/1210)
+
+[Full Changelog][v0.5.3]
+
 <a name="v0.5.2"></a>
 
 ## [v0.5.2 (beta) - Poll-Loop Rendering Fix](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.2) - 29 August 2026
@@ -400,6 +414,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.5.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.2...brs-sg-v0.5.3
 [v0.5.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.1...brs-sg-v0.5.2
 [v0.5.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.0...brs-sg-v0.5.1
 [v0.5.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.4.0...brs-sg-v0.5.0
