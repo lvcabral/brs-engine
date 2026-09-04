@@ -158,8 +158,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 return this.messageQueue[0];
             }
             if (this.callbackQueue.length > 0) {
-                let callback = this.callbackQueue[0];
-                if (callback) {
+                const callback = this.callbackQueue.shift();
+                if (typeof callback === "function") {
                     const msg = callback();
                     if (!isInvalid(msg)) {
                         this.messageQueue.push(msg);
