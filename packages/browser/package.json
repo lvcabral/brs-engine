@@ -61,7 +61,7 @@
     "decode-bmp": "^0.1.0",
     "esm-gamecontroller.js": "^1.0.2",
     "exif-parser": "^0.1.12",
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "file-type": "^12.4.2",
     "gifuct-js": "^2.1.2",
     "hls.js": "^1.7.0",
