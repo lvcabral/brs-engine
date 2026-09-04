@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <!-- Mirrors the task's report; source/main.brs observes this to know when to close. -->
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/MainScene.brs" />
+    <children>
+        <Label id="Results" translation="[40,30]" width="1840" height="1020" wrap="true" font="font:MediumSystemFont" />
+    </children>
+</component>

@@ -109,4 +109,39 @@ describe("RoURLTransfer", () => {
             expect(transfer.postFromStringAsync()).toBe(BrsInvalid.Instance);
         });
     });
+
+    describe("AsyncGetToString + PeekMessage", () => {
+        // PeekMessage() used to read callbackQueue[0] without removing it, so for roUrlTransfer's
+        // callbackQueue entries (one-shot job thunks that perform a real, synchronous HTTP request)
+        // the same pending job kept firing on every PeekMessage() call once messageQueue drained —
+        // producing duplicate network requests and repeated roUrlEvent delivery in the very common
+        // PeekMessage()+GetMessage() polling idiom. Regression for that zombie-callback bug.
+        it("fires the request only once across a PeekMessage()+GetMessage() poll loop", () => {
+            const transfer = new RoURLTransfer();
+            const port = new RoMessagePort();
+            transfer.getMethod("setMessagePort").call(interpreter, port);
+
+            let callCount = 0;
+            transfer.getToStringEvent = () => {
+                callCount++;
+                return new RoURLEvent(1, "", "ok", 200, "", "");
+            };
+
+            transfer.getMethod("asyncGetToString").call(interpreter);
+
+            const peekMessage = port.getMethod("peekMessage");
+            const getMessage = port.getMethod("getMessage");
+
+            // Common app idiom: peek, then get once a message is available.
+            const peeked = peekMessage.call(interpreter);
+            expect(peeked).toBeInstanceOf(RoURLEvent);
+
+            const gotten = getMessage.call(interpreter);
+            expect(gotten).toBeInstanceOf(RoURLEvent);
+
+            // A further poll with no new async call queued must not re-fire the request.
+            expect(peekMessage.call(interpreter)).toBe(BrsInvalid.Instance);
+            expect(callCount).toBe(1);
+        });
+    });
 });
