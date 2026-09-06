@@ -10,7 +10,11 @@ describe("RoAppManager", () => {
     let ts;
 
     beforeEach(() => {
-        clock = fakeTimer.install({ toFake: ["Date", "performance"] });
+        // Only fake `Date`, pinned to a realistic epoch (not sinon's default of 0): `getUpTime` is
+        // marked from `performance.now()`, so leaving `performance` real and `Date` at a huge,
+        // real-world-scale epoch lets the tests below actually distinguish the two clocks (see the
+        // regression test in the "getUpTime" block, which catches them being mixed up).
+        clock = fakeTimer.install({ toFake: ["Date"], now: 1700000000000 });
         ts = new RoTimespan();
         interpreter = new Interpreter();
         interpreter.manifest = new Map();
@@ -37,6 +41,14 @@ describe("RoAppManager", () => {
             expect(totalMilliseconds).toBeTruthy();
             expect(upTime).toBeTruthy();
             expect(upTime.call(interpreter)).toEqual(totalMilliseconds.call(interpreter));
+        });
+
+        it("returns a non-negative elapsed time, not a clamped Int32.MIN_VALUE", () => {
+            let appManager = new RoAppManager();
+            let getUpTime = appManager.getMethod("getUpTime");
+            let upTime = getUpTime.call(interpreter).getMethod("totalMilliseconds");
+
+            expect(upTime.call(interpreter).getValue()).toBeGreaterThanOrEqual(0);
         });
     });
 
