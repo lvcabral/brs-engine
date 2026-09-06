@@ -109,7 +109,7 @@ const MainEnvironment: Environment = new Environment(new RoAssociativeArray([]))
  */
 export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType> {
     private readonly _stack = new Array<TracePoint>();
-    private readonly _startTime = Date.now();
+    private readonly _startTime = performance.now();
     private readonly _creationTime = process.env.CREATION_TIME;
     private _environment: Environment;
     private _sourceMap = new Map<string, string>();
