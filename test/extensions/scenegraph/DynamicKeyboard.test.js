@@ -774,6 +774,46 @@ describe("Dynamic voice keyboards", () => {
         });
     });
 
+    describe("DynamicKeyGrid Key Definition File loading", () => {
+        afterEach(() => {
+            BrsDevice.fileSystem.clearSourceOverlay();
+        });
+
+        test("a Row with no keys (spacer row) renders as blank space instead of throwing", () => {
+            // Real-device KDFs use a Row with only rowHeight and no `keys` (or `{}`) as a
+            // spacer between rows of keys; the spec calls this a "null Row" (blank space,
+            // not focusable). computeLayout() must tolerate the missing `keys` array.
+            BrsDevice.fileSystem.setSourceOverlay({
+                "pkg:/resources/keyboards/custom.json": JSON.stringify({
+                    keyboardWidthFHD: 300,
+                    keyboardHeightFHD: 200,
+                    keyboardWidthHD: 200,
+                    keyboardHeightHD: 133,
+                    sections: [
+                        {
+                            grids: [
+                                {
+                                    rows: [
+                                        { keys: [{ label: "a" }] },
+                                        { rowHeightFHD: 4, rowHeightHD: 2 }, // spacer row, no "keys"
+                                        { keys: [{ label: "b" }] },
+                                    ],
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            });
+            const grid = SGNodeFactory.createNode("DynamicKeyGrid");
+            expect(() =>
+                grid.setValue("keyDefinitionUri", new BrsString("pkg:/resources/keyboards/custom.json"))
+            ).not.toThrow();
+            expect(grid.getValueJS("width")).toBe(200); // default test scene resolution is HD
+            expect(grid.getValueJS("height")).toBe(133);
+            expect(grid.getValueJS("keyFocused")).toBe("a");
+        });
+    });
+
     describe("DynamicKeyGrid focus management", () => {
         test("disabling the focused key moves focus to an adjacent key", () => {
             const pad = SGNodeFactory.createNode("DynamicPinPad");

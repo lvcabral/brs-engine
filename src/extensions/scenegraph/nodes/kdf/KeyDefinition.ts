@@ -29,7 +29,8 @@ export interface KeyDef {
 export interface RowDef {
     rowHeightFHD?: number;
     rowHeightHD?: number;
-    keys: KeyDef[];
+    /** Omitted (or a null Row, e.g. `{}`) renders as blank, unfocusable space. */
+    keys?: KeyDef[];
 }
 
 export interface GridDef {
@@ -192,14 +193,15 @@ export function computeLayout(
             let rowY = inset.top;
             for (let r = 0; r < grid.rows.length; r++) {
                 const row = grid.rows[r];
+                const keys = row.keys ?? [];
                 const rowHeight = rowHeights[r];
                 const keyWidths = distribute(
                     sectionWidth,
-                    row.keys.map((key) => pick(res, key.keyWidthFHD, key.keyWidthHD))
+                    keys.map((key) => pick(res, key.keyWidthFHD, key.keyWidthHD))
                 );
                 let keyX = sectionX;
-                for (let c = 0; c < row.keys.length; c++) {
-                    const key = row.keys[c];
+                for (let c = 0; c < keys.length; c++) {
+                    const key = keys[c];
                     const keyWidth = keyWidths[c];
                     const label = key.label ?? "";
                     const strOut = key.strOut ?? "";
