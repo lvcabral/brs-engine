@@ -637,6 +637,11 @@ export function initializeNode(
  */
 export function initializeTask(interpreter: Interpreter, taskData: TaskData) {
     sgRoot.setCurrentThread(taskData.id);
+    // This thread's `m.global` is always an incomplete mirror of render's authoritative copy —
+    // a field another task adds to it later (after this task's own launch) must still rendezvous
+    // to the owner instead of answering `invalid` locally, exactly like any other cross-thread
+    // node reached through `m.global` (see Node.get / issue #1219).
+    sgRoot.mGlobal.setRemoteProxy(true);
     const type = taskData.name;
     let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {

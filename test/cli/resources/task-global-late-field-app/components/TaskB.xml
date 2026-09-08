@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    An independent Task, launched and confirmed "ready" before TaskA (see TaskA.xml) adds and
+    sets its own m.global field. Its own m.global mirror is seeded once, at its own launch;
+    reading a field added by another task afterward must still rendezvous to the owner rather
+    than answering invalid locally (issue #1219).
+-->
+<component name="TaskB" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <field id="check" type="boolean" value="false" alwaysNotify="true" />
+        <field id="resultValue" type="string" value="" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("check", m.port)
+    end sub
+
+    sub runTask()
+        m.top.ready = true
+        for i = 0 to 200
+            msg = wait(50, m.port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "check" and msg.getData()
+                value = m.global.marker
+                if value = invalid
+                    m.top.resultValue = "INVALID"
+                else
+                    m.top.resultValue = value
+                end if
+                return
+            end if
+        end for
+        m.top.resultValue = "TIMEOUT"
+    end sub
+    ]]></script>
+</component>

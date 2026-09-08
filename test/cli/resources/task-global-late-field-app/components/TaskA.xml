@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors issue #1219's own minimal repro: an independent Task publishing its own m.global
+    field once it initializes, a common pattern for subsystems that each contribute their own
+    globals as they start up. Only launched once TaskB (see TaskB.xml) has already reported
+    "ready", so the field this adds is guaranteed to arrive after TaskB's own m.global snapshot.
+-->
+<component name="TaskA" extends="Task">
+    <interface>
+        <field id="marked" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    sub runTask()
+        m.global.addField("marker", "string", false)
+        m.global.marker = "set-by-taska"
+        m.top.marked = true
+    end sub
+    ]]></script>
+</component>
