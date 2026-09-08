@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    A second, unrelated Task that reaches the agent Node through m.global: a cross-thread
+    Task-to-Node callFunc, NOT render-to-Node. On a real Roku this succeeds via the pre-existing
+    owner-based rendezvous (Node.shouldRendezvous()/rendezvousCall(), untouched by the render-
+    thread callFunc fix). On the simulator it currently fails earlier than that -- m.global.nrAgent
+    itself reads back Invalid here, a separate simulator-only bug tracked as issue #1219.
+-->
+<component name="ForeignTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <field id="triggerForeignCall" type="boolean" value="false" alwaysNotify="true" />
+        <field id="foreignCallResult" type="integer" value="0" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("control", m.port)
+        m.top.observeField("triggerForeignCall", m.port)
+    end sub
+
+    sub runTask()
+        m.top.ready = true
+        while true
+            msg = wait(0, m.port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "triggerForeignCall" and msg.getData()
+                ' PHASE foreign-task-call: a DIFFERENT task (not the one that created/owns the
+                ' agent) reads it back from m.global and calls callFunc -- cross-thread, but
+                ' Task-to-Node, not render-to-Node.
+                agent = m.global.nrAgent
+                result = agent.callFunc("setHarvestTime", 77)
+                print "FOREIGNTASK: foreignCall result=" + result.toStr()
+                m.top.foreignCallResult = result
+            end if
+        end while
+    end sub
+    ]]></script>
+</component>

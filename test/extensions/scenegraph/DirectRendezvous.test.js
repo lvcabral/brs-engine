@@ -135,14 +135,26 @@ describe("Phase 3b direct fan-out", () => {
         expect(node.getOwner()).toBe(7); // unchanged on the render side
     });
 
-    test("a task-thread set DOES re-own the node to the render thread", () => {
+    test("a task-thread set on its OWN field DOES re-own the node to the render thread", () => {
         const task = renderSideTask();
         task.inThread = true; // simulate running on the task worker
         const node = new Task([], "Inner");
         node.setOwner(7);
-        task.syncRemoteField("foo", node, "node", "ABC123");
+        // address === task.address: setting the task's own interface field.
+        task.syncRemoteField("foo", node, "node", task.address);
 
         expect(node.getOwner()).toBe(0); // crossed task -> render, now render-owned
+    });
+
+    test("a task-thread set on a FOREIGN node's field does NOT re-own the node", () => {
+        const task = renderSideTask();
+        task.inThread = true; // simulate running on the task worker
+        const node = new Task([], "Inner");
+        node.setOwner(7);
+        // address !== task.address: setting a field on some OTHER render-owned node.
+        task.syncRemoteField("foo", node, "node", "ABC123");
+
+        expect(node.getOwner()).toBe(7); // unchanged — still owned by the task that built it
     });
 
     test("a non-serializable fan-out is dropped without throwing; the rest still flush", () => {

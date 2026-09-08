@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+        <field id="taskReady" type="boolean" value="false" />
+        <function name="doHarvestCall" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.global.addFields({ appTag: "v1" })
+        m.task = createObject("roSGNode", "HarvestTask")
+        m.task.observeField("ready", "onTaskReady")
+        m.task.control = "run"
+    end sub
+
+    sub onTaskReady(event as object)
+        ' Only flag readiness here; doHarvestCall() below calls back from a clean, non-nested
+        ' context (the reported crash's own shape). Calling back onto the same task from directly
+        ' inside its own field-change observer is covered separately by task-selfcall-observer-app
+        ' -- see .claude/docs/threading-and-rendezvous.md.
+        if event.getData() then m.top.taskReady = true
+    end sub
+
+    ' Called via callFunc from the main thread's own loop (source/main.brs), matching the reported
+    ' crash's call shape: callFunc onto a Task node from a clean, non-nested render-thread context.
+    function doHarvestCall() as Dynamic
+        result = m.task.callFunc("setHarvestTime", 42)
+        print "SCENE: callFunc returned " + result.toStr()
+        hasPostInit = m.task.callFunc("touchPostInitNode")
+        print "SCENE: touchPostInitNode reports m-has-postInitNode=" + hasPostInit
+        m.top.done = true
+        return result
+    end function
+    ]]></script>
+</component>

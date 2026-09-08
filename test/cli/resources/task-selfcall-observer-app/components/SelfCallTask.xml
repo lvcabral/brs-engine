@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SelfCallTask" extends="Task">
+    <interface>
+        <field id="responseCode" type="integer" value="0" />
+        <function name="reset" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+    end sub
+
+    ' Matches PostTask.bs's real-world shape: a one-shot function whose only job is to set its own
+    ' field and return -- no wait() loop. The render-side observer of that field (see MainScene's
+    ' onResponseCode) calls callFunc() straight back onto this same task before this thread's own
+    ' set-field rendezvous is ack'd.
+    sub runTask()
+        m.top.responseCode = 42
+    end sub
+
+    function reset() as Dynamic
+        print "TASK: reset called, responseCode was " + m.top.responseCode.toStr()
+        m.top.responseCode = 0
+        return true
+    end function
+    ]]></script>
+</component>

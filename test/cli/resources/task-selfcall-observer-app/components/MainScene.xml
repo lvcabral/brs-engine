@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="finished" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "SelfCallTask")
+        m.task.observeField("responseCode", "onResponseCode")
+        m.task.control = "run"
+    end sub
+
+    ' Fires synchronously while m.task's own "responseCode" field-set rendezvous is still awaiting
+    ' its ack (handleSetFieldRequest used to send it only after this observer returns). Calling
+    ' callFunc() on the SAME task here used to deadlock: the task blocks on that ack while render
+    ' blocks on the callFunc reply, and neither side is free to service the other. See
+    ' .claude/docs/threading-and-rendezvous.md.
+    sub onResponseCode(event as object)
+        print "SCENE: onResponseCode " + event.getData().toStr()
+        m.task.unobserveField("responseCode")
+        result = m.task.callFunc("reset")
+        print "SCENE: reset callFunc returned " + result.toStr()
+        m.top.finished = true
+    end sub
+    ]]></script>
+</component>

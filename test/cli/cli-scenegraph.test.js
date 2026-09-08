@@ -1124,6 +1124,64 @@ describe.concurrent("cli scenegraph", () => {
         expect(stdout).toContain("[EXIT_BRIGHTSCRIPT_CRASH]");
     }, 30000);
 
+    it("Rendezvouses a callFunc from the render thread onto a Task's own thread", async () => {
+        let command = ["node", brsCliPath, "-r task-render-callfunc-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // `m.harvestEvents` (created in init(), see HarvestTask.xml) must round-trip through a
+        // render-initiated callFunc; `m.postInitNode` (created in runTask(), after init() returns)
+        // must be invisible to it. A nested m.global read inside the call must not deadlock. See
+        // .claude/docs/threading-and-rendezvous.md.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Render CallFunc Repro ===");
+        expect(lines).toContain("TASK: tag=v1 duration=42");
+        expect(lines).toContain("SCENE: callFunc returned 42");
+        expect(lines).toContain("TASK: touchPostInitNode m-has-postInitNode=false");
+        expect(lines).toContain("SCENE: touchPostInitNode reports m-has-postInitNode=false");
+        expect(lines).toContain("=== Task Render CallFunc Repro Complete ===");
+        expect(stdout).not.toContain("Invalid value for left-side of expression");
+        expect(stdout).not.toContain("Dropped script-scope reference");
+    }, 30000);
+
+    it("Rendezvouses a callFunc from the render thread onto a plain Node owned by a Task thread", async () => {
+        let command = ["node", brsCliPath, "-r task-owned-node-callfunc-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // AppTask constructs AgentNode (a plain Node, not a Task) on its own thread and publishes
+        // it via m.global, matching the real New Relic SDK shape (NRAgent.xml, a plain Node whose
+        // nrSetHarvestTime is callFunc-invoked). See .claude/docs/threading-and-rendezvous.md and
+        // test/simulator/probes/node-owned-by-task-callfunc-probe/ for the full investigation.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Owned Node CallFunc Repro ===");
+        expect(lines).toContain("AGENT: setHarvestTime duration=42");
+        expect(lines).toContain("SCENE: callFunc returned 42");
+        expect(lines).toContain("=== Task Owned Node CallFunc Repro Complete ===");
+        expect(stdout).not.toContain("Invalid value for left-side of expression");
+    }, 30000);
+
+    it("A Task's own field-change observer can callFunc back onto that same task without deadlocking", async () => {
+        let command = ["node", brsCliPath, "-r task-selfcall-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // SelfCallTask sets its own field and returns (a one-shot function, no wait() loop); render's
+        // observer of that field callFunc()s straight back onto the same task before the task's own
+        // field-set rendezvous is ack'd. Matches jellyfin-roku's PostTask/postFinished() shape. See
+        // .claude/docs/threading-and-rendezvous.md.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Selfcall Observer Repro ===");
+        expect(lines).toContain("SCENE: onResponseCode 42");
+        expect(lines).toContain("TASK: reset called, responseCode was 42");
+        expect(lines).toContain("SCENE: reset callFunc returned true");
+        expect(lines).toContain("=== Task Selfcall Observer Repro Complete ===");
+        expect(stdout).not.toContain("Rendezvous timeout");
+    }, 30000);
+
     it("roDataGramSocket performs real UDP send/receive from inside a Task", async () => {
         let command = ["node", brsCliPath, "-r udp-loopback-app", "source/main.brs", "-c 0"].join(" ");
 

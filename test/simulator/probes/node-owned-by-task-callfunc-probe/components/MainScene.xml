@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.backgroundURI = ""
+        m.top.backgroundColor = "0x101020FF"
+
+        m.status = CreateObject("roSGNode", "Label")
+        m.status.translation = [40, 40]
+        m.status.width = 1200
+        m.status.text = [
+            "NODE-OWNED-BY-TASK CALLFUNC PROBE"
+            ""
+            "Watch for STEP1/STEP2 results below as soon as the app starts (automatic, no key"
+            "needed) -- that isolation is the key diagnostic. Then:"
+            ""
+            "REWIND    task-call      baseline: AppTask calls callFunc on its own local agent"
+            "UP        foreign-call   baseline: a DIFFERENT task reaches the agent via m.global"
+            "DOWN      render-call    THE REPORTED BUG SHAPE: render calls callFunc on the"
+            "                         agent Node via m.global -- expect a crash on an unfixed"
+            "                         engine (matches the New Relic report); run this LAST, it"
+            "                         may end the app"
+            "BACK                     exit"
+        ].join(chr(10))
+        m.top.appendChild(m.status)
+
+        m.appReady = false
+        m.foreignReady = false
+        m.taskReady = false
+
+        m.appTask = CreateObject("roSGNode", "AppTask")
+        m.appTask.observeField("ready", "onAppTaskReady")
+        m.appTask.observeField("preCallFuncResult", "onPreCallFuncResult")
+        m.appTask.observeField("postPublishResult", "onPostPublishResult")
+        m.appTask.observeField("taskCallResult", "onTaskCallResult")
+        m.appTask.control = "run"
+
+        m.foreignTask = CreateObject("roSGNode", "ForeignTask")
+        m.foreignTask.observeField("ready", "onForeignTaskReady")
+        m.foreignTask.observeField("foreignCallResult", "onForeignCallResult")
+        m.foreignTask.control = "run"
+
+        m.top.setFocus(true)
+    end sub
+
+    sub onAppTaskReady(event as object)
+        if event.getData()
+            m.appReady = true
+            print "### RENDER AppTask ready"
+            checkAllReady()
+        end if
+    end sub
+
+    sub onForeignTaskReady(event as object)
+        if event.getData()
+            m.foreignReady = true
+            print "### RENDER ForeignTask ready"
+            checkAllReady()
+        end if
+    end sub
+
+    sub checkAllReady()
+        if m.appReady and m.foreignReady
+            m.taskReady = true
+            print "### RENDER all tasks ready -- press a phase key"
+            m.status.text = m.status.text + chr(10) + chr(10) + "ready -- press a phase key"
+        end if
+    end sub
+
+    ' KEY DIAGNOSTIC: isolates whether the corruption is caused by the ownership-changing
+    ' m.global publish itself (STEP2 fails while STEP1, the identical call made just before the
+    ' publish, succeeds), independent of any later callFunc routing/caller-thread question.
+    sub onPreCallFuncResult(event as object)
+        print "### ISOLATION STEP1 (pre-publish, same-thread) result="; event.getData()
+        m.status.text = m.status.text + chr(10) + "STEP1 (pre-publish) result=" + event.getData().toStr()
+    end sub
+
+    sub onPostPublishResult(event as object)
+        print "### ISOLATION STEP2 (post-publish, same-thread) result="; event.getData()
+        verdict = "FAILED -- publishing to m.global corrupted the agent's own script scope"
+        if event.getData() = 22 then verdict = "OK -- publish did not corrupt the agent"
+        print "### ISOLATION verdict: "; verdict
+        m.status.text = m.status.text + chr(10) + "STEP2 (post-publish) result=" + event.getData().toStr() + " -> " + verdict
+    end sub
+
+    sub onTaskCallResult(event as object)
+        print "### PHASE task-call READBACK result="; event.getData()
+    end sub
+
+    sub onForeignCallResult(event as object)
+        print "### PHASE foreign-call READBACK result="; event.getData()
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if not press then return false
+        if not m.taskReady and key <> "back"
+            print "### RENDER not ready yet -- wait for '### RENDER all tasks ready'"
+            return true
+        end if
+
+        if key = "rewind"
+            print "### PHASE task-call BEGIN"
+            m.appTask.triggerTaskCall = true
+        else if key = "up"
+            print "### PHASE foreign-call BEGIN"
+            m.foreignTask.triggerForeignCall = true
+        else if key = "down"
+            runRenderCall()
+        else
+            return false
+        end if
+        return true
+    end function
+
+    ' THE REPORTED BUG SHAPE: callFunc issued from the render thread's own clean loop context
+    ' (onKeyEvent, not a field observer of the target), onto a node handle read back from
+    ' m.global -- the agent Node was constructed by AppTask (a Task), not by render. This is the
+    ' New Relic crash's exact shape: m.nrAgent.callFunc("nrSetHarvestTime", seconds) from the main
+    ' thread, where m.nrHarvestTimerEvents was captured via findNode() inside a callFunc-invoked
+    ' init wrapper, not the agent's own init().
+    sub runRenderCall()
+        print "### PHASE render-call BEGIN"
+        agent = m.global.nrAgent
+        span = CreateObject("roTimespan")
+        span.mark()
+        result = agent.callFunc("setHarvestTime", 42)
+        elapsed = span.totalMilliseconds()
+        print "### PHASE render-call END result="; result; " elapsed-ms="; elapsed
+        m.status.text = "render-call: result=" + result.toStr() + " elapsed=" + elapsed.toStr() + "ms"
+    end sub
+    ]]></script>
+</component>

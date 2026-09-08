@@ -207,7 +207,7 @@ describe("Dynamic voice keyboards", () => {
             kbd.funcNames.add("keyselected");
             sgRoot._interpreter = fakeInterpreter;
             const calls = [];
-            kbd.callFunction = (interpreter, name, key) => {
+            kbd.callFunction = (interpreter, name, mOverride, key) => {
                 calls.push([interpreter, name.getValue(), key.getValue()]);
                 return core.BrsBoolean.True;
             };

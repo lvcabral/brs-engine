@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors the real New Relic Roku video-agent SDK's NRAgent.xml structure exactly (fetched from
+    github.com/newrelic/video-agent-roku, tag 3.2.4, components/NewRelicAgent/{NRAgent.xml,.brs}):
+    a plain Node (NOT a Task) with a child Timer, whose reference is captured into a raw
+    script-scope `m` member via findNode() inside a callFunc-invoked "init" wrapper function
+    (NewRelicInit in the real SDK), not inside init() itself. The real crash line
+    (`m.nrHarvestTimerEvents.duration = seconds` in NRAgent.brs's nrSetHarvestTimeEvents, called
+    from nrSetHarvestTime) is reproduced here as setHarvestTime / harvestTimer.
+-->
+<component name="AgentNode" extends="Node">
+    <interface>
+        <function name="agentInit" />
+        <function name="setHarvestTime" />
+    </interface>
+    <children>
+        <Timer id="harvestTimer" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        ' Real NRAgent.brs's init() is likewise trivial -- it does not touch any children.
+    end sub
+
+    ' Mirrors NewRelicInit(): a callFunc-invoked "constructor" function, not init() itself, that
+    ' captures a child node reference into a raw script-scope `m` member.
+    function agentInit() as Void
+        m.harvestTimer = m.top.findNode("harvestTimer")
+        m.harvestTimer.duration = 60
+    end function
+
+    ' Mirrors nrSetHarvestTimeEvents(): `m.nrHarvestTimerEvents.duration = seconds`.
+    function setHarvestTime(seconds as Integer) as Dynamic
+        m.harvestTimer.duration = seconds
+        print "AGENT: setHarvestTime duration=" + m.harvestTimer.duration.toStr()
+        return seconds
+    end function
+    ]]></script>
+</component>

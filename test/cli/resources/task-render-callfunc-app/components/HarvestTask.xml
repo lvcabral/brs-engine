@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="HarvestTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <function name="setHarvestTime" />
+        <function name="touchPostInitNode" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        ' The documented Task pattern: registered here, on the render thread, before the task
+        ' launches -- observeField's port branch is what wires this port's wait() to service
+        ' cross-thread requests (see task-globalobserve-app for the same shape). A port observed
+        ' only after the task is already running would just sleep, wired to nothing.
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("control", m.port)
+
+        ' Populated here, in init() -- this is the exact condition that used to crash a
+        ' render-initiated callFunc in brs-engine: a script-scope node reference that never
+        ' independently crossed to the render thread before, so a render-side reconstruction of
+        ' this node would be missing it.
+        '
+        ' Device testing (see .claude/docs/threading-and-rendezvous.md and the
+        ' callfunc-task-thread-probe in test/simulator/probes/) confirmed the real, precise rule:
+        ' real Roku takes a snapshot of a Task's `m` once, right after init() completes, and every
+        ' callFunc dispatch runs against that frozen snapshot forever after -- never the task's
+        ' live, currently-mutating `m`. A member that *is* in that snapshot keeps pointing at the
+        ' exact same live value (a Node stays fully functional; mutations through it persist).
+        ' That is why this node is created here, in init(), rather than in runTask() below.
+        m.harvestEvents = CreateObject("roSGNode", "Node")
+        m.harvestEvents.addField("duration", "integer", false)
+    end sub
+
+    sub runTask()
+        ' Populated AFTER init() returns, on this thread -- device-confirmed to be invisible to a
+        ' render-initiated callFunc dispatch, not merely stale: touchPostInitNode below finds
+        ' m.postInitNode absent entirely, not just an outdated copy of it. See the init() comment
+        ' above for the full story; touchPostInitNode is the negative-case regression companion to
+        ' setHarvestTime's positive case.
+        m.postInitNode = CreateObject("roSGNode", "Node")
+        m.postInitNode.addField("value", "integer", false)
+        m.top.ready = true
+        for i = 0 to 200
+            msg = wait(50, m.port)
+        end for
+    end sub
+
+    function setHarvestTime(seconds as Integer) as Dynamic
+        ' Reading a m.global field forces a nested task->render rendezvous while render is
+        ' blocked waiting on this very call -- must not deadlock.
+        tag = m.global.appTag
+        m.harvestEvents.duration = seconds
+        print "TASK: tag=" + tag + " duration=" + m.harvestEvents.duration.toStr()
+        return seconds
+    end function
+
+    ' Negative-case companion to setHarvestTime: m.postInitNode was created in runTask(), after
+    ' init() returned, so a render-initiated callFunc must not see it -- not even as a key.
+    function touchPostInitNode() as string
+        hasKey = m.doesExist("postInitNode")
+        print "TASK: touchPostInitNode m-has-postInitNode=" + hasKey.toStr()
+        return hasKey.toStr()
+    end function
+    ]]></script>
+</component>

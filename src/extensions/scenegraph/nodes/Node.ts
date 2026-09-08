@@ -51,6 +51,7 @@ import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor } from "../SGUtil";
+import type { Task } from "./Task";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
@@ -2099,14 +2100,22 @@ export class Node extends RoSGNode implements BrsValue {
      * Invokes a public BrightScript function defined on this component's script.
      * @param interpreter Calling interpreter.
      * @param functionName Name of the function to call.
+     * @param mOverride `m` to run the function with instead of `this.m`, or `undefined` to use
+     *   `this.m` (see `.claude/docs/threading-and-rendezvous.md`).
      * @param functionArgs Arguments provided by BrightScript.
      * @returns Function return value or invalid when not callable.
      */
-    protected callFunction(interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]): BrsType {
+    protected callFunction(
+        interpreter: Interpreter,
+        functionName: BrsString,
+        mOverride: RoAssociativeArray | undefined,
+        ...functionArgs: BrsType[]
+    ): BrsType {
         // We need to search the callee's environment for this function rather than the caller's.
         // Only allow public functions (defined in the interface) to be called.
         const name = functionName.getValue();
         if (this.componentDef && this.funcNames.has(name.toLowerCase())) {
+            const m = mOverride ?? this.m;
             return interpreter.inSubEnv((subInterpreter) => {
                 let functionToCall = subInterpreter.getCallableFunction(name);
                 if (!(functionToCall instanceof Callable)) {
@@ -2115,8 +2124,8 @@ export class Node extends RoSGNode implements BrsValue {
                 }
                 const originalLocation = interpreter.location;
                 let addedToStack = false;
-                subInterpreter.environment.setM(this.m);
-                subInterpreter.environment.setRootM(this.m);
+                subInterpreter.environment.setM(m);
+                subInterpreter.environment.setRootM(m);
                 subInterpreter.environment.hostNode = this;
 
                 try {
@@ -2516,39 +2525,120 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Builds the payload for a rendezvous method call, serializing arguments for cross-thread
+     * transfer and optionally re-owning any Node argument to render.
+     * @param interpreter Current BrightScript interpreter.
+     * @param task Task instance whose channel the call travels over (used to flag port-observed
+     *   fields on any Node argument via `fromSGNode`'s host parameter).
+     * @param callArgs Arguments to pass to the remote method.
+     * @param reownToRender Whether a Node argument should be re-owned to render (see
+     *   `.claude/docs/threading-and-rendezvous.md` for when this is/isn't correct).
+     * @returns The serialized call payload.
+     */
+    private buildMethodCallPayload(
+        interpreter: Interpreter,
+        task: Task,
+        callArgs: BrsType[] | undefined,
+        reownToRender: boolean
+    ): MethodCallPayload {
+        let host = this.address;
+        const hostNode = interpreter.environment.hostNode;
+        if (hostNode instanceof Node) {
+            host = hostNode.getAddress();
+        }
+        const location = interpreter.location;
+        const args = callArgs?.map((arg: BrsType) => {
+            if (arg instanceof Node) {
+                if (reownToRender) {
+                    arg.setOwner(0);
+                }
+                // Flag port-observed fields for the receiving task via fromSGNode's host param.
+                return fromSGNode(arg, true, task);
+            }
+            return jsValueOf(arg);
+        });
+        return args ? { host, args, location } : { host, location };
+    }
+
+    /**
      * Helper to perform a rendezvous method call via the current task.
      * @param interpreter Current BrightScript interpreter.
      * @param method Name of the method to call.
      * @param args Arguments to pass to the remote method.
+     * @param reownToRender Whether a Node argument should be re-owned to render (see
+     *   `buildMethodCallPayload`). Defaults to `true`.
      * @returns Result of the remote method call, or undefined if not available.
      */
-    protected rendezvousCall(interpreter: Interpreter, method: string, callArgs?: BrsType[]): BrsType | undefined {
+    protected rendezvousCall(
+        interpreter: Interpreter,
+        method: string,
+        callArgs?: BrsType[],
+        reownToRender: boolean = true
+    ): BrsType | undefined {
         if (!this.shouldRendezvous()) {
             return undefined;
         }
         const task = sgRoot.getCurrentThreadTask();
         if (task?.active) {
-            let host = this.address;
-            const hostNode = interpreter.environment.hostNode;
-            if (hostNode instanceof Node) {
-                host = hostNode.getAddress();
-            }
-            const location = interpreter.location;
-            const args = callArgs?.map((arg: BrsType) => {
-                if (arg instanceof Node) {
-                    arg.setOwner(0); // Node references sent to render thread will be owned by the render thread
-                    // Pass the task as host so port-observed fields are flagged `_observed_`. A node
-                    // built *inside* a task and observed there (the request/result node of a worker
-                    // pool) is task-owned at `observeField` time, so that call never rendezvoused and
-                    // the render thread would otherwise have no idea anyone is waiting on it.
-                    return fromSGNode(arg, true, task);
-                }
-                return jsValueOf(arg);
-            });
-            const payload: MethodCallPayload = args ? { host, args, location } : { host, location };
+            const payload = this.buildMethodCallPayload(interpreter, task, callArgs, reownToRender);
             return task.requestMethodCall(this.syncType, this.address, method, payload);
         }
         return undefined;
+    }
+
+    /**
+     * Thread this node's callable interface functions actually run on, when that differs from
+     * ordinary field-owner routing (`shouldRendezvous`'s `owner` check). `Task` overrides this
+     * with its own `threadId`; this base case routes to whichever thread owns the node, if that
+     * thread has an active, registered Task to dispatch through — see
+     * `.claude/docs/threading-and-rendezvous.md` for why this isn't gated on the caller the way
+     * `shouldRendezvous()` is.
+     * @returns The thread id, or undefined when not applicable (routes through the owner-based path).
+     */
+    protected callFuncThread(): number | undefined {
+        if (this.owner <= 0) {
+            return undefined;
+        }
+        const task = sgRoot.getThreadTask(this.owner);
+        return task?.active ? this.owner : undefined;
+    }
+
+    /**
+     * Consumes (and clears) a one-shot override for the `m` the *next* `callFunction` dispatch on
+     * this node should run with, if one is currently pending. Only `Task` overrides this — see
+     * `.claude/docs/threading-and-rendezvous.md`.
+     * @returns The `m` to use instead of `this.m` for the next dispatch, or undefined.
+     */
+    protected consumeCallFuncMOverride(): RoAssociativeArray | undefined {
+        return undefined;
+    }
+
+    /**
+     * `callFunc`-specific rendezvous entry point — see `.claude/docs/threading-and-rendezvous.md`.
+     * @param interpreter Current BrightScript interpreter.
+     * @param functionName Name of the function being called.
+     * @param callArgs Arguments to pass to the remote function.
+     * @returns Result of the remote call, or undefined when it should run locally.
+     */
+    protected rendezvousCallFunc(
+        interpreter: Interpreter,
+        functionName: BrsString,
+        callArgs: BrsType[]
+    ): BrsType | undefined {
+        const targetThread = this.callFuncThread();
+        if (targetThread === undefined) {
+            return this.rendezvousCall(interpreter, "callFunc", [functionName, ...callArgs], false);
+        }
+        if (targetThread === sgRoot.threadId) {
+            // Avoid a self-rendezvous loop when handleMethodCallRequest re-dispatches here.
+            return undefined;
+        }
+        const task = sgRoot.getThreadTask(targetThread);
+        if (!task?.active || task.inThread) {
+            return undefined;
+        }
+        const payload = this.buildMethodCallPayload(interpreter, task, [functionName, ...callArgs], false);
+        return task.requestTaskMethodCall(this.syncType, this.address, "callFunc", payload);
     }
 
     /**
