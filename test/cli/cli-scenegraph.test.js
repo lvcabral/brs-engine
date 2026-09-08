@@ -1072,6 +1072,27 @@ describe.concurrent("cli scenegraph", () => {
         expect(lines).toContain("=== Task Global Observe Repro Complete ===");
     }, 30000);
 
+    it("Rendezvouses a m.global field another task added after this task's own launch (#1219)", async () => {
+        let command = ["node", brsCliPath, "-r task-global-late-field-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // TaskB launches first and its own m.global mirror is seeded at that point (`sgRoot.mGlobal`,
+        // never a `remoteProxy` before this fix). TaskA launches only after TaskB reports ready, and
+        // adds/sets a m.global field TaskB never saw at its own launch. A field an unmirrored task
+        // hasn't seen yet must still rendezvous to the owner, matching real Roku, instead of
+        // short-circuiting to invalid. See Node.get and .claude/docs/threading-and-rendezvous.md.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Global Late Field Repro ===");
+        expect(lines).toContain("TASKB READY");
+        expect(lines).toContain("TASKA MARKED");
+        expect(lines).toContain("TASKB RESULT: set-by-taska");
+        expect(lines).not.toContain("TASKB RESULT: INVALID");
+        expect(lines).not.toContain("TASKB RESULT: TIMEOUT");
+        expect(lines).toContain("=== Task Global Late Field Repro Complete ===");
+    }, 30000);
+
     it("Delivers a field set between control=run and task launch exactly once", async () => {
         let command = ["node", brsCliPath, "-r task-prelaunch-events-app", "source/main.brs", "-c 0"].join(" ");
 

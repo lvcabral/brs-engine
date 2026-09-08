@@ -3,8 +3,8 @@
     A second, unrelated Task that reaches the agent Node through m.global: a cross-thread
     Task-to-Node callFunc, NOT render-to-Node. On a real Roku this succeeds via the pre-existing
     owner-based rendezvous (Node.shouldRendezvous()/rendezvousCall(), untouched by the render-
-    thread callFunc fix). On the simulator it currently fails earlier than that -- m.global.nrAgent
-    itself reads back Invalid here, a separate simulator-only bug tracked as issue #1219.
+    thread callFunc fix). Previously failed earlier than that: m.global.nrAgent itself read back
+    Invalid here, a separate simulator-only bug tracked as issue #1219 (now fixed).
 -->
 <component name="ForeignTask" extends="Task">
     <interface>

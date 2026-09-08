@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.taskB = createObject("roSGNode", "TaskB")
+        m.taskB.observeField("ready", "onTaskBReady")
+        m.taskB.control = "run"
+    end sub
+
+    sub onTaskBReady(event as object)
+        if not event.getData() then return
+        print "TASKB READY"
+        ' TaskB's own m.global mirror is now seeded -- launch TaskA only after this point so the
+        ' field it adds is guaranteed to arrive after TaskB's launch snapshot.
+        m.taskA = createObject("roSGNode", "TaskA")
+        m.taskA.observeField("marked", "onTaskAMarked")
+        m.taskA.control = "run"
+    end sub
+
+    sub onTaskAMarked(event as object)
+        if not event.getData() then return
+        print "TASKA MARKED"
+        m.taskB.observeField("resultValue", "onTaskBResult")
+        m.taskB.check = true
+    end sub
+
+    sub onTaskBResult(event as object)
+        print "TASKB RESULT: " + event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>
