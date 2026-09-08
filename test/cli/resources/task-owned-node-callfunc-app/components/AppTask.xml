@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors the app's own "main"/business-logic Task creating an SDK's agent Node on its own
+    worker thread (not render) and publishing it as a m.global singleton: a very common SDK
+    integration pattern (CreateObject the agent once, store a handle other components/threads
+    reach it through). AgentNode.owner ends up being THIS task's thread, not render's: the
+    precondition for the render->callFunc bug this fixture regression-tests.
+-->
+<component name="AppTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("control", m.port)
+    end sub
+
+    sub runTask()
+        m.agent = CreateObject("roSGNode", "AgentNode")
+        m.agent.callFunc("agentInit") ' same-thread call: this task calling its own local node.
+
+        m.global.addField("nrAgent", "node", false)
+        m.global.nrAgent = m.agent
+
+        m.top.ready = true
+        for i = 0 to 200
+            msg = wait(50, m.port)
+        end for
+    end sub
+    ]]></script>
+</component>

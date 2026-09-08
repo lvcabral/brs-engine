@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <field id="trigger" type="boolean" value="false" alwaysNotify="true" />
+        <field id="startSpin" type="boolean" value="false" alwaysNotify="true" />
+        <field id="pulse" type="integer" value="0" alwaysNotify="true" />
+        <field id="bumpInitNode" type="boolean" value="false" alwaysNotify="true" />
+        <field id="checkInitNode" type="boolean" value="false" alwaysNotify="true" />
+        <field id="taskSideInitValue" type="integer" value="0" alwaysNotify="true" />
+        <field id="taskSideNodeValue" type="integer" value="0" alwaysNotify="true" />
+        <field id="lateValue" type="integer" value="0" />
+        <function name="touchInitNode" />
+        <function name="touchPostLaunchNode" />
+        <function name="touchLateField" />
+        <function name="readGlobalDuringCall" />
+        <function name="returnTypesCheck" />
+        <function name="duringSpin" />
+        <function name="respondToPulse" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeTask.brs" />
+</component>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+        <field id="agentReady" type="boolean" value="false" />
+        <function name="doHarvestCall" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.appTask = createObject("roSGNode", "AppTask")
+        m.appTask.observeField("ready", "onAppTaskReady")
+        m.appTask.control = "run"
+    end sub
+
+    sub onAppTaskReady(event as object)
+        if event.getData() then m.top.agentReady = true
+    end sub
+
+    ' Matches the reported crash's call shape exactly: callFunc issued from the render (main)
+    ' thread's own clean loop context (source/main.brs), onto a node handle read back from
+    ' m.global -- the agent Node was constructed by AppTask (a Task), not by render.
+    function doHarvestCall() as Dynamic
+        agent = m.global.nrAgent
+        result = agent.callFunc("setHarvestTime", 42)
+        print "SCENE: callFunc returned " + result.toStr()
+        m.top.done = true
+        return result
+    end function
+    ]]></script>
+</component>

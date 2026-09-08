@@ -119,7 +119,12 @@ export class DynamicKeyboardBase extends Group {
      */
     private dispatchKeySelected(out: string) {
         if (this.funcNames.has("keyselected") && sgRoot.interpreter) {
-            const handled = this.callFunction(sgRoot.interpreter, new BrsString("keySelected"), new BrsString(out));
+            const handled = this.callFunction(
+                sgRoot.interpreter,
+                new BrsString("keySelected"),
+                undefined,
+                new BrsString(out)
+            );
             if (handled instanceof BrsBoolean && handled.toBoolean()) {
                 return;
             }

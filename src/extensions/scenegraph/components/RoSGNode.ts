@@ -211,7 +211,12 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     ): BrsBoolean;
     protected abstract removeObserver(fieldName: string, node?: RoSGNode): void;
     protected abstract cloneNode(isDeepCopy: boolean, interpreter?: Interpreter): BrsType;
-    protected abstract callFunction(interpreter: Interpreter, funcName: BrsString, ...funcArgs: BrsType[]): BrsType;
+    protected abstract callFunction(
+        interpreter: Interpreter,
+        funcName: BrsString,
+        mOverride: RoAssociativeArray | undefined,
+        ...funcArgs: BrsType[]
+    ): BrsType;
     protected abstract setNodeFocus(focusOn: boolean): boolean;
 
     protected abstract moveObjectIntoField(fieldName: string, data: RoAssociativeArray): { code: number; msg?: string };
@@ -243,7 +248,19 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract getThreadInfo(): RoAssociativeArray;
 
     protected abstract shouldRendezvous(): boolean;
-    protected abstract rendezvousCall(interpreter: Interpreter, method: string, args?: BrsType[]): BrsType | undefined;
+    protected abstract rendezvousCall(
+        interpreter: Interpreter,
+        method: string,
+        args?: BrsType[],
+        reownToRender?: boolean
+    ): BrsType | undefined;
+    protected abstract callFuncThread(): number | undefined;
+    protected abstract rendezvousCallFunc(
+        interpreter: Interpreter,
+        functionName: BrsString,
+        args: BrsType[]
+    ): BrsType | undefined;
+    protected abstract consumeCallFuncMOverride(): RoAssociativeArray | undefined;
 
     /**
      * Calls the function specified on this node.
@@ -257,11 +274,16 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     returns: ValueKind.Dynamic,
                 },
                 impl: (interpreter: Interpreter, functionName: BrsString, ...functionArgs: BrsType[]) => {
-                    const remote = this.rendezvousCall(interpreter, "callFunc", [functionName, ...functionArgs]);
+                    const remote = this.rendezvousCallFunc(interpreter, functionName, functionArgs);
                     if (remote !== undefined) {
                         return remote;
                     }
-                    return this.callFunction(interpreter, functionName, ...functionArgs);
+                    return this.callFunction(
+                        interpreter,
+                        functionName,
+                        this.consumeCallFuncMOverride(),
+                        ...functionArgs
+                    );
                 },
             })
         );

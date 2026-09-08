@@ -15,6 +15,8 @@ import {
     ThreadUpdate,
     SyncType,
     RoArray,
+    RoAssociativeArray,
+    PrimitiveKinds,
     isSyncAction,
     RuntimeError,
     RuntimeErrorDetail,
@@ -89,9 +91,10 @@ function nextRendezvousId(): number {
  * timeout exists to report; a busy render thread is a device-faithful wait, not a failure.
  * @param timeoutMs Milliseconds of render-thread silence tolerated before the wait fails.
  * @param label Describes the pending rendezvous for the one-shot "still waiting" warning.
+ * @param waiter Describes who is waiting, for the one-shot warning. Defaults to the render thread.
  * @returns A countdown exposing the remaining time and a restart for uncounted pauses.
  */
-export function rendezvousDeadline(timeoutMs: number, label: () => string) {
+export function rendezvousDeadline(timeoutMs: number, label: () => string, waiter: string = "the render thread") {
     const started = Date.now();
     let beat = BrsDevice.readRenderHeartbeat();
     let deadline = started + timeoutMs;
@@ -110,7 +113,7 @@ export function rendezvousDeadline(timeoutMs: number, label: () => string) {
                     warned = true;
                     BrsDevice.stderr.write(
                         `warning,[task:${sgRoot.threadId}] Rendezvous ${label()} pending for ${elapsed}ms: ` +
-                            `the render thread is busy and has not reached its message loop`
+                            `${waiter} is busy and has not reached its message loop`
                     );
                 }
             }
@@ -151,6 +154,25 @@ function describeSimpleValue(value: BrsType): string {
 }
 
 /**
+ * Builds the frozen `m` a render-initiated `callFunc` dispatch runs against — see
+ * `.claude/docs/threading-and-rendezvous.md` for the snapshot semantics.
+ * @param m The Task's own live `m`, as of the capture moment.
+ * @returns A standalone associative array snapshotting `m`'s key set at this moment.
+ */
+function buildCallFuncSnapshot(m: RoAssociativeArray): RoAssociativeArray {
+    const snapshot = new RoAssociativeArray([]);
+    for (const [key, value] of m.elements) {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey === "top" || lowerKey === "global" || value instanceof Node || PrimitiveKinds.has(value.kind)) {
+            snapshot.set(new BrsString(key), value, true);
+        } else {
+            snapshot.set(new BrsString(key), BrsInvalid.Instance, true);
+        }
+    }
+    return snapshot;
+}
+
+/**
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
  * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
  */
@@ -180,6 +202,22 @@ export class Task extends Node {
      * busy-waits for FPS and doesn't yield its event loop mid-frame).
      */
     private readonly fanoutQueue: ThreadUpdate[] = [];
+    /**
+     * Dedicated buffer carrying replies from this Task thread back to a `callFunc` request
+     * initiated by whichever thread manages it (typically render — see `requestTaskMethodCall`).
+     * The request itself travels over `fanoutBuffer`/`fanoutQueue` (the only channel a Task polls
+     * during normal execution, not just while blocked in its own outgoing wait); the reply can't
+     * reuse `directBuffer` because a nested task→render rendezvous served while handling the call
+     * (e.g. a `m.global` read) could be in flight on it at the same time, in the opposite direction.
+     */
+    private callBackBuffer?: SharedObject;
+    /**
+     * Frozen snapshot of this Task's own `m`, set by `captureCallFuncSnapshot()` — see
+     * `.claude/docs/threading-and-rendezvous.md`.
+     */
+    private callFuncM?: RoAssociativeArray;
+    /** One-shot signal consumed by `consumeCallFuncMOverride()`. */
+    private useCallFuncSnapshot = false;
 
     /** Thread identifier assigned by sgRoot once scheduled. */
     threadId: number;
@@ -412,8 +450,8 @@ export class Task extends Node {
 
     /**
      * Allocates the dedicated render→task rendezvous buffers (direct response + observed-field
-     * fan-out) so the render thread delivers them straight to the Task thread without a main-thread
-     * relay hop. Idempotent and render-thread only.
+     * fan-out + callFunc reply) so the render thread delivers them straight to the Task thread
+     * without a main-thread relay hop. Idempotent and render-thread only.
      */
     private ensureDirectBuffers() {
         if (this.inThread || this.fanoutBuffer) {
@@ -421,6 +459,7 @@ export class Task extends Node {
         }
         this.directBuffer = new SharedObject();
         this.fanoutBuffer = new SharedObject();
+        this.callBackBuffer = new SharedObject();
         if (sgRoot.logRendezvous) {
             BrsDevice.stdout.write(
                 `debug,[rendezvous] thread ${sgRoot.threadId} allocated direct buffers for task ${this.nodeSubtype} (thread ${this.threadId})`
@@ -506,6 +545,16 @@ export class Task extends Node {
     }
 
     /**
+     * Initializes the dedicated callFunc-reply buffer on the Task thread.
+     * @param data Buffer this thread writes `callFunc` replies into, for the managing thread
+     *   (typically render) that called `requestTaskMethodCall` to read.
+     */
+    setCallBackBuffer(data: SharedArrayBuffer) {
+        this.callBackBuffer = new SharedObject();
+        this.callBackBuffer.setBuffer(data);
+    }
+
+    /**
      * Synchronizes a field change back to the owning thread when applicable.
      * @param key Field name to synchronize.
      * @param fieldValue The new value of the field being synchronized.
@@ -516,21 +565,16 @@ export class Task extends Node {
         if (this.threadId < 0 || !this.active) {
             return;
         }
-        // A node crossing task → render changes owner (below), so the receiver runs callFunc against
-        // its own copy and needs the script-scope `m` that init() populated here. Every other path
-        // leaves the owner unchanged, and a callFunc on a node owned elsewhere rendezvouses to that
-        // owner (device-confirmed), so shipping `m` there would only bloat the payload.
+        // See .claude/docs/threading-and-rendezvous.md for the scriptScope/re-own rules below.
         const value =
             fieldValue instanceof Node
                 ? fromSGNode(fieldValue, true, undefined, undefined, { scriptScope: this.inThread })
                 : jsValueOf(fieldValue);
         if (fieldValue instanceof Node) {
-            // Re-own to the render thread only when the node actually crosses task → render (a task
-            // setting a field). On the render side this is a fan-out (render → task): the node stays
-            // render-authoritative and the task receives a serialized copy, so mutating its ownership
-            // here would corrupt the live node tree (setOwner recurses into children).
-            if (this.inThread) {
-                fieldValue.setOwner(0); // Once the Node is sent to the Render thread, it's forever owned by it
+            // Re-own to render only when reporting through this task's own field (a hand-off);
+            // never for a field on some other render-owned node the task keeps using itself.
+            if (this.inThread && address === this.address) {
+                fieldValue.setOwner(0);
             }
             fieldValue.changed = false;
         }
@@ -662,6 +706,62 @@ export class Task extends Node {
     }
 
     /**
+     * Shared blocking wait for a method-call reply, used by `requestMethodCall` and
+     * `requestTaskMethodCall`.
+     * @param rdzCtx Rendezvous tracking context from the caller's `beginRendezvous`.
+     * @param responseBuffer Buffer this thread polls for the reply.
+     * @param requestId Id the caller's request was tagged with; only a reply carrying it resolves.
+     * @param type The sync type domain (for logging/timeout messages only).
+     * @param methodName The method name that was called (for logging/timeout messages only).
+     * @param timeoutMs Timeout in milliseconds.
+     * @param waiter Describes who this thread is waiting on, for the "still waiting" warning.
+     * @param pumpTasks Whether to call `sgRoot.processTasks()` every iteration before polling.
+     * @returns The method return value, or undefined on a `nil` reply.
+     * @throws {@link rendezvousTimeoutError} if no matching reply arrives before the deadline.
+     */
+    private waitForCallReply(
+        rdzCtx: RendezvousCtx | undefined,
+        responseBuffer: SharedObject,
+        requestId: number,
+        type: SyncType,
+        methodName: string,
+        timeoutMs: number,
+        waiter: string = "the render thread",
+        pumpTasks: boolean = false
+    ): BrsType | undefined {
+        const countdown = rendezvousDeadline(timeoutMs, () => `call ${type}.${methodName}`, waiter);
+        while (true) {
+            if (pumpTasks) {
+                sgRoot.processTasks();
+            }
+            const update = this.processThreadUpdate(responseBuffer);
+            if (update?.requestId === requestId) {
+                if (update.action === "resp") {
+                    this.endRendezvous(rdzCtx, "call", type, methodName);
+                    return brsValueOf(update.value);
+                } else if (update.action === "nil") {
+                    this.endRendezvous(rdzCtx, "call", type, methodName);
+                    return undefined;
+                }
+            }
+            if (BrsDevice.pauseIfDebugging()) {
+                // Frozen for a debug session on another thread; debug time must not count toward
+                // the rendezvous timeout, and the request has already been sent (do not re-send).
+                countdown.restart();
+                continue;
+            }
+            const remaining = countdown.remaining();
+            if (remaining <= 0) {
+                break;
+            }
+            // Cap the sleep so the loop re-checks pauseIfDebugging even if the debugger activates
+            // after we entered the wait; the real timeout is enforced by the `remaining` check above.
+            responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
+        }
+        throw this.rendezvousTimeoutError("call", type, methodName);
+    }
+
+    /**
      * Requests a method call on the task thread (or from task to main) using rendezvous.
      * Blocks until the return value is received or timeout occurs.
      * @param type The sync type domain.
@@ -694,35 +794,93 @@ export class Task extends Node {
         };
         const rdzCtx = this.beginRendezvous("call", type, methodName);
         this.sendThreadUpdate(request);
-        const countdown = rendezvousDeadline(timeoutMs, () => `call ${type}.${methodName}`);
         const responseBuffer = this.directBuffer ?? this.taskBuffer;
+        return this.waitForCallReply(rdzCtx, responseBuffer, requestId, type, methodName, timeoutMs);
+    }
 
-        while (true) {
-            const update = this.processThreadUpdate(responseBuffer);
-            if (update?.requestId === requestId) {
-                if (update.action === "resp") {
-                    this.endRendezvous(rdzCtx, "call", type, methodName);
-                    return brsValueOf(update.value);
-                } else if (update.action === "nil") {
-                    this.endRendezvous(rdzCtx, "call", type, methodName);
-                    return undefined;
-                }
-            }
-            if (BrsDevice.pauseIfDebugging()) {
-                // Frozen for a debug session on another thread; debug time must not count toward
-                // the rendezvous timeout, and the request has already been sent (do not re-send).
-                countdown.restart();
-                continue;
-            }
-            const remaining = countdown.remaining();
-            if (remaining <= 0) {
-                break;
-            }
-            // Cap the sleep so the loop re-checks pauseIfDebugging even if the debugger activates
-            // after we entered the wait; the real timeout is enforced by the `remaining` check above.
-            responseBuffer.waitVersion(0, Math.min(remaining, RENDEZVOUS_POLL_MS));
+    /**
+     * A Task's callable interface functions always run on its own worker thread, regardless of
+     * which thread built/owns the node's fields — see `Node.callFuncThread`.
+     * @returns This task's thread id when active and scheduled, otherwise undefined (falls back to
+     *   ordinary owner-based routing — correctly so for a reconstructed copy of a *foreign* Task
+     *   reached via `m.global`/a field, since `active`/`threadId` are never serialized cross-thread).
+     */
+    protected callFuncThread(): number | undefined {
+        return this.active && this.threadId >= 0 ? this.threadId : undefined;
+    }
+
+    /**
+     * Captures this Task's `callFuncM` snapshot. Call exactly once, on the task thread itself,
+     * right after `init()` completes and before the task function begins running — see
+     * `.claude/docs/threading-and-rendezvous.md`. No-op when this Task has no callable interface
+     * functions, since `callFunction` can never dispatch to it.
+     */
+    captureCallFuncSnapshot() {
+        if (this.funcNames.size === 0) {
+            return;
         }
-        throw this.rendezvousTimeoutError("call", type, methodName);
+        this.callFuncM = buildCallFuncSnapshot(this.m);
+    }
+
+    /**
+     * Consumes the one-shot `useCallFuncSnapshot` signal `handleMethodCallRequest` sets
+     * immediately before dispatching a render-initiated `callFunc` on this thread.
+     * @returns The frozen `callFuncM` snapshot when the signal is set, otherwise undefined (use
+     *   the live `this.m`, e.g. for a Task calling `callFunc` on itself directly).
+     */
+    protected consumeCallFuncMOverride(): RoAssociativeArray | undefined {
+        if (!this.useCallFuncSnapshot) {
+            return undefined;
+        }
+        this.useCallFuncSnapshot = false;
+        return this.callFuncM;
+    }
+
+    /**
+     * Requests a `callFunc`-class method call on this Task's own worker thread. Mirrors
+     * `requestMethodCall`'s protocol but travels via `fanoutQueue`/`fanoutBuffer` with the reply
+     * on the dedicated `callBackBuffer` — see `.claude/docs/threading-and-rendezvous.md`.
+     * @param type The sync type domain.
+     * @param address The address of the target node.
+     * @param methodName The method name to call.
+     * @param payload Optional arguments and context for the call.
+     * @param timeoutMs Timeout in milliseconds.
+     * @returns The method return value or undefined on error/timeout.
+     */
+    requestTaskMethodCall(
+        type: SyncType,
+        address: string,
+        methodName: string,
+        payload?: MethodCallPayload,
+        timeoutMs: number = sgRoot.rendezvousTimeout
+    ): BrsType | undefined {
+        if (this.inThread || !this.fanoutBuffer || !this.callBackBuffer || this.threadId < 0 || !this.active) {
+            return undefined;
+        }
+        const value = payload ?? null;
+        const requestId = this.syncRequestId++;
+        const request: ThreadUpdate = {
+            id: sgRoot.threadId,
+            action: "call",
+            type,
+            address,
+            key: methodName,
+            value,
+            requestId,
+            direct: true,
+        };
+        const rdzCtx = this.beginRendezvous("call", type, methodName);
+        this.fanoutQueue.push(request);
+        return this.waitForCallReply(
+            rdzCtx,
+            this.callBackBuffer,
+            requestId,
+            type,
+            methodName,
+            timeoutMs,
+            "the task thread",
+            true
+        );
     }
 
     /**
@@ -767,6 +925,7 @@ export class Task extends Node {
                 buffer: this.taskBuffer.getBuffer(),
                 directToTask: this.directBuffer?.getBuffer(),
                 fanout: this.fanoutBuffer?.getBuffer(),
+                callBack: this.callBackBuffer?.getBuffer(),
                 tmp: BrsDevice.getTmpVolume(),
                 cacheFS: BrsDevice.getCacheFS(),
                 m: serializeTaskM(this.m, this),
@@ -849,6 +1008,12 @@ export class Task extends Node {
         // and all task-originated traffic still go through the broker via postMessage.
         if (!this.inThread && this.directBuffer && update.requestId !== undefined) {
             this.directBuffer.store(update);
+            return;
+        }
+        // A task thread replying to a direct-flagged callFunc request — mirrors the render-side
+        // direct-buffer branch above, in the opposite direction.
+        if (this.inThread && update.direct && this.callBackBuffer && !isRequest) {
+            this.callBackBuffer.store(update);
             return;
         }
         postMessage(update);
@@ -1169,7 +1334,19 @@ export class Task extends Node {
         if (!this.inThread) {
             this.trackRemotePortObserver(target, update, payload.args);
         }
-        const result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
+        // Signal the callFuncM snapshot for this one dispatch — see .claude/docs/threading-and-rendezvous.md.
+        const snapshotTarget = update.direct === true && target instanceof Task ? target : undefined;
+        if (snapshotTarget) {
+            snapshotTarget.useCallFuncSnapshot = true;
+        }
+        let result: BrsType;
+        try {
+            result = sgRoot.interpreter.call(method, args, hostNode.m, location, hostNode);
+        } finally {
+            if (snapshotTarget) {
+                snapshotTarget.useCallFuncSnapshot = false;
+            }
+        }
         update.action = "resp";
         if (result instanceof Node) {
             const deep = result instanceof ContentNode;

@@ -207,6 +207,9 @@ export class BrightScriptExtension implements BrsExtension {
             // Phase 3a: render thread writes rendezvous responses directly into this buffer.
             taskNode.setDirectBuffer(taskData.directToTask);
         }
+        if (taskData.callBack) {
+            taskNode.setCallBackBuffer(taskData.callBack);
+        }
         const typeDef = sgRoot.nodeDefMap.get(taskNode.nodeSubtype.toLowerCase());
         const taskEnv = typeDef?.environment;
         if (taskEnv) {
@@ -228,6 +231,7 @@ export class BrightScriptExtension implements BrsExtension {
                             callLocation: interpreter.location,
                             signature: funcToCall.signatures[0].signature,
                         });
+                        taskNode.captureCallFuncSnapshot();
                         taskNode.started = true;
                         funcToCall.call(subInterpreter);
                         BrsDevice.stdout.write(

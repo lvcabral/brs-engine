@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Label
+            id="keymap"
+            translation="[80,60]"
+            width="1760"
+            height="900"
+            wrap="true" />
+        <Label
+            id="status"
+            translation="[80,960]"
+            width="1760" />
+        <!-- A visible, continuously-incrementing counter driven by the render thread's own message
+             loop. It stalls whenever the render thread is blocked waiting on a callFunc: the
+             most direct, no-instrumentation-needed evidence of whether a phase actually blocks. -->
+        <Label
+            id="heartbeat"
+            translation="[80,1000]"
+            width="1760" />
+        <Timer
+            id="heartbeatTimer"
+            duration="0.1"
+            repeat="false" />
+        <!-- Deferred so PHASE busy's callFunc lands *after* the task's spin has actually started
+             (control=RUN/field sync round trips before runBusySpin() begins), not before it. -->
+        <Timer
+            id="spinCallTimer"
+            duration="0.5"
+            repeat="false" />
+        <!-- Deferred so PHASE refresh's callFunc lands *after* the task's own bumpInitNode mutation
+             has actually applied, not before it. -->
+        <Timer
+            id="refreshCallTimer"
+            duration="0.3"
+            repeat="false" />
+    </children>
+    <script type="text/brightscript" uri="pkg:/components/ProbeScene.brs" />
+</component>

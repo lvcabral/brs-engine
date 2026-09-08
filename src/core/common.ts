@@ -487,6 +487,8 @@ export type TaskData = {
     directToTask?: SharedArrayBuffer;
     /** Phase 3b: dedicated buffer for direct render→task fan-out of observed-field updates. */
     fanout?: SharedArrayBuffer;
+    /** Dedicated buffer for replies to a render-initiated `callFunc` request. See `Task.requestTaskMethodCall`. */
+    callBack?: SharedArrayBuffer;
     tmp?: SharedArrayBuffer;
     cacheFS?: SharedArrayBuffer;
     m?: any;
@@ -533,6 +535,8 @@ export type ThreadUpdate = {
     key: string;
     value: any;
     requestId?: number;
+    /** Marks a request/reply that must travel over the dedicated `callBackBuffer`, not the broker. */
+    direct?: true;
 };
 
 /**

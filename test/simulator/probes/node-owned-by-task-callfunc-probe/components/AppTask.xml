@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Mirrors the app's own "main"/business-logic Task creating an SDK's agent Node on its own
+    worker thread (not render) and publishing it as a m.global singleton: a very common SDK
+    integration pattern (CreateObject the agent once, store a handle other components/threads
+    reach it through). AgentNode.owner ends up being THIS task's thread, not render's: the
+    precondition for the render->callFunc bug this probe tests.
+-->
+<component name="AppTask" extends="Task">
+    <interface>
+        <field id="ready" type="boolean" value="false" />
+        <field id="preCallFuncResult" type="integer" value="-1" alwaysNotify="true" />
+        <field id="postPublishResult" type="integer" value="-1" alwaysNotify="true" />
+        <field id="triggerTaskCall" type="boolean" value="false" alwaysNotify="true" />
+        <field id="taskCallResult" type="integer" value="-1" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "runTask"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("control", m.port)
+        m.top.observeField("triggerTaskCall", m.port)
+    end sub
+
+    sub runTask()
+        m.agent = CreateObject("roSGNode", "AgentNode")
+        m.agent.callFunc("agentInit") ' same-thread call: this task calling its own local node.
+
+        ' ISOLATION STEP 1: same-thread callFunc BEFORE the agent is ever published anywhere.
+        ' Always expected to succeed -- pure sanity baseline.
+        m.top.preCallFuncResult = m.agent.callFunc("setHarvestTime", 11)
+        print "APPTASK: STEP1 (pre-publish, same-thread) result=" + m.top.preCallFuncResult.toStr()
+
+        ' Publish into m.global (a render-owned node) -- the SDK-singleton pattern.
+        m.global.addField("nrAgent", "node", false)
+        m.global.nrAgent = m.agent
+
+        ' ISOLATION STEP 2: the SAME same-thread callFunc call, immediately AFTER the publish
+        ' above, before render (or anyone else) has touched the agent at all. If this ALSO fails,
+        ' the corruption is caused by the ownership-changing publish itself, independent of who
+        ' later calls callFunc or from which thread -- not specific to render's dispatch routing.
+        '
+        ' NOTE: try/catch here does NOT protect against the engine bug this isolates. Publishing
+        ' to m.global reassigns this node's owner to render even though it physically stays on
+        ' this task's own thread, so this "same-thread" call now incorrectly rendezvouses OUT to
+        ' render -- and if it crashes, the crashing statement executes on render's own call stack
+        ' while servicing that rendezvous request, entirely outside this task's try block. That
+        ' crash terminates the whole app (uncaught error on a Task thread), so `ready` below and
+        ' every later phase become unreachable whenever this isolation step fails. That is itself
+        ' part of the finding, not a probe bug -- see the README.
+        try
+            m.top.postPublishResult = m.agent.callFunc("setHarvestTime", 22)
+            print "APPTASK: STEP2 (post-publish, same-thread) result=" + m.top.postPublishResult.toStr()
+        catch e
+            print "APPTASK: STEP2 (post-publish, same-thread) THREW: " + e.message
+            m.top.postPublishResult = -1
+        end try
+
+        m.top.ready = true
+        while true
+            msg = wait(0, m.port)
+            if type(msg) = "roSGNodeEvent" and msg.getField() = "triggerTaskCall" and msg.getData()
+                ' PHASE task-call: this task calling callFunc on its OWN local node again, later,
+                ' from inside its normal wait() loop -- same question as STEP2 but at a later,
+                ' more "normal" point in the task's lifecycle.
+                try
+                    result = m.agent.callFunc("setHarvestTime", 99)
+                    print "APPTASK: taskCall result=" + result.toStr()
+                    m.top.taskCallResult = result
+                catch e
+                    print "APPTASK: taskCall THREW: " + e.message
+                    m.top.taskCallResult = -1
+                end try
+            end if
+        end while
+    end sub
+    ]]></script>
+</component>

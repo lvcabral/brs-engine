@@ -75,8 +75,107 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
   `rendezvousCall(interpreter, "<method>", [args])`. When `shouldRendezvous()`, it serializes args (node
   args re-owned by thread 0) and calls `task.requestMethodCall(...)`, which blocks (default 10s timeout,
   logs "Rendezvous timeout") until `resp`/`nil`. `requestFieldValue` does the same for plain reads.
-- **Crossing into a node sends ownership**: a `Node` passed from a task to the render thread is re-owned
-  (`setOwner(0)`), so later access from the task rendezvouses back.
+- **Crossing into a node sends ownership *only when the task is reporting through its own
+  field*.** `Task.syncRemoteField` re-owns a `Node` value to render (`setOwner(0)`) when the task
+  is setting **its own** interface field (`m.top.xxx = someNode`, `address === this.address` —
+  a hand-off: the task isn't going to keep using the node itself, so render becoming its
+  permanent owner is correct, and the receiver needs to run `callFunc` against its own copy).
+  It must **not** re-own when the task is merely setting a field on some *other* render-owned
+  node (`address !== this.address` — e.g. `m.global.someHandle = someNode`, the common
+  "publish a singleton for other threads/components to discover" pattern): the task keeps using
+  its own local reference to that node forever after, so its ownership must not change.
+  Device-confirmed this distinction matters (real Roku does not re-own in the second case) —
+  getting it wrong was the actual New Relic SDK crash's root cause (see
+  `test/simulator/probes/node-owned-by-task-callfunc-probe/`, whose README documents the full
+  investigation): re-owning unconditionally made every later same-thread access on the owning
+  task incorrectly evaluate `shouldRendezvous()` as `true` and rendezvous *out* to render, which
+  only had a reconstructed copy missing whatever the task's own script populated. Regression:
+  `DirectRendezvous.test.js`'s "own field" vs "FOREIGN node" pair, and
+  `task-owned-node-callfunc-app` in `test/cli/`.
+- **A `callFunc` argument is never re-owned, on either the render→Task or task→render routing
+  branch** — `Node.buildMethodCallPayload`'s `reownToRender` boolean, threaded through from both
+  `rendezvousCallFunc` call sites (`rendezvousCall(..., false)` for the fallback branch,
+  `buildMethodCallPayload(..., false)` for the Task-target branch). Same rule and same root cause
+  as the field case above, just reached via a call argument: re-owning a `Node` argument to
+  whichever thread it's passed into breaks the caller's own later same-thread use of it.
+  `rendezvousCall`'s ~69 other, non-`callFunc` call sites keep the default (`true`) — those really
+  are a task→render hand-off. **Gotcha hit while fixing this**: giving the parameter a numeric
+  default (`= 0`) let an explicit `undefined` argument silently fall back to that default (JS
+  substitutes on `undefined`, not just omission) — hence the boolean instead of a nullable thread
+  id. Regression: `RenderTaskCallFunc.test.js`'s "keeps its own ownership" pair.
+- **`callFunc` on a Task rendezvouses even from the thread that owns the node** (device-confirmed — a
+  Task's callable interface functions always run on its own worker thread, independent of `owner`, which
+  models who built the node's *fields*, typically render). `shouldRendezvous()`'s `owner` check can never
+  catch this: a Task's render-side instance is *constructed* on render, so `owner === 0` forever. `callFunc`
+  therefore has its own routing pair — `Node.callFuncThread()` (only `Task` overrides it, returning its own
+  `threadId` when `active`) and `Node.rendezvousCallFunc()` — used exclusively by `RoSGNode.callFunc`, not
+  the other ~69 `rendezvousCall()` call sites (those stay owner-based; a Task's *fields* really are
+  render-owned and already work via the field-sync path above). Three branches: not an active Task →
+  falls back to `rendezvousCall` unchanged; `callFuncThread() === sgRoot.threadId` → run locally,
+  returning `undefined` **without** falling through to `rendezvousCall` — `handleMethodCallRequest`
+  re-dispatches `"callFunc"` through the Callable a second time once the request lands on the Task's own
+  thread, so falling through there would self-rendezvous back out to render; otherwise →
+  `Task.requestTaskMethodCall()`. That method's transport differs from `requestMethodCall`'s: the request
+  travels via `fanoutQueue`/`fanoutBuffer` (the only channel a Task polls every tick, not just while
+  blocked in its own outgoing wait — `directBuffer`/broker delivery are dead paths for a fresh
+  render-initiated request in current direct/fan-out mode), and the reply arrives on a **dedicated
+  `callBackBuffer`** (can't reuse `directBuffer` — a nested task→render rendezvous served while handling
+  the call, e.g. a `m.global` read, could be in flight on it at the same time, in the opposite direction).
+  The wait loop pumps `sgRoot.processTasks()` every iteration — otherwise that nested rendezvous, or any
+  other task's unrelated in-flight request, would deadlock behind this blocking wait, since incoming
+  requests are only ever served from `processTasks()` (see the *silence* note below). Regression:
+  `test/extensions/scenegraph/RenderTaskCallFunc.test.js` and `task-render-callfunc-app` in `test/cli/`.
+- **`callFunc` on an ordinary `Node` genuinely owned by a Task thread also rendezvouses, from *any*
+  caller — not just a Task-initiated one.** This is the base-class counterpart to the Task-specific
+  routing above: `shouldRendezvous()`/`rendezvousCall()` gate on the *caller* being a task thread
+  (`sgRoot.inTaskThread()`), so they never fire for a render-initiated call, no matter what the
+  target's `owner` is. That left a real gap: a plain `Node` a Task legitimately owns and keeps using
+  itself (not a Task target, and not merely field-owned by render the way most nodes are) was
+  unreachable from render's own `callFunc` — the exact shape a Task publishing an SDK singleton via
+  `m.global` produces once the ownership bug above is fixed. `Node.callFuncThread()`'s base case
+  (previously an unconditional `return undefined`, meaning "always fall back to `rendezvousCall`")
+  now checks `this.owner`: if it points at a thread with an active, registered Task
+  (`sgRoot.getThreadTask(this.owner)`), route through the same `rendezvousCallFunc`/
+  `requestTaskMethodCall` machinery the Task-specific case already uses — no gate on
+  `sgRoot.inTaskThread()`, since it doesn't matter whether the caller is render or another task,
+  only that the *target* thread has a live Task to dispatch through. `Task`'s own override is
+  unaffected (a Task's functions run on its own `threadId`, which can differ from `owner` — the
+  thread that *built* it, typically render — so it keeps using `active`/`threadId`, not this
+  `owner`-based check). Regression: `task-owned-node-callfunc-app` in `test/cli/`.
+- **A render-initiated `callFunc` runs against a frozen snapshot of the Task's `m`, never its live,
+  currently-mutating `m`** — device-confirmed by direct probing (`callfunc-task-thread-probe` in
+  `test/simulator/probes/`, whose README documents the full experiment trail). Real Roku snapshots a
+  Task's `m` once, right after `init()` completes and before the task's own function starts running; a
+  raw script-scope member added *after* that point is invisible to any later `callFunc` dispatch — not
+  stale, **absent entirely**, not even as a key. A member that *is* captured keeps pointing at the exact
+  same live value forever after (a `Node` reference stays fully functional and reflects later mutations
+  made either through the dispatch or by the task's own unrelated code — it is the same object, not a
+  copy); a value with no meaning outside the one thread that made it (a live `roMessagePort` handle) comes
+  back present-as-key but `invalid`-as-value. Declared fields (`m.top.xxx`) are untouched by any of this —
+  they cross via the already-correct field-sync path above regardless of timing.
+  `Task.captureCallFuncSnapshot()` builds this once (`buildCallFuncSnapshot` in `nodes/Task.ts`: keep
+  `top`/`global`, `Node` values, and primitives as-is; flatten everything else — any other live
+  BrsComponent — to `invalid`), called from `execTask` in `src/extensions/scenegraph/index.ts` at exactly
+  that boundary, right before the task's function is invoked. Routing this into the actual call is not a
+  matter of passing a different `m` down through `Interpreter.call`'s dispatch of the `callFunc`
+  Callable — `Node.callFunction`'s sub-environment setup hardcodes `this.m`, ignoring whatever `m` the
+  outer call carried, so a naive parameter swap at the outer layer is a silent no-op. Instead
+  `callFunction` takes an explicit `mOverride` parameter (every other caller passes `undefined`, meaning
+  "use `this.m`" — unchanged), and a new virtual hook, `Node.consumeCallFuncMOverride()` (no-op on `Node`;
+  `Task` overrides it), is consulted right at the `callFunc` Callable's own call site in
+  `RoSGNode.callFunc`. `Task.handleMethodCallRequest` sets a one-shot `useCallFuncSnapshot` flag on the
+  target immediately before dispatching a `direct`-flagged request (clearing it in a `finally`, so a
+  resolution that never reaches the hook — or throws — can't leak it onto a later, unrelated call);
+  `consumeCallFuncMOverride()` reads and clears that same flag, returning `callFuncM` only for that one
+  dispatch. Regression: `captureCallFuncSnapshot`/`consumeCallFuncMOverride` describe blocks in
+  `test/extensions/scenegraph/RenderTaskCallFunc.test.js`, and `task-render-callfunc-app`'s
+  positive/negative pair (`m.harvestEvents`, created in `init()`, must round-trip; `m.postInitNode`,
+  created in `runTask()`, must be invisible — not merely stale) in `test/cli/`.
+  `captureCallFuncSnapshot()` skips the `m`-copy when `funcNames` is empty (no callable interface
+  functions declared) — `callFunction` can never dispatch to such a Task, so no `callFunc` will
+  ever consume the snapshot; cheap to skip for the common fields-only worker/background Task shape.
+  Unit tests exercising the snapshot directly must populate `funcNames` on their bare `Task`
+  instances or this guard makes `captureCallFuncSnapshot()` a no-op.
 - **Function values cross threads via AST rebuild** — `jsValueOf` serializes a user-defined `Callable` as
   name + source location; `restoreCallable` (`factory/Serializer.ts`) resolves it from the per-worker anon
   registry (location-verified — `$anon_N` ids collide across workers) or rebuilds it with `toCallable`

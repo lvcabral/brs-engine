@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+        <field id="taskReady" type="boolean" value="false" />
+        <function name="doHarvestCall" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.global.addFields({ appTag: "v1" })
+        m.task = createObject("roSGNode", "HarvestTask")
+        m.task.observeField("ready", "onTaskReady")
+        m.task.control = "run"
+    end sub
+
+    sub onTaskReady(event as object)
+        ' Only flag readiness here -- do NOT call m.task.callFunc() from this handler. This fires
+        ' synchronously while the task's own "ready" field-set rendezvous is still awaiting its ack
+        ' (handleSetFieldRequest sends it only after this observer returns), so a callFunc back into
+        ' the SAME task here would deadlock: the task blocks on that ack while render blocks on the
+        ' callFunc reply, and neither side is free to service the other. The reported crash calls
+        ' callFunc from the main thread's own independent message loop, not from a field observer of
+        ' the target task -- doHarvestCall(), below, is called from that same clean context.
+        if event.getData() then m.top.taskReady = true
+    end sub
+
+    ' Called via callFunc from the main thread's own loop (source/main.brs), matching the reported
+    ' crash's call shape: callFunc onto a Task node from a clean, non-nested render-thread context.
+    function doHarvestCall() as Dynamic
+        result = m.task.callFunc("setHarvestTime", 42)
+        print "SCENE: callFunc returned " + result.toStr()
+        hasPostInit = m.task.callFunc("touchPostInitNode")
+        print "SCENE: touchPostInitNode reports m-has-postInitNode=" + hasPostInit
+        m.top.done = true
+        return result
+    end function
+    ]]></script>
+</component>
