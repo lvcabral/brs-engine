@@ -14,13 +14,10 @@
     end sub
 
     sub onTaskReady(event as object)
-        ' Only flag readiness here -- do NOT call m.task.callFunc() from this handler. This fires
-        ' synchronously while the task's own "ready" field-set rendezvous is still awaiting its ack
-        ' (handleSetFieldRequest sends it only after this observer returns), so a callFunc back into
-        ' the SAME task here would deadlock: the task blocks on that ack while render blocks on the
-        ' callFunc reply, and neither side is free to service the other. The reported crash calls
-        ' callFunc from the main thread's own independent message loop, not from a field observer of
-        ' the target task -- doHarvestCall(), below, is called from that same clean context.
+        ' Only flag readiness here; doHarvestCall() below calls back from a clean, non-nested
+        ' context (the reported crash's own shape). Calling back onto the same task from directly
+        ' inside its own field-change observer is covered separately by task-selfcall-observer-app
+        ' -- see .claude/docs/threading-and-rendezvous.md.
         if event.getData() then m.top.taskReady = true
     end sub
 

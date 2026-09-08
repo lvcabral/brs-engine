@@ -1163,6 +1163,25 @@ describe.concurrent("cli scenegraph", () => {
         expect(stdout).not.toContain("Invalid value for left-side of expression");
     }, 30000);
 
+    it("A Task's own field-change observer can callFunc back onto that same task without deadlocking", async () => {
+        let command = ["node", brsCliPath, "-r task-selfcall-observer-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // SelfCallTask sets its own field and returns (a one-shot function, no wait() loop); render's
+        // observer of that field callFunc()s straight back onto the same task before the task's own
+        // field-set rendezvous is ack'd. Matches jellyfin-roku's PostTask/postFinished() shape. See
+        // .claude/docs/threading-and-rendezvous.md.
+        const lines = stdout.split("\n").map((line) => line.trimEnd());
+        expect(lines).toContain("=== Task Selfcall Observer Repro ===");
+        expect(lines).toContain("SCENE: onResponseCode 42");
+        expect(lines).toContain("TASK: reset called, responseCode was 42");
+        expect(lines).toContain("SCENE: reset callFunc returned true");
+        expect(lines).toContain("=== Task Selfcall Observer Repro Complete ===");
+        expect(stdout).not.toContain("Rendezvous timeout");
+    }, 30000);
+
     it("roDataGramSocket performs real UDP send/receive from inside a Task", async () => {
         let command = ["node", brsCliPath, "-r udp-loopback-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -744,6 +744,14 @@ export class Task extends Node {
                     return undefined;
                 }
             }
+            if (pumpTasks && !this.active) {
+                // The target task finished and tore down its worker while we were waiting (a race
+                // between its final field sync and its own control=stop relay reaching us -- see
+                // .claude/docs/threading-and-rendezvous.md). No reply can ever arrive; fall back
+                // instead of blocking for the full timeout.
+                this.endRendezvous(rdzCtx, "call", type, methodName);
+                return undefined;
+            }
             if (BrsDevice.pauseIfDebugging()) {
                 // Frozen for a debug session on another thread; debug time must not count toward
                 // the rendezvous timeout, and the request has already been sent (do not re-send).
@@ -1211,6 +1219,15 @@ export class Task extends Node {
             ? node.resolveField(update.key.toLowerCase())?.isObserved() ?? false
             : false;
         const previous = sgRoot.logRendezvous ? describeSimpleValue(oldValue) : "";
+        // Ack the sender before applying the value: applying it can synchronously fire an observer
+        // (e.g. a Task's own field-change observer calling `callFunc` right back onto this same
+        // task), which would otherwise block this thread and starve the sender's own blocking wait
+        // for this very ack -- a deadlock. The ack is a transport-level receipt, independent of
+        // whatever the observer subsequently does. See .claude/docs/threading-and-rendezvous.md.
+        if (!this.inThread && update.requestId !== undefined) {
+            const ack: ThreadUpdate = { ...update, action: "ack", value: null };
+            this.sendThreadUpdate(ack);
+        }
         // A reply to one of *our* reads only mirrors the owner's value locally — it is not a change,
         // so it must not fire this thread's observers (see `pendingReads`).
         const isReadReply = update.requestId !== undefined && this.pendingReads.has(update.requestId);
@@ -1252,12 +1269,6 @@ export class Task extends Node {
             } else {
                 node.fanOutFieldToObservingTasks(update.key, update.id);
             }
-        }
-        // Send acknowledgement back to the other thread if needed
-        if (!this.inThread && update.requestId !== undefined) {
-            update.action = "ack";
-            update.value = null;
-            this.sendThreadUpdate(update);
         }
         return update;
     }
