@@ -192,7 +192,7 @@ function taskNotify(event: string, data?: any) {
  * Stops all task workers and the app worker, releasing host state.
  */
 async function cleanupApp() {
-    resetTasks();
+    await resetTasks();
     const worker = appWorker;
     appWorker = undefined;
     currentPayload = undefined;

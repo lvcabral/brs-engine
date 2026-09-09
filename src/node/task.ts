@@ -162,10 +162,60 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
 }
 
 /**
+ * Waits for a task worker to go quiet before it is force-terminated.
+ *
+ * `worker.terminate()` races the delivery of a message the worker already sent: a BrightScript
+ * `print` reaches the host via `OutputProxy`'s `postMessage(str)` (see `src/core/device/
+ * OutputProxy.ts`), a channel entirely independent of whatever unrelated signal (another thread
+ * setting `control = "stop"`, or the app itself ending) triggered this termination. A print issued
+ * moments earlier can still be in flight when the kill lands, silently dropping it -- unlike a
+ * worker's own trailing print before its own "stop"/"end" message, which shares that same channel
+ * and is reliably ordered ahead of it. Confirmed with a standalone worker_threads repro:
+ * terminating immediately after an unrelated worker's message loses the target's last postMessage
+ * a meaningful fraction of the time (worse under CPU load); a short quiet window after its last
+ * message eliminates the loss. The caller must keep the worker's real "message" listener attached
+ * during the wait -- this only tracks activity, it never substitutes for it -- and remove it
+ * afterward, once quiet.
+ *
+ * `quietMs` must comfortably cover a freshly spawned worker's own startup latency, not just
+ * message-delivery jitter: a worker that hasn't even started running yet has produced no
+ * activity to reset the timer, so a too-short window mistakes "hasn't started" for "already
+ * done" and can lose 100% of its first message. A standalone repro racing termination against a
+ * worker's very first tick (the tightest case) needed >=50ms even under heavy CPU contention.
+ * @param worker Task worker about to be terminated
+ * @param quietMs How long the worker must be silent before considering it drained
+ * @param maxWaitMs Upper bound so a worker that keeps producing output can't stall shutdown
+ */
+async function drainWorkerOutput(worker: Worker, quietMs = 50, maxWaitMs = 500): Promise<void> {
+    return new Promise((resolve) => {
+        let quietTimer: NodeJS.Timeout;
+        const onActivity = () => {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(finish, quietMs).unref();
+        };
+        const maxTimer = setTimeout(finish, maxWaitMs).unref();
+        function finish() {
+            clearTimeout(maxTimer);
+            clearTimeout(quietTimer);
+            worker.off("message", onActivity);
+            worker.stdout.off("data", onActivity);
+            worker.stderr.off("data", onActivity);
+            resolve();
+        }
+        // "message" is the real print/debug/warning transport; stdout/stderr only catch a stray
+        // write that bypassed OutputProxy (engine internals, third-party libraries).
+        worker.on("message", onActivity);
+        worker.stdout.on("data", onActivity);
+        worker.stderr.on("data", onActivity);
+        quietTimer = setTimeout(finish, quietMs).unref();
+    });
+}
+
+/**
  * Terminates a running task worker and cleans up resources.
  * @param taskId ID of the task to terminate
  */
-function endTask(taskId: number) {
+async function endTask(taskId: number) {
     // A task stopped before its queued launch got a slot must not start afterwards.
     const queued = pendingTasks.findIndex((pending) => pending.taskData.id === taskId);
     if (queued >= 0) {
@@ -173,6 +223,9 @@ function endTask(taskId: number) {
     }
     const taskWorker = tasks.get(taskId);
     if (taskWorker) {
+        // Drain before detaching the real "message" listener: a print in flight when this was
+        // called must still reach taskCallback/notifyHost, not just be waited on.
+        await drainWorkerOutput(taskWorker);
         taskWorker.removeAllListeners("message");
         taskWorker.terminate().catch(() => {});
         tasks.delete(taskId);
@@ -199,8 +252,13 @@ function startPendingTasks() {
 /**
  * Resets all tasks by terminating workers and clearing state.
  */
-export function resetTasks() {
-    for (const [_id, worker] of tasks) {
+export async function resetTasks() {
+    const workers = [...tasks.values()];
+    // Drain every worker concurrently, real "message" listener still attached, before tearing any
+    // of them down -- sequential draining would multiply the (usually negligible) quiet-window
+    // wait by the number of still-running tasks.
+    await Promise.all(workers.map(async (worker) => drainWorkerOutput(worker)));
+    for (const worker of workers) {
         worker.removeAllListeners("message");
         worker.terminate().catch(() => {});
     }
