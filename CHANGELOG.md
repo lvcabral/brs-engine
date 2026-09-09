@@ -6,13 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ## [v2.5.4 - SceneGraph Task Rendezvous Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.4) - 08 September 2026
 
-This patch release fixes a `callFunc` issued from the render thread onto a SceneGraph `Task`, or onto a plain `Node` genuinely owned by a Task's thread, silently running locally against an incomplete render-side reconstruction instead of rendezvousing to the real owning thread — the root cause of a reported New Relic SDK crash. Two related device-confirmed fixes ship alongside it: a field or callFunc argument publishing a `Node` reference (e.g. an `m.global` singleton) no longer gets incorrectly re-owned to the receiving thread, and a Task's outgoing field-set now acknowledges before dispatching render-side observers, closing a circular-wait deadlock reproduced against a real Jellyfin server. A related fix makes a field added to `m.global` by another task, after this task's own launch, visible through rendezvous instead of permanently reading `Invalid`. Also fixed: `DynamicKeyGrid` crashing when loading a Key Definition File containing a spacer row with no `keys`, and `roAppManager.getUpTime()` returning negative values. Read the full release notes below for more details.
+This patch release fixes a `callFunc` issued from the render thread onto a SceneGraph `Task`, or onto a plain `Node` genuinely owned by a Task's thread, silently running locally against an incomplete render-side reconstruction instead of rendezvousing to the real owning thread — the root cause of a reported New Relic SDK crash. Two related device-confirmed fixes ship alongside it: a field or callFunc argument publishing a `Node` reference (e.g. an `m.global` singleton) no longer gets incorrectly re-owned to the receiving thread, and a Task's outgoing field-set now acknowledges before dispatching render-side observers, closing a circular-wait deadlock reproduced against a real Jellyfin server. A related fix makes a field added to `m.global` by another task, after this task's own launch, visible through rendezvous instead of permanently reading `Invalid`. Also fixed: `DynamicKeyGrid` crashing when loading a Key Definition File containing a spacer row with no `keys`, `roAppManager.getUpTime()` returning negative values, and the Node.js host silently dropping a Task's last `print` when it raced the Task's own teardown. Read the full release notes below for more details.
 
 ### Release Changes
 
 #### Core Engine
 
 * (brs) Fixed `roAppManager.getUpTime()` returning negative values by [@lvcabral](https://github.com/lvcabral) in [#1216](https://github.com/lvcabral/brs-engine/pull/1216)
+
+#### Node.js Library and CLI
+
+* (node) Fixed the host force-terminating a Task worker before an in-flight `print` it had already sent could reach the terminal by [@lvcabral](https://github.com/lvcabral) in [#1222](https://github.com/lvcabral/brs-engine/pull/1222)
 
 #### SceneGraph Extension (`brs-scenegraph` release v0.5.4)
 
