@@ -2,6 +2,20 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.5.4"></a>
+
+## [v0.5.4 (beta) - Task Rendezvous Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.4) - 08 September 2026
+
+This patch release fixes a `callFunc` issued from the render thread onto a SceneGraph `Task`, or onto a plain `Node` genuinely owned by a Task's thread, silently running locally against an incomplete render-side reconstruction instead of rendezvousing to the real owning thread — the root cause of a reported New Relic SDK crash. Two related device-confirmed fixes ship alongside it: a field or callFunc argument publishing a `Node` reference (e.g. an `m.global` singleton) no longer gets incorrectly re-owned to the receiving thread, and a Task's outgoing field-set now acknowledges before dispatching render-side observers, closing a circular-wait deadlock reproduced against a real Jellyfin server. A related fix makes a field added to `m.global` by another task, after this task's own launch, visible through rendezvous instead of permanently reading `Invalid`. Also fixed: `DynamicKeyGrid` crashing when loading a Key Definition File containing a spacer row with no `keys`. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Fixed a render-initiated `callFunc` onto a Task or Task-owned Node running locally instead of rendezvousing to the owning thread, plus a field/argument re-ownership fix and a Task field-set acknowledgment race that could deadlock by [@lvcabral](https://github.com/lvcabral) in [#1218](https://github.com/lvcabral/brs-engine/pull/1218)
+* (rsg) Fixed `m.global` rendezvous so a field added by another task after this task's own launch is no longer permanently invisible by [@lvcabral](https://github.com/lvcabral) in [#1220](https://github.com/lvcabral/brs-engine/pull/1220)
+* (rsg) Fixed `DynamicKeyGrid` crashing when loading a Key Definition File with a spacer row (no `keys`) by [@lvcabral](https://github.com/lvcabral) in [#1217](https://github.com/lvcabral/brs-engine/pull/1217)
+
+[Full Changelog][v0.5.4]
+
 <a name="v0.5.3"></a>
 
 ## [v0.5.3 (beta) - Copy Semantics and Node Hierarchy Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.3) - 03 September 2026
@@ -414,6 +428,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.5.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.3...brs-sg-v0.5.4
 [v0.5.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.2...brs-sg-v0.5.3
 [v0.5.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.1...brs-sg-v0.5.2
 [v0.5.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.0...brs-sg-v0.5.1
