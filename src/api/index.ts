@@ -105,6 +105,7 @@ export {
     getControlMode,
     setCustomKeys,
     setCustomPadButtons,
+    setCustomExtendedPadButtons,
     sendInput,
     setDebugState,
     getDebugState,

@@ -6,7 +6,17 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, saveDataBuffer } from "./util";
-import { DataType, RemoteType, DebugCommand, KeyBufferSize, KeyArraySpots, Platform, BufferType } from "../core/common";
+import {
+    DataType,
+    RemoteType,
+    DebugCommand,
+    KeyBufferSize,
+    KeyArraySpots,
+    Platform,
+    BufferType,
+    AnalogAxis,
+    analogSlotBase,
+} from "../core/common";
 /// #if BROWSER
 import { deviceData } from "./package";
 import gameControl, { GCGamepad, EventName } from "esm-gamecontroller.js";
@@ -39,6 +49,12 @@ const rokuKeys: Map<string, number> = new Map([
     ["b", 18],
     ["playonly", 22],
     ["stop", 23],
+    ["x", 24],
+    ["y", 25],
+    ["l1", 26],
+    ["r1", 27],
+    ["l2", 28],
+    ["r2", 29],
     ["channelup", 1114134],
     ["channeldown", 1114135],
     ["red", 1114226],
@@ -77,6 +93,9 @@ export function initControlModule(array: Int32Array, options: any = {}) {
     }
     if (options.customPadButtons instanceof Map) {
         setCustomPadButtons(options.customPadButtons);
+    }
+    if (options.customExtendedPadButtons instanceof Map) {
+        setCustomExtendedPadButtons(options.customExtendedPadButtons);
     }
     deviceData.remoteControls.push({ model: 10001, features: ["wifi", "keyboard"] });
     gameControl.on("connect", gamePadOnHandler);
@@ -193,11 +212,14 @@ function getNext() {
             return next;
         }
     }
-    // buffer full
+    // buffer full - shift RID/KEY/MOD together so a shifted key never ends up paired with a
+    // stale remote id or modifier from a different slot (they must stay in sync per event).
     for (let i = 1; i < KeyBufferSize; i++) {
         const prev = (i - 1) * KeyArraySpots;
         const next = i * KeyArraySpots;
+        Atomics.store(sharedArray, DataType.RID + prev, Atomics.load(sharedArray, DataType.RID + next));
         Atomics.store(sharedArray, DataType.KEY + prev, Atomics.load(sharedArray, DataType.KEY + next));
+        Atomics.store(sharedArray, DataType.MOD + prev, Atomics.load(sharedArray, DataType.MOD + next));
     }
     return (KeyBufferSize - 1) * KeyArraySpots;
 }
@@ -319,6 +341,8 @@ function handleKeyboardEvent(event: KeyboardEvent, mod: number, repeat = false) 
 }
 
 // Game Pad Mapping
+// Both sticks are mapped identically here (legacy behavior): with `multi_controllers` off, the
+// right stick aliases the same d-pad keys as the left stick, for backward compatibility.
 const axesMap = new Map([
     [0, ["up", "down", "left", "right"]],
     [1, ["up", "down", "left", "right"]],
@@ -344,11 +368,52 @@ const buttonsMap = new Map([
     [17, "volumemute"],
 ]);
 
+// Extended Game Pad Mapping - used only when the `multi_controllers` manifest flag is enabled
+// (mirrored to the shared array as DataType.GPX). Assigns proper face buttons (X/Y, L1/R1/L2/R2)
+// instead of the legacy map's aliasing (e.g. X and L1 both sending "instantreplay").
+const extendedButtonsMap = new Map([
+    [0, "a"],
+    [1, "b"],
+    [2, "x"],
+    [3, "y"],
+    [4, "l1"],
+    [5, "r1"],
+    [6, "l2"],
+    [7, "r2"],
+    [8, "back"],
+    [9, "home"],
+    [10, "select"],
+    [11, "info"],
+    [12, "up"],
+    [13, "down"],
+    [14, "left"],
+    [15, "right"],
+    [16, "instantreplay"],
+    [17, "volumemute"],
+]);
+
+/**
+ * Whether `multi_controllers` is currently enabled by the running app's manifest, as mirrored
+ * into the shared array by the worker thread (this module runs on the main/API thread, which
+ * has no direct access to BrsDevice).
+ */
+function isExtendedMode(): boolean {
+    return sharedArray !== undefined && Atomics.load(sharedArray, DataType.GPX) === 1;
+}
+
 // Game Pad API
 export function setCustomPadButtons(newButtons: Map<number, string>) {
     for (const [button, value] of newButtons) {
         if (button >= 0 && button < 32 && value.length) {
             buttonsMap.set(button, value);
+        }
+    }
+}
+
+export function setCustomExtendedPadButtons(newButtons: Map<number, string>) {
+    for (const [button, value] of newButtons) {
+        if (button >= 0 && button < 32 && value.length) {
+            extendedButtonsMap.set(button, value);
         }
     }
 }
@@ -374,6 +439,24 @@ function gamePadOnHandler(gamePad: GCGamepad) {
             gamePadSubscribe(gamePad, eventName, index, key);
         }
     }
+    startAnalogPolling();
+}
+/**
+ * Resolves the Roku key name for a gamepad button/axis event, based on whether the
+ * `multi_controllers` extended mapping is currently active.
+ * @param eventName Event name being dispatched
+ * @param index Button or axis index
+ * @param key Legacy Roku key name (fallback when extended mode is off)
+ */
+function resolveGamePadKey(eventName: EventName, index: number, key: string): string {
+    if (eventName.startsWith("button")) {
+        return (isExtendedMode() ? extendedButtonsMap : buttonsMap).get(index) ?? "";
+    }
+    if (index === 1 && isExtendedMode()) {
+        // Extended mode: the right stick is analog-only (GetValue()), not aliased to the d-pad.
+        return "";
+    }
+    return key;
 }
 /**
  * Subscribes to gamepad button or axis events.
@@ -385,19 +468,15 @@ function gamePadOnHandler(gamePad: GCGamepad) {
  */
 function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: number, key: string) {
     gamePad.before(eventName, () => {
-        if (eventName.startsWith("button")) {
-            key = buttonsMap.get(index) ?? "";
-        }
-        if (controls.gamePads && key !== "") {
-            sendKey(key, 0, RemoteType.BT, gamePad.id + 1);
+        const resolved = resolveGamePadKey(eventName, index, key);
+        if (controls.gamePads && resolved !== "") {
+            sendKey(resolved, 0, RemoteType.BT, gamePad.id + 1);
         }
     });
     gamePad.after(eventName, () => {
-        if (eventName.startsWith("button")) {
-            key = buttonsMap.get(index) ?? "";
-        }
-        if (controls.gamePads && key !== "") {
-            sendKey(key, 100, RemoteType.BT, gamePad.id + 1);
+        const resolved = resolveGamePadKey(eventName, index, key);
+        if (controls.gamePads && resolved !== "") {
+            sendKey(resolved, 100, RemoteType.BT, gamePad.id + 1);
         }
     });
 }
@@ -407,5 +486,64 @@ function gamePadSubscribe(gamePad: GCGamepad, eventName: EventName, index: numbe
  */
 function gamePadOffHandler(id: number) {
     console.info(`GamePad ${id} disconnected!`);
+    stopAnalogPollingIfIdle();
+}
+
+// Continuous Analog Polling
+// esm-gamecontroller.js only exposes binary threshold-crossing for axes/buttons - it never
+// surfaces continuous stick/trigger values - so this polls navigator.getGamepads() directly.
+// Runs unconditionally whenever >=1 gamepad is connected (not gated on isExtendedMode()): it's
+// cheap and writes to a shared-array region nothing reads unless the app both enables
+// `multi_controllers` and calls GetValue(), so it has no observable effect otherwise. This also
+// avoids a startup-ordering race between a gamepad connecting and the worker parsing the
+// manifest (and mirroring DataType.GPX).
+let analogPollHandle: number | undefined;
+
+function startAnalogPolling() {
+    if (analogPollHandle !== undefined) {
+        return;
+    }
+    const step = () => {
+        pollAnalogGamepads();
+        analogPollHandle = requestAnimationFrame(step);
+    };
+    analogPollHandle = requestAnimationFrame(step);
+}
+
+function stopAnalogPollingIfIdle() {
+    if (analogPollHandle !== undefined && Object.keys(gameControl.getGamepads()).length === 0) {
+        cancelAnimationFrame(analogPollHandle);
+        analogPollHandle = undefined;
+    }
+}
+
+function pollAnalogGamepads() {
+    const gps = navigator.getGamepads ? navigator.getGamepads() : [];
+    for (const gp of gps) {
+        if (!gp) {
+            continue;
+        }
+        const base = analogSlotBase(RemoteType.BT, gp.index + 1);
+        if (base < 0) {
+            continue;
+        }
+        writeAnalogAxis(base + AnalogAxis.LeftX, gp.axes[0]);
+        writeAnalogAxis(base + AnalogAxis.LeftY, gp.axes[1]);
+        writeAnalogAxis(base + AnalogAxis.RightX, gp.axes[2]);
+        writeAnalogAxis(base + AnalogAxis.RightY, gp.axes[3]);
+        writeAnalogAxis(base + AnalogAxis.LeftTrigger, gp.buttons[6]?.value);
+        writeAnalogAxis(base + AnalogAxis.RightTrigger, gp.buttons[7]?.value);
+    }
+}
+
+/**
+ * Writes a normalized analog value into the shared array as a fixed-point integer (*1000),
+ * decoded back to a float by `BrsDevice.getAnalogValue()`.
+ * @param index Absolute shared-array index for the axis slot
+ * @param value Raw value from the Gamepad API, in [-1,1] (sticks) or [0,1] (triggers)
+ */
+function writeAnalogAxis(index: number, value: number | undefined) {
+    const v = Math.max(-1, Math.min(1, value ?? 0));
+    Atomics.store(sharedArray, index, Math.round(v * 1000));
 }
 /// #endif

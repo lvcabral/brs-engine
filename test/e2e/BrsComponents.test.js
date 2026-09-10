@@ -666,6 +666,7 @@ describe("end to end brightscript functions", () => {
             "--- Simulator Only Features ---",
             "Keyboard? false",
             "GamePad? false",
+            "Multi Controllers? true",
         ]);
     });
 

@@ -16,6 +16,7 @@ sub main()
         print "--- Simulator Only Features ---"
         print "Keyboard? "; m.remote.hasFeature("Keyboard",i)
         print "GamePad? "; m.remote.hasFeature("Gamepad",i)
+        print "Multi Controllers? "; m.remote.hasFeature("multi_controllers",i)
         if m.remote.getModel(i) = 0
             exit for
         end if
