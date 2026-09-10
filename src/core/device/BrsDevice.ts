@@ -548,7 +548,7 @@ export class BrsDevice {
             const last = this.keysBuffer.at(-1);
             const isDuplicate = this.multiControllers
                 ? last?.key === key && last?.remote === remote
-                : last !== undefined && key === last.key;
+                : key === last?.key;
             // Legacy behavior (flag off) only cleared the slot when the event was accepted,
             // leaking a stuck slot on a dedup drop (fixed here for the multi-controller path).
             if (this.multiControllers || !isDuplicate) {
