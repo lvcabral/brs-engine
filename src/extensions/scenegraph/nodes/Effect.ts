@@ -154,12 +154,12 @@ export function applyNodeEffect(
     const localRect: Rect = { x: 0, y: 0, width: contentRect.width, height: contentRect.height };
     const clipped = draw2D !== undefined && contentRect.width > 0 && contentRect.height > 0;
     if (clipped) {
-        draw2D!.pushRoundedClip(contentRect, radii, rotation, center, scale[0], scale[1]);
+        draw2D.pushRoundedClip(contentRect, radii, rotation, center, scale[0], scale[1]);
     }
     try {
         drawContent(localRect, 0, [1, 1]);
         if (clipped && hasEnoughColors && effect.getValueJS("gradientFillContent")) {
-            draw2D!.fillEffectGradient(
+            draw2D.fillEffectGradient(
                 localRect,
                 radii,
                 style,
@@ -173,7 +173,7 @@ export function applyNodeEffect(
         }
     } finally {
         if (clipped) {
-            draw2D!.popClip();
+            draw2D.popClip();
         }
     }
 
