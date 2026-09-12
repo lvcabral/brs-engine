@@ -1493,6 +1493,11 @@ export class Node extends RoSGNode implements BrsValue {
         if (!owner || !(focused instanceof Node)) {
             return false;
         }
+        // Owner and focused must belong to the same tree for the ancestor comparison below to mean
+        // anything — see the disconnected-tree carve-out in scenegraph-invariants.md.
+        if (Node.rootOf(owner) !== Node.rootOf(focused)) {
+            return false;
+        }
         // Owner must still be in the focus chain.
         if (!Node.isAncestorOrSelf(owner, focused)) {
             return true;
@@ -1526,6 +1531,19 @@ export class Node extends RoSGNode implements BrsValue {
             current = current.parent;
         }
         return false;
+    }
+
+    /**
+     * Walks `node`'s raw `.parent` chain to its top-most ancestor.
+     * @param node Node to walk up from.
+     * @returns The root-most ancestor (which is `node` itself if it has no parent).
+     */
+    private static rootOf(node: Node): Node {
+        let current = node;
+        while (current.parent instanceof Node) {
+            current = current.parent;
+        }
+        return current;
     }
 
     /**

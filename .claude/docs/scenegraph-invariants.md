@@ -1331,6 +1331,21 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
      the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner). Checked last —
      it costs an unbounded walk to the scene root, so it only runs once the cheap subtree walk has already
      failed to place `target` under `owner`.
+   - The mirror case, checked **first**: the *currently-focused* node can be the one that is unparented,
+     not the target. A component's `init()` focusing one of its own not-yet-attached children still runs
+     the ordinary `setNodeFocus` LCA walk, which unsets *every* non-common ancestor of the previously
+     focused chain as a side effect — including ancestors with no relationship whatsoever to the new
+     (detached) subtree. That fires their `focusedChild`-loss observers while nothing has actually left
+     their tree yet: a router outlet observing its own `focusedChild` and re-grabbing focus into its
+     routed content (sgRouter + a `JRDialog`-style overlay that focuses its own button from a field
+     observer *before* `presentOverlayDialog` appends it to the scene) is a real, device-confirmed
+     instance. Testing only "is `owner` still an ancestor of `focused`" reads this as a permanent
+     cross-tree steal and drops it — corrupting the chain exactly the way this whole mechanism exists to
+     prevent: `sgRoot.focused` is left on a node outside the visible tree, and the scene's own
+     `focusedChild` is left cleared instead of re-threaded to the re-grabbed node. Guard: if `owner` and
+     `focused` don't share the same root (`createPath()[0]`), there is no steal to classify yet — honor
+     the request. It resolves itself once the detached subtree is eventually mounted, via
+     `restoreFocusChainOnAttach`.
 
    **The classification must survive the deferral, not defeat it.** A grid's focus-gain settle is an
    engine emission, so raised inside another observer it defers — by which point the transaction has left
@@ -1362,4 +1377,5 @@ because an app that re-grabs focus from its own `focusedChild` observer (sgRoute
    Regression: `focus-steal-app` and `container-redirect-focus-app` in `test/cli/` (the latter drives all
    four rules plus the deferral through a real app; the `Focus.test.js` unit tests use port observers,
    which never defer), which must stay green alongside `dialog-buttongroup-focus-app`,
-   `deferred-observer-app` and `init-focus-observer-app`.
+   `deferred-observer-app` and `init-focus-observer-app`. The disconnected-tree carve-out: "honors a
+   re-grab when the competing focus lives in a still-detached subtree" in `Focus.test.js`.
