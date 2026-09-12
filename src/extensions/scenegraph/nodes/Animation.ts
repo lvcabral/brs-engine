@@ -20,6 +20,9 @@ type TargetBinding = {
  */
 export class Animation extends AnimationBase {
     private readonly targetCache = new WeakMap<Interpolator, TargetBinding>();
+    // Tracks the last `fieldToInterp` value warned about per interpolator, so a still-invalid
+    // descriptor (checked every tick) doesn't reprint the same device warning every frame.
+    private readonly warnedDescriptors = new WeakMap<Interpolator, string>();
 
     private readonly animationFields: FieldModel[] = [
         { name: "duration", type: "float", value: "0" },
@@ -273,18 +276,21 @@ export class Animation extends AnimationBase {
             return cached;
         }
 
-        let targetNode: Node | undefined;
-        let fieldName = "";
-
-        if (normalized.includes(".")) {
-            const [nodeId, ...fieldParts] = normalized.split(".");
-            fieldName = fieldParts.join(".").trim();
-            targetNode = this.findTargetNode(nodeId.trim());
-        } else {
-            const parent = this.getNodeParent();
-            targetNode = parent instanceof Node ? parent : this;
-            fieldName = normalized;
+        if (!normalized.includes(".")) {
+            // Confirmed on a real Roku device: a bare field name (no "nodeId.") is NOT resolved
+            // against the interpolator's own enclosing node - the device rejects it outright.
+            this.targetCache.delete(child);
+            this.warnInvalidDescriptor(
+                child,
+                normalized,
+                `No node specified, expected a string of the form "nodeName.fieldName"`
+            );
+            return undefined;
         }
+
+        const [nodeId, ...fieldParts] = normalized.split(".");
+        const fieldName = fieldParts.join(".").trim();
+        const targetNode = this.findTargetNode(nodeId.trim());
 
         if (!targetNode || !fieldName) {
             this.targetCache.delete(child);
@@ -298,6 +304,21 @@ export class Animation extends AnimationBase {
         };
         this.targetCache.set(child, binding);
         return binding;
+    }
+
+    /**
+     * Reports a device-format `Failed to update interpolator field` warning for an invalid
+     * `fieldToInterp` descriptor, deduplicated per interpolator so a value re-checked every tick
+     * doesn't reprint the same warning every frame.
+     */
+    private warnInvalidDescriptor(child: Interpolator, descriptor: string, reason: string) {
+        if (this.warnedDescriptors.get(child) === descriptor) {
+            return;
+        }
+        this.warnedDescriptors.set(child, descriptor);
+        BrsDevice.stderr.write(
+            `warning,Failed to update interpolator field\r\nCould not update the interpolator field "${descriptor}"\r\n${reason}\r\n`
+        );
     }
 
     /**

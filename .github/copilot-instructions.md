@@ -36,7 +36,7 @@
 - **`setValue()` signature**: Does NOT create a field if it does not already exist (prevents accidental field creation on assignment)
 
 ### New SceneGraph Nodes (v2.0 – v2.1)
-- **Animation system**: `Animation`, `ParallelAnimation`, `SequentialAnimation`, `FloatFieldInterpolator`, `ColorFieldInterpolator`, `Vector2DFieldInterpolator`
+- **Animation system**: `Animation`, `ParallelAnimation`, `SequentialAnimation`, `FloatFieldInterpolator`, `FloatArrayFieldInterpolator`, `ColorFieldInterpolator`, `Vector2DFieldInterpolator`
 - **Panel nodes**: `PanelSet`, `Panel`, `ListPanel`, `GridPanel`, `OverhangPanelSetScene`, `Overhang`
 - **Standard dialogs**: `StandardKeyboardDialog`, `StandardProgressDialog`, `StdDlgContentArea`, `StdDlgProgressItem`, `StdDlgTitleArea`
 - **Input nodes**: `PinPad`, `VoiceTextEditBox`, `ScrollableText`, `ScrollingLabel`
@@ -178,7 +178,7 @@ All SceneGraph nodes inherit from **RoSGNode** (`src/extensions/scenegraph/compo
 
 4. **Animation Nodes**:
    - `Animation`, `ParallelAnimation`, `SequentialAnimation`: Animation container nodes
-   - `FloatFieldInterpolator`, `ColorFieldInterpolator`, `Vector2DFieldInterpolator`: Field interpolators
+   - `FloatFieldInterpolator`, `FloatArrayFieldInterpolator`, `ColorFieldInterpolator`, `Vector2DFieldInterpolator`: Field interpolators
 
 5. **Special Nodes**:
    - `ContentNode`: Data-only node (no rendering), holds metadata for lists/grids

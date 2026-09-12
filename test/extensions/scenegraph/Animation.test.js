@@ -2,7 +2,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory } = scenegraph;
-const { BrsString, Float, RoArray } = core;
+const { BrsDevice, BrsString, Float, RoArray } = core;
 
 const floatArray = (nums) => new RoArray(nums.map((n) => new Float(n)));
 
@@ -15,6 +15,10 @@ const floatArray = (nums) => new RoArray(nums.map((n) => new Float(n)));
  * would animate the wrong node and the new image would never become visible.
  */
 describe("Animation target resolution", () => {
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     test("interpolator targets the child, not a same-named (case-folded) component root", () => {
         // Container id "Background" mirrors the parent-assigned id; inner poster id "background".
         const container = SGNodeFactory.createNode("Rectangle");
@@ -88,5 +92,34 @@ describe("Animation target resolution", () => {
         expect(group.getValueJS("opacity")).toBe(1);
         animation.setValue("control", new BrsString("finish"));
         expect(group.getValueJS("opacity")).toBeCloseTo(0, 5);
+    });
+
+    test('a bare fieldToInterp (no "nodeId.") is rejected, matching a real device', () => {
+        // Device-confirmed: unlike a with-dot id that resolves to the interpolator's own enclosing
+        // node (the case above), a fieldToInterp with NO dot at all is never applied - the device
+        // reports "Failed to update interpolator field ... No node specified, expected a string of
+        // the form \"nodeName.fieldName\"" and leaves the target field untouched.
+        const errors = [];
+        vi.spyOn(BrsDevice.stderr, "write").mockImplementation((msg) => errors.push(msg));
+
+        const group = SGNodeFactory.createNode("Group");
+        group.setValue("opacity", new Float(1));
+
+        const animation = SGNodeFactory.createNode("Animation");
+        animation.setValue("duration", new Float(0.5));
+        const interp = SGNodeFactory.createNode("FloatFieldInterpolator");
+        interp.setValue("fieldToInterp", new BrsString("opacity")); // no "id." prefix
+        interp.setValue("key", floatArray([0.0, 1.0]));
+        interp.setValue("keyValue", floatArray([1.0, 0.0]));
+        animation.appendChildToParent(interp);
+        group.appendChildToParent(animation);
+
+        animation.setValue("control", new BrsString("finish"));
+
+        expect(group.getValueJS("opacity")).toBe(1); // untouched
+        const warnings = errors.filter((msg) => msg.includes("Failed to update interpolator field"));
+        expect(warnings).toHaveLength(1);
+        expect(warnings[0]).toContain('Could not update the interpolator field "opacity"');
+        expect(warnings[0]).toContain('No node specified, expected a string of the form "nodeName.fieldName"');
     });
 });

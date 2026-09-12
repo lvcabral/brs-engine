@@ -1,4 +1,4 @@
-import { AAMember, BrsType } from "brs-engine";
+import { AAMember, BrsType, RoArray } from "brs-engine";
 import { Node } from "./Node";
 import { SGNodeType } from "../nodes";
 import { FieldModel } from "../SGTypes";
@@ -75,6 +75,39 @@ export abstract class Interpolator extends Node {
             return { index: 0, localT: 0 };
         }
         return { index: lastIndex - 1, localT: 1 };
+    }
+
+    /**
+     * Resolves the pair of `RoArray` keyframes surrounding `fraction` from a `keyValue` field whose
+     * entries are themselves `RoArray`s (Vector2DFieldInterpolator's pairs, FloatArrayFieldInterpolator's
+     * float arrays). Returns the sole keyframe directly when there is only one (held constant for any
+     * fraction), or `undefined` when `keyValue` is empty/malformed.
+     */
+    protected resolveArrayKeyframePair(
+        keyValue: BrsType,
+        fraction: number
+    ): RoArray | { start: RoArray; end: RoArray; localT: number } | undefined {
+        if (!(keyValue instanceof RoArray)) {
+            return undefined;
+        }
+        // `elements` directly, not `getElements()`: the latter slices a throwaway copy, and this is a
+        // per-frame path.
+        const elements = keyValue.elements;
+        if (elements.length === 0) {
+            return undefined;
+        }
+        if (elements.length === 1 && elements[0] instanceof RoArray) {
+            return elements[0];
+        }
+
+        const { index, localT } = this.resolveSegment(fraction);
+        const clampedIndex = Math.min(index, elements.length - 2);
+        const start = elements[clampedIndex];
+        const end = elements[Math.min(clampedIndex + 1, elements.length - 1)];
+        if (!(start instanceof RoArray) || !(end instanceof RoArray)) {
+            return undefined;
+        }
+        return { start, end, localT };
     }
 
     /**

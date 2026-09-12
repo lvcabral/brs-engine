@@ -6,19 +6,23 @@ Beta section of `external/dev-doc/docs/DEVELOPER/release-notes/index.md` for the
 `src/extensions/scenegraph/nodes/Effect.ts` for how brs-engine implements it (Canvas2D, since the
 engine has no real GPU/shader pipeline).
 
+Panel 2 also demos the new **`FloatArrayFieldInterpolator`** node (same release), which animates a
+field holding an array of floats — such as `Effect.borderRadius` — by interpolating each entry
+independently. See `src/extensions/scenegraph/nodes/FloatArrayFieldInterpolator.ts`.
+
 Nine panels, each an independent `Effect` configuration:
 
-| # | Demonstrates |
-| --- | --- |
-| 1 | Uniform `borderRadius` on a `Rectangle` |
-| 2 | Per-corner `borderRadius` — proves the field's clockwise-from-top-right ordering |
-| 3 | `borderWidth`/`borderColor`/`borderPadding`, no rounding |
-| 4 | Rounded corners + border + padding together |
-| 5 | `gradientStyle="linear"` with `gradientAngle` |
-| 6 | `gradientStyle="radial"` |
-| 7 | A gradient applied to both content and border (`gradientFillBorder`) |
-| 8 | `borderRadius` clipping a `Poster`'s bitmap |
-| 9 | A `Poster` with rounded corners, a border, and a gradient overlay (`gradientFillContent`) |
+| #   | Demonstrates                                                                                                                                                                              |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Uniform `borderRadius` on a `Rectangle`                                                                                                                                                   |
+| 2   | Per-corner `borderRadius`, animated via `FloatArrayFieldInterpolator` — proves the field's clockwise-from-top-right ordering and that each of the 4 entries is interpolated independently |
+| 3   | `borderWidth`/`borderColor`/`borderPadding`, no rounding                                                                                                                                  |
+| 4   | Rounded corners + border + padding together                                                                                                                                               |
+| 5   | `gradientStyle="linear"` with `gradientAngle`                                                                                                                                             |
+| 6   | `gradientStyle="radial"`                                                                                                                                                                  |
+| 7   | A gradient applied to both content and border (`gradientFillBorder`)                                                                                                                      |
+| 8   | `borderRadius` clipping a `Poster`'s bitmap                                                                                                                                               |
+| 9   | A `Poster` with rounded corners, a border, and a gradient overlay (`gradientFillContent`)                                                                                                 |
 
 ## Run it
 
