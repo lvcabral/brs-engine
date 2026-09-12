@@ -740,7 +740,7 @@ export class ArrayGrid extends Group {
         const frameRect = this.focusFrameRect(itemRect, bmp, index);
         // Dry run (no draw target, so every draw2D call inside is skipped) purely to resolve
         // frameRect's final width/height the same way a real draw would — see the ALIASING note above.
-        this.drawImage(bmp, frameRect, 0, opacity, undefined, undefined);
+        this.drawImage(bmp, frameRect, 0, opacity);
         // Read the field fresh rather than a cached property — see `setValue`'s `focusfeedbackposter`
         // branch for why.
         const poster = this.getValue("focusFeedbackPoster");
