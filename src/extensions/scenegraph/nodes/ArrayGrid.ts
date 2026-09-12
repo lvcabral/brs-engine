@@ -17,8 +17,7 @@ import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { Node } from "./Node";
 import { Field } from "./Field";
-import { createNode } from "../factory/NodeFactory";
-import { normalizeBlendColor } from "../SGUtil";
+import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -64,6 +63,13 @@ export declare namespace ArrayGrid {
     };
 }
 
+/**
+ * Stand-in for `focusFeedbackPoster.renderNode`'s interpreter param when `sgRoot.interpreter` is not
+ * yet registered (a direct-render unit test that never calls `sgRoot.setInterpreter`). Safe because
+ * that param only ever reaches `renderChildren`, and this poster is never given scenegraph children.
+ */
+const noopInterpreter = {} as Interpreter;
+
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "content", type: "node" },
@@ -83,6 +89,7 @@ export class ArrayGrid extends Group {
         { name: "focusFootprintBitmapUri", type: "string", value: "" },
         { name: "focusBitmapBlendColor", type: "color", value: "0xFFFFFFFF" },
         { name: "focusFootprintBlendColor", type: "color", value: "0xFFFFFFFF" },
+        { name: "focusFeedbackPoster", type: "node" }, // Introduced in OS 16.0
         { name: "wrapDividerBitmapUri", type: "string", value: "" },
         { name: "wrapDividerWidth", type: "float", value: "0" },
         { name: "wrapDividerHeight", type: "float", value: "36" },
@@ -191,6 +198,9 @@ export class ArrayGrid extends Group {
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
+        const focusFeedbackPoster = SGNodeFactory.createNode(SGNodeType.Poster) as Poster;
+        focusFeedbackPoster.setNodeParent(this);
+        this.setValueSilent("focusFeedbackPoster", focusFeedbackPoster);
         this.applyVertFocusStyle();
         this.applyHorizFocusStyle();
         this.lastPressHandled = "";
@@ -208,6 +218,15 @@ export class ArrayGrid extends Group {
             return;
         } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
             this.setFocusedItem(jsValueOf(value));
+        } else if (fieldName === "focusfeedbackposter") {
+            // Must stay a Poster (matches BusySpinner's `poster` field). No private cache is kept for
+            // it — `renderFocus` re-reads the field every draw, because `Node.cloneNode` aliases a
+            // node-valued field onto the SAME node while still re-running this constructor, which
+            // would desync a cache from the field the moment a grid is cloned.
+            if (!(value instanceof Poster)) {
+                return;
+            }
+            value.setNodeParent(this);
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
             const style = resolveFocusStyle(value.toString());
             if (style) {
@@ -705,7 +724,10 @@ export class ArrayGrid extends Group {
      *
      * TEMPLATE METHOD — override `focusFrameRect`, never this. Everything here is shared contract: the
      * uri and blend field the focus state selects, the validity guard, the `hasNinePatch` write that
-     * `rectMargins()` reads, and the `drawImage` call.
+     * `rectMargins()` reads, and the draw itself — via `focusFeedbackPoster` (Roku OS 16.0), the Poster
+     * node this grid uses to draw its focus indicator, so an app-assigned `effect` on it (rounded/
+     * asymmetric corners matching a custom item shape) is honored through `Poster.renderNodeContent`'s
+     * own `applyNodeEffect` call.
      */
     protected renderFocus(itemRect: Rect, opacity: number, nodeFocus: boolean, draw2D?: IfDraw2D, index = -1) {
         const bmpUri = nodeFocus ? "focusBitmapUri" : "focusFootprintBitmapUri";
@@ -715,8 +737,21 @@ export class ArrayGrid extends Group {
             return;
         }
         this.hasNinePatch = bmp.ninePatch;
-        const blendColor = normalizeBlendColor(this.getValueJS(blendField));
-        this.drawImage(bmp, this.focusFrameRect(itemRect, bmp, index), 0, opacity, draw2D, blendColor);
+        const frameRect = this.focusFrameRect(itemRect, bmp, index);
+        // Dry run (no draw target, so every draw2D call inside is skipped) purely to resolve
+        // frameRect's final width/height the same way a real draw would — see the ALIASING note above.
+        this.drawImage(bmp, frameRect, 0, opacity);
+        // Read the field fresh rather than a cached property — see `setValue`'s `focusfeedbackposter`
+        // branch for why.
+        const poster = this.getValue("focusFeedbackPoster");
+        if (!(poster instanceof Poster)) {
+            return;
+        }
+        this.copyField(poster, "uri", bmpUri);
+        this.copyField(poster, "blendColor", blendField);
+        poster.setValue("width", new Float(frameRect.width), false);
+        poster.setValue("height", new Float(frameRect.height), false);
+        poster.renderNode(sgRoot.interpreter ?? noopInterpreter, [frameRect.x, frameRect.y], 0, opacity, draw2D);
     }
 
     /**
