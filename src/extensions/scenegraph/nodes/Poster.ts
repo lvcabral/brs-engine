@@ -17,6 +17,7 @@ import { Group } from "./Group";
 import { sgRoot } from "../SGRoot";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { normalizeBlendColor } from "../SGUtil";
+import { applyNodeEffect } from "./Effect";
 
 export class Poster extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -37,6 +38,7 @@ export class Poster extends Group {
         { name: "failedBitmapUri", type: "uri" },
         { name: "failedBitmapOpacity", type: "float", value: "1.0" },
         { name: "audioGuideText", type: "string" },
+        { name: "effect", type: "node" },
     ];
     protected uri: string = "";
     protected bitmap?: RoBitmap;
@@ -123,21 +125,11 @@ export class Poster extends Group {
             this.scaleToResolution(rect);
         }
         const rotation = angle + this.getRotation();
+        const center = this.getScaleRotateCenter();
         const displayMode = this.getValueJS("loadDisplayMode") as string;
         opacity = opacity * this.getOpacity();
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
-            // Normalize HERE, not only inside `drawImage`: the `scaletozoom` branch below goes straight
-            // to `doDrawCroppedBitmap`, so an un-normalized default (stored as -1) reached the draw and
-            // tinted the poster — washing out every partially transparent pixel.
-            let rgba = normalizeBlendColor(this.getValueJS("blendColor"));
-            let alpha = opacity;
-            if (loadStatus === "failed") {
-                // The placeholder draw is deliberately untinted; `0xffffffff` said that in the spelling
-                // that leaked through the unscrubbed path above.
-                rgba = undefined;
-                alpha = opacity * this.getValueJS("loadingBitmapOpacity");
-            }
-            this.bitmap.scaleMode = 1;
+            const bitmap = this.bitmap;
             // The aspect-preserving display modes do not apply to a 9-patch: its marker border is
             // what declares which regions stretch (fixed corners are blitted 1:1), so the target
             // rect is authoritative and the source aspect ratio is meaningless. Letterboxing it to
@@ -145,23 +137,56 @@ export class Poster extends Group {
             // height of the rect — the app-assigned width is simply lost — and cropping it
             // (scaleToZoom) slices through the markers. Same rationale as loadUri skipping
             // loadWidth/loadHeight for 9-patches: the bitmap must reach drawNinePatch intact.
-            const mode = this.bitmap.ninePatch ? "noscale" : displayMode.trim().toLowerCase();
-            if (mode === "scaletofit") {
-                this.drawImage(this.bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
-            } else if (mode === "scaletozoom") {
-                draw2D?.doDrawCroppedBitmap(this.bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
-            } else if (mode === "limitsize") {
+            const mode = bitmap.ninePatch ? "noscale" : displayMode.trim().toLowerCase();
+            if (mode === "limitsize") {
+                // Resolved BEFORE `applyNodeEffect` runs, not inside its draw callback: the effect's
+                // rounded clip is pushed from `rect` up front, so the clamped size has to be known
+                // by then too — discovering it only while drawing left the clip sized to the
+                // pre-clamp rect while the gradient/border (read after) used the clamped one.
                 const loadWidth = this.getValueJS("loadWidth") as number;
                 const loadHeight = this.getValueJS("loadHeight") as number;
                 if (loadWidth > 0 && loadHeight > 0) {
-                    const size = this.clampLoadSize(this.bitmap.width, this.bitmap.height, loadWidth, loadHeight);
-                    rect.width = size.width;
-                    rect.height = size.height;
+                    const clamped = this.clampLoadSize(bitmap.width, bitmap.height, loadWidth, loadHeight);
+                    rect.width = clamped.width;
+                    rect.height = clamped.height;
                 }
-                this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
-            } else {
-                this.drawImage(this.bitmap, rect, rotation, alpha, draw2D, rgba);
             }
+            applyNodeEffect(
+                this,
+                rect,
+                draw2D,
+                opacity,
+                (rect, rotation) => {
+                    // Normalize HERE, not only inside `drawImage`: the `scaletozoom` branch below goes
+                    // straight to `doDrawCroppedBitmap`, so an un-normalized default (stored as -1)
+                    // reached the draw and tinted the poster — washing out every partially transparent
+                    // pixel.
+                    let rgba = normalizeBlendColor(this.getValueJS("blendColor"));
+                    let alpha = opacity;
+                    if (loadStatus === "failed") {
+                        // The placeholder draw is deliberately untinted; `0xffffffff` said that in the
+                        // spelling that leaked through the unscrubbed path above.
+                        rgba = undefined;
+                        alpha = opacity * this.getValueJS("loadingBitmapOpacity");
+                    }
+                    bitmap.scaleMode = 1;
+                    if (mode === "scaletofit") {
+                        this.drawImage(bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
+                    } else if (mode === "scaletozoom") {
+                        draw2D?.doDrawCroppedBitmap(bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
+                    } else {
+                        // "limitsize" (already clamped above) and "noscale"/default both draw at `rect` as-is.
+                        this.drawImage(bitmap, rect, rotation, alpha, draw2D, rgba);
+                    }
+                },
+                rotation,
+                center
+                // `scale` is deliberately left at applyNodeEffect's default ([1,1]): `Group.drawImage`
+                // reads this node's `scale` field directly and applies it internally regardless of
+                // what runs it, so composing the same scale again here would double it. Known gap:
+                // the effect's clip/border/gradient do not scale with a scaled Poster (the image
+                // content still does, via `drawImage`, unaffected by this).
+            );
         }
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);

@@ -32,6 +32,7 @@ import {
     ComponentLibrary,
     ContentNode,
     Dialog,
+    Effect,
     Font,
     Group,
     MaskGroup,
@@ -195,6 +196,8 @@ export class SGNodeFactory {
                 return new Dialog([], name);
             case SGNodeType.Rectangle.toLowerCase():
                 return new Rectangle([], name);
+            case SGNodeType.Effect.toLowerCase():
+                return new Effect([], name);
             case SGNodeType.Label.toLowerCase():
                 return new Label([], name);
             case SGNodeType.SimpleLabel.toLowerCase():

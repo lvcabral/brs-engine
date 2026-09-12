@@ -42,6 +42,7 @@ export * from "./PanelSet";
 export * from "./ListPanel";
 export * from "./GridPanel";
 export * from "./Poster";
+export * from "./Effect";
 export * from "./PosterGrid";
 export * from "./RSGPalette";
 export * from "./RadioButtonList";
@@ -140,6 +141,7 @@ export enum SGNodeType {
     StdDlgTitleArea = "StdDlgTitleArea",
     Rectangle = "Rectangle",
     Poster = "Poster",
+    Effect = "Effect",
     AnimatedImage = "AnimatedImage",
     Label = "Label",
     SimpleLabel = "SimpleLabel",
