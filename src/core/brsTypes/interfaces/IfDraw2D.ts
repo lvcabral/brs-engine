@@ -132,9 +132,34 @@ export class IfDraw2D {
         scaleX: number = 1,
         scaleY: number = 1
     ) {
-        const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         ctx.save();
+        this.composeRotatedScale(ctx, rect, rotation, center, scaleX, scaleY);
+        ctx.globalAlpha = opacity; // Set the opacity
+        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
+    /**
+     * Composes the same translate/rotate/scale-around-pivot bracket `doDrawRotatedRect` uses onto
+     * the canvas's CURRENT transform, so a caller drawing at local `(0, 0)` afterward lands at
+     * `rect`'s position, rotated by `rotation` around `center` and scaled around `rect.x/y` — used
+     * by `doDrawRotatedRect` itself and by the `Effect` node's rounded clip/border/gradient
+     * primitives (`pushRoundedClip`/`strokeRoundedRect`/`strokeEffectGradient`) so a rotated/scaled
+     * Rectangle or Poster's effect stays aligned with its rotated/scaled content. Caller owns
+     * `ctx.save()`/`ctx.restore()`.
+     */
+    private composeRotatedScale(
+        ctx: BrsCanvasContext2D,
+        rect: Rect,
+        rotation: number,
+        center: number[] | undefined,
+        scaleX: number,
+        scaleY: number
+    ) {
+        const { x: baseX, y: baseY } = this.component;
         // Default to top-left corner if centerX and centerY are not provided
         const rotationCenterX = center === undefined ? 0 : center[0];
         const rotationCenterY = center === undefined ? 0 : center[1];
@@ -145,8 +170,6 @@ export class IfDraw2D {
             // Pivot is rect.x/y as-is, NOT + rotationCenterX/Y: rect.x/y already bakes in
             // scaleRotateCenter's position compensation via Group.getTranslation(), so adding the
             // center again here would double-count it (see Group.applyScale for the derivation).
-            // Composed onto the ctx.save() already opened above (this method restores it below);
-            // pushScale (used by text drawing) does the same composition with its own save/restore.
             this.composeScalePivot(ctx, baseX + rect.x, baseY + rect.y, scaleX, scaleY);
         }
         if (rotation === 0) {
@@ -156,11 +179,6 @@ export class IfDraw2D {
             ctx.rotate(-rotation); // Apply the rotation
             ctx.translate(-rotationCenterX, -rotationCenterY); // Translate back
         }
-        ctx.globalAlpha = opacity; // Set the opacity
-        ctx.fillStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
-        ctx.fillRect(0, 0, rect.width, rect.height); // Draw the rectangle at the origin
-        ctx.restore();
-        this.component.makeDirty();
     }
 
     doDrawClearedRect(rect: Rect) {
@@ -170,6 +188,196 @@ export class IfDraw2D {
         ctx.save();
         ctx.clearRect(baseX, baseY, rect.width, rect.height);
         ctx.restore();
+    }
+
+    /**
+     * Builds the rounded-rectangle path shared by every `Effect` clip/stroke/fill primitive below.
+     * Always in the CURRENT (already-transformed) local frame — callers that need rotation/scale
+     * compose it first via `composeRotatedScale`.
+     */
+    private beginRoundedPath(ctx: BrsCanvasContext2D, rect: Rect, radii: [number, number, number, number]) {
+        ctx.beginPath();
+        ctx.roundRect(rect.x, rect.y, rect.width, rect.height, radii);
+    }
+
+    /**
+     * Strokes a rounded-rectangle outline — used by the `Effect` node's `borderColor`/`borderWidth`
+     * rendering. Corner radii follow `roundRect()`'s own order: [topLeft, topRight, bottomRight,
+     * bottomLeft] (`nodes/Effect.ts`'s `normalizeBorderRadius` remaps Roku's clockwise-from-top-right
+     * order into this one).
+     *
+     * `pivotRect` is the CONTENT rect (for the rotate/scale pivot, matching `doDrawRotatedRect`'s
+     * own convention) while `localRect` is the actual (typically larger, outset) geometry to
+     * stroke, positioned relative to that same pivot — so the border rotates/scales as one rigid
+     * unit with the content it surrounds, around the node's own `rotation`/`scale`/`center`.
+     */
+    strokeRoundedRect(
+        pivotRect: Rect,
+        localRect: Rect,
+        radii: [number, number, number, number],
+        lineWidth: number,
+        rgba: number,
+        opacity: number,
+        rotation: number,
+        center: number[],
+        scaleX: number,
+        scaleY: number
+    ) {
+        if (lineWidth <= 0) {
+            return;
+        }
+        const ctx = this.component.getContext();
+        ctx.save();
+        this.composeRotatedScale(ctx, pivotRect, rotation, center, scaleX, scaleY);
+        this.beginRoundedPath(ctx, localRect, radii);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = rgbaIntToHex(rgba, this.component.getCanvasAlpha());
+        ctx.globalAlpha = opacity;
+        ctx.stroke();
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
+    /**
+     * Fills a rounded-rectangle area with a linear/radial gradient — used by the `Effect` node's
+     * `gradientFillContent`. Confined to the rounded path via a clip, so it never bleeds past the
+     * corners it is meant to respect. Always called from inside an already-transformed frame (the
+     * `pushRoundedClip` bracket for the same node), so `rect` is already local — no rotation/scale
+     * params here; see `strokeEffectGradient` for the border's self-contained equivalent.
+     */
+    fillEffectGradient(
+        rect: Rect,
+        radii: [number, number, number, number],
+        style: "linear" | "radial",
+        colors: number[],
+        stops: number[],
+        angleDeg: number,
+        centre: [number, number],
+        radius: [number, number],
+        opacity: number
+    ) {
+        if (colors.length < 2) {
+            return;
+        }
+        const ctx = this.component.getContext();
+        const gradient = this.buildEffectGradient(
+            ctx,
+            rect.x,
+            rect.y,
+            rect.width,
+            rect.height,
+            style,
+            colors,
+            stops,
+            angleDeg,
+            centre,
+            radius
+        );
+        ctx.save();
+        this.beginRoundedPath(ctx, rect, radii);
+        ctx.clip();
+        ctx.fillStyle = gradient;
+        ctx.globalAlpha = opacity;
+        ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
+    /**
+     * Strokes a rounded-rectangle outline with a gradient instead of a flat color
+     * (`gradientFillBorder`). See `strokeRoundedRect` for the `pivotRect`/`localRect` split.
+     */
+    strokeEffectGradient(
+        pivotRect: Rect,
+        localRect: Rect,
+        radii: [number, number, number, number],
+        lineWidth: number,
+        style: "linear" | "radial",
+        colors: number[],
+        stops: number[],
+        angleDeg: number,
+        centre: [number, number],
+        radius: [number, number],
+        opacity: number,
+        rotation: number,
+        center: number[],
+        scaleX: number,
+        scaleY: number
+    ) {
+        if (lineWidth <= 0 || colors.length < 2) {
+            return;
+        }
+        const ctx = this.component.getContext();
+        ctx.save();
+        this.composeRotatedScale(ctx, pivotRect, rotation, center, scaleX, scaleY);
+        const gradient = this.buildEffectGradient(
+            ctx,
+            localRect.x,
+            localRect.y,
+            localRect.width,
+            localRect.height,
+            style,
+            colors,
+            stops,
+            angleDeg,
+            centre,
+            radius
+        );
+        this.beginRoundedPath(ctx, localRect, radii);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = gradient;
+        ctx.globalAlpha = opacity;
+        ctx.stroke();
+        ctx.restore();
+        this.component.makeDirty();
+    }
+
+    /**
+     * Builds the `CanvasGradient` shared by `fillEffectGradient`/`strokeEffectGradient`.
+     *
+     * Radial: `CanvasGradient`'s radial gradient is a circle, but `Effect.gradientRadius` is a
+     * `vector2d` (independent x/y radii). Approximated as a circle sized to the LARGER of the two
+     * requested radii, rather than an elliptical transform — a transform-based ellipse needs the
+     * fill to overshoot the transformed clip by an amount that depends on the x/y ratio, which is
+     * easy to get wrong (under-fill leaves a gap, over-fill wastes a large `fillRect`); a circle
+     * sized to the larger radius always fully covers the node and never leaves a gap. Not
+     * device-measured — no OS 16.0 device is available to compare against.
+     */
+    private buildEffectGradient(
+        ctx: BrsCanvasContext2D,
+        x: number,
+        y: number,
+        width: number,
+        height: number,
+        style: "linear" | "radial",
+        colors: number[],
+        stops: number[],
+        angleDeg: number,
+        centre: [number, number],
+        radius: [number, number]
+    ): CanvasGradient {
+        let gradient: CanvasGradient;
+        if (style === "radial") {
+            const cx = x + centre[0] * width;
+            const cy = y + centre[1] * height;
+            const r = Math.max(radius[0] * width, radius[1] * height, 0.0001);
+            gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+        } else {
+            const angleRad = (angleDeg * Math.PI) / 180;
+            // "Clockwise from up": up is -Y, so the unit direction vector is (sin, -cos).
+            const dx = Math.sin(angleRad);
+            const dy = -Math.cos(angleRad);
+            const cx = x + width / 2;
+            const cy = y + height / 2;
+            const half = (Math.abs(dx) * width + Math.abs(dy) * height) / 2;
+            gradient = ctx.createLinearGradient(cx - dx * half, cy - dy * half, cx + dx * half, cy + dy * half);
+        }
+        const alpha = this.component.getCanvasAlpha();
+        for (const [index, color] of colors.entries()) {
+            const stop = Math.min(Math.max(stops[index] ?? 0, 0), 1);
+            gradient.addColorStop(stop, rgbaIntToHex(color, alpha));
+        }
+        return gradient;
     }
 
     doDrawText(text: string, x: number, y: number, rgba: number, opacity: number, font: RoFont) {
@@ -229,6 +437,42 @@ export class IfDraw2D {
         ctx.save();
         ctx.beginPath();
         ctx.rect(rect.x, rect.y, rect.width, rect.height);
+        ctx.clip();
+        this.clipDepth++;
+    }
+
+    /**
+     * Saves the current drawing context state and applies a rounded-rectangle clipping region —
+     * used by the `Effect` node's `borderRadius`. Shares `pushClip()`'s `clipDepth` counter, so
+     * `popClip()`/`resetClips()` unwind it identically regardless of which push method built the
+     * path. Corner radii follow `roundRect()`'s own order: [topLeft, topRight, bottomRight,
+     * bottomLeft] (`nodes/Effect.ts`'s `normalizeBorderRadius` remaps Roku's clockwise-from-top-right
+     * order into this one).
+     *
+     * Composes the same rotate/scale-around-pivot bracket `doDrawRotatedRect` uses (see
+     * `composeRotatedScale`) before clipping, so content drawn afterward at local `(0, 0,
+     * rect.width, rect.height)` — rather than re-applying its own rotation/scale — stays inside a
+     * clip that rotates/scales together with it, keeping a rotated/scaled node's rounded corners
+     * aligned with its rotated/scaled content.
+     * @param rect The clipping rectangle, in the node's own (pre-rotation/scale) coordinate system.
+     * @param radii Corner radii, in `roundRect()` order.
+     * @param rotation Radians to rotate around `center`, matching `doDrawRotatedRect`.
+     * @param center Rotation pivot (`getScaleRotateCenter()`), relative to `rect.x/y`.
+     * @param scaleX Horizontal scale around `rect.x/y`, matching `doDrawRotatedRect`.
+     * @param scaleY Vertical scale around `rect.x/y`, matching `doDrawRotatedRect`.
+     */
+    pushRoundedClip(
+        rect: Rect,
+        radii: [number, number, number, number],
+        rotation: number,
+        center: number[],
+        scaleX: number,
+        scaleY: number
+    ) {
+        const ctx = this.component.getContext();
+        ctx.save();
+        this.composeRotatedScale(ctx, rect, rotation, center, scaleX, scaleY);
+        this.beginRoundedPath(ctx, { x: 0, y: 0, width: rect.width, height: rect.height }, radii);
         ctx.clip();
         this.clipDepth++;
     }
