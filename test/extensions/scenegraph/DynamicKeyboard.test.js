@@ -500,22 +500,30 @@ describe("Dynamic voice keyboards", () => {
             });
         }
 
-        // Captures the URIs of every bitmap drawn during a render.
-        function drawnImageNames(node) {
+        // Builds a draw2D stub that records the URIs of every bitmap drawn through it.
+        function makeCaptureDraw2D() {
             const names = [];
             const record = (...args) => {
                 const bmp = args.find((a) => a && typeof a.getImageName === "function");
                 if (bmp) names.push(bmp.getImageName());
             };
-            const capture = {
-                doDrawRotatedText() {},
-                doDrawRotatedRect() {},
-                doDrawScaledObject: record,
-                doDrawRotatedBitmap: record,
-                drawNinePatch: record,
+            return {
+                names,
+                draw2D: {
+                    doDrawRotatedText() {},
+                    doDrawRotatedRect() {},
+                    doDrawScaledObject: record,
+                    doDrawRotatedBitmap: record,
+                    drawNinePatch: record,
+                },
             };
+        }
+
+        // Captures the URIs of every bitmap drawn while rendering `node` as the focused node.
+        function drawnImageNames(node) {
+            const { names, draw2D } = makeCaptureDraw2D();
             sgRoot.setFocused(node);
-            node.renderNode(fakeInterpreter, [0, 0], 0, 1, capture);
+            node.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
             return names;
         }
 
@@ -608,6 +616,144 @@ describe("Dynamic voice keyboards", () => {
         test("DynamicCustomKeyboard draws no keyboard background until a KDF is set", () => {
             const names = drawnImageNames(SGNodeFactory.createNode("DynamicCustomKeyboard"));
             expect(names.some((n) => n.includes("keyboard_"))).toBe(false);
+        });
+
+        describe("per-key icon/focusIcon (Key Definition File spec)", () => {
+            const KDF_URI = "pkg:/resources/keyboards/custom.json";
+
+            // A single-row, single-grid KDF holding exactly `keys`, sized to (w, h) at both
+            // resolutions — the minimal shape every test below needs.
+            function customKDF(keys, w = 100, h = 100) {
+                return JSON.stringify({
+                    keyboardWidthFHD: w,
+                    keyboardHeightFHD: h,
+                    keyboardWidthHD: w,
+                    keyboardHeightHD: h,
+                    sections: [{ grids: [{ rows: [{ keys }] }] }],
+                });
+            }
+
+            afterEach(() => {
+                BrsDevice.fileSystem.clearSourceOverlay();
+            });
+
+            // A labelless key with a real "icon" URI (not the "theme:" special-key convention)
+            // must draw that bitmap, per the DynamicCustomKeyboard spec's own worked example
+            // ({ "icon": "pkg:/images/Duplicate.png", "strOut": "DuplicateCharacter" }): the icon
+            // is the source of what's drawn, decoupled from strOut.
+            test("a custom KDF's icon URI is drawn, independent of strOut", () => {
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF_URI]: customKDF([{ icon: "common:/images/icon_options.png", strOut: "DuplicateCharacter" }]),
+                });
+                const kbd = SGNodeFactory.createNode("DynamicCustomKeyboard");
+                kbd.keyGrid.setValue("keyDefinitionUri", new BrsString(KDF_URI));
+                const names = drawnImageNames(kbd);
+                expect(names).toContain("common:/images/icon_options.png");
+            });
+
+            // Real device KDFs (including Roku's own dynamic-voice-enabled-keyboards sample app,
+            // e.g. its CustomAddressKDF.json) reference Roku's documented `theme:DKB_*Bitmap` and
+            // `theme:Keyboard*On/OffBitmap` identifiers directly. The engine doesn't ship Roku's
+            // actual system theme graphics, so these must resolve to the bundled substitute icons
+            // instead of silently drawing nothing.
+            test("Roku's documented theme: bitmap identifiers resolve to the bundled substitute icons", () => {
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF_URI]: customKDF(
+                        [
+                            {
+                                icon: "theme:DKB_SpaceKeyBitmap",
+                                focusIcon: "theme:DKB_SpaceKeyFocusBitmap",
+                                strOut: "Space",
+                            },
+                            {
+                                icon: "theme:KeyboardDeleteOnBitmap",
+                                focusIcon: "theme:KeyboardDeleteOffBitmap",
+                                strOut: "Delete",
+                            },
+                            { icon: "theme:UnknownFutureBitmap", strOut: "Unmapped" },
+                        ],
+                        300
+                    ),
+                });
+                const kbd = SGNodeFactory.createNode("DynamicCustomKeyboard");
+                kbd.keyGrid.setValue("keyDefinitionUri", new BrsString(KDF_URI));
+                const names = drawnImageNames(kbd);
+                expect(names.some((n) => n.includes("icon_space"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_delete"))).toBe(true);
+                // An unrecognized theme identifier draws nothing (spec's blank-key behavior),
+                // rather than throwing.
+                expect(() => kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D)).not.toThrow();
+            });
+
+            // Per the KDF spec's Row.keys description, a key is focusable as long as it has
+            // "either a label field or an icon/focusIcon field" — a key with only `focusIcon`
+            // (no `label`, no `icon`) must still be focusable and still draw something once
+            // focused.
+            test("a key with only focusIcon (no icon, no label) is still focusable and drawn", () => {
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF_URI]: customKDF([
+                        { focusIcon: "common:/images/icon_options_off.png", strOut: "OnlyFocusIcon" },
+                    ]),
+                });
+                const grid = SGNodeFactory.createNode("DynamicKeyGrid");
+                grid.setValue("keyDefinitionUri", new BrsString(KDF_URI));
+                expect(grid.getValueJS("keyFocused")).toBe("OnlyFocusIcon");
+                sgRoot.setFocused(grid);
+                const names = drawnImageNames(grid);
+                expect(names).toContain("common:/images/icon_options_off.png");
+            });
+
+            test("focusIcon is drawn only while the key has focus; icon is drawn otherwise", () => {
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF_URI]: customKDF([
+                        {
+                            icon: "common:/images/icon_options.png",
+                            focusIcon: "common:/images/icon_options_off.png",
+                            strOut: "Toggle",
+                        },
+                    ]),
+                });
+                const grid = SGNodeFactory.createNode("DynamicKeyGrid");
+                grid.setValue("keyDefinitionUri", new BrsString(KDF_URI));
+
+                // Not focused (the outer afterEach clears sgRoot's focus): icon only.
+                const unfocused = makeCaptureDraw2D();
+                grid.renderNode(fakeInterpreter, [0, 0], 0, 1, unfocused.draw2D);
+                expect(unfocused.names).toContain("common:/images/icon_options.png");
+                expect(unfocused.names).not.toContain("common:/images/icon_options_off.png");
+
+                // Focused: focusIcon takes over from icon.
+                sgRoot.setFocused(grid);
+                const focused = makeCaptureDraw2D();
+                grid.renderNode(fakeInterpreter, [0, 0], 0, 1, focused.draw2D);
+                expect(focused.names).toContain("common:/images/icon_options_off.png");
+                expect(focused.names).not.toContain("common:/images/icon_options.png");
+            });
+        });
+
+        describe("built-in keyboard mode-toggle icons", () => {
+            test("DynamicKeyboard draws the on/off icon matching the active mode", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                sgRoot.setFocused(kbd);
+                let names = drawnImageNames(kbd);
+                expect(names.some((n) => n.includes("icon_caps_off"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_alphanum_on"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_caps_on"))).toBe(false);
+
+                kbd.keyGrid.setValue("jumpToKey", coords(3, 0, 0)); // capslock toggle (section 4)
+                kbd.handleKey("OK", true);
+                expect(kbd.keyGrid.getValueJS("mode")).toBe("ABC123Upper");
+                names = drawnImageNames(kbd);
+                expect(names.some((n) => n.includes("icon_caps_on"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_caps_off"))).toBe(false);
+
+                kbd.keyGrid.setValue("jumpToKey", coords(3, 2, 0)); // symbols toggle
+                kbd.handleKey("OK", true);
+                expect(kbd.keyGrid.getValueJS("mode")).toBe("SymbolsUpper");
+                names = drawnImageNames(kbd);
+                expect(names.some((n) => n.includes("icon_symbols_on"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_alphanum_on"))).toBe(false);
+            });
         });
 
         test("DynamicPinPad renders entered digits as underline slots", () => {

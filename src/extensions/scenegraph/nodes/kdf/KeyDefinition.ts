@@ -17,9 +17,13 @@ export interface KeySuggestions {
 export interface KeyDef {
     keyWidthFHD?: number;
     keyWidthHD?: number;
+    /** Text drawn on the key (mutually exclusive with `icon`, per spec). */
     label?: string;
+    /** Bitmap URI drawn on the key when there is no `label`. */
     icon?: string;
+    /** Bitmap URI drawn instead of `icon` while the key is focused. */
     focusIcon?: string;
+    /** String emitted to keyFocused/keySelected; falls back to `label` when unset. */
     strOut?: string;
     autoRepeat?: number;
     disabled?: number;
@@ -64,7 +68,9 @@ export interface RenderedKey {
     width: number;
     height: number;
     label: string;
+    /** Bitmap URI to draw when the key has no label (mutually exclusive with `label`, per spec). */
     icon?: string;
+    /** Bitmap URI to draw instead of `icon` while the key is focused. */
     focusIcon?: string;
     /** The value emitted via keyFocused/keySelected: strOut when set, otherwise label. */
     out: string;
@@ -73,6 +79,8 @@ export interface RenderedKey {
     disabled: boolean;
     autoRepeat: boolean;
     suggestions?: KeySuggestions;
+    /** Whether the key has a label or an icon/focusIcon to draw (false for a blank spacer key). */
+    hasContent: boolean;
     /** Whether the key can receive focus (false for blank keys and disabled keys). */
     focusable: boolean;
 }
@@ -205,7 +213,8 @@ export function computeLayout(
                     const keyWidth = keyWidths[c];
                     const label = key.label ?? "";
                     const strOut = key.strOut ?? "";
-                    const hasContent = label.length > 0 || (key.icon ?? "").length > 0;
+                    const hasContent =
+                        label.length > 0 || (key.icon ?? "").length > 0 || (key.focusIcon ?? "").length > 0;
                     const disabled = (key.disabled ?? 0) !== 0;
                     rendered.push({
                         section: s,
@@ -223,6 +232,7 @@ export function computeLayout(
                         disabled,
                         autoRepeat: (key.autoRepeat ?? 0) !== 0,
                         suggestions: key.suggestions,
+                        hasContent,
                         focusable: hasContent && !disabled,
                     });
                     keyX += keyWidth;
@@ -233,43 +243,4 @@ export function computeLayout(
         sectionX += sectionWidth + gap;
     }
     return rendered;
-}
-
-/** Resolution-independent icon mapping for a special key, keyed by its strOut. */
-export interface SpecialKeyIcon {
-    /** Base name of an existing `common:/images/{res}/icon_<name>.png` asset, if any. */
-    iconName?: "clear" | "delete" | "space";
-    /** Short text glyph drawn when no bitmap asset is available. */
-    glyph: string;
-}
-
-/**
- * Maps a key's `strOut` to an icon asset and/or a text-glyph fallback. Only the
- * clear/space/delete icons ship in `common.zip`; everything else is a glyph.
- */
-export function resolveKeyIcon(strOut: string): SpecialKeyIcon | undefined {
-    switch (strOut.toLowerCase()) {
-        case "clear":
-            return { iconName: "clear", glyph: "clear" };
-        case "backspace":
-            return { iconName: "delete", glyph: "⌫" }; // ⌫
-        case "space":
-            return { iconName: "space", glyph: "␣" }; // ␣
-        case "shift":
-            return { glyph: "⇧" }; // ⇧
-        case "left":
-            return { glyph: "◄" }; // ◄
-        case "right":
-            return { glyph: "►" }; // ►
-        case "capslock":
-            return { glyph: "⇪" }; // ⇪
-        case "abc123":
-            return { glyph: "ABC" };
-        case "symbols":
-            return { glyph: "#+=" };
-        case "accents":
-            return { glyph: "àé" }; // àé
-        default:
-            return undefined;
-    }
 }
