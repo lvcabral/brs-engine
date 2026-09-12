@@ -8,36 +8,36 @@ As described on the [engine API documentation](engine-api.md), the asynchronous 
 
 ```ts
 const deviceInfo = {
-  developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As Roku, this ID segregates Registry data (can't be empty or have a dot)
-  friendlyName: "BrightScript Engine Library",
-  deviceModel: "8000X", // Roku TV (Midland)
-  clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
-  RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
-  countryCode: "US", // App Store Country
-  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  locale: "en_US", // Valid locales: en_US, es_MX, pt_BR, fr_CA, de_DE
-  captionLanguage: "en", // Preferred caption language
-  clockFormat: "12h",
-  displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
-  maxSimulStreams: 2, // Max number of `roAudioResource` streams (1 or 2)
-  customFeatures: [], // String array with custom features (see below)
-  localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
-  audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
-  audioLanguage: "en", // Preferred audio track language
-  autoPlayEnabled: true, // Autoplay device setting, returned by `roDeviceInfo.IsAutoplayEnabled()` (default: enabled)
-  minVideoBufferMs: 700, // Simulated minimum buffering floor (ms) before video playback starts
-  maxFps: 60, // Maximum frames per second for rendering
-  tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
-  cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)
-  logLevel: LogLevel.Warning, // Log level for the engine (Debug, Warning, Error)
-  corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
+    developerId: "34c6fceca75e456f25e7e99531e2425c6c1de443", // As Roku, this ID segregates Registry data (can't be empty or have a dot)
+    friendlyName: "BrightScript Engine Library",
+    deviceModel: "8000X", // Roku TV (Midland)
+    clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
+    RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
+    countryCode: "US", // App Store Country
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    locale: "en_US", // Valid locales: en_US, es_MX, pt_BR, fr_CA, de_DE
+    captionLanguage: "en", // Preferred caption language
+    clockFormat: "12h",
+    displayMode: "720p", // Supported modes: 480p (SD), 720p (HD) and 1080p (FHD)
+    maxSimulStreams: 2, // Max number of `roAudioResource` streams (1 or 2)
+    customFeatures: [], // String array with custom features (see below)
+    localIps: ["eth1,127.0.0.1"], // In a Browser isn't possible to get a real IP, populate it on NodeJS or Electron
+    audioVolume: 50, // Defines the default volume level for system sounds - valid: (0-100)
+    audioLanguage: "en", // Preferred audio track language
+    autoPlayEnabled: true, // Autoplay device setting, returned by `roDeviceInfo.IsAutoplayEnabled()` (default: enabled)
+    minVideoBufferMs: 700, // Simulated minimum buffering floor (ms) before video playback starts
+    maxFps: 60, // Maximum frames per second for rendering
+    tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
+    cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)
+    logLevel: LogLevel.Warning, // Log level for the engine (Debug, Warning, Error)
+    corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
 ```
 
 ### CORS Proxy Configuration
 
-* See `App Manifest` below to enable CORS proxy for your app
-* CORS-Anywhere repository: <https://github.com/Rob--W/cors-anywhere>
+-   See `App Manifest` below to enable CORS proxy for your app
+-   CORS-Anywhere repository: <https://github.com/Rob--W/cors-anywhere>
 
 ## Simulated Device Features
 
@@ -45,21 +45,21 @@ In BrightScript, various device features can be checked using the `roDeviceInfo`
 
 Below is a table with the extended set of features, internally created by the engine, that can be used in BrightScript code. This allows apps to behave differently when running on a Roku device or under the simulation engine.
 
-| Feature Name | Description |
-|--------------|-------------|
-| `simulation_engine` | Always `true` when running under `brs-engine` |
-| `platform_cli` | Returns `true` when running in the terminal, see the [CLI doc](run-as-cli.md) for more details |
-| `platform_browser` | Returns `true` when running under a Browser |
-| `platform_chromium` | Returns `true` when running under Chromium |
-| `platform_firefox` | Returns `true` when running under Firefox |
-| `platform_safari` | Returns `true` when running under Safari |
-| `platform_electron` | Returns `true` when running under Electron |
-| `platform_linux` | Returns `true` when running under Linux |
-| `platform_macos` | Returns `true` when running under MacOS |
-| `platform_windows` | Returns `true` when running under Windows |
-| `platform_chromeos` | Returns `true` when running under ChromeOS |
-| `platform_ios` | Returns `true` when running under iOS |
-| `platform_android` | Returns `true` when running under Android |
+| Feature Name        | Description                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| `simulation_engine` | Always `true` when running under `brs-engine`                                                  |
+| `platform_cli`      | Returns `true` when running in the terminal, see the [CLI doc](run-as-cli.md) for more details |
+| `platform_browser`  | Returns `true` when running under a Browser                                                    |
+| `platform_chromium` | Returns `true` when running under Chromium                                                     |
+| `platform_firefox`  | Returns `true` when running under Firefox                                                      |
+| `platform_safari`   | Returns `true` when running under Safari                                                       |
+| `platform_electron` | Returns `true` when running under Electron                                                     |
+| `platform_linux`    | Returns `true` when running under Linux                                                        |
+| `platform_macos`    | Returns `true` when running under MacOS                                                        |
+| `platform_windows`  | Returns `true` when running under Windows                                                      |
+| `platform_chromeos` | Returns `true` when running under ChromeOS                                                     |
+| `platform_ios`      | Returns `true` when running under iOS                                                          |
+| `platform_android`  | Returns `true` when running under Android                                                      |
 
 ### Custom Features
 
@@ -80,8 +80,9 @@ For example, if you want to define that your application is running on a device 
 
 There is also a way BrightScript apps can change the behavior of the simulation engine, by using special `manifest` entries. The valid options are:
 
-* `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
-* `cors_proxy=0`: If this flag is defined with `zero`, the engine will disable the `corsProxy` URL for the app, if configured in the `DeviceInfo` object.
+-   `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
+-   `cors_proxy=0`: If this flag is defined with `zero`, the engine will disable the `corsProxy` URL for the app, if configured in the `DeviceInfo` object.
+-   `multi_controllers=1`: If this flag is defined, enables full support for multiple simultaneous game controllers, an expanded button map (X/Y, L1/R1/L2/R2, independent right stick), and the `GetValue()` analog extension on `roUniversalControlEvent`. See [Multiple Controllers Support](#multiple-controllers-support) below.
 
 **Note:** these special `manifest` entries are ignored by Roku Devices.
 
@@ -117,3 +118,14 @@ This example shows how to map the `Shift` key in combination with the arrow keys
 This way, the app can receive multiple key events when the `Shift` key is held down while pressing the arrow keys, and with the manifest entry `multi_key_events=1`, the app will receive all key events without generating `keyUp` events for the previously pressed keys, so the game can differentiate between walking and running.
 
 Notice that I used the `ShiftLeft` code to map the `playonly` key, as `playonly` is not mapped by default and could be used as an additional button in games. When `ShiftLeft` is pressed alone, the app can detect and handle it, as in case of the "Prince of Persia" game, it makes the character to `hang` from a ledge or `pick` an item. To see how this is implemented in the game check the source code in the repository: <https://github.com/lvcabral/Prince-of-Persia-Roku>.
+
+### Multiple Controllers Support
+
+By default, all connected game pads share a single 5-slot key buffer and a single "one key at a time" debounce state, matching a single-remote Roku device — this can cause simultaneous input from more than one controller to clobber or delay each other's events, and the digital button map only covers a Roku remote's vocabulary (no X/Y face buttons, no L1/L2/R1/R2, and the right stick aliases the same D-pad keys as the left stick). Adding the `multi_controllers=1` entry to your app `manifest` file enables:
+
+-   Correct per-controller event delivery — a press on one game pad no longer forces a synthetic release of another controller's held key, and events from different controllers are no longer dropped as false duplicates.
+-   An expanded button map: `A`/`B`/`X`/`Y`, `L1`/`R1`/`L2`/`R2`, D-pad, `Back`/`Home`/`Select`/`Info`, in addition to the sticks.
+-   The right analog stick becomes analog-only (see below) instead of aliasing the left stick's D-pad keys.
+-   The `GetValue()` analog extension on `roUniversalControlEvent` — see [Remote Control Simulation](./remote-control.md#analog-controller-values-brs-engine-extension) for details.
+
+This flag only affects game pad/gamepad-style remotes; keyboard and other remote input are unaffected.

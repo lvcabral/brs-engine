@@ -55,7 +55,11 @@ export class RoRemoteInfo extends BrsComponent implements BrsValue {
             returns: ValueKind.Boolean,
         },
         impl: (interpreter: Interpreter, feature: BrsString, remoteIndex: Int32) => {
-            const features = ["muteswitch"]; // MuteSwitch feature always returns true in Roku
+            // MuteSwitch feature always returns true in Roku; `multi_controllers` is a
+            // brs-engine-only capability flag (no Roku equivalent) - unconditional so apps can
+            // detect a simulator new enough to support `roUniversalControlEvent.GetValue()`
+            // before calling it, regardless of whether the app's manifest turns the behavior on.
+            const features = ["muteswitch", "multi_controllers"];
             const remote = getRemote(interpreter, remoteIndex.getValue());
             if (remote.features.length) {
                 features.push(...remote.features);

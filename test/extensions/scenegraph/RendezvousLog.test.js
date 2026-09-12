@@ -2,7 +2,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { sgRoot } = scenegraph;
-const { BrsDevice, DataType, DataBufferIndex } = core;
+const { BrsDevice, DataType, DataBufferIndex, AnalogBufferIndex, AnalogBufferSize } = core;
 
 /**
  * Rendezvous tracing lives in the shared control array rather than in a per-thread field, for two
@@ -53,14 +53,17 @@ describe("rendezvous logging flag", () => {
         expect(sgRoot.logRendezvous).toBe(false);
     });
 
-    test("does not collide with the key buffer that follows it", () => {
-        // The key buffer occupies KeyBufferSize * KeyArraySpots slots starting at RID, and
-        // `DataBufferIndex` is derived from RID so status slots can be added above it freely.
+    test("does not collide with the key buffer or analog controller state that follow it", () => {
+        // The key buffer occupies KeyBufferSize * KeyArraySpots slots starting at RID, followed by
+        // the analog controller state block, and `DataBufferIndex` is derived from the end of that
+        // block so status slots can be added above RDZ freely.
         expect(DataType.RDZ).toBeLessThan(DataType.RID);
-        expect(DataBufferIndex).toBe(DataType.RID + 5 * 3);
+        expect(AnalogBufferIndex).toBe(DataType.RID + 5 * 3);
+        expect(DataBufferIndex).toBe(AnalogBufferIndex + AnalogBufferSize);
 
         sgRoot.logRendezvous = true;
         expect(Atomics.load(sharedArray, DataType.RID)).toBe(-1);
         expect(Atomics.load(sharedArray, DataType.KEY)).toBe(-1);
+        expect(Atomics.load(sharedArray, AnalogBufferIndex)).toBe(-1);
     });
 });

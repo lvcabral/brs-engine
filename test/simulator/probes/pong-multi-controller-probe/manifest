@@ -1,0 +1,27 @@
+##   Channel Details
+title=Pong Multi-Controller Probe
+subtitle=Keyboard (P1) vs Game Pad (P2)
+major_version=1
+minor_version=0
+build_version=00001
+
+##   Channel Assets
+###  Main Menu Icons / Channel Poster Artwork
+mm_icon_focus_hd=pkg:/images/icon-hd.png
+mm_icon_focus_fhd=pkg:/images/icon-fhd.png
+
+###  Splash Screen Artwork
+splash_screen_hd=pkg:/images/splash-hd.jpg
+splash_screen_fhd=pkg:/images/splash-fhd.jpg
+
+splash_color=#08080F
+splash_min_time=0
+
+##   Resolution
+ui_resolutions=hd
+
+##   brs-engine custom manifest entries (see docs/customization.md#app-manifest)
+##   Enables multi-controller support: per-remote-safe input handling, the expanded digital
+##   button map (X/Y/L1/R1/L2/R2), and the roUniversalControlEvent.GetValue() analog extension -
+##   this probe exists specifically to exercise those (issue #1214).
+multi_controllers=1
