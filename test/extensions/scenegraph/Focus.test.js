@@ -109,6 +109,55 @@ describe("SceneGraph focus management", () => {
         expect(sibling.getValueJS("focusable")).toBe(true);
     });
 
+    test("honors a re-grab when the competing focus lives in a still-detached subtree", () => {
+        // Real-world shape (JellyRock's sgRouter + JRDialog): an outlet observes its own
+        // focusedChild and re-grabs focus into its routed content whenever it loses focus. A
+        // dialog overlay focuses its OWN button from a field observer (JRDialog.onButtonsChanged)
+        // BEFORE the dialog is ever appended to the scene — the same "focus set before attach"
+        // case restoreFocusChainOnAttach exists for. Staging that focus change still clears the
+        // outlet's focusedChild as a side effect (the LCA walk in setNodeFocus unsets every
+        // non-common ancestor of the previously-focused chain), firing the outlet's loss observer
+        // while the node that "stole" focus isn't even part of the same tree yet.
+        //
+        // Device-measured (real Roku): the outlet's re-grab succeeds here. Dropping it — as a
+        // same-tree "backwards steal" classifier would — corrupts the SceneGraph's focusedChild
+        // chain: the scene's own focusedChild is left cleared (pointing at nothing) instead of
+        // being re-threaded down to the re-grabbed node, because sgRoot.focused is left on a node
+        // outside the visible tree until the detached subtree is eventually mounted.
+        const scene = focusableNode();
+        const outlet = focusableNode();
+        const page = focusableNode();
+        scene.appendChildToParent(outlet);
+        outlet.appendChildToParent(page);
+
+        page.setNodeFocus(true);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        port.pushMessage = (event) => {
+            if (sgRoot.focused !== outlet && !outlet.isChildrenFocused()) {
+                // Mirrors sgrouter_onFocusChildChanged -> Home.handleFocus -> restoreHomeFocus:
+                // re-grab focus into the routed content whenever the outlet loses it.
+                page.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        outlet.fields.get("focusedchild").addObserver("permanent", fakeInterpreter, port, outlet, focusedChildFieldArg);
+
+        // A dialog button focuses itself while the dialog is still completely unattached — never
+        // appended anywhere, unlike the "still in the same tree" steal scenario above.
+        const dialog = focusableNode();
+        const dialogButton = focusableNode();
+        dialog.appendChildToParent(dialogButton);
+
+        dialogButton.setNodeFocus(true);
+
+        // The re-grab is honored: nothing has legitimately left the outlet's tree yet.
+        expect(sgRoot.focused).toBe(page);
+        expect(scene.getValue("focusedChild")).toBe(outlet);
+        expect(outlet.getValue("focusedChild")).toBe(page);
+    });
+
     test("still honors a forward focus onto a sibling of the focused child", () => {
         // The mirror case that must keep working: a container hands focus from its first child to
         // another of its own children (how a dialog highlights a specific button). The target is a
