@@ -22,39 +22,23 @@ export class Vector2DFieldInterpolator extends Interpolator {
      * consumes it copies (`Node.setValue`) and this runs every frame per animated target.
      */
     interpolate(fraction: number): BrsType | undefined {
-        const keyValues = this.getValue("keyValue");
-        if (!(keyValues instanceof RoArray)) {
+        const pair = this.resolveArrayKeyframePair(this.getValue("keyValue"), fraction);
+        if (!pair) {
             return undefined;
         }
-        // `elements` directly, not `getElements()`: the latter slices a throwaway copy, and this is a
-        // per-frame path.
-        const elements = keyValues.elements;
-        if (elements.length === 0) {
+        if (pair instanceof RoArray) {
+            return pair;
+        }
+
+        const { start, end, localT } = pair;
+        const startPoint = jsValueOf(start);
+        const endPoint = jsValueOf(end);
+        if (!Array.isArray(startPoint) || !Array.isArray(endPoint) || startPoint.length < 2 || endPoint.length < 2) {
             return undefined;
         }
-        if (elements.length === 1 && elements[0] instanceof RoArray) {
-            return elements[0];
-        }
 
-        const { index, localT } = this.resolveSegment(fraction);
-        const clampedIndex = Math.min(index, elements.length - 2);
-        const startVec = elements[clampedIndex];
-        const endVec = elements[Math.min(clampedIndex + 1, elements.length - 1)];
-
-        if (startVec instanceof RoArray && endVec instanceof RoArray) {
-            const startPoint = jsValueOf(startVec);
-            const endPoint = jsValueOf(endVec);
-            if (
-                Array.isArray(startPoint) &&
-                Array.isArray(endPoint) &&
-                startPoint.length >= 2 &&
-                endPoint.length >= 2
-            ) {
-                const currX = startPoint[0] + (endPoint[0] - startPoint[0]) * localT;
-                const currY = startPoint[1] + (endPoint[1] - startPoint[1]) * localT;
-                return new RoArray([new Float(currX), new Float(currY)]);
-            }
-        }
-        return undefined;
+        const currX = startPoint[0] + (endPoint[0] - startPoint[0]) * localT;
+        const currY = startPoint[1] + (endPoint[1] - startPoint[1]) * localT;
+        return new RoArray([new Float(currX), new Float(currY)]);
     }
 }

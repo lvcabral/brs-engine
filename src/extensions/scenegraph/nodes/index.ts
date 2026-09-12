@@ -90,6 +90,7 @@ export * from "./ParallelAnimation";
 export * from "./SequentialAnimation";
 export * from "./Interpolator";
 export * from "./FloatFieldInterpolator";
+export * from "./FloatArrayFieldInterpolator";
 export * from "./ColorFieldInterpolator";
 export * from "./Vector2DFieldInterpolator";
 
@@ -187,6 +188,7 @@ export enum SGNodeType {
     SequentialAnimation = "SequentialAnimation",
     ParallelAnimation = "ParallelAnimation",
     FloatFieldInterpolator = "FloatFieldInterpolator",
+    FloatArrayFieldInterpolator = "FloatArrayFieldInterpolator",
     Vector2DFieldInterpolator = "Vector2DFieldInterpolator",
     ColorFieldInterpolator = "ColorFieldInterpolator",
     BusySpinner = "BusySpinner",

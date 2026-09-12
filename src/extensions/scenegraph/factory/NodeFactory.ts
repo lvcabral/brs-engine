@@ -109,6 +109,7 @@ import {
     ParallelAnimation,
     SequentialAnimation,
     FloatFieldInterpolator,
+    FloatArrayFieldInterpolator,
     ColorFieldInterpolator,
     Vector2DFieldInterpolator,
 } from "../nodes";
@@ -342,6 +343,8 @@ export class SGNodeFactory {
                 return new SequentialAnimation([], name);
             case SGNodeType.FloatFieldInterpolator.toLowerCase():
                 return new FloatFieldInterpolator([], name);
+            case SGNodeType.FloatArrayFieldInterpolator.toLowerCase():
+                return new FloatArrayFieldInterpolator([], name);
             case SGNodeType.ColorFieldInterpolator.toLowerCase():
                 return new ColorFieldInterpolator([], name);
             case SGNodeType.Vector2DFieldInterpolator.toLowerCase():
