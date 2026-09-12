@@ -2,9 +2,11 @@
  * Built-in Key Definition Files for the fixed-layout Dynamic keyboards.
  *
  * Transcribed from the Roku reference KDF examples
- * (`scenegraph/dynamic-voice-keyboard-nodes/key-definition-file.md`). The `icon`
- * fields are kept for fidelity, but the renderer resolves special-key visuals from
- * each key's `strOut` (see `resolveKeyIcon` in `KeyDefinition.ts`).
+ * (`scenegraph/dynamic-voice-keyboard-nodes/key-definition-file.md`), including its `theme:*`
+ * icon identifiers verbatim — the same ones real device KDFs use (e.g. Roku's own
+ * dynamic-voice-enabled-keyboards sample app). The engine maps each to a bundled substitute
+ * bitmap (`DynamicKeyGrid.THEME_ICON_ALIASES`/`resolveIcon()`) since it doesn't ship Roku's
+ * actual system theme graphics.
  */
 import { KeyLayout } from "./KeyDefinition";
 
@@ -68,6 +70,25 @@ export const dynamicMiniKeyboardKDF: KeyLayout = {
 const lblRow = (chars: string) => ({ keys: chars.split("").map((label) => ({ label })) });
 // Same, but from an explicit array (for rows containing quotes/backslashes).
 const rowOf = (labels: string[]) => ({ keys: labels.map((label) => ({ label })) });
+// A mode-toggle sidebar key (caps/abc123/symbols/accents), themed with Roku's DKB_*Mod{On,Off}
+// icon pair for the given on/off state.
+const modKey = (base: string, on: boolean, strOut: string) => {
+    const state = on ? "On" : "Off";
+    return {
+        icon: `theme:DKB_${base}Mod${state}KeyBitmap`,
+        focusIcon: `theme:DKB_${base}Mod${state}KeyFocusBitmap`,
+        strOut,
+    };
+};
+// The four mode-toggle sidebar rows (caps / abc123 / symbols / accents) for one mode-group grid:
+// `caps` is the caps-lock state and `active` names which of the three character sets is showing
+// (so its icon is "on" and the other two are "off").
+const sidebarRows = (caps: boolean, active: "ABC123" | "Symbols" | "Accents") => [
+    { keys: [modKey("Caps", caps, "capslock")] },
+    { keys: [modKey("ABC123", active === "ABC123", "abc123")] },
+    { keys: [modKey("Symbols", active === "Symbols", "symbols")] },
+    { keys: [modKey("Accents", active === "Accents", "accents")] },
+];
 
 /**
  * DynamicKeyboard — full WiFi-style keyboard matching the legacy Keyboard layout.
@@ -87,13 +108,29 @@ export const dynamicKeyboardKDF: KeyLayout = {
             grids: [
                 {
                     rows: [
-                        { keys: [{ icon: "theme:DKB_ShiftKeyBitmap", strOut: "shift" }] },
+                        {
+                            keys: [
+                                {
+                                    icon: "theme:DKB_ShiftKeyBitmap",
+                                    focusIcon: "theme:DKB_ShiftKeyFocusBitmap",
+                                    strOut: "shift",
+                                },
+                            ],
+                        },
                         { keys: [spaceKey] },
                         { keys: [deleteKey] },
                         {
                             keys: [
-                                { icon: "theme:DKB_LeftKeyBitmap", strOut: "left" },
-                                { icon: "theme:DKB_RightKeyBitmap", strOut: "right" },
+                                {
+                                    icon: "theme:DKB_LeftKeyBitmap",
+                                    focusIcon: "theme:DKB_LeftKeyFocusBitmap",
+                                    strOut: "left",
+                                },
+                                {
+                                    icon: "theme:DKB_RightKeyBitmap",
+                                    focusIcon: "theme:DKB_RightKeyFocusBitmap",
+                                    strOut: "right",
+                                },
                             ],
                         },
                     ],
@@ -184,29 +221,19 @@ export const dynamicKeyboardKDF: KeyLayout = {
                 },
             ],
         },
-        // Section 4: mode-toggle sidebar (caps / abc123 / symbols / accents).
+        // Section 4: mode-toggle sidebar (caps / abc123 / symbols / accents). Each grid's icons
+        // reflect that mode's on/off state directly (one grid per mode group, matching Roku's
+        // WiFi-keyboard reference KDF sample), so the renderer needs no mode-aware icon logic.
         {
             sectionWidthFHD: 181,
             sectionWidthHD: 120,
             grids: [
-                {
-                    modes: ["ABC123Lower", "ABC123Shift", "SymbolsLower", "AccentsLower"],
-                    rows: [
-                        { keys: [{ icon: "theme:DKB_CapsModOffKeyBitmap", strOut: "capslock" }] },
-                        { keys: [{ icon: "theme:DKB_ABC123ModKeyBitmap", strOut: "abc123" }] },
-                        { keys: [{ icon: "theme:DKB_SymbolsModKeyBitmap", strOut: "symbols" }] },
-                        { keys: [{ icon: "theme:DKB_AccentsModKeyBitmap", strOut: "accents" }] },
-                    ],
-                },
-                {
-                    modes: ["ABC123Upper", "SymbolsUpper", "AccentsUpper"],
-                    rows: [
-                        { keys: [{ icon: "theme:DKB_CapsModOnKeyBitmap", strOut: "capslock" }] },
-                        { keys: [{ icon: "theme:DKB_ABC123ModKeyBitmap", strOut: "abc123" }] },
-                        { keys: [{ icon: "theme:DKB_SymbolsModKeyBitmap", strOut: "symbols" }] },
-                        { keys: [{ icon: "theme:DKB_AccentsModKeyBitmap", strOut: "accents" }] },
-                    ],
-                },
+                { modes: ["ABC123Lower", "ABC123Shift"], rows: sidebarRows(false, "ABC123") },
+                { modes: "ABC123Upper", rows: sidebarRows(true, "ABC123") },
+                { modes: ["SymbolsLower", "SymbolsShift"], rows: sidebarRows(false, "Symbols") },
+                { modes: "SymbolsUpper", rows: sidebarRows(true, "Symbols") },
+                { modes: ["AccentsLower", "AccentsShift"], rows: sidebarRows(false, "Accents") },
+                { modes: "AccentsUpper", rows: sidebarRows(true, "Accents") },
             ],
         },
     ],

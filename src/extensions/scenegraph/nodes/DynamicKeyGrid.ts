@@ -19,7 +19,7 @@ import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { sgClock } from "../SGClock";
 import { jsValueOf } from "../factory/Serializer";
-import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey, resolveKeyIcon } from "./kdf/KeyDefinition";
+import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey } from "./kdf/KeyDefinition";
 
 /**
  * Default keyboard palette colors used when no RSGPalette is found in the scene graph (the gray
@@ -79,9 +79,10 @@ export class DynamicKeyGrid extends Group {
     private bmpBackground?: RoBitmap;
     private inset: KeyInset = { top: 0, right: 0, bottom: 0, left: 0 };
     private readonly keyFocusDelta: number;
+    // Bundled special-key icon assets, shared with the legacy Keyboard/MiniKeyboard/PinPad nodes
+    // and addressed from a KDF's `icon`/`focusIcon` via a `theme:` URI (see resolveIcon()).
     private readonly bmpIcons = new Map<string, RoBitmap>();
 
-    // The special-key icon assets shared with the legacy Keyboard/MiniKeyboard/PinPad nodes.
     private static readonly ICON_NAMES = [
         "shift",
         "space",
@@ -98,6 +99,48 @@ export class DynamicKeyGrid extends Group {
         "accent_on",
         "accent_off",
     ];
+
+    /**
+     * Maps Roku's own documented `theme:` bitmap identifiers for the Dynamic keyboards (as used
+     * by the reference KDF examples and real device KDFs, e.g. Roku's dynamic-voice-enabled-
+     * keyboards sample app) to this engine's bundled substitute icon (`ICON_NAMES`/`bmpIcons`).
+     * The engine doesn't ship Roku's actual system theme bitmaps, so both the base and "Focus"/
+     * "Off" variant of a given key resolve to the same bundled asset — built from each family's
+     * base name list rather than spelled out pairwise, so that invariant holds by construction.
+     */
+    private static readonly THEME_ICON_ALIASES: Record<string, string> = (() => {
+        const aliases: Record<string, string> = {};
+        const dkbBases: [string, string][] = [
+            ["Shift", "shift"],
+            ["Space", "space"],
+            ["Delete", "delete"],
+            ["Clear", "clear"],
+            ["Left", "moveCursorLeft"],
+            ["Right", "moveCursorRight"],
+            ["CapsModOff", "caps_off"],
+            ["CapsModOn", "caps_on"],
+            ["ABC123ModOff", "alphanum_off"],
+            ["ABC123ModOn", "alphanum_on"],
+            ["SymbolsModOff", "symbols_off"],
+            ["SymbolsModOn", "symbols_on"],
+            ["AccentsModOff", "accent_off"],
+            ["AccentsModOn", "accent_on"],
+        ];
+        for (const [base, name] of dkbBases) {
+            aliases[`DKB_${base}KeyBitmap`] = name;
+            aliases[`DKB_${base}KeyFocusBitmap`] = name;
+        }
+        const keyboardBases: [string, string][] = [
+            ["Space", "space"],
+            ["Delete", "delete"],
+            ["Clear", "clear"],
+        ];
+        for (const [base, name] of keyboardBases) {
+            aliases[`Keyboard${base}OnBitmap`] = name;
+            aliases[`Keyboard${base}OffBitmap`] = name;
+        }
+        return aliases;
+    })();
 
     private readonly hoverDelay = 800; // ms the focus must dwell on a key before its "hover" pop-up opens
 
@@ -529,8 +572,7 @@ export class DynamicKeyGrid extends Group {
 
         for (let i = 0; i < this.renderedKeys.length; i++) {
             const key = this.renderedKeys[i];
-            const hasContent = key.label.length > 0 || (key.icon ?? "").length > 0;
-            if (!hasContent) {
+            if (!key.hasContent) {
                 continue;
             }
             const disabled = !key.focusable || this.disabledSet.has(key.out);
@@ -557,7 +599,7 @@ export class DynamicKeyGrid extends Group {
                 this.drawImage(this.bmpFocus, focusRect, 0, opacity, draw2D, focusColor);
             }
             const color = disabled ? secondary : focused ? focusItem : primary;
-            this.renderKeyContent(key, keyRect, color, opacity, i, draw2D);
+            this.renderKeyContent(key, keyRect, color, opacity, i, focused, draw2D);
         }
 
         if (this.popup) {
@@ -570,37 +612,21 @@ export class DynamicKeyGrid extends Group {
     }
 
     /**
-     * Maps a key's strOut to a legacy icon asset name, honoring the current mode for
-     * the on/off toggle keys (caps/alphanum/symbols/accents), matching the legacy Keyboard.
+     * Resolves a key's `icon`/`focusIcon` URI to a bitmap. A `theme:<name>` URI names one of
+     * Roku's own built-in Dynamic Keyboard theme bitmaps (`THEME_ICON_ALIASES`), mapped to this
+     * node's bundled substitute asset (`bmpIcons`) since the engine doesn't ship Roku's actual
+     * theme graphics; any other URI (`pkg:/`, `common:/`, ...) is loaded generically, exactly
+     * like a custom KDF's own package image.
      */
-    private iconAssetFor(strOut: string): string | undefined {
-        const mode = this.mode;
-        const upper = mode.endsWith("Upper") || mode.endsWith("Shift");
-        const base = mode.startsWith("Symbols") ? "Symbols" : mode.startsWith("Accents") ? "Accents" : "ABC123";
-        switch (strOut.toLowerCase()) {
-            case "shift":
-                return "shift";
-            case "space":
-                return "space";
-            case "backspace":
-                return "delete";
-            case "clear":
-                return "clear";
-            case "left":
-                return "moveCursorLeft";
-            case "right":
-                return "moveCursorRight";
-            case "capslock":
-                return upper ? "caps_on" : "caps_off";
-            case "abc123":
-                return base === "ABC123" ? "alphanum_on" : "alphanum_off";
-            case "symbols":
-                return base === "Symbols" ? "symbols_on" : "symbols_off";
-            case "accents":
-                return base === "Accents" ? "accent_on" : "accent_off";
-            default:
-                return undefined;
+    private resolveIcon(uri?: string): RoBitmap | undefined {
+        if (!uri) {
+            return undefined;
         }
+        if (uri.startsWith("theme:")) {
+            const alias = DynamicKeyGrid.THEME_ICON_ALIASES[uri.slice("theme:".length)];
+            return alias ? this.bmpIcons.get(alias) : undefined;
+        }
+        return this.loadBitmap(uri);
     }
 
     private renderKeyContent(
@@ -609,32 +635,20 @@ export class DynamicKeyGrid extends Group {
         color: number,
         opacity: number,
         index: number,
+        focused: boolean,
         draw2D?: IfDraw2D
     ) {
-        // Icon keys: prefer the legacy bitmap asset (drawn at natural size), else a glyph.
-        if (key.strOut.length > 0 && key.label.length === 0) {
-            const iconName = this.iconAssetFor(key.strOut);
-            const bmp = iconName ? this.bmpIcons.get(iconName) : undefined;
-            if (bmp?.isValid()) {
-                const iconX = rect.x + Math.floor((rect.width - bmp.width) / 2);
-                const iconY = rect.y + Math.floor((rect.height - bmp.height) / 2);
-                this.drawImage(
-                    bmp,
-                    { x: iconX, y: iconY, width: bmp.width, height: bmp.height },
-                    0,
-                    opacity,
-                    draw2D,
-                    color
-                );
-                return;
-            }
-            const glyph = resolveKeyIcon(key.strOut)?.glyph ?? key.strOut;
-            this.drawText(glyph, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index);
-            return;
-        }
         if (key.label.length > 0) {
             this.drawText(key.label, this.font, color, opacity, rect, "center", "center", 0, draw2D, "", index);
+            return;
         }
+        const bmp = (focused && this.resolveIcon(key.focusIcon)) || this.resolveIcon(key.icon);
+        if (!bmp?.isValid()) {
+            return; // No label, no resolvable icon: draw nothing, matching the spec's blank key.
+        }
+        const iconX = rect.x + Math.floor((rect.width - bmp.width) / 2);
+        const iconY = rect.y + Math.floor((rect.height - bmp.height) / 2);
+        this.drawImage(bmp, { x: iconX, y: iconY, width: bmp.width, height: bmp.height }, 0, opacity, draw2D, color);
     }
 
     private renderPopup(
