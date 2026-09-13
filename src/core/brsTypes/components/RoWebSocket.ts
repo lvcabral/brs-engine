@@ -610,14 +610,6 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
  * `RoURLTransfer.ts`'s `XMLHttpRequest` import): the browser build always runs the interpreter
  * in a real Web Worker, where the real `WebSocket` must live on the main thread instead; every
  * other case (Node worker thread or in-process CLI/REPL) uses the Node helper-process bridge.
- *
- * Keep both `return`s inside one function body — splitting this into two separate per-branch
- * function definitions (one per ifdef branch) looks cleaner to a linter, but breaks the Node
- * package's `cli`/`ecp` webpack bundles: with `ts-loader` running in that configuration, having
- * two same-named function declarations in the raw source trips `TS2393: Duplicate function
- * implementation` even though only one survives `ifdef-loader`'s stripping (the `core` bundle
- * builds fine either way — only `cli`/`ecp` hit this). A real build failure outranks the resulting
- * SonarCloud false positive below, which is a known, intentional trade-off, not a bug to fix.
  */
 function createTransport(onError?: (message: string) => void): WebSocketTransport {
     /// #if BROWSER

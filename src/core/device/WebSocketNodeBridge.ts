@@ -1,5 +1,5 @@
-import * as fs from "fs";
-import { ChildProcessWithoutNullStreams } from "child_process";
+import * as fs from "node:fs";
+import { ChildProcessWithoutNullStreams } from "node:child_process";
 import { spawnHelperProcess, pollQueueFile } from "./HelperProcess";
 import { WebSocketEventPayload, WebSocketOpenParams, WebSocketTransport } from "./WebSocketTransport";
 
