@@ -5,6 +5,14 @@ import type * as net from "net";
 /** Generic socket failure, used when a host error maps to nothing `ifSocketStatus` recognizes. */
 export const GENERIC_SOCKET_ERROR = 3474;
 
+/** An 8-digit random id, shared by every socket-like component (`roStreamSocket`, `roDataGramSocket`,
+ *  `roWebSocket`) for `GetID()`/`GetSocketId()` and matching their async event's socket id. */
+export function generateUniqueId(): number {
+    const min = 10000000;
+    const max = 99999999;
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 /**
  * Host error names mapped to the numeric codes `ifSocketStatus` compares against.
  *
