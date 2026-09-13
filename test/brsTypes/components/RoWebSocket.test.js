@@ -5,7 +5,7 @@ const { Interpreter } = brs;
 const { RoWebSocket, RoMessagePort, BrsBoolean, BrsString, BrsInvalid, Int32, RoByteArray } = brs.types;
 const { pollUntil } = require("../../testUtils/pollUntil");
 
-// Real WebSocket loopback I/O backed by a helper child process (see src/core/device/WebSocketBridge.ts),
+// Real WebSocket loopback I/O backed by a helper child process (see src/core/device/WebSocketNodeBridge.ts),
 // talking to a *separate* server process (see resources/wsEchoServer.js for why it must not be
 // in-process). These tests perform genuine local network I/O, so they poll with real timers instead
 // of fake ones.
@@ -214,7 +214,7 @@ describe("RoWebSocket", () => {
 
     describe("transport fails to start", () => {
         it("reports Open() as failed with an Error event instead of hanging silently", async () => {
-            // Regression: WebSocketBridge.open() used to be void, so a spawn failure (simulated
+            // Regression: WebSocketNodeBridge.open() used to be void, so a spawn failure (simulated
             // here the same way RoDataGramSocket.test.js does — os.tmpdir() throwing, as the
             // browser build's webpack `resolve.fallback` stubs os/child_process the same way)
             // left Open() reporting success with no event ever following, hanging a script

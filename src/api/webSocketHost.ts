@@ -5,12 +5,12 @@ import { SharedEventQueue } from "../core/SharedEventQueue";
  * main thread (shared by `src/api/index.ts` for the app worker and `src/api/task.ts` for each
  * Task worker) because the interpreter's own thread busy-spins inside `Wait()` with no yielding,
  * so a `WebSocket` created there could never have its callbacks fire — see
- * `src/core/device/WebSocketBrowserBridge.ts` for the full rationale and the worker-side half of
+ * `src/core/device/WebSocketBridge.ts` for the full rationale and the worker-side half of
  * this bridge.
  *
  * Browsers give script no way to set custom handshake headers, HTTP Basic-Auth credentials, or
  * certificate-verification behavior on `WebSocket`, and no way to observe or originate raw
- * Ping/Pong control frames — unlike the Node/CLI build (`WebSocketBridge.ts`, backed by the `ws`
+ * Ping/Pong control frames — unlike the Node/CLI build (`WebSocketNodeBridge.ts`, backed by the `ws`
  * package), those parts of `ifWebSocket` are unsupported here by platform limitation, not by
  * choice: `SetUserAndPassword`/custom headers/peer-and-host verification are accepted but have no
  * effect, and `SendPing`/`SendPong` are no-ops (browsers auto-reply to a Ping invisibly to JS).
@@ -50,7 +50,7 @@ interface CloseCommand extends WebSocketCommandBase {
 
 type WebSocketCommand = OpenCommand | SendCommand | SendDataCommand | CloseCommand | WebSocketCommandBase;
 
-/** Type guard for the worker→main WebSocket command channel (see `WebSocketBrowserBridge.ts`). */
+/** Type guard for the worker→main WebSocket command channel (see `WebSocketBridge.ts`). */
 export function isWebSocketCommand(data: any): data is WebSocketCommand {
     return (
         data !== null &&

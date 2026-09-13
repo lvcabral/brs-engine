@@ -1,6 +1,6 @@
 /**
- * Platform-agnostic shape shared by `RoWebSocket`'s two transports: `WebSocketBridge` (Node/CLI,
- * a helper process with a real `ws` client) and `WebSocketBrowserBridge` (browser, a real
+ * Platform-agnostic shape shared by `RoWebSocket`'s two transports: `WebSocketNodeBridge` (Node/CLI,
+ * a helper process with a real `ws` client) and `WebSocketBridge` (browser, a real
  * `WebSocket` owned by the main thread). Both convert their platform's real WebSocket
  * callbacks/events into this plain, JSON-serializable shape so `RoWebSocket.ts` has exactly one
  * code path for turning results into `RoWebSocketEvent`s, regardless of platform.

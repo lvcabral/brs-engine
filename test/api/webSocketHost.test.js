@@ -1,6 +1,6 @@
 // Exercises `src/api/webSocketHost.ts` directly (not a compiled bundle) because this module's
 // logic lives on the browser main-thread side of the roWebSocket bridge (see
-// `src/core/device/WebSocketBrowserBridge.ts` for the worker-side half) and is never reached by
+// `src/core/device/WebSocketBridge.ts` for the worker-side half) and is never reached by
 // the `packages/node/bin` bundle the rest of the suite imports for `roXxx` component behavior.
 // Node 22's global `WebSocket`/`atob`/`btoa` stand in for the browser's — same API surface this
 // module actually calls.

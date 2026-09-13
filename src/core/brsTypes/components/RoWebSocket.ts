@@ -22,9 +22,9 @@ import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { generateUniqueId } from "../interfaces/IfSocket";
 import { BrsDevice } from "../../device/BrsDevice";
 /// #if BROWSER
-import { WebSocketBrowserBridge } from "../../device/WebSocketBrowserBridge";
-/// #else
 import { WebSocketBridge } from "../../device/WebSocketBridge";
+/// #else
+import { WebSocketNodeBridge } from "../../device/WebSocketNodeBridge";
 /// #endif
 import { WebSocketEventPayload, WebSocketTransport, WS_GENERIC_ERROR } from "../../device/WebSocketTransport";
 import { DefaultCertificatesFile } from "../../common";
@@ -47,8 +47,8 @@ const DEFAULT_MSG_BUFFER_SIZE = 32 * 1024;
  *
  * Real I/O is delegated to a platform transport (`WebSocketTransport`) because the interpreter's
  * `Wait()` loop is a synchronous busy-spin that can never let a same-thread WebSocket's own
- * callbacks fire — see `WebSocketBridge.ts` (Node/CLI, a helper process) and
- * `WebSocketBrowserBridge.ts` (browser, the main thread) for the two platform implementations and
+ * callbacks fire — see `WebSocketNodeBridge.ts` (Node/CLI, a helper process) and
+ * `WebSocketBridge.ts` (browser, the main thread) for the two platform implementations and
  * their respective fidelity gaps (Node: full protocol including Ping/Pong; browser: no custom
  * headers/auth/cert verification and no script-visible Ping/Pong, all platform limitations).
  */
@@ -552,7 +552,7 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
     });
 
     /** Sets whether the WebSocket automatically replies to incoming Ping frames with a Pong.
-     *  Browsers always auto-reply regardless of this setting — see `WebSocketBrowserBridge.ts`. */
+     *  Browsers always auto-reply regardless of this setting — see `WebSocketBridge.ts`. */
     private readonly setAutoPingReply = new Callable("setAutoPingReply", {
         signature: { args: [new StdlibArgument("auto_reply", ValueKind.Boolean)], returns: ValueKind.Void },
         impl: (_: Interpreter, autoReply: BrsBoolean) => {
@@ -605,15 +605,25 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
     });
 }
 
-/** Chooses the platform transport at compile time via the `BROWSER` ifdef (same convention as
- *  `RoURLTransfer.ts`'s `XMLHttpRequest` import): the browser build always runs the interpreter
- *  in a real Web Worker, where the real `WebSocket` must live on the main thread instead; every
- *  other case (Node worker thread or in-process CLI/REPL) uses the Node helper-process bridge. */
+/**
+ * Chooses the platform transport at compile time via the `BROWSER` ifdef (same convention as
+ * `RoURLTransfer.ts`'s `XMLHttpRequest` import): the browser build always runs the interpreter
+ * in a real Web Worker, where the real `WebSocket` must live on the main thread instead; every
+ * other case (Node worker thread or in-process CLI/REPL) uses the Node helper-process bridge.
+ *
+ * Keep both `return`s inside one function body — splitting this into two separate per-branch
+ * function definitions (one per ifdef branch) looks cleaner to a linter, but breaks the Node
+ * package's `cli`/`ecp` webpack bundles: with `ts-loader` running in that configuration, having
+ * two same-named function declarations in the raw source trips `TS2393: Duplicate function
+ * implementation` even though only one survives `ifdef-loader`'s stripping (the `core` bundle
+ * builds fine either way — only `cli`/`ecp` hit this). A real build failure outranks the resulting
+ * SonarCloud false positive below, which is a known, intentional trade-off, not a bug to fix.
+ */
 function createTransport(onError?: (message: string) => void): WebSocketTransport {
     /// #if BROWSER
-    return new WebSocketBrowserBridge(onError);
+    return new WebSocketBridge(onError); // NOSONAR - ifdef-selected branch, not truly unreachable
     /// #else
-    return new WebSocketBridge(onError);
+    return new WebSocketNodeBridge(onError);
     /// #endif
 }
 
