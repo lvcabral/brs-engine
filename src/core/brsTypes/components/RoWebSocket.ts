@@ -621,9 +621,9 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
  */
 function createTransport(onError?: (message: string) => void): WebSocketTransport {
     /// #if BROWSER
-    return new WebSocketBridge(onError); // NOSONAR - ifdef-selected branch, not truly unreachable
+    return new WebSocketBridge(onError);
     /// #else
-    return new WebSocketNodeBridge(onError);
+    return new WebSocketNodeBridge(onError); // NOSONAR - ifdef-selected branch, not truly unreachable
     /// #endif
 }
 
