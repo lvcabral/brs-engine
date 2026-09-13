@@ -60,6 +60,7 @@ module.exports = (env) => {
                     net: false,
                     dgram: false,
                     child_process: false,
+                    ws: false,
                     os: false,
                     crypto: require.resolve("crypto-browserify"),
                     path: require.resolve("path-browserify"),

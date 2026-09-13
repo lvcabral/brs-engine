@@ -21,6 +21,7 @@ import {
 import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
+import { isWebSocketCommand, handleWebSocketCommand, disposeSocketsForRealm } from "./webSocketHost";
 
 /**
  * Concurrent task workers allowed at once. This is purely a guardrail against a runaway app spawning
@@ -191,6 +192,9 @@ function endTask(taskId: number) {
         threadSyncToMain.get(taskId)?.dispose();
         threadSyncToTask.delete(taskId);
         threadSyncToMain.delete(taskId);
+        // The task worker is gone before it can post its own `dispose` for any roWebSocket it
+        // opened — close those now instead of leaking the real connection past the task's lifetime.
+        disposeSocketsForRealm(taskId);
         notifyAll("debug", `[task:api] Task worker stopped: ${taskId}`);
     }
     startPendingTasks();
@@ -267,6 +271,8 @@ function taskCallback(event: MessageEvent) {
         handleThreadUpdate(event.data, true);
     } else if (isNDKStart(event.data)) {
         notifyAll("ndkStart", event.data);
+    } else if (isWebSocketCommand(event.data)) {
+        handleWebSocketCommand(event.data);
     } else if (typeof event.data === "string") {
         notifyAll("message", event.data);
     } else if (inDebugLib) {
