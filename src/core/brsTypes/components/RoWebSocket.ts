@@ -53,7 +53,7 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
     readonly kind = ValueKind.Object;
     private readonly identity: number;
     private readonly callbackKey: string;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
     private url: string;
     private socketData?: BrsType;
     private user?: string;

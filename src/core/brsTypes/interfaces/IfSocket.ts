@@ -6,11 +6,14 @@ import type * as net from "net";
 export const GENERIC_SOCKET_ERROR = 3474;
 
 /** An 8-digit random id, shared by every socket-like component (`roStreamSocket`, `roDataGramSocket`,
- *  `roWebSocket`) for `GetID()`/`GetSocketId()` and matching their async event's socket id. */
+ *  `roWebSocket`) for `GetID()`/`GetSocketId()` and matching their async event's socket id. Not
+ *  security-sensitive — purely a same-process correlation id, never used for auth/tokens/secrets —
+ *  same reasoning already accepted for the identical pattern in `RoStreamSocket.ts`/`RoDataGramSocket.ts`
+ *  (reviewed as safe in SonarCloud). */
 export function generateUniqueId(): number {
     const min = 10000000;
     const max = 99999999;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(Math.random() * (max - min + 1)) + min; // NOSONAR - non-cryptographic id, not a secret
 }
 
 /**

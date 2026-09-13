@@ -84,7 +84,9 @@ export class WebSocketBrowserBridge implements WebSocketTransport {
 
     /** No-op: browsers give script no control over automatic Pong replies to an incoming Ping —
      *  the browser always auto-replies, invisibly to JS, regardless of this setting. */
-    setAutoPingReply(_enable: boolean): void {}
+    setAutoPingReply(_enable: boolean): void {
+        // Intentionally empty — see doc comment above.
+    }
 
     close(code: number, reason: string): void {
         this.postCommand("close", { code, reason });
