@@ -21,8 +21,11 @@ import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort"
 import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { generateUniqueId } from "../interfaces/IfSocket";
 import { BrsDevice } from "../../device/BrsDevice";
-import { WebSocketBridge } from "../../device/WebSocketBridge";
+/// #if BROWSER
 import { WebSocketBrowserBridge } from "../../device/WebSocketBrowserBridge";
+/// #else
+import { WebSocketBridge } from "../../device/WebSocketBridge";
+/// #endif
 import { WebSocketEventPayload, WebSocketTransport, WS_GENERIC_ERROR } from "../../device/WebSocketTransport";
 import { DefaultCertificatesFile } from "../../common";
 
@@ -602,14 +605,16 @@ export class RoWebSocket extends BrsComponent implements BrsValue, BrsHttpAgent 
     });
 }
 
-/** Chooses the platform transport: a real Web Worker (has `importScripts`) means the browser
- *  build, where the real `WebSocket` must live on the main thread; anything else (Node worker
- *  thread or in-process CLI/REPL) uses the Node helper-process bridge. */
+/** Chooses the platform transport at compile time via the `BROWSER` ifdef (same convention as
+ *  `RoURLTransfer.ts`'s `XMLHttpRequest` import): the browser build always runs the interpreter
+ *  in a real Web Worker, where the real `WebSocket` must live on the main thread instead; every
+ *  other case (Node worker thread or in-process CLI/REPL) uses the Node helper-process bridge. */
 function createTransport(onError?: (message: string) => void): WebSocketTransport {
-    if (typeof importScripts === "function") {
-        return new WebSocketBrowserBridge(onError);
-    }
+    /// #if BROWSER
+    return new WebSocketBrowserBridge(onError);
+    /// #else
     return new WebSocketBridge(onError);
+    /// #endif
 }
 
 function bytesFromBase64(base64: string): RoByteArray {
