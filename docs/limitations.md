@@ -1,6 +1,6 @@
 # BrightScript Engine Current Limitations
 
-The **BrightScript Engine** implements the BrightScript language specification up to Roku OS 15.3. However, some features and components remain unsupported or only partially implemented. These limitations fall into three categories: features planned for future development, components that will remain as mock objects for compatibility purposes, and functionality considered outside the project's scope. The following sections detail each category and its current status.
+The **BrightScript Engine** implements the BrightScript language specification up to Roku OS 16.0. However, some features and components remain unsupported or only partially implemented. These limitations fall into three categories: features planned for future development, components that will remain as mock objects for compatibility purposes, and functionality considered outside the project's scope. The following sections detail each category and its current status.
 
 ## In Scope (to be developed/fixed in future releases)
 
@@ -47,6 +47,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
+  * **Server-Sent Events (SSE)** support, added by Roku OS 16.0, is not yet implemented — the engine does not inspect the response headers to detect an SSE stream or deliver each server event as a separate `roUrlEvent` on the message port; a streaming SSE response is instead read to completion (or times out) like any other request.
 * The `roStreamSocket` (TCP) component performs real network I/O, on the Node.js/CLI package only.
   * Supports listening, connecting, accepting connections, and sending/receiving stream data, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()`, backed by a small helper process per listener/connection.
   * `Connect()` uses a blocking request with an 8-second timeout rather than modeling Roku's async-per-message-port connect semantics.
@@ -78,7 +79,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
 
 * RAF (Roku Ads Framework) library that exposes `Roku_Ads` object is mocked with the most common methods available returning static values.
 * RED (Roku Event Dispatcher) and Google IMA3 libraries are also mocked.
-* Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature: every documented command is implemented, with catalog, purchase, order and account data coming from the `csfake/*.xml` test files (or a canned account) only while `fakeServer` is enabled. The channel credential store (`storeChannelCredData`/`getChannelCred`) is the exception — it holds the app's own artifact in memory and works regardless of `fakeServer`, though the data does not persist between runs or across devices.
+* Channel Store components (`ChannelStore`, `roChannelStore` and `roChannelStoreEvent`) are mocked with support for the `fakeServer()` feature: every documented command is implemented, with catalog, purchase, order and account data coming from the `csfake/*.xml` test files (or a canned account) only while `fakeServer` is enabled. The channel credential store (`storeChannelCredData`/`getChannelCred`) is the exception — it holds the app's own artifact in memory and works regardless of `fakeServer`, though the data does not persist between runs or across devices. The new **`GetRokuCustomerId`** command, added by Roku OS 16.0 to retrieve a unique Roku customer ID without a prior purchase, is not yet implemented.
 * The Text to Speech components (`roAudioGuide`, `roTextToSpeech` and `roMicrophone`) and the Signing Algorithm components (`roDSA` and `roRSA`) are mocked: they expose their documented methods returning static values, but perform no real speech, recording or cryptographic signing.
 * Several components have their methods and events mocked, they return constant values to prevent crash. Those are mostly related to device behaviors that are not possible to replicate in a browser environment or simply not applicable to the engine.
 
