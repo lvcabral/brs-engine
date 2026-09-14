@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="ProbeScene" extends="Scene">
+    <script type="text/brightscript" uri="ProbeScene.brs" />
+    <children>
+        <Label id="title" translation="[60,40]" font="font:LargeSystemFont" color="0x40C8FFFF"
+            text="roWebSocket Probe" />
+        <Label id="instructions" translation="[60,90]" font="font:SmallSystemFont" color="0x9AA5B1FF"
+            text="OK=Open  up=SendText  down=SendData  left=Ping  right=PingTest  rewind=Close  fastforward=Reopen  replay=SetTimer  options=Clear"
+            wrap="true" width="1800" />
+        <Label id="status" translation="[60,170]" font="font:MediumBoldSystemFont" color="0xEBF0F5FF"
+            text="Status: not connected" />
+        <Label id="openInfo" translation="[60,210]" font="font:SmallSystemFont" color="0xEBF0F5FF" text="" />
+        <Label id="socketId" translation="[60,240]" font="font:SmallSystemFont" color="0xEBF0F5FF" text="" />
+        <Label id="lastText" translation="[60,290]" font="font:SmallSystemFont" color="0x40C8FFFF" text=""
+            wrap="true" width="1800" />
+        <Label id="lastData" translation="[60,330]" font="font:SmallSystemFont" color="0x40C8FFFF" text=""
+            wrap="true" width="1800" />
+        <Label id="pingStatus" translation="[60,370]" font="font:SmallSystemFont" color="0x40C8FFFF" text="" />
+        <Label id="timerStatus" translation="[60,410]" font="font:SmallSystemFont" color="0xA0FFA0FF" text="" />
+        <Label id="counts" translation="[60,450]" font="font:SmallSystemFont" color="0x9AA5B1FF" text="" />
+        <Label id="log" translation="[60,500]" font="font:SmallSystemFont" color="0x707880FF" text=""
+            wrap="true" width="1800" numLines="10" />
+    </children>
+</component>
