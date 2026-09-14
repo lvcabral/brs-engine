@@ -111,7 +111,7 @@
     "stream-browserify": "^3.0.0",
     "ts-loader": "^9.5.1",
     "typescript": "^5.9.3",
-    "vitest": "^3.2.7",
+    "vitest": "^5.0.0",
     "webpack": "^5.105.0",
     "webpack-bundle-analyzer": "^4.10.1",
     "webpack-cli": "^5.0.1",
