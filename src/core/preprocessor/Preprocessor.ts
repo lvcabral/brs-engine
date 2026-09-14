@@ -153,8 +153,8 @@ export class Preprocessor implements CC.Visitor {
 
     /**
      * Resolves a token to a JavaScript boolean value, or throws an error.
-     * @param token the token to resolve to either `true`, `false`, or an error
-     * @throws if attempting to reference an undefined `#const` or if `token` is neither `true`, `false`, nor an identifier.
+     * @param token the token to resolve to either `true` or `false`
+     * @throws if `token` is neither `true`, `false`, nor an identifier.
      */
     evaluateCondition(token: Token): boolean {
         switch (token.kind) {
@@ -163,17 +163,11 @@ export class Preprocessor implements CC.Visitor {
             case Lexeme.False:
                 return false;
             case Lexeme.Identifier: {
+                // Roku OS 16.0: a name with no matching `#const`/`bs_const` definition now
+                // evaluates to `false` instead of raising a compile error, so a library can gate
+                // a feature on a name a downstream app never defines.
                 const lookupKey = token.text.toLowerCase();
-                if (this.constants.has(lookupKey)) {
-                    return this.constants.get(lookupKey) as boolean;
-                }
-
-                return this.addError(
-                    new BrsError(
-                        `Invalid #If/#ElseIf expression (<CONST-NAME> not defined) '${token.text}' (compile error &h92)`,
-                        token.location
-                    )
-                );
+                return this.constants.get(lookupKey) ?? false;
             }
             default:
                 return this.addError(

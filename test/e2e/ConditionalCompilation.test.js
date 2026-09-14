@@ -37,6 +37,21 @@ describe("end to end conditional compilation", () => {
         ]);
     });
 
+    test("conditional-compilation/undefined-const.brs", async () => {
+        await execute(
+            [
+                resourceFile("conditional-compilation", "manifest"),
+                resourceFile("conditional-compilation", "undefined-const.brs"),
+            ],
+            outputStreams
+        );
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "undefined name correctly treated as false",
+            "not undefined name correctly treated as true",
+        ]);
+    });
+
     test("case-insensitive-consts/main.brs", async () => {
         await execute(
             [resourceFile("case-insensitive-consts", "manifest"), resourceFile("case-insensitive-consts", "main.brs")],
