@@ -53,6 +53,7 @@ export * from "./brsTypes/components/RoFontRegistry";
 export * from "./device/FileSystem";
 export * from "./packageEncryption";
 export { default as SharedObject } from "./SharedObject";
+export { SharedEventQueue } from "./SharedEventQueue";
 export type { ISGNode } from "./extensions";
 export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
 export { Lexer, Lexeme, Token, ReservedWords, isToken } from "./lexer";

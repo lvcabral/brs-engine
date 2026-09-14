@@ -92,6 +92,7 @@ import {
 } from "./video";
 import { subscribeControl, initControlModule, enableSendKeys, sendKey } from "./control";
 import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks, subscribeTask } from "./task";
+import { isWebSocketCommand, handleWebSocketCommand, disposeSocketsForRealm } from "./webSocketHost";
 import SharedObject from "../core/SharedObject";
 import packageInfo from "../../packages/browser/package.json";
 
@@ -669,6 +670,9 @@ function resetWorker() {
     resetArray();
     resetSounds(deviceData.assets);
     resetVideo();
+    // The app worker is gone before it can post its own `dispose` for any roWebSocket it opened —
+    // close those now instead of leaking the real connection past the app's lifetime.
+    disposeSocketsForRealm(0);
 }
 
 /**
@@ -885,6 +889,8 @@ function mainCallback(event: MessageEvent) {
         handleThreadUpdate(event.data);
     } else if (isNDKStart(event.data)) {
         handleNDKStart(event.data);
+    } else if (isWebSocketCommand(event.data)) {
+        handleWebSocketCommand(event.data);
     } else if (typeof event.data === "string") {
         // All messages beyond this point must be csv string
         handleStringMessage(event.data);

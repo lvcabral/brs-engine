@@ -65,6 +65,7 @@ import { RoCECStatus } from "./RoCECStatus";
 import { RoSocketAddress } from "./RoSocketAddress";
 import { RoStreamSocket } from "./RoStreamSocket";
 import { RoDataGramSocket } from "./RoDataGramSocket";
+import { RoWebSocket } from "./RoWebSocket";
 import { RoHdmiStatus } from "./RoHdmiStatus";
 import { RoUtils } from "./RoUtils";
 
@@ -197,5 +198,6 @@ export const BrsObjects = new BrsObjectsMap([
     ["roSocketAddress", (_?: Interpreter) => new RoSocketAddress()],
     ["roStreamSocket", (_?: Interpreter) => new RoStreamSocket()],
     ["roDataGramSocket", (_?: Interpreter) => new RoDataGramSocket()],
+    ["roWebSocket", (_?: Interpreter) => new RoWebSocket()],
     ["roUtils", (_?: Interpreter) => new RoUtils()],
 ]);

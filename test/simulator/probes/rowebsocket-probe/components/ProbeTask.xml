@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="ProbeTask" extends="Task">
+    <interface>
+        <!-- Written by the Scene (render thread) to trigger an action; alwaysNotify so pressing
+             the same remote key twice in a row (same string value) still fires onChange. -->
+        <field id="probeCommand" type="string" alwaysNotify="true" />
+        <!-- Written by the task to publish everything the Scene displays, bundled into one field
+             so the Scene has a single observer instead of one per label. A JSON string, not an
+             `assocarray`; see the comment at the top of ProbeScene.brs for why. -->
+        <field id="uiState" type="string" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript" uri="ProbeTask.brs" />
+</component>
