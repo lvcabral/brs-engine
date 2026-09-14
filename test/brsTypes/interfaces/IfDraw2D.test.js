@@ -347,6 +347,24 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 10, 7, 7)[3]).toBe(0);
         });
 
+        it("doDrawScaledObject with a negative scaleX mirrors the source horizontally", () => {
+            const src = makeBitmap(2, 2, true);
+            const sctx = src.getContext();
+            // Left column red, right column blue, so a horizontal flip is observable.
+            sctx.fillStyle = "red";
+            sctx.fillRect(0, 0, 1, 2);
+            sctx.fillStyle = "blue";
+            sctx.fillRect(1, 0, 1, 2);
+            const dest = makeBitmap(10, 10, true);
+            const ok = new IfDraw2D(dest).doDrawScaledObject(4, 0, -1, 1, src);
+            expect(ok).toBe(true);
+            const ctx = dest.getContext();
+            // Unflipped the blit would occupy (4,0)-(6,2) with red on the left; a negative
+            // scaleX mirrors it into (2,0)-(4,0), with red now on the right.
+            expect(pixelAt(ctx, 10, 2, 0)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 10, 3, 0)).toEqual([255, 0, 0, 255]);
+        });
+
         it("doDrawCroppedBitmap draws only the requested source sub-rect, scaled into destRect", () => {
             const src = makeBitmap(4, 4, true);
             new IfDraw2D(src).doClearCanvas(0x0000ffff | 0);

@@ -1475,15 +1475,28 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         return;
     }
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
+    // A negative scaleX/scaleY (eg. DrawScaledObject mirroring per the Roku docs)
+    // needs a manual flip via a transform, drawing with the equivalent positive width/height.
+    const flipX = dw < 0;
+    const flipY = dh < 0;
+    if (flipX || flipY) {
+        ctx.save();
+        ctx.translate(dx, dy);
+        ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
+    }
+    const [ddx, ddy, ddw, ddh] = flipX || flipY ? [0, 0, Math.abs(dw), Math.abs(dh)] : [dx, dy, dw, dh];
     /// #if BROWSER
     if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
-        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+        ctx.drawImage(image, sx, sy, sw, sh, ddx, ddy, ddw, ddh);
     }
     /// #else
     if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
-        ctx.drawImage(image, sx, sy, sw, sh, dx, dy, dw, dh);
+        ctx.drawImage(image, sx, sy, sw, sh, ddx, ddy, ddw, ddh);
     }
     /// #endif
+    if (flipX || flipY) {
+        ctx.restore();
+    }
 }
 
 /**
