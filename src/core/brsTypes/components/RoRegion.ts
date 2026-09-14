@@ -224,6 +224,10 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
         return this.alphaEnable;
     }
 
+    isDrawable(): boolean {
+        return this.bitmap.isDrawable();
+    }
+
     getPosX(): number {
         return this.x;
     }

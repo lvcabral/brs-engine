@@ -614,11 +614,14 @@ export class IfDraw2D {
     readonly clear = new Callable("clear", {
         signature: {
             args: [new StdlibArgument("rgba", ValueKind.Int32)],
-            returns: ValueKind.Void,
+            returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, rgba: Int32) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             this.doClearCanvas(rgba.getValue());
-            return BrsInvalid.Instance;
+            return BrsBoolean.True;
         },
     });
 
@@ -634,6 +637,9 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -659,6 +665,9 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, theta: Float, object: BrsComponent, rgba: Int32 | BrsInvalid) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const didDraw = drawRotatedObject(
                 this.component,
                 object,
@@ -694,6 +703,9 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const didDraw = this.component.drawImage(
                 object,
                 x.getValue(),
@@ -730,6 +742,9 @@ export class IfDraw2D {
             object: BrsComponent,
             rgba: Int32 | BrsInvalid
         ) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const ctx = this.component.getContext();
             const positionX = x.getValue();
             const positionY = y.getValue();
@@ -763,6 +778,9 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, xStart: Int32, yStart: Int32, xEnd: Int32, yEnd: Int32, rgba: Int32) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
             ctx.beginPath();
@@ -787,10 +805,15 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, size: Float, rgba: Int32) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
+            // Roku documents DrawPoint() as having a maximum point size of 100.
+            const pointSize = Math.min(size.getValue(), 100);
             ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), size.getValue(), size.getValue());
+            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), pointSize, pointSize);
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -809,6 +832,9 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, x: Int32, y: Int32, width: Int32, height: Int32, rgba: Int32) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             const baseX = this.component.x + x.getValue();
             const baseY = this.component.y + y.getValue();
             const w = width.getValue();
@@ -839,6 +865,9 @@ export class IfDraw2D {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, text: BrsString, x: Int32, y: Int32, rgba: Int32, font: RoFont) => {
+            if (!this.component.isDrawable()) {
+                return BrsBoolean.False;
+            }
             this.doDrawText(text.value, x.getValue(), y.getValue(), rgba.getValue(), 1, font);
             return BrsBoolean.True;
         },
@@ -964,6 +993,9 @@ export interface BrsDraw2D {
     setCanvasAlpha(alphaEnable: boolean): void;
 
     getCanvasAlpha(): boolean;
+
+    /** Whether Clear()/the draw functions may modify this surface (see `roTextureRequest.SetDrawable`). */
+    isDrawable(): boolean;
 
     /**
      * `alpha` is the blit transparency when it must be carried SEPARATELY from `rgba` — an untinted draw

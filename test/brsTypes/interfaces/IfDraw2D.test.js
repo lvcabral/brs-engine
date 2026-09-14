@@ -159,10 +159,27 @@ describe("IfDraw2D", () => {
 
         it("drawPoint paints a size x size square at the given position", () => {
             const bmp = makeBitmap(10, 10, true);
-            bmp.getMethod("drawPoint").call(interpreter, new Int32(4), new Int32(4), new Float(2.0), rgba(0x0000ffff));
+            const result = bmp
+                .getMethod("drawPoint")
+                .call(interpreter, new Int32(4), new Int32(4), new Float(2.0), rgba(0x0000ffff));
+            expect(result).toBe(BrsBoolean.True);
             const ctx = bmp.getContext();
             expect(pixelAt(ctx, 10, 4, 4)).toEqual([0, 0, 255, 255]);
             expect(pixelAt(ctx, 10, 4, 6)).toEqual([0, 0, 0, 0]);
+        });
+
+        it("drawPoint clamps size to Roku's documented maximum of 100", () => {
+            const bmp = makeBitmap(200, 200, true);
+            bmp.getMethod("drawPoint").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Float(500.0),
+                rgba(0x0000ffff)
+            );
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 200, 99, 99)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 200, 100, 100)).toEqual([0, 0, 0, 0]);
         });
     });
 
@@ -223,6 +240,54 @@ describe("IfDraw2D", () => {
         });
     });
 
+    describe("isDrawable gating (roTextureRequest.SetDrawable)", () => {
+        it("clear/draw* return false and leave the canvas untouched on a non-drawable bitmap", () => {
+            const bmp = makeBitmap(10, 10, true);
+            bmp.drawable = false;
+            const src = makeBitmap(4, 4, true);
+
+            expect(bmp.getMethod("clear").call(interpreter, rgba(0xaabbccff))).toBe(BrsBoolean.False);
+            expect(
+                bmp
+                    .getMethod("drawRect")
+                    .call(interpreter, new Int32(0), new Int32(0), new Int32(4), new Int32(4), rgba(0xff0000ff))
+            ).toBe(BrsBoolean.False);
+            expect(
+                bmp
+                    .getMethod("drawLine")
+                    .call(interpreter, new Int32(0), new Int32(0), new Int32(9), new Int32(0), rgba(0x00ff00ff))
+            ).toBe(BrsBoolean.False);
+            expect(
+                bmp
+                    .getMethod("drawPoint")
+                    .call(interpreter, new Int32(0), new Int32(0), new Float(2.0), rgba(0x0000ffff))
+            ).toBe(BrsBoolean.False);
+            expect(bmp.getMethod("drawObject").call(interpreter, new Int32(0), new Int32(0), src)).toBe(
+                BrsBoolean.False
+            );
+
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 0, 0)).toEqual([0, 0, 0, 0]);
+        });
+
+        it("a directly-created roBitmap is drawable by default", () => {
+            const bmp = makeBitmap(4, 4, true);
+            expect(bmp.isDrawable()).toBe(true);
+            expect(bmp.getMethod("clear").call(interpreter, rgba(0xaabbccff))).toBe(BrsBoolean.True);
+        });
+
+        it("a roRegion delegates isDrawable() to its underlying bitmap", () => {
+            const bmp = makeBitmap(10, 10, true);
+            bmp.drawable = false;
+            const region = new RoRegion(bmp, new Int32(0), new Int32(0), new Int32(4), new Int32(4));
+
+            expect(region.getMethod("clear").call(interpreter, rgba(0xaabbccff))).toBe(BrsBoolean.False);
+
+            bmp.drawable = true;
+            expect(region.getMethod("clear").call(interpreter, rgba(0xaabbccff))).toBe(BrsBoolean.True);
+        });
+    });
+
     describe("simple property Callables", () => {
         it("getWidth/getHeight report the component's size", () => {
             const bmp = makeBitmap(7, 9, false);
@@ -237,9 +302,10 @@ describe("IfDraw2D", () => {
             expect(bmp.getMethod("getAlphaEnable").call(interpreter)).toBe(BrsBoolean.True);
         });
 
-        it("clear fills the whole canvas with the given color", () => {
+        it("clear fills the whole canvas with the given color and returns true", () => {
             const bmp = makeBitmap(4, 4, true);
-            bmp.getMethod("clear").call(interpreter, rgba(0xaabbccff));
+            const result = bmp.getMethod("clear").call(interpreter, rgba(0xaabbccff));
+            expect(result).toBe(BrsBoolean.True);
             const ctx = bmp.getContext();
             expect(pixelAt(ctx, 4, 0, 0)).toEqual([170, 187, 204, 255]);
             expect(pixelAt(ctx, 4, 3, 3)).toEqual([170, 187, 204, 255]);

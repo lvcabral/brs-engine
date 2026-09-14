@@ -172,6 +172,10 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return this.alphaEnable;
     }
 
+    isDrawable(): boolean {
+        return true;
+    }
+
     toString(parent?: BrsType): string {
         return "<Component: roScreen>";
     }

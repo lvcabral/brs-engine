@@ -134,6 +134,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     getCanvasAlpha(): boolean {
         return this.alphaEnable;
     }
+    isDrawable(): boolean {
+        return true;
+    }
     drawImage(
         object: BrsComponent,
         x: number,
