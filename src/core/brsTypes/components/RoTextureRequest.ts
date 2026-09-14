@@ -34,6 +34,7 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
     state: RequestState;
     scaleMode: number;
     size?: { width: number; height: number };
+    drawable: boolean;
     // ifHttpAgent Interface
     readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
@@ -53,12 +54,20 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
         this.async = true;
         this.state = RequestState.Requested;
         this.scaleMode = 0;
+        this.drawable = false;
         this.cookiesEnabled = false;
         this.certificatesFile = DefaultCertificatesFile;
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
         this.registerMethods({
-            ifTextureRequest: [this.getId, this.getState, this.setAsync, this.setSize, this.setScaleMode],
+            ifTextureRequest: [
+                this.getId,
+                this.getState,
+                this.setAsync,
+                this.setSize,
+                this.setScaleMode,
+                this.setDrawable,
+            ],
             ifHttpAgent: [
                 ifHttpAgent.addHeader,
                 ifHttpAgent.setHeaders,
@@ -132,6 +141,18 @@ export class RoTextureRequest extends BrsComponent implements BrsValue, BrsHttpA
         },
         impl: (_: Interpreter, mode: Int32) => {
             this.scaleMode = mode.getValue() ? 1 : 0;
+            return Uninitialized.Instance;
+        },
+    });
+
+    /** Sets whether the returned roBitmap's Clear()/draw functions are allowed to modify it. */
+    private readonly setDrawable = new Callable("setDrawable", {
+        signature: {
+            args: [new StdlibArgument("drawable", ValueKind.Boolean)],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter, drawable: BrsBoolean) => {
+            this.drawable = drawable.toBoolean();
             return Uninitialized.Instance;
         },
     });

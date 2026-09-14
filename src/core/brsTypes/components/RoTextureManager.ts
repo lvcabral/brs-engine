@@ -98,17 +98,25 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
     private createEvent(request: RoTextureRequest) {
         let bitmap = this.loadTexture(request.uri);
-        if (
-            bitmap?.isValid() &&
-            request.size &&
-            request.size.width > 0 &&
-            request.size.height > 0 &&
-            (request.size.width !== bitmap.width || request.size.height !== bitmap.height)
-        ) {
-            const newDim = toAssociativeArray(request.size);
-            const newBmp = new RoBitmap(newDim);
-            drawBitmapOnBitmap(bitmap, newBmp, request.scaleMode);
-            bitmap = newBmp;
+        if (bitmap?.isValid()) {
+            const needsResize =
+                !!request.size &&
+                request.size.width > 0 &&
+                request.size.height > 0 &&
+                (request.size.width !== bitmap.width || request.size.height !== bitmap.height);
+            // A drawable request always gets its own unique, uncached bitmap (never the one shared
+            // out of `this.textures`), even when no resize was requested. A resize also always
+            // produces its own private copy, so it's implicitly drawable too — there's no shared
+            // cache entry left to protect from being mutated out from under another request.
+            if (needsResize || request.drawable) {
+                const width = needsResize ? request.size!.width : bitmap.width;
+                const height = needsResize ? request.size!.height : bitmap.height;
+                const newDim = toAssociativeArray({ width, height });
+                const newBmp = new RoBitmap(newDim);
+                drawBitmapOnBitmap(bitmap, newBmp, request.scaleMode);
+                newBmp.drawable = request.drawable || needsResize;
+                bitmap = newBmp;
+            }
         }
         request.state = bitmap?.isValid() ? RequestState.Ready : RequestState.Failed;
         return new RoTextureRequestEvent(request, bitmap ?? BrsInvalid.Instance);
@@ -148,6 +156,9 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (data) {
             const bitmap = new RoBitmap(data, uri);
             if (bitmap instanceof RoBitmap && bitmap.isValid()) {
+                // Cached/shared bitmaps are never drawable — a drawable request always gets its own
+                // unique copy, made in `createEvent()`.
+                bitmap.drawable = false;
                 this.textures.set(uri, bitmap);
                 return bitmap;
             }

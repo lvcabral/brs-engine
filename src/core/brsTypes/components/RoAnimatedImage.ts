@@ -214,6 +214,10 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         return this.alphaEnable;
     }
 
+    isDrawable(): boolean {
+        return true;
+    }
+
     makeDirty() {
         this.rgbaRedraw = true;
     }

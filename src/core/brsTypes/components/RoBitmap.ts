@@ -76,6 +76,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     rgbaRedraw: boolean;
     scaleMode: number;
     readonly address: string = nextAddress();
+    /** Whether Clear()/the draw functions may modify this bitmap (see `roTextureRequest.SetDrawable`). */
+    drawable: boolean = true;
 
     constructor(param: BrsType | ArrayBuffer | Buffer, name?: string) {
         super("roBitmap");
@@ -354,6 +356,10 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
     getCanvasAlpha(): boolean {
         return this.alphaEnable;
+    }
+
+    isDrawable(): boolean {
+        return this.drawable;
     }
 
     makeDirty() {
