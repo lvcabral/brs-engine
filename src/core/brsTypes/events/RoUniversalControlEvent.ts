@@ -1,7 +1,19 @@
-import { BrsType, ValueKind, BrsString, BrsBoolean, Int32, Callable, Comparable, isNumberComp } from "..";
+import {
+    BrsType,
+    ValueKind,
+    BrsString,
+    BrsBoolean,
+    Int32,
+    Float,
+    Callable,
+    Comparable,
+    isNumberComp,
+    StdlibArgument,
+} from "..";
 import { BrsEvent } from "./BrsEvent";
 import { Interpreter } from "../../interpreter";
 import { KeyEvent } from "../../common";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoUniversalControlEvent extends BrsEvent implements Comparable {
     private readonly event: KeyEvent;
@@ -10,7 +22,14 @@ export class RoUniversalControlEvent extends BrsEvent implements Comparable {
         this.event = keyEvent;
 
         this.registerMethods({
-            ifUniversalControlEvent: [this.getKey, this.getRemoteID, this.getID, this.isPress, this.getChar],
+            ifUniversalControlEvent: [
+                this.getKey,
+                this.getRemoteID,
+                this.getID,
+                this.isPress,
+                this.getChar,
+                this.getFloatValue,
+            ],
             ifInt: [this.getInt],
         });
     }
@@ -121,6 +140,25 @@ export class RoUniversalControlEvent extends BrsEvent implements Comparable {
         },
         impl: (_: Interpreter) => {
             return BrsBoolean.from(this.event.mod < 100);
+        },
+    });
+
+    /**
+     * [brs-engine extension - no equivalent on real Roku hardware] Returns the live analog value
+     * for `axis` (see AnalogAxis in src/core/common.ts: 0=LeftX, 1=LeftY, 2=RightX, 3=RightY,
+     * 4=LeftTrigger, 5=RightTrigger), in the range [-1,1] for sticks or [0,1] for triggers. Only
+     * populated when the app manifest sets `multi_controllers=1` and this event's remote is a
+     * tracked Bluetooth gamepad; otherwise falls back to 1.0/0.0 based on IsPress(), matching
+     * Roku's digital-only semantics for discrete buttons/DPad.
+     */
+    private readonly getFloatValue = new Callable("getvalue", {
+        signature: {
+            args: [new StdlibArgument("axis", ValueKind.Int32)],
+            returns: ValueKind.Float,
+        },
+        impl: (_: Interpreter, axis: Int32) => {
+            const analog = BrsDevice.getAnalogValue(this.event.remote, axis.getValue());
+            return new Float(analog ?? (this.event.mod < 100 ? 1 : 0));
         },
     });
 }

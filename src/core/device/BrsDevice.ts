@@ -6,6 +6,8 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import {
+    AnalogAxesPerController,
+    analogSlotBase,
     DataBufferIndex,
     DataType,
     DebugCommand,
@@ -56,6 +58,8 @@ export class BrsDevice {
     static displayEnabled: boolean = true;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
+    static multiControllers: boolean = false; // Reset every app run in setManifest(); off = no behavior change
+    static readonly perRemoteState: Map<string, { key: number; mod: number }> = new Map();
     static lastRemote: number = 0;
     static lastKey: number = -1;
     static lastMod: number = -1;
@@ -520,6 +524,7 @@ export class BrsDevice {
         this.keysBuffer.length = 0;
         this.lastKey = -1;
         this.lastMod = -1;
+        this.perRemoteState.clear();
     }
 
     /**
@@ -533,19 +538,35 @@ export class BrsDevice {
             const key = Atomics.load(this.sharedArray, DataType.KEY + idx);
             if (key === -1) {
                 break;
-            } else if (this.keysBuffer.length === 0 || key !== this.keysBuffer.at(-1)?.key) {
-                const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
-                const remoteType = Math.trunc(remoteId / 10) * 10;
-                const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
-                const remoteIdx = remoteId - remoteType;
-                const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
+            }
+            const remoteId = Atomics.load(this.sharedArray, DataType.RID + idx);
+            const remoteType = Math.trunc(remoteId / 10) * 10;
+            const remoteStr = RemoteType[remoteType] ?? RemoteType[RemoteType.SIM];
+            const remoteIdx = remoteId - remoteType;
+            const remote = `${remoteStr}:${remoteIdx}`;
+            const mod = Atomics.load(this.sharedArray, DataType.MOD + idx);
+            const last = this.keysBuffer.at(-1);
+            const isDuplicate = this.multiControllers
+                ? last?.key === key && last?.remote === remote
+                : key === last?.key;
+            // Legacy behavior (flag off) only cleared the slot when the event was accepted,
+            // leaking a stuck slot on a dedup drop (fixed here for the multi-controller path).
+            if (this.multiControllers || !isDuplicate) {
                 Atomics.store(this.sharedArray, DataType.KEY + idx, -1);
-                this.keysBuffer.push({ remote: `${remoteStr}:${remoteIdx}`, key: key, mod: mod });
+            }
+            if (!isDuplicate) {
+                this.keysBuffer.push({ remote, key, mod });
                 this.lastRemote = remoteIdx;
             }
         }
         const nextKey = this.keysBuffer.shift();
-        if (!nextKey || nextKey.key === this.lastKey) {
+        if (!nextKey) {
+            return;
+        }
+        if (this.multiControllers) {
+            return this.updateKeysBufferPerRemote(nextKey);
+        }
+        if (nextKey.key === this.lastKey) {
             return;
         }
         if (this.singleKeyEvents) {
@@ -564,6 +585,58 @@ export class BrsDevice {
         this.lastKey = nextKey.key;
         this.lastMod = nextKey.mod;
         return nextKey;
+    }
+
+    /**
+     * Per-remote counterpart of the single-key debounce logic above, used only when
+     * `multiControllers` is enabled. Each remote gets its own `{key, mod}` state, so a press on
+     * one controller no longer forces a synthetic release of another controller's held key.
+     */
+    private static updateKeysBufferPerRemote(nextKey: KeyEvent): KeyEvent | undefined {
+        const state = this.perRemoteState.get(nextKey.remote) ?? { key: -1, mod: -1 };
+        if (nextKey.key === state.key) {
+            return;
+        }
+        if (this.singleKeyEvents) {
+            if (nextKey.mod === 0) {
+                if (state.mod === 0) {
+                    this.keysBuffer.unshift({ ...nextKey });
+                    nextKey = { ...nextKey, key: state.key + 100, mod: 100 };
+                }
+            } else if (nextKey.key !== state.key + 100) {
+                return;
+            }
+        }
+        this.lastKeyTime = this.currKeyTime;
+        this.currKeyTime = Date.now();
+        state.key = nextKey.key;
+        state.mod = nextKey.mod;
+        this.perRemoteState.set(nextKey.remote, state);
+        return nextKey;
+    }
+
+    /**
+     * Live analog axis read for the brs-engine `roUniversalControlEvent.GetValue()` extension.
+     * Returns `undefined` when `multiControllers` is off, the remote isn't a tracked gamepad, the
+     * axis index is out of range, or no analog data has been polled yet for that slot (the shared
+     * array's "no data" sentinel, -1, is indistinguishable from a real reading otherwise) - callers
+     * should fall back to digital 0/1 semantics in that case.
+     * @param remote Remote id string, e.g. "BT:1" (see KeyEvent.remote)
+     * @param axis Axis index (see AnalogAxis)
+     */
+    static getAnalogValue(remote: string, axis: number): number | undefined {
+        if (!this.multiControllers || axis < 0 || axis >= AnalogAxesPerController) {
+            return undefined;
+        }
+        const [remoteStr, idxStr] = remote.split(":");
+        const remoteType = RemoteType[remoteStr as keyof typeof RemoteType];
+        const remoteIdx = Number(idxStr);
+        const base = analogSlotBase(remoteType, remoteIdx);
+        if (base < 0) {
+            return undefined;
+        }
+        const raw = Atomics.load(this.sharedArray, base + axis);
+        return raw === -1 ? undefined : raw / 1000;
     }
 
     /**

@@ -226,6 +226,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         // Reset custom manifest flags to default
         BrsDevice.singleKeyEvents = true;
         BrsDevice.useCORSProxy = true;
+        BrsDevice.multiControllers = false;
+        BrsDevice.perRemoteState.clear();
         // Load manifest entries
         for (const [key, value] of manifest.entries()) {
             this.manifest.set(key, value);
@@ -234,7 +236,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 BrsDevice.singleKeyEvents = value.trim() !== "1";
             } else if (key.toLowerCase() === "cors_proxy") {
                 BrsDevice.useCORSProxy = value.trim() !== "0";
+            } else if (key.toLowerCase() === "multi_controllers") {
+                BrsDevice.multiControllers = value.trim() === "1";
             }
+        }
+        // Mirror the flag to the shared array so the browser/API thread (a separate JS realm
+        // with no access to BrsDevice statics) can gate gamepad button/axis remapping.
+        if (BrsDevice.sharedArray.length > DataType.GPX) {
+            Atomics.store(BrsDevice.sharedArray, DataType.GPX, BrsDevice.multiControllers ? 1 : 0);
         }
         // Reset sound effects
         BrsDevice.sfx.length = 0;
