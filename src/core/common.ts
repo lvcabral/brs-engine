@@ -754,6 +754,7 @@ export enum DataType {
     RDN, // Rendezvous sequence Number (monotonic id shared by all threads for logRendezvous tracing)
     RDT, // Rendezvous Data Tracking (0/1), ECP `sgrendezvous` track/untrack state
     RDZ, // Rendezvous Logging (0/1), enable/disable logRendezvous console trace
+    GPX, // Multiple Controllers Support (0/1), mirrors the `multi_controllers` manifest flag
     // Key Buffer starts here: KeyBufferSize * KeyArraySpots
     RID, // Remote Id
     KEY, // Key Code
@@ -772,10 +773,20 @@ export const RegistryMaxSize = 64 * 1024;
 export const KeyBufferSize = 5;
 export const KeyArraySpots = 3;
 
+// Analog Controller State - fixed block right after the key buffer, one slice per possible
+// gamepad. Holds continuous stick/trigger values (fixed-point *1000 ints on the wire). This is
+// NOT part of the discrete key-event ring buffer above: it always reflects the *current* live
+// axis position (polled continuously), independent of press/release event flow. Only populated
+// when the `multi_controllers` manifest flag is enabled - see `roUniversalControlEvent.GetValue()`.
+export const MaxControllers = 4;
+export const AnalogAxesPerController = 6; // LeftX, LeftY, RightX, RightY, LeftTrigger, RightTrigger
+export const AnalogBufferIndex = DataType.RID + KeyBufferSize * KeyArraySpots;
+export const AnalogBufferSize = MaxControllers * AnalogAxesPerController;
+
 // Index where the data buffer starts and the size of the data buffer.
-// Derived from the first key slot so the data buffer always begins right after the key buffer,
-// no matter how many status slots are added above it.
-export const DataBufferIndex = DataType.RID + KeyBufferSize * KeyArraySpots;
+// Derived from the analog buffer so the data buffer always begins right after it, no matter how
+// many status/key/analog slots are added above it.
+export const DataBufferIndex = AnalogBufferIndex + AnalogBufferSize;
 export const DataBufferSize = 1024;
 
 // Remote control type
@@ -797,6 +808,30 @@ export interface KeyEvent {
     remote: string; // Remote Id (Remote Type:Remote Index)
     key: number; // Key Code
     mod: number; // Modifier (0 = press, 100 = release)
+}
+
+// brs-engine extension: analog stick/trigger axis indices for `roUniversalControlEvent.GetValue()`.
+// No equivalent on real Roku hardware - see docs/remote-control.md.
+export enum AnalogAxis {
+    LeftX = 0,
+    LeftY = 1,
+    RightX = 2,
+    RightY = 3,
+    LeftTrigger = 4,
+    RightTrigger = 5,
+}
+
+/**
+ * Shared-array base index for a remote's analog state slice, or -1 when not applicable (only
+ * Bluetooth gamepad remotes within `MaxControllers` get one). Shared by the writer
+ * (src/api/control.ts, main thread) and the reader (BrsDevice, worker thread) so both sides
+ * agree on the wire layout.
+ */
+export function analogSlotBase(remoteType: RemoteType, remoteIdx: number): number {
+    if (remoteType !== RemoteType.BT || remoteIdx < 1 || remoteIdx > MaxControllers) {
+        return -1;
+    }
+    return AnalogBufferIndex + (remoteIdx - 1) * AnalogAxesPerController;
 }
 
 // Debug prompt

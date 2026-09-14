@@ -10,24 +10,80 @@ When [running under the CLI](./run-as-cli.md) in a terminal (TTY), the keyboard 
 
 The default mapping of the keyboard and game pads to Roku remote control is described below:
 
-| Keyboard    | Game Pad   | Roku Control | Description                                                           |
-|-------------|------------|--------------|-----------------------------------------------------------------------|
-| Esc or Del  |     1      |    Back      | Return to the previous screen, some apps will close at the main menu. |
-| Home or Shift+Esc|   9   |    Home      | Close the currently loaded app.                                       |
-| Arrow Keys  |Joys & D-Pad|    D-Pad     | Directional controls to navigate on menus and control games.          |
-| Backspace   |   2 or 4  |    Replay    | Instant replay button.                                                |
-| Enter       |     0      |    OK        | Select button.                                                        |
-| Insert or Ctrl+8|   5 or 16   |    Info      | Information/Settings button                                       |
-| PageUp or Cmd+⬅️|     6      |    Rewind    | Reverse scan button.                                              |
-| PageDown or Cmd+➡️|     7      | Fast Forward | Forward scan button.                                            |
-| End         |   3 or 8   |  Play/Pause  | Play/Pause button.                                                    |
-| Ctrl+A      |    10      |     A        | A game button.                                                        |
-| Ctrl+Z      |    11      |     B        | B game button.                                                        |
-| F10         |    17      | Volume Mute  | Button to toggle the simulator audio mute on/off.                     |
-| Letters & digits |  n/a  | Text input   | Any other printable key is sent as a literal `lit_<char>` key, used by keyboard dialogs. |
+| Keyboard           | Game Pad     | Roku Control | Description                                                                              |
+| ------------------ | ------------ | ------------ | ---------------------------------------------------------------------------------------- |
+| Esc or Del         | 1            | Back         | Return to the previous screen, some apps will close at the main menu.                    |
+| Home or Shift+Esc  | 9            | Home         | Close the currently loaded app.                                                          |
+| Arrow Keys         | Joys & D-Pad | D-Pad        | Directional controls to navigate on menus and control games.                             |
+| Backspace          | 2 or 4       | Replay       | Instant replay button.                                                                   |
+| Enter              | 0            | OK           | Select button.                                                                           |
+| Insert or Ctrl+8   | 5 or 16      | Info         | Information/Settings button                                                              |
+| PageUp or Cmd+⬅️   | 6            | Rewind       | Reverse scan button.                                                                     |
+| PageDown or Cmd+➡️ | 7            | Fast Forward | Forward scan button.                                                                     |
+| End                | 3 or 8       | Play/Pause   | Play/Pause button.                                                                       |
+| Ctrl+A             | 10           | A            | A game button.                                                                           |
+| Ctrl+Z             | 11           | B            | B game button.                                                                           |
+| F10                | 17           | Volume Mute  | Button to toggle the simulator audio mute on/off.                                        |
+| Letters & digits   | n/a          | Text input   | Any other printable key is sent as a literal `lit_<char>` key, used by keyboard dialogs. |
 
 **Note:** There are mappings not listed above, specific for MacOS or Windows, please look at the file [`src/api/control.ts`](../src/api/control.ts) for details.
 
 <p align="center">
 <img src="./images/remote-mapping.png"/>
 </p>
+
+## Multiple Controllers Support
+
+With the [`multi_controllers=1` manifest entry](./customization.md#multiple-controllers-support) enabled, connected game pads get an expanded digital button map beyond the table above:
+
+| Game Pad Button | Roku Control | Description                           |
+| --------------- | ------------ | ------------------------------------- |
+| X               | X            | Face button, sent as key code 24.     |
+| Y               | Y            | Face button, sent as key code 25.     |
+| L1              | L1           | Left shoulder button, key code 26.    |
+| R1              | R1           | Right shoulder button, key code 27.   |
+| L2              | L2           | Left trigger (digital), key code 28.  |
+| R2              | R2           | Right trigger (digital), key code 29. |
+
+The right analog stick is **not** aliased to the D-pad in this mode (unlike the default mapping, where both sticks send the same directional keys) — it is only available through the analog extension below. Use `setCustomExtendedPadButtons()` (see the [engine API documentation](engine-api.md)) to remap any of these buttons.
+
+### Analog Controller Values (brs-engine extension)
+
+> [!IMPORTANT]
+>
+> `GetValue()` on `roUniversalControlEvent` has **no equivalent on real Roku hardware** — `roUniversalControlEvent` is a digital-only interface on an actual device. This is a brs-engine-only extension for simulating analog game controllers, only populated when `multi_controllers=1` is set in the app manifest.
+
+Since `GetValue()` doesn't exist on older brs-engine versions (or on a real Roku device), calling it
+unconditionally can throw on a runtime that predates it. `roRemoteInfo.hasFeature()` carries a
+matching capability flag, `"multi_controllers"`, that's `true` whenever this method is available on
+the running engine — independent of whether the app's own manifest currently sets
+`multi_controllers=1`. Apps that call `GetValue()` should check it first and fall back to digital
+input (`IsPress()`) when it's `false`:
+
+```brightscript
+ri = CreateObject("roRemoteInfo")
+hasAnalogSupport = ri.HasFeature("multi_controllers", 0)
+' ...
+if hasAnalogSupport
+    value = event.GetValue(axis)
+end if
+```
+
+When `multi_controllers=1` is enabled, `roUniversalControlEvent` gains an additional method:
+
+```brightscript
+value = event.GetValue(axis) ' axis: Integer, returns: Float
+```
+
+`axis` selects which analog input to read:
+
+| Axis | Constant     | Range   | Description                |
+| ---- | ------------ | ------- | -------------------------- |
+| 0    | LeftX        | -1 to 1 | Left stick, horizontal     |
+| 1    | LeftY        | -1 to 1 | Left stick, vertical       |
+| 2    | RightX       | -1 to 1 | Right stick, horizontal    |
+| 3    | RightY       | -1 to 1 | Right stick, vertical      |
+| 4    | LeftTrigger  | 0 to 1  | L2 analog trigger pressure |
+| 5    | RightTrigger | 0 to 1  | R2 analog trigger pressure |
+
+For an event generated by a digital button or the D-pad (or when `multi_controllers` is off, or the event's remote isn't a tracked game pad), `GetValue()` falls back to `1.0` on a press and `0.0` on a release, matching `IsPress()` — so apps can call `GetValue()` unconditionally without special-casing digital events.

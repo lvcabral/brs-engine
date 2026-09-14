@@ -35,6 +35,12 @@ const rokuKeys: Map<string, number> = new Map([
     ["b", 18],
     ["playonly", 22],
     ["stop", 23],
+    ["x", 24],
+    ["y", 25],
+    ["l1", 26],
+    ["r1", 27],
+    ["l2", 28],
+    ["r2", 29],
     ["channelup", 1114134],
     ["channeldown", 1114135],
     ["red", 1114226],
@@ -170,11 +176,14 @@ function getNext() {
             return next;
         }
     }
-    // buffer full
+    // buffer full - shift RID/KEY/MOD together so a shifted key never ends up paired with a
+    // stale remote id or modifier from a different slot (they must stay in sync per event).
     for (let i = 1; i < KeyBufferSize; i++) {
         const prev = (i - 1) * KeyArraySpots;
         const next = i * KeyArraySpots;
+        Atomics.store(sharedArray, DataType.RID + prev, Atomics.load(sharedArray, DataType.RID + next));
         Atomics.store(sharedArray, DataType.KEY + prev, Atomics.load(sharedArray, DataType.KEY + next));
+        Atomics.store(sharedArray, DataType.MOD + prev, Atomics.load(sharedArray, DataType.MOD + next));
     }
     return (KeyBufferSize - 1) * KeyArraySpots;
 }
