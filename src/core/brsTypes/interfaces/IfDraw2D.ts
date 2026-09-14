@@ -170,7 +170,7 @@ export class IfDraw2D {
             // Pivot is rect.x/y as-is, NOT + rotationCenterX/Y: rect.x/y already bakes in
             // scaleRotateCenter's position compensation via Group.getTranslation(), so adding the
             // center again here would double-count it (see Group.applyScale for the derivation).
-            this.composeScalePivot(ctx, baseX + rect.x, baseY + rect.y, scaleX, scaleY);
+            composeScalePivot(ctx, baseX + rect.x, baseY + rect.y, scaleX, scaleY);
         }
         if (rotation === 0) {
             ctx.translate(baseX + rect.x, baseY + rect.y);
@@ -533,20 +533,8 @@ export class IfDraw2D {
         }
         const ctx = this.component.getContext();
         ctx.save();
-        this.composeScalePivot(ctx, this.component.x + pivotX, this.component.y + pivotY, scaleX, scaleY);
+        composeScalePivot(ctx, this.component.x + pivotX, this.component.y + pivotY, scaleX, scaleY);
         return true;
-    }
-
-    /**
-     * Composes `translate(pivot) -> scale -> translate(-pivot)` onto the canvas's CURRENT
-     * transform. Caller owns `ctx.save()`/`ctx.restore()` — shared by `doDrawRotatedRect` (which
-     * composes onto its own already-open save, alongside rotation) and `pushScale` (which opens
-     * its own save for text drawing, since `doDrawRotatedText` never takes a scale param).
-     */
-    private composeScalePivot(ctx: BrsCanvasContext2D, pivotX: number, pivotY: number, scaleX: number, scaleY: number) {
-        ctx.translate(pivotX, pivotY);
-        ctx.scale(scaleX, scaleY);
-        ctx.translate(-pivotX, -pivotY);
     }
 
     /** Pairs with a `pushScale()` call that returned true. */
@@ -1028,6 +1016,19 @@ function setContextGlobalAlpha(ctx: BrsCanvasContext2D, alpha: number): boolean 
     return false;
 }
 
+/**
+ * Composes `translate(pivot) -> scale -> translate(-pivot)` onto the canvas's CURRENT transform.
+ * Caller owns `ctx.save()`/`ctx.restore()` — shared by `IfDraw2D.composeRotatedScale` (which
+ * composes onto its own already-open save, alongside rotation), `IfDraw2D.pushScale` (which opens
+ * its own save for text drawing, since `doDrawRotatedText` never takes a scale param), and
+ * `drawChunk` (mirroring a blit around its destination origin at scale -1 for a negative dw/dh).
+ */
+function composeScalePivot(ctx: BrsCanvasContext2D, pivotX: number, pivotY: number, scaleX: number, scaleY: number) {
+    ctx.translate(pivotX, pivotY);
+    ctx.scale(scaleX, scaleY);
+    ctx.translate(-pivotX, -pivotY);
+}
+
 /** Applies the object's `scaleMode` (1 = smooth) to the context's image smoothing settings. */
 function applyScaleModeSmoothing(ctx: BrsCanvasContext2D, scaleMode: number) {
     const smoothing = scaleMode === 1;
@@ -1271,9 +1272,11 @@ export function drawObjectToComponent(
 
         const chunks = getDrawChunks(destOffset, allowWrap, object, x, y, scaleX, scaleY);
         for (const chunk of chunks) {
-            const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
             if (!alphaEnable) {
-                ctx.clearRect(dx, dy, sw * scaleX, sh * scaleY);
+                // Use the chunk's own (already-signed) dw/dh, not sw/sh * scaleX/scaleY: a wrap
+                // sub-chunk's sw/sh (eg. missingHorizontal) aren't the same value its dw/dh are
+                // derived from, so re-multiplying by the outer scale would clear the wrong rect.
+                ctx.clearRect(chunk.dx, chunk.dy, chunk.dw, chunk.dh);
             }
             drawChunk(ctx, image, chunk);
         }
@@ -1475,27 +1478,33 @@ function drawChunk(ctx: BrsCanvasContext2D, image: BrsCanvas, chunk: DrawChunk) 
         return;
     }
     const { sx, sy, sw, sh, dx, dy, dw, dh } = chunk;
-    // A negative scaleX/scaleY (eg. DrawScaledObject mirroring per the Roku docs)
-    // needs a manual flip via a transform, drawing with the equivalent positive width/height.
+    // A negative scaleX/scaleY (eg. DrawScaledObject mirroring per the Roku docs) needs a manual
+    // flip: mirror around the (dx, dy) pivot via the shared scale-pivot bracket, then draw with
+    // the equivalent positive width/height (dx/dy stay as-is - only the pivot mirroring flips it).
     const flipX = dw < 0;
     const flipY = dh < 0;
+    const w = flipX ? -dw : dw;
+    const h = flipY ? -dh : dh;
     if (flipX || flipY) {
         ctx.save();
-        ctx.translate(dx, dy);
-        ctx.scale(flipX ? -1 : 1, flipY ? -1 : 1);
     }
-    const [ddx, ddy, ddw, ddh] = flipX || flipY ? [0, 0, Math.abs(dw), Math.abs(dh)] : [dx, dy, dw, dh];
-    /// #if BROWSER
-    if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
-        ctx.drawImage(image, sx, sy, sw, sh, ddx, ddy, ddw, ddh);
-    }
-    /// #else
-    if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
-        ctx.drawImage(image, sx, sy, sw, sh, ddx, ddy, ddw, ddh);
-    }
-    /// #endif
-    if (flipX || flipY) {
-        ctx.restore();
+    try {
+        if (flipX || flipY) {
+            composeScalePivot(ctx, dx, dy, flipX ? -1 : 1, flipY ? -1 : 1);
+        }
+        /// #if BROWSER
+        if (ctx instanceof OffscreenCanvasRenderingContext2D && image instanceof OffscreenCanvas) {
+            ctx.drawImage(image, sx, sy, sw, sh, dx, dy, w, h);
+        }
+        /// #else
+        if (ctx instanceof CanvasRenderingContext2D && image instanceof Canvas) {
+            ctx.drawImage(image, sx, sy, sw, sh, dx, dy, w, h);
+        }
+        /// #endif
+    } finally {
+        if (flipX || flipY) {
+            ctx.restore();
+        }
     }
 }
 
