@@ -34,6 +34,15 @@ The default mapping of the keyboard and game pads to Roku remote control is desc
 
 ## Multiple Controllers Support
 
+> [!WARNING]
+>
+> **Experimental — simulator only.** Multiple-controller support (the `multi_controllers=1` manifest
+> entry, the expanded button map, and the `GetValue()` analog extension below) exists only in
+> `brs-engine`'s simulated remote control; it has no equivalent on real Roku hardware. This API is
+> still evolving and **may change in future engine versions** without following normal deprecation
+> timelines — avoid depending on it for anything beyond development/testing convenience, and expect
+> to revisit call sites that use it as the feature matures.
+
 With the [`multi_controllers=1` manifest entry](./customization.md#multiple-controllers-support) enabled, connected game pads get an expanded digital button map beyond the table above:
 
 | Game Pad Button | Roku Control | Description                           |
