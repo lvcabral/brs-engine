@@ -29,7 +29,7 @@ export class Animation extends AnimationBase {
         { name: "easeFunction", type: "string", value: "outCubic" },
         { name: "easeInPercent", type: "float", value: "0.5" },
         { name: "easeOutPercent", type: "float", value: "0.5" },
-        { name: "optional", type: "boolean", value: "false" },
+        { name: "optional", type: "boolean", value: "false" }, // deprecated in Roku OS 16.0
         { name: "willBeSkipped", type: "boolean", value: "false", system: true },
     ];
 

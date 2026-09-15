@@ -21,7 +21,7 @@ export class RoHttpAgent extends BrsComponent implements BrsValue, BrsHttpAgent 
             ifHttpAgent: [
                 this.ifHttpAgent.addHeader,
                 this.ifHttpAgent.setHeaders,
-                this.ifHttpAgent.initClientCertificates,
+                this.ifHttpAgent.initClientCertificates, // Deprecated in Roku OS 16.0
                 this.ifHttpAgent.setCertificatesFile,
                 this.ifHttpAgent.setCertificatesDepth,
                 this.ifHttpAgent.enableCookies,

@@ -263,6 +263,70 @@ describe("preprocessor", () => {
             expect(elseChunk.accept).not.toHaveBeenCalled();
         });
 
+        describe("undefined identifiers default to false (Roku OS 16.0)", () => {
+            it("treats an undefined #if identifier as false instead of throwing", () => {
+                expect(() =>
+                    new Preprocessor().filter([
+                        new Chunk.If(
+                            identifier("neverDefined"),
+                            false, // not negated
+                            [ifChunk],
+                            [] // no else-if chunks
+                            // NOTE: no 'else' chunk!
+                        ),
+                    ])
+                ).not.toThrow();
+
+                expect(ifChunk.accept).not.toHaveBeenCalled();
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).not.toHaveBeenCalled();
+            });
+
+            it("falls through to #else when the #if identifier is undefined", () => {
+                new Preprocessor().filter([
+                    new Chunk.If(
+                        identifier("neverDefined"),
+                        false, // not negated
+                        [ifChunk],
+                        [], // no else-if chunks
+                        [elseChunk]
+                    ),
+                ]);
+
+                expect(ifChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).toHaveBeenCalledTimes(1);
+            });
+
+            it("treats an undefined #elseif identifier as false", () => {
+                new Preprocessor().filter([
+                    new Chunk.If(
+                        token(Lexeme.False, "false", BrsBoolean.False),
+                        false, // not negated
+                        [ifChunk],
+                        [{ condition: identifier("neverDefined"), isNegated: false, thenChunks: [elseIfChunk] }],
+                        [elseChunk]
+                    ),
+                ]);
+
+                expect(ifChunk.accept).not.toHaveBeenCalled();
+                expect(elseIfChunk.accept).not.toHaveBeenCalled();
+                expect(elseChunk.accept).toHaveBeenCalledTimes(1);
+            });
+
+            it("negates an undefined identifier with 'not' to true", () => {
+                new Preprocessor().filter([
+                    new Chunk.If(
+                        identifier("neverDefined"),
+                        true, // negated
+                        [ifChunk],
+                        [] // no else-if chunks
+                    ),
+                ]);
+
+                expect(ifChunk.accept).toHaveBeenCalledTimes(1);
+            });
+        });
+
         describe("case-insensitive lookups", () => {
             it("matches #if with different case than #const declaration (lowercase)", () => {
                 new Preprocessor().filter([

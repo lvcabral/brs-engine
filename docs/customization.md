@@ -82,7 +82,7 @@ There is also a way BrightScript apps can change the behavior of the simulation 
 
 -   `multi_key_events=1`: If this flag is defined, will inform the simulator to handle multiple key events in parallel, instead of the default Roku behavior, that is handling one key at a time.
 -   `cors_proxy=0`: If this flag is defined with `zero`, the engine will disable the `corsProxy` URL for the app, if configured in the `DeviceInfo` object.
--   `multi_controllers=1`: If this flag is defined, enables full support for multiple simultaneous game controllers, an expanded button map (X/Y, L1/R1/L2/R2, independent right stick), and the `GetValue()` analog extension on `roUniversalControlEvent`. See [Multiple Controllers Support](#multiple-controllers-support) below.
+-   `multi_controllers=1` **(experimental, simulator only)**: If this flag is defined, enables full support for multiple simultaneous game controllers, an expanded button map (X/Y, L1/R1/L2/R2, independent right stick), and the `GetValue()` analog extension on `roUniversalControlEvent`. This is a `brs-engine`-only capability with no real-Roku equivalent, and its API may change in future engine versions. See [Multiple Controllers Support](#multiple-controllers-support) below.
 
 **Note:** these special `manifest` entries are ignored by Roku Devices.
 
@@ -120,6 +120,14 @@ This way, the app can receive multiple key events when the `Shift` key is held d
 Notice that I used the `ShiftLeft` code to map the `playonly` key, as `playonly` is not mapped by default and could be used as an additional button in games. When `ShiftLeft` is pressed alone, the app can detect and handle it, as in case of the "Prince of Persia" game, it makes the character to `hang` from a ledge or `pick` an item. To see how this is implemented in the game check the source code in the repository: <https://github.com/lvcabral/Prince-of-Persia-Roku>.
 
 ### Multiple Controllers Support
+
+> [!WARNING]
+>
+> **Experimental — simulator only.** This feature (and its API: the `multi_controllers=1` manifest
+> entry, the expanded button map, `setCustomExtendedPadButtons()`, and `GetValue()` on
+> `roUniversalControlEvent`) exists only in `brs-engine`'s simulated remote control and has no
+> equivalent on real Roku hardware. It may change in future engine versions without following normal
+> deprecation timelines.
 
 By default, all connected game pads share a single 5-slot key buffer and a single "one key at a time" debounce state, matching a single-remote Roku device — this can cause simultaneous input from more than one controller to clobber or delay each other's events, and the digital button map only covers a Roku remote's vocabulary (no X/Y face buttons, no L1/L2/R1/R2, and the right stick aliases the same D-pad keys as the left stick). Adding the `multi_controllers=1` entry to your app `manifest` file enables:
 

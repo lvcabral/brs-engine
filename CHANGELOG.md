@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.6.0"></a>
+
+## [v2.6.0 - Effect Node, roWebSocket and Draw2D Updates](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.0) - 14 September 2026
+
+This release adds substantial Roku OS 16.0 feature coverage across the core engine and the SceneGraph extension. The new **`Effect`** node brings rounded corners, borders, and linear/radial gradients to `Rectangle` and `Poster` (approximated via Canvas2D, since the engine has no real GPU/shader pipeline), paired with a new **`FloatArrayFieldInterpolator`** node for animating its array-valued fields and a public `ArrayGrid.focusFeedbackPoster` field for customizing a grid's focus indicator. The core engine gains a new **`roWebSocket`** component with full Node.js and browser support — unlike the raw-socket components, it performs real WebSocket network I/O on both platforms — and `ifDraw2D.Clear()` now returns a `Boolean` like `DrawLine()`/`DrawPoint()`/`DrawRect()` already did, with a new `roTextureRequest.SetDrawable()` controlling whether a texture-manager bitmap can be drawn onto directly. An undefined conditional-compilation name in `#if`/`#elseif` now evaluates to `false` instead of raising a compile error, matching Roku OS 16.0's relaxed rule. The remote-control simulation also gains **experimental** multi-controller support (`multi_controllers=1`), an expanded game pad button map, and an analog `GetValue()` extension on `roUniversalControlEvent` — simulator-only capabilities with no real-Roku equivalent, whose API may still change in a future release. Also fixed: `DrawScaledObject()` not mirroring the image for a negative `scaleX`/`scaleY`, a SceneGraph focus re-grab being dropped when the competing focus lived in a still-detached subtree, and `DynamicKeyGrid` not rendering a Key Definition File's own `icon`/`focusIcon` bitmaps. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Added `roWebSocket` component (Roku OS 16.0) with full Node.js and browser support by [@lvcabral](https://github.com/lvcabral) in [#1234](https://github.com/lvcabral/brs-engine/pull/1234)
+* (draw2d) Fixed `DrawScaledObject()` not mirroring the image for a negative `scaleX`/`scaleY` by [@lvcabral](https://github.com/lvcabral) in [#1235](https://github.com/lvcabral/brs-engine/pull/1235)
+* (draw2d) `ifDraw2D.Clear()` now returns `Boolean` and added `roTextureRequest.SetDrawable()` (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1236](https://github.com/lvcabral/brs-engine/pull/1236)
+* (brs) An undefined `#if`/`#elseif` conditional-compilation name now evaluates to `false` instead of raising a compile error (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1237](https://github.com/lvcabral/brs-engine/pull/1237)
+* (brs) Added **experimental** support for multiple simultaneous game controllers and an analog `GetValue()` extension on `roUniversalControlEvent` — simulator only, no real-Roku equivalent, API may change by [@lvcabral](https://github.com/lvcabral) in [#1226](https://github.com/lvcabral/brs-engine/pull/1226)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.6.0)
+
+* (rsg) Added new `Effect` node for rounded corners, borders and gradients (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1230](https://github.com/lvcabral/brs-engine/pull/1230)
+* (rsg) Added `ArrayGrid.focusFeedbackPoster` field for customizing the focus indicator (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1231](https://github.com/lvcabral/brs-engine/pull/1231)
+* (rsg) Added new `FloatArrayFieldInterpolator` node (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1232](https://github.com/lvcabral/brs-engine/pull/1232)
+* (rsg) Fixed a focus re-grab being dropped when the competing focus lived in a still-detached subtree by [@lvcabral](https://github.com/lvcabral) in [#1227](https://github.com/lvcabral/brs-engine/pull/1227)
+* (rsg) Fixed `DynamicKeyGrid` to render a Key Definition File's own `icon`/`focusIcon` bitmaps instead of a hardcoded lookup by [@lvcabral](https://github.com/lvcabral) in [#1228](https://github.com/lvcabral/brs-engine/pull/1228)
+
+[Full Changelog][v2.6.0]
+
 <a name="v2.5.4"></a>
 
 ## [v2.5.4 - SceneGraph Task Rendezvous Fixes](https://github.com/lvcabral/brs-engine/releases/tag/v2.5.4) - 08 September 2026
@@ -1884,6 +1910,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.6.0]: https://github.com/lvcabral/brs-engine/compare/v2.5.4...v2.6.0
 [v2.5.4]: https://github.com/lvcabral/brs-engine/compare/v2.5.3...v2.5.4
 [v2.5.3]: https://github.com/lvcabral/brs-engine/compare/v2.5.2...v2.5.3
 [v2.5.2]: https://github.com/lvcabral/brs-engine/compare/v2.5.1...v2.5.2

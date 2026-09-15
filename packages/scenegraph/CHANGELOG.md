@@ -2,6 +2,22 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.6.0"></a>
+
+## [v0.6.0 (beta) - Effect Node and Focus/DynamicKeyGrid Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.0) - 14 September 2026
+
+This release adds the Roku OS 16.0 **`Effect`** node (rounded corners, borders, and linear/radial gradients on `Rectangle` and `Poster`), a new **`FloatArrayFieldInterpolator`** node for animating its array-valued fields, and a public `ArrayGrid.focusFeedbackPoster` field for customizing a grid's focus indicator. Also fixed: a focus re-grab being dropped when the competing focus lived in a still-detached subtree (e.g. a dialog focusing its own button before being attached to the scene), and `DynamicKeyGrid` not rendering a Key Definition File's own `icon`/`focusIcon` bitmaps. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Added new `Effect` node for rounded corners, borders and gradients (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1230](https://github.com/lvcabral/brs-engine/pull/1230)
+* (rsg) Added `ArrayGrid.focusFeedbackPoster` field for customizing the focus indicator (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1231](https://github.com/lvcabral/brs-engine/pull/1231)
+* (rsg) Added new `FloatArrayFieldInterpolator` node (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1232](https://github.com/lvcabral/brs-engine/pull/1232)
+* (rsg) Fixed a focus re-grab being dropped when the competing focus lived in a still-detached subtree by [@lvcabral](https://github.com/lvcabral) in [#1227](https://github.com/lvcabral/brs-engine/pull/1227)
+* (rsg) Fixed `DynamicKeyGrid` to render a Key Definition File's own `icon`/`focusIcon` bitmaps instead of a hardcoded lookup by [@lvcabral](https://github.com/lvcabral) in [#1228](https://github.com/lvcabral/brs-engine/pull/1228)
+
+[Full Changelog][v0.6.0]
+
 <a name="v0.5.4"></a>
 
 ## [v0.5.4 (beta) - Task Rendezvous Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.5.4) - 08 September 2026
@@ -428,6 +444,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.6.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.4...brs-sg-v0.6.0
 [v0.5.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.3...brs-sg-v0.5.4
 [v0.5.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.2...brs-sg-v0.5.3
 [v0.5.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.1...brs-sg-v0.5.2

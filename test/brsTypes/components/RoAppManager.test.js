@@ -40,7 +40,14 @@ describe("RoAppManager", () => {
             expect(getUpTime).toBeTruthy();
             expect(totalMilliseconds).toBeTruthy();
             expect(upTime).toBeTruthy();
-            expect(upTime.call(interpreter)).toEqual(totalMilliseconds.call(interpreter));
+            // `upTime` and `ts` are marked independently, a fraction of a millisecond apart, via the
+            // real (un-faked) `performance.now()` clock — comparing their elapsed milliseconds for
+            // bit-exact equality is flaky across an integer-ms rounding boundary (observed in CI as
+            // an occasional off-by-one). A tolerance of 1ms still fails hard if `getUpTime()` ever
+            // regresses to reading the faked `Date` clock instead, which would read wildly different.
+            const upTimeMs = upTime.call(interpreter).getValue();
+            const totalMs = totalMilliseconds.call(interpreter).getValue();
+            expect(Math.abs(upTimeMs - totalMs)).toBeLessThanOrEqual(1);
         });
 
         it("returns a non-negative elapsed time, not a clamped Int32.MIN_VALUE", () => {
