@@ -19,7 +19,9 @@ like harmless simplifications.
 `docs/` (repo-level, user-facing) is the source of truth for usage: `build-from-source.md`,
 `integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`,
 `extensions.md`, `scenegraph-rendezvous.md`, `scenegraph-layout-passes.md`, `remote-control.md`,
-`limitations.md`, `contributing.md`.
+`limitations.md`, `contributing.md`. `scenegraph-render-fields.md` records the Group/Rectangle render
+fields that are declared but not implemented (`childRenderOrder`, `inheritParentTransform`,
+`inheritParentOpacity`, `blendingEnabled`) and what must be measured on hardware before implementing them.
 
 ## Overview
 
