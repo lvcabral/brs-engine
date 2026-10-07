@@ -103,6 +103,7 @@ There are many ways you can use and/or participate in the project, read the docu
 - [How to build from source](docs/build-from-source.md)
 - [How add the Engine to a Web Application](docs/integrating.md)
 - [How to run as a Command Line Interface](docs/run-as-cli.md)
+- [How to run Rooibos unit tests with the CLI](docs/rooibos-testing.md)
 - [How to use the Node.js Library](docs/using-node-library.md)
 - [How to use and build extensions](docs/extensions.md)
 - [How to customize the Engine behavior](docs/customization.md)
