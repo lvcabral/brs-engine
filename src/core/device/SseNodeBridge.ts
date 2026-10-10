@@ -60,7 +60,7 @@ export class SseNodeBridge implements SseTransport {
     }
 
     private helperExited(): boolean {
-        return !this.child || this.child.exitCode !== null || this.child.signalCode !== null;
+        return this.child?.exitCode !== null || this.child.signalCode !== null;
     }
 
     private parseLines(lines: string[]): SseEventPayload[] {
