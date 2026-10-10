@@ -53,6 +53,9 @@ export class ChannelStore extends Node {
      */
     private readonly channelStore: RoChannelStore;
 
+    /** Sequence number reported as `requestid` in each `requestStatus`, starting at 0. */
+    private nextRequestId = 0;
+
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.ChannelStore) {
         super([], name);
         this.setExtendsType(SGNodeType.ChannelStore, SGNodeType.Node);
@@ -78,28 +81,34 @@ export class ChannelStore extends Node {
     }
 
     /**
-     * Runs a command sent through the generic request framework and publishes `requestStatus`,
-     * echoing back the request's `command` and `context`. A missing or unknown command reports
-     * status -4 (Invalid request).
+     * Runs a command sent through the generic request framework and publishes `requestStatus`.
+     *
+     * Shape measured on a device (`test/simulator/probes/roku-customer-id-probe`): every key is
+     * lowercase and always present. The command must match exactly (no case folding or trimming),
+     * and anything else reports status -4 with an empty `result`. `command` echoes the request's
+     * string command, or "" when it is missing or not a string, in which case `context` is not
+     * echoed either.
      * @param request The new value of the `request` field.
      */
     private handleRequest(request: RoAssociativeArray) {
         const command = request.get(new BrsString("command"));
-        const known = ChannelStore.textOf(command).toLowerCase() === "getrokucustomerid";
-        const status = toAssociativeArray(
-            known ? { status: 1, statusMessage: "Success" } : { status: -4, statusMessage: "Invalid request" }
-        );
-        if (known) {
-            status.set(
-                new BrsString("result"),
-                toAssociativeArray({ rokuCustomerId: this.channelStore.getRokuCustomerId() })
-            );
-        }
-        status.set(new BrsString("command"), command);
+        const name = isBrsString(command) ? command.getValue() : "";
+        const known = name === "GetRokuCustomerId";
         const context = request.get(new BrsString("context"));
-        if (!(context instanceof BrsInvalid)) {
-            status.set(new BrsString("context"), context);
-        }
+        const status = new RoAssociativeArray([]);
+        status.set(
+            new BrsString("result"),
+            toAssociativeArray(known ? { rokucustomerid: this.channelStore.getRokuCustomerId() } : {})
+        );
+        status.set(new BrsString("command"), new BrsString(name));
+        status.set(new BrsString("status"), new Int32(known ? 1 : -4));
+        status.set(
+            new BrsString("context"),
+            isBrsString(command) && context instanceof RoAssociativeArray ? context : new RoAssociativeArray([])
+        );
+        status.set(new BrsString("statusmessage"), new BrsString(known ? "Success" : "Invalid request"));
+        status.set(new BrsString("requestid"), new Int32(this.nextRequestId));
+        this.nextRequestId++;
         super.setValue("requestStatus", status);
     }
 

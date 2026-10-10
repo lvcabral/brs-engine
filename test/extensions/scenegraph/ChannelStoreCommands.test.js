@@ -419,47 +419,51 @@ describe("ChannelStore mocked commands", () => {
             }
         });
 
-        test("requestStatus echoes the command exactly as passed", () => {
+        // Shape and matching rules measured on a device (test/simulator/probes/roku-customer-id-probe).
+        test("requestStatus has the device's lowercase keys, in its order, with an incrementing requestid", () => {
             const node = new ChannelStore();
-            node.setValue("request", toAssociativeArray({ command: " GetRokuCustomerId " }));
-            const status = node.getValue("requestStatus");
-            expect(status.get(new BrsString("status")).getValue()).toBe(1);
-            expect(stringOf(status, "command")).toBe(" GetRokuCustomerId ");
-
-            node.setValue("request", toAssociativeArray({ command: 42 }));
-            expect(node.getValue("requestStatus").get(new BrsString("command")).getValue()).toBe(42);
-        });
-
-        test("requestStatus wraps the id in result and echoes the command and context", () => {
-            const node = new ChannelStore();
-            const context = toAssociativeArray({ id: "ctx" });
-            node.setValue(
-                "request",
-                new RoAssociativeArray([
-                    { name: new BrsString("command"), value: new BrsString("getRokuCustomerID") },
-                    { name: new BrsString("context"), value: context },
-                ])
-            );
-            const status = node.getValue("requestStatus");
-            expect(status.get(new BrsString("status")).getValue()).toBe(1);
-            expect(stringOf(status, "statusMessage")).toBe("Success");
-            expect(stringOf(status, "command")).toBe("getRokuCustomerID");
-            expect(stringOf(status.get(new BrsString("context")), "id")).toBe("ctx");
-            expect(stringOf(status.get(new BrsString("result")), "rokuCustomerId")).toBe(
+            node.setValue("request", toAssociativeArray({ command: "GetRokuCustomerId" }));
+            const first = node.getValue("requestStatus");
+            expect(keysOf(first)).toEqual(["result", "command", "status", "context", "statusmessage", "requestid"]);
+            expect(first.get(new BrsString("status")).getValue()).toBe(1);
+            expect(stringOf(first, "statusmessage")).toBe("Success");
+            expect(stringOf(first, "command")).toBe("GetRokuCustomerId");
+            expect(keysOf(first.get(new BrsString("context")))).toEqual([]);
+            expect(stringOf(first.get(new BrsString("result")), "rokucustomerid")).toBe(
                 new RoChannelStore().getRokuCustomerId()
             );
+            expect(first.get(new BrsString("requestid")).getValue()).toBe(0);
+
+            node.setValue("request", toAssociativeArray({ command: "GetRokuCustomerId" }));
+            expect(node.getValue("requestStatus").get(new BrsString("requestid")).getValue()).toBe(1);
         });
 
-        test("an unknown or missing command reports Invalid request with no result", () => {
+        test("echoes the context of a request with a string command", () => {
             const node = new ChannelStore();
-            for (const request of [toAssociativeArray({ command: "NoSuchCommand" }), toAssociativeArray({})]) {
-                node.setValue("request", request);
-                const status = node.getValue("requestStatus");
-                expect(status.get(new BrsString("status")).getValue()).toBe(-4);
-                expect(stringOf(status, "statusMessage")).toBe("Invalid request");
-                expect(isInvalid(status.get(new BrsString("result")))).toBe(true);
-                expect(isInvalid(status.get(new BrsString("context")))).toBe(true);
+            for (const command of ["GetRokuCustomerId", "NoSuchCommand"]) {
+                node.setValue("request", toAssociativeArray({ command: command, context: { id: "ctx", n: 7 } }));
+                const context = node.getValue("requestStatus").get(new BrsString("context"));
+                expect(stringOf(context, "id")).toBe("ctx");
+                expect(context.get(new BrsString("n")).getValue()).toBe(7);
             }
+        });
+
+        test.each([
+            ["a lowercase command", { command: "getrokucustomerid" }, "getrokucustomerid", ["id"]],
+            ["a padded command", { command: " GetRokuCustomerId " }, " GetRokuCustomerId ", ["id"]],
+            ["an unknown command", { command: "NoSuchCommand" }, "NoSuchCommand", ["id"]],
+            // Without a string command the device echoes "" and drops the context.
+            ["a missing command", {}, "", []],
+            ["a non-string command", { command: 42 }, "", []],
+        ])("%s reports Invalid request with an empty result", (_label, fields, echoed, contextKeys) => {
+            const node = new ChannelStore();
+            node.setValue("request", toAssociativeArray({ ...fields, context: { id: "ctx" } }));
+            const status = node.getValue("requestStatus");
+            expect(status.get(new BrsString("status")).getValue()).toBe(-4);
+            expect(stringOf(status, "statusmessage")).toBe("Invalid request");
+            expect(stringOf(status, "command")).toBe(echoed);
+            expect(keysOf(status.get(new BrsString("result")))).toEqual([]);
+            expect(keysOf(status.get(new BrsString("context")))).toEqual(contextKeys);
         });
     });
 });

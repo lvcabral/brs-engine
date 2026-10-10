@@ -224,7 +224,8 @@
     end sub
 
     ' GetRokuCustomerId goes through the generic request framework: `request` in, `requestStatus` out,
-    ' echoing the command and context. It works without fakeServer, and is stable across stores.
+    ' echoing the command and context. It works without fakeServer, and is stable across stores. The
+    ' reply shape (always-present context/result, exact command match, requestid) is device-measured.
     sub runCustomerId()
         print "-- GetRokuCustomerId --"
         m.customerStore = newStore(false)
@@ -234,7 +235,11 @@
         other = newStore(true)
         other.request = { command: "GetRokuCustomerId" }
         print "stable across stores: "; (other.requestStatus.result.rokuCustomerId = m.firstCustomerId)
-        print "context present: "; (other.requestStatus.context <> invalid)
+        print "context without one sent: " + other.requestStatus.context.count().toStr()
+        print "requestid: " + other.requestStatus.requestid.toStr()
+        other.request = { command: "getrokucustomerid" }
+        print "lowercase command: " + other.requestStatus.status.toStr() + " result keys=" + other.requestStatus.result.count().toStr()
+        print "requestid: " + other.requestStatus.requestid.toStr()
         m.customerStore.request = { command: "NoSuchCommand", context: { id: "bad-1" } }
     end sub
 
@@ -246,7 +251,7 @@
             print "rokuCustomerId length: " + len(id).toStr()
             print "rokuCustomerId is hex: "; (CreateObject("roRegex", "^[0-9a-f]{32}$", "").isMatch(id))
         else
-            print "result present: "; (status.result <> invalid)
+            print "result keys: " + status.result.count().toStr()
         end if
     end sub
     ]]></script>
