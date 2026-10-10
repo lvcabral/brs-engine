@@ -17,7 +17,7 @@ like harmless simplifications.
 | [`.claude/docs/cli-terminal-rendering.md`](docs/cli-terminal-rendering.md) | `src/cli/display.ts`, terminal frame output (`-a`/`-u`/`-i`), `--log`, anything printing mid-run |
 
 `docs/` (repo-level, user-facing) is the source of truth for usage: `build-from-source.md`,
-`integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `using-node-library.md`,
+`integrating.md`, `engine-api.md`, `customization.md`, `run-as-cli.md`, `rooibos-testing.md`, `using-node-library.md`,
 `extensions.md`, `scenegraph-rendezvous.md`, `scenegraph-layout-passes.md`, `remote-control.md`,
 `limitations.md`, `contributing.md`.
 
@@ -26,7 +26,7 @@ like harmless simplifications.
 **brs-engine** is a BrightScript Simulation Engine: an interpreter that runs Roku apps (channels) in web
 browsers and Node.js. It simulates the BrightScript runtime, the Draw 2D API (`roScreen`, `roCompositor`,
 `roRegion`, …), the SceneGraph framework, the Roku file system, registry, remote control, and the Micro
-Debugger — targeting compatibility up to Roku OS 15. It is a development/automation tool, **not** a Roku
+Debugger — targeting compatibility up to Roku OS 16. It is a development/automation tool, **not** a Roku
 OS or hardware emulator. Originally forked from [rokucommunity/brs](https://github.com/rokucommunity/brs).
 
 Node.js **v22+** is required to build and run the CLI.

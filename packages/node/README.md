@@ -32,7 +32,7 @@ The **BrightScript Simulation Engine** provides a complete BrightScript interpre
 
 ### ⚙️ BrightScript Interpreter
 
-- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.3
+- Full BrightScript language interpreter, with specs aligned up to Roku OS 16.0
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
 - **SceneGraph Framework** - Beta support for the Roku SceneGraph components (see section below)
 - **Video Playback** - Via `roVideoPlayer` and `Video` node
@@ -103,6 +103,7 @@ Learn how to use the package and its libraries by reading the documents below:
 
 - [How to use the Node.js Library](https://github.com/lvcabral/brs-engine/blob/master/docs/using-node-library.md)
 - [How to run as a Command Line Interface](https://github.com/lvcabral/brs-engine/blob/master/docs/run-as-cli.md)
+- [How to run Rooibos unit tests with the CLI](https://github.com/lvcabral/brs-engine/blob/master/docs/rooibos-testing.md)
 - [How to customize the Engine behavior](https://github.com/lvcabral/brs-engine/blob/master/docs/customization.md)
 - [Remote Control Simulation](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md)
 - [How to build from source](https://github.com/lvcabral/brs-engine/blob/master/docs/build-from-source.md)

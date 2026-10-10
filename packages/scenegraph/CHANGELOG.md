@@ -2,6 +2,18 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.6.1"></a>
+
+## [v0.6.1 (beta) - ChannelStore Roku Customer ID](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.1) - 10 October 2026
+
+This release adds the Roku OS 16.0 **`GetRokuCustomerId`** command to the `ChannelStore` node, sent through its generic request framework (`request`/`requestStatus` fields). It returns the `customerId` configured in the engine's device information and works regardless of the `fakeServer` setting. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Added the `GetRokuCustomerId` command to the `ChannelStore` node (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1242](https://github.com/lvcabral/brs-engine/pull/1242)
+
+[Full Changelog][v0.6.1]
+
 <a name="v0.6.0"></a>
 
 ## [v0.6.0 (beta) - Effect Node and Focus/DynamicKeyGrid Fixes](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.0) - 14 September 2026
@@ -444,6 +456,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.6.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.0...brs-sg-v0.6.1
 [v0.6.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.4...brs-sg-v0.6.0
 [v0.5.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.3...brs-sg-v0.5.4
 [v0.5.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.2...brs-sg-v0.5.3

@@ -24,7 +24,7 @@ You have two options to install the CLI application:
 When running on an interactive terminal, the CLI checks the npm registry (at most once a day, in background) for a newer release of `brs-node`, and shows a notice with the command to upgrade the installation it detected (global, local or `npx`):
 
 ```console
-Update available: 2.5.0 -> 2.6.0
+Update available: 2.6.0 -> 2.6.1
 Run npm install -g brs-node@latest to update.
 ```
 
