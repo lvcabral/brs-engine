@@ -92,13 +92,15 @@ export class RoRegex extends BrsComponent implements BrsValue {
     private static stripFreeSpacing(pattern: string): string {
         let result = "";
         let inClass = false;
-        for (let i = 0; i < pattern.length; i++) {
+        let i = 0;
+        while (i < pattern.length) {
             const char = pattern[i];
             if (char === "\\" && i + 1 < pattern.length) {
                 result += char + pattern[i + 1];
-                i++;
+                i += 2;
                 continue;
             }
+            i++;
             if (inClass) {
                 result += char;
                 if (char === "]") {
@@ -116,7 +118,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
             }
             if (char === "#") {
                 const newline = pattern.indexOf("\n", i);
-                i = newline === -1 ? pattern.length : newline;
+                i = newline === -1 ? pattern.length : newline + 1;
                 continue;
             }
             result += char;
