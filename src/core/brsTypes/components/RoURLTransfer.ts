@@ -7,14 +7,22 @@ import { BrsType } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import { RoURLEvent } from "../events/RoURLEvent";
+import { RoURLEvent, UrlEventType } from "../events/RoURLEvent";
+import { RoSSEvent } from "../events/RoSSEvent";
+import { BrsEvent } from "../events/BrsEvent";
 import { AudioExt, DefaultCertificatesFile, VideoExt, getRokuOSVersion } from "../../common";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsHttpAgent, HttpError, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { getHost } from "../../interpreter/Network";
+import { generateUniqueId } from "../interfaces/IfSocket";
 import fileType from "file-type";
-/// #if !BROWSER
+import { ServerSentEvent, SseParser } from "../../device/SseParser";
+import { SseEventPayload, SseTransport } from "../../device/SseTransport";
+/// #if BROWSER
+import { SseBridge } from "../../device/SseBridge";
+/// #else
 import { XMLHttpRequest } from "../../polyfill/XMLHttpRequest";
+import { SseNodeBridge } from "../../device/SseNodeBridge";
 /// #endif
 
 /** Percent-encodes a string per RFC 3986, closing the gap left by `encodeURIComponent()`
@@ -34,6 +42,17 @@ interface RequestOptions {
     logToStdout?: boolean;
 }
 
+/** State of the current `AsyncGetSSEvents()` transfer. */
+interface SseTransfer {
+    parser: SseParser;
+    status: number;
+    statusText: string;
+    headers: string;
+    isStream: boolean;
+    started: boolean;
+    body: string[];
+}
+
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     private readonly identity: number;
@@ -50,6 +69,11 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private postBody: string[];
     private user?: string;
     private password?: string;
+    private readonly callbackKey: string;
+    private sseTransport?: SseTransport;
+    private sseTransfer?: SseTransfer;
+    private lastSseEventId: string;
+    private lastSseRetry: number;
     // ifHttpAgent Interface
     readonly customHeaders: Map<string, string>;
     cookiesEnabled: boolean;
@@ -57,7 +81,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
 
     constructor() {
         super("roUrlTransfer");
-        this.identity = Math.trunc(Math.random() * 10 * 8);
+        this.identity = generateUniqueId();
+        this.callbackKey = `roUrlTransfer:${this.identity}`;
+        this.lastSseEventId = "";
+        this.lastSseRetry = 0;
         this.fs = BrsDevice.fileSystem;
         this.url = "";
         this.host = "";
@@ -72,7 +99,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.outFile = new Array<string>();
         this.postBody = new Array<string>();
         const ifHttpAgent = new IfHttpAgent(this);
-        const setPortIface = new IfSetMessagePort(this);
+        const setPortIface = new IfSetMessagePort(this, this.getSseEvents.bind(this), this.callbackKey);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifUrlTransfer: [
@@ -107,6 +134,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 this.enableFreshConnection,
                 this.setHttpVersion,
                 this.getUserAgent, // Since OS 12.5
+                this.asyncGetSSEvents, // Since OS 16.0
+                this.sseLastEventId,
+                this.sseRetry,
+                this.sseClearLastEventId,
             ],
             ifHttpAgent: [
                 ifHttpAgent.addHeader,
@@ -166,7 +197,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 logger.write(`warning,[${scope}] ${message}`);
             }
         }
-        return new RoURLEvent(this.identity, this.host, responseText, status, this.failureReason, headers);
+        return this.newUrlEvent(responseText, status, this.failureReason, headers);
     }
 
     getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
@@ -308,7 +339,169 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     dispose() {
+        this.port?.unregisterCallback(this.getComponentName(), this.callbackKey);
+        this.sseTransport?.dispose();
         this.port?.removeReference();
+    }
+
+    // Server-Sent Events -----------------------------------------------------------------------------
+
+    /** Builds the request headers of an SSE transfer, including the automatic `Last-Event-ID`. */
+    private getSseHeaders(): Record<string, string> {
+        const headers: Record<string, string> = {};
+        for (const [key, value] of this.customHeaders) {
+            headers[key] = value;
+        }
+        const names = new Set(Object.keys(headers).map((key) => key.toLowerCase()));
+        if (!names.has("accept")) {
+            headers["Accept"] = "text/event-stream";
+        }
+        if (!names.has("cache-control")) {
+            headers["Cache-Control"] = "no-cache";
+        }
+        if (this.user !== undefined && !names.has("authorization")) {
+            const credentials = Buffer.from(`${this.user}:${this.password ?? ""}`).toString("base64");
+            headers["Authorization"] = `Basic ${credentials}`;
+        }
+        if (this.lastSseEventId !== "") {
+            for (const key of Object.keys(headers)) {
+                if (key.toLowerCase() === "last-event-id") {
+                    delete headers[key];
+                }
+            }
+            headers["Last-Event-ID"] = this.lastSseEventId;
+        }
+        return headers;
+    }
+
+    /** Starts an SSE transfer, delivering its events to the message port. */
+    private startSse(port: RoMessagePort): boolean {
+        this.stopSse();
+        this.failureReason = "";
+        this.lastSseRetry = 0;
+        if (this.url.toLowerCase().startsWith("https:") && !this.fs.existsSync(this.certificatesFile)) {
+            this.failureReason = `error setting certificate file: ${this.certificatesFile}`;
+            const event = this.newUrlEvent("", -77, this.failureReason, "", UrlEventType.Completed);
+            port.pushCallback(() => event);
+            return true;
+        }
+        this.sseTransport ??= createSseTransport((message) => {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,${message}`);
+            }
+        });
+        const started = this.sseTransport.start({
+            url: BrsDevice.getCORSProxy(this.url),
+            method: this.reqMethod === "" ? "GET" : this.reqMethod,
+            headers: this.getSseHeaders(),
+        });
+        if (!started) {
+            return false;
+        }
+        this.sseTransfer = {
+            parser: new SseParser(),
+            status: 0,
+            statusText: "",
+            headers: "",
+            isStream: false,
+            started: false,
+            body: [],
+        };
+        return true;
+    }
+
+    /** Cancels the current SSE transfer, if any, without sending further events. */
+    private stopSse() {
+        if (this.sseTransfer) {
+            this.sseTransport?.abort();
+            this.sseTransfer = undefined;
+        }
+    }
+
+    /** Polled on every message port iteration; drains the active SSE transfer, if any. */
+    private getSseEvents(): BrsEvent[] {
+        const events: BrsEvent[] = [];
+        if (!this.sseTransfer || !this.sseTransport) {
+            return events;
+        }
+        for (const payload of this.sseTransport.poll()) {
+            const transfer = this.sseTransfer;
+            if (!transfer) {
+                break;
+            }
+            this.applySsePayload(transfer, payload, events);
+        }
+        return events;
+    }
+
+    private applySsePayload(transfer: SseTransfer, payload: SseEventPayload, events: BrsEvent[]) {
+        switch (payload.type) {
+            case "response": {
+                transfer.status = payload.status;
+                transfer.statusText = payload.statusText;
+                transfer.headers = payload.headers;
+                transfer.isStream =
+                    payload.status >= 200 &&
+                    payload.status < 300 &&
+                    payload.contentType.toLowerCase().startsWith("text/event-stream");
+                break;
+            }
+            case "chunk": {
+                if (transfer.isStream) {
+                    this.pushServerEvents(transfer, transfer.parser.feed(payload.text), events);
+                } else {
+                    transfer.body.push(payload.text);
+                }
+                break;
+            }
+            case "end": {
+                if (transfer.isStream) {
+                    this.pushServerEvents(transfer, transfer.parser.end(), events);
+                }
+                this.failureReason = transfer.statusText;
+                const body = transfer.isStream ? "" : transfer.body.join("");
+                events.push(this.newUrlEvent(body, transfer.status, this.failureReason, transfer.headers));
+                this.stopSse();
+                break;
+            }
+            case "error": {
+                this.failureReason = payload.message;
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`warning,[asyncGetSSEvents] Error getting ${this.url}: ${payload.message}`);
+                }
+                events.push(this.newUrlEvent("", payload.code, payload.message, transfer.headers));
+                this.stopSse();
+                break;
+            }
+        }
+    }
+
+    private pushServerEvents(transfer: SseTransfer, received: ServerSentEvent[], events: BrsEvent[]) {
+        for (const sse of received) {
+            if (sse.hasId) {
+                this.lastSseEventId = sse.id;
+            }
+            if (sse.hasRetry) {
+                this.lastSseRetry = sse.retry;
+            }
+            if (!transfer.started) {
+                transfer.started = true;
+                events.push(
+                    this.newUrlEvent("", transfer.status, transfer.statusText, transfer.headers, UrlEventType.Started)
+                );
+            }
+            events.push(new RoSSEvent(this.identity, sse));
+        }
+    }
+
+    private newUrlEvent(
+        body: string,
+        status: number,
+        reason: string,
+        headers: string,
+        eventType: UrlEventType = UrlEventType.Completed
+    ) {
+        return new RoURLEvent(this.identity, this.host, body, status, reason, headers, eventType);
     }
 
     // ifUrlTransfer ----------------------------------------------------------------------------------
@@ -439,6 +632,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter) => {
+            this.stopSse();
             if (this.port) {
                 this.failureReason = "";
                 this.outFile = [];
@@ -745,4 +939,64 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             return new BrsString(`Roku/DVP-${short} (${long})`);
         },
     });
+
+    /** Enables server-sent event handling on the transfer and starts reading the event stream. */
+    private readonly asyncGetSSEvents = new Callable("asyncGetSSEvents", {
+        signature: {
+            args: [],
+            returns: ValueKind.Boolean,
+        },
+        impl: (_: Interpreter) => {
+            if (!this.port) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
+                }
+                return BrsBoolean.False;
+            }
+            return BrsBoolean.from(this.startSse(this.port));
+        },
+    });
+
+    /** Returns the id of the last server-sent event received in the previous SSE transfer. */
+    private readonly sseLastEventId = new Callable("sseLastEventId", {
+        signature: {
+            args: [],
+            returns: ValueKind.String,
+        },
+        impl: (_: Interpreter) => {
+            return new BrsString(this.lastSseEventId);
+        },
+    });
+
+    /** Returns the reconnection interval (ms) sent by the server in the previous SSE transfer, or 0. */
+    private readonly sseRetry = new Callable("sseRetry", {
+        signature: {
+            args: [],
+            returns: ValueKind.Int32,
+        },
+        impl: (_: Interpreter) => {
+            return new Int32(this.lastSseRetry);
+        },
+    });
+
+    /** Clears the last event id, suppressing the automatic `Last-Event-ID` header. */
+    private readonly sseClearLastEventId = new Callable("sseClearLastEventId", {
+        signature: {
+            args: [],
+            returns: ValueKind.Void,
+        },
+        impl: (_: Interpreter) => {
+            this.lastSseEventId = "";
+            return BrsInvalid.Instance;
+        },
+    });
+}
+
+/** Chooses the SSE transport at compile time: the browser streams via the main thread, Node via a helper process. */
+function createSseTransport(onError?: (message: string) => void): SseTransport {
+    /// #if BROWSER
+    return new SseBridge(onError);
+    /// #else
+    return new SseNodeBridge(onError); // NOSONAR - ifdef-selected branch, not truly unreachable
+    /// #endif
 }

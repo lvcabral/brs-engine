@@ -41,13 +41,13 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * To make a **web app** access urls from domains other than the one it is hosted, the Cross-Origin Resource Sharing (CORS) browser policy requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
     * A simple way to overcome this limitation is to use a CORS proxy like the [cors-anywhere](https://github.com/Rob--W/cors-anywhere), see [customization documentation](./customization.md) to learn how to configure `brs-engine` to use it.
     * If you are using a Chromium based browser (Chrome, Edge, Brave, etc) you can install this [extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf) to bypass CORS.
-  * The _async_ methods are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
+  * The _async_ methods (except `AsyncGetSSEvents()`) are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
   * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate database.
   * As custom certificates are not supported these methods are just mocked and do nothing: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
-  * **Server-Sent Events (SSE)** support, added by Roku OS 16.0, is not yet implemented — the engine does not inspect the response headers to detect an SSE stream or deliver each server event as a separate `roUrlEvent` on the message port; a streaming SSE response is instead read to completion (or times out) like any other request.
+  * **Server-Sent Events (SSE)** (Roku OS 16.0) are supported via `AsyncGetSSEvents()`, delivering real streaming `roSSEvent`s on **both** packages: on Node.js/CLI the request runs in a small per-transfer helper process, and on the browser package the `fetch()` runs on the main thread, bridged to the worker via shared memory (so the CORS limitation above applies too). On the browser package, request headers that browsers forbid script to set (see `AddHeader()`) are silently dropped.
 * The `roStreamSocket` (TCP) component performs real network I/O, on the Node.js/CLI package only.
   * Supports listening, connecting, accepting connections, and sending/receiving stream data, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()`, backed by a small helper process per listener/connection.
   * `Connect()` uses a blocking request with an 8-second timeout rather than modeling Roku's async-per-message-port connect semantics.

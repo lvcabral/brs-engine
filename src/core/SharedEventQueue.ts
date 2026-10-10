@@ -78,20 +78,39 @@ class SharedEventQueue {
         return [new Uint8Array(buffer), new Int32Array(buffer, 0, SharedEventQueue.headerInts), new DataView(buffer)];
     }
 
+    /** Serializes a frame once, for producers that may retry `tryPush` with it. */
+    static encode(obj: any): Uint8Array {
+        return textEncoder.encode(JSON.stringify(obj));
+    }
+
     /** Appends one JSON-serializable frame. Safe to call from the thread that owns the real I/O. */
     push(obj: any): void {
         let bytes: Uint8Array;
         try {
-            bytes = textEncoder.encode(JSON.stringify(obj));
+            bytes = SharedEventQueue.encode(obj);
         } catch {
             return;
         }
-        this.withLock(() => {
+        if (!this.append(bytes, 0)) {
+            this.onError?.(`[SharedEventQueue] Dropped event: queue would exceed ${this.maxSize}-byte limit`);
+        }
+    }
+
+    /**
+     * Appends an encoded frame (see `encode`) only if it fits while leaving `reserve` bytes free, so a
+     * producer can apply backpressure (retry after the consumer drains) instead of dropping events.
+     * @returns `false` if the frame did not fit and was not appended.
+     */
+    tryPush(frame: Uint8Array, reserve: number): boolean {
+        return this.append(frame, reserve);
+    }
+
+    private append(bytes: Uint8Array, reserve: number): boolean {
+        return this.withLock(() => {
             const writeOffset = Atomics.load(this.atomicView, SharedEventQueue.writeOffsetIdx);
             const needed = SharedEventQueue.headerBytes + writeOffset + 4 + bytes.length;
-            if (needed > this.maxSize) {
-                this.onError?.(`[SharedEventQueue] Dropped event: queue would exceed ${this.maxSize}-byte limit`);
-                return;
+            if (needed + reserve > this.maxSize) {
+                return false;
             }
             if (needed > this.buffer.byteLength) {
                 const newSize = Math.min(this.maxSize, Math.max(needed, this.buffer.byteLength * 2));
@@ -99,14 +118,15 @@ class SharedEventQueue {
                     this.buffer.grow(newSize);
                     [this.view, this.atomicView, this.dataView] = SharedEventQueue.viewsFor(this.buffer);
                 } catch (e: any) {
-                    this.onError?.(`[SharedEventQueue] Dropped event: failed to grow buffer: ${e?.message ?? e}`);
-                    return;
+                    this.onError?.(`[SharedEventQueue] Failed to grow buffer: ${e?.message ?? e}`);
+                    return false;
                 }
             }
             const dataOffset = SharedEventQueue.headerBytes + writeOffset;
             this.dataView.setUint32(dataOffset, bytes.length, true);
             this.view.set(bytes, dataOffset + 4);
             Atomics.store(this.atomicView, SharedEventQueue.writeOffsetIdx, writeOffset + 4 + bytes.length);
+            return true;
         });
     }
 
@@ -148,7 +168,7 @@ class SharedEventQueue {
      *  termination path) mid-critical-section, which would otherwise leave the lock held forever
      *  and freeze every future caller — after `LOCK_TIMEOUT_MS` with no progress, the lock is
      *  assumed abandoned and force-cleared instead of spinning indefinitely. */
-    private withLock(fn: () => void): void {
+    private withLock<T>(fn: () => T): T {
         const deadline = Date.now() + SharedEventQueue.lockTimeoutMs;
         while (Atomics.compareExchange(this.atomicView, SharedEventQueue.lockIdx, LOCK_FREE, LOCK_HELD) !== LOCK_FREE) {
             if (Date.now() > deadline) {
@@ -158,7 +178,7 @@ class SharedEventQueue {
             }
         }
         try {
-            fn();
+            return fn();
         } finally {
             Atomics.store(this.atomicView, SharedEventQueue.lockIdx, LOCK_FREE);
         }
