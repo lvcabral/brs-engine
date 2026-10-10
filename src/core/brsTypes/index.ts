@@ -106,6 +106,7 @@ export * from "./components/RoTextureManager";
 export * from "./components/RoUtils";
 export * from "./events/BrsEvent";
 export * from "./events/RoURLEvent";
+export * from "./events/RoSSEvent";
 export * from "./events/RoSocketEvent";
 export * from "./events/RoWebSocketEvent";
 export * from "./events/RoInputEvent";

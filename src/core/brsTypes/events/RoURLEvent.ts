@@ -14,6 +14,13 @@ import { Callable } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { resolveHostToIP } from "../../interpreter/Network";
 
+/** Values reported by `roUrlEvent.GetInt()`. */
+export enum UrlEventType {
+    Completed = 1,
+    /** Sent when the first event of a server-sent event stream arrives (since Roku OS 16.0). */
+    Started = 2,
+}
+
 export class RoURLEvent extends BrsEvent implements Comparable {
     private readonly id: number;
     private readonly responseCode: number;
@@ -21,8 +28,17 @@ export class RoURLEvent extends BrsEvent implements Comparable {
     private readonly failureReason: string;
     private readonly headers: string;
     private readonly host: string;
+    private readonly eventType: number;
 
-    constructor(id: number, host: string, response: string, status: number, statusText: string, headers: string) {
+    constructor(
+        id: number,
+        host: string,
+        response: string,
+        status: number,
+        statusText: string,
+        headers: string,
+        eventType: number = UrlEventType.Completed
+    ) {
         super("roUrlEvent");
         this.id = id;
         this.responseCode = status;
@@ -30,6 +46,7 @@ export class RoURLEvent extends BrsEvent implements Comparable {
         this.responseString = response;
         this.headers = headers;
         this.host = host;
+        this.eventType = eventType;
 
         this.registerMethods({
             ifUrlEvent: [
@@ -92,7 +109,7 @@ export class RoURLEvent extends BrsEvent implements Comparable {
             returns: ValueKind.Int32,
         },
         impl: (_: Interpreter) => {
-            return new Int32(1); // Transfer Complete
+            return new Int32(this.eventType);
         },
     });
 

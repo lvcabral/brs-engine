@@ -120,11 +120,17 @@ export function pollQueueFile(file: string, offset: number): { lines: string[]; 
     } finally {
         fs.closeSync(fd);
     }
+    // Consume only complete lines; a partially appended trailing line is read on the next poll.
+    const lastNewline = buffer.lastIndexOf(0x0a);
+    if (lastNewline === -1) {
+        return { lines: [], newOffset: offset };
+    }
     const lines = buffer
+        .subarray(0, lastNewline)
         .toString("utf8")
         .split("\n")
         .filter((line) => line.trim().length > 0);
-    return { lines, newOffset: size };
+    return { lines, newOffset: offset + lastNewline + 1 };
 }
 
 /** Reuses `ifSocket`'s host-error-name mapping so status codes stay consistent across both bridges. */
