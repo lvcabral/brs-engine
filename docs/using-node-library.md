@@ -176,6 +176,7 @@ const deviceData = {
     deviceModel: "8000X",
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4",
+    customerId: "3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3",
     countryCode: "US",
     timeZone: "US/Eastern",
     locale: "en_US",

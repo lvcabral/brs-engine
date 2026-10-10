@@ -41,6 +41,9 @@ export class ChannelStore extends Node {
         // field on this node (`channelCred` included) is a ContentNode — keep that asymmetry.
         { name: "storeChannelCredDataStatus", type: "assocarray", alwaysNotify: true },
         { name: "channelCred", type: "node", alwaysNotify: true },
+        // Generic request framework: commands that have no dedicated field (e.g. GetRokuCustomerId).
+        { name: "request", type: "assocarray" },
+        { name: "requestStatus", type: "assocarray", alwaysNotify: true },
     ];
 
     /**
@@ -49,6 +52,9 @@ export class ChannelStore extends Node {
      * state it needs from this node's own fields instead of relying on state pushed into it.
      */
     private readonly channelStore: RoChannelStore;
+
+    /** Sequence number reported as `requestid` in each `requestStatus`, starting at 0. */
+    private nextRequestId = 0;
 
     constructor(members: AAMember[] = [], readonly name: string = SGNodeType.ChannelStore) {
         super([], name);
@@ -69,7 +75,41 @@ export class ChannelStore extends Node {
         super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "command" && isBrsString(value) && value.getValue() !== "") {
             this.handleCommand(value.getValue().toLowerCase());
+        } else if (fieldName === "request" && value instanceof RoAssociativeArray) {
+            this.handleRequest(value);
         }
+    }
+
+    /**
+     * Runs a command sent through the generic request framework and publishes `requestStatus`.
+     *
+     * Shape measured on a device (`test/simulator/probes/roku-customer-id-probe`): every key is
+     * lowercase and always present. The command must match exactly (no case folding or trimming),
+     * and anything else reports status -4 with an empty `result`. `command` echoes the request's
+     * string command, or "" when it is missing or not a string, in which case `context` is not
+     * echoed either.
+     * @param request The new value of the `request` field.
+     */
+    private handleRequest(request: RoAssociativeArray) {
+        const command = request.get(new BrsString("command"));
+        const name = isBrsString(command) ? command.getValue() : "";
+        const known = name === "GetRokuCustomerId";
+        const context = request.get(new BrsString("context"));
+        const status = new RoAssociativeArray([]);
+        status.set(
+            new BrsString("result"),
+            toAssociativeArray(known ? { rokucustomerid: this.channelStore.getRokuCustomerId() } : {})
+        );
+        status.set(new BrsString("command"), new BrsString(name));
+        status.set(new BrsString("status"), new Int32(known ? 1 : -4));
+        status.set(
+            new BrsString("context"),
+            isBrsString(command) && context instanceof RoAssociativeArray ? context : new RoAssociativeArray([])
+        );
+        status.set(new BrsString("statusmessage"), new BrsString(known ? "Success" : "Invalid request"));
+        status.set(new BrsString("requestid"), new Int32(this.nextRequestId));
+        this.nextRequestId++;
+        super.setValue("requestStatus", status);
     }
 
     /**

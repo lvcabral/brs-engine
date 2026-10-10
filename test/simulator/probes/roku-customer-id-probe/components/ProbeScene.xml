@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Sends ChannelStore generic-framework requests one at a time and dumps every requestStatus
+    verbatim (key, type, value), so the GetRokuCustomerId format and the framework's status/echo
+    behavior can be compared with brs-engine. A request that gets no reply within 10s is reported
+    as a timeout and the probe moves on. The next request is sent from a short timer, never from inside
+    the requestStatus observer, so a synchronous reply can't be nested in its own notification.
+-->
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <ChannelStore id="store" />
+        <Timer id="timeout" duration="10" repeat="false" />
+        <Timer id="gap" duration="0.2" repeat="false" />
+        <Label id="status" translation="[80,80]" width="1100" wrap="true" text="Roku Customer ID Probe running, see the console (port 8085)" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.store = m.top.findNode("store")
+        m.timer = m.top.findNode("timeout")
+        m.store.observeField("requestStatus", "onRequestStatus")
+        m.timer.observeField("fire", "onTimeout")
+        m.gap = m.top.findNode("gap")
+        m.gap.observeField("fire", "nextCase")
+        ' Each case: a label and the request AA to send (invalid = skip the field).
+        m.cases = [
+            { label: "basic", request: { command: "GetRokuCustomerId" } },
+            { label: "with context", request: { command: "GetRokuCustomerId", context: { id: "ctx-1", n: 7 } } },
+            { label: "lowercase command", request: { command: "getrokucustomerid" } },
+            { label: "padded command", request: { command: " GetRokuCustomerId " } },
+            { label: "repeat (stable?)", request: { command: "GetRokuCustomerId" } },
+            { label: "unknown command", request: { command: "NoSuchCommand", context: { id: "bad-1" } } },
+            { label: "missing command", request: { context: { id: "none-1" } } },
+            { label: "non-string command", request: { command: 42 } },
+        ]
+        m.index = -1
+        m.ids = []
+        print "[probe] ===== Roku Customer ID Probe ====="
+        di = CreateObject("roDeviceInfo")
+        print "[probe] firmware: "; di.GetOSVersion()
+        print "[probe] model: "; di.GetModel()
+        print "[probe] channelClientId: "; di.GetChannelClientId()
+        nextCase()
+    end sub
+
+    sub nextCase()
+        m.timer.control = "stop"
+        m.index = m.index + 1
+        if m.index >= m.cases.count()
+            finish()
+            return
+        end if
+        c = m.cases[m.index]
+        print "[probe] ----- case "; m.index; ": "; c.label; " -----"
+        print "[probe] request: "; FormatJson(c.request)
+        m.timer.control = "start"
+        m.store.request = c.request
+    end sub
+
+    sub onRequestStatus()
+        rs = m.store.requestStatus
+        print "[probe] requestStatus type: "; type(rs)
+        if rs <> invalid and GetInterface(rs, "ifAssociativeArray") <> invalid
+            dump(rs, "  ")
+            if rs.result <> invalid and GetInterface(rs.result, "ifAssociativeArray") <> invalid
+                id = rs.result.rokuCustomerId
+                if id <> invalid
+                    analyze(id)
+                    m.ids.push(id)
+                end if
+            end if
+        else
+            print "[probe]   value: "; rs
+        end if
+        m.timer.control = "stop"
+        m.gap.control = "start"
+    end sub
+
+    sub onTimeout()
+        print "[probe] TIMEOUT: no requestStatus within 10s"
+        m.gap.control = "start"
+    end sub
+
+    ' Prints each key with its BrightScript type, recursing into nested AAs.
+    sub dump(aa as object, indent as string)
+        for each key in aa
+            value = aa[key]
+            if value <> invalid and GetInterface(value, "ifAssociativeArray") <> invalid
+                print "[probe] "; indent; key; " ("; type(value); "):"
+                dump(value, indent + "  ")
+            else if value <> invalid and GetInterface(value, "ifArray") <> invalid
+                print "[probe] "; indent; key; " ("; type(value); "): "; FormatJson(value)
+            else
+                print "[probe] "; indent; key; " ("; type(value); "): ["; value; "]"
+            end if
+        end for
+    end sub
+
+    ' Describes the id's shape: length, character classes, dash positions, case.
+    sub analyze(id as dynamic)
+        print "[probe]   >> rokuCustomerId type: "; type(id)
+        if GetInterface(id, "ifString") = invalid then return
+        print "[probe]   >> length: "; len(id)
+        print "[probe]   >> hex32 lowercase: "; CreateObject("roRegex", "^[0-9a-f]{32}$", "").isMatch(id)
+        print "[probe]   >> hex32 any case: "; CreateObject("roRegex", "^[0-9a-fA-F]{32}$", "").isMatch(id)
+        print "[probe]   >> uuid (dashed): "; CreateObject("roRegex", "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", "").isMatch(id)
+        print "[probe]   >> digits only: "; CreateObject("roRegex", "^[0-9]+$", "").isMatch(id)
+        print "[probe]   >> has uppercase: "; CreateObject("roRegex", "[A-Z]", "").isMatch(id)
+    end sub
+
+    sub finish()
+        print "[probe] ----- summary -----"
+        stable = true
+        for each id in m.ids
+            if id <> m.ids[0] then stable = false
+        end for
+        print "[probe] ids received: "; m.ids.count()
+        print "[probe] all ids identical: "; stable
+        print "[probe] ===== done ====="
+        m.top.findNode("status").text = "Probe finished (" + m.ids.count().toStr() + " ids). See console."
+    end sub
+    ]]></script>
+</component>

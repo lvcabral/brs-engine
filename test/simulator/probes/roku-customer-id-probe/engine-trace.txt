@@ -1,0 +1,107 @@
+[probe] ===== Roku Customer ID Probe =====
+[probe] firmware: <Component: roAssociativeArray> =
+[probe] model: 8000X
+[probe] channelClientId: 6c5bf3a5-b2a5-4918-824d-7691d5c85364
+[probe] ----- case  0: basic -----
+[probe] request: {"command":"GetRokuCustomerId"}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]     rokucustomerid (roString): [3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3]
+[probe]   command (roString): [GetRokuCustomerId]
+[probe]   status (roInt): [ 1]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Success]
+[probe]   requestid (roInt): [ 0]
+[probe]   >> rokuCustomerId type: roString
+[probe]   >> length:  32
+[probe]   >> hex32 lowercase: true
+[probe]   >> hex32 any case: true
+[probe]   >> uuid (dashed): false
+[probe]   >> digits only: false
+[probe]   >> has uppercase: false
+[probe] ----- case  1: with context -----
+[probe] request: {"command":"GetRokuCustomerId","context":{"id":"ctx-1","n":7}}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]     rokucustomerid (roString): [3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3]
+[probe]   command (roString): [GetRokuCustomerId]
+[probe]   status (roInt): [ 1]
+[probe]   context (roAssociativeArray):
+[probe]     id (roString): [ctx-1]
+[probe]     n (roInt): [ 7]
+[probe]   statusmessage (roString): [Success]
+[probe]   requestid (roInt): [ 1]
+[probe]   >> rokuCustomerId type: roString
+[probe]   >> length:  32
+[probe]   >> hex32 lowercase: true
+[probe]   >> hex32 any case: true
+[probe]   >> uuid (dashed): false
+[probe]   >> digits only: false
+[probe]   >> has uppercase: false
+[probe] ----- case  2: lowercase command -----
+[probe] request: {"command":"getrokucustomerid"}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]   command (roString): [getrokucustomerid]
+[probe]   status (roInt): [-4]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Invalid request]
+[probe]   requestid (roInt): [ 2]
+[probe] ----- case  3: padded command -----
+[probe] request: {"command":" GetRokuCustomerId "}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]   command (roString): [ GetRokuCustomerId ]
+[probe]   status (roInt): [-4]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Invalid request]
+[probe]   requestid (roInt): [ 3]
+[probe] ----- case  4: repeat (stable?) -----
+[probe] request: {"command":"GetRokuCustomerId"}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]     rokucustomerid (roString): [3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3]
+[probe]   command (roString): [GetRokuCustomerId]
+[probe]   status (roInt): [ 1]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Success]
+[probe]   requestid (roInt): [ 4]
+[probe]   >> rokuCustomerId type: roString
+[probe]   >> length:  32
+[probe]   >> hex32 lowercase: true
+[probe]   >> hex32 any case: true
+[probe]   >> uuid (dashed): false
+[probe]   >> digits only: false
+[probe]   >> has uppercase: false
+[probe] ----- case  5: unknown command -----
+[probe] request: {"command":"NoSuchCommand","context":{"id":"bad-1"}}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]   command (roString): [NoSuchCommand]
+[probe]   status (roInt): [-4]
+[probe]   context (roAssociativeArray):
+[probe]     id (roString): [bad-1]
+[probe]   statusmessage (roString): [Invalid request]
+[probe]   requestid (roInt): [ 5]
+[probe] ----- case  6: missing command -----
+[probe] request: {"context":{"id":"none-1"}}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]   command (roString): []
+[probe]   status (roInt): [-4]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Invalid request]
+[probe]   requestid (roInt): [ 6]
+[probe] ----- case  7: non-string command -----
+[probe] request: {"command":42}
+[probe] requestStatus type: roAssociativeArray
+[probe]   result (roAssociativeArray):
+[probe]   command (roString): []
+[probe]   status (roInt): [-4]
+[probe]   context (roAssociativeArray):
+[probe]   statusmessage (roString): [Invalid request]
+[probe]   requestid (roInt): [ 7]
+[probe] ----- summary -----
+[probe] ids received:  3
+[probe] all ids identical: true
+[probe] ===== done =====
