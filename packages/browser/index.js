@@ -239,7 +239,7 @@ function loadZip(appId, params) {
         .then(function (response) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
-                    zipBlob.arrayBuffer().then(function (zipData) {
+                    return zipBlob.arrayBuffer().then(function (zipData) {
                         currentZip = zipData;
                         if (!params) {
                             params = new Map([["source", "homescreen"]]);
@@ -263,7 +263,7 @@ function mountZip(zip) {
         .then(function (response) {
             if (response.status === 200 || response.status === 0) {
                 return response.blob().then(function (zipBlob) {
-                    zipBlob.arrayBuffer().then(function (zipData) {
+                    return zipBlob.arrayBuffer().then(function (zipData) {
                         brs.mountExt(zipData);
                     });
                 });
