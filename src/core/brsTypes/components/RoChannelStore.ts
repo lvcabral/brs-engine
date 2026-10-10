@@ -294,6 +294,15 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     }
 
     /**
+     * Mocks the node's `GetRokuCustomerId` command (Roku OS 16.0). Not gated on `fakeServer`: like
+     * the PUCID, it identifies the account rather than coming from the mocked store.
+     * @returns The configured `DeviceInfo.customerId`.
+     */
+    getRokuCustomerId(): string {
+        return BrsDevice.deviceInfo.customerId;
+    }
+
+    /**
      * Mocks `RequestPartnerOrder`: the billing check that must precede a partner order confirmation.
      * A successful check remembers its order id so `confirmPartnerOrderData` can validate it.
      * @param orderInfo The order details; expected to be an associative array.

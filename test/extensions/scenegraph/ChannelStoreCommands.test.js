@@ -2,7 +2,8 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { ChannelStore, ContentNode, toContentNode } = scenegraph;
-const { BrsBoolean, BrsString, Int32, RoAssociativeArray, RoChannelStore, isInvalid, toAssociativeArray } = core;
+const { BrsBoolean, BrsDevice, BrsString, Int32, RoAssociativeArray, RoChannelStore, isInvalid, toAssociativeArray } =
+    core;
 
 // The mocked ChannelStore commands, checked against Roku's reference for the node
 // (REFERENCES/scenegraph/control-nodes/channelstore.md) and for ifChannelStore. The end-to-end
@@ -404,6 +405,61 @@ describe("ChannelStore mocked commands", () => {
             node.setValueSilent("fakeServer", BrsBoolean.True);
             node.setValue("command", new BrsString("getUserData"));
             expect(node.getValue("userData").getValue("email").getValue()).toBe("john.doe@email.com");
+        });
+    });
+    describe("the generic request framework", () => {
+        test("GetRokuCustomerId reports the configured customerId without fakeServer", () => {
+            expect(new RoChannelStore().getRokuCustomerId()).toMatch(/^[0-9a-f]{32}$/);
+            const original = BrsDevice.deviceInfo.customerId;
+            try {
+                BrsDevice.deviceInfo.customerId = "99999999999999999999999999999999";
+                expect(new RoChannelStore().getRokuCustomerId()).toBe("99999999999999999999999999999999");
+            } finally {
+                BrsDevice.deviceInfo.customerId = original;
+            }
+        });
+
+        test("requestStatus echoes the command exactly as passed", () => {
+            const node = new ChannelStore();
+            node.setValue("request", toAssociativeArray({ command: " GetRokuCustomerId " }));
+            const status = node.getValue("requestStatus");
+            expect(status.get(new BrsString("status")).getValue()).toBe(1);
+            expect(stringOf(status, "command")).toBe(" GetRokuCustomerId ");
+
+            node.setValue("request", toAssociativeArray({ command: 42 }));
+            expect(node.getValue("requestStatus").get(new BrsString("command")).getValue()).toBe(42);
+        });
+
+        test("requestStatus wraps the id in result and echoes the command and context", () => {
+            const node = new ChannelStore();
+            const context = toAssociativeArray({ id: "ctx" });
+            node.setValue(
+                "request",
+                new RoAssociativeArray([
+                    { name: new BrsString("command"), value: new BrsString("getRokuCustomerID") },
+                    { name: new BrsString("context"), value: context },
+                ])
+            );
+            const status = node.getValue("requestStatus");
+            expect(status.get(new BrsString("status")).getValue()).toBe(1);
+            expect(stringOf(status, "statusMessage")).toBe("Success");
+            expect(stringOf(status, "command")).toBe("getRokuCustomerID");
+            expect(stringOf(status.get(new BrsString("context")), "id")).toBe("ctx");
+            expect(stringOf(status.get(new BrsString("result")), "rokuCustomerId")).toBe(
+                new RoChannelStore().getRokuCustomerId()
+            );
+        });
+
+        test("an unknown or missing command reports Invalid request with no result", () => {
+            const node = new ChannelStore();
+            for (const request of [toAssociativeArray({ command: "NoSuchCommand" }), toAssociativeArray({})]) {
+                node.setValue("request", request);
+                const status = node.getValue("requestStatus");
+                expect(status.get(new BrsString("status")).getValue()).toBe(-4);
+                expect(stringOf(status, "statusMessage")).toBe("Invalid request");
+                expect(isInvalid(status.get(new BrsString("result")))).toBe(true);
+                expect(isInvalid(status.get(new BrsString("context")))).toBe(true);
+            }
         });
     });
 });

@@ -13,6 +13,7 @@ const deviceInfo = {
     deviceModel: "8000X", // Roku TV (Midland)
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
+    customerId: "3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3", // Roku customer ID, returned by the ChannelStore `GetRokuCustomerId` command
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     locale: "en_US", // Valid locales: en_US, es_MX, pt_BR, fr_CA, de_DE
@@ -32,6 +33,34 @@ const deviceInfo = {
     logLevel: LogLevel.Warning, // Log level for the engine (Debug, Warning, Error)
     corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };
+```
+
+### Device and Account Identifiers
+
+The engine has no real Roku account or hardware, so the identifiers an app can read are fixed values taken from the `deviceInfo` object. Override them in `initialize()` to simulate a different device or customer (for example, to test how your backend handles two users):
+
+| Property      | Simulates                                 | Used by                                                                                                               |
+| ------------- | ----------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `developerId` | The developer account that signed the app | Segregates the registry; also seeds `roDeviceCrypto` keys                                                             |
+| `clientId`    | The device's unique ID for this app       | `roDeviceInfo.GetChannelClientId()` and `GetClientTrackingId()`; `publisherDeviceID` in ChannelStore `getChannelCred` |
+| `RIDA`        | The Roku ID for Advertising               | `roDeviceInfo.GetRIDA()` and `GetAdvertisingId()`                                                                     |
+| `customerId`  | The Roku customer account (Roku OS 16.0)  | `result.rokuCustomerId` of the `ChannelStore` node `GetRokuCustomerId` command                                        |
+
+On a Roku device the customer ID identifies the same customer consistently across a publisher's apps, and is reported by Roku Pay as a 32-digit hex string, so keep that format when overriding it. The command works regardless of the `ChannelStore` `fakeServer` setting and is only available through the node's generic request framework:
+
+```brs
+sub init()
+    m.store = CreateObject("roSGNode", "ChannelStore")
+    m.store.observeField("requestStatus", "onRequestStatus")
+    m.store.request = { command: "GetRokuCustomerId" }
+end sub
+
+sub onRequestStatus()
+    status = m.store.requestStatus
+    if status.status = 1 and status.command = "GetRokuCustomerId"
+        print "rokuCustomerId: "; status.result.rokuCustomerId ' the `customerId` from deviceInfo
+    end if
+end sub
 ```
 
 ### CORS Proxy Configuration

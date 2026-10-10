@@ -1636,6 +1636,9 @@ describe.concurrent("cli scenegraph", () => {
         // Without fakeServer the store-backed commands report their documented failure payload, but
         // the credential store still works — it holds the app's own artifact, not a mocked store
         // response, and a production app never enables fakeServer.
+        // GetRokuCustomerId (generic request framework): requestStatus echoes command/context, works
+        // without fakeServer, and the id is stable. The -4 status for an unknown command and the
+        // "Success"/"Invalid request" statusMessage text are engine choices.
         // The negative-qty semantics and the individual errorCode values are engine choices, not
         // device measurements — a device probe may legitimately overturn them.
         //
@@ -1709,6 +1712,14 @@ describe.concurrent("cli scenegraph", () => {
             "channelCred.channel_data: prod token",
             "requestPartnerOrderStatus.status: Failure",
             "requestPartnerOrderStatus.errorCode: -1",
+            "-- GetRokuCustomerId --",
+            "requestStatus: 1 Success GetRokuCustomerId cid-1",
+            "rokuCustomerId length: 32",
+            "rokuCustomerId is hex: true",
+            "stable across stores: true",
+            "context present: false",
+            "requestStatus: -4 Invalid request NoSuchCommand bad-1",
+            "result present: false",
             "=== ChannelStore Node Test Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",

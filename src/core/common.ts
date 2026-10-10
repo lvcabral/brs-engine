@@ -22,6 +22,7 @@ export interface DeviceInfo {
     serialNumber: string;
     clientId: string;
     RIDA: string;
+    customerId: string;
     countryCode: string;
     timeZone: string;
     timeZoneIANA: string;
@@ -124,6 +125,7 @@ export const DefaultDeviceInfo: DeviceInfo = {
     serialNumber: "", // Will be set dynamically
     clientId: "6c5bf3a5-b2a5-4918-824d-7691d5c85364",
     RIDA: "f51ac698-bc60-4409-aae3-8fc3abc025c4", // Unique identifier for advertisement tracking
+    customerId: "3f1e9a2c7b5d48e6a0c4d2b8e6f1a9c3", // Roku customer ID (ChannelStore `GetRokuCustomerId`)
     countryCode: "US", // App Store Country
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     timeZoneIANA: Intl.DateTimeFormat().resolvedOptions().timeZone,

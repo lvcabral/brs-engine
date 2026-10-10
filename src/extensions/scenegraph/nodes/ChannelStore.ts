@@ -41,6 +41,9 @@ export class ChannelStore extends Node {
         // field on this node (`channelCred` included) is a ContentNode — keep that asymmetry.
         { name: "storeChannelCredDataStatus", type: "assocarray", alwaysNotify: true },
         { name: "channelCred", type: "node", alwaysNotify: true },
+        // Generic request framework: commands that have no dedicated field (e.g. GetRokuCustomerId).
+        { name: "request", type: "assocarray" },
+        { name: "requestStatus", type: "assocarray", alwaysNotify: true },
     ];
 
     /**
@@ -69,7 +72,35 @@ export class ChannelStore extends Node {
         super.setValue(index, value, alwaysNotify, kind);
         if (fieldName === "command" && isBrsString(value) && value.getValue() !== "") {
             this.handleCommand(value.getValue().toLowerCase());
+        } else if (fieldName === "request" && value instanceof RoAssociativeArray) {
+            this.handleRequest(value);
         }
+    }
+
+    /**
+     * Runs a command sent through the generic request framework and publishes `requestStatus`,
+     * echoing back the request's `command` and `context`. A missing or unknown command reports
+     * status -4 (Invalid request).
+     * @param request The new value of the `request` field.
+     */
+    private handleRequest(request: RoAssociativeArray) {
+        const command = request.get(new BrsString("command"));
+        const known = ChannelStore.textOf(command).toLowerCase() === "getrokucustomerid";
+        const status = toAssociativeArray(
+            known ? { status: 1, statusMessage: "Success" } : { status: -4, statusMessage: "Invalid request" }
+        );
+        if (known) {
+            status.set(
+                new BrsString("result"),
+                toAssociativeArray({ rokuCustomerId: this.channelStore.getRokuCustomerId() })
+            );
+        }
+        status.set(new BrsString("command"), command);
+        const context = request.get(new BrsString("context"));
+        if (!(context instanceof BrsInvalid)) {
+            status.set(new BrsString("context"), context);
+        }
+        super.setValue("requestStatus", status);
     }
 
     /**

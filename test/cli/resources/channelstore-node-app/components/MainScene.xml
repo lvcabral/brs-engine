@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--
-    Exercises every command documented for the ChannelStore node against its fakeServer mock: the
-    order/deltaOrder inputs, getUserData's attribute filtering, the channel-credential pair, and the
-    partner-order (transactional purchase) pair. All of these complete synchronously when `command` is
-    assigned, so the results are read back on the next statement; `orderStatus` is read through an
-    observer instead, to prove the result fields still notify.
+    Exercises every command documented for the ChannelStore node: the order/deltaOrder inputs,
+    getUserData's attribute filtering, the channel-credential pair, and the partner-order
+    (transactional purchase) pair against the fakeServer mock, plus GetRokuCustomerId through the
+    generic request framework (`request`/`requestStatus`), which needs no fakeServer. All of these
+    complete synchronously when `command` or `request` is assigned, so the results are read back on
+    the next statement; `orderStatus` and `requestStatus` are also read through observers, to prove
+    the result fields still notify.
 -->
 <component name="MainScene" extends="Scene">
     <script type="text/brightscript"><![CDATA[
@@ -16,6 +18,7 @@
         runChannelCred()
         runPartnerOrder()
         runFakeServerOff()
+        runCustomerId()
     end sub
 
     function newStore(fake as boolean) as object
@@ -218,6 +221,33 @@
         store.command = "requestPartnerOrder"
         print "requestPartnerOrderStatus.status: " + store.requestPartnerOrderStatus.status
         print "requestPartnerOrderStatus.errorCode: " + store.requestPartnerOrderStatus.errorCode
+    end sub
+
+    ' GetRokuCustomerId goes through the generic request framework: `request` in, `requestStatus` out,
+    ' echoing the command and context. It works without fakeServer, and is stable across stores.
+    sub runCustomerId()
+        print "-- GetRokuCustomerId --"
+        m.customerStore = newStore(false)
+        m.customerStore.observeFieldScoped("requestStatus", "onRequestStatus")
+        m.customerStore.request = { command: "GetRokuCustomerId", context: { id: "cid-1" } }
+        m.firstCustomerId = m.customerStore.requestStatus.result.rokuCustomerId
+        other = newStore(true)
+        other.request = { command: "GetRokuCustomerId" }
+        print "stable across stores: "; (other.requestStatus.result.rokuCustomerId = m.firstCustomerId)
+        print "context present: "; (other.requestStatus.context <> invalid)
+        m.customerStore.request = { command: "NoSuchCommand", context: { id: "bad-1" } }
+    end sub
+
+    sub onRequestStatus(event as object)
+        status = event.getData()
+        print "requestStatus: " + status.status.toStr() + " " + status.statusMessage + " " + status.command + " " + status.context.id
+        if status.status = 1
+            id = status.result.rokuCustomerId
+            print "rokuCustomerId length: " + len(id).toStr()
+            print "rokuCustomerId is hex: "; (CreateObject("roRegex", "^[0-9a-f]{32}$", "").isMatch(id))
+        else
+            print "result present: "; (status.result <> invalid)
+        end if
     end sub
     ]]></script>
 </component>
