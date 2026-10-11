@@ -40,7 +40,7 @@ This repository is organized as a [monorepo](https://en.wikipedia.org/wiki/Monor
 
 ### For web applications, PWAs, and Electron apps
 
-The browser package provides a complete BrightScript interpreter that runs directly in browser environments with full support for the BrightScript language up to Roku OS version 15.3.
+The browser package provides a complete BrightScript interpreter that runs directly in browser environments with full support for the BrightScript language up to Roku OS version 16.0.
 
 - **Client-side execution** - No server required
 - **Web Worker** - Interpreter runs in a Web Worker, optimized for browser performance

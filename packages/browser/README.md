@@ -30,7 +30,7 @@ This package includes a **Web Worker** library and an **Engine API** library for
 
 ### ⚙️ BrightScript Interpreter
 
-- Full BrightScript language interpreter, with specs aligned up to Roku OS 15.3
+- Full BrightScript language interpreter, with specs aligned up to Roku OS 16.0
 - **Draw 2D API** - Full support for the BrightScript 2D drawing components
 - **SceneGraph Framework** - Beta support for the BrightScript SceneGraph components (see section below)
 - **Video Playback** - Via `roVideoPlayer` and `Video` node

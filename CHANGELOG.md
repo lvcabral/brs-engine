@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.6.1"></a>
+
+## [v2.6.1 - Server-Sent Events and Roku Customer ID](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.1) - 10 October 2026
+
+This release completes the two Roku OS 16.0 features left out of v2.6.0. `roUrlTransfer` now supports **Server-Sent Events (SSE)** through the new `AsyncGetSSEvents()` method, delivering real streaming `roSSEvent`s to the message port on **both** packages — on Node.js/CLI the request runs in a small per-transfer helper process, and on the browser package the `fetch()` runs on the main thread, bridged to the worker via shared memory. The SceneGraph `ChannelStore` node gains the **`GetRokuCustomerId`** command, sent through its generic request framework (`request`/`requestStatus` fields), returning the new `customerId` device-information property (configurable, see [customization](docs/customization.md#device-and-account-identifiers)). A new guide documents how to run [Rooibos unit tests with the CLI](docs/rooibos-testing.md), headlessly on a developer machine or CI runner. Also fixed: two Sonar reliability issues (a `roRegex` free-spacing loop and unhandled promise rejections in the browser example app). Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Added Server-Sent Events support to `roUrlTransfer` via `AsyncGetSSEvents()` and the new `roSSEvent` (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1240](https://github.com/lvcabral/brs-engine/pull/1240)
+* (brs) Resolved Sonar reliability issues in `roRegex` and the browser example app by [@lvcabral](https://github.com/lvcabral) in [#1241](https://github.com/lvcabral/brs-engine/pull/1241)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.6.1)
+
+* (rsg) Added the `GetRokuCustomerId` command to the `ChannelStore` node (Roku OS 16.0) by [@lvcabral](https://github.com/lvcabral) in [#1242](https://github.com/lvcabral/brs-engine/pull/1242)
+
+#### Documentation
+
+* Added a guide for running Rooibos unit tests with the CLI by [@lvcabral](https://github.com/lvcabral) in [#1239](https://github.com/lvcabral/brs-engine/pull/1239)
+* Updated the documented Roku OS baseline to 16.0 across the package READMEs by [@lvcabral](https://github.com/lvcabral)
+
+#### Chores, Build and Dependencies
+
+* build(deps-dev): bump `vitest` from 3.2.7 to 4.1.11 by @dependabot in [#1225](https://github.com/lvcabral/brs-engine/pull/1225)
+* build(deps): bump `webpack-dev-middleware` from 8.0.3 to 8.3.0 by @dependabot in [#1238](https://github.com/lvcabral/brs-engine/pull/1238)
+* Updated the `external/dev-doc` submodule reference
+
+[Full Changelog][v2.6.1]
+
 <a name="v2.6.0"></a>
 
 ## [v2.6.0 - Effect Node, roWebSocket and Draw2D Updates](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.0) - 14 September 2026
@@ -1910,6 +1940,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.6.1]: https://github.com/lvcabral/brs-engine/compare/v2.6.0...v2.6.1
 [v2.6.0]: https://github.com/lvcabral/brs-engine/compare/v2.5.4...v2.6.0
 [v2.5.4]: https://github.com/lvcabral/brs-engine/compare/v2.5.3...v2.5.4
 [v2.5.3]: https://github.com/lvcabral/brs-engine/compare/v2.5.2...v2.5.3
