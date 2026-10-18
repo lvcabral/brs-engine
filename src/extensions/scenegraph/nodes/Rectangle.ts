@@ -32,13 +32,14 @@ export class Rectangle extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const scale = this.getValueJS("scale") as number[];
-        const drawTrans = this.getDrawTranslation(origin, angle, scale);
+        const ownScale = this.getOwnScale();
+        const drawTrans = this.getDrawTranslation(origin, angle, ownScale);
+        const scale = this.getEffectiveScale(ownScale);
         const size = this.getDimensions();
         const rotation = angle + this.getRotation();
         const color = this.getValueJS("color") as number;
         opacity = opacity * this.getOpacity();
-        const center = this.getScaleRotateCenter();
+        const center = angle !== 0 && this.getRotation() === 0 ? [0, 0] : this.getScaleRotateCenter();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         applyNodeEffect(
             this,
@@ -50,9 +51,9 @@ export class Rectangle extends Group {
             },
             rotation,
             center,
-            [scale[0], scale[1]]
+            scale
         );
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, ownScale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
