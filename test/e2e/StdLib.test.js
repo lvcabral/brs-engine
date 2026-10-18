@@ -282,6 +282,9 @@ describe("end to end standard library", () => {
             "arr-reg         String          roString",
             "arr-upper       String          roString",
             "arr-set         String          roString",
+            "var-after       Integer         roInteger       roInteger",
+            "json-after      Integer         Integer         roInteger",
+            "str-after       String          roString        roString",
         ]);
     });
     test("stdlib/end.brs", async () => {

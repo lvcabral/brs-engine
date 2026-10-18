@@ -1,4 +1,5 @@
-import { BrsType, isBoxable, isBoxedNumber } from "..";
+import { BrsType, isBoxedNumber } from "..";
+import { containerMember } from "../Boxing";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
@@ -18,8 +19,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         this.elements = [];
         if (elements) {
             for (const element of elements) {
-                this.addChildRef(element);
-                this.elements.push(element);
+                this.elements.push(this.addChildRef(element));
             }
         }
         this.listIndex = -1;
@@ -119,7 +119,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
-            this.addChildRef(value);
+            value = this.addChildRef(value);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
         }
@@ -155,7 +155,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     add(element: BrsType, onTail: boolean = true) {
-        this.addChildRef(element);
+        element = this.addChildRef(element);
         if (onTail) {
             this.elements.push(element);
         } else {
@@ -233,12 +233,13 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         }
     }
 
-    addChildRef(value: BrsType | undefined) {
+    /** Takes a reference on a component member; returns what to store (see `containerMember`). */
+    addChildRef<T extends BrsType | undefined>(value: T): T {
         if (value instanceof BrsComponent) {
             value.addReference();
-        } else if (value && isBoxable(value)) {
-            value.legacy = true;
+            return value;
         }
+        return value ? containerMember(value) : value;
     }
 
     removeChildRef(value: BrsType | undefined) {

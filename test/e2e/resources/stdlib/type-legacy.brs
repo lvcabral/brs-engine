@@ -47,4 +47,17 @@ sub main()
     arrSet = [""]
     arrSet[0] = value1.left(1)
     print "arr-set", type(arrSet[0]), type(arrSet[0], 3)
+    'A container keeps its own copy: the variable a value came from keeps its type (Roku Express 4K+, OS 15)
+    num = 5
+    numAA = { pocket: num }
+    numArr = [num]
+    print "var-after", type(num), type(numAA.pocket), type(numArr[0])
+    json = ParseJson("{""p"":5}")
+    p = Int(json.p)
+    pAA = { pocket: p }
+    print "json-after", type(json.p), type(p), type(pAA.pocket)
+    str = "x"
+    strAA = { s: str }
+    strArr = [str]
+    print "str-after", type(str), type(strAA.s), type(strArr[0])
 end sub

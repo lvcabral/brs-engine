@@ -34,8 +34,7 @@ export class IfList {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
-            const elements = this.component.getValue();
-            elements.push(tvalue);
+            this.component.add(tvalue, true);
             return BrsInvalid.Instance;
         },
     });

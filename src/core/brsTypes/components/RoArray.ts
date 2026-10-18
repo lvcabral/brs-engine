@@ -12,7 +12,7 @@ import {
     jsValueOf,
     isNumberKind,
 } from "..";
-import { boxForFieldCopy, CopyVisited } from "../Boxing";
+import { boxForFieldCopy, containerMember, CopyVisited, literalMember } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -38,12 +38,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         this.elements = [];
         if (args.length === 1 && Array.isArray(args[0])) {
             for (const element of args[0]) {
-                if (isBoxable(element) && isNumberKind(element.kind) && element.legacy) {
-                    // set the literal flag of numeric values, when legacy was already set, to cover a Roku edge case for Type()
-                    element.literal = true;
-                }
-                this.addChildRef(element);
-                this.elements.push(element);
+                this.elements.push(this.addChildRef(literalMember(element)));
             }
         } else if (args.length === 2 && isAnyNumber(args[0]) && (isBrsBoolean(args[1]) || isAnyNumber(args[1]))) {
             this.maxSize = jsValueOf(args[0]) as number;
@@ -115,7 +110,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     add(element: BrsType, onTail: boolean = true) {
-        this.addChildRef(element);
+        element = this.addChildRef(element);
         if (onTail) {
             this.elements.push(element);
         } else {
@@ -222,7 +217,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
-            this.addChildRef(value);
+            value = this.addChildRef(value);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
         }
@@ -302,12 +297,13 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         }
     }
 
-    addChildRef(value: BrsType | undefined) {
+    /** Takes a reference on a component member; returns what to store (see `containerMember`). */
+    addChildRef<T extends BrsType | undefined>(value: T): T {
         if (value instanceof BrsComponent) {
             value.addReference();
-        } else if (value && isBoxable(value)) {
-            value.legacy = true;
+            return value;
         }
+        return value ? containerMember(value) : value;
     }
 
     removeChildRef(value: BrsType | undefined) {
