@@ -101,6 +101,9 @@ export class IfDraw2D {
         rgba?: number,
         opacity?: number
     ) {
+        if (scaleX === 0 || scaleY === 0) {
+            return;
+        }
         const { x: baseX, y: baseY } = this.component;
         const ctx = this.component.getContext();
         const style = resolveBlitStyle(rgba, opacity);
