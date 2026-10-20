@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="Sink" extends="Task">
+    <script type="text/brightscript" uri="Sink.brs" />
+    <interface>
+        <field id="entry" type="assocarray" />
+        <field id="save" type="boolean" />
+        <field id="received" type="integer" />
+        <field id="done" type="boolean" />
+    </interface>
+</component>

@@ -101,7 +101,7 @@ describe("Phase 3b direct fan-out", () => {
         expect(got.value).toBe("bar");
     });
 
-    test("flush respects the single slot: drains one, leaves the rest until the reader consumes", () => {
+    test("flush packs consecutive sets into one batch in the single slot (#1263)", () => {
         const task = renderSideTask();
         const reader = attachFanout(task);
 
@@ -110,7 +110,29 @@ describe("Phase 3b direct fan-out", () => {
 
         task.flushFanout();
         expect(reader.getVersion()).toBe(1);
-        expect(reader.load(true).key).toBe("a"); // resets version to 0
+        const payload = reader.load(true); // resets version to 0
+        expect(payload.batch.map((update) => update.key)).toEqual(["a", "b"]);
+
+        task.flushFanout(); // nothing left queued
+        expect(reader.getVersion()).toBe(0);
+    });
+
+    test("flush respects the single slot: a non-set update travels alone and waits for the reader", () => {
+        const task = renderSideTask();
+        const reader = attachFanout(task);
+
+        task.syncRemoteField("a", new BrsString("1"), "node", "ABC123");
+        task.fanoutQueue.push({ id: 1, action: "call", type: "node", address: "ABC123", key: "fn", value: [] });
+        task.syncRemoteField("b", new BrsString("2"), "node", "ABC123");
+
+        task.flushFanout();
+        expect(reader.getVersion()).toBe(1);
+        task.flushFanout(); // slot still occupied: nothing more is written
+        expect(task.fanoutQueue.length).toBe(2);
+        expect(reader.load(true).key).toBe("a");
+
+        task.flushFanout();
+        expect(reader.load(true).action).toBe("call");
 
         task.flushFanout();
         expect(reader.load(true).key).toBe("b");

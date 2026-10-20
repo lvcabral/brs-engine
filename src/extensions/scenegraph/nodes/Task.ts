@@ -16,6 +16,7 @@ import {
     SyncType,
     RoArray,
     RoAssociativeArray,
+    RoMessagePort,
     PrimitiveKinds,
     isSyncAction,
     RuntimeError,
@@ -176,6 +177,11 @@ function buildCallFuncSnapshot(m: RoAssociativeArray): RoAssociativeArray {
  * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
  * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
  */
+/** Most fan-out `set` updates packed into one slot hand-off (see `Task.flushFanout`). */
+const FANOUT_BATCH_MAX = 1000;
+/** Soft cap on a fan-out batch's JSON length, well under the shared buffer's 16MB limit. */
+const FANOUT_BATCH_MAX_CHARS = 1024 * 1024;
+
 export class Task extends Node {
     /** Built-in Task fields defined by Roku (control/state/functionName). */
     readonly defaultFields: FieldModel[] = [
@@ -511,6 +517,27 @@ export class Task extends Node {
     }
 
     /**
+     * A port held by the render-side copy of a launched task's `m` is never drained: the task's
+     * real port lives on its worker and receives field changes through fan-out, and the render copy
+     * is only swept at launch (`collectPortNodeEvents`) and at stop (`dropPortNodeEvents`). Queueing
+     * an `roSGNodeEvent` there on every write leaked one event per write (lvcabral/brs-engine#1263).
+     * Pre-launch events are kept: the launch replay delivers them in bulk.
+     * @param port Message port registered as a field observer with this task as host.
+     * @returns True when the task has launched and `port` is one of its render-side `m` ports.
+     */
+    isDetachedPort(port: RoMessagePort): boolean {
+        if (!this.started || this.inThread) {
+            return false;
+        }
+        for (const value of this.m.elements.values()) {
+            if (value === port) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Sends a stop command to the worker thread to terminate execution.
      */
     stopTask() {
@@ -609,30 +636,60 @@ export class Task extends Node {
 
     /**
      * Flushes queued fan-out updates into the dedicated buffer (render thread only). Writes are
-     * synchronous and non-blocking: one update is stored whenever the single slot is free, leaving
-     * the rest queued for the next render pass so a slow task can never stall the render thread.
+     * synchronous and non-blocking: whenever the single slot is free, consecutive `set` updates are
+     * packed into one `{ batch }` payload (bounded by `FANOUT_BATCH_MAX`/`FANOUT_BATCH_MAX_CHARS`),
+     * leaving the rest queued for the next render pass so a slow task can never stall the render
+     * thread. Batching matters because each slot hand-off costs a render-loop round trip: one update
+     * per pass capped a task port-observing a hot field at a few hundred events per second
+     * (lvcabral/brs-engine#1263). Other actions (a `callFunc` request) still travel alone.
      */
     flushFanout() {
         if (!this.fanoutBuffer) {
             return;
         }
         while (this.fanoutQueue.length > 0 && this.fanoutBuffer.getVersion() === 0) {
-            const update = this.fanoutQueue.shift();
-            try {
-                this.fanoutBuffer.store(update);
-                if (sgRoot.logRendezvous) {
-                    BrsDevice.stdout.write(
-                        `debug,[rendezvous] thread ${sgRoot.threadId} flushed fan-out ${update?.type}.${update?.key} -> task thread ${this.threadId} (queue ${this.fanoutQueue.length})`
+            const parts: string[] = [];
+            let chars = 0;
+            let last: ThreadUpdate | undefined;
+            // Walk with an index and remove the consumed run with one `splice`: a `shift()` per update
+            // re-indexes the whole backlog each time, quadratic when a hot field queues thousands.
+            let consumed = 0;
+            while (
+                consumed < this.fanoutQueue.length &&
+                parts.length < FANOUT_BATCH_MAX &&
+                chars < FANOUT_BATCH_MAX_CHARS &&
+                (consumed === 0 || this.fanoutQueue[consumed].action === "set")
+            ) {
+                const update = this.fanoutQueue[consumed++];
+                try {
+                    const json = JSON.stringify(update);
+                    parts.push(json);
+                    chars += json.length;
+                    last = update;
+                } catch (err: any) {
+                    // A non-serializable payload (e.g. a value with a cycle) must never propagate out of
+                    // here: on the render thread this runs inside the render loop, so a throw would stall
+                    // every rendezvous. Drop just this update and keep draining the rest.
+                    BrsDevice.stderr.write(
+                        `error,[task:${sgRoot.threadId}] Dropped fan-out ${update.type}.${update.key} to thread ${
+                            this.threadId
+                        }: ${err?.message ?? err}`
                     );
                 }
-            } catch (err: any) {
-                // A non-serializable payload (e.g. a value with a cycle) must never propagate out of
-                // here: on the render thread this runs inside the render loop, so a throw would stall
-                // every rendezvous. Drop just this update and keep draining the rest.
-                BrsDevice.stderr.write(
-                    `error,[task:${sgRoot.threadId}] Dropped fan-out ${update?.type}.${update?.key} to thread ${
-                        this.threadId
-                    }: ${err?.message ?? err}`
+                if (update.action !== "set") {
+                    break;
+                }
+            }
+            this.fanoutQueue.splice(0, consumed);
+            if (parts.length === 0) {
+                continue;
+            }
+            this.fanoutBuffer.storeJson(parts.length === 1 ? parts[0] : `{"batch":[${parts.join(",")}]}`);
+            if (sgRoot.logRendezvous) {
+                BrsDevice.stdout.write(
+                    `debug,[rendezvous] thread ${sgRoot.threadId} flushed fan-out ${last?.type}.${last?.key}${
+                        parts.length > 1 ? ` (batch of ${parts.length})` : ""
+                    } -> task thread ${this.threadId} (queue ${this.fanoutQueue.length})`
                 );
             }
         }
@@ -1111,6 +1168,23 @@ export class Task extends Node {
         }
         // Load update from buffer and reset version to 0 (idle)
         const update = buffer.load(true);
+        if (Array.isArray(update?.batch)) {
+            // A packed run of fan-out `set` updates (see `flushFanout`), applied in send order.
+            let applied: ThreadUpdate | undefined;
+            for (const item of update.batch) {
+                applied = this.applyThreadUpdate(item) ?? applied;
+            }
+            return applied;
+        }
+        return this.applyThreadUpdate(update);
+    }
+
+    /**
+     * Applies one update loaded from a shared buffer (see `processThreadUpdate`).
+     * @param update Deserialized payload; ignored unless it is a ThreadUpdate.
+     * @returns The ThreadUpdate that was applied, if any.
+     */
+    private applyThreadUpdate(update: any): ThreadUpdate | undefined {
         if (isThreadUpdate(update)) {
             if (update.action === "ack") {
                 if (this.inThread && update.requestId !== undefined) {

@@ -814,12 +814,13 @@ export class Field {
         }
         // Snapshot the event (value + info fields) at notification time, matching the RoMessagePort
         // branch which also builds the event before deferring via pushMessage.
-        const event = this.buildEvent(callback);
-
         if (callback.observer instanceof RoMessagePort) {
-            callback.observer.pushMessage(event);
+            if (!callback.hostNode.isDetachedPort(callback.observer)) {
+                callback.observer.pushMessage(this.buildEvent(callback));
+            }
             return;
         }
+        const event = this.buildEvent(callback);
 
         // Roku-accurate deferral: if this notification comes from an engine-initiated emission
         // (grid focus bookkeeping — a direct BrightScript assignment never defers), another

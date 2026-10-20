@@ -200,7 +200,14 @@ class SharedObject {
      * @param obj Arbitrary JSON-serializable payload.
      */
     store(obj: any): void {
-        const serialized = JSON.stringify(obj);
+        this.storeJson(JSON.stringify(obj));
+    }
+
+    /**
+     * Writes an already-serialized JSON payload to the shared buffer (read back with `load`).
+     * @param serialized JSON text to store.
+     */
+    storeJson(serialized: string): void {
         const data = new TextEncoder().encode(serialized);
         this.writeToBuffer(data);
     }

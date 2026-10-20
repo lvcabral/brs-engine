@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="BurstScene" extends="Scene">
+    <script type="text/brightscript">
+        <![CDATA[
+        ' 5 writes before the Task launches (delivered by the launch replay), then a burst of
+        ' 20000 after it is running (delivered by render->task fan-out). Each must arrive once.
+        sub init()
+            m.sink = CreateObject("roSGNode", "BurstSink")
+            for i = 1 to 5
+                m.sink.entry = { "l": i }
+            end for
+            m.timer = CreateObject("roSGNode", "Timer")
+            m.timer.duration = 0.2
+            m.timer.observeField("fire", "sendBurst")
+            m.timer.control = "start"
+        end sub
+
+        sub sendBurst()
+            for i = 1 to 20000
+                m.sink.entry = { "l": i }
+            end for
+            m.sink.observeField("received", "onReceived")
+            m.sink.save = true
+        end sub
+
+        sub onReceived()
+            print "received=" ; m.sink.received
+            m.global.finished = true
+        end sub
+        ]]>
+    </script>
+</component>

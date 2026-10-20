@@ -555,6 +555,16 @@ export class SGRoot {
     }
 
     /**
+     * Hands queued render→task fan-out to every task whose slot is free (see `Task.flushFanout`),
+     * without serving any other task traffic. Safe to call between frames: runs no BrightScript.
+     */
+    flushFanouts() {
+        for (const thread of this._threads.values()) {
+            thread.task?.flushFanout();
+        }
+    }
+
+    /**
      * Updates all application tasks.
      * Processes task state and checks for active tasks.
      * @returns True if any tasks were updated, false otherwise

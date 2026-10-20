@@ -215,6 +215,28 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
     > `task-prelaunch-events-app` in `test/cli/`, which asserts **both** sides of the boundary (before `run`
     > must still arrive; after `run` exactly once).
 
+    > **Fan-out must keep up with a hot field — batch it, and never queue what nothing drains** (#1263,
+    > rooibos code coverage: one port-observed `entry` write per executed line). Three rules, each of
+    > which regressed to a hang or OOM on its own:
+    >
+    > -   **Batch consecutive `set`s into one slot hand-off.** `flushFanout` packs them as
+    >     `{ batch: [...] }` (≤ `FANOUT_BATCH_MAX` updates / `FANOUT_BATCH_MAX_CHARS`) and
+    >     `processThreadUpdate` applies them in order. One update per hand-off costs a render-loop round
+    >     trip each, so tens of thousands of writes took minutes. A non-`set` (a render→Task `callFunc`
+    >     request) still travels **alone** — its caller blocks on the `callBackBuffer` reply.
+    > -   **Drain the queue with one `splice` per batch, never `shift()` per update** — `shift()`
+    >     re-indexes the whole backlog, which went quadratic and starved the render thread (a 2s
+    >     async test timed out). `RoSGScreen`'s frame-cap wait also calls `sgRoot.flushFanouts()` so slots
+    >     refill as the task drains them, not once per frame.
+    > -   **Once the task has launched (`started`), don't queue events on its render-side `m` ports.**
+    >     `Task.isDetachedPort` makes `Field.executeCallbacks` skip them: the task's real port receives
+    >     via fan-out, and the render copy is swept only at launch/stop, so each write leaked a full
+    >     `roSGNodeEvent` (~9KB). Pre-launch events are still queued — the launch replay needs them.
+    >
+    > Regression: `task-port-burst-app` in `test/cli/` (5 pre-launch + 20000 post-launch writes, each
+    > received exactly once, bounded wall time); `DirectRendezvous.test.js` pins the batching/slot rules.
+    > Probe: `test/simulator/probes/port-observer-leak-probe/`.
+
     > **A task thread's uncaught error terminates the whole app** (device-verified), exactly as it does on
     > the app thread — the task node is _not_ moved to `state = "stop"` so the app can carry on, and there
     > is no "the thread died but the app lives" state to model. A task worker posts `end,<reason>` only when

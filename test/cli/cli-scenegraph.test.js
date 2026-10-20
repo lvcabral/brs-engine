@@ -1340,6 +1340,26 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Delivers a burst of writes to a field a Task port-observes, once each and promptly", async () => {
+        let command = ["node", brsCliPath, "-r task-port-burst-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // lvcabral/brs-engine#1263 (rooibos code coverage): render->task fan-out handed over one update
+        // per frame, so 20000 writes took minutes and the app's bounded loop gave up before the Task
+        // reported (no `received=` line). The 5 pre-launch writes also pin that the launch replay and
+        // fan-out don't double-deliver.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Task Port Burst ===",
+            "received= 20005",
+            "=== Task Port Burst Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 60000);
+
     it("Services SceneGraph timers/rendering through a sleep()+getMessage() poll loop, not just wait()", async () => {
         let command = ["node", brsCliPath, "-r sleep-poll-app", "source/main.brs", "-c 0"].join(" ");
 
