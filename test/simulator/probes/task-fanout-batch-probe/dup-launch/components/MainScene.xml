@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.rounds = 20
+        m.round = 0
+        m.reports = 0
+        m.dups = 0
+        m.tasks = []
+        m.timer = createObject("roSGNode", "Timer")
+        m.timer.duration = 0.001
+        m.timer.repeat = true
+        m.timer.observeField("fire", "onFire")
+        m.timer.control = "start"
+    end sub
+
+    ' Launches from a Timer observer: if it fires inside the render loop's frame-cap wait,
+    ' flushFanouts() hands the post-RUN write to the slot before checkTaskRun's replay sweep.
+    sub onFire()
+        if m.round >= m.rounds
+            m.timer.control = "stop"
+            return
+        end if
+        m.round++
+        t = createObject("roSGNode", "WorkerTask")
+        t.observeField("report", "onReport")
+        t.control = "run"
+        t.request = "r" + m.round.toStr()
+        m.tasks.push(t)
+    end sub
+
+    sub onReport(event as object)
+        data = event.getData()
+        m.reports++
+        if data.split(",").count() <> 1 then m.dups++
+        print "TASK SAW: ["; data; "]"
+        if m.reports = m.rounds
+            print "ROUNDS=" + m.rounds.toStr() + " DUPLICATED=" + m.dups.toStr()
+            m.top.done = true
+        end if
+    end sub
+    ]]></script>
+</component>
