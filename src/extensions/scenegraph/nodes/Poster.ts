@@ -117,9 +117,7 @@ export class Poster extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const ownScale = this.getOwnScale();
-        const drawTrans = this.getDrawTranslation(origin, angle, ownScale);
-        const effScale = this.getEffectiveScale(ownScale);
+        const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();
         const loadStatus = this.getValueJS("loadStatus") as string;
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
@@ -127,7 +125,7 @@ export class Poster extends Group {
             this.scaleToResolution(rect);
         }
         const rotation = angle + this.getRotation();
-        const center = angle !== 0 && this.getRotation() === 0 ? [0, 0] : this.getScaleRotateCenter();
+        const center = this.getScaleRotateCenter();
         const displayMode = this.getValueJS("loadDisplayMode") as string;
         opacity = opacity * this.getOpacity();
         if (this.bitmap instanceof RoBitmap && this.bitmap.isValid()) {
@@ -174,19 +172,8 @@ export class Poster extends Group {
                     bitmap.scaleMode = 1;
                     if (mode === "scaletofit") {
                         this.drawImage(bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
-                        const scaled = this.applyScale(rect, effScale);
-                        rect.x = scaled.x;
-                        rect.y = scaled.y;
-                        rect.width = scaled.width;
-                        rect.height = scaled.height;
                     } else if (mode === "scaletozoom") {
-                        const zoomSource = this.scaleToZoom(rect);
-                        const scaled = this.applyScale(rect, effScale);
-                        rect.x = scaled.x;
-                        rect.y = scaled.y;
-                        rect.width = scaled.width;
-                        rect.height = scaled.height;
-                        draw2D?.doDrawCroppedBitmap(bitmap, zoomSource, rect, rgba, alpha);
+                        draw2D?.doDrawCroppedBitmap(bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
                     } else {
                         // "limitsize" (already clamped above) and "noscale"/default both draw at `rect` as-is.
                         this.drawImage(bitmap, rect, rotation, alpha, draw2D, rgba);
@@ -195,19 +182,13 @@ export class Poster extends Group {
                 rotation,
                 center
                 // `scale` is deliberately left at applyNodeEffect's default ([1,1]): `Group.drawImage`
-                // reads this node's effective scale directly and applies it internally regardless of
+                // reads this node's `scale` field directly and applies it internally regardless of
                 // what runs it, so composing the same scale again here would double it. Known gap:
                 // the effect's clip/border/gradient do not scale with a scaled Poster (the image
                 // content still does, via `drawImage`, unaffected by this).
             );
-        } else {
-            const scaled = this.applyScale(rect, effScale);
-            rect.x = scaled.x;
-            rect.y = scaled.y;
-            rect.width = scaled.width;
-            rect.height = scaled.height;
         }
-        this.updateBoundingRects(rect, origin, rotation, ownScale);
+        this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }

@@ -79,9 +79,8 @@ export class Label extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const ownScale = this.getOwnScale();
-        const drawTrans = this.getDrawTranslation(origin, angle, ownScale);
-        const scale = this.getEffectiveScale(ownScale);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         const rotation = angle + this.getRotation();
@@ -89,7 +88,7 @@ export class Label extends Group {
         this.measured = this.renderLabel(rect, rotation, opacity, draw2D, scale);
         rect.width = Math.max(this.measured.width, size.width);
         rect.height = Math.max(this.measured.height, size.height);
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, ownScale);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }

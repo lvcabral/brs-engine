@@ -87,9 +87,8 @@ export class SimpleLabel extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const ownScale = this.getOwnScale();
-        const drawTrans = this.getDrawTranslation(origin, angle, ownScale);
-        const scale = this.getEffectiveScale(ownScale);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rect = { x: drawTrans[0], y: drawTrans[1], width: 0, height: 0 };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
@@ -97,7 +96,7 @@ export class SimpleLabel extends Group {
         this.measured = this.renderLabel(rect, rotation, opacity, draw2D, scale);
         rect.width = this.measured.width;
         rect.height = this.measured.height;
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, ownScale);
+        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
@@ -145,7 +144,7 @@ export class SimpleLabel extends Group {
         } else if (vertOrigin === "baseline") {
             rect.y = drawFont.getBaselineDrawY(rect.y);
         }
-        scale ??= this.getEffectiveScale();
+        scale ??= this.getValueJS("scale") as number[];
         this.withScale(draw2D, pivotX, pivotY, scale, () => {
             draw2D?.doDrawRotatedText(text, rect.x, rect.y, color, opacity, drawFont, rotation);
         });

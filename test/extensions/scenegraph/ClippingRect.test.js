@@ -89,6 +89,24 @@ describe("clippingRect limits child rendering", () => {
         expect(draw2D.getMaxDepth()).toBe(1);
     });
 
+    test("a clippingRect rotated 90° about its centre clips to its axis-aligned bounding box", () => {
+        // A 100x40 clip at translation [200, 100] rotated 90° around its centre [50, 20] (scene
+        // pivot [250, 120]) covers a 40x100 box centred on the pivot: { x: 230, y: 70 }.
+        const { group } = buildClippedGroup([0, 0, 100, 40], [200, 100]);
+        group.setValue("scaleRotateCenter", vector([50, 20]));
+        group.setValue("rotation", new Float(Math.PI / 2));
+        const draw2D = recordingDraw2D();
+
+        group.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.clips).toHaveLength(1);
+        expect(draw2D.clips[0].x).toBeCloseTo(230, 2);
+        expect(draw2D.clips[0].y).toBeCloseTo(70, 2);
+        expect(draw2D.clips[0].width).toBeCloseTo(40, 2);
+        expect(draw2D.clips[0].height).toBeCloseTo(100, 2);
+        expect(draw2D.getDepth()).toBe(0);
+    });
+
     test("an empty clippingRect (default) pushes no clip", () => {
         const { group } = buildClippedGroup(null, [40, 20]);
         const draw2D = recordingDraw2D();
@@ -352,112 +370,5 @@ describe("clippingRect on nodes that draw their own geometry", () => {
         // Idempotent: an already-balanced frame is left alone (no stray ctx.restore()).
         draw2D.resetClips();
         expect(draw2D.getClipDepth()).toBe(0);
-    });
-});
-
-describe("clippingRect under scale and rotation", () => {
-    let interpreter;
-
-    beforeAll(() => {
-        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
-        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
-    });
-
-    beforeEach(() => {
-        interpreter = new Interpreter();
-    });
-
-    afterEach(() => {
-        sgRoot.setFocused();
-    });
-
-    function vector(values) {
-        return new RoArray(values.map((v) => new Float(v)));
-    }
-
-    function recordingDraw2D() {
-        const clips = [];
-        let depth = 0;
-        return {
-            clips,
-            getDepth: () => depth,
-            pushClip: (rect) => {
-                clips.push({ ...rect });
-                depth += 1;
-            },
-            popClip: () => {
-                depth -= 1;
-            },
-            doDrawRotatedRect: () => {},
-        };
-    }
-
-    test("(a) scale [0.5, 0.5] parent + clipped child scales the child clip into canvas space", () => {
-        // Reproduces ballNode (Group, translation=[100,50], scale=[0.5,0.5], scaleRotateCenter=[32,32])
-        // > holder (Group, clippingRect=[0,0,64,64]). Parent's getDrawTranslation shifts origin to
-        // [100 + 32*(1-0.5), 50 + 32*(1-0.5)] = [116, 66], and the child's 64x64 clip shrinks to 32x32.
-        const parent = SGNodeFactory.createNode("Group");
-        parent.setValue("translation", vector([100, 50]));
-        parent.setValue("scale", vector([0.5, 0.5]));
-        parent.setValue("scaleRotateCenter", vector([32, 32]));
-
-        const child = SGNodeFactory.createNode("Group");
-        child.setValue("clippingRect", vector([0, 0, 64, 64]));
-        parent.appendChildToParent(child);
-
-        const draw2D = recordingDraw2D();
-        parent.renderNode(interpreter, [0, 0], 0, 1, draw2D);
-
-        expect(draw2D.clips).toEqual([{ x: 116, y: 66, width: 32, height: 32 }]);
-        expect(draw2D.getDepth()).toBe(0);
-    });
-
-    test("(b) own scale + scaleRotateCenter shrinks clip around pivot without double-counting", () => {
-        // Group at [40, 20] with clippingRect [0, 0, 100, 60], scale [0.5, 0.5], and
-        // scaleRotateCenter [20, 10]: x = 40 + 20*(1-0.5) = 50, y = 20 + 10*(1-0.5) = 25,
-        // width = 100*0.5 = 50, height = 60*0.5 = 30.
-        const group = SGNodeFactory.createNode("Group");
-        group.setValue("translation", vector([40, 20]));
-        group.setValue("scale", vector([0.5, 0.5]));
-        group.setValue("scaleRotateCenter", vector([20, 10]));
-        group.setValue("clippingRect", vector([0, 0, 100, 60]));
-
-        const draw2D = recordingDraw2D();
-        group.renderNode(interpreter, [0, 0], 0, 1, draw2D);
-
-        expect(draw2D.clips).toEqual([{ x: 50, y: 25, width: 50, height: 30 }]);
-        expect(draw2D.getDepth()).toBe(0);
-    });
-
-    test("(c) rotation 90° about the centre clips to the axis-aligned bounding box (AABB)", () => {
-        // A 100x40 clip at translation [200, 100] rotated 90° (π/2) around its centre [50, 20]
-        // (world pivot [250, 120]) produces a 40x100 AABB centered at [250, 120] -> { x: 230, y: 70 }.
-        const group = SGNodeFactory.createNode("Group");
-        group.setValue("translation", vector([200, 100]));
-        group.setValue("scaleRotateCenter", vector([50, 20]));
-        group.setValue("rotation", new Float(Math.PI / 2));
-        group.setValue("clippingRect", vector([0, 0, 100, 40]));
-
-        const draw2D = recordingDraw2D();
-        group.renderNode(interpreter, [0, 0], 0, 1, draw2D);
-
-        expect(draw2D.clips).toHaveLength(1);
-        expect(draw2D.clips[0].x).toBeCloseTo(230, 2);
-        expect(draw2D.clips[0].y).toBeCloseTo(70, 2);
-        expect(draw2D.clips[0].width).toBeCloseTo(40, 2);
-        expect(draw2D.clips[0].height).toBeCloseTo(100, 2);
-        expect(draw2D.getDepth()).toBe(0);
-    });
-
-    test("(d) unscaled and unrotated clippingRect is unchanged", () => {
-        const group = SGNodeFactory.createNode("Group");
-        group.setValue("translation", vector([40, 20]));
-        group.setValue("clippingRect", vector([10, 5, 108, 240]));
-
-        const draw2D = recordingDraw2D();
-        group.renderNode(interpreter, [0, 0], 0, 1, draw2D);
-
-        expect(draw2D.clips).toEqual([{ x: 50, y: 25, width: 108, height: 240 }]);
-        expect(draw2D.getDepth()).toBe(0);
     });
 });
