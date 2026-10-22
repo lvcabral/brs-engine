@@ -13,6 +13,8 @@ containers, on a real Roku vs. brs-engine. It reruns the cases already pinned by
 | `lists` | `roList` `AddTail`/`AddHead`/index set. |
 | `xmlLists` | `roXMLList` `AddHead` order, index set and `Push`. |
 | `nodes` | `ButtonGroup.buttons` set directly and grown by appending a `Button` child. |
+| `storePaths` | Every way of storing a computed/literal/JSON number, boolean and `invalid` (AA assign, index set, `Push`, `Unshift`, `AddTail`, `AddHead`). |
+| `boxedStringArgs` | `Keys()`/`Split()` items (`roString`) passed back to `ReadMulti`, `Read`, `GetAttributes()[…]` and AA indexes. |
 
 ## Run
 
@@ -30,7 +32,7 @@ Output format: `PROBE|<case>|<values...>`. Engine baseline is `engine-trace.txt`
 ## Results (Streaming Stick, OS 15.3.4, 2026-10-21)
 
 `device-trace.txt` is the device capture and `engine-trace.txt` the engine output; they match line for line
-except `bg-child` (see below). The rule the device follows:
+except the two open cases below. The rule the device follows:
 
 | How the value gets into the container | Numbers and booleans | `invalid` | Strings |
 | --- | --- | --- | --- |
@@ -44,7 +46,13 @@ what other `invalid`/boolean values report. `Split`, `Tokenize`, `roRegex.Split`
 
 `roXMLList.AddHead` adds at the head.
 
-Open: `bg-child`: appending a `Button` child to a `ButtonGroup` does not grow its `buttons` field on the
+`Keys()`/`Split()` items work wherever a string is taken (`ReadMulti`, `Read`, AA indexes).
+
+Open (both also differ on master):
+
+- `xml-index`: indexing an `roXMLElement` by a string (`xml["title"]` or `xml[names[0]]`) is a runtime error
+  on the device (`&he7`, 231); the engine returns the named child elements.
+- `bg-child`: appending a `Button` child to a `ButtonGroup` does not grow its `buttons` field on the
 device (count stays 2); the engine adds the button text (count 3).
 
 `test/e2e/resources/stdlib/type-legacy-store.brs` pins the non-SceneGraph cases against the device output.

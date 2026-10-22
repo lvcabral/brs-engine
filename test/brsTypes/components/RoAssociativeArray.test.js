@@ -56,6 +56,15 @@ describe("RoAssociativeArray", () => {
         });
     });
 
+    describe("constructor", () => {
+        it("keeps the members it is built from unchanged", () => {
+            const literal = new Int32(5, true);
+            const aa = new RoAssociativeArray([{ name: new BrsString("k"), value: literal }]);
+            expect(aa.get(new BrsString("k"))).toBe(literal);
+            expect(literal.legacy).toBe(false);
+        });
+    });
+
     describe("set", () => {
         it("sets values with new keys", () => {
             let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, isUnboxable } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -143,6 +143,9 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     get(index: BrsType) {
+        if (isUnboxable(index)) {
+            index = index.unbox();
+        }
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element indexes must be strings");
         }
@@ -150,6 +153,9 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     set(index: BrsType, value: BrsType) {
+        if (isUnboxable(index)) {
+            index = index.unbox();
+        }
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element indexes must be strings");
         }
@@ -174,6 +180,9 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     getAttribute(index: BrsType) {
+        if (isUnboxable(index)) {
+            index = index.unbox();
+        }
         if (index.kind !== ValueKind.String) {
             throw new Error("XML Element attribute must be strings");
         }

@@ -9,6 +9,7 @@ import {
     StdlibArgument,
     RoArray,
     isBrsString,
+    isUnboxable,
 } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
 import { Interpreter } from "../interpreter";
@@ -66,7 +67,8 @@ export const Run = new Callable(
         },
         impl: (interpreter: Interpreter, filenameArray: BrsComponent, ...args: BrsType[]) => {
             if (filenameArray instanceof RoArray && filenameArray.getElements().every(isBrsString)) {
-                return runFiles(interpreter, filenameArray.getElements() as BrsString[], args);
+                const filenames = filenameArray.getElements().map((name) => (isUnboxable(name) ? name.unbox() : name));
+                return runFiles(interpreter, filenames as BrsString[], args);
             }
 
             // RBI seems to hard-reboot when passed a non-empty associative array, but returns invalid for empty

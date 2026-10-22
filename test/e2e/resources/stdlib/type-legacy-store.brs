@@ -6,6 +6,7 @@ sub main()
     lists()
     xmlLists()
     storePaths()
+    boxedStringArgs()
 end sub
 
 sub out(name as string, values as object)
@@ -170,4 +171,20 @@ sub storePaths()
     bs = box("a,b")
     out("box-split", t2(bs.Split(",")[0]))
     out("aa-keys-json", t2(j.Keys()[0]))
+end sub
+
+sub boxedStringArgs()
+    sec = CreateObject("roRegistrySection", "TypeLegacyStore")
+    sec.Write("a", "1")
+    sec.Write("b", "2")
+    out("readmulti-keys", [FormatJson(sec.ReadMulti({ a: 0, b: 0 }.Keys()))])
+    out("readmulti-split", [FormatJson(sec.ReadMulti("a,b".Split(",")))])
+    out("read-split", [sec.Read("a,b".Split(",")[1])])
+    xml = CreateObject("roXMLElement")
+    xml.Parse("<r title=""T""><x>inner</x></r>")
+    names = "title,x".Split(",")
+    out("xml-attr", [xml@title, xml.GetAttributes()[names[0]], xml.GetNamedElements(names[1]).Count().ToStr()])
+    aa = {}
+    aa[names[0]] = 1
+    out("aa-index", [aa.title.ToStr(), aa[names[0]].ToStr()])
 end sub

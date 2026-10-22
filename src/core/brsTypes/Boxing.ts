@@ -45,34 +45,26 @@ export type MemberStore = "build" | "add" | "assign";
  * @returns The member to store.
  */
 export function containerMember<T extends BrsType>(value: T, store: MemberStore = "build", legacyInvalid = false): T {
-    if (!isBoxable(value)) {
+    if (store === "build" || !isBoxable(value)) {
         return value;
     }
     switch (value.kind) {
-        case ValueKind.Invalid: {
-            if (store === "build") {
-                return value;
-            }
+        case ValueKind.Invalid:
             return (store === "add" && legacyInvalid ? BrsInvalid.Legacy : BrsInvalid.Instance) as unknown as T;
-        }
         case ValueKind.Boolean:
         case ValueKind.Int32:
         case ValueKind.Int64:
         case ValueKind.Float:
-        case ValueKind.Double: {
+        case ValueKind.Double:
             if (store === "add") {
                 return value.literal && value.legacy ? value : withFlags(value, true, true);
-            } else if (store === "assign") {
-                return value.literal ? withFlags(value, false, false) : value;
             }
-            break;
-        }
+            return value.literal ? withFlags(value, false, false) : value;
         case ValueKind.String:
-            break;
+            return value.literal && !value.legacy ? withFlags(value, true, true) : value;
         default:
             return value;
     }
-    return value.literal && !value.legacy ? withFlags(value, true, true) : value;
 }
 
 /**

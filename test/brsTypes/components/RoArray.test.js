@@ -57,6 +57,17 @@ describe("RoArray", () => {
         });
     });
 
+    describe("constructor", () => {
+        it("keeps the members it is built from unchanged", () => {
+            const literal = new Int32(5, true);
+            const flag = BrsBoolean.fromLiteral(true);
+            const arr = new RoArray([literal, flag]);
+            expect(arr.elements[0]).toBe(literal);
+            expect(arr.elements[1]).toBe(flag);
+            expect(literal.legacy).toBe(false);
+        });
+    });
+
     describe("set", () => {
         it("sets values at in-bounds indexes", () => {
             let a = new BrsString("a");

@@ -337,6 +337,11 @@ describe("end to end standard library", () => {
             "regex-split|roString|roString",
             "box-split|roString|roString",
             "aa-keys-json|roString|roString",
+            'readmulti-keys|{"a":"1","b":"2"}',
+            'readmulti-split|{"a":"1","b":"2"}',
+            "read-split|2",
+            "xml-attr|T|T|1",
+            "aa-index|1|1",
         ]);
     });
     test("stdlib/end.brs", async () => {

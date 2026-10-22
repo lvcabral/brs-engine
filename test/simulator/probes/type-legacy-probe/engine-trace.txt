@@ -73,4 +73,11 @@ PROBE|inv-after-all|Invalid|Invalid
 PROBE|regex-split|roString|roString
 PROBE|box-split|roString|roString
 PROBE|aa-keys-json|roString|roString
+PROBE|readmulti-keys|{"a":"1","b":"2"}
+PROBE|readmulti-split|{"a":"1","b":"2"}
+PROBE|read-split|2
+PROBE|xml-attr|T|T|1
+PROBE|xml-index|roXMLList
+PROBE|xml-index-lit|roXMLList
+PROBE|aa-index|1|1
 PROBE|done

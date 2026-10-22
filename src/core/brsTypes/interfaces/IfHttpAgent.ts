@@ -9,6 +9,7 @@ import {
     RoAssociativeArray,
     StdlibArgument,
     ValueKind,
+    isUnboxable,
 } from "..";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
@@ -56,7 +57,8 @@ export class IfHttpAgent {
                 if (key.toLowerCase() === "x-roku-reserved-dev-id") {
                     this.component.customHeaders.set(key, BrsDevice.deviceInfo.developerId);
                 } else {
-                    this.component.customHeaders.set(key, (value as BrsString).value);
+                    const header = isUnboxable(value) ? value.unbox() : value;
+                    this.component.customHeaders.set(key, (header as BrsString).value);
                 }
             }
             return BrsBoolean.True;

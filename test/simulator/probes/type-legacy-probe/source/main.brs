@@ -16,6 +16,7 @@ sub main()
     xmlLists()
     nodes()
     storePaths()
+    boxedStringArgs()
     out("done", [])
 end sub
 
@@ -278,4 +279,33 @@ sub storePaths()
     bs = box("a,b")
     out("box-split", t2(bs.Split(",")[0]))
     out("aa-keys-json", t2(j.Keys()[0]))
+end sub
+
+' --- Keys()/Split()/Tokenize() items (roString) passed back into APIs that take strings ---------------
+sub boxedStringArgs()
+    sec = CreateObject("roRegistrySection", "TypeLegacyProbe")
+    sec.Write("a", "1")
+    sec.Write("b", "2")
+    out("readmulti-keys", [FormatJson(sec.ReadMulti({ a: 0, b: 0 }.Keys()))])
+    out("readmulti-split", [FormatJson(sec.ReadMulti("a,b".Split(",")))])
+    out("read-split", [sec.Read("a,b".Split(",")[1])])
+    xml = CreateObject("roXMLElement")
+    xml.Parse("<r title=""T""><x>inner</x></r>")
+    names = "title,x".Split(",")
+    out("xml-attr", [xml@title, xml.GetAttributes()[names[0]], xml.GetNamedElements(names[1]).Count().ToStr()])
+    try
+        out("xml-index", [type(xml[names[0]])])
+    catch e
+        out("xml-index", ["error", e.number.ToStr()])
+    end try
+    try
+        out("xml-index-lit", [type(xml["title"])])
+    catch e
+        out("xml-index-lit", ["error", e.number.ToStr()])
+    end try
+    aa = {}
+    aa[names[0]] = 1
+    out("aa-index", [aa.title.ToStr(), aa[names[0]].ToStr()])
+    sec.Delete("a")
+    sec.Delete("b")
 end sub
