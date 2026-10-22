@@ -98,10 +98,14 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             index = index.unbox();
         }
         switch (index.kind) {
-            case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
-            case ValueKind.Int32:
-                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
+            case ValueKind.Float: {
+                const value = this.elements[Math.trunc(index.getValue())];
+                return value === undefined ? BrsInvalid.Instance : new Int32(value);
+            }
+            case ValueKind.Int32: {
+                const value = this.elements[index.getValue()];
+                return value === undefined ? BrsInvalid.Instance : new Int32(value);
+            }
             case ValueKind.String:
                 return this.getMethod(index.value) ?? BrsInvalid.Instance;
             default:
