@@ -7,7 +7,6 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class BrsComponent {
     protected readonly componentName: string;
-    private static readonly noInterfaces: ReadonlyMap<string, BrsInterface> = new Map();
     /** Created on first registration, so components that never get methods (e.g. boxed values) stay light. */
     private methods?: Map<string, Callable>;
     private interfaceMap?: Map<string, BrsInterface>;
@@ -46,7 +45,8 @@ export class BrsComponent {
 
     /** The interfaces this component implements, keyed by lowercase name. */
     get interfaces(): ReadonlyMap<string, BrsInterface> {
-        return this.interfaceMap ?? BrsComponent.noInterfaces;
+        this.interfaceMap ??= new Map();
+        return this.interfaceMap;
     }
 
     /**
@@ -107,15 +107,11 @@ export class BrsComponent {
      * @param methods List of Callables to override
      */
     overrideMethods(methods: Callable[]) {
-        const current = this.methods;
-        if (!current) {
-            return;
-        }
         for (const m of methods) {
-            if (!m.name || !current.has(m.name.toLowerCase())) {
+            if (!m.name || !this.methods?.has(m.name.toLowerCase())) {
                 continue;
             }
-            current.set(m.name.toLowerCase(), m);
+            this.methods.set(m.name.toLowerCase(), m);
         }
     }
 
