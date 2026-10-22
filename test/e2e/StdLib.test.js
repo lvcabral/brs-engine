@@ -287,6 +287,63 @@ describe("end to end standard library", () => {
             "str-after       String          roString        roString",
         ]);
     });
+    test("stdlib/type-legacy-store.brs", async () => {
+        await execute([resourceFile("stdlib", "type-legacy-store.brs")], outputStreams);
+
+        // Device trace: test/simulator/probes/type-legacy-probe/device-trace.txt
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "inv-before|Invalid|Invalid",
+            "inv-after-arr|Invalid|Invalid|roInvalid",
+            "inv-after-aa|Invalid|Invalid|Invalid",
+            "inv-fresh-var|Invalid|Invalid",
+            "bool-expr-before|Boolean|Boolean|Boolean",
+            "bool-expr-after|Boolean|Boolean|Boolean|roBoolean|roBoolean",
+            "bool-lit-var|Boolean|Boolean",
+            "json-arr|Integer|Float|String",
+            "json-slice|Integer|Float|String",
+            "lit-arr|roInteger|roFloat|roString",
+            "lit-slice|roInteger|roFloat|roString",
+            "json-aa|Integer|Integer",
+            "json-aa-items|Integer|Integer",
+            "lit-aa|roInteger|Integer",
+            "lit-aa-items|roInteger|Integer",
+            "split|roString|roString",
+            "tokenize|roString|roString",
+            "aa-keys|roString|roString",
+            "push-expr|roInteger|Integer",
+            "append-lit|roInteger|Integer",
+            "append-json|Integer|Integer",
+            "list-tail|roInteger|Integer|Integer",
+            "list-head|roString|String|roString",
+            "list-set|Integer|Integer",
+            "xml-addhead|z|b|3",
+            "xml-addtail|z|y|4",
+            "xml-set|Integer|Integer",
+            "xml-push|roInteger|Integer",
+            "aa-set-expr|roInteger|roInteger|roInteger|Integer",
+            "aa-set-lit|roInteger|Integer",
+            "aa-set-json|roInteger|Integer",
+            "arr-set-num|Integer|Integer|Integer|Integer",
+            "arr-push-json|roInteger|Integer",
+            "arr-unshift-expr|roInteger|Integer",
+            "list-add|roInteger|roInteger|Integer",
+            "list-set-expr|Integer|Integer",
+            "bool-lit-in|roBoolean|roBoolean|roBoolean",
+            "bool-store|roBoolean|roBoolean|Boolean|Boolean",
+            "bool-json|Boolean|Boolean",
+            "inv-store|roInvalid|Invalid|Invalid|roInvalid|Invalid",
+            "inv-json|Invalid|Invalid",
+            "inv-after-all|Invalid|Invalid",
+            "regex-split|roString|roString",
+            "box-split|roString|roString",
+            "aa-keys-json|roString|roString",
+            'readmulti-keys|{"a":"1","b":"2"}',
+            'readmulti-split|{"a":"1","b":"2"}',
+            "read-split|2",
+            "xml-attr|T|T|1",
+            "aa-index|1|1",
+        ]);
+    });
     test("stdlib/end.brs", async () => {
         await execute([resourceFile("stdlib", "end.brs")], outputStreams);
 

@@ -3,6 +3,7 @@ import { BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { Callable, StdlibArgument } from "../Callable";
+import { MemberStore } from "../Boxing";
 
 /**
  * BrightScript Interface ifArray
@@ -46,7 +47,7 @@ export class IfArray {
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
             const elements = this.component.getValue();
             if (this.component.resizable || elements.length < this.component.maxSize) {
-                this.component.add(tvalue, true);
+                this.component.add(tvalue, true, "add");
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: ${
@@ -76,7 +77,7 @@ export class IfArray {
         impl: (interpreter: Interpreter, tvalue: BrsType) => {
             const elements = this.component.getValue();
             if (this.component.resizable || elements.length < this.component.maxSize) {
-                this.component.add(tvalue, false);
+                this.component.add(tvalue, false, "add");
             } else {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: ${
@@ -197,7 +198,7 @@ export class IfArraySet {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.component.set(index, tvalue);
+            return this.component.set(index, tvalue, false, "assign");
         },
     });
 }
@@ -208,7 +209,7 @@ export interface BrsArray extends BrsIterable {
 
     getValue(): BrsType[];
 
-    add(value: BrsType, toTail: boolean): void;
+    add(value: BrsType, toTail: boolean, store?: MemberStore): void;
 
     remove(index: number): BrsType | undefined;
 
@@ -218,5 +219,5 @@ export interface BrsArray extends BrsIterable {
 
     tail(): number;
 
-    addChildRef?: <T extends BrsType | undefined>(value: T) => T;
+    addChildRef?: <T extends BrsType | undefined>(value: T, store?: MemberStore) => T;
 }

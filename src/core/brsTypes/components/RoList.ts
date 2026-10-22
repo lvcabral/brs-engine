@@ -1,5 +1,5 @@
 import { BrsType, isBoxedNumber } from "..";
-import { containerMember } from "../Boxing";
+import { containerMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsList, IfList, IfListToArray } from "../interfaces/IfList";
@@ -113,13 +113,13 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         }
     }
 
-    set(index: BrsType, value: BrsType) {
+    set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
         if (isBoxedNumber(index)) {
             index = index.unbox();
         }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
-            value = this.addChildRef(value);
+            value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
         }
@@ -154,8 +154,8 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
         }
     }
 
-    add(element: BrsType, onTail: boolean = true) {
-        element = this.addChildRef(element);
+    add(element: BrsType, onTail: boolean = true, store: MemberStore = "build") {
+        element = this.addChildRef(element, store);
         if (onTail) {
             this.elements.push(element);
         } else {
@@ -234,12 +234,12 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     /** Takes a reference on a component member; returns what to store (see `containerMember`). */
-    addChildRef<T extends BrsType | undefined>(value: T): T {
+    addChildRef<T extends BrsType | undefined>(value: T, store: MemberStore = "build"): T {
         if (value instanceof BrsComponent) {
             value.addReference();
             return value;
         }
-        return value ? containerMember(value) : value;
+        return value ? containerMember(value, store, true) : value;
     }
 
     removeChildRef(value: BrsType | undefined) {

@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType } from "..";
+import { BrsType, isBrsString } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RoAssociativeArray } from "./RoAssociativeArray";
@@ -143,14 +143,15 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     get(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("XML Element indexes must be strings");
         }
-        return this.getMethod(index.value) ?? this.namedElements(index.value, true);
+        const name = index.getValue();
+        return this.getMethod(name) ?? this.namedElements(name, true);
     }
 
     set(index: BrsType, value: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("XML Element indexes must be strings");
         }
         // TODO: Replicate Roku behavior
@@ -174,11 +175,11 @@ export class RoXMLElement extends BrsComponent implements BrsValue, BrsIterable 
     }
 
     getAttribute(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("XML Element attribute must be strings");
         }
         const element = this.getElement();
-        const target = index.value.toLocaleLowerCase();
+        const target = index.getValue().toLocaleLowerCase();
         for (const [name, value] of Object.entries(element.attr ?? {})) {
             if (name.toLocaleLowerCase() === target) {
                 return new BrsString(value);

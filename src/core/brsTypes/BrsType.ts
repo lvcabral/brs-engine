@@ -248,6 +248,9 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 
     static readonly False = new BrsBoolean(false);
     static readonly True = new BrsBoolean(true);
+    /** `false`/`true` as a container member, which `type()` reports as `roBoolean`. */
+    static readonly LegacyFalse = new BrsBoolean(false, true, true);
+    static readonly LegacyTrue = new BrsBoolean(true, true, true);
 
     /**
      * Creates a fresh boolean instance flagged as a source literal.
@@ -371,6 +374,8 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     literal: boolean = false;
     legacy: boolean = false;
     static readonly Instance = new BrsInvalid();
+    /** `invalid` added to an array or list, which `type()` reports as `roInvalid`. */
+    static readonly Legacy = Object.assign(new BrsInvalid(), { legacy: true });
 
     /**
      * Compares if invalid is less than another value.

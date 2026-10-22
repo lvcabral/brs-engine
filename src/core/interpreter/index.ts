@@ -1686,7 +1686,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
+        return new RoArray(
+            expression.elements.map((expr) => this.evaluate(expr)),
+            "add"
+        );
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
@@ -1694,7 +1697,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             expression.elements.map((member) => ({
                 name: member.name,
                 value: this.evaluate(member.value),
-            }))
+            })),
+            false,
+            "add"
         );
     }
 
@@ -1710,7 +1715,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isSceneGraphNode(source)) {
                 source.location = this.formatLocation(statement.name.location);
             }
-            source.set(new BrsString(statement.name.text), value);
+            source.set(new BrsString(statement.name.text), value, false, "add");
         } catch (err: any) {
             this.addError(new BrsError(err.message, statement.name.location));
         }
@@ -1748,7 +1753,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isSceneGraphNode(source)) {
                     source.location = this.formatLocation(statement.closingSquare.location);
                 }
-                source.set(index, value, true);
+                source.set(index, value, true, "add");
             } catch (err: any) {
                 this.addError(new BrsError(err.message, statement.closingSquare.location));
             }
@@ -1791,7 +1796,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoXMLList
             ) {
                 try {
-                    current.set(index, value);
+                    current.set(index, value, false, "assign");
                 } catch (err: any) {
                     this.addError(new BrsError(err.message, statement.closingSquare.location));
                 }

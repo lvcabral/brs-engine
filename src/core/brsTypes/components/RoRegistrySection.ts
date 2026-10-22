@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, isStringComp } from "..";
+import { BrsType, isStringComp, isUnboxable } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
@@ -73,7 +73,7 @@ export class RoRegistrySection extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, keysArray: RoArray) => {
             BrsDevice.refreshRegistry();
-            const keys = keysArray.getElements() as BrsString[];
+            const keys = keysArray.getElements().map((key) => (isUnboxable(key) ? key.unbox() : key)) as BrsString[];
             const result = new RoAssociativeArray([]);
             for (const key of keys) {
                 const fullKey = `${this.devId}.${this.section}.${key.value}`;

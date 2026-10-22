@@ -1,4 +1,5 @@
-import { BrsType, isBoxedNumber } from "..";
+import { BrsType, isBrsString, isUnboxable } from "..";
+import { MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -92,7 +93,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     getAttribute(index: BrsType) {
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("XML Element attribute must be strings");
         }
         if (this.length() === 1) {
@@ -105,7 +106,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     get(index: BrsType) {
-        if (isBoxedNumber(index)) {
+        if (isUnboxable(index)) {
             index = index.unbox();
         }
         switch (index.kind) {
@@ -120,14 +121,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
         }
     }
 
-    set(index: BrsType, value: BrsType) {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
-        }
-        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-            this.roList.elements[Math.trunc(index.getValue())] = value;
-        }
-        return BrsInvalid.Instance;
+    set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
+        return this.roList.set(index, value, false, store);
     }
 
     hasNext() {
@@ -146,8 +141,8 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
         this.roList.updateNext();
     }
 
-    add(element: RoXMLElement) {
-        this.roList.add(element);
+    add(element: BrsType, onTail: boolean = true, store: MemberStore = "build") {
+        this.roList.add(element, onTail, store);
     }
 
     remove(index: number) {

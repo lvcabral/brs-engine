@@ -57,6 +57,17 @@ describe("RoArray", () => {
         });
     });
 
+    describe("constructor", () => {
+        it("keeps the members it is built from unchanged", () => {
+            const literal = new Int32(5, true);
+            const flag = BrsBoolean.fromLiteral(true);
+            const arr = new RoArray([literal, flag]);
+            expect(arr.elements[0]).toBe(literal);
+            expect(arr.elements[1]).toBe(flag);
+            expect(literal.legacy).toBe(false);
+        });
+    });
+
     describe("set", () => {
         it("sets values at in-bounds indexes", () => {
             let a = new BrsString("a");
@@ -68,15 +79,15 @@ describe("RoArray", () => {
             arr.set(new Int32(0), new BrsString("replacement for a"));
             arr.set(new Int32(2), new BrsString("replacement for c"));
 
-            expect(arr.get(new Int32(0))).toEqual(new BrsString("replacement for a", false, true));
-            expect(arr.get(new Int32(2))).toEqual(new BrsString("replacement for c", false, true));
+            expect(arr.get(new Int32(0))).toEqual(new BrsString("replacement for a"));
+            expect(arr.get(new Int32(2))).toEqual(new BrsString("replacement for c"));
         });
 
         it("sets values at out-of-bounds indexes", () => {
             let arr = new RoArray([]);
 
             arr.set(new Int32(555), new BrsString("value set at index 555"));
-            expect(arr.get(new Int32(555))).toEqual(new BrsString("value set at index 555", false, true));
+            expect(arr.get(new Int32(555))).toEqual(new BrsString("value set at index 555"));
         });
     });
 

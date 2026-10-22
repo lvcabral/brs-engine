@@ -46,7 +46,7 @@ describe("RoAssociativeArray", () => {
         it("returns value given a key it contains", () => {
             let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
 
-            expect(aa.get(new BrsString("foo"))).toEqual(new Int32(-99, false, true));
+            expect(aa.get(new BrsString("foo"))).toEqual(new Int32(-99));
         });
 
         it("returns 'invalid' given a key it doesn't contain", () => {
@@ -56,13 +56,22 @@ describe("RoAssociativeArray", () => {
         });
     });
 
+    describe("constructor", () => {
+        it("keeps the members it is built from unchanged", () => {
+            const literal = new Int32(5, true);
+            const aa = new RoAssociativeArray([{ name: new BrsString("k"), value: literal }]);
+            expect(aa.get(new BrsString("k"))).toBe(literal);
+            expect(literal.legacy).toBe(false);
+        });
+    });
+
     describe("set", () => {
         it("sets values with new keys", () => {
             let aa = new RoAssociativeArray([{ name: new BrsString("foo"), value: new Int32(-99) }]);
             let ninetyNine = aa.get(new BrsString("foo"));
 
             aa.set(new BrsString("bar"), new Int32(808));
-            expect(aa.get(new BrsString("bar"))).toEqual(new Int32(808, false, true));
+            expect(aa.get(new BrsString("bar"))).toEqual(new Int32(808));
 
             // ensure other keys don't get modified
             expect(aa.get(new BrsString("foo"))).toBe(ninetyNine);
@@ -73,7 +82,7 @@ describe("RoAssociativeArray", () => {
 
             aa.set(new BrsString("foo"), new BrsString("not ninetynine"));
 
-            expect(aa.get(new BrsString("foo"))).toEqual(new BrsString("not ninetynine", false, true));
+            expect(aa.get(new BrsString("foo"))).toEqual(new BrsString("not ninetynine"));
         });
 
         it("keeps a replaced key's enumeration position (for each + assign must not skip keys)", () => {
@@ -152,7 +161,7 @@ describe("RoAssociativeArray", () => {
                 expect(addreplace.call(interpreter, new BrsString("letter2"), new BrsString("b"))).toBe(
                     BrsInvalid.Instance
                 );
-                expect(aa.get(new BrsString("letter2"))).toEqual(new BrsString("b", false, true));
+                expect(aa.get(new BrsString("letter2"))).toEqual(new BrsString("b"));
             });
 
             it("replaces the value of known elements in the associative array", () => {
@@ -163,8 +172,8 @@ describe("RoAssociativeArray", () => {
                 expect(addreplace.call(interpreter, new BrsString("letter1"), new BrsString("c"))).toBe(
                     BrsInvalid.Instance
                 );
-                expect(aa.get(new BrsString("letter1"))).not.toEqual(new BrsString("a", false, true));
-                expect(aa.get(new BrsString("letter1"))).toEqual(new BrsString("c", false, true));
+                expect(aa.get(new BrsString("letter1"))).not.toEqual(new BrsString("a"));
+                expect(aa.get(new BrsString("letter1"))).toEqual(new BrsString("c"));
             });
         });
 
@@ -271,7 +280,8 @@ describe("RoAssociativeArray", () => {
                 expect(keys).toBeTruthy();
 
                 let result = keys.call(interpreter);
-                expect(result.elements).toEqual(new RoArray([cletter, letter1, letter2]).elements);
+                // Keys are returned boxed: `type(aa.Keys()[0])` is `roString` on a device.
+                expect(result.elements.map((key) => key.unbox())).toEqual([cletter, letter1, letter2]);
             });
 
             it("returns an empty array from an empty associative array", () => {
@@ -327,12 +337,12 @@ describe("RoAssociativeArray", () => {
                 let items = aa.getMethod("items");
                 expect(items).toBeTruthy();
                 let result = items.call(interpreter);
-                expect(result.elements[0].elements.get("key")).toEqual(new BrsString("cletter", false, true));
-                expect(result.elements[0].elements.get("value")).toEqual(new BrsString("c", false, true));
-                expect(result.elements[1].elements.get("key")).toEqual(new BrsString("letter1", false, true));
-                expect(result.elements[1].elements.get("value")).toEqual(new BrsString("a", false, true));
-                expect(result.elements[2].elements.get("key")).toEqual(new BrsString("letter2", false, true));
-                expect(result.elements[2].elements.get("value")).toEqual(new BrsString("b", false, true));
+                expect(result.elements[0].elements.get("key")).toEqual(new BrsString("cletter"));
+                expect(result.elements[0].elements.get("value")).toEqual(new BrsString("c"));
+                expect(result.elements[1].elements.get("key")).toEqual(new BrsString("letter1"));
+                expect(result.elements[1].elements.get("value")).toEqual(new BrsString("a"));
+                expect(result.elements[2].elements.get("key")).toEqual(new BrsString("letter2"));
+                expect(result.elements[2].elements.get("value")).toEqual(new BrsString("b"));
             });
 
             it("returns an empty array from an empty associative array", () => {
