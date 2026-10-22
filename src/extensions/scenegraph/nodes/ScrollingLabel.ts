@@ -244,7 +244,7 @@ export class ScrollingLabel extends Label {
                 }
             }
         }
-        scale ??= this.getEffectiveScale();
+        scale ??= this.getValueJS("scale") as number[];
         this.withScale(draw2D, rect.x, rect.y, scale, () => {
             draw2D?.pushClip(clipRect);
             try {

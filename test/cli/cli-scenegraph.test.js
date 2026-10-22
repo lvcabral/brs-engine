@@ -831,13 +831,22 @@ describe.concurrent("cli scenegraph", () => {
 
         // A Group's scale and rotation apply to its whole subtree about its scaleRotateCenter: a 64x64
         // child of a [0.5, 0.5] Group covers 32x32 (16x16 under a nested 0.5 Group), and a child of a
-        // Group rotated 180 degrees about [32, 32] lands on the far side of the pivot, not of [0, 0].
+        // Group rotated 180 degrees about [32, 32] lands on the far side of the pivot, not of [0, 0]; a
+        // node rotated about its own center inside a rotated Group turns its children about it too.
+        // A LayoutGroup under a scaled Group spaces its items in unscaled units (device: [0, 120]), and
+        // a grid item's subBoundingRect stays in parent units (device: 100x100, scene 50x50).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Group Scale Repro ===",
             "scaled child =  416, 316  32x 32",
             "scaled group =  416, 316  32x 32",
             "nested child =  416, 316  16x 16",
             "rotated child =  132, 132  32x 32",
+            "turned tile =  1379,-21  141x 141",
+            "turned tile child =  1436, 92  28x 28",
+            "layout item =  400, 160  25x 25",
+            "layout item translation =  0, 120",
+            "grid item =  0, 0  100x 100",
+            "grid item scene =  100, 420  50x 50",
             "=== Group Scale Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",

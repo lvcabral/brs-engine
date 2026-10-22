@@ -26,6 +26,56 @@ function rectangle({ width = 100, height = 50, translation = [0, 0], scale, scal
 }
 
 /**
+ * Fake draw target that records what lands on SCREEN: it composes `pushScale` around its pivot
+ * the way the canvas does, and maps each draw call and clip through it. Assertions then check
+ * where content appears, not how the engine splits a transform between draw arguments and the
+ * canvas. Own-scale pivots are not modelled: the drawn nodes use the default scaleRotateCenter.
+ */
+function screenRecorder() {
+    const stack = [{ sx: 1, sy: 1, bx: 0, by: 0 }];
+    const top = () => stack[stack.length - 1];
+    const toScreen = (x, y, width, height) => {
+        const m = top();
+        return { x: m.sx * x + m.bx, y: m.sy * y + m.by, width: m.sx * width, height: m.sy * height };
+    };
+    const rec = {
+        rects: [],
+        bitmaps: [],
+        clips: [],
+        pushScale(px, py, sx, sy) {
+            const m = top();
+            stack.push({
+                sx: m.sx * sx,
+                sy: m.sy * sy,
+                bx: m.sx * px * (1 - sx) + m.bx,
+                by: m.sy * py * (1 - sy) + m.by,
+            });
+            return true;
+        },
+        popScale() {
+            stack.pop();
+        },
+        pushClip(r) {
+            rec.clips.push(toScreen(r.x, r.y, r.width, r.height));
+        },
+        popClip() {},
+        doDrawRotatedRect(r, rgba, rotation, center, opacity, scaleX = 1, scaleY = 1) {
+            rec.rects.push({ ...toScreen(r.x, r.y, r.width * scaleX, r.height * scaleY), rotation });
+        },
+        doDrawRotatedBitmap(x, y, scaleX, scaleY, rotation, bitmap, centerX = 0, centerY = 0) {
+            const drawn = toScreen(x, y, scaleX * bitmap.width, scaleY * bitmap.height);
+            const pivot = toScreen(x + centerX, y + centerY, 0, 0);
+            rec.bitmaps.push({ ...drawn, rotation, pivot: [pivot.x, pivot.y] });
+        },
+        doDrawScaledObject(x, y, scaleX, scaleY, bitmap) {
+            rec.bitmaps.push({ ...toScreen(x, y, scaleX * bitmap.width, scaleY * bitmap.height), rotation: 0 });
+        },
+        depth: () => stack.length - 1,
+    };
+    return rec;
+}
+
+/**
  * Regression: `scale` used to be a no-op on a Rectangle's own fill (it was only ever applied to
  * Poster-style bitmap drawing), so `scale=[0,0]` never visually collapsed a Rectangle, AND its
  * reported boundingRect() never shrank either — so a parent LayoutGroup kept spacing a collapsed
@@ -125,36 +175,22 @@ describe("Rectangle node scale", () => {
     });
 
     /**
-     * DEVICE-MEASURED (Roku Express 4K+, Roku OS 15; `WacUltraStream/components/poolTable.brs`
-     * ~lines 325-335): a `Group`'s `scale` transforms its entire child coordinate system — both
-     * child positions and child drawn sizes. On device, each pool ball (`Group` with
-     * `scale = [0.5, 0.5]`, `scaleRotateCenter = [32, 32]`) scales its child `Group` (`holder`,
-     * `clippingRect = [0, 0, 64, 64]`), child `Poster` (`strip`, 1792x64 sprite sheet at
-     * `translation = [-x, 0]`), and child `Poster` (`shade`, 64x64 overlay) down to a 32x32
-     * composite on the table felt. Previously this test pinned the opposite (non-propagating)
-     * engine assumption from #1147.
+     * DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe`): a node's `scale` transforms its
+     * children's coordinate system, positions and drawn sizes alike, around the node's own
+     * position.
      */
-    test("scale is propagated to children (both position and drawn scale)", () => {
+    test("scale is propagated to children (both position and drawn size)", () => {
         const rect = rectangle({ translation: [10, 20], scale: [0, 0] });
         const child = rectangle({ translation: [30, 40], width: 5, height: 5 });
         rect.appendChildToParent(child);
 
-        const calls = [];
-        const draw2D = {
-            doDrawRotatedRect(r, rgba, rotation, center, opacity, scaleX, scaleY) {
-                calls.push({ r, scaleX, scaleY });
-            },
-        };
-        rect.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+        const screen = screenRecorder();
+        rect.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
 
-        expect(calls.length).toBe(2);
-        // Second call is the child: it inherits the parent's [0,0] scale, collapsing both its
-        // parent-relative offset ([30*0, 40*0] + [10, 20] = [10, 20]) and its drawn scale ([0, 0]).
-        const childCall = calls[1];
-        expect(childCall.scaleX).toBe(0);
-        expect(childCall.scaleY).toBe(0);
-        expect(childCall.r.x).toBe(10);
-        expect(childCall.r.y).toBe(20);
+        // Second draw is the child: the parent's [0,0] scale collapses both its offset [30, 40]
+        // and its size onto the parent's position [10, 20].
+        expect(screen.rects[1]).toEqual({ x: 10, y: 20, width: 0, height: 0, rotation: 0 });
+        expect(screen.depth()).toBe(0);
         expect(child.getBoundingRect("toScene", fakeObserverInterpreter)).toEqual({
             x: 10,
             y: 20,
@@ -212,9 +248,9 @@ describe("LayoutGroup spacing reflects a scaled child's collapsed size", () => {
 });
 
 /**
- * Descendant transform propagation (Roku Express 4K+, Roku OS 15; `WacUltraStream/components/poolTable.brs`):
- * a `Group`'s `scale` and `rotation` about `scaleRotateCenter` compose down the tree to all
- * descendants' positions, drawn sizes, and `clippingRect`s.
+ * Descendant transform propagation (Roku OS 16, probe `group-scale-probe`): a `Group`'s `scale` and
+ * `rotation` about `scaleRotateCenter` compose down the tree to all descendants' positions, drawn
+ * sizes, and `clippingRect`s.
  */
 describe("Group scale and scaleRotateCenter propagation to descendants", () => {
     const fs = require("fs");
@@ -237,34 +273,6 @@ describe("Group scale and scaleRotateCenter propagation to descendants", () => {
         return poster;
     }
 
-    test("Group scale [0.5, 0.5] with a 64x64 Poster child draws 32x32 at the scaled position", () => {
-        const group = SGNodeFactory.createNode("Group");
-        group.setValue("translation", vector([100, 50]));
-        group.setValue("scale", vector([0.5, 0.5]));
-
-        const poster = createLoadedPoster({ width: 64, height: 64, translation: [20, 40] });
-        group.appendChildToParent(poster);
-
-        const bitmapCalls = [];
-        const draw2D = {
-            doDrawRotatedBitmap(x, y, scaleX, scaleY, rotation, bitmap) {
-                bitmapCalls.push({
-                    x,
-                    y,
-                    width: scaleX * bitmap.width,
-                    height: scaleY * bitmap.height,
-                    rotation,
-                });
-            },
-        };
-        group.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
-
-        // Child translation [20, 40] is scaled by [0.5, 0.5] -> [10, 20] + parent [100, 50] = [110, 70],
-        // and the 64x64 Poster draws at 32x32.
-        expect(bitmapCalls).toEqual([{ x: 110, y: 70, width: 32, height: 32, rotation: 0 }]);
-        expect(poster.rectToScene).toEqual({ x: 110, y: 70, width: 32, height: 32 });
-    });
-
     test("nested Group scales multiply across levels", () => {
         const outer = SGNodeFactory.createNode("Group");
         outer.setValue("translation", vector([100, 200]));
@@ -278,57 +286,19 @@ describe("Group scale and scaleRotateCenter propagation to descendants", () => {
         const leaf = rectangle({ translation: [16, 32], width: 64, height: 64 });
         inner.appendChildToParent(leaf);
 
-        const calls = [];
-        const draw2D = {
-            doDrawRotatedRect(r, rgba, rotation, center, opacity, scaleX, scaleY) {
-                calls.push({ r: { ...r }, scaleX, scaleY });
-            },
-        };
-        outer.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+        const screen = screenRecorder();
+        outer.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
 
-        expect(calls.length).toBe(1);
         // Effective scale is 0.5 * 0.5 = 0.25.
         // Position: 100 + 40*0.5 + 16*0.25 = 124; 200 + 80*0.5 + 32*0.25 = 248.
-        expect(calls[0].scaleX).toBeCloseTo(0.25, 5);
-        expect(calls[0].scaleY).toBeCloseTo(0.25, 5);
-        expect(calls[0].r).toEqual({ x: 124, y: 248, width: 64, height: 64 });
+        expect(screen.rects).toEqual([{ x: 124, y: 248, width: 16, height: 16, rotation: 0 }]);
+        expect(screen.depth()).toBe(0);
         expect(leaf.rectToScene).toEqual({ x: 124, y: 248, width: 16, height: 16 });
     });
 
-    test("rotation about scaleRotateCenter moves a translated child around the pivot, not around (0, 0)", () => {
-        const host = SGNodeFactory.createNode("Group");
-        host.setValue("translation", vector([100, 50]));
-        host.setValue("scaleRotateCenter", vector([32, 32]));
-        host.setValue("rotation", new Float(Math.PI / 2));
-
-        // Child placed right at the parent's rotation pivot [32, 32]: rotating the parent around
-        // [32, 32] must leave that pivot point at scene [100 + 32, 50 + 32] = [132, 82]. Rotating
-        // around (0, 0) instead would swing [32, 32] to [100 + 32, 50 - 32] = [132, 18].
-        const atPivot = rectangle({ translation: [32, 32], width: 10, height: 10 });
-        // Second child at [-112, 0] (the poolTable strip shape): relative to pivot [32, 32] its
-        // offset is [-144, -32]; after +90° CCW rotation (rotateTranslation) that offset becomes
-        // [-32, +144], landing at [132 - 32, 82 + 144] = [100, 226].
-        const stripChild = rectangle({ translation: [-112, 0], width: 64, height: 64 });
-        host.appendChildToParent(atPivot);
-        host.appendChildToParent(stripChild);
-
-        const calls = [];
-        const draw2D = {
-            doDrawRotatedRect(r, rgba, rotation, center, opacity, scaleX, scaleY) {
-                calls.push({ r: { ...r }, rotation, center, scaleX, scaleY });
-            },
-        };
-        host.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
-
-        expect(calls.length).toBe(2);
-        expect(calls[0].r.x).toBeCloseTo(132, 4);
-        expect(calls[0].r.y).toBeCloseTo(82, 4);
-        expect(calls[1].r.x).toBeCloseTo(100, 4);
-        expect(calls[1].r.y).toBeCloseTo(226, 4);
-    });
-
-    test("clip + scaled/rotated content stay aligned (poolTable ballNode > holder > strip)", () => {
-        // Exact hierarchy from WacUltraStream/components/poolTable.brs (~lines 325-335):
+    test("clip + scaled/rotated content stay aligned (ball > clipped holder > sprite strip)", () => {
+        // A pool ball sprite: a scaled ball Group whose clipped holder rolls a sprite strip under a
+        // fixed shading overlay.
         // ballNode (Group, translation=[100,50], scale=[0.5,0.5], scaleRotateCenter=[32,32])
         //   ├── holder (Group, clippingRect=[0,0,64,64], scaleRotateCenter=[32,32], rotation=π/2)
         //   │     └── strip (Poster, 1792x64 sprite sheet, translation=[-112,0])
@@ -350,24 +320,9 @@ describe("Group scale and scaleRotateCenter propagation to descendants", () => {
         const shade = createLoadedPoster({ width: 64, height: 64, translation: [0, 0] });
         ballNode.appendChildToParent(shade);
 
-        const clips = [];
-        const bitmaps = [];
-        const draw2D = {
-            pushClip(rect) {
-                clips.push({ ...rect });
-            },
-            popClip() {},
-            doDrawRotatedBitmap(x, y, scaleX, scaleY, rotation, bitmap) {
-                bitmaps.push({
-                    x,
-                    y,
-                    width: scaleX * bitmap.width,
-                    height: scaleY * bitmap.height,
-                    rotation,
-                });
-            },
-        };
-        ballNode.renderNode(fakeInterpreter, [0, 0], 0, 1, draw2D);
+        const screen = screenRecorder();
+        ballNode.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
+        const { clips, bitmaps } = screen;
 
         // 1. holder's 64x64 clip scaled by 0.5 around [32,32] and rotated 90° around its centre
         //    lands at { x: 116, y: 66, width: 32, height: 32 }.
@@ -393,5 +348,59 @@ describe("Group scale and scaleRotateCenter propagation to descendants", () => {
         expect(bitmaps[1].width).toBeCloseTo(32, 4);
         expect(bitmaps[1].height).toBeCloseTo(32, 4);
         expect(bitmaps[1].rotation).toBeCloseTo(0, 4);
+    });
+    test("a scaled Poster rotates about its scaleRotateCenter, as its children do", () => {
+        // Poster at [100, 50], 64x64, scale [0.5, 0.5], rotated 90° about [32, 32]: the pivot stays
+        // at its unscaled spot [100 + 32, 50 + 32], not 32 * 0.5 further along each axis.
+        const poster = createLoadedPoster({ width: 64, height: 64, translation: [100, 50] });
+        poster.setValue("scale", vector([0.5, 0.5]));
+        poster.setValue("scaleRotateCenter", vector([32, 32]));
+        poster.setValue("rotation", new Float(Math.PI / 2));
+
+        const screen = screenRecorder();
+        poster.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
+
+        expect(screen.bitmaps).toHaveLength(1);
+        expect(screen.bitmaps[0].pivot[0]).toBeCloseTo(132, 4);
+        expect(screen.bitmaps[0].pivot[1]).toBeCloseTo(82, 4);
+        expect(screen.bitmaps[0].width).toBeCloseTo(32, 4);
+    });
+
+    test("an own-scale clip is placed once, not again by the scale it applies to its children", () => {
+        // Group at [40, 20] with clippingRect [0, 0, 100, 60], scale [0.5, 0.5] about [20, 10]: the
+        // clip covers x = 40 + 20*(1-0.5) = 50, y = 20 + 10*(1-0.5) = 25, 50x30 on screen, and so
+        // does its 100x60 child. Pushed inside the canvas scale applied to the children, the clip
+        // would shrink again to 25x15.
+        const group = SGNodeFactory.createNode("Group");
+        group.setValue("translation", vector([40, 20]));
+        group.setValue("scale", vector([0.5, 0.5]));
+        group.setValue("scaleRotateCenter", vector([20, 10]));
+        group.setValue("clippingRect", vector([0, 0, 100, 60]));
+        group.appendChildToParent(rectangle({ width: 100, height: 60 }));
+
+        const screen = screenRecorder();
+        group.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
+
+        expect(screen.clips).toEqual([{ x: 50, y: 25, width: 50, height: 30 }]);
+        expect(screen.rects).toEqual([{ x: 50, y: 25, width: 50, height: 30, rotation: 0 }]);
+        expect(screen.depth()).toBe(0);
+    });
+
+    test("a MaskGroup under a scaled Group composites its screen-sized bitmap 1:1", () => {
+        // The offscreen bitmap is in screen pixels, so the composite must cancel the ancestors'
+        // canvas scale: it covers the 1280x720 scene from [0, 0], not 640x360 from the scale pivot.
+        const outer = SGNodeFactory.createNode("Group");
+        outer.setValue("translation", vector([100, 200]));
+        outer.setValue("scale", vector([0.5, 0.5]));
+        const masked = SGNodeFactory.createNode("MaskGroup");
+        masked.setValue("maskUri", new BrsString("common:/images/icon_options.png"));
+        masked.appendChildToParent(rectangle({ width: 64, height: 64 }));
+        outer.appendChildToParent(masked);
+
+        const screen = screenRecorder();
+        outer.renderNode(fakeInterpreter, [0, 0], 0, 1, screen);
+
+        expect(screen.bitmaps).toEqual([{ x: 0, y: 0, width: 1280, height: 720, rotation: 0 }]);
+        expect(screen.depth()).toBe(0);
     });
 });
