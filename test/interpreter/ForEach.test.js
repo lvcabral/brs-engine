@@ -4,6 +4,11 @@ const { BrsString } = brs.types;
 
 const { token, identifier, fakeLocation } = require("../parser/ParserTests");
 
+// What a container stores for a value: a primitive is kept as a legacy-flagged copy, so the variable it came
+// from keeps its own type() (stdlib/type-legacy.brs); components and shared singletons are stored as they are.
+const member = (value) => brs.types.containerMember(value);
+const members = (values) => values.map(member);
+
 const LEFT_SQUARE = token(Lexeme.LeftSquare, "[");
 const RIGHT_SQUARE = token(Lexeme.RightSquare, "]");
 
@@ -52,7 +57,7 @@ describe("interpreter for-each loops", () => {
         interpreter.exec(statements);
 
         expect(emptyBlockSpy).toHaveBeenCalledTimes(3);
-        expect(receivedElements).toEqual(arrayMembers);
+        expect(receivedElements).toEqual(members(arrayMembers));
     });
 
     it("doesn't execute the body for empty arrays", () => {
@@ -101,7 +106,9 @@ describe("interpreter for-each loops", () => {
 
         interpreter.exec(statements);
 
-        expect(interpreter.environment.get(identifier("element"))).toEqual(arrayMembers[arrayMembers.length - 1]);
+        expect(interpreter.environment.get(identifier("element"))).toEqual(
+            member(arrayMembers[arrayMembers.length - 1])
+        );
     });
 
     it("exits early when it encounters 'exit for'", () => {

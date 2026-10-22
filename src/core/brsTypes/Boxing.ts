@@ -1,4 +1,4 @@
-import { BrsType } from ".";
+import { BrsType, isNumberKind } from ".";
 import { ValueKind } from "./BrsType";
 
 /**
@@ -20,6 +20,50 @@ export interface Unboxable {
 
 export function isBoxable(value: BrsType): value is BrsType & Boxable {
     return value !== undefined && "box" in value && "literal" in value && "legacy" in value;
+}
+
+/**
+ * The value a container (array, list or associative array) stores for `value`. A primitive inside a container
+ * reports its legacy type name to `type()` (`roInteger`, `roString`, …) while the variable it came from keeps its
+ * own (`Integer`, `String`, …), as on a device: so a fresh primitive is stored as a legacy-flagged copy instead of
+ * flagging the caller's value. Shared instances (`true`/`false`, `invalid`) and functions are flagged in place, as
+ * identity checks elsewhere rely on them.
+ * @param value Member being stored.
+ * @returns The member to store.
+ */
+export function containerMember<T extends BrsType>(value: T): T {
+    if (!isBoxable(value) || value.legacy) {
+        return value;
+    }
+    const fresh =
+        value.kind === ValueKind.String ||
+        value.kind === ValueKind.Int32 ||
+        value.kind === ValueKind.Int64 ||
+        value.kind === ValueKind.Float ||
+        value.kind === ValueKind.Double ||
+        (value.kind === ValueKind.Boolean && value.literal);
+    if (!fresh) {
+        value.legacy = true;
+        return value;
+    }
+    const copy = Object.assign(Object.create(Object.getPrototypeOf(value)), value) as T & Boxable;
+    copy.legacy = true;
+    return copy;
+}
+
+/**
+ * A legacy number written into a container literal reports its legacy type name (a Roku edge case for `type()`):
+ * returns a copy flagged `literal`, so the value the caller holds keeps reporting its own type.
+ * @param value Member of an array or associative array literal.
+ * @returns The member to store.
+ */
+export function literalMember<T extends BrsType>(value: T): T {
+    if (!isBoxable(value) || !isNumberKind(value.kind) || !value.legacy || value.literal) {
+        return value;
+    }
+    const copy = Object.assign(Object.create(Object.getPrototypeOf(value)), value) as T & Boxable;
+    copy.literal = true;
+    return copy;
 }
 
 export function isUnboxable(value: BrsType): value is BrsType & Unboxable {

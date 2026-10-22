@@ -2,6 +2,11 @@ const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
 const { RoAssociativeArray, RoArray, BrsBoolean, BrsString, Int32, BrsInvalid, ValueKind } = brs.types;
 
+// What a container stores for a value: a primitive is kept as a legacy-flagged copy, so the variable it came
+// from keeps its own type() (stdlib/type-legacy.brs); components and shared singletons are stored as they are.
+const member = (value) => brs.types.containerMember(value);
+const members = (values) => values.map(member);
+
 describe("RoAssociativeArray", () => {
     describe("comparisons", () => {
         it("is equal to nothing", () => {
@@ -354,14 +359,14 @@ describe("RoAssociativeArray", () => {
                 expect(doesexist).toBeTruthy();
 
                 let result = lookup.call(interpreter, new BrsString("KeY1"));
-                expect(result).toBe(v1);
+                expect(result).toEqual(member(v1));
 
                 result = doesexist.call(interpreter, new BrsString("KeY1"));
                 expect(result.kind).toBe(ValueKind.Boolean);
                 expect(result).toBe(BrsBoolean.True);
 
                 result = aa.get(new BrsString("KEY1"));
-                expect(result).toBe(v1);
+                expect(result).toEqual(member(v1));
             });
 
             it("changes lookups to case sensitive mode", () => {
@@ -384,7 +389,7 @@ describe("RoAssociativeArray", () => {
 
                 // Keys added in constructor are case insensitive
                 let result1 = lookup.call(interpreter, new BrsString("KeY1"));
-                expect(result1).toBe(v1);
+                expect(result1).toEqual(member(v1));
 
                 result1 = doesexist.call(interpreter, new BrsString("key1"));
                 expect(result1.kind).toBe(ValueKind.Boolean);
@@ -401,10 +406,10 @@ describe("RoAssociativeArray", () => {
                 expect(result2).toBe(BrsBoolean.False);
 
                 result2 = lookup.call(interpreter, new BrsString("KeY2"));
-                expect(result2).toBe(v2);
+                expect(result2).toEqual(member(v2));
 
                 result2 = aa.get(new BrsString("KeY2"));
-                expect(result2).toBe(v2);
+                expect(result2).toEqual(member(v2));
             });
         });
 
@@ -434,16 +439,16 @@ describe("RoAssociativeArray", () => {
                 expect(lookupCI).toBeTruthy();
 
                 let result = lookup.call(interpreter, new BrsString("key1"));
-                expect(result).toBe(v1);
+                expect(result).toEqual(member(v1));
 
                 result = lookup.call(interpreter, new BrsString("KEY1"));
-                expect(result).toBe(v2);
+                expect(result).toEqual(member(v2));
 
                 result = lookupCI.call(interpreter, new BrsString("kEy1"));
-                expect(result).toBe(v1);
+                expect(result).toEqual(member(v1));
 
                 result = lookupCI.call(interpreter, new BrsString("KeY1"));
-                expect(result).toBe(v1);
+                expect(result).toEqual(member(v1));
             });
         });
     });

@@ -1,4 +1,4 @@
-import { boxForFieldCopy, CopyVisited } from "../Boxing";
+import { boxForFieldCopy, containerMember, CopyVisited, literalMember } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType, isBoxable, isNumberKind, isUnboxable, RoFunction } from "..";
@@ -32,11 +32,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         super("roAssociativeArray");
         this.modeCaseSensitive = cs;
         for (const member of elements) {
-            const element = member.value;
-            if (isBoxable(element) && isNumberKind(element.kind) && element.legacy) {
-                // set the literal flag of numeric values, when legacy was already set, to cover a Roku edge case for Type()
-                element.literal = true;
-            }
+            const element = literalMember(member.value);
             this.addChildRef(element);
             this.set(member.name, element, true);
         }
@@ -200,7 +196,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
         // override old key with new one
         let oldKey = this.findElementKey(index.value);
-        this.addChildRef(value);
+        value = this.addChildRef(value);
         if (oldKey) this.removeChildRef(this.elements.get(oldKey));
         let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
         if (!this.modeCaseSensitive && oldKey) {
@@ -264,12 +260,13 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
     }
 
-    addChildRef(value: BrsType | undefined) {
+    /** Takes a reference on a component member; returns what to store (see `containerMember`). */
+    addChildRef<T extends BrsType | undefined>(value: T): T {
         if (value instanceof BrsComponent) {
             value.addReference();
-        } else if (value && isBoxable(value)) {
-            value.legacy = true;
+            return value;
         }
+        return value ? containerMember(value) : value;
     }
 
     removeChildRef(value: BrsType | undefined) {

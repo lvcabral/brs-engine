@@ -140,15 +140,12 @@ export class IfArray {
             const elem = comp.getValue();
             if (comp.resizable || elem.length + array.getValue().length <= comp.maxSize) {
                 // don't copy "holes" where no value exists
-                const noGap = array.getValue().filter((element) => {
+                const noGap: BrsType[] = [];
+                for (const element of array.getValue()) {
                     if (element) {
-                        if (comp.addChildRef) {
-                            comp.addChildRef(element);
-                        }
-                        return true;
+                        noGap.push(comp.addChildRef ? comp.addChildRef(element) : element);
                     }
-                    return false;
-                });
+                }
                 elem.push(...noGap);
                 this.component.updateNext(true, 0);
             }
@@ -221,5 +218,5 @@ export interface BrsArray extends BrsIterable {
 
     tail(): number;
 
-    addChildRef?: (value: BrsType | undefined) => void;
+    addChildRef?: <T extends BrsType | undefined>(value: T) => T;
 }
