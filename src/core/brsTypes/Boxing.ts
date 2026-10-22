@@ -56,40 +56,61 @@ export function containerMember<T extends BrsType>(value: T, store: MemberStore 
         case ValueKind.Int64:
         case ValueKind.Float:
         case ValueKind.Double:
-            if (store === "add") {
-                return value.literal && value.legacy ? value : withFlags(value, true, true);
-            }
-            return value.literal ? withFlags(value, false, false) : value;
+            return store === "add" ? asLegacyLiteral(value) : asPlain(value);
         case ValueKind.String:
-            return value.literal && !value.legacy ? withFlags(value, true, true) : value;
+            return value.literal ? asLegacyLiteral(value) : value;
         default:
             return value;
     }
 }
 
 /**
- * A copy of a primitive with the given flags.
- * @param value Primitive to copy.
- * @param literal Copy's `literal` flag.
- * @param legacy Copy's `legacy` flag.
- * @returns The copy.
+ * `value` as a literal that reports its legacy type name (`roInteger`, `roString`, …).
+ * @param value Primitive to flag.
+ * @returns `value` when it already is one, otherwise a flagged copy.
  */
-function withFlags<T extends BrsType>(value: T, literal: boolean, legacy: boolean): T {
+function asLegacyLiteral<T extends BrsType>(value: T & Boxable): T {
+    if (value.literal && value.legacy) {
+        return value;
+    }
     switch (value.kind) {
         case ValueKind.String:
-            return new BrsString(value.value, literal, legacy) as T;
+            return new BrsString(value.value, true, true) as T;
         case ValueKind.Int32:
-            return new Int32(value.getValue(), literal, legacy) as T;
+            return new Int32(value.getValue(), true, true) as T;
         case ValueKind.Int64:
-            return new Int64(value.getValue(), literal, legacy) as T;
+            return new Int64(value.getValue(), true, true) as T;
         case ValueKind.Float:
-            return new Float(value.getValue(), literal, legacy) as T;
+            return new Float(value.getValue(), true, true) as T;
         case ValueKind.Double:
-            return new Double(value.getValue(), literal, legacy) as T;
+            return new Double(value.getValue(), true, true) as T;
         case ValueKind.Boolean:
-            return (
-                literal ? BrsBoolean.fromLiteral(value.toBoolean(), legacy) : BrsBoolean.from(value.toBoolean())
-            ) as T;
+            return (value.toBoolean() ? BrsBoolean.LegacyTrue : BrsBoolean.LegacyFalse) as T;
+        default:
+            return value;
+    }
+}
+
+/**
+ * `value` as a computed value, which reports its plain type name (`Integer`, `Boolean`, …).
+ * @param value Number or boolean.
+ * @returns `value` when it is not a literal, otherwise an unflagged copy.
+ */
+function asPlain<T extends BrsType>(value: T & Boxable): T {
+    if (!value.literal) {
+        return value;
+    }
+    switch (value.kind) {
+        case ValueKind.Int32:
+            return new Int32(value.getValue()) as T;
+        case ValueKind.Int64:
+            return new Int64(value.getValue()) as T;
+        case ValueKind.Float:
+            return new Float(value.getValue()) as T;
+        case ValueKind.Double:
+            return new Double(value.getValue()) as T;
+        case ValueKind.Boolean:
+            return BrsBoolean.from(value.toBoolean()) as T;
         default:
             return value;
     }
@@ -113,7 +134,7 @@ export function isUnboxable(value: BrsType): value is BrsType & Unboxable {
  */
 export function fieldCopyMember(value: BrsType & Boxable, noBoxKinds: ValueKind[], toBoxKinds: ValueKind[]): BrsType {
     if (noBoxKinds.includes(value.kind)) {
-        return value.literal && value.legacy ? value : withFlags(value, true, true);
+        return asLegacyLiteral(value);
     }
     return !value.literal || toBoxKinds.includes(value.kind) ? value.box() : value;
 }

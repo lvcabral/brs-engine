@@ -1,7 +1,7 @@
 import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
-import { BrsType, isBoxable, isNumberKind, isUnboxable, RoFunction } from "..";
+import { BrsType, isBoxable, isUnboxable, RoFunction } from "..";
 import { isSceneGraphNode } from "../../extensions";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";

@@ -10,7 +10,6 @@ import {
     isBrsBoolean,
     isAnyNumber,
     jsValueOf,
-    isNumberKind,
 } from "..";
 import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";

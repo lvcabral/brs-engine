@@ -248,17 +248,19 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
 
     static readonly False = new BrsBoolean(false);
     static readonly True = new BrsBoolean(true);
+    /** `false`/`true` as a container member, which `type()` reports as `roBoolean`. */
+    static readonly LegacyFalse = new BrsBoolean(false, true, true);
+    static readonly LegacyTrue = new BrsBoolean(true, true, true);
 
     /**
      * Creates a fresh boolean instance flagged as a source literal.
      * A distinct instance (not the shared `True`/`False` singletons) is required so that
      * literalness is tracked per occurrence and doesn't leak onto runtime/parsed booleans.
      * @param value JavaScript boolean value
-     * @param legacy True for a container member that reports `roBoolean`
      * @returns a new literal-flagged BrsBoolean
      */
-    static fromLiteral(value: boolean, legacy = false) {
-        return new BrsBoolean(value, true, legacy);
+    static fromLiteral(value: boolean) {
+        return new BrsBoolean(value, true);
     }
 
     /**

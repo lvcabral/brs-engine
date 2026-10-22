@@ -1,4 +1,4 @@
-import { BrsType, isUnboxable } from "..";
+import { BrsType, isBrsString, isUnboxable } from "..";
 import { MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
@@ -93,10 +93,7 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
     }
 
     getAttribute(index: BrsType) {
-        if (isUnboxable(index)) {
-            index = index.unbox();
-        }
-        if (index.kind !== ValueKind.String) {
+        if (!isBrsString(index)) {
             throw new Error("XML Element attribute must be strings");
         }
         if (this.length() === 1) {

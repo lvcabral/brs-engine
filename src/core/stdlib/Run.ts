@@ -9,7 +9,6 @@ import {
     StdlibArgument,
     RoArray,
     isBrsString,
-    isUnboxable,
 } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
 import { Interpreter } from "../interpreter";
@@ -23,7 +22,7 @@ import { Interpreter } from "../interpreter";
  *
  * @returns the value returned by the executed file(s) if no errors are detected, otherwise `invalid`
  */
-function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsType[]) {
+function runFiles(interpreter: Interpreter, filenames: string[], args: BrsType[]) {
     try {
         // execute the new files in a brand-new interpreter, as no scope is shared with the `Run`-ed files in RBI
         const sandbox = new Interpreter(interpreter.options);
@@ -32,8 +31,8 @@ function runFiles(interpreter: Interpreter, filenames: BrsString[], args: BrsTyp
         }
         const sourceMap = new Map<string, string>();
         for (const filename of filenames) {
-            if (BrsDevice.fileSystem.existsSync(filename.value)) {
-                sourceMap.set(filename.value, BrsDevice.fileSystem.readFileSync(filename.value, "utf8"));
+            if (BrsDevice.fileSystem.existsSync(filename)) {
+                sourceMap.set(filename, BrsDevice.fileSystem.readFileSync(filename, "utf8"));
             }
         }
         if (sourceMap.size !== 0) {
@@ -57,7 +56,7 @@ export const Run = new Callable(
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, filename: BrsString, ...args: BrsType[]) => {
-            return runFiles(interpreter, [filename], args);
+            return runFiles(interpreter, [filename.value], args);
         },
     }),
     ...Callable.variadic({
@@ -66,9 +65,13 @@ export const Run = new Callable(
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, filenameArray: BrsComponent, ...args: BrsType[]) => {
-            if (filenameArray instanceof RoArray && filenameArray.getElements().every(isBrsString)) {
-                const filenames = filenameArray.getElements().map((name) => (isUnboxable(name) ? name.unbox() : name));
-                return runFiles(interpreter, filenames as BrsString[], args);
+            const filenames = filenameArray instanceof RoArray ? filenameArray.getElements() : [];
+            if (filenameArray instanceof RoArray && filenames.every(isBrsString)) {
+                return runFiles(
+                    interpreter,
+                    filenames.map((name) => name.getValue()),
+                    args
+                );
             }
 
             // RBI seems to hard-reboot when passed a non-empty associative array, but returns invalid for empty
