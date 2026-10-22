@@ -1,4 +1,5 @@
 import { BrsType } from "..";
+import { MemberStore } from "../Boxing";
 import { BrsBoolean, BrsInvalid } from "../BrsType";
 import { Callable } from "../Callable";
 import { BrsInterface } from "../interfaces/BrsInterface";
@@ -198,8 +199,9 @@ export interface BrsCollection {
      * @param index the index in this component at which to set the provided `value`.
      * @param value the value to update at the provided `index`.
      * @param isCaseSensitive determinate whether operation of setting should be case sensitive or not.
+     * @param store how a container stores the value (see `MemberStore`).
      */
-    set(index: BrsType, value: BrsType, isCaseSensitive?: boolean): BrsInvalid;
+    set(index: BrsType, value: BrsType, isCaseSensitive?: boolean, store?: MemberStore): BrsInvalid;
 }
 
 /** Represents a BrightScript component that has elements that can be iterated across. */

@@ -12,7 +12,7 @@ import {
     jsValueOf,
     isNumberKind,
 } from "..";
-import { boxForFieldCopy, containerMember, CopyVisited, literalMember } from "../Boxing";
+import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -38,7 +38,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         this.elements = [];
         if (args.length === 1 && Array.isArray(args[0])) {
             for (const element of args[0]) {
-                this.elements.push(this.addChildRef(literalMember(element)));
+                this.elements.push(this.addChildRef(element));
             }
         } else if (args.length === 2 && isAnyNumber(args[0]) && (isBrsBoolean(args[1]) || isAnyNumber(args[1]))) {
             this.maxSize = jsValueOf(args[0]) as number;
@@ -109,8 +109,8 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         return this.elements.slice();
     }
 
-    add(element: BrsType, onTail: boolean = true) {
-        element = this.addChildRef(element);
+    add(element: BrsType, onTail: boolean = true, store: MemberStore = "build") {
+        element = this.addChildRef(element, store);
         if (onTail) {
             this.elements.push(element);
         } else {
@@ -175,8 +175,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
             } else if (isSceneGraphNode(value)) {
                 copy.add(value);
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                const boxValue = boxContent && boxForFieldCopy(value, RoArray.noBoxKinds, RoArray.toBoxKinds);
-                copy.add(boxValue ? value.box() : value);
+                copy.add(boxContent ? fieldCopyMember(value, RoArray.noBoxKinds, RoArray.toBoxKinds) : value);
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copy.add(value.copy());
             } else {
@@ -211,13 +210,13 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         }
     }
 
-    set(index: BrsType, value: BrsType) {
+    set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
         if (isBoxedNumber(index)) {
             index = index.unbox();
         }
         if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
             const idx = Math.trunc(index.getValue());
-            value = this.addChildRef(value);
+            value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
         }
@@ -298,12 +297,12 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     /** Takes a reference on a component member; returns what to store (see `containerMember`). */
-    addChildRef<T extends BrsType | undefined>(value: T): T {
+    addChildRef<T extends BrsType | undefined>(value: T, store: MemberStore = "build"): T {
         if (value instanceof BrsComponent) {
             value.addReference();
             return value;
         }
-        return value ? containerMember(value) : value;
+        return value ? containerMember(value, store, true) : value;
     }
 
     removeChildRef(value: BrsType | undefined) {

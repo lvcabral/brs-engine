@@ -205,7 +205,7 @@ export class ContentNode extends Node {
                 child.setNodeParent(this);
                 added = true;
             }
-        } else if (child instanceof Node || child === BrsInvalid.Instance) {
+        } else if (child instanceof Node || child instanceof BrsInvalid) {
             success = true;
             appendedIndex = this.children.length;
             this.children.push(BrsInvalid.Instance);

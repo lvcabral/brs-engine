@@ -194,7 +194,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
         },
         impl: (_: Interpreter, str: BrsString) => {
             let items = this.jsRegex[Symbol.split](str.value);
-            let brsItems = items.map((item) => new BrsString(item));
+            let brsItems = items.map((item) => new BrsString(item).box());
             return new RoList(brsItems);
         },
     });

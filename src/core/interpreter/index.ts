@@ -38,6 +38,7 @@ import {
     toAssociativeArray,
     isCollection,
     resolveAnonymousCallable,
+    containerMember,
 } from "../brsTypes";
 import { BrsExtension, ISGNode, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
@@ -1686,14 +1687,14 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     visitArrayLiteral(expression: Expr.ArrayLiteral): RoArray {
-        return new RoArray(expression.elements.map((expr) => this.evaluate(expr)));
+        return new RoArray(expression.elements.map((expr) => containerMember(this.evaluate(expr), "add", true)));
     }
 
     visitAALiteral(expression: Expr.AALiteral): BrsType {
         return new RoAssociativeArray(
             expression.elements.map((member) => ({
                 name: member.name,
-                value: this.evaluate(member.value),
+                value: containerMember(this.evaluate(member.value), "add"),
             }))
         );
     }
@@ -1710,7 +1711,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             if (isSceneGraphNode(source)) {
                 source.location = this.formatLocation(statement.name.location);
             }
-            source.set(new BrsString(statement.name.text), value);
+            if (source instanceof RoAssociativeArray) {
+                source.set(new BrsString(statement.name.text), value, false, "add");
+            } else {
+                source.set(new BrsString(statement.name.text), value);
+            }
         } catch (err: any) {
             this.addError(new BrsError(err.message, statement.name.location));
         }
@@ -1748,7 +1753,11 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 if (isSceneGraphNode(source)) {
                     source.location = this.formatLocation(statement.closingSquare.location);
                 }
-                source.set(index, value, true);
+                if (source instanceof RoAssociativeArray) {
+                    source.set(index, value, true, "add");
+                } else {
+                    source.set(index, value, true);
+                }
             } catch (err: any) {
                 this.addError(new BrsError(err.message, statement.closingSquare.location));
             }
@@ -1791,7 +1800,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoXMLList
             ) {
                 try {
-                    current.set(index, value);
+                    current.set(index, value, false, "assign");
                 } catch (err: any) {
                     this.addError(new BrsError(err.message, statement.closingSquare.location));
                 }

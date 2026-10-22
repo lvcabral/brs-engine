@@ -22,7 +22,7 @@ export class IfList {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
-            this.component.add(tvalue, false);
+            this.component.add(tvalue, false, "add");
             return BrsInvalid.Instance;
         },
     });
@@ -34,7 +34,7 @@ export class IfList {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, tvalue: BrsType) => {
-            this.component.add(tvalue, true);
+            this.component.add(tvalue, true, "add");
             return BrsInvalid.Instance;
         },
     });

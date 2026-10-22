@@ -1,4 +1,4 @@
-import { boxForFieldCopy, containerMember, CopyVisited, literalMember } from "../Boxing";
+import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { BrsType, isBoxable, isNumberKind, isUnboxable, RoFunction } from "..";
@@ -32,9 +32,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         super("roAssociativeArray");
         this.modeCaseSensitive = cs;
         for (const member of elements) {
-            const element = literalMember(member.value);
-            this.addChildRef(element);
-            this.set(member.name, element, true);
+            this.set(member.name, member.value, true);
         }
         this.enumIndex = elements.length ? 0 : -1;
     }
@@ -152,9 +150,10 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             } else if (isSceneGraphNode(value)) {
                 copy.set(name, value, true);
             } else if (isBoxable(value) && !(value instanceof Callable)) {
-                const boxValue =
-                    boxContent && boxForFieldCopy(value, RoAssociativeArray.noBoxKinds, RoAssociativeArray.toBoxKinds);
-                copy.set(name, boxValue ? value.box() : value, true);
+                const member = boxContent
+                    ? fieldCopyMember(value, RoAssociativeArray.noBoxKinds, RoAssociativeArray.toBoxKinds)
+                    : value;
+                copy.set(name, member, true);
             } else if (isUnboxable(value) && !(value instanceof RoFunction)) {
                 copy.set(name, value.copy(), true);
             }
@@ -187,7 +186,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         return this.findElement(index.value, isCaseSensitive) ?? BrsInvalid.Instance;
     }
 
-    set(index: BrsType, value: BrsType, isCaseSensitive = false) {
+    set(index: BrsType, value: BrsType, isCaseSensitive = false, store: MemberStore = "build") {
         if (isUnboxable(index)) {
             index = index.unbox();
         }
@@ -196,7 +195,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
         }
         // override old key with new one
         let oldKey = this.findElementKey(index.value);
-        value = this.addChildRef(value);
+        value = this.addChildRef(value, store);
         if (oldKey) this.removeChildRef(this.elements.get(oldKey));
         let indexValue = isCaseSensitive ? index.value : index.value.toLowerCase();
         if (!this.modeCaseSensitive && oldKey) {
@@ -261,18 +260,18 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     }
 
     /** Takes a reference on a component member; returns what to store (see `containerMember`). */
-    addChildRef<T extends BrsType | undefined>(value: T): T {
+    addChildRef<T extends BrsType | undefined>(value: T, store: MemberStore = "build"): T {
         if (value instanceof BrsComponent) {
             value.addReference();
             return value;
         }
-        return value ? containerMember(value) : value;
+        return value ? containerMember(value, store) : value;
     }
 
+    /** Drops a reference on a component member; returns true when the member is still referenced elsewhere. */
     removeChildRef(value: BrsType | undefined) {
         if (value instanceof BrsComponent) {
-            const refs = value.removeReference();
-            return refs > 1;
+            return value.removeReference() > 0;
         }
         return false;
     }
@@ -342,7 +341,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, key: BrsString, value: BrsType) => {
-            this.set(key, value, /* isCaseSensitive */ true);
+            this.set(key, value, /* isCaseSensitive */ true, "add");
             this.updateNext();
             return BrsInvalid.Instance;
         },
@@ -401,7 +400,7 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            return new RoArray(this.getElements());
+            return new RoArray(this.getElements().map((key: BrsString) => key.box()));
         },
     });
 

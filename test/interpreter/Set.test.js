@@ -51,7 +51,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index0", false, true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new index0"));
         });
 
         test("multi-dimensional", () => {
@@ -120,7 +120,7 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)", false, true));
+            expect(interpreter.environment.get(identifier("result"))).toEqual(new BrsString("new (2,1)"));
         });
     });
 
@@ -166,10 +166,8 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(new BrsString("new foo", false, true));
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("added bar", false, true)
-            );
+            expect(interpreter.environment.get(identifier("fooResult"))).toEqual(new BrsString("new foo"));
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("added bar"));
         });
 
         test("multi-dimensional", () => {
@@ -232,12 +230,8 @@ describe("property setting", () => {
 
             interpreter.exec(ast);
 
-            expect(interpreter.environment.get(identifier("barResult"))).toEqual(
-                new BrsString("new aa.foo.bar", false, true)
-            );
-            expect(interpreter.environment.get(identifier("bazResult"))).toEqual(
-                new BrsString("added aa.foo.baz", false, true)
-            );
+            expect(interpreter.environment.get(identifier("barResult"))).toEqual(new BrsString("new aa.foo.bar"));
+            expect(interpreter.environment.get(identifier("bazResult"))).toEqual(new BrsString("added aa.foo.baz"));
         });
     });
 });

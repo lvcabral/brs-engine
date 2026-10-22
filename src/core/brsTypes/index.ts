@@ -269,7 +269,7 @@ export function isBrsType(value: any): value is BrsType {
         isBrsBoolean(value) ||
         isBrsString(value) ||
         isBrsNumber(value) ||
-        value === BrsInvalid.Instance ||
+        value instanceof BrsInvalid ||
         value instanceof BrsComponent ||
         value instanceof BrsInterface ||
         value instanceof Callable ||

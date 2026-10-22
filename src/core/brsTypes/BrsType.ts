@@ -254,10 +254,11 @@ export class BrsBoolean implements BrsValue, Comparable, Boxable {
      * A distinct instance (not the shared `True`/`False` singletons) is required so that
      * literalness is tracked per occurrence and doesn't leak onto runtime/parsed booleans.
      * @param value JavaScript boolean value
+     * @param legacy True for a container member that reports `roBoolean`
      * @returns a new literal-flagged BrsBoolean
      */
-    static fromLiteral(value: boolean) {
-        return new BrsBoolean(value, true);
+    static fromLiteral(value: boolean, legacy = false) {
+        return new BrsBoolean(value, true, legacy);
     }
 
     /**
@@ -371,6 +372,8 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     literal: boolean = false;
     legacy: boolean = false;
     static readonly Instance = new BrsInvalid();
+    /** `invalid` added to an array or list, which `type()` reports as `roInvalid`. */
+    static readonly Legacy = Object.assign(new BrsInvalid(), { legacy: true });
 
     /**
      * Compares if invalid is less than another value.
