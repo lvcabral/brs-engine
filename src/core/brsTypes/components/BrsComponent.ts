@@ -7,13 +7,14 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class BrsComponent {
     protected readonly componentName: string;
-    private readonly methods: Map<string, Callable> = new Map();
+    private static readonly noInterfaces: ReadonlyMap<string, BrsInterface> = new Map();
+    /** Created on first registration, so components that never get methods (e.g. boxed values) stay light. */
+    private methods?: Map<string, Callable>;
+    private interfaceMap?: Map<string, BrsInterface>;
     private filter: string = "";
     private methodsBuilt = false;
     protected references: number;
     protected returnFlag: boolean;
-
-    readonly interfaces = new Map<string, BrsInterface>();
 
     constructor(name: string) {
         this.componentName = name;
@@ -41,6 +42,11 @@ export class BrsComponent {
             this.methodsBuilt = true;
             this.buildMethods();
         }
+    }
+
+    /** The interfaces this component implements, keyed by lowercase name. */
+    get interfaces(): ReadonlyMap<string, BrsInterface> {
+        return this.interfaceMap ?? BrsComponent.noInterfaces;
     }
 
     /**
@@ -78,7 +84,8 @@ export class BrsComponent {
             const methodNames = new Set(
                 methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
             );
-            this.interfaces.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
+            this.interfaceMap ??= new Map();
+            this.interfaceMap.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
 
             this.appendMethods(methods);
         }
@@ -89,6 +96,7 @@ export class BrsComponent {
      * @param methods List of Callables to add
      */
     appendMethods(methods: Callable[]) {
+        this.methods ??= new Map();
         for (const m of methods) {
             this.methods.set((m.name || "").toLowerCase(), m);
         }
@@ -99,11 +107,15 @@ export class BrsComponent {
      * @param methods List of Callables to override
      */
     overrideMethods(methods: Callable[]) {
+        const current = this.methods;
+        if (!current) {
+            return;
+        }
         for (const m of methods) {
-            if (!m.name || !this.methods.has(m.name.toLowerCase())) {
+            if (!m.name || !current.has(m.name.toLowerCase())) {
                 continue;
             }
-            this.methods.set(m.name.toLowerCase(), m);
+            current.set(m.name.toLowerCase(), m);
         }
     }
 
@@ -118,9 +130,9 @@ export class BrsComponent {
         if (this.filter !== "") {
             const iface = this.interfaces.get(this.filter);
             this.filter = "";
-            return iface?.hasMethod(method) ? this.methods.get(method) : undefined;
+            return iface?.hasMethod(method) ? this.methods?.get(method) : undefined;
         }
-        return this.methods.get(method);
+        return this.methods?.get(method);
     }
 
     /**
