@@ -179,8 +179,12 @@ function buildCallFuncSnapshot(m: RoAssociativeArray): RoAssociativeArray {
  */
 /** Most fan-out `set` updates packed into one slot hand-off (see `Task.flushFanout`). */
 const FANOUT_BATCH_MAX = 1000;
-/** Soft cap on a fan-out batch's JSON length, well under the shared buffer's 16MB limit. */
-const FANOUT_BATCH_MAX_CHARS = 1024 * 1024;
+/**
+ * Cap on a fan-out batch's UTF-8 size, well under the shared buffer's 16MB limit. Checked before an
+ * update joins a batch, so a batch never outgrows the buffer; an update too large for the cap on its
+ * own still travels alone, exactly as it did before batching.
+ */
+const FANOUT_BATCH_MAX_BYTES = 1024 * 1024;
 
 export class Task extends Node {
     /** Built-in Task fields defined by Roku (control/state/functionName). */
@@ -208,6 +212,14 @@ export class Task extends Node {
      * busy-waits for FPS and doesn't yield its event loop mid-frame).
      */
     private readonly fanoutQueue: ThreadUpdate[] = [];
+    /**
+     * Task thread: items of the last loaded fan-out batch not applied yet, consumed from
+     * `pendingFanoutHead` on (see `processThreadUpdate`).
+     */
+    private readonly pendingFanout: any[] = [];
+    private pendingFanoutHead = 0;
+    /** Task thread: a fan-out batch is being applied (see `processThreadUpdate`). */
+    private applyingFanout = false;
     /**
      * Dedicated buffer carrying replies from this Task thread back to a `callFunc` request
      * initiated by whichever thread manages it (typically render — see `requestTaskMethodCall`).
@@ -488,6 +500,9 @@ export class Task extends Node {
             // The task consumed its events live while running; drop the render-side copies so a
             // restart doesn't replay the whole previous run as pre-launch events.
             dropPortNodeEvents(this.m);
+            // Same for fan-out not handed over yet: it belonged to the run that just ended, and
+            // `flushFanout` would otherwise hold it for the next launch (it only flushes `started` tasks).
+            this.fanoutQueue.length = 0;
         }
         this.active = false;
     }
@@ -637,19 +652,23 @@ export class Task extends Node {
     /**
      * Flushes queued fan-out updates into the dedicated buffer (render thread only). Writes are
      * synchronous and non-blocking: whenever the single slot is free, consecutive `set` updates are
-     * packed into one `{ batch }` payload (bounded by `FANOUT_BATCH_MAX`/`FANOUT_BATCH_MAX_CHARS`),
+     * packed into one `{ batch }` payload (bounded by `FANOUT_BATCH_MAX`/`FANOUT_BATCH_MAX_BYTES`),
      * leaving the rest queued for the next render pass so a slow task can never stall the render
      * thread. Batching matters because each slot hand-off costs a render-loop round trip: one update
      * per pass capped a task port-observing a hot field at a few hundred events per second
      * (lvcabral/brs-engine#1263). Other actions (a `callFunc` request) still travel alone.
+     *
+     * Nothing is handed over until the task has launched: a write between activation and launch is
+     * also swept into the launch replay, and `dropFanoutCoveredByReplay` can only discard the fan-out
+     * copy while it is still queued. `processTasks` flushes right after `checkTaskRun` launches.
      */
     flushFanout() {
-        if (!this.fanoutBuffer) {
+        if (!this.fanoutBuffer || !this.started) {
             return;
         }
         while (this.fanoutQueue.length > 0 && this.fanoutBuffer.getVersion() === 0) {
             const parts: string[] = [];
-            let chars = 0;
+            let bytes = 0;
             let last: ThreadUpdate | undefined;
             // Walk with an index and remove the consumed run with one `splice`: a `shift()` per update
             // re-indexes the whole backlog each time, quadratic when a hot field queues thousands.
@@ -657,15 +676,12 @@ export class Task extends Node {
             while (
                 consumed < this.fanoutQueue.length &&
                 parts.length < FANOUT_BATCH_MAX &&
-                chars < FANOUT_BATCH_MAX_CHARS &&
                 (consumed === 0 || this.fanoutQueue[consumed].action === "set")
             ) {
-                const update = this.fanoutQueue[consumed++];
+                const update = this.fanoutQueue[consumed];
+                let json: string | undefined;
                 try {
-                    const json = JSON.stringify(update);
-                    parts.push(json);
-                    chars += json.length;
-                    last = update;
+                    json = JSON.stringify(update);
                 } catch (err: any) {
                     // A non-serializable payload (e.g. a value with a cycle) must never propagate out of
                     // here: on the render thread this runs inside the render loop, so a throw would stall
@@ -676,6 +692,18 @@ export class Task extends Node {
                         }: ${err?.message ?? err}`
                     );
                 }
+                if (json !== undefined) {
+                    // UTF-8 upper bound (≤ 3 bytes per UTF-16 unit): cheap, and only ever errs toward a
+                    // smaller batch. An update that would push the batch over the cap waits for the next one.
+                    const itemBytes = json.length * 3;
+                    if (parts.length > 0 && bytes + itemBytes > FANOUT_BATCH_MAX_BYTES) {
+                        break;
+                    }
+                    parts.push(json);
+                    bytes += itemBytes;
+                    last = update;
+                }
+                consumed++;
                 if (update.action !== "set") {
                     break;
                 }
@@ -960,11 +988,13 @@ export class Task extends Node {
             if (BrsDevice.pauseIfDebugging()) {
                 return new Array<BrsEvent>();
             }
-            if (wait !== PORT_NO_WAIT) {
+            // Don't sleep on the slot while a loaded batch still has items to apply (left behind by
+            // an item that threw): they are already here, and the slot may stay idle indefinitely.
+            if (wait !== PORT_NO_WAIT && this.pendingFanoutHead >= this.pendingFanout.length) {
                 const timeout = wait === 0 ? undefined : wait;
                 this.taskBuffer.waitVersion(0, timeout);
             }
-            this.processThreadUpdate();
+            this.processThreadUpdate(this.taskBuffer, true);
         }
         return new Array<BrsEvent>();
     }
@@ -1156,27 +1186,62 @@ export class Task extends Node {
 
     /**
      * Applies pending updates stored in the shared buffer that originated from another thread.
+     * @param buffer Buffer to read (defaults to the task's own incoming buffer).
+     * @param fromWait True when called from a port `wait()` (see below), false from `tick`.
      * @returns The ThreadUpdate that was applied, if any.
      */
-    processThreadUpdate(buffer: SharedObject | undefined = this.taskBuffer): ThreadUpdate | undefined {
-        const currentVersion = buffer?.getVersion() ?? -1;
-        // Only process updates when the buffer version is exactly 1,
-        // which indicates a new update is available from the other thread.
-        // (Versioning protocol: 1 = update ready, 0 = idle/no update)
-        if (!buffer || currentVersion !== 1) {
+    processThreadUpdate(
+        buffer: SharedObject | undefined = this.taskBuffer,
+        fromWait: boolean = false
+    ): ThreadUpdate | undefined {
+        if (!buffer) {
             return undefined;
         }
-        // Load update from buffer and reset version to 0 (idle)
-        const update = buffer.load(true);
-        if (Array.isArray(update?.batch)) {
-            // A packed run of fan-out `set` updates (see `flushFanout`), applied in send order.
-            let applied: ThreadUpdate | undefined;
-            for (const item of update.batch) {
+        const fanout = buffer === this.taskBuffer;
+        // Applying a batch item can run BrightScript on this thread (an XML `onChange`), and its
+        // `tick` lands back here. Applying more items from inside that handler would re-enter its own
+        // field observer, which `Field` skips while it runs, so those events were lost; it also must
+        // not load the next batch on top of this one (the slot was reset on load, so render may have
+        // refilled it). So a re-entrant tick does nothing and the outer loop carries on in order.
+        // A port `wait()` inside the handler still drains, as it pumps observers on a device too,
+        // otherwise a handler waiting for the next fan-out event could never get it.
+        if (fanout && this.applyingFanout && !fromWait) {
+            return undefined;
+        }
+        // Finish the current fan-out batch before loading anything new from the slot.
+        if (!fanout || this.pendingFanoutHead >= this.pendingFanout.length) {
+            // Only process updates when the buffer version is exactly 1,
+            // which indicates a new update is available from the other thread.
+            // (Versioning protocol: 1 = update ready, 0 = idle/no update)
+            if (buffer.getVersion() !== 1) {
+                return undefined;
+            }
+            // Load update from buffer and reset version to 0 (idle)
+            const update = buffer.load(true);
+            if (!Array.isArray(update?.batch)) {
+                return this.applyThreadUpdate(update);
+            }
+            this.pendingFanout.length = 0;
+            this.pendingFanoutHead = 0;
+            this.pendingFanout.push(...update.batch);
+        }
+        // A packed run of fan-out `set` updates (see `flushFanout`), applied in send order. The head
+        // advances before each item is applied, so an item that throws isn't re-applied and doesn't
+        // take the rest of the batch with it: they are applied on the next call.
+        let applied: ThreadUpdate | undefined;
+        const wasApplying = this.applyingFanout;
+        this.applyingFanout = true;
+        try {
+            while (this.pendingFanoutHead < this.pendingFanout.length) {
+                const item = this.pendingFanout[this.pendingFanoutHead++];
                 applied = this.applyThreadUpdate(item) ?? applied;
             }
-            return applied;
+        } finally {
+            this.applyingFanout = wasApplying;
         }
-        return this.applyThreadUpdate(update);
+        this.pendingFanout.length = 0;
+        this.pendingFanoutHead = 0;
+        return applied;
     }
 
     /**

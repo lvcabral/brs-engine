@@ -556,11 +556,21 @@ export class SGRoot {
 
     /**
      * Hands queued render→task fan-out to every task whose slot is free (see `Task.flushFanout`),
-     * without serving any other task traffic. Safe to call between frames: runs no BrightScript.
+     * without serving any other task traffic. Safe to call between frames: runs no BrightScript, and
+     * skips tasks that haven't launched yet (see `Task.flushFanout`).
      */
     flushFanouts() {
         for (const thread of this._threads.values()) {
-            thread.task?.flushFanout();
+            // Same isolation as `processTasks`: this runs inside the render loop's frame-cap wait.
+            try {
+                thread.task?.flushFanout();
+            } catch (err: any) {
+                BrsDevice.stderr.write(
+                    `error,[sg] Error flushing fan-out for task ${thread.task?.nodeSubtype} (thread ${
+                        thread.task?.threadId
+                    }): ${err?.message ?? err}`
+                );
+            }
         }
     }
 
