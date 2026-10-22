@@ -7,8 +7,8 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class BrsComponent {
     protected readonly componentName: string;
-    /** Created on first registration, so components that never get methods (e.g. boxed values) stay light. */
-    private methods?: Map<string, Callable>;
+    // Created on first registration, so components that never get methods (e.g. boxed values) stay light.
+    private methodMap?: Map<string, Callable>;
     private interfaceMap?: Map<string, BrsInterface>;
     private filter: string = "";
     private methodsBuilt = false;
@@ -33,10 +33,9 @@ export class BrsComponent {
 
     /**
      * Ensures {@link buildMethods} has run before the method/interface maps are consulted. Cheap
-     * (a boolean check) after the first call. Public so external reflection (e.g. `GetInterface`)
-     * can trigger the build before reading `interfaces` directly.
+     * (a boolean check) after the first call.
      */
-    ensureMethods() {
+    protected ensureMethods() {
         if (!this.methodsBuilt) {
             this.methodsBuilt = true;
             this.buildMethods();
@@ -45,6 +44,7 @@ export class BrsComponent {
 
     /** The interfaces this component implements, keyed by lowercase name. */
     get interfaces(): ReadonlyMap<string, BrsInterface> {
+        this.ensureMethods();
         this.interfaceMap ??= new Map();
         return this.interfaceMap;
     }
@@ -64,7 +64,7 @@ export class BrsComponent {
      */
     hasInterface(interfaceName: string) {
         this.ensureMethods();
-        return this.interfaces.has(interfaceName.toLowerCase());
+        return this.interfaceMap?.has(interfaceName.toLowerCase()) ?? false;
     }
 
     /**
@@ -80,11 +80,14 @@ export class BrsComponent {
      * @param interfaces a record mapping interface names to arrays of Callables.
      */
     protected registerMethods(interfaces: Record<string, Callable[]>) {
+        this.interfaceMap ??= new Map();
         for (const [interfaceName, methods] of Object.entries(interfaces)) {
-            const methodNames = new Set(
-                methods.filter((m) => m.name?.toLowerCase()).map((m) => m.name?.toLowerCase()!)
-            );
-            this.interfaceMap ??= new Map();
+            const methodNames = new Set<string>();
+            for (const m of methods) {
+                if (m.name) {
+                    methodNames.add(m.name);
+                }
+            }
             this.interfaceMap.set(interfaceName.toLowerCase(), new BrsInterface(interfaceName, methodNames));
 
             this.appendMethods(methods);
@@ -96,9 +99,9 @@ export class BrsComponent {
      * @param methods List of Callables to add
      */
     appendMethods(methods: Callable[]) {
-        this.methods ??= new Map();
+        this.methodMap ??= new Map();
         for (const m of methods) {
-            this.methods.set((m.name || "").toLowerCase(), m);
+            this.methodMap.set((m.name || "").toLowerCase(), m);
         }
     }
 
@@ -108,10 +111,10 @@ export class BrsComponent {
      */
     overrideMethods(methods: Callable[]) {
         for (const m of methods) {
-            if (!m.name || !this.methods?.has(m.name.toLowerCase())) {
+            if (!m.name || !this.methodMap?.has(m.name.toLowerCase())) {
                 continue;
             }
-            this.methods.set(m.name.toLowerCase(), m);
+            this.methodMap.set(m.name.toLowerCase(), m);
         }
     }
 
@@ -124,11 +127,11 @@ export class BrsComponent {
         this.ensureMethods();
         const method = index.toLowerCase();
         if (this.filter !== "") {
-            const iface = this.interfaces.get(this.filter);
+            const iface = this.interfaceMap?.get(this.filter);
             this.filter = "";
-            return iface?.hasMethod(method) ? this.methods?.get(method) : undefined;
+            return iface?.hasMethod(method) ? this.methodMap?.get(method) : undefined;
         }
-        return this.methods?.get(method);
+        return this.methodMap?.get(method);
     }
 
     /**

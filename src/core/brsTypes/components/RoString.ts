@@ -15,14 +15,11 @@ import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
     readonly kind = ValueKind.Object;
-    private intrinsic: BrsString = new BrsString("");
+    private intrinsic: BrsString;
 
     constructor(initialValue?: BrsString) {
         super("roString");
-
-        if (initialValue) {
-            this.intrinsic = initialValue;
-        }
+        this.intrinsic = initialValue ?? new BrsString("");
     }
 
     /**

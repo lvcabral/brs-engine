@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { BrsComponent, BrsString, BrsInvalid, Callable, ValueKind } = brs.types;
+const { BrsComponent, BrsInterface, BrsString, BrsInvalid, Callable, ValueKind } = brs.types;
 const { GetInterface, FindMemberFunction } = brs.stdlib;
 const { Interpreter } = brs;
 
@@ -15,7 +15,6 @@ describe("BrsComponent without registered methods", () => {
         const component = new BrsComponent("roEmpty");
         expect(component.getMethod("ping")).toBeUndefined();
         expect(component.hasInterface("ifPing")).toBe(false);
-        expect(component.interfaces.size).toBe(0);
         expect(GetInterface.call(interpreter, component, new BrsString("ifPing"))).toBe(BrsInvalid.Instance);
         expect(FindMemberFunction.call(interpreter, component, new BrsString("ping"))).toBe(BrsInvalid.Instance);
     });
@@ -29,7 +28,9 @@ describe("BrsComponent without registered methods", () => {
     it("keeps its interfaces separate from other components", () => {
         const first = new BrsComponent("roEmpty");
         const second = new BrsComponent("roEmpty");
-        expect(first.interfaces).not.toBe(second.interfaces);
+        first.interfaces.set("ifping", new BrsInterface("ifPing", new Set(["ping"])));
+        expect(first.hasInterface("ifPing")).toBe(true);
+        expect(second.hasInterface("ifPing")).toBe(false);
     });
 
     it("finds methods appended after construction", () => {
