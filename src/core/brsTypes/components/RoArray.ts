@@ -31,14 +31,15 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     elements: BrsType[];
     enumIndex: number;
 
-    constructor(elements: BrsType[]);
+    constructor(elements: BrsType[], store?: MemberStore);
     constructor(capacity: Int32 | Float, resizable: BrsBoolean);
     constructor(...args: any) {
         super("roArray");
         this.elements = [];
-        if (args.length === 1 && Array.isArray(args[0])) {
+        if (Array.isArray(args[0]) && args.length <= 2) {
+            const store: MemberStore = args[1] ?? "build";
             for (const element of args[0]) {
-                this.elements.push(this.addChildRef(element));
+                this.elements.push(this.addChildRef(element, store));
             }
         } else if (args.length === 2 && isAnyNumber(args[0]) && (isBrsBoolean(args[1]) || isAnyNumber(args[1]))) {
             this.maxSize = jsValueOf(args[0]) as number;

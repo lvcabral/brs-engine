@@ -28,11 +28,11 @@ export class RoAssociativeArray extends BrsComponent implements BrsValue, BrsIte
     keyMap = new Map<string, Set<string>>();
     private modeCaseSensitive: boolean;
 
-    constructor(elements: AAMember[], cs: boolean = false) {
+    constructor(elements: AAMember[], cs: boolean = false, store: MemberStore = "build") {
         super("roAssociativeArray");
         this.modeCaseSensitive = cs;
         for (const member of elements) {
-            this.set(member.name, member.value, true);
+            this.set(member.name, member.value, true, store);
         }
         this.enumIndex = elements.length ? 0 : -1;
     }
