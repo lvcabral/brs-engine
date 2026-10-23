@@ -1,6 +1,7 @@
 import { Callable, ValueKind, BrsString, Int32, Float, Double, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
+import Long from "long";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable("UCase", {
@@ -291,27 +292,38 @@ const leadingSpace = /^[\t\n\v\f\r ]*/;
  * @returns the number, or 0 when there is none.
  */
 function parseFloatPrefix(text: string): number {
-    const match =
-        /^([+-]?)(?:(inf(?:inity)?)|(nan)(?:\(\w*\))?|0x((?:[\da-f]+(?:\.[\da-f]*)?|\.[\da-f]+)(?:p[+-]?\d+)?)|((?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?))/i.exec(
-            text.replace(leadingSpace, "")
-        );
-    if (!match) {
+    let rest = text.replace(leadingSpace, "");
+    const negative = rest.startsWith("-");
+    if (negative || rest.startsWith("+")) {
+        rest = rest.slice(1);
+    }
+    const value = parseUnsignedFloatPrefix(rest);
+    if (value === undefined) {
         return 0;
     }
-    const [, sign, inf, nan, hex, decimal] = match;
-    let value: number;
-    if (inf) {
-        value = Infinity;
-    } else if (nan) {
-        value = Number.NaN;
-    } else if (hex) {
-        const [mantissa, exponent = "0"] = hex.toLowerCase().split("p");
-        const [whole, fraction = ""] = mantissa.split(".");
-        value = (Number.parseInt(whole + fraction, 16) / 16 ** fraction.length) * 2 ** Number(exponent);
-    } else {
-        value = Number(decimal);
+    return negative ? -value : value;
+}
+
+/**
+ * `parseFloatPrefix` after the sign.
+ * @param text the string, from just after any sign.
+ * @returns the number, or `undefined` when there is none.
+ */
+function parseUnsignedFloatPrefix(text: string): number | undefined {
+    const start = text.slice(0, 3).toLowerCase();
+    if (start === "inf") {
+        return Infinity;
+    } else if (start === "nan") {
+        return Number.NaN;
     }
-    return sign === "-" ? -value : value;
+    const hex = /^0x([\da-f]*)(?:\.([\da-f]*))?/i.exec(text);
+    if (hex && (hex[1] || hex[2])) {
+        const [prefix, whole, fraction = ""] = hex;
+        const exponent = /^p([+-]?\d+)/i.exec(text.slice(prefix.length))?.[1] ?? "0";
+        return (Number.parseInt(whole + fraction, 16) / 16 ** fraction.length) * 2 ** Number(exponent);
+    }
+    const decimal = /^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i.exec(text);
+    return decimal ? Number(decimal[0]) : undefined;
 }
 
 /**
@@ -350,7 +362,7 @@ function parseIntPrefix(text: string, radix: number): number {
     if (radix === 10) {
         return Math.min(Math.max(value, minInteger), maxInteger);
     }
-    return Math.min(Math.max(value, minInteger), maxUnsigned) | 0;
+    return Long.fromNumber(Math.min(Math.max(value, minInteger), maxUnsigned)).toInt();
 }
 
 const minInteger = -(2 ** 31);

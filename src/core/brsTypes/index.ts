@@ -8,6 +8,7 @@ import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
+import { hasNegativeSign } from "./BrsNumber";
 import { Callable } from "./Callable";
 import { BrsCollection, BrsComponent, BrsIterable } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
@@ -246,6 +247,28 @@ export type BoxedNumber = RoInt | RoFloat | RoDouble | RoLongInteger;
  */
 export function isAnyNumber(value: BrsType): value is BrsNumber | BoxedNumber {
     return isBrsNumber(value) || isBoxedNumber(value);
+}
+
+/**
+ * The result of a numeric operation with the NaN sign a Roku device gives: a NaN that an operation creates from
+ * non-NaN operands (`Sqr(-1)`, `inf - inf`) has no sign, while the host CPU may set it (x86 does); a NaN operand's
+ * sign carries through, as on the device.
+ * @param result the result of the operation.
+ * @param operands the operation's operands.
+ * @returns `result`, or a positive NaN of the same type when the operation created a negative NaN.
+ */
+export function deviceNaN<T extends BrsType>(result: T, ...operands: BrsType[]): T {
+    if (
+        (result instanceof Float || result instanceof Double) &&
+        Number.isNaN(result.getValue()) &&
+        hasNegativeSign(result.getValue()) &&
+        !operands.some(
+            (operand) => isBrsNumber(operand) && operand.kind !== ValueKind.Int64 && Number.isNaN(operand.getValue())
+        )
+    ) {
+        return (result instanceof Float ? new Float(Number.NaN) : new Double(Number.NaN)) as T;
+    }
+    return result;
 }
 
 /**

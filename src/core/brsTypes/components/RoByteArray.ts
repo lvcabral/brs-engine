@@ -5,6 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { validUri, writeUri } from "../../device/FileSystem";
 import { crc32 } from "crc";
+import Long from "long";
 import { IfEnum } from "../interfaces/IfEnum";
 import { IfArrayGet, isWritableIndex } from "../interfaces/IfArray";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -399,7 +400,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
         impl: (interpreter: Interpreter, index: BrsType, length: BrsType) => {
             if (index === omittedArg) {
-                return new Int32(crc32(asBuffer(this.elements)) | 0);
+                return new Int32(signedCrc32(this.elements));
             } else if (length === omittedArg) {
                 // There is no one-argument form.
                 interpreter.addError(
@@ -413,7 +414,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             const idx = toIntegerArg(interpreter, index);
             const len = toIntegerArg(interpreter, length);
             const bytes = idx < 0 || len < 1 ? new Uint8Array() : this.elements.subarray(idx, idx + len);
-            return new Int32(crc32(asBuffer(bytes)) | 0);
+            return new Int32(signedCrc32(bytes));
         },
     });
 
@@ -683,7 +684,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     });
 }
 
-/** A `Buffer` view of `bytes`, without copying them. */
-function asBuffer(bytes: Uint8Array) {
-    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+/** The CRC-32 of `bytes` as a signed Integer, read through a `Buffer` view so they are not copied. */
+function signedCrc32(bytes: Uint8Array) {
+    return Long.fromNumber(crc32(Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength))).toInt();
 }

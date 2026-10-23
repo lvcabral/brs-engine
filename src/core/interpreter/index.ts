@@ -9,6 +9,7 @@ import {
     ValueKind,
     isBrsNumber,
     hasNegativeSign,
+    deviceNaN,
     isBrsString,
     isBrsBoolean,
     isBrsCallable,
@@ -783,7 +784,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Minus:
             case Lexeme.MinusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.subtract(right);
+                    return deviceNaN(left.subtract(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -802,7 +803,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Star:
             case Lexeme.StarEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.multiply(right);
+                    return deviceNaN(left.multiply(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -820,7 +821,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.Caret:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.pow(right);
+                    return deviceNaN(left.pow(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -839,7 +840,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Slash:
             case Lexeme.SlashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.divide(right);
+                    return deviceNaN(left.divide(right), left, right);
                 }
                 return this.addError(
                     new TypeMismatch({
@@ -856,7 +857,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.Mod:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.modulo(right);
+                    return deviceNaN(left.modulo(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -875,7 +876,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Backslash:
             case Lexeme.BackslashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.intDivide(right);
+                    return deviceNaN(left.intDivide(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -894,7 +895,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Plus:
             case Lexeme.PlusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.add(right);
+                    return deviceNaN(left.add(right), left, right);
                 } else if (isStringComp(left) && isStringComp(right)) {
                     return left.concat(right);
                 } else {

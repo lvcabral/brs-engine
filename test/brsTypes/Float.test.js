@@ -438,4 +438,29 @@ describe("Float", () => {
             expect(one.not()).toEqual(new Int32(-2));
         });
     });
+
+    describe("NaN sign", () => {
+        const { deviceNaN, hasNegativeSign } = brs.types;
+        const negativeNaN = -Math.sqrt(-1);
+
+        it("keeps the sign of a NaN and of -0", () => {
+            expect(new Float(negativeNaN).toString()).toBe("-nan");
+            expect(new Float(-0).toString()).toBe("-0");
+            expect(new Double(negativeNaN).toString()).toBe("-nan");
+        });
+
+        it("makes a NaN an operation created from non-NaN operands positive, as a device does", () => {
+            // An x86 host sets the sign of a NaN it creates (Sqr(-1), inf - inf); a device does not.
+            const created = deviceNaN(new Float(negativeNaN), new Float(-1));
+            expect(hasNegativeSign(created.getValue())).toBe(false);
+            expect(created.toString()).toBe("nan");
+            const createdDouble = deviceNaN(new Double(negativeNaN), new Double(Infinity), new Double(Infinity));
+            expect(createdDouble.toString()).toBe("nan");
+        });
+
+        it("keeps the sign a NaN operand carries through", () => {
+            expect(deviceNaN(new Float(negativeNaN), new Float(negativeNaN), new Int32(2)).toString()).toBe("-nan");
+            expect(deviceNaN(new Float(2.5), new Float(1)).toString()).toBe("2.5");
+        });
+    });
 });
