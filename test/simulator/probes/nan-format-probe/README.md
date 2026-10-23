@@ -43,7 +43,8 @@ Output format: `PROBE|<case>|<values...>`, with `print` output between `print-be
 - `Val(s, radix)` reads the longest prefix like C's `strtol` and returns an `Integer`, even with a `.` in the string
   (`Val("1.5", 10)` is 1). Radix 0 picks 16 for `0x`, 8 for a leading `0`, else 10; radix 16 accepts `0x`; a radix
   outside 0 and 2-36 gives 0. Radix 10 clamps to the Integer range; other radixes keep the low 32 bits, saturating
-  past 32 unsigned bits (`"ffffffff"` and `"100000000"` hex are -1, `"-ffffffff"` hex is -2147483648).
+  past 32 unsigned bits (`"ffffffff"` and `"100000000"` hex are -1, `"-ffffffff"` hex is -2147483648). Overflow with
+  radix 0 is not tested; the engine treats it by the radix it resolves to.
 
 Before PR #1270 the engine wrote `-NaN`/`NaN`/`Infinity`, lost the sign of a negated NaN and of `-0` (the `Float`
 constructor and unary minus dropped them), returned 0 for any `Val(s)` that `Number()` rejects, and parsed
