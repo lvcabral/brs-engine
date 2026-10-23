@@ -29,12 +29,18 @@ import { Node } from "./Node";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 import {
+    composeSceneScale,
     convertHexColor,
+    IDENTITY_SCENE_MAP,
+    mapRectToScene,
     normalizeBlendColor,
     rectContainsRect,
     rotateRect,
     rotateTranslation,
+    sameSceneMap,
     scaledExtent,
+    SceneMap,
+    transformLocalRect,
     unionRect,
 } from "../SGUtil";
 import { SGNodeFactory } from "../factory/NodeFactory";
@@ -63,12 +69,17 @@ export class Group extends Node {
     private cachedHeight: number = 0;
     private _isDirty: boolean = true;
     /**
-     * The (origin, angle, opacity) context of this node's last completed layout pass. A pruned
-     * refresh may skip the subtree only when the incoming context matches EXACTLY (float
-     * equality): a moved/rotated/faded ancestor changes the context of every descendant, which
-     * re-renders them even though their own fields never changed.
+     * The (origin, angle, opacity, scene map) context of this node's last completed layout pass. A
+     * pruned refresh may skip the subtree only when the incoming context matches EXACTLY (float
+     * equality): a moved/rotated/scaled/faded ancestor changes the context of every descendant,
+     * which re-renders them even though their own fields never changed.
      */
-    private lastLayoutContext?: { x: number; y: number; angle: number; opacity: number };
+    private lastLayoutContext?: { x: number; y: number; angle: number; opacity: number; sceneMap: SceneMap };
+    /**
+     * `sgRoot.sceneMap` as of this node's last render: the ancestors' scale, which maps the
+     * coordinates this node draws in (its parent's local units) to `rectToScene`.
+     */
+    protected sceneMap: SceneMap = IDENTITY_SCENE_MAP;
     /** @internal Number of non-skipped render passes this node has run; exposed for pruning tests. */
     layoutPassCount = 0;
 
@@ -667,6 +678,8 @@ export class Group extends Node {
             rect.width = scaleX * bitmap.width;
             rect.height = scaleY * bitmap.height;
             if (rotation !== 0 || scale[0] !== 1 || scale[1] !== 1) {
+                // The pivot sits at the SCALED center: `rect.x/y` already carries the
+                // `center * (1 - scale)` compensation from getTranslation.
                 const center = this.getScaleRotateCenter();
                 draw2D?.doDrawRotatedBitmap(
                     rect.x,
@@ -675,8 +688,8 @@ export class Group extends Node {
                     scaleY,
                     rotation,
                     bitmap,
-                    center[0],
-                    center[1],
+                    center[0] * scale[0],
+                    center[1] * scale[1],
                     rgba,
                     opacity
                 );
@@ -705,6 +718,7 @@ export class Group extends Node {
 
     /** @param scale See `getTranslation`'s `scale` param — threaded through to avoid a re-fetch. */
     protected updateBoundingRects(drawRect: Rect, origin: number[], rotation: number, scale?: number[]) {
+        scale ??= this.getValueJS("scale") as number[];
         const nodeTrans = this.getTranslation(scale);
         this.rectLocal = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
         if (rotation === 0) {
@@ -718,7 +732,7 @@ export class Group extends Node {
                 width: drawRect.width,
                 height: drawRect.height,
             };
-            this.rectToScene = drawRect;
+            this.rectToScene = mapRectToScene(this.sceneMap, drawRect);
             // Parent-relative position comes from the DRAW rect, not from the node's translation.
             // The two are the same for an ordinary node, but a grid's updateRect outsets drawRect by
             // its focus margins — and a device reports that outset. Reading nodeTrans here dropped it,
@@ -733,15 +747,18 @@ export class Group extends Node {
             };
             return;
         }
-        const center = this.getScaleRotateCenter();
-        this.rectToScene = rotateRect(drawRect, rotation, center);
+        // `drawRect` is already scaled, so the pivot is the scaled center (see drawImage).
+        const rawCenter = this.getScaleRotateCenter();
+        const center = [rawCenter[0] * scale[0], rawCenter[1] * scale[1]];
+        const drawnRect = rotateRect(drawRect, rotation, center);
+        this.rectToScene = mapRectToScene(this.sceneMap, drawnRect);
         const nodeRotation = this.getRotation();
         if (nodeRotation !== 0 && nodeRotation === rotation) {
             this.rectToParent = {
-                x: this.rectToScene.x - origin[0],
-                y: this.rectToScene.y - origin[1],
-                width: this.rectToScene.width,
-                height: this.rectToScene.height,
+                x: drawnRect.x - origin[0],
+                y: drawnRect.y - origin[1],
+                width: drawnRect.width,
+                height: drawnRect.height,
             };
         } else if (nodeRotation !== 0 && nodeRotation !== rotation) {
             const rect = { x: 0, y: 0, width: drawRect.width, height: drawRect.height };
@@ -762,27 +779,25 @@ export class Group extends Node {
         }
     }
 
+    /**
+     * Unions this node's rects into its parent's. `rectToParent` is in the parent's local space,
+     * so it reaches the parent's own parent through the parent's translation, scale and rotation;
+     * `rectToScene` is already in scene space.
+     */
     protected updateParentRects(origin: number[], angle: number) {
         if (this.parent instanceof Group) {
             const parent = this.parent;
             parent.rectLocal = unionRect(parent.rectLocal, this.rectToParent);
-            const parentTrans = parent.getTranslation();
-            let x = parentTrans[0] + parent.rectLocal.x;
-            let y = parentTrans[1] + parent.rectLocal.y;
-            let width = parent.rectLocal.width;
-            let height = parent.rectLocal.height;
-            if (angle !== 0) {
-                const center = parent.getScaleRotateCenter();
-                const rect = rotateRect({ x: 0, y: 0, width, height }, angle, center);
-                x += rect.x;
-                y += rect.y;
-                width = rect.width;
-                height = rect.height;
-            }
-            parent.rectToParent = unionRect(parent.rectToParent, { x, y, width, height });
-            x += origin[0] - parentTrans[0];
-            y += origin[1] - parentTrans[1];
-            parent.rectToScene = unionRect(parent.rectToScene, { x, y, width, height });
+            const parentScale = parent.getValueJS("scale") as number[];
+            const inParent = transformLocalRect(
+                this.rectToParent,
+                parent.getTranslation(parentScale),
+                parentScale,
+                parent.getRotation(),
+                parent.getScaleRotateCenter()
+            );
+            parent.rectToParent = unionRect(parent.rectToParent, inParent);
+            parent.rectToScene = unionRect(parent.rectToScene, this.rectToScene);
         }
     }
 
@@ -807,6 +822,7 @@ export class Group extends Node {
      * Measurement/layout passes stay unclipped: `pushClippingRect` no-ops without a `draw2D`.
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+        this.sceneMap = sgRoot.sceneMap;
         this.prepareRender(draw2D);
         // A fully transparent subtree DEGRADES to a layout traversal — drop the draw target rather
         // than returning, so ancestor bounds come out identical to a layout pass and every descendant
@@ -847,6 +863,18 @@ export class Group extends Node {
         // override in derived classes
     }
 
+    /** Rotation is ignored, as the sub part rects are re-expressed by translation only. */
+    protected sceneUnitsTo(local: boolean): [number, number] {
+        let sx = this.sceneMap.sx;
+        let sy = this.sceneMap.sy;
+        if (local) {
+            const scale = this.getValueJS("scale") as number[];
+            sx *= scale[0];
+            sy *= scale[1];
+        }
+        return [sx === 0 ? 0 : 1 / sx, sy === 0 ? 0 : 1 / sy];
+    }
+
     /**
      * This node's draw translation: its own translation composed with the parent-space `origin`,
      * rotated by any inherited angle.
@@ -861,14 +889,80 @@ export class Group extends Node {
      * renderable types but not for `Group` or the keyboard/text-entry containers — a split that
      * looked accidental (#1133 preserved it pending exactly this measurement) and placed a container's
      * children 100px off under a rotated ancestor.
+     *
+     * Under a rotated ancestor the node's own `scaleRotateCenter` turns with it, so the returned
+     * position is shifted by `R(angle)(scale * center) - scale * center`. Every draw call rotates
+     * around `drawTrans + scale * center`, which then lands on the rotated pivot: content, clip,
+     * bounding rects and children share one pivot. DEVICE-MEASURED (Roku OS 16, probe
+     * `group-scale-probe` S6): a Rectangle rotated 45° around [50,50] inside a Group rotated 90°
+     * reports sceneBoundingRect {1379,-21,141,141} and its child {1436,92,28,28}.
      */
     /** @param scale See `getTranslation`'s `scale` param — threaded through to avoid a re-fetch. */
     protected getDrawTranslation(origin: number[], angle: number, scale?: number[]): number[] {
+        scale ??= this.getValueJS("scale") as number[];
         const nodeTrans = this.getTranslation(scale);
         const drawTrans = angle === 0 ? nodeTrans.slice() : rotateTranslation(nodeTrans, angle);
         drawTrans[0] += origin[0];
         drawTrans[1] += origin[1];
+        if (angle !== 0) {
+            const center = this.getScaleRotateCenter();
+            if (center[0] !== 0 || center[1] !== 0) {
+                const scaledCenter = [center[0] * scale[0], center[1] * scale[1]];
+                const turned = rotateTranslation(scaledCenter, angle);
+                drawTrans[0] += turned[0] - scaledCenter[0];
+                drawTrans[1] += turned[1] - scaledCenter[1];
+            }
+        }
         return drawTrans;
+    }
+
+    /**
+     * Renders the children in this node's local coordinate system. `origin` is this node's draw
+     * translation. The node's own `scale` is applied once, as a canvas transform around `origin`,
+     * so descendants keep drawing in local units (sizes, layout spacing, text) and only their
+     * scene rects go through `sgRoot.sceneMap`. Its own rotation around `scaleRotateCenter` moves
+     * the children's origin so they orbit the same pivot as the node's content.
+     *
+     * DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe`): a child of a Group scaled 0.5 keeps
+     * localBoundingRect/boundingRect in unscaled local units ({0,0,64,64} / {20,10,64,64}) while its
+     * sceneBoundingRect is halved; a LayoutGroup under that Group spaces its items 60 apart, as when
+     * unscaled. A non-uniform scale under a rotation is approximated (scale applied after rotation).
+     *
+     * @param scale See `getTranslation`'s `scale` param — threaded through to avoid a re-fetch.
+     */
+    renderChildren(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D,
+        scale?: number[]
+    ) {
+        let childOrigin = origin;
+        const center = this.getScaleRotateCenter();
+        if (angle !== 0 && (center[0] !== 0 || center[1] !== 0)) {
+            const turned = rotateTranslation(center, angle);
+            childOrigin = [origin[0] + center[0] - turned[0], origin[1] + center[1] - turned[1]];
+        }
+        // A childless node has nothing to scale, so it skips the field read and the canvas bracket.
+        if (this.children.length > 0) {
+            scale ??= this.getValueJS("scale") as number[];
+        }
+        if (this.children.length === 0 || !scale || (scale[0] === 1 && scale[1] === 1)) {
+            super.renderChildren(interpreter, childOrigin, angle, opacity, draw2D);
+            return;
+        }
+        const outerMap = sgRoot.sceneMap;
+        sgRoot.sceneMap = composeSceneScale(outerMap, origin[0], origin[1], scale[0], scale[1]);
+        const scaled = draw2D?.pushScale(origin[0], origin[1], scale[0], scale[1]) ?? false;
+        try {
+            super.renderChildren(interpreter, childOrigin, angle, opacity, draw2D);
+        } finally {
+            if (scaled) {
+                draw2D?.popScale();
+            }
+            sgRoot.sceneMap = outerMap;
+        }
     }
 
     /**
@@ -902,11 +996,12 @@ export class Group extends Node {
         if (sgRoot.pruneLayout) {
             this.subtreeStale = false;
             this.measureStale = false;
-            this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity };
+            this.lastLayoutContext = { x: origin[0], y: origin[1], angle, opacity, sceneMap: this.sceneMap };
         }
         this.layoutPassCount++;
-        const nodeTrans = this.getTranslation();
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const nodeTrans = this.getTranslation(scale);
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rotation = angle + this.getRotation();
         this.rectLocal = {
             x: Number.POSITIVE_INFINITY,
@@ -914,12 +1009,12 @@ export class Group extends Node {
             width: Number.POSITIVE_INFINITY,
             height: Number.POSITIVE_INFINITY,
         };
-        this.rectToScene = {
+        this.rectToScene = mapRectToScene(this.sceneMap, {
             x: drawTrans[0],
             y: drawTrans[1],
             width: 0,
             height: 0,
-        };
+        });
         this.rectToParent = {
             x: nodeTrans[0],
             y: nodeTrans[1],
@@ -931,8 +1026,8 @@ export class Group extends Node {
         // out, not displayed.
         opacity = this.isVisible() ? opacity * this.getOpacity() : 0;
         // The clippingRect bracket lives in the renderNode template, so it wraps this whole body.
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
-        this.updateContainerBounds(nodeTrans, drawTrans);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
+        this.updateContainerBounds(nodeTrans, drawTrans, scale, rotation);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
@@ -941,7 +1036,8 @@ export class Group extends Node {
      * by the `renderNode` template so it brackets the node's OWN geometry as well as its children,
      * per the reference ("all drawing by this node and its children").
      * The rect is in the node's local coordinate system (per the SceneGraph reference), so it is
-     * translated to scene/screen space by the node's draw translation before being pushed. An
+     * placed by the node's draw translation, own scale and rotation (as its axis-aligned bounding
+     * box) before being pushed; ancestor scale is already on the canvas. An
      * empty rect (width or height ≤ 0, the default `[0,0,0,0]`) disables clipping. Clipping is only
      * applied on a real draw pass (`draw2D` present); a measurement/layout pass (no draw target)
      * must remain unclipped so hidden-UI bounding rects still compute. The canvas clip intersects
@@ -974,33 +1070,30 @@ export class Group extends Node {
         }
         // Resolved only once a clip is known to be needed — `getDrawTranslation` allocates, and the
         // node computes its own copy inside `renderNodeContent` anyway.
-        const drawTrans = this.getDrawTranslation(origin, angle);
-        draw2D.pushClip({
-            x: clip.x + drawTrans[0],
-            y: clip.y + drawTrans[1],
-            width: clip.width,
-            height: clip.height,
-        });
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
+        const rotation = angle + this.getRotation();
+        draw2D.pushClip(transformLocalRect(clip, drawTrans, scale, rotation, this.getScaleRotateCenter()));
         return true;
     }
 
-    private updateContainerBounds(nodeTrans: number[], drawTrans: number[]) {
+    /**
+     * A container's parent and scene rects are its local union (children's `boundingRect`s) taken
+     * through its own scale and rotation. DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe`):
+     * a Group at [100,100] scaled 0.5 around a child at [20,10] reports localBoundingRect
+     * {20,10,64,64} and boundingRect {110,105,32,32}; a Group rotated 90° reports the bounding box
+     * of its rotated local rect.
+     */
+    private updateContainerBounds(nodeTrans: number[], drawTrans: number[], scale: number[], rotation: number) {
         if (!Number.isFinite(this.rectLocal.x)) {
             return;
         }
-        const rectLocal = this.rectLocal;
-        this.rectToParent = {
-            x: nodeTrans[0] + rectLocal.x,
-            y: nodeTrans[1] + rectLocal.y,
-            width: rectLocal.width,
-            height: rectLocal.height,
-        };
-        this.rectToScene = {
-            x: drawTrans[0] + rectLocal.x,
-            y: drawTrans[1] + rectLocal.y,
-            width: rectLocal.width,
-            height: rectLocal.height,
-        };
+        const center = this.getScaleRotateCenter();
+        this.rectToParent = transformLocalRect(this.rectLocal, nodeTrans, scale, this.getRotation(), center);
+        this.rectToScene = mapRectToScene(
+            this.sceneMap,
+            transformLocalRect(this.rectLocal, drawTrans, scale, rotation, center)
+        );
     }
 
     protected nodeRenderingDone(origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
@@ -1035,7 +1128,13 @@ export class Group extends Node {
             return false;
         }
         const ctx = this.lastLayoutContext;
-        if (ctx.x !== origin[0] || ctx.y !== origin[1] || ctx.angle !== angle || ctx.opacity !== opacity) {
+        if (
+            ctx.x !== origin[0] ||
+            ctx.y !== origin[1] ||
+            ctx.angle !== angle ||
+            ctx.opacity !== opacity ||
+            !sameSceneMap(ctx.sceneMap, this.sceneMap)
+        ) {
             return false;
         }
         if (this.isVisible()) {
