@@ -35,6 +35,8 @@ const MAX_TASKS = 30;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
+/** Task workers that have started running (see `drainWorkerOutput`). */
+const onlineWorkers: WeakSet<Worker> = new WeakSet();
 /**
  * Launches deferred because `MAX_TASKS` was reached, oldest first, started as slots free.
  *
@@ -130,6 +132,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     taskWorker.stderr.on("data", (chunk: Buffer) => notifyHost("stderr", chunk.toString()));
     // A leaked task worker must never keep the host process alive after the app ends.
     taskWorker.unref();
+    taskWorker.once("online", () => onlineWorkers.add(taskWorker));
     taskWorker.on("message", taskCallback);
     tasks.set(taskData.id, taskWorker);
     if (isTypeOf(taskData.fanout, "SharedArrayBuffer")) {
@@ -177,11 +180,9 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
  * during the wait -- this only tracks activity, it never substitutes for it -- and remove it
  * afterward, once quiet.
  *
- * `quietMs` must comfortably cover a freshly spawned worker's own startup latency, not just
- * message-delivery jitter: a worker that hasn't even started running yet has produced no
- * activity to reset the timer, so a too-short window mistakes "hasn't started" for "already
- * done" and can lose 100% of its first message. A standalone repro racing termination against a
- * worker's very first tick (the tightest case) needed >=50ms even under heavy CPU contention.
+ * The quiet window only starts once the worker is running (its "online" event): a worker that
+ * hasn't started yet has produced no activity, and on a slow host its startup alone can outlast
+ * `quietMs`, which would mistake "hasn't started" for "already done" and lose its first message.
  * @param worker Task worker about to be terminated
  * @param quietMs How long the worker must be silent before considering it drained
  * @param maxWaitMs Upper bound so a worker that keeps producing output can't stall shutdown
@@ -197,6 +198,7 @@ async function drainWorkerOutput(worker: Worker, quietMs = 50, maxWaitMs = 500):
         function finish() {
             clearTimeout(maxTimer);
             clearTimeout(quietTimer);
+            worker.off("online", onActivity);
             worker.off("message", onActivity);
             worker.stdout.off("data", onActivity);
             worker.stderr.off("data", onActivity);
@@ -207,7 +209,11 @@ async function drainWorkerOutput(worker: Worker, quietMs = 50, maxWaitMs = 500):
         worker.on("message", onActivity);
         worker.stdout.on("data", onActivity);
         worker.stderr.on("data", onActivity);
-        quietTimer = setTimeout(finish, quietMs).unref();
+        if (onlineWorkers.has(worker)) {
+            quietTimer = setTimeout(finish, quietMs).unref();
+        } else {
+            worker.once("online", onActivity);
+        }
     });
 }
 
