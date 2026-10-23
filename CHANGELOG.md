@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.6.2"></a>
+
+## [v2.6.2 - Device-accurate Collections, Numbers and Task Fan-out](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.2) - 23 October 2026
+
+This release is a round of device-verified accuracy and performance fixes, each checked against a real Roku with a probe app now committed under `test/simulator/probes/`. **Collections** can be indexed with any numeric type (`Double`, `LongInteger`, boxed numbers) without the whole container being copied on each read, writes with a negative or out-of-capacity index are ignored with the device's warning, and built-in methods read their `Integer` arguments like the device (a `LongInteger` index no longer loses its low 32 bits). What `type()` reports for a container member now depends on how it was stored, as on the device, and storing a value no longer changes the `type()` of the variable it came from. **Numbers** print `nan`/`-nan`/`inf`/`-inf`/`-0` like the device, and `Val()` reads the longest numeric prefix like C's `strtod`/`strtol`. `roByteArray` `for each` no longer skips the first byte, and `CreateObject("roRegex", ...)` with a pattern JavaScript can't compile prints the device's error and returns `invalid` instead of crashing the app. In the **SceneGraph** extension, render→Task fan-out is now batched — fixing Rooibos code-coverage runs that hung or ran out of memory — and a Task's XML `onChange` runs only on the render thread, as on the device. Boxed values are also lighter, since components now create their method maps on first use. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Fixed storing a value in an array or AA changing the original variable's `type()` by [@quan7794](https://github.com/quan7794) in [#1259](https://github.com/lvcabral/brs-engine/pull/1259)
+* (brs) Matched the device's `type()` for container members by how they are stored, and fixed `roXMLList.AddHead` appending at the tail by [@lvcabral](https://github.com/lvcabral) in [#1265](https://github.com/lvcabral/brs-engine/pull/1265)
+* (brs) Components now create their method and interface maps on first use, so boxed values take about a third of the memory by [@lvcabral](https://github.com/lvcabral) in [#1266](https://github.com/lvcabral/brs-engine/pull/1266)
+* (brs) Fixed `roByteArray` indexed reads copying the whole array by [@jay23606](https://github.com/jay23606) in [#1267](https://github.com/lvcabral/brs-engine/pull/1267)
+* (brs) Collections can be indexed by any numeric type without copying, built-in methods read `Integer` arguments like the device, and `nan`/`inf`/`-0` formatting and `Val()` parsing now match the device by [@lvcabral](https://github.com/lvcabral) in [#1270](https://github.com/lvcabral/brs-engine/pull/1270)
+* (brs) Fixed `roByteArray` `for each` skipping the first byte, and `Next()` past the end now returns `invalid` by [@rahul05ranjan](https://github.com/rahul05ranjan) in [#1273](https://github.com/lvcabral/brs-engine/pull/1273)
+* (brs) Fixed `roRegex` creation crashing the app on PCRE-only patterns: `(?-)`/`(?)` are accepted, and an invalid pattern returns `invalid` as on the device by [@rahul05ranjan](https://github.com/rahul05ranjan) in [#1274](https://github.com/lvcabral/brs-engine/pull/1274)
+* (node) Fixed a Task worker's first print being dropped on a slow host, by starting the output drain only once the worker is running by [@lvcabral](https://github.com/lvcabral) in [#1269](https://github.com/lvcabral/brs-engine/pull/1269)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.6.2)
+
+* (rsg) Batched render→Task fan-out and stopped leaking port events for a running Task, fixing Rooibos code-coverage runs hanging or running out of memory by [@markwpearce](https://github.com/markwpearce) in [#1264](https://github.com/lvcabral/brs-engine/pull/1264)
+* (rsg) A Task's XML `onChange` now runs only on the render thread, and its message ports are kept out of render's `m` by [@lvcabral](https://github.com/lvcabral) in [#1268](https://github.com/lvcabral/brs-engine/pull/1268)
+
+#### Chores, Build and Dependencies
+
+* Enabled ESLint `no-unused-vars` to flag unused imports and locals before SonarCloud does by [@lvcabral](https://github.com/lvcabral) in [#1268](https://github.com/lvcabral/brs-engine/pull/1268)
+* Fixed the `roAppManager` `getUpTime` test flaking on slow runners by [@lvcabral](https://github.com/lvcabral) in [#1278](https://github.com/lvcabral/brs-engine/pull/1278)
+* build(deps): bump `compression` from 1.8.1 to 1.8.2 by @dependabot in [#1244](https://github.com/lvcabral/brs-engine/pull/1244)
+* build(deps): bump `shell-quote` from 1.10.0 to 1.12.0 by @dependabot in [#1245](https://github.com/lvcabral/brs-engine/pull/1245)
+* build(deps-dev): bump `brace-expansion` from 5.0.9 to 5.0.12 by @dependabot in [#1246](https://github.com/lvcabral/brs-engine/pull/1246)
+* build(deps): bump `proxy-addr` from 2.0.7 to 2.0.8 by @dependabot in [#1247](https://github.com/lvcabral/brs-engine/pull/1247)
+* build(deps-dev): bump `source-map-js` from 1.2.1 to 1.2.2 by @dependabot in [#1248](https://github.com/lvcabral/brs-engine/pull/1248)
+
+### New Contributors
+
+* @quan7794 made their first contribution in [#1259](https://github.com/lvcabral/brs-engine/pull/1259) - welcome to the project!
+* @jay23606 made their first contribution in [#1267](https://github.com/lvcabral/brs-engine/pull/1267) - welcome to the project!
+* @rahul05ranjan made their first contribution in [#1273](https://github.com/lvcabral/brs-engine/pull/1273) - welcome to the project!
+
+[Full Changelog][v2.6.2]
+
 <a name="v2.6.1"></a>
 
 ## [v2.6.1 - Server-Sent Events and Roku Customer ID](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.1) - 10 October 2026
@@ -1940,6 +1982,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.6.2]: https://github.com/lvcabral/brs-engine/compare/v2.6.1...v2.6.2
 [v2.6.1]: https://github.com/lvcabral/brs-engine/compare/v2.6.0...v2.6.1
 [v2.6.0]: https://github.com/lvcabral/brs-engine/compare/v2.5.4...v2.6.0
 [v2.5.4]: https://github.com/lvcabral/brs-engine/compare/v2.5.3...v2.5.4
