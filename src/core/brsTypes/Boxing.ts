@@ -28,7 +28,7 @@ export function isBoxable(value: BrsType): value is BrsType & Boxable {
  * - `build`: the runtime fills the container (`ParseJson`, `Slice`, `Items`, `Append`, a node field copy, …):
  *   the member keeps the type it reports.
  * - `add`: a container literal or an add (`Push`, `Unshift`, `AddTail`, `AddHead`, any associative array
- *   assignment): numbers and booleans report their legacy name (`roInteger`, `roBoolean`, …).
+ *   assignment, `SetEntry`): numbers and booleans report their legacy name (`roInteger`, `roBoolean`, …).
  * - `assign`: an array or list index assignment (`a[i] = x`): numbers and booleans report their plain name.
  *
  * Strings follow one rule in every case: a literal reports `roString`, a computed string `String`.

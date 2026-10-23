@@ -36,8 +36,8 @@ except the two open cases below. The rule the device follows:
 
 | How the value gets into the container | Numbers and booleans | `invalid` | Strings |
 | --- | --- | --- | --- |
-| Literal (`[x]`, `{k: x}`), `Push`, `Unshift`, `AddTail`, `AddHead`, any AA assignment or `AddReplace` | `roInteger`, `roBoolean`, … | `roInvalid` in an array or list, `Invalid` in an AA | literal `roString`, computed `String` |
-| Index assignment (`a[i] = x`, `l[i] = x`, `SetEntry`) | `Integer`, `Boolean`, … | `Invalid` | same as above |
+| Literal (`[x]`, `{k: x}`), `Push`, `Unshift`, `AddTail`, `AddHead`, `SetEntry` (see `collection-index-probe`), any AA assignment or `AddReplace` | `roInteger`, `roBoolean`, … | `roInvalid` in an array or list, `Invalid` in an AA | literal `roString`, computed `String` |
+| Index assignment (`a[i] = x`, `l[i] = x`) | `Integer`, `Boolean`, … | `Invalid` | same as above |
 | Built by the runtime (`ParseJson`), copied (`Slice`, `Items`, `Append`) | keeps what the value reported | keeps | keeps |
 
 The variable a value came from always keeps its own type, and storing `invalid` or a boolean never changes

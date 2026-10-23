@@ -1,4 +1,4 @@
-import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Float, Int32 } from "..";
+import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Int32 } from "..";
 import { BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
@@ -24,8 +24,7 @@ export class IfArray {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const elements = this.component.getElements();
-            return elements.at(-1) || BrsInvalid.Instance;
+            return this.component.getValue().at(-1) ?? BrsInvalid.Instance;
         },
     });
 
@@ -172,7 +171,7 @@ export class IfArrayGet {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
+        impl: (_: Interpreter, index: BrsType) => {
             return this.component.get(index) || BrsInvalid.Instance;
         },
     });
@@ -197,8 +196,8 @@ export class IfArraySet {
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.component.set(index, tvalue, false, "assign");
+        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+            return this.component.set(index, tvalue, false, "add");
         },
     });
 }

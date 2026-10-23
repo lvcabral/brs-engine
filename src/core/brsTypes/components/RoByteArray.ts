@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBoxedNumber, isBrsNumber, jsValueOf } from "..";
+import { BrsType, Float, Int32, isBrsNumber, jsValueOf, toArrayIndex } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -66,9 +66,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         return [
             "<Component: roByteArray> =",
             "[",
-            ...this.getElements()
-                .slice(0, 100)
-                .map((el: BrsValue) => `    ${el.toString(this)}`),
+            ...Array.from(this.elements.subarray(0, 100), (el: number) => `    ${el}`),
             this.elements.length > 100 ? "    ...\n]" : "]",
         ].join("\n");
     }
@@ -83,7 +81,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     getElements(): Int32[] {
         const result: Int32[] = [];
-        for (const value of this.elements.slice()) {
+        for (const value of this.elements) {
             result.push(new Int32(value));
         }
         return result;
@@ -94,34 +92,17 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     }
 
     get(index: BrsType) {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
+        if (index.kind === ValueKind.String) {
+            return this.getMethod(index.value) ?? BrsInvalid.Instance;
         }
-        switch (index.kind) {
-            case ValueKind.Float: {
-                const value = this.elements[Math.trunc(index.getValue())];
-                return value === undefined ? BrsInvalid.Instance : new Int32(value);
-            }
-            case ValueKind.Int32: {
-                const value = this.elements[index.getValue()];
-                return value === undefined ? BrsInvalid.Instance : new Int32(value);
-            }
-            case ValueKind.String:
-                return this.getMethod(index.value) ?? BrsInvalid.Instance;
-            default:
-                return BrsInvalid.Instance;
-        }
+        const idx = toArrayIndex(index);
+        const value = idx === undefined ? undefined : this.elements[idx];
+        return value === undefined ? BrsInvalid.Instance : new Int32(value);
     }
 
     set(index: BrsType, value: BrsType) {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
-        }
-        if (isBrsNumber(index) && value.kind === ValueKind.Int32) {
-            if (index.kind === ValueKind.Int64) {
-                index = new Int32(index.getValue());
-            }
-            const idx = Math.trunc(index.getValue());
+        const idx = toArrayIndex(index);
+        if (idx !== undefined && value.kind === ValueKind.Int32) {
             // Expand the array if the index is out of bounds
             if (idx >= this.elements.length) {
                 const elements = new Uint8Array(idx + 1);
@@ -634,8 +615,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            return this.getElements()[Math.trunc(index.getValue())] || BrsInvalid.Instance;
+        impl: (_: Interpreter, index: BrsType) => {
+            return this.get(index);
         },
     });
 

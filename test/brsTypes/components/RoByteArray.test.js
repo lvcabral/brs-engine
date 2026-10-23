@@ -1,7 +1,7 @@
 const os = require("os");
 const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter } = brs;
-const { RoArray, RoByteArray, BrsBoolean, BrsString, Int32, BrsInvalid } = brs.types;
+const { RoArray, RoByteArray, BrsBoolean, BrsString, Int32, Int64, Float, Double, BrsInvalid } = brs.types;
 const { createMockStreams } = require("../../e2e/E2ETests");
 
 describe("RoByteArray", () => {
@@ -40,6 +40,31 @@ describe("RoByteArray", () => {
             let arr = new RoByteArray();
 
             expect(arr.get(new Int32(555))).toBe(BrsInvalid.Instance);
+        });
+
+        it("accepts every numeric index type, truncating floating-point indexes", () => {
+            let arr = new RoByteArray(new Uint8Array([1, 2, 3]));
+
+            expect(arr.get(new Float(2.9))).toEqual(new Int32(3));
+            expect(arr.get(new Double(1.9))).toEqual(new Int32(2));
+            expect(arr.get(new Int64(1))).toEqual(new Int32(2));
+            expect(arr.get(new Int32(1).box())).toEqual(new Int32(2));
+            expect(arr.get(new Double(1.9).box())).toEqual(new Int32(2));
+            expect(arr.get(new Float(-0.5))).toEqual(new Int32(1));
+        });
+
+        it("keeps only the low 32 bits of a LongInteger index", () => {
+            let arr = new RoByteArray(new Uint8Array([1, 2, 3]));
+
+            expect(arr.get(new Int64(4294967297))).toEqual(new Int32(2));
+            expect(arr.get(new Double(4294967297))).toBe(BrsInvalid.Instance);
+        });
+
+        it("returns invalid for negative indexes", () => {
+            let arr = new RoByteArray(new Uint8Array([1, 2, 3]));
+
+            expect(arr.get(new Int32(-1))).toBe(BrsInvalid.Instance);
+            expect(arr.get(new Float(-1.5))).toBe(BrsInvalid.Instance);
         });
     });
 
