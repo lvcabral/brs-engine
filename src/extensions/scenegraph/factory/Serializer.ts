@@ -1058,14 +1058,18 @@ export function collectPortNodeEvents(
  * `invalid` there and on any later run of the same task. Each port is detached, since the field
  * observers registered with it still notify on the render thread and nothing would drain it.
  * @param m The task node's render-side script-scope `m`, after its launch payload was built.
+ * @returns The ports handed over.
  */
-export function detachLaunchedPorts(m: RoAssociativeArray): void {
+export function detachLaunchedPorts(m: RoAssociativeArray): Set<RoMessagePort> {
+    const ports = new Set<RoMessagePort>();
     for (const [key, value] of m.elements) {
         if (value instanceof RoMessagePort) {
-            value.detach();
+            value.detach?.();
+            ports.add(value);
             m.set(new BrsString(key), BrsInvalid.Instance, true);
         }
     }
+    return ports;
 }
 
 /** One-shot warning when a pre-launch port event can't be re-targeted on the task thread. */

@@ -2460,6 +2460,15 @@ export class Node extends RoSGNode implements BrsValue {
         return this.owner;
     }
 
+    /**
+     * Whether a detached port observer still stands for a live port on this node's thread (only a
+     * running Task holds one; see `Task.launchedPorts`).
+     * @param _port The detached port registered as an observer.
+     */
+    holdsLaunchedPort(_port: RoMessagePort) {
+        return false;
+    }
+
     /** Sets the unique address for this node.
      * @param address Node address.
      */

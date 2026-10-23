@@ -24,6 +24,7 @@ import {
     LogLevel,
     getNow,
     PORT_NO_WAIT,
+    RoMessagePort,
 } from "brs-engine";
 import { sgClock } from "../SGClock";
 import { sgRoot } from "../SGRoot";
@@ -217,6 +218,12 @@ export class Task extends Node {
      */
     private pendingFanout: any[] = [];
     private pendingFanoutHead = 0;
+    /**
+     * Render thread: the ports handed to the task thread by the latest launch. They are detached
+     * here, but their observer registrations still mark the fields the running task waits on; a
+     * re-run launched from the port-less clone of `m` hands over none.
+     */
+    private launchedPorts?: Set<RoMessagePort>;
     /** Task thread: a fan-out batch is being applied (see `processThreadUpdate`). */
     private applyingFanout = false;
     /**
@@ -973,6 +980,10 @@ export class Task extends Node {
         return new Array<BrsEvent>();
     }
 
+    holdsLaunchedPort(port: RoMessagePort) {
+        return this.launchedPorts?.has(port) ?? false;
+    }
+
     /**
      * Validates readiness and posts task metadata to the scheduler when control becomes `run`.
      */
@@ -983,6 +994,7 @@ export class Task extends Node {
             return;
         }
         if (!this.started) {
+            this.launchedPorts = undefined;
             this.taskBuffer = new SharedObject();
             // Direct render→task buffers (responses + fan-out) are normally allocated at activation;
             // ensure they exist here too in case the task was started without going through activate.
@@ -1008,7 +1020,7 @@ export class Task extends Node {
                 taskData.portEvents = portEvents;
                 this.dropFanoutCoveredByReplay(portEvents);
             }
-            detachLaunchedPorts(this.m);
+            this.launchedPorts = detachLaunchedPorts(this.m);
             postMessage(taskData);
             this.started = true;
         }

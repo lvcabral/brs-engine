@@ -38,6 +38,25 @@ import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 import { convertHexColor } from "../SGUtil";
 import { sgRoot } from "../SGRoot";
 
+/**
+ * Whether a port observer can still receive events (see `detachLaunchedPorts`). Optional-called so
+ * this bundle still runs against a brs-engine without `isDetached`.
+ * @param port The port registered as an observer.
+ */
+function isAttachedPort(port: RoMessagePort) {
+    return !port.isDetached?.();
+}
+
+/**
+ * Whether a port observer stands for a port the node's thread can still read: one that is attached,
+ * or one a running Task took with it at launch.
+ * @param port The port registered as an observer.
+ * @param scope Node that registered it.
+ */
+function isLivePortFor(port: RoMessagePort, scope: Node) {
+    return isAttachedPort(port) || scope.holdsLaunchedPort(port);
+}
+
 export class Field {
     // Observer collections are allocated lazily. A node like ContentNode registers ~100 default
     // fields and is instantiated in the thousands (e.g. a TimeGrid EPG); eagerly allocating two
@@ -605,10 +624,18 @@ export class Field {
     isPortObserved(scope: Node) {
         return (
             (this.unscopedObservers?.some(
-                (callback) => callback.observer instanceof RoMessagePort && callback.hostNode === scope
+                (callback) =>
+                    callback.observer instanceof RoMessagePort &&
+                    callback.hostNode === scope &&
+                    isLivePortFor(callback.observer, scope)
             ) ??
                 false) ||
-            (this.scopedObservers?.get(scope)?.some((callback) => callback.observer instanceof RoMessagePort) ?? false)
+            (this.scopedObservers
+                ?.get(scope)
+                ?.some(
+                    (callback) => callback.observer instanceof RoMessagePort && isLivePortFor(callback.observer, scope)
+                ) ??
+                false)
         );
     }
 
@@ -815,7 +842,7 @@ export class Field {
             return;
         }
         if (callback.observer instanceof RoMessagePort) {
-            if (!callback.observer.isDetached()) {
+            if (isAttachedPort(callback.observer)) {
                 callback.observer.pushMessage(this.buildEvent(callback));
             }
             return;

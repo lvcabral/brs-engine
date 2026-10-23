@@ -561,31 +561,32 @@ export class SGRoot {
      */
     flushFanouts() {
         for (const thread of this._threads.values()) {
-            this.serveTask(thread.task, "flushing fan-out for", (task) => task.flushFanout());
+            const task = thread.task;
+            if (!task) {
+                continue;
+            }
+            try {
+                task.flushFanout();
+            } catch (err: any) {
+                this.reportTaskError(task, "flushing fan-out for", err);
+            }
         }
     }
 
     /**
-     * Runs one task's share of a render-loop pass, isolated: a fault while serving one task must
-     * never tear down the render thread (which would stall every rendezvous and silently drop
-     * in-flight updates).
-     * @param task Task being served, if the thread has one.
-     * @param action What is being done, for the error message.
-     * @param serve The work to do for that task.
+     * Logs a fault raised while serving one task from the render loop. Each task is served inside its
+     * own try/catch: a fault must never tear down the render thread (which would stall every
+     * rendezvous and silently drop in-flight updates).
+     * @param task Task being served.
+     * @param action What was being done, for the error message.
+     * @param err The error thrown.
      */
-    private serveTask(task: Task | undefined, action: string, serve: (task: Task) => void) {
-        if (!task) {
-            return;
-        }
-        try {
-            serve(task);
-        } catch (err: any) {
-            BrsDevice.stderr.write(
-                `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${err?.message ?? err}${
-                    err?.stack ? `\n${err.stack}` : ""
-                }`
-            );
-        }
+    private reportTaskError(task: Task, action: string, err: any) {
+        BrsDevice.stderr.write(
+            `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${err?.message ?? err}${
+                err?.stack ? `\n${err.stack}` : ""
+            }`
+        );
     }
 
     /**
@@ -598,14 +599,20 @@ export class SGRoot {
         // Snapshot the thread list so a handler that creates/stops a task mid-iteration can't disturb
         // the loop.
         for (const thread of Array.from(this._threads.values())) {
-            this.serveTask(thread.task, "processing", (task) => {
+            const task = thread.task;
+            if (!task) {
+                continue;
+            }
+            try {
                 updates = task.processThreadUpdate() !== undefined || updates;
                 if (task.active) {
                     task.checkTaskRun();
                 }
                 // Phase 3b: drain any queued direct fan-out into the task's buffer (render thread only).
                 task.flushFanout();
-            });
+            } catch (err: any) {
+                this.reportTaskError(task, "processing", err);
+            }
         }
         return updates;
     }
