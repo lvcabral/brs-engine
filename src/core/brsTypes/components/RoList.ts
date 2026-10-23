@@ -107,7 +107,7 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
 
     set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
         const idx = toArrayIndex(index);
-        if (idx !== undefined) {
+        if (idx !== undefined && idx >= 0) {
             value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;

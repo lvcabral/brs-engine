@@ -66,6 +66,23 @@ describe("RoByteArray", () => {
             expect(arr.get(new Int32(-1))).toBe(BrsInvalid.Instance);
             expect(arr.get(new Float(-1.5))).toBe(BrsInvalid.Instance);
         });
+
+        it("reads NaN as index 0", () => {
+            let arr = new RoByteArray(new Uint8Array([1, 2, 3]));
+
+            expect(arr.get(new Float(Number.NaN))).toEqual(new Int32(1));
+        });
+
+        it("reads one element without copying the array", () => {
+            let arr = new RoByteArray(new Uint8Array([1, 2, 3]));
+            let getElements = vi.spyOn(arr, "getElements");
+
+            expect(arr.get(new Int32(1))).toEqual(new Int32(2));
+            expect(arr.getMethod("getentry").call(new Interpreter(createMockStreams()), new Int32(2))).toEqual(
+                new Int32(3)
+            );
+            expect(getElements).not.toHaveBeenCalled();
+        });
     });
 
     describe("set", () => {

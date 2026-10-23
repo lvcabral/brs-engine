@@ -76,7 +76,7 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
 
 /**
  * Reads an `Integer` parameter of a built-in method the way a Roku device does: any numeric type, intrinsic or
- * boxed, is accepted (`Float`/`Double` truncated, a `LongInteger` keeping its low 32 bits), anything else is a
+ * boxed, is accepted (`Float`/`Double` truncated, NaN as 0, a `LongInteger` keeping its low 32 bits), anything else is a
  * type mismatch. Use it with a `ValueKind.Dynamic` argument; a numeric `ValueKind` would coerce the value first.
  * @param interpreter the interpreter running the call.
  * @param value the argument.

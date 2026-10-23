@@ -11,6 +11,10 @@ sub main()
     resizes()
     deletes()
     exifTags()
+    nanArgs()
+    negativeWrites()
+    fixedSizeWrites()
+    uninitializedArgs()
     out("done", [])
 end sub
 
@@ -296,4 +300,165 @@ sub exifTag(name as string, ifd as dynamic, tag as dynamic)
         res = errText(e)
     end try
     out("exif|" + name, [res])
+end sub
+
+function countText(c as object) as string
+    return "count=" + c.Count().ToStr() + "," + arrText(c)
+end function
+
+' NaN and infinite arguments and indexes (0! / 0! is a divide-by-zero error on the device).
+sub nanArgs()
+    nan = Sqr(-1!)
+    inf = 1e38 * 1e38
+    for each name in ["ba-read", "arr-read", "ba-write", "arr-write", "ba-delete", "arr-delete", "ba-resize", "ba-slice", "arr-slice", "ba-slice-end", "ba-signedByte", "ba-crc", "arr-getEntry"]
+        nanCase(name, "nan", nan)
+    end for
+    ' A write at an infinite index makes the device kill the app (out of memory), so only calls that do not write.
+    for each name in ["ba-read", "arr-read", "ba-delete", "arr-delete", "ba-slice", "arr-slice", "ba-slice-end", "ba-signedByte", "ba-crc", "arr-getEntry"]
+        nanCase(name, "inf", inf)
+        nanCase(name, "-inf", -inf)
+    end for
+end sub
+
+sub nanCase(name as string, label as string, v as dynamic)
+    try
+        if name = "ba-read"
+            res = optText(makeBa()[v])
+        else if name = "arr-read"
+            res = optText(makeArr()[v])
+        else if name = "ba-write"
+            c = makeBa()
+            c[v] = 99
+            res = countText(c)
+        else if name = "arr-write"
+            c = makeArr()
+            c[v] = 99
+            res = countText(c)
+        else if name = "ba-delete"
+            c = makeBa()
+            res = "ret=" + c.Delete(v).ToStr() + "," + countText(c)
+        else if name = "arr-delete"
+            c = makeArr()
+            res = "ret=" + c.Delete(v).ToStr() + "," + countText(c)
+        else if name = "ba-resize"
+            c = makeBa()
+            c.SetResize(v, false)
+            c.Push(1)
+            res = "cap=" + c.Capacity().ToStr() + "," + countText(c)
+        else if name = "ba-slice"
+            res = arrText(makeBa().Slice(v))
+        else if name = "arr-slice"
+            res = arrText(makeArr().Slice(v))
+        else if name = "ba-slice-end"
+            res = arrText(makeBa().Slice(1, v))
+        else if name = "ba-signedByte"
+            res = makeBa().GetSignedByte(v).ToStr()
+        else if name = "ba-crc"
+            res = makeBa().GetCRC32(v, 2).ToStr()
+        else
+            res = optText(makeArr().GetEntry(v))
+        end if
+    catch e
+        res = errText(e)
+    end try
+    out("nan|" + name + "|" + label, [res])
+end sub
+
+function optText(r as dynamic) as string
+    if r = invalid then return "invalid"
+    return r.ToStr()
+end function
+
+' Writes at a negative index (and a LongInteger whose low 32 bits are -1), then reads back.
+sub negativeWrites()
+    for each kind in ["arr", "list", "ba"]
+        for each how in ["idx", "entry", "long"]
+            if kind = "arr"
+                c = makeArr()
+            else if kind = "ba"
+                c = makeBa()
+            else
+                c = CreateObject("roList")
+                c.AddTail(10)
+                c.AddTail(20)
+            end if
+            try
+                if how = "idx"
+                    c[-1] = 5
+                else if how = "entry"
+                    c.SetEntry(-1, 5)
+                else
+                    c[&hFFFFFFFF&] = 5
+                end if
+                r = c[-1]
+                if r = invalid then rt = "invalid" else rt = r.ToStr()
+                res = "read=" + rt + "," + countText(c)
+            catch e
+                res = errText(e)
+            end try
+            out("negWrite|" + kind + "|" + how, [res])
+        end for
+    end for
+end sub
+
+' Writes past the end of a non-resizable roByteArray and roArray.
+sub fixedSizeWrites()
+    for each how in ["idx", "entry", "inBounds"]
+        ba = makeBa()
+        ba.SetResize(4, false)
+        a = CreateObject("roArray", 4, false)
+        for n = 1 to 4
+            a.Push(n)
+        end for
+        try
+            if how = "idx"
+                ba[6] = 7
+                a[6] = 7
+            else if how = "entry"
+                ba.SetEntry(6, 7)
+                a.SetEntry(6, 7)
+            else
+                ba[1] = 7
+                a[1] = 7
+            end if
+            res = countText(ba) + "|" + countText(a) + "|cap=" + ba.Capacity().ToStr() + "," + a.Capacity().ToStr()
+        catch e
+            res = errText(e)
+        end try
+        out("fixedWrite|" + how, [res])
+    end for
+end sub
+
+' Passing a variable that was never assigned as an optional argument.
+sub uninitializedArgs()
+    try
+        r = arrText(makeArr().Slice(1, notAssigned))
+    catch e
+        r = errText(e)
+    end try
+    out("uninit|arr-slice-end", [r])
+    try
+        r = arrText(makeBa().Slice(notAssigned2))
+    catch e
+        r = errText(e)
+    end try
+    out("uninit|ba-slice-start", [r])
+    try
+        r = makeBa().GetCRC32(notAssigned3).ToStr()
+    catch e
+        r = errText(e)
+    end try
+    out("uninit|ba-crc-one", [r])
+    try
+        r = makeBa().GetCRC32(0, notAssigned4).ToStr()
+    catch e
+        r = errText(e)
+    end try
+    out("uninit|ba-crc-length", [r])
+    try
+        r = makeBa().GetSignedByte(notAssigned5).ToStr()
+    catch e
+        r = errText(e)
+    end try
+    out("uninit|ba-signedByte", [r])
 end sub

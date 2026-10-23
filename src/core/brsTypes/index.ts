@@ -249,7 +249,7 @@ export function isAnyNumber(value: BrsType): value is BrsNumber | BoxedNumber {
 
 /**
  * The element index a numeric value selects in an array-like container: `Float`/`Double` indexes are
- * truncated and a `LongInteger` keeps only its low 32 bits, as on a Roku device.
+ * truncated (NaN is 0) and a `LongInteger` keeps only its low 32 bits, as on a Roku device.
  * @param value the BrightScript value used as an index.
  * @returns the index, or `undefined` if `value` is not a number.
  */
@@ -261,10 +261,11 @@ export function toArrayIndex(value: BrsType): number | undefined {
         case ValueKind.Int32:
             return value.getValue();
         case ValueKind.Int64:
-            return new Int32(value.getValue()).getValue();
+            return value.getValue().low;
         case ValueKind.Float:
         case ValueKind.Double:
-            return Math.trunc(value.getValue());
+            // NaN reads as 0, as on a device; `|| 0` also turns -0 into 0.
+            return Math.trunc(value.getValue()) || 0;
         default:
             return undefined;
     }

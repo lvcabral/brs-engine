@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBrsNumber, jsValueOf, toArrayIndex, toIntegerArg, Uninitialized } from "..";
+import { BrsType, Float, Int32, isBrsNumber, jsValueOf, omittedArg, toArrayIndex, toIntegerArg } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -6,13 +6,14 @@ import { Interpreter } from "../../interpreter";
 import { validUri, writeUri } from "../../device/FileSystem";
 import { crc32 } from "crc";
 import { IfEnum } from "../interfaces/IfEnum";
+import { toWriteIndex } from "../interfaces/IfArray";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
-    private maxSize = 0;
-    private resizable = true;
+    maxSize = 0;
+    resizable = true;
     elements: Uint8Array;
     enumIndex: number;
 
@@ -103,7 +104,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
 
     set(index: BrsType, value: BrsType) {
         const idx = toArrayIndex(index);
-        if (idx !== undefined && value.kind === ValueKind.Int32) {
+        if (idx !== undefined && idx >= 0 && value.kind === ValueKind.Int32) {
             // Expand the array if the index is out of bounds
             if (idx >= this.elements.length) {
                 const elements = new Uint8Array(idx + 1);
@@ -391,15 +392,15 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private readonly getCRC32 = new Callable("getCRC32", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Dynamic, Uninitialized.Instance),
-                new StdlibArgument("length", ValueKind.Dynamic, Uninitialized.Instance),
+                new StdlibArgument("index", ValueKind.Dynamic, omittedArg),
+                new StdlibArgument("length", ValueKind.Dynamic, omittedArg),
             ],
             returns: ValueKind.Int32,
         },
         impl: (interpreter: Interpreter, index: BrsType, length: BrsType) => {
-            if (index instanceof Uninitialized) {
+            if (index === omittedArg) {
                 return new Int32(crc32(asBuffer(this.elements)) | 0);
-            } else if (length instanceof Uninitialized) {
+            } else if (length === omittedArg) {
                 // There is no one-argument form.
                 interpreter.addError(
                     new RuntimeError(
@@ -640,13 +641,16 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, value: BrsType) => {
-            toIntegerArg(interpreter, index);
+            const idx = toWriteIndex(interpreter, this, index);
             if (!isBrsNumber(value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
                 );
             }
-            return this.set(index, value);
+            if (idx !== undefined) {
+                this.set(index, value);
+            }
+            return BrsInvalid.Instance;
         },
     });
 
@@ -657,13 +661,13 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         signature: {
             args: [
                 new StdlibArgument("start", ValueKind.Dynamic, new Int32(0)),
-                new StdlibArgument("end", ValueKind.Dynamic, Uninitialized.Instance),
+                new StdlibArgument("end", ValueKind.Dynamic, omittedArg),
             ],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, start: BrsType, end: BrsType) => {
             const from = toIntegerArg(interpreter, start);
-            const to = end instanceof Uninitialized ? undefined : toIntegerArg(interpreter, end);
+            const to = end === omittedArg ? undefined : toIntegerArg(interpreter, end);
             return new RoByteArray(this.elements.slice(from, to));
         },
     });

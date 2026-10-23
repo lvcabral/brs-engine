@@ -11,7 +11,7 @@ import {
     jsValueOf,
     toArrayIndex,
     toIntegerArg,
-    Uninitialized,
+    omittedArg,
 } from "..";
 import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
@@ -206,7 +206,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
 
     set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
         const idx = toArrayIndex(index);
-        if (idx !== undefined) {
+        if (idx !== undefined && idx >= 0) {
             value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
@@ -400,13 +400,13 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         signature: {
             args: [
                 new StdlibArgument("start", ValueKind.Dynamic, new Int32(0)),
-                new StdlibArgument("end", ValueKind.Dynamic, Uninitialized.Instance),
+                new StdlibArgument("end", ValueKind.Dynamic, omittedArg),
             ],
             returns: ValueKind.Object,
         },
         impl: (interpreter: Interpreter, start: BrsType, end: BrsType) => {
             const from = toIntegerArg(interpreter, start);
-            const to = end instanceof Uninitialized ? undefined : toIntegerArg(interpreter, end);
+            const to = end === omittedArg ? undefined : toIntegerArg(interpreter, end);
             return new RoArray(this.elements.slice(from, to));
         },
     });

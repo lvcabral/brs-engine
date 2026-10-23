@@ -4,6 +4,7 @@ import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { Callable, StdlibArgument } from "../Callable";
 import { MemberStore } from "../Boxing";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 /**
  * BrightScript Interface ifArray
@@ -195,10 +196,49 @@ export class IfArraySet {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, tvalue: BrsType) => {
-            toIntegerArg(interpreter, index);
-            return this.component.set(index, tvalue, false, "add");
+            if (toWriteIndex(interpreter, this.component, index) !== undefined) {
+                this.component.set(index, tvalue, false, "add");
+            }
+            return BrsInvalid.Instance;
         },
     });
+}
+
+/** The first index past the 32-bit `Integer` range; growing an array to it runs a device out of memory. */
+const outOfMemoryIndex = 2 ** 31;
+
+/**
+ * The element index a write (`c[i] = v` or `SetEntry`) goes to, as a Roku device reads it. A negative index, or one
+ * at or past the capacity of a non-resizable array, is ignored with a warning (`undefined`); an index past the
+ * 32-bit range is out of memory.
+ * @param interpreter the interpreter running the write.
+ * @param component the array, list or byte array written to.
+ * @param index the index argument.
+ * @returns the index, or `undefined` if the write is ignored.
+ */
+export function toWriteIndex(
+    interpreter: Interpreter,
+    component: BrsComponent & { readonly resizable: boolean; readonly maxSize: number },
+    index: BrsType
+): number | undefined {
+    const idx = toIntegerArg(interpreter, index);
+    if (idx >= outOfMemoryIndex) {
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorDetail.OutOfMemory, interpreter.location, interpreter.getBacktrace())
+        );
+    }
+    let reason: string;
+    if (idx < 0) {
+        reason = "invalid index";
+    } else if (!component.resizable && idx >= component.maxSize) {
+        reason = "index out of bounds on non-resizable array";
+    } else {
+        return idx;
+    }
+    BrsDevice.stderr.write(
+        `warning,BRIGHTSCRIPT: ERROR: ${component.getComponentName()}.SetEntry: set ignored for ${reason}: ${interpreter.formatLocation()}`
+    );
+    return undefined;
 }
 
 export interface BrsArray extends BrsIterable {
