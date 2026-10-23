@@ -1,6 +1,6 @@
 import { BrsType, BrsBoolean, isNumberComp } from ".";
 import { ValueKind, Comparable } from "./BrsType";
-import { BrsNumber, Numeric } from "./BrsNumber";
+import { BrsNumber, Numeric, signedSpecialText } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -202,7 +202,7 @@ export class Double implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return Number.isNaN(this.value) ? "nan" : this.value.toPrecision();
+        return signedSpecialText(this.value) ?? this.value.toPrecision();
     }
 
     box() {

@@ -10,6 +10,7 @@ import {
     BrsNumber,
     isBrsNumber,
     Uninitialized,
+    deviceNaN,
 } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 
@@ -166,7 +167,7 @@ export const Atn = new Callable("Atn", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.atan(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.atan(x.getValue())), x),
 });
 
 /** Returns the cosine of a float (argument must be provided in radians). */
@@ -175,7 +176,7 @@ export const Cos = new Callable("Cos", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.cos(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.cos(x.getValue())), x),
 });
 
 /** Returns the sine of a float (argument must be provided in radians). */
@@ -184,7 +185,7 @@ export const Sin = new Callable("Sin", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.sin(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.sin(x.getValue())), x),
 });
 
 /** Returns the tangent float (argument must be provided in radians). */
@@ -193,7 +194,7 @@ export const Tan = new Callable("Tan", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.tan(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.tan(x.getValue())), x),
 });
 
 /** Returns the natural exponent of a float. */
@@ -202,7 +203,7 @@ export const Exp = new Callable("Exp", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.exp(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.exp(x.getValue())), x),
 });
 
 /** Returns the log of a float. */
@@ -211,7 +212,7 @@ export const Log = new Callable("Log", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.log(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.log(x.getValue())), x),
 });
 
 /** Returns the square root of a float. */
@@ -220,7 +221,7 @@ export const Sqr = new Callable("Sqr", {
         args: [new StdlibArgument("x", ValueKind.Float)],
         returns: ValueKind.Float,
     },
-    impl: (_: Interpreter, x: Float) => new Float(Math.sqrt(x.getValue())),
+    impl: (_: Interpreter, x: Float) => deviceNaN(new Float(Math.sqrt(x.getValue())), x),
 });
 
 /**

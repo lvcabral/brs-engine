@@ -1,0 +1,238 @@
+PROBE|start
+PROBE|float-nan|type=Float|tostr=nan|str= nan|boxed=nan
+PROBE|float-nan|fmt=nan,nan,nan,  nan
+PROBE|float-nan|json=[nan]
+PROBE|float-nan|print-begin
+ nan 
+ nan | nan 
+<Component: roArray> =
+[
+    nan
+]
+PROBE|float-nan|print-end
+PROBE|float-negnan|type=Float|tostr=-nan|str=-nan|boxed=-nan
+PROBE|float-negnan|fmt=-nan,-nan,-nan, -nan
+PROBE|float-negnan|json=[-nan]
+PROBE|float-negnan|print-begin
+-nan 
+-nan |-nan 
+<Component: roArray> =
+[
+    -nan
+]
+PROBE|float-negnan|print-end
+PROBE|float-inf|type=Float|tostr=inf|str= inf|boxed=inf
+PROBE|float-inf|fmt=inf,inf,inf,  inf
+PROBE|float-inf|json=[inf]
+PROBE|float-inf|print-begin
+ inf 
+ inf | inf 
+<Component: roArray> =
+[
+    inf
+]
+PROBE|float-inf|print-end
+PROBE|float-neginf|type=Float|tostr=-inf|str=-inf|boxed=-inf
+PROBE|float-neginf|fmt=-inf,-inf,-inf, -inf
+PROBE|float-neginf|json=[-inf]
+PROBE|float-neginf|print-begin
+-inf 
+-inf |-inf 
+<Component: roArray> =
+[
+    -inf
+]
+PROBE|float-neginf|print-end
+PROBE|double-nan|type=Float|tostr=nan|str= nan|boxed=nan
+PROBE|double-nan|fmt=nan,nan,nan,  nan
+PROBE|double-nan|json=[nan]
+PROBE|double-nan|print-begin
+ nan 
+ nan | nan 
+<Component: roArray> =
+[
+    nan
+]
+PROBE|double-nan|print-end
+PROBE|double-negnan|type=Float|tostr=-nan|str=-nan|boxed=-nan
+PROBE|double-negnan|fmt=-nan,-nan,-nan, -nan
+PROBE|double-negnan|json=[-nan]
+PROBE|double-negnan|print-begin
+-nan 
+-nan |-nan 
+<Component: roArray> =
+[
+    -nan
+]
+PROBE|double-negnan|print-end
+PROBE|double-inf|type=Double|tostr=inf|str= inf|boxed=inf
+PROBE|double-inf|fmt=inf,inf,inf,  inf
+PROBE|double-inf|json=[inf]
+PROBE|double-inf|print-begin
+ inf 
+ inf | inf 
+<Component: roArray> =
+[
+    inf
+]
+PROBE|double-inf|print-end
+PROBE|double-neginf|type=Double|tostr=-inf|str=-inf|boxed=-inf
+PROBE|double-neginf|fmt=-inf,-inf,-inf, -inf
+PROBE|double-neginf|json=[-inf]
+PROBE|double-neginf|print-begin
+-inf 
+-inf |-inf 
+<Component: roArray> =
+[
+    -inf
+]
+PROBE|double-neginf|print-end
+PROBE|float-negzero|type=Float|tostr=-0|str=-0|boxed=-0
+PROBE|float-negzero|fmt=-0.000000,-0,-0.000000e+00,-0.00
+PROBE|float-negzero|json=[-0]
+PROBE|float-negzero|print-begin
+-0 
+-0 |-0 
+<Component: roArray> =
+[
+    -0
+]
+PROBE|float-negzero|print-end
+PROBE|double-negzero|type=Double|tostr=-0|str=-0|boxed=-0
+PROBE|double-negzero|fmt=-0.000000,-0,-0.000000e+00,-0.00
+PROBE|double-negzero|json=[-0]
+PROBE|double-negzero|print-begin
+-0 
+-0 |-0 
+<Component: roArray> =
+[
+    -0
+]
+PROBE|double-negzero|print-end
+PROBE|plain|print-begin
+ 5.5 
+ 5.5 | 2.25 | 7|-5.5 
+<Component: roArray> =
+[
+    5.5
+    2.25
+    7
+]
+PROBE|plain|print-end
+PROBE|val|12abc|Float|12
+PROBE|val10|12abc|Integer|12|hex=Integer|76476
+PROBE|val|  12|Float|12
+PROBE|val10|  12|Integer|12|hex=Integer|18
+PROBE|val|1e3|Float|1000
+PROBE|val10|1e3|Integer|1|hex=Integer|483
+PROBE|val|1e|Float|1
+PROBE|val10|1e|Integer|1|hex=Integer|30
+PROBE|val|1e+|Float|1
+PROBE|val10|1e+|Integer|1|hex=Integer|30
+PROBE|val|0x1A|Float|26
+PROBE|val10|0x1A|Integer|0|hex=Integer|26
+PROBE|val|&h1A|Float|0
+PROBE|val10|&h1A|Integer|0|hex=Integer|0
+PROBE|val|&HFF|Float|0
+PROBE|val10|&HFF|Integer|0|hex=Integer|0
+PROBE|val|.5|Float|0.5
+PROBE|val10|.5|Integer|0|hex=Integer|0
+PROBE|val|-.5e-1x|Float|-0.05
+PROBE|val10|-.5e-1x|Integer|0|hex=Integer|0
+PROBE|val|1_000|Float|1
+PROBE|val10|1_000|Integer|1|hex=Integer|1
+PROBE|val||Float|0
+PROBE|val10||Integer|0|hex=Integer|0
+PROBE|val|abc|Float|0
+PROBE|val10|abc|Integer|0|hex=Integer|2748
+PROBE|val|12.5.6|Float|12.5
+PROBE|val10|12.5.6|Integer|12|hex=Integer|18
+PROBE|val|+5|Float|5
+PROBE|val10|+5|Integer|5|hex=Integer|5
+PROBE|val|--5|Float|0
+PROBE|val10|--5|Integer|0|hex=Integer|0
+PROBE|val|1 2|Float|1
+PROBE|val10|1 2|Integer|1|hex=Integer|1
+PROBE|val|3.|Float|3
+PROBE|val10|3.|Integer|3|hex=Integer|3
+PROBE|val|1d2|Float|1
+PROBE|val10|1d2|Integer|1|hex=Integer|466
+PROBE|val|1E2|Float|100
+PROBE|val10|1E2|Integer|1|hex=Integer|482
+PROBE|val|-0|Float|-0
+PROBE|val10|-0|Integer|0|hex=Integer|0
+PROBE|val|2147483648|Float|2.14748e+09
+PROBE|val10|2147483648|Integer|2147483647|hex=Integer|-1
+PROBE|val|99999999999|Float|1e+11
+PROBE|val10|99999999999|Integer|2147483647|hex=Integer|-1
+PROBE|val|1.5|Float|1.5
+PROBE|val10|1.5|Integer|1|hex=Integer|1
+PROBE|val|nan|Float|nan
+PROBE|val10|nan|Integer|0|hex=Integer|0
+PROBE|val|NaN|Float|nan
+PROBE|val10|NaN|Integer|0|hex=Integer|0
+PROBE|val|NAN|Float|nan
+PROBE|val10|NAN|Integer|0|hex=Integer|0
+PROBE|val|-nan|Float|-nan
+PROBE|val10|-nan|Integer|0|hex=Integer|0
+PROBE|val|+nan|Float|nan
+PROBE|val10|+nan|Integer|0|hex=Integer|0
+PROBE|val|inf|Float|inf
+PROBE|val10|inf|Integer|0|hex=Integer|0
+PROBE|val|Inf|Float|inf
+PROBE|val10|Inf|Integer|0|hex=Integer|0
+PROBE|val|INF|Float|inf
+PROBE|val10|INF|Integer|0|hex=Integer|0
+PROBE|val|-inf|Float|-inf
+PROBE|val10|-inf|Integer|0|hex=Integer|0
+PROBE|val|+inf|Float|inf
+PROBE|val10|+inf|Integer|0|hex=Integer|0
+PROBE|val|infinity|Float|inf
+PROBE|val10|infinity|Integer|0|hex=Integer|0
+PROBE|val|-Infinity|Float|-inf
+PROBE|val10|-Infinity|Integer|0|hex=Integer|0
+PROBE|val|INFINITY|Float|inf
+PROBE|val10|INFINITY|Integer|0|hex=Integer|0
+PROBE|val|1e999|Float|inf
+PROBE|val10|1e999|Integer|1|hex=Integer|125337
+PROBE|val|-1e999|Float|-inf
+PROBE|val10|-1e999|Integer|-1|hex=Integer|-125337
+PROBE|val| nan|Float|nan
+PROBE|val10| nan|Integer|0|hex=Integer|0
+PROBE|val|nanx|Float|nan
+PROBE|val10|nanx|Integer|0|hex=Integer|0
+PROBE|val|infx|Float|inf
+PROBE|val10|infx|Integer|0|hex=Integer|0
+PROBE|val|in|Float|0
+PROBE|val10|in|Integer|0|hex=Integer|0
+PROBE|val|na|Float|0
+PROBE|val10|na|Integer|0|hex=Integer|0
+PROBE|val|1.5nan|Float|1.5
+PROBE|val10|1.5nan|Integer|1|hex=Integer|1
+PROBE|val|nan(1)|Float|nan
+PROBE|val10|nan(1)|Integer|0|hex=Integer|0
+PROBE|radix|-5|16|Integer|-5
+PROBE|radix|-99999999999|10|Integer|-2147483648
+PROBE|radix|ffffffff|16|Integer|-1
+PROBE|radix|100000000|16|Integer|-1
+PROBE|radix|-ffffffff|16|Integer|-2147483648
+PROBE|radix|7fffffff|16|Integer|2147483647
+PROBE|radix|80000000|16|Integer|-2147483648
+PROBE|radix|777|8|Integer|511
+PROBE|radix|99999999999|8|Integer|0
+PROBE|radix|37777777777|8|Integer|-1
+PROBE|radix|zz|36|Integer|1295
+PROBE|radix|ZZ|36|Integer|1295
+PROBE|radix|-1|2|Integer|-1
+PROBE|radix|101|2|Integer|5
+PROBE|radix|0x10|10|Integer|0
+PROBE|radix|010|0|Integer|8
+PROBE|radix|0x1f|0|Integer|31
+PROBE|radix|19|0|Integer|19
+PROBE|radix|12|1|Integer|0
+PROBE|radix|12|37|Integer|0
+PROBE|radix|12|-1|Integer|0
+PROBE|radix|-2147483648|10|Integer|-2147483648
+PROBE|radix|-2147483649|10|Integer|-2147483648
+PROBE|radix|4294967295|10|Integer|2147483647
+PROBE|done

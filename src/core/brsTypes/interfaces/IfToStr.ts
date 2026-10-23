@@ -4,6 +4,7 @@ import {
     Callable,
     isBoxedNumber,
     isComparable,
+    nonFiniteText,
     RoBoolean,
     RoInvalid,
     RoString,
@@ -69,13 +70,15 @@ export class IfToStr {
                     interpreter.getBacktrace()
                 );
             }
-            const tokens = format.value.split("%").length - 1;
+            const value = this.component.getValue();
+            const formatText = typeof value === "number" ? formatSignedSpecial(format.value, value) : format.value;
+            const tokens = formatText.split("%").length - 1;
             if (tokens === 0) {
-                return new BrsString(format.value);
+                return new BrsString(formatText);
             }
-            const params = new Array(tokens).fill(this.component.getValue());
+            const params = new Array(tokens).fill(value);
             try {
-                return new BrsString(vsprintf(format.value, params));
+                return new BrsString(vsprintf(formatText, params));
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
@@ -90,5 +93,39 @@ export class IfToStr {
                 throw new RuntimeError(errorDetail, interpreter.location, interpreter.getBacktrace());
             }
         },
+    });
+}
+
+/**
+ * Writes `-0` or a non-finite number into the floating-point conversions (`%f`, `%g`, `%e`, `%a`) of a format string
+ * the way C's printf does on a device, which the sprintf library gets wrong: `nan`/`inf` with the sign and width
+ * flags (no precision or zero padding), and `-0` with its sign.
+ * @param format the format string.
+ * @param value the number being formatted.
+ * @returns the format string, with those conversions already written when `value` is one of these numbers.
+ */
+function formatSignedSpecial(format: string, value: number) {
+    const text = nonFiniteText(value);
+    if (text === undefined && !Object.is(value, -0)) {
+        return format;
+    }
+    const spec = /%([-+ 0#]*)(\d*)((?:\.\d*)?)([aAeEfFgG])/g;
+    return format.replaceAll(spec, (_spec, flags: string, width: string, precision: string, conversion: string) => {
+        const size = Number(width);
+        if (text === undefined) {
+            // -0: format a zero without sign flags or width, then add the sign.
+            const zero = vsprintf(`%${flags.replaceAll(/[-+ 0]/g, "")}${precision}${conversion}`, [0]);
+            if (flags.includes("-")) {
+                return ("-" + zero).padEnd(size);
+            }
+            return flags.includes("0") ? "-" + zero.padStart(size - 1, "0") : ("-" + zero).padStart(size);
+        }
+        let sign = "";
+        if (!text.startsWith("-") && flags.includes("+")) {
+            sign = "+";
+        } else if (!text.startsWith("-") && flags.includes(" ")) {
+            sign = " ";
+        }
+        return flags.includes("-") ? (sign + text).padEnd(size) : (sign + text).padStart(size);
     });
 }

@@ -109,16 +109,10 @@ export class RoXMLList extends BrsComponent implements BrsValue, BrsList {
         if (isUnboxable(index)) {
             index = index.unbox();
         }
-        switch (index.kind) {
-            case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
-            case ValueKind.Int32:
-                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
-            case ValueKind.String:
-                return this.getMethod(index.value) ?? this.namedElements(index.value, true);
-            default:
-                return BrsInvalid.Instance;
+        if (index.kind === ValueKind.String) {
+            return this.getMethod(index.value) ?? this.namedElements(index.value, true);
         }
+        return this.roList.get(index);
     }
 
     set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
