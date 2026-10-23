@@ -1360,6 +1360,29 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 60000);
 
+    it("Runs a Task's XML onChange only on render, and keeps the Task's port out of render's m", async () => {
+        let command = ["node", brsCliPath, "-r task-onchange-thread-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-measured on Roku OS 15.3.4 (task-fanout-batch-probe): a Task node is owned by render,
+        // so its XML onChange runs there, with render's clone of `m`, whichever thread wrote the field.
+        // The port created in init() goes to the first launched thread only: render's clone and the
+        // re-run both read it as Invalid, and the re-run's `m.runs` restarts from render's clone.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Task onChange Thread ===",
+            "ONCHANGE fromRender=5 inTask=false port=Invalid",
+            "ONCHANGE fromTask=7 inTask=false port=Invalid",
+            "TASK SAW: run 1: port=roMessagePort event=roSGNodeEvent",
+            "TASK SAW: run 1: port=Invalid",
+            "=== Task onChange Thread Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Services SceneGraph timers/rendering through a sleep()+getMessage() poll loop, not just wait()", async () => {
         let command = ["node", brsCliPath, "-r sleep-poll-app", "source/main.brs", "-c 0"].join(" ");
 

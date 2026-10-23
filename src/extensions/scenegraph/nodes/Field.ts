@@ -36,6 +36,7 @@ import { getValueKindFromFieldType } from "../factory/NodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 import { convertHexColor } from "../SGUtil";
+import { sgRoot } from "../SGRoot";
 
 export class Field {
     // Observer collections are allocated lazily. A node like ContentNode registers ~100 default
@@ -529,6 +530,7 @@ export class Field {
                 fieldName,
                 infoFields,
             },
+            permanent: mode === "permanent",
         };
         if (mode === "scoped") {
             this.scopedObservers ??= new Map();
@@ -812,14 +814,19 @@ export class Field {
             // Prevent stack overflow by not re-entering a running callback
             return;
         }
-        // Snapshot the event (value + info fields) at notification time, matching the RoMessagePort
-        // branch which also builds the event before deferring via pushMessage.
         if (callback.observer instanceof RoMessagePort) {
-            if (!callback.hostNode.isDetachedPort(callback.observer)) {
+            if (!callback.observer.isDetached()) {
                 callback.observer.pushMessage(this.buildEvent(callback));
             }
             return;
         }
+        // An XML `onChange` runs on the thread that owns the node, whichever thread wrote the field
+        // (a Task node is owned by render), so a task thread skips it for a node it doesn't own.
+        if (callback.permanent && sgRoot.inTaskThread() && callback.eventParams.node.getOwner() !== sgRoot.threadId) {
+            return;
+        }
+        // Snapshot the event (value + info fields) at notification time, matching the RoMessagePort
+        // branch which also builds the event before deferring via pushMessage.
         const event = this.buildEvent(callback);
 
         // Roku-accurate deferral: if this notification comes from an engine-initiated emission

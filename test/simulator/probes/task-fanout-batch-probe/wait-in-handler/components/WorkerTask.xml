@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="request" type="integer" alwaysNotify="true" onChange="onReq" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "drain"
+        m.inTask = false
+        m.count = 0
+        m.last = 0
+        m.inversions = 0
+        m.portCount = 0
+    end sub
+
+    ' XML onChange on the task thread that waits on the port observing the same field.
+    sub onReq(event as object)
+        v = event.getData()
+        if v <= 2 then print "ONCHANGE v=" + v.toStr() + " inTask=" + m.inTask.toStr()
+        if not m.inTask then return
+        if v < m.last then m.inversions++
+        m.last = v
+        m.count++
+        msg = wait(1, m.port)
+        if type(msg) = "roSGNodeEvent" then m.portCount++
+    end sub
+
+    sub drain()
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("request", m.port)
+        m.inTask = true
+        m.top.ready = true
+        idle = 0
+        while idle < 20
+            msg = wait(100, m.port)
+            if type(msg) = "roSGNodeEvent"
+                idle = 0
+                m.portCount++
+            else
+                idle++
+            end if
+        end while
+        m.top.report = "onChange n=" + m.count.toStr() + " inversions=" + m.inversions.toStr() + " | port n=" + m.portCount.toStr() + " | final field=" + m.top.request.toStr()
+    end sub
+    ]]></script>
+</component>

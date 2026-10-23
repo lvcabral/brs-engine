@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="fromRender" type="integer" onChange="onFromRender" />
+        <field id="fromTask" type="integer" onChange="onFromTask" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    ' m.inTask is true only in the task thread's m; the render thread keeps a clone where it is false.
+    sub init()
+        m.top.functionName = "work"
+        m.inTask = false
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("fromRender", m.port)
+    end sub
+
+    sub onFromRender(event as object)
+        print "ONCHANGE fromRender=" + event.getData().toStr() + " inTask=" + m.inTask.toStr() + " port=" + type(m.port)
+    end sub
+
+    sub onFromTask(event as object)
+        print "ONCHANGE fromTask=" + event.getData().toStr() + " inTask=" + m.inTask.toStr() + " port=" + type(m.port)
+    end sub
+
+    sub work()
+        m.inTask = true
+        m.top.ready = true
+        msg = wait(2000, m.port)
+        print "TASK got port event: " + type(msg)
+        m.top.fromTask = 7
+        wait(300, m.port)
+        m.top.report = "done"
+    end sub
+    ]]></script>
+</component>

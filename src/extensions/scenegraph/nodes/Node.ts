@@ -407,16 +407,6 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Whether `port`, observing a field on behalf of this node, is a render-side copy that nothing
-     * will drain (see `Task.isDetachedPort`). Events for such a port are dropped instead of queued.
-     * @param _port Message port registered as a field observer with this node as host.
-     * @returns True when events pushed to the port would never be consumed.
-     */
-    isDetachedPort(_port: RoMessagePort): boolean {
-        return false;
-    }
-
-    /**
      * Looks up a field or method by name, mimicking BrightScript associative-array semantics.
      * @param index Field or method name as a BrightScript string value.
      * @throws Error when an unsupported index type is provided.

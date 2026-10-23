@@ -1053,17 +1053,17 @@ export function collectPortNodeEvents(
 }
 
 /**
- * Discards the node events queued on a task's render-side ports. While a task runs, field changes
- * reach it live (the render thread pushes to the observing task), yet the render-side copy of the
- * port keeps queueing the same events and nothing consumes them. Dropping them when the task stops
- * keeps a restart replaying only what was queued while it was stopped — otherwise a stop/run cycle
- * (the standard polling-task pattern) would replay the whole previous run's backlog at once.
- * @param m The task node's script-scope `m`.
+ * Hands a task's message ports over to the thread being launched. On a device the launched thread
+ * receives the original `m` and the render thread keeps a clone without the ports, so they read
+ * `invalid` there and on any later run of the same task. Each port is detached, since the field
+ * observers registered with it still notify on the render thread and nothing would drain it.
+ * @param m The task node's render-side script-scope `m`, after its launch payload was built.
  */
-export function dropPortNodeEvents(m: RoAssociativeArray): void {
-    for (const value of m.elements.values()) {
+export function detachLaunchedPorts(m: RoAssociativeArray): void {
+    for (const [key, value] of m.elements) {
         if (value instanceof RoMessagePort) {
-            value.drainMessages((event) => event instanceof RoSGNodeEvent);
+            value.detach();
+            m.set(new BrsString(key), BrsInvalid.Instance, true);
         }
     }
 }

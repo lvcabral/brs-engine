@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+    end sub
+
+    sub onReady()
+        m.task.fromRender = 5
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

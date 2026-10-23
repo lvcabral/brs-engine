@@ -249,8 +249,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     if (sgRoot.processTimers()) {
                         this.isDirty = true;
                     }
-                    // Keep feeding Task fan-out slots as the tasks drain them, instead of handing
-                    // over one batch per frame (lvcabral/brs-engine#1263). Runs no BrightScript.
+                    // Keep feeding Task fan-out slots as the tasks drain them. Runs no BrightScript.
                     sgRoot.flushFanouts();
                     timeStamp = Date.now();
                 }

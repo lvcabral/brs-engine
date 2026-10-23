@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.reports = 0
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+        m.timer = createObject("roSGNode", "Timer")
+        m.timer.duration = 0.5
+        m.timer.observeField("fire", "onRerun")
+    end sub
+
+    sub onReady()
+        m.task.cmd = 1
+    end sub
+
+    ' Re-run once, after the first run has returned.
+    sub onRerun()
+        print "SCENE: re-running, state=" + m.task.state
+        m.task.control = "run"
+    end sub
+
+    sub onReport(event as object)
+        m.reports++
+        print "TASK SAW: "; event.getData()
+        if m.reports = 1 then m.timer.control = "start"
+        if m.reports = 2 then m.top.done = true
+    end sub
+    ]]></script>
+</component>

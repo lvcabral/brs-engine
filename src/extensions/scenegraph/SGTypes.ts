@@ -24,6 +24,8 @@ export interface BrsCallback {
         infoFields?: RoArray;
     };
     running?: boolean;
+    /** Registered by an XML `onChange` (can't be removed). */
+    permanent?: boolean;
 }
 
 /** This is used to define a field (usually a default/built-in field in a component definition). */

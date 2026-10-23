@@ -561,16 +561,30 @@ export class SGRoot {
      */
     flushFanouts() {
         for (const thread of this._threads.values()) {
-            // Same isolation as `processTasks`: this runs inside the render loop's frame-cap wait.
-            try {
-                thread.task?.flushFanout();
-            } catch (err: any) {
-                BrsDevice.stderr.write(
-                    `error,[sg] Error flushing fan-out for task ${thread.task?.nodeSubtype} (thread ${
-                        thread.task?.threadId
-                    }): ${err?.message ?? err}`
-                );
-            }
+            this.serveTask(thread.task, "flushing fan-out for", (task) => task.flushFanout());
+        }
+    }
+
+    /**
+     * Runs one task's share of a render-loop pass, isolated: a fault while serving one task must
+     * never tear down the render thread (which would stall every rendezvous and silently drop
+     * in-flight updates).
+     * @param task Task being served, if the thread has one.
+     * @param action What is being done, for the error message.
+     * @param serve The work to do for that task.
+     */
+    private serveTask(task: Task | undefined, action: string, serve: (task: Task) => void) {
+        if (!task) {
+            return;
+        }
+        try {
+            serve(task);
+        } catch (err: any) {
+            BrsDevice.stderr.write(
+                `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${err?.message ?? err}${
+                    err?.stack ? `\n${err.stack}` : ""
+                }`
+            );
         }
     }
 
@@ -582,24 +596,16 @@ export class SGRoot {
     processTasks(): boolean {
         let updates = false;
         // Snapshot the thread list so a handler that creates/stops a task mid-iteration can't disturb
-        // the loop, and isolate each task: a fault while serving one task must never tear down the
-        // render thread (which would stall every rendezvous and silently drop in-flight updates).
+        // the loop.
         for (const thread of Array.from(this._threads.values())) {
-            const task = thread.task;
-            try {
-                updates = task?.processThreadUpdate() !== undefined || updates;
-                if (task?.active) {
+            this.serveTask(thread.task, "processing", (task) => {
+                updates = task.processThreadUpdate() !== undefined || updates;
+                if (task.active) {
                     task.checkTaskRun();
                 }
                 // Phase 3b: drain any queued direct fan-out into the task's buffer (render thread only).
-                task?.flushFanout();
-            } catch (err: any) {
-                BrsDevice.stderr.write(
-                    `error,[sg] Error processing task ${task?.nodeSubtype} (thread ${task?.threadId}): ${
-                        err?.message ?? err
-                    }${err?.stack ? `\n${err.stack}` : ""}`
-                );
-            }
+                task.flushFanout();
+            });
         }
         return updates;
     }

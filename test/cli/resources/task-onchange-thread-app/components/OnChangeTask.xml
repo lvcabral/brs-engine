@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="OnChangeTask" extends="Task">
+    <interface>
+        <field id="fromRender" type="integer" onChange="onFromRender" />
+        <field id="fromTask" type="integer" onChange="onFromTask" />
+        <field id="cmd" type="integer" alwaysNotify="true" />
+        <field id="ready" type="boolean" alwaysNotify="true" />
+        <field id="report" type="string" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    ' m.inTask is true only in the launched thread's m; render keeps a clone where it stays false.
+    sub init()
+        m.top.functionName = "work"
+        m.inTask = false
+        m.runs = 0
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("cmd", m.port)
+    end sub
+
+    sub onFromRender(event as object)
+        print "ONCHANGE fromRender=" + event.getData().toStr() + " inTask=" + m.inTask.toStr() + " port=" + type(m.port)
+    end sub
+
+    sub onFromTask(event as object)
+        print "ONCHANGE fromTask=" + event.getData().toStr() + " inTask=" + m.inTask.toStr() + " port=" + type(m.port)
+    end sub
+
+    sub work()
+        m.inTask = true
+        m.runs++
+        line = "run " + m.runs.toStr() + ": port=" + type(m.port)
+        if type(m.port) = "roMessagePort"
+            m.top.ready = true
+            msg = wait(2000, m.port)
+            line = line + " event=" + type(msg)
+            m.top.fromTask = 7
+        end if
+        m.top.report = line
+    end sub
+    ]]></script>
+</component>

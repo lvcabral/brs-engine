@@ -31,7 +31,7 @@ import { sgRoot } from "../SGRoot";
 import {
     brsValueOf,
     collectPortNodeEvents,
-    dropPortNodeEvents,
+    detachLaunchedPorts,
     fromSGNode,
     jsValueOf,
     SerializedPortEvent,
@@ -173,19 +173,19 @@ function buildCallFuncSnapshot(m: RoAssociativeArray): RoAssociativeArray {
     return snapshot;
 }
 
-/**
- * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
- * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
- */
 /** Most fan-out `set` updates packed into one slot hand-off (see `Task.flushFanout`). */
 const FANOUT_BATCH_MAX = 1000;
 /**
  * Cap on a fan-out batch's UTF-8 size, well under the shared buffer's 16MB limit. Checked before an
  * update joins a batch, so a batch never outgrows the buffer; an update too large for the cap on its
- * own still travels alone, exactly as it did before batching.
+ * own travels alone.
  */
 const FANOUT_BATCH_MAX_BYTES = 1024 * 1024;
 
+/**
+ * SceneGraph `Task` node implementation responsible for executing BrightScript in a worker thread.
+ * Manages control/state fields, SharedArrayBuffer message passing, and thread synchronization.
+ */
 export class Task extends Node {
     /** Built-in Task fields defined by Roku (control/state/functionName). */
     readonly defaultFields: FieldModel[] = [
@@ -216,7 +216,7 @@ export class Task extends Node {
      * Task thread: items of the last loaded fan-out batch not applied yet, consumed from
      * `pendingFanoutHead` on (see `processThreadUpdate`).
      */
-    private readonly pendingFanout: any[] = [];
+    private pendingFanout: any[] = [];
     private pendingFanoutHead = 0;
     /** Task thread: a fan-out batch is being applied (see `processThreadUpdate`). */
     private applyingFanout = false;
@@ -497,13 +497,10 @@ export class Task extends Node {
             };
             postMessage(taskData);
             this.started = false;
-            // The task consumed its events live while running; drop the render-side copies so a
-            // restart doesn't replay the whole previous run as pre-launch events.
-            dropPortNodeEvents(this.m);
-            // Same for fan-out not handed over yet: it belonged to the run that just ended, and
-            // `flushFanout` would otherwise hold it for the next launch (it only flushes `started` tasks).
-            this.fanoutQueue.length = 0;
         }
+        // Fan-out not handed over yet belongs to the run that just ended (or never launched), and
+        // `flushFanout` would otherwise deliver it to the next launch.
+        this.fanoutQueue.length = 0;
         this.active = false;
     }
 
@@ -529,27 +526,6 @@ export class Task extends Node {
             value,
         };
         this.sendThreadUpdate(update);
-    }
-
-    /**
-     * A port held by the render-side copy of a launched task's `m` is never drained: the task's
-     * real port lives on its worker and receives field changes through fan-out, and the render copy
-     * is only swept at launch (`collectPortNodeEvents`) and at stop (`dropPortNodeEvents`). Queueing
-     * an `roSGNodeEvent` there on every write leaked one event per write (lvcabral/brs-engine#1263).
-     * Pre-launch events are kept: the launch replay delivers them in bulk.
-     * @param port Message port registered as a field observer with this task as host.
-     * @returns True when the task has launched and `port` is one of its render-side `m` ports.
-     */
-    isDetachedPort(port: RoMessagePort): boolean {
-        if (!this.started || this.inThread) {
-            return false;
-        }
-        for (const value of this.m.elements.values()) {
-            if (value === port) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**
@@ -654,9 +630,8 @@ export class Task extends Node {
      * synchronous and non-blocking: whenever the single slot is free, consecutive `set` updates are
      * packed into one `{ batch }` payload (bounded by `FANOUT_BATCH_MAX`/`FANOUT_BATCH_MAX_BYTES`),
      * leaving the rest queued for the next render pass so a slow task can never stall the render
-     * thread. Batching matters because each slot hand-off costs a render-loop round trip: one update
-     * per pass capped a task port-observing a hot field at a few hundred events per second
-     * (lvcabral/brs-engine#1263). Other actions (a `callFunc` request) still travel alone.
+     * thread. Batching matters because each slot hand-off costs a render-loop round trip. Other
+     * actions (a `callFunc` request) still travel alone.
      *
      * Nothing is handed over until the task has launched: a write between activation and launch is
      * also swept into the launch replay, and `dropFanoutCoveredByReplay` can only discard the fan-out
@@ -1034,6 +1009,7 @@ export class Task extends Node {
                 taskData.portEvents = portEvents;
                 this.dropFanoutCoveredByReplay(portEvents);
             }
+            detachLaunchedPorts(this.m);
             postMessage(taskData);
             this.started = true;
         }
@@ -1198,13 +1174,13 @@ export class Task extends Node {
             return undefined;
         }
         const fanout = buffer === this.taskBuffer;
-        // Applying a batch item can run BrightScript on this thread (an XML `onChange`), and its
-        // `tick` lands back here. Applying more items from inside that handler would re-enter its own
-        // field observer, which `Field` skips while it runs, so those events were lost; it also must
-        // not load the next batch on top of this one (the slot was reset on load, so render may have
+        // Applying a batch item can run BrightScript on this thread (an observer of a node this
+        // thread owns), and its `tick` lands back here. Applying more items from inside that handler
+        // would re-enter its own field observer, which `Field` skips while it runs; it also must not
+        // load the next batch on top of this one (the slot was reset on load, so render may have
         // refilled it). So a re-entrant tick does nothing and the outer loop carries on in order.
-        // A port `wait()` inside the handler still drains, as it pumps observers on a device too,
-        // otherwise a handler waiting for the next fan-out event could never get it.
+        // A port `wait()` inside the handler still drains, otherwise a handler waiting for the next
+        // fan-out event could never get it.
         if (fanout && this.applyingFanout && !fromWait) {
             return undefined;
         }
@@ -1221,9 +1197,8 @@ export class Task extends Node {
             if (!Array.isArray(update?.batch)) {
                 return this.applyThreadUpdate(update);
             }
-            this.pendingFanout.length = 0;
+            this.pendingFanout = update.batch;
             this.pendingFanoutHead = 0;
-            this.pendingFanout.push(...update.batch);
         }
         // A packed run of fan-out `set` updates (see `flushFanout`), applied in send order. The head
         // advances before each item is applied, so an item that throws isn't re-applied and doesn't
@@ -1233,13 +1208,14 @@ export class Task extends Node {
         this.applyingFanout = true;
         try {
             while (this.pendingFanoutHead < this.pendingFanout.length) {
-                const item = this.pendingFanout[this.pendingFanoutHead++];
+                const item = this.pendingFanout[this.pendingFanoutHead];
+                this.pendingFanoutHead++;
                 applied = this.applyThreadUpdate(item) ?? applied;
             }
         } finally {
             this.applyingFanout = wasApplying;
         }
-        this.pendingFanout.length = 0;
+        this.pendingFanout = [];
         this.pendingFanoutHead = 0;
         return applied;
     }
