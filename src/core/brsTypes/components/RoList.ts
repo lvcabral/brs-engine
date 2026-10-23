@@ -1,4 +1,4 @@
-import { BrsType, isBoxedNumber } from "..";
+import { BrsType, toArrayIndex } from "..";
 import { containerMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
@@ -98,27 +98,16 @@ export class RoList extends BrsComponent implements BrsValue, BrsList {
     }
 
     get(index: BrsType) {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
+        if (index.kind === ValueKind.String) {
+            return this.getMethod(index.value) ?? BrsInvalid.Instance;
         }
-        switch (index.kind) {
-            case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
-            case ValueKind.Int32:
-                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
-            case ValueKind.String:
-                return this.getMethod(index.value) ?? BrsInvalid.Instance;
-            default:
-                return BrsInvalid.Instance;
-        }
+        const idx = toArrayIndex(index);
+        return idx === undefined ? BrsInvalid.Instance : this.elements[idx] ?? BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
-        }
-        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-            const idx = Math.trunc(index.getValue());
+        const idx = toArrayIndex(index);
+        if (idx !== undefined && idx >= 0) {
             value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;

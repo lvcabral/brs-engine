@@ -1,9 +1,10 @@
-import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Float, Int32 } from "..";
-import { BrsComponent, BrsIterable } from "../components/BrsComponent";
+import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Int32, toIntegerArg } from "..";
+import { BrsCollection, BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { Callable, StdlibArgument } from "../Callable";
 import { MemberStore } from "../Boxing";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 /**
  * BrightScript Interface ifArray
@@ -24,8 +25,7 @@ export class IfArray {
             returns: ValueKind.Dynamic,
         },
         impl: (_: Interpreter) => {
-            const elements = this.component.getElements();
-            return elements.at(-1) || BrsInvalid.Instance;
+            return this.component.getValue().at(-1) ?? BrsInvalid.Instance;
         },
     });
 
@@ -161,19 +161,20 @@ export class IfArray {
  */
 export class IfArrayGet {
     readonly kind = ValueKind.Object;
-    private readonly component: BrsComponent & BrsArray;
+    private readonly component: BrsComponent & BrsCollection;
 
-    constructor(component: BrsComponent & BrsArray) {
+    constructor(component: BrsComponent & BrsCollection) {
         this.component = component;
     }
 
     readonly getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            return this.component.get(index) || BrsInvalid.Instance;
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            toIntegerArg(interpreter, index);
+            return this.component.get(index);
         },
     });
 }
@@ -191,16 +192,53 @@ export class IfArraySet {
     }
     readonly setEntry = new Callable("setEntry", {
         signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
-            ],
+            args: [new StdlibArgument("index", ValueKind.Dynamic), new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: Int32 | Float, tvalue: BrsType) => {
-            return this.component.set(index, tvalue, false, "assign");
+        impl: (interpreter: Interpreter, index: BrsType, tvalue: BrsType) => {
+            if (isWritableIndex(interpreter, this.component, index)) {
+                this.component.set(index, tvalue, false, "add");
+            }
+            return BrsInvalid.Instance;
         },
     });
+}
+
+/** The first index past the 32-bit `Integer` range; growing an array to it runs a device out of memory. */
+const outOfMemoryIndex = 2 ** 31;
+
+/**
+ * Whether a write (`c[i] = v` or `SetEntry`) at `index` goes ahead, as on a Roku device. A negative index, or one at
+ * or past the capacity of a non-resizable array, is ignored with a warning; an index past the 32-bit range is out of
+ * memory.
+ * @param interpreter the interpreter running the write.
+ * @param component the array, list or byte array written to.
+ * @param index the index argument.
+ * @returns true if the write goes ahead.
+ */
+export function isWritableIndex(
+    interpreter: Interpreter,
+    component: BrsComponent & { readonly resizable: boolean; readonly maxSize: number },
+    index: BrsType
+): boolean {
+    const idx = toIntegerArg(interpreter, index);
+    if (idx >= outOfMemoryIndex) {
+        interpreter.addError(
+            new RuntimeError(RuntimeErrorDetail.OutOfMemory, interpreter.location, interpreter.getBacktrace())
+        );
+    }
+    let reason: string;
+    if (idx < 0) {
+        reason = "invalid index";
+    } else if (!component.resizable && idx >= component.maxSize) {
+        reason = "index out of bounds on non-resizable array";
+    } else {
+        return true;
+    }
+    BrsDevice.stderr.write(
+        `warning,BRIGHTSCRIPT: ERROR: ${component.getComponentName()}.SetEntry: set ignored for ${reason}: ${interpreter.formatLocation()}`
+    );
+    return false;
 }
 
 export interface BrsArray extends BrsIterable {

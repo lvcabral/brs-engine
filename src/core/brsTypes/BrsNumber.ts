@@ -110,3 +110,41 @@ export interface Numeric extends BrsValue {
 
 /** The union of all supported BrightScript number types. */
 export type BrsNumber = Int32 | Int64 | Float | Double;
+
+const signView = new DataView(new ArrayBuffer(8));
+
+/**
+ * Whether a number has its sign bit set, including `-0` and a NaN produced by negating one.
+ * @param value the number.
+ * @returns true for a negative sign.
+ */
+export function hasNegativeSign(value: number): boolean {
+    if (!Number.isNaN(value)) {
+        return value < 0 || Object.is(value, -0);
+    }
+    signView.setFloat64(0, value);
+    return (signView.getUint8(0) & 0x80) !== 0;
+}
+
+/**
+ * How a Roku device writes a number that plain number formatting gets wrong: `-0`, and the non-finite values.
+ * @param value the number.
+ * @returns the text, or `undefined` for any other number.
+ */
+export function signedSpecialText(value: number): string | undefined {
+    return Object.is(value, -0) ? "-0" : nonFiniteText(value);
+}
+
+/**
+ * How a Roku device writes a non-finite number: `nan`/`-nan` (keeping the sign of the NaN) or `inf`/`-inf`.
+ * @param value the number.
+ * @returns the text, or `undefined` for a finite number.
+ */
+export function nonFiniteText(value: number): string | undefined {
+    if (Number.isFinite(value)) {
+        return undefined;
+    } else if (Number.isNaN(value)) {
+        return hasNegativeSign(value) ? "-nan" : "nan";
+    }
+    return value > 0 ? "inf" : "-inf";
+}

@@ -1,0 +1,236 @@
+PROBE|start
+PROBE|read|ba|int-1|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|float-1.9|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|double-1.9|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|long-1|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|boxInt-1|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|boxFloat-1.9|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|boxDouble-1.9|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|boxLong-1|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|int-neg1|idx=Invalid|entry=Invalid
+PROBE|read|ba|float-neg0.5|idx=Integer:10|entry=Integer:10
+PROBE|read|ba|float-neg1.5|idx=Invalid|entry=Invalid
+PROBE|read|ba|int-3|idx=Invalid|entry=Invalid
+PROBE|read|ba|long-big|idx=Integer:20|entry=Integer:20
+PROBE|read|ba|double-big|idx=Invalid|entry=Invalid
+PROBE|write|ba|int-1|idx|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|int-1|entry|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|float-1.9|idx|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|float-1.9|entry|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|double-1.9|idx|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|double-1.9|entry|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|long-1|idx|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|long-1|entry|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|boxLong-1|idx|count=3,Integer:10,Integer:99,Integer:30
+PROBE|write|ba|boxLong-1|entry|count=3,Integer:10,Integer:99,Integer:30
+PROBE|read|arr|int-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|float-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|double-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|long-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|boxInt-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|boxFloat-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|boxDouble-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|boxLong-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|int-neg1|idx=Invalid|entry=Invalid
+PROBE|read|arr|float-neg0.5|idx=roInteger:10|entry=roInteger:10
+PROBE|read|arr|float-neg1.5|idx=Invalid|entry=Invalid
+PROBE|read|arr|int-3|idx=Invalid|entry=Invalid
+PROBE|read|arr|long-big|idx=roInteger:20|entry=roInteger:20
+PROBE|read|arr|double-big|idx=Invalid|entry=Invalid
+PROBE|write|arr|int-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|arr|int-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|arr|float-1.9|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|arr|float-1.9|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|arr|double-1.9|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|arr|double-1.9|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|arr|long-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|arr|long-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|arr|boxLong-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|arr|boxLong-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|read|list|int-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|float-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|double-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|long-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|boxInt-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|boxFloat-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|boxDouble-1.9|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|boxLong-1|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|int-neg1|idx=Invalid|entry=Invalid
+PROBE|read|list|float-neg0.5|idx=roInteger:10|entry=roInteger:10
+PROBE|read|list|float-neg1.5|idx=Invalid|entry=Invalid
+PROBE|read|list|int-3|idx=Invalid|entry=Invalid
+PROBE|read|list|long-big|idx=roInteger:20|entry=roInteger:20
+PROBE|read|list|double-big|idx=Invalid|entry=Invalid
+PROBE|write|list|int-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|list|int-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|list|float-1.9|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|list|float-1.9|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|list|double-1.9|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|list|double-1.9|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|list|long-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|list|long-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|write|list|boxLong-1|idx|count=3,roInteger:10,Integer:99,roInteger:30
+PROBE|write|list|boxLong-1|entry|count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|read|xml|int-1|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|float-1.9|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|double-1.9|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|long-1|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|boxInt-1|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|boxFloat-1.9|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|boxDouble-1.9|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|boxLong-1|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|int-neg1|idx=Invalid|entry=Invalid
+PROBE|read|xml|float-neg0.5|idx=roXMLElement:i0|entry=roXMLElement:i0
+PROBE|read|xml|float-neg1.5|idx=Invalid|entry=Invalid
+PROBE|read|xml|int-3|idx=Invalid|entry=Invalid
+PROBE|read|xml|long-big|idx=roXMLElement:i1|entry=roXMLElement:i1
+PROBE|read|xml|double-big|idx=Invalid|entry=Invalid
+PROBE|write|xml|int-1|idx|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|int-1|entry|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|float-1.9|idx|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|float-1.9|entry|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|double-1.9|idx|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|double-1.9|entry|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|long-1|idx|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|long-1|entry|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|boxLong-1|idx|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|write|xml|boxLong-1|entry|count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|entryType|type=Integer|type3=Integer|entry=Integer
+PROBE|entryCopy|v=11|ba0=10
+PROBE|entryArgs|ba|long-big|get=Integer:20|set=count=3,Integer:10,Integer:99,Integer:30
+PROBE|entryArgs|ba|string-1|get=ERR:24|set=ERR:24
+PROBE|entryArgs|ba|invalid|get=ERR:24|set=ERR:24
+PROBE|entryArgs|ba|bool|get=ERR:24|set=ERR:24
+PROBE|entryArgs|arr|long-big|get=roInteger:20|set=count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|entryArgs|arr|string-1|get=ERR:24|set=ERR:24
+PROBE|entryArgs|arr|invalid|get=ERR:24|set=ERR:24
+PROBE|entryArgs|arr|bool|get=ERR:24|set=ERR:24
+PROBE|entryArgs|list|long-big|get=roInteger:20|set=count=3,roInteger:10,roInteger:99,roInteger:30
+PROBE|entryArgs|list|string-1|get=ERR:24|set=ERR:24
+PROBE|entryArgs|list|invalid|get=ERR:24|set=ERR:24
+PROBE|entryArgs|list|bool|get=ERR:24|set=ERR:24
+PROBE|entryArgs|xml|long-big|get=roXMLElement:i1|set=count=3,roXMLElement:i0,roXMLElement:i0,roXMLElement:i2
+PROBE|entryArgs|xml|string-1|get=ERR:24|set=ERR:24
+PROBE|entryArgs|xml|invalid|get=ERR:24|set=ERR:24
+PROBE|entryArgs|xml|bool|get=ERR:24|set=ERR:24
+PROBE|stored|arr|invalid|setEntry=roInvalid|index=Invalid
+PROBE|stored|arr|bool|setEntry=roBoolean|index=Boolean
+PROBE|stored|arr|float|setEntry=roFloat|index=Float
+PROBE|stored|arr|double|setEntry=roFloat|index=Double
+PROBE|stored|arr|string|setEntry=roString|index=String
+PROBE|stored|arr|stringVar|setEntry=roString|index=String
+PROBE|stored|arr|computedString|setEntry=String|index=String
+PROBE|stored|list|invalid|setEntry=roInvalid|index=Invalid
+PROBE|stored|list|bool|setEntry=roBoolean|index=Boolean
+PROBE|stored|list|float|setEntry=roFloat|index=Float
+PROBE|stored|list|double|setEntry=roFloat|index=Double
+PROBE|stored|list|string|setEntry=roString|index=String
+PROBE|stored|list|stringVar|setEntry=roString|index=String
+PROBE|stored|list|computedString|setEntry=String|index=String
+PROBE|print-begin
+<Component: roByteArray> =
+[
+    0
+    1
+    2
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+    10
+    11
+    12
+    13
+    14
+    15
+    16
+    17
+    18
+    19
+    20
+    21
+    22
+    23
+    24
+    25
+    26
+    27
+    28
+    29
+    30
+    31
+    32
+    33
+    34
+    35
+    36
+    37
+    38
+    39
+    40
+    41
+    42
+    43
+    44
+    45
+    46
+    47
+    48
+    49
+    50
+    51
+    52
+    53
+    54
+    55
+    56
+    57
+    58
+    59
+    60
+    61
+    62
+    63
+    64
+    65
+    66
+    67
+    68
+    69
+    70
+    71
+    72
+    73
+    74
+    75
+    76
+    77
+    78
+    79
+    80
+    81
+    82
+    83
+    84
+    85
+    86
+    87
+    88
+    89
+    90
+    91
+    92
+    93
+    94
+    95
+    96
+    97
+    98
+    99
+    ...
+]
+PROBE|print-end
+PROBE|done

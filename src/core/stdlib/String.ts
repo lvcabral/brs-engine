@@ -1,6 +1,7 @@
 import { Callable, ValueKind, BrsString, Int32, Float, Double, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
+import Long from "long";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable("UCase", {
@@ -164,9 +165,8 @@ export const Str = new Callable("Str", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, value: Double): BrsString => {
-        const doubleValue = value.getValue();
-        const prefix = doubleValue >= 0 ? " " : "";
-        return new BrsString(prefix + String(doubleValue));
+        const text = value.toString();
+        return new BrsString(text.startsWith("-") ? text : " " + text);
     },
 });
 
@@ -263,7 +263,8 @@ export const Substitute = new Callable("Substitute", {
 });
 
 /**
- * Return a float or integer from a string
+ * Return a float or integer from a string: without a radix, the string is read like C's `strtod` (a Float);
+ * with one, like `strtol` (an Integer). Both read the longest valid prefix, as on a Roku device.
  */
 export const Val = new Callable("Val", {
     signature: {
@@ -274,22 +275,100 @@ export const Val = new Callable("Val", {
         returns: ValueKind.Dynamic,
     },
     impl: (_: Interpreter, s: BrsString, brsRadix: Int32 | BrsInvalid): BrsNumber => {
-        const isFloat = s.value.includes(".");
-        if (isFloat || brsRadix instanceof BrsInvalid) {
-            const retNumber = Number(s.value);
-            if (Number.isNaN(retNumber)) {
-                return new Float(0);
-            }
-            return new Float(retNumber);
-        } else {
-            const retNumber = Number.parseInt(s.value, brsRadix.getValue());
-            if (Number.isNaN(retNumber)) {
-                return new Int32(0);
-            }
-            return new Int32(retNumber);
+        if (brsRadix instanceof BrsInvalid) {
+            return new Float(parseFloatPrefix(s.value));
         }
+        return new Int32(parseIntPrefix(s.value, brsRadix.getValue()));
     },
 });
+
+/** C `isspace` characters, which `strtod`/`strtol` skip before the number. */
+const leadingSpace = /^[\t\n\v\f\r ]*/;
+
+/**
+ * Reads the longest prefix of `text` that is a number, like C's `strtod`: decimal or `0x` hexadecimal (with an
+ * optional fraction and exponent), `inf`/`infinity` or `nan`/`nan(...)`, case-insensitive, with an optional sign.
+ * @param text the string.
+ * @returns the number, or 0 when there is none.
+ */
+function parseFloatPrefix(text: string): number {
+    let rest = text.replace(leadingSpace, "");
+    const negative = rest.startsWith("-");
+    if (negative || rest.startsWith("+")) {
+        rest = rest.slice(1);
+    }
+    const value = parseUnsignedFloatPrefix(rest);
+    if (value === undefined) {
+        return 0;
+    }
+    return negative ? -value : value;
+}
+
+/**
+ * `parseFloatPrefix` after the sign.
+ * @param text the string, from just after any sign.
+ * @returns the number, or `undefined` when there is none.
+ */
+function parseUnsignedFloatPrefix(text: string): number | undefined {
+    const start = text.slice(0, 3).toLowerCase();
+    if (start === "inf") {
+        return Infinity;
+    } else if (start === "nan") {
+        return Number.NaN;
+    }
+    const hex = /^0x([\da-f]*)(?:\.([\da-f]*))?/i.exec(text);
+    if (hex && (hex[1] || hex[2])) {
+        const [prefix, whole, fraction = ""] = hex;
+        const exponent = /^p([+-]?\d+)/i.exec(text.slice(prefix.length))?.[1] ?? "0";
+        return (Number.parseInt(whole + fraction, 16) / 16 ** fraction.length) * 2 ** Number(exponent);
+    }
+    const decimal = /^(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?/i.exec(text);
+    return decimal ? Number(decimal[0]) : undefined;
+}
+
+/**
+ * Reads the longest prefix of `text` that is an integer in `radix`, like C's `strtol`: radix 0 picks 16 for a `0x`
+ * prefix, 8 for a leading `0` and 10 otherwise, and radix 16 allows a `0x` prefix. A decimal result is clamped to
+ * the Integer range; any other radix keeps the low 32 bits, saturating past 32 unsigned bits (as on a device).
+ * @param text the string.
+ * @param radix the radix: 0, or 2 to 36.
+ * @returns the integer, or 0 when there is none or the radix is invalid.
+ */
+function parseIntPrefix(text: string, radix: number): number {
+    if (radix !== 0 && (radix < 2 || radix > 36)) {
+        return 0;
+    }
+    let rest = text.replace(leadingSpace, "");
+    const negative = rest.startsWith("-");
+    if (negative || rest.startsWith("+")) {
+        rest = rest.slice(1);
+    }
+    if ((radix === 0 || radix === 16) && /^0x[\da-f]/i.test(rest)) {
+        radix = 16;
+        rest = rest.slice(2);
+    } else if (radix === 0) {
+        radix = rest.startsWith("0") ? 8 : 10;
+    }
+    let magnitude = 0;
+    for (const char of rest) {
+        const digit = Number.parseInt(char, 36);
+        if (Number.isNaN(digit) || digit >= radix) {
+            break;
+        }
+        // Anything past 32 unsigned bits saturates below, so capping keeps the sum exact.
+        magnitude = Math.min(magnitude * radix + digit, saturatedMagnitude);
+    }
+    const value = negative ? 0 - magnitude : magnitude;
+    if (radix === 10) {
+        return Math.min(Math.max(value, minInteger), maxInteger);
+    }
+    return Long.fromNumber(Math.min(Math.max(value, minInteger), maxUnsigned)).toInt();
+}
+
+const minInteger = -(2 ** 31);
+const maxInteger = 2 ** 31 - 1;
+const maxUnsigned = 2 ** 32 - 1;
+const saturatedMagnitude = 2 ** 33;
 
 /**
  * Return an integer from a string or 0 if it can't be parsed.

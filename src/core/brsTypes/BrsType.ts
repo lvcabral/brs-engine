@@ -437,6 +437,12 @@ export class BrsInvalid implements BrsValue, Comparable, Boxable {
     }
 }
 
+/**
+ * Default value marking an optional argument of a built-in method as omitted, so the method can tell it apart from
+ * an explicit `invalid` or an uninitialized variable. Compare by identity (`arg === omittedArg`).
+ */
+export const omittedArg: BrsInvalid = new BrsInvalid();
+
 /** Internal representation of uninitialized BrightScript variables. */
 export class Uninitialized implements BrsValue, Comparable {
     readonly kind = ValueKind.Uninitialized;
