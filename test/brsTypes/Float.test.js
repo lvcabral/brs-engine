@@ -441,7 +441,10 @@ describe("Float", () => {
 
     describe("NaN sign", () => {
         const { deviceNaN, hasNegativeSign } = brs.types;
-        const negativeNaN = -Math.sqrt(-1);
+        // Built from its bits: the sign of a NaN from Math.sqrt(-1) depends on the host CPU.
+        const bits = new DataView(new ArrayBuffer(8));
+        bits.setUint32(0, 0xfff80000);
+        const negativeNaN = bits.getFloat64(0);
 
         it("keeps the sign of a NaN and of -0", () => {
             expect(new Float(negativeNaN).toString()).toBe("-nan");
