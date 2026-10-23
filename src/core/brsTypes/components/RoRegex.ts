@@ -9,7 +9,7 @@ import { BrsDevice } from "../../device/BrsDevice";
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     // JS RegExp has no native equivalent to the "x" (extended/free-spacing) flag, so it's handled
-    // by preprocessing the pattern in stripFreeSpacing() rather than being forwarded to new RegExp().
+    // by preprocessing the pattern in translatePattern() rather than being forwarded to new RegExp().
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
     private readonly valid: boolean;
@@ -30,14 +30,15 @@ export class RoRegex extends BrsComponent implements BrsValue {
             throw new RuntimeError(errorDetail);
         }
         const rawFlags = flags.getValue();
-        let pattern = expression.getValue();
-        if (rawFlags.includes("x")) {
-            pattern = RoRegex.stripFreeSpacing(pattern);
+        const pattern = RoRegex.translatePattern(expression.getValue(), rawFlags.includes("x"));
+        try {
+            this.jsRegex = new RegExp(pattern, this.parseFlags(rawFlags));
+            this.valid = true;
+        } catch {
+            // An invalid object is never handed to BrightScript (see createRegex); this never matches.
+            this.jsRegex = /(?!)/;
+            this.valid = false;
         }
-        const jsRegex = RoRegex.compile(pattern, this.parseFlags(rawFlags));
-        this.valid = jsRegex !== undefined;
-        // An invalid object is never handed to BrightScript (see createRegex); this never matches.
-        this.jsRegex = jsRegex ?? /(?!)/;
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
@@ -88,77 +89,24 @@ export class RoRegex extends BrsComponent implements BrsValue {
 
     private static readonly whitespacePattern = /\s/;
 
-    /**
-     * Compiles a pattern to a JS RegExp, tolerating constructs that are valid PCRE (what Roku's
-     * roRegex uses) but rejected by JavaScript. The empty inline option-setting groups `(?-)` and
-     * `(?)`, PCRE no-ops that JavaScript rejects as "Invalid group", are stripped on the retry path.
-     * @param pattern Pattern as passed to CreateObject
-     * @param parsedFlags Flags already filtered by parseFlags
-     * @returns the compiled regular expression, or `undefined` if the pattern is still invalid
-     */
-    private static compile(pattern: string, parsedFlags: string): RegExp | undefined {
-        try {
-            return new RegExp(pattern, parsedFlags);
-        } catch {
-            try {
-                return new RegExp(RoRegex.stripNoOpOptionGroups(pattern), parsedFlags);
-            } catch {
-                return undefined;
-            }
-        }
-    }
+    private static readonly noOpOptionGroup = /\(\?-?\)/y;
 
     /**
-     * Removes PCRE inline option-setting groups with an empty option list - `(?-)` and `(?)` - which
-     * PCRE accepts as a no-op and JavaScript rejects. Escaped characters and character classes are
-     * left untouched (there `(?-)` is a literal character sequence, not a group).
-     * @param pattern Original pattern, as passed to CreateObject
-     * @returns Pattern without the no-op option-setting groups
-     */
-    private static stripNoOpOptionGroups(pattern: string): string {
-        let result = "";
-        let inClass = false;
-        let i = 0;
-        while (i < pattern.length) {
-            const char = pattern[i];
-            if (char === "\\" && i + 1 < pattern.length) {
-                result += pattern.slice(i, i + 2);
-                i += 2;
-                continue;
-            }
-            if (!inClass && pattern.startsWith("(?-)", i)) {
-                i += 4;
-                continue;
-            }
-            if (!inClass && pattern.startsWith("(?)", i)) {
-                i += 3;
-                continue;
-            }
-            i++;
-            if (inClass) {
-                if (char === "]") {
-                    inClass = false;
-                }
-            } else if (char === "[") {
-                inClass = true;
-            }
-            result += char;
-        }
-        return result;
-    }
-
-    /**
-     * Implements the "x" (extended/free-spacing) flag, which JS RegExp has no native flag for:
-     * strips unescaped whitespace and "#...newline" comments from the pattern, leaving whitespace
-     * and "#" untouched when escaped (e.g. "\ ", "\#") or inside a character class ("[...]").
+     * Translates PCRE syntax that JS RegExp lacks or rejects, leaving escaped characters and
+     * character classes ("[...]") untouched:
+     * - drops the empty inline option-setting groups `(?-)` and `(?)`, PCRE no-ops that JavaScript
+     *   rejects as "Invalid group";
+     * - with `freeSpacing` (the "x" flag, which JS RegExp has no native flag for), drops unescaped
+     *   whitespace and "#...newline" comments.
      *
      * Unlike PCRE, JS RegExp has no "leading ']' is literal" convention for character classes, so
      * an unescaped "]" always closes the class here, even immediately after "[" or "[^" - matching
-     * how `new RegExp()` will itself interpret the (stripped) pattern.
+     * how `new RegExp()` will itself interpret the translated pattern.
      * @param pattern Original pattern, as passed to CreateObject
-     * @returns Pattern with free-spacing whitespace and comments removed
+     * @param freeSpacing Whether the "x" flag was passed
+     * @returns Pattern to compile with JS RegExp
      */
-    private static stripFreeSpacing(pattern: string): string {
+    private static translatePattern(pattern: string, freeSpacing: boolean): string {
         let result = "";
         let inClass = false;
         let i = 0;
@@ -169,27 +117,27 @@ export class RoRegex extends BrsComponent implements BrsValue {
                 i += 2;
                 continue;
             }
-            i++;
             if (inClass) {
+                inClass = char !== "]";
                 result += char;
-                if (char === "]") {
-                    inClass = false;
-                }
+                i++;
                 continue;
             }
-            if (char === "[") {
-                inClass = true;
-                result += char;
+            RoRegex.noOpOptionGroup.lastIndex = i;
+            if (RoRegex.noOpOptionGroup.test(pattern)) {
+                i = RoRegex.noOpOptionGroup.lastIndex;
                 continue;
             }
-            if (RoRegex.whitespacePattern.test(char)) {
+            i++;
+            if (freeSpacing && RoRegex.whitespacePattern.test(char)) {
                 continue;
             }
-            if (char === "#") {
+            if (freeSpacing && char === "#") {
                 const newline = pattern.indexOf("\n", i);
                 i = newline === -1 ? pattern.length : newline + 1;
                 continue;
             }
+            inClass = char === "[";
             result += char;
         }
         return result;
