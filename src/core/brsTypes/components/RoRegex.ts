@@ -1,16 +1,18 @@
-import { BrsBoolean, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
+import { BrsBoolean, BrsInvalid, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, isStringComp, RoArray, RoList } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
     // JS RegExp has no native equivalent to the "x" (extended/free-spacing) flag, so it's handled
-    // by preprocessing the pattern in stripFreeSpacing() rather than being forwarded to new RegExp().
+    // by preprocessing the pattern in translatePattern() rather than being forwarded to new RegExp().
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
+    private readonly valid: boolean;
 
     constructor(expression: BrsType, flags: BrsType = new BrsString("")) {
         super("roRegex");
@@ -28,15 +30,24 @@ export class RoRegex extends BrsComponent implements BrsValue {
             throw new RuntimeError(errorDetail);
         }
         const rawFlags = flags.getValue();
-        let pattern = expression.getValue();
-        if (rawFlags.includes("x")) {
-            pattern = RoRegex.stripFreeSpacing(pattern);
+        const pattern = RoRegex.translatePattern(expression.getValue(), rawFlags.includes("x"));
+        try {
+            this.jsRegex = new RegExp(pattern, this.parseFlags(rawFlags));
+            this.valid = true;
+        } catch {
+            // An invalid object is never handed to BrightScript (see createRegex); this never matches.
+            this.jsRegex = /(?!)/;
+            this.valid = false;
         }
-        this.jsRegex = new RegExp(pattern, this.parseFlags(rawFlags));
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
         });
+    }
+
+    /** Returns `false` when the pattern did not compile. */
+    isValid() {
+        return this.valid;
     }
 
     toString(parent?: BrsType) {
@@ -78,18 +89,24 @@ export class RoRegex extends BrsComponent implements BrsValue {
 
     private static readonly whitespacePattern = /\s/;
 
+    private static readonly noOpOptionGroup = /\(\?-?\)/y;
+
     /**
-     * Implements the "x" (extended/free-spacing) flag, which JS RegExp has no native flag for:
-     * strips unescaped whitespace and "#...newline" comments from the pattern, leaving whitespace
-     * and "#" untouched when escaped (e.g. "\ ", "\#") or inside a character class ("[...]").
+     * Translates PCRE syntax that JS RegExp lacks or rejects, leaving escaped characters and
+     * character classes ("[...]") untouched:
+     * - drops the empty inline option-setting groups `(?-)` and `(?)`, PCRE no-ops that JavaScript
+     *   rejects as "Invalid group";
+     * - with `freeSpacing` (the "x" flag, which JS RegExp has no native flag for), drops unescaped
+     *   whitespace and "#...newline" comments.
      *
      * Unlike PCRE, JS RegExp has no "leading ']' is literal" convention for character classes, so
      * an unescaped "]" always closes the class here, even immediately after "[" or "[^" - matching
-     * how `new RegExp()` will itself interpret the (stripped) pattern.
+     * how `new RegExp()` will itself interpret the translated pattern.
      * @param pattern Original pattern, as passed to CreateObject
-     * @returns Pattern with free-spacing whitespace and comments removed
+     * @param freeSpacing Whether the "x" flag was passed
+     * @returns Pattern to compile with JS RegExp
      */
-    private static stripFreeSpacing(pattern: string): string {
+    private static translatePattern(pattern: string, freeSpacing: boolean): string {
         let result = "";
         let inClass = false;
         let i = 0;
@@ -100,27 +117,27 @@ export class RoRegex extends BrsComponent implements BrsValue {
                 i += 2;
                 continue;
             }
-            i++;
             if (inClass) {
+                inClass = char !== "]";
                 result += char;
-                if (char === "]") {
-                    inClass = false;
-                }
+                i++;
                 continue;
             }
-            if (char === "[") {
-                inClass = true;
-                result += char;
+            RoRegex.noOpOptionGroup.lastIndex = i;
+            if (RoRegex.noOpOptionGroup.test(pattern)) {
+                i = RoRegex.noOpOptionGroup.lastIndex;
                 continue;
             }
-            if (RoRegex.whitespacePattern.test(char)) {
+            i++;
+            if (freeSpacing && RoRegex.whitespacePattern.test(char)) {
                 continue;
             }
-            if (char === "#") {
+            if (freeSpacing && char === "#") {
                 const newline = pattern.indexOf("\n", i);
                 i = newline === -1 ? pattern.length : newline + 1;
                 continue;
             }
+            inClass = char === "[";
             result += char;
         }
         return result;
@@ -223,4 +240,17 @@ export class RoRegex extends BrsComponent implements BrsValue {
             return new RoArray(arr);
         },
     });
+}
+
+/**
+ * Creates a roRegex for CreateObject. Like the device, an invalid pattern prints an error and
+ * returns invalid instead of raising a runtime error.
+ */
+export function createRegex(interpreter: Interpreter, expression: BrsType, flags: BrsType) {
+    const regex = new RoRegex(expression, flags);
+    if (regex.isValid()) {
+        return regex;
+    }
+    BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: ${interpreter.formatLocation()}`);
+    return BrsInvalid.Instance;
 }

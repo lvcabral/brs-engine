@@ -234,4 +234,32 @@ describe("RoRegex", () => {
             expect(result).toBe(BrsBoolean.True);
         });
     });
+
+    describe("PCRE-only patterns", () => {
+        it("compiles the empty option-setting group (?-) as a no-op and still matches", () => {
+            let regx = new RoRegex(new BrsString("^(?:(?-))?(\\d+)$"));
+            let isMatch = regx.getMethod("ismatch");
+            expect(regx.isValid()).toBe(true);
+            expect(isMatch.call(interpreter, new BrsString("123"))).toBe(BrsBoolean.True);
+            expect(isMatch.call(interpreter, new BrsString("abc"))).toBe(BrsBoolean.False);
+        });
+
+        it("compiles the empty option-setting group (?) as a no-op", () => {
+            let regx = new RoRegex(new BrsString("(?)abc"));
+            expect(regx.isValid()).toBe(true);
+            expect(regx.getMethod("ismatch").call(interpreter, new BrsString("abc"))).toBe(BrsBoolean.True);
+        });
+
+        it("keeps a character class that spells (?- out literally", () => {
+            let regx = new RoRegex(new BrsString("[(?-]+"));
+            let isMatch = regx.getMethod("ismatch");
+            expect(isMatch.call(interpreter, new BrsString("(?-"))).toBe(BrsBoolean.True);
+            expect(isMatch.call(interpreter, new BrsString("x"))).toBe(BrsBoolean.False);
+        });
+
+        it("marks an invalid pattern instead of throwing", () => {
+            expect(new RoRegex(new BrsString("(")).isValid()).toBe(false);
+            expect(new RoRegex(new BrsString("a{2,1}")).isValid()).toBe(false);
+        });
+    });
 });

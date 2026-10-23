@@ -18,7 +18,7 @@ import { RoAppMemoryMonitor } from "./RoAppMemoryMonitor";
 import { RoDateTime } from "./RoDateTime";
 import { RoTimespan } from "./RoTimespan";
 import { RoList } from "./RoList";
-import { RoRegex } from "./RoRegex";
+import { createRegex } from "./RoRegex";
 import { BrsString, BrsBoolean } from "../BrsType";
 import { RoMessagePort } from "./RoMessagePort";
 import { RoInput } from "./RoInput";
@@ -142,7 +142,12 @@ export const BrsObjects = new BrsObjectsMap([
     ["roDateTime", (_?: Interpreter) => new RoDateTime()],
     ["roList", (_?: Interpreter) => new RoList()],
     ["roTimespan", (_?: Interpreter) => new RoTimespan()],
-    ["roRegex", (_: Interpreter, expression: BrsString, flags: BrsString) => new RoRegex(expression, flags), 2],
+    [
+        "roRegex",
+        (interpreter: Interpreter, expression: BrsString, flags: BrsString) =>
+            createRegex(interpreter, expression, flags),
+        2,
+    ],
     ["roString", (_?: Interpreter) => new RoString(), -1],
     ["roBoolean", (_: Interpreter, literal: BrsBoolean) => new RoBoolean(literal), -1],
     ["roDouble", (_: Interpreter, literal: Double) => new RoDouble(literal), -1],
