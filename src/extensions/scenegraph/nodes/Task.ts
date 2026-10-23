@@ -16,7 +16,6 @@ import {
     SyncType,
     RoArray,
     RoAssociativeArray,
-    RoMessagePort,
     PrimitiveKinds,
     isSyncAction,
     RuntimeError,
