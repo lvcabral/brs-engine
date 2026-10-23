@@ -750,6 +750,37 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/regex-pcre.brs", async () => {
+        await execute([resourceFile("components", "regex-pcre.brs")], outputStreams);
+
+        // Device trace: test/simulator/probes/regex-pcre-probe/device-trace.txt
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "PROBE|start",
+            "PROBE|issue1255|roRegex|true|false",
+            "PROBE|emptyMinus|roRegex|true",
+            "PROBE|emptyGroup|roRegex|true",
+            "PROBE|namedK|roRegex|true|false",
+            "PROBE|lookbehind|roRegex|true|false",
+            "PROBE|classLiteral|roRegex|true|false",
+            "PROBE|escapedGroup|roRegex|true|true",
+            "PROBE|invalidOpen|Invalid",
+            "PROBE|invalidClass|Invalid",
+            "PROBE|invalidStar|Invalid",
+            "PROBE|invalidRange|Invalid",
+            "PROBE|invalidInline|Invalid",
+            "PROBE|untried|Invalid",
+            "PROBE|done",
+        ]);
+        expect(
+            allArgs(outputStreams.stderr.write)
+                .filter((arg) => arg.includes("roRegex"))
+                .map((arg) => arg.trimEnd())
+        ).toEqual([
+            ...Array(5).fill("BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(32)"),
+            "BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(25)",
+        ]);
+    });
+
     test("components/roRegistry.brs", () => {
         return execute([resourceFile("components", "roRegistry.brs")], outputStreams).then(() => {
             expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([

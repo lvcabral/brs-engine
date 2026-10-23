@@ -1,9 +1,10 @@
-import { BrsBoolean, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
+import { BrsBoolean, BrsInvalid, BrsString, BrsValue, Uninitialized, ValueKind } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsType, isStringComp, RoArray, RoList } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
+import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoRegex extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -11,6 +12,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     // by preprocessing the pattern in stripFreeSpacing() rather than being forwarded to new RegExp().
     readonly supportedFlags = "gims";
     private jsRegex: RegExp;
+    private readonly valid: boolean;
 
     constructor(expression: BrsType, flags: BrsType = new BrsString("")) {
         super("roRegex");
@@ -32,11 +34,19 @@ export class RoRegex extends BrsComponent implements BrsValue {
         if (rawFlags.includes("x")) {
             pattern = RoRegex.stripFreeSpacing(pattern);
         }
-        this.jsRegex = RoRegex.compile(pattern, this.parseFlags(rawFlags));
+        const jsRegex = RoRegex.compile(pattern, this.parseFlags(rawFlags));
+        this.valid = jsRegex !== undefined;
+        // An invalid object is never handed to BrightScript (see createRegex); this never matches.
+        this.jsRegex = jsRegex ?? /(?!)/;
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
         });
+    }
+
+    /** Returns `false` when the pattern did not compile. */
+    isValid() {
+        return this.valid;
     }
 
     toString(parent?: BrsType) {
@@ -80,30 +90,27 @@ export class RoRegex extends BrsComponent implements BrsValue {
 
     /**
      * Compiles a pattern to a JS RegExp, tolerating constructs that are valid PCRE (what Roku's
-     * roRegex uses) but rejected by JavaScript. A raw SyntaxError must never escape: it terminates
-     * the whole app instead of being reported as a BrightScript error. The inline option-setting
-     * group `(?-)` - an empty option list, a documented PCRE no-op that JavaScript rejects as
-     * "Invalid group" - is stripped on the retry path; anything still invalid raises a
-     * RuntimeError so the engine reports it through its normal error handling.
+     * roRegex uses) but rejected by JavaScript. The empty inline option-setting groups `(?-)` and
+     * `(?)`, PCRE no-ops that JavaScript rejects as "Invalid group", are stripped on the retry path.
      * @param pattern Pattern as passed to CreateObject
      * @param parsedFlags Flags already filtered by parseFlags
-     * @returns the compiled regular expression
+     * @returns the compiled regular expression, or `undefined` if the pattern is still invalid
      */
-    private static compile(pattern: string, parsedFlags: string): RegExp {
+    private static compile(pattern: string, parsedFlags: string): RegExp | undefined {
         try {
             return new RegExp(pattern, parsedFlags);
-        } catch (e) {
+        } catch {
             try {
                 return new RegExp(RoRegex.stripNoOpOptionGroups(pattern), parsedFlags);
-            } catch (e2) {
-                throw new RuntimeError(RuntimeErrorDetail.BadFunctionOrArrayParam);
+            } catch {
+                return undefined;
             }
         }
     }
 
     /**
-     * Removes PCRE inline option-setting groups with an empty option list - `(?-)` - which PCRE
-     * accepts as a no-op and JavaScript rejects. Escaped characters and character classes are
+     * Removes PCRE inline option-setting groups with an empty option list - `(?-)` and `(?)` - which
+     * PCRE accepts as a no-op and JavaScript rejects. Escaped characters and character classes are
      * left untouched (there `(?-)` is a literal character sequence, not a group).
      * @param pattern Original pattern, as passed to CreateObject
      * @returns Pattern without the no-op option-setting groups
@@ -121,6 +128,10 @@ export class RoRegex extends BrsComponent implements BrsValue {
             }
             if (!inClass && pattern.startsWith("(?-)", i)) {
                 i += 4;
+                continue;
+            }
+            if (!inClass && pattern.startsWith("(?)", i)) {
+                i += 3;
                 continue;
             }
             i++;
@@ -281,4 +292,17 @@ export class RoRegex extends BrsComponent implements BrsValue {
             return new RoArray(arr);
         },
     });
+}
+
+/**
+ * Creates a roRegex for CreateObject. Like the device, an invalid pattern prints an error and
+ * returns invalid instead of raising a runtime error.
+ */
+export function createRegex(interpreter: Interpreter, expression: BrsType, flags: BrsType) {
+    const regex = new RoRegex(expression, flags);
+    if (regex.isValid()) {
+        return regex;
+    }
+    BrsDevice.stderr.write(`warning,BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: ${interpreter.formatLocation()}`);
+    return BrsInvalid.Instance;
 }
