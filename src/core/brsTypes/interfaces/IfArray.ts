@@ -1,5 +1,5 @@
 import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Int32, toIntegerArg } from "..";
-import { BrsComponent, BrsIterable } from "../components/BrsComponent";
+import { BrsCollection, BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { Callable, StdlibArgument } from "../Callable";
@@ -161,9 +161,9 @@ export class IfArray {
  */
 export class IfArrayGet {
     readonly kind = ValueKind.Object;
-    private readonly component: BrsComponent & BrsArray;
+    private readonly component: BrsComponent & BrsCollection;
 
-    constructor(component: BrsComponent & BrsArray) {
+    constructor(component: BrsComponent & BrsCollection) {
         this.component = component;
     }
 
@@ -174,7 +174,7 @@ export class IfArrayGet {
         },
         impl: (interpreter: Interpreter, index: BrsType) => {
             toIntegerArg(interpreter, index);
-            return this.component.get(index) || BrsInvalid.Instance;
+            return this.component.get(index);
         },
     });
 }
@@ -196,7 +196,7 @@ export class IfArraySet {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, tvalue: BrsType) => {
-            if (toWriteIndex(interpreter, this.component, index) !== undefined) {
+            if (isWritableIndex(interpreter, this.component, index)) {
                 this.component.set(index, tvalue, false, "add");
             }
             return BrsInvalid.Instance;
@@ -208,19 +208,19 @@ export class IfArraySet {
 const outOfMemoryIndex = 2 ** 31;
 
 /**
- * The element index a write (`c[i] = v` or `SetEntry`) goes to, as a Roku device reads it. A negative index, or one
- * at or past the capacity of a non-resizable array, is ignored with a warning (`undefined`); an index past the
- * 32-bit range is out of memory.
+ * Whether a write (`c[i] = v` or `SetEntry`) at `index` goes ahead, as on a Roku device. A negative index, or one at
+ * or past the capacity of a non-resizable array, is ignored with a warning; an index past the 32-bit range is out of
+ * memory.
  * @param interpreter the interpreter running the write.
  * @param component the array, list or byte array written to.
  * @param index the index argument.
- * @returns the index, or `undefined` if the write is ignored.
+ * @returns true if the write goes ahead.
  */
-export function toWriteIndex(
+export function isWritableIndex(
     interpreter: Interpreter,
     component: BrsComponent & { readonly resizable: boolean; readonly maxSize: number },
     index: BrsType
-): number | undefined {
+): boolean {
     const idx = toIntegerArg(interpreter, index);
     if (idx >= outOfMemoryIndex) {
         interpreter.addError(
@@ -233,12 +233,12 @@ export function toWriteIndex(
     } else if (!component.resizable && idx >= component.maxSize) {
         reason = "index out of bounds on non-resizable array";
     } else {
-        return idx;
+        return true;
     }
     BrsDevice.stderr.write(
         `warning,BRIGHTSCRIPT: ERROR: ${component.getComponentName()}.SetEntry: set ignored for ${reason}: ${interpreter.formatLocation()}`
     );
-    return undefined;
+    return false;
 }
 
 export interface BrsArray extends BrsIterable {

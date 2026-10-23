@@ -111,28 +111,21 @@ function formatSignedSpecial(format: string, value: number) {
     }
     const spec = /%([-+ 0#]*)(\d*)((?:\.\d*)?)([aAeEfFgG])/g;
     return format.replaceAll(spec, (_spec, flags: string, width: string, precision: string, conversion: string) => {
-        let padded: string;
+        const size = Number(width);
         if (text === undefined) {
             // -0: format a zero without sign flags or width, then add the sign.
-            const zeroFlags = flags.replaceAll(/[-+ 0]/g, "");
-            padded = "-" + vsprintf(`%${zeroFlags}${precision}${conversion}`, [0]);
-        } else {
-            let sign = "";
-            if (!text.startsWith("-")) {
-                if (flags.includes("+")) {
-                    sign = "+";
-                } else if (flags.includes(" ")) {
-                    sign = " ";
-                }
+            const zero = vsprintf(`%${flags.replaceAll(/[-+ 0]/g, "")}${precision}${conversion}`, [0]);
+            if (flags.includes("-")) {
+                return ("-" + zero).padEnd(size);
             }
-            padded = sign + text;
+            return flags.includes("0") ? "-" + zero.padStart(size - 1, "0") : ("-" + zero).padStart(size);
         }
-        const size = Number(width);
-        if (flags.includes("-")) {
-            return padded.padEnd(size);
-        } else if (text === undefined && flags.includes("0")) {
-            return "-" + padded.slice(1).padStart(size - 1, "0");
+        let sign = "";
+        if (!text.startsWith("-") && flags.includes("+")) {
+            sign = "+";
+        } else if (!text.startsWith("-") && flags.includes(" ")) {
+            sign = " ";
         }
-        return padded.padStart(size);
+        return flags.includes("-") ? (sign + text).padEnd(size) : (sign + text).padStart(size);
     });
 }

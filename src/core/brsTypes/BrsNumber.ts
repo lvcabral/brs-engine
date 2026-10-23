@@ -119,6 +119,9 @@ const signView = new DataView(new ArrayBuffer(8));
  * @returns true for a negative sign.
  */
 export function hasNegativeSign(value: number): boolean {
+    if (!Number.isNaN(value)) {
+        return value < 0 || Object.is(value, -0);
+    }
     signView.setFloat64(0, value);
     return (signView.getUint8(0) & 0x80) !== 0;
 }

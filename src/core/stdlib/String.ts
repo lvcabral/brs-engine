@@ -1,6 +1,6 @@
 import { Callable, ValueKind, BrsString, Int32, Float, Double, StdlibArgument, BrsInvalid } from "../brsTypes";
 import { Interpreter } from "../interpreter";
-import { BrsNumber, signedSpecialText } from "../brsTypes/BrsNumber";
+import { BrsNumber } from "../brsTypes/BrsNumber";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable("UCase", {
@@ -164,8 +164,7 @@ export const Str = new Callable("Str", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, value: Double): BrsString => {
-        const doubleValue = value.getValue();
-        const text = signedSpecialText(doubleValue) ?? String(doubleValue);
+        const text = value.toString();
         return new BrsString(text.startsWith("-") ? text : " " + text);
     },
 });
@@ -308,7 +307,7 @@ function parseFloatPrefix(text: string): number {
     } else if (hex) {
         const [mantissa, exponent = "0"] = hex.toLowerCase().split("p");
         const [whole, fraction = ""] = mantissa.split(".");
-        value = (Number.parseInt(whole + fraction || "0", 16) / 16 ** fraction.length) * 2 ** Number(exponent);
+        value = (Number.parseInt(whole + fraction, 16) / 16 ** fraction.length) * 2 ** Number(exponent);
     } else {
         value = Number(decimal);
     }
@@ -332,48 +331,32 @@ function parseIntPrefix(text: string, radix: number): number {
     if (negative || rest.startsWith("+")) {
         rest = rest.slice(1);
     }
-    const hexPrefix = /^0x[\da-f]/i.test(rest);
-    if ((radix === 0 || radix === 16) && hexPrefix) {
+    if ((radix === 0 || radix === 16) && /^0x[\da-f]/i.test(rest)) {
         radix = 16;
         rest = rest.slice(2);
     } else if (radix === 0) {
         radix = rest.startsWith("0") ? 8 : 10;
     }
-    let digits = 0n;
-    let count = 0;
+    let magnitude = 0;
     for (const char of rest) {
         const digit = Number.parseInt(char, 36);
         if (Number.isNaN(digit) || digit >= radix) {
             break;
         }
-        digits = digits * BigInt(radix) + BigInt(digit);
-        count++;
+        // Anything past 32 unsigned bits saturates below, so capping keeps the sum exact.
+        magnitude = Math.min(magnitude * radix + digit, saturatedMagnitude);
     }
-    if (count === 0) {
-        return 0;
-    }
-    const value = negative ? -digits : digits;
+    const value = negative ? 0 - magnitude : magnitude;
     if (radix === 10) {
-        return Number(clamp(value, -(2n ** 31n), 2n ** 31n - 1n));
+        return Math.min(Math.max(value, minInteger), maxInteger);
     }
-    return Number(BigInt.asIntN(32, clamp(value, -(2n ** 31n), 2n ** 32n - 1n)));
+    return Math.min(Math.max(value, minInteger), maxUnsigned) | 0;
 }
 
-/**
- * `value` limited to the range `min` to `max`.
- * @param value the value.
- * @param min the lowest value.
- * @param max the highest value.
- * @returns the clamped value.
- */
-function clamp(value: bigint, min: bigint, max: bigint) {
-    if (value < min) {
-        return min;
-    } else if (value > max) {
-        return max;
-    }
-    return value;
-}
+const minInteger = -(2 ** 31);
+const maxInteger = 2 ** 31 - 1;
+const maxUnsigned = 2 ** 32 - 1;
+const saturatedMagnitude = 2 ** 33;
 
 /**
  * Return an integer from a string or 0 if it can't be parsed.

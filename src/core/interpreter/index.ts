@@ -43,7 +43,7 @@ import {
 } from "../brsTypes";
 import { BrsExtension, ISGNode, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
-import { toWriteIndex } from "../brsTypes/interfaces/IfArray";
+import { isWritableIndex } from "../brsTypes/interfaces/IfArray";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -1798,7 +1798,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoList ||
                 current instanceof RoXMLList
             ) {
-                if (toWriteIndex(this, current, index) === undefined) {
+                if (!isWritableIndex(this, current, index)) {
                     continue;
                 }
                 try {

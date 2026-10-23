@@ -6,7 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { validUri, writeUri } from "../../device/FileSystem";
 import { crc32 } from "crc";
 import { IfEnum } from "../interfaces/IfEnum";
-import { toWriteIndex } from "../interfaces/IfArray";
+import { IfArrayGet, isWritableIndex } from "../interfaces/IfArray";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
@@ -52,7 +52,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.clear,
                 this.append,
             ],
-            ifArrayGet: [this.getEntry],
+            ifArrayGet: [new IfArrayGet(this).getEntry],
             ifArraySet: [this.setEntry],
             ifArraySlice: [this.slice],
             ifArraySizeInfo: [this.capacity, this.isResizable],
@@ -618,20 +618,6 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         },
     });
 
-    // ifArrayGet -------------------------------------------------------------------------
-
-    /** Returns an array entry based on the provided index. */
-    private readonly getEntry = new Callable("getEntry", {
-        signature: {
-            args: [new StdlibArgument("index", ValueKind.Dynamic)],
-            returns: ValueKind.Dynamic,
-        },
-        impl: (interpreter: Interpreter, index: BrsType) => {
-            toIntegerArg(interpreter, index);
-            return this.get(index);
-        },
-    });
-
     // ifArraySet  -------------------------------------------------------------------------
 
     /** Sets an entry at a given index to the passed value. If index is beyond the bounds of the array, the array is expanded. */
@@ -641,13 +627,13 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, value: BrsType) => {
-            const idx = toWriteIndex(interpreter, this, index);
+            const writable = isWritableIndex(interpreter, this, index);
             if (!isBrsNumber(value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
                 );
             }
-            if (idx !== undefined) {
+            if (writable) {
                 this.set(index, value);
             }
             return BrsInvalid.Instance;

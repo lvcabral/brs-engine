@@ -7,6 +7,15 @@ import { ExifSections, exifTags, exifTagEnums, ExifTag } from "../ExifTags";
 import * as exifParser from "exif-parser";
 import { BrsDevice } from "../../device/BrsDevice";
 
+/** The exif-parser section of each Roku IFD number. */
+const ifdSections: { [ifd: number]: ExifSections } = {
+    0: ExifSections.Image,
+    1: ExifSections.Thumbnail,
+    2: ExifSections.EXIF,
+    3: ExifSections.GPS,
+    4: ExifSections.EXIF, // the exif-parser library mix interoperability tags with exif tags
+};
+
 export class RoImageMetadata extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
 
@@ -330,6 +339,10 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
+            const sectionId = ifdSections[ifd];
+            if (sectionId === undefined) {
+                return new RoAssociativeArray([]);
+            }
             try {
                 const parser = exifParser.create(this.fileData);
                 parser.enablePointers(true);
@@ -338,17 +351,6 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 parser.enableImageSize(false);
                 const result = parser.parse();
                 const tagsMap = ifd === ExifSections.GPS ? exifTags.gps : exifTags.exif;
-                const sectionIdMap: { [key: number]: ExifSections } = {
-                    0: ExifSections.Image,
-                    1: ExifSections.Thumbnail,
-                    2: ExifSections.EXIF,
-                    3: ExifSections.GPS,
-                    4: ExifSections.EXIF, // the exif-parser library mix interoperability tags with exif tags
-                };
-                const sectionId = sectionIdMap[ifd];
-                if (sectionId === undefined) {
-                    return new RoAssociativeArray([]);
-                }
                 const tag = this.findValue(result.tags, sectionId, tagnum);
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
