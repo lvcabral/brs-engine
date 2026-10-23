@@ -50,7 +50,7 @@ import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer
 import { sgRoot } from "../SGRoot";
 import { SGNodeType } from ".";
 import { ComponentDefinition } from "../parser/ComponentDefinition";
-import { convertHexColor, IDENTITY_SCENE_MAP } from "../SGUtil";
+import { convertHexColor } from "../SGUtil";
 import type { Task } from "./Task";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
@@ -1015,18 +1015,13 @@ export class Node extends RoSGNode implements BrsValue {
         // fade: `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren` both call
         // this from within the paint traversal (app observers and item `init()` measuring mid-frame).
         const previousSuppressed = sgRoot.paintSuppressed;
-        // A scoped measurement runs at origin [0,0] with no ancestor scale, even when it starts from
-        // inside a scaled subtree's paint.
-        const previousSceneMap = sgRoot.sceneMap;
         sgRoot.renderPass = "layout";
         sgRoot.paintSuppressed = false;
-        sgRoot.sceneMap = IDENTITY_SCENE_MAP;
         try {
             this.renderNode(interpreter, origin, angle, opacity);
         } finally {
             sgRoot.renderPass = previousPass;
             sgRoot.paintSuppressed = previousSuppressed;
-            sgRoot.sceneMap = previousSceneMap;
         }
     }
 
@@ -1037,14 +1032,11 @@ export class Node extends RoSGNode implements BrsValue {
      */
     paintNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D: IfDraw2D) {
         const previousPass = sgRoot.renderPass;
-        const previousSceneMap = sgRoot.sceneMap;
         sgRoot.renderPass = "paint";
-        sgRoot.sceneMap = IDENTITY_SCENE_MAP;
         try {
             this.renderNode(interpreter, origin, angle, opacity, draw2D);
         } finally {
             sgRoot.renderPass = previousPass;
-            sgRoot.sceneMap = previousSceneMap;
         }
     }
 
@@ -1255,25 +1247,13 @@ export class Node extends RoSGNode implements BrsValue {
         }
         // The subpart rect is tracked in scene coordinates; re-express it relative to this
         // node's position in the requested space.
-        const local = type === "local";
-        const base = local ? this.rectLocal : this.rectToParent;
-        const [kx, ky] = this.sceneUnitsTo(local);
+        const base = type === "local" ? this.rectLocal : this.rectToParent;
         return {
-            x: base.x + (subScene.x - this.rectToScene.x) * kx,
-            y: base.y + (subScene.y - this.rectToScene.y) * ky,
-            width: subScene.width * Math.abs(kx),
-            height: subScene.height * Math.abs(ky),
+            x: base.x + (subScene.x - this.rectToScene.x),
+            y: base.y + (subScene.y - this.rectToScene.y),
+            width: subScene.width,
+            height: subScene.height,
         };
-    }
-
-    /**
-     * How many units of this node's local (or parent) space one scene unit spans. A plain node
-     * applies no scale; a Group overrides it with its ancestors' and own scale.
-     * @param _local Whether the target is this node's local space rather than its parent's.
-     * @returns The x and y factors.
-     */
-    protected sceneUnitsTo(_local: boolean): [number, number] {
-        return [1, 1];
     }
 
     /**
