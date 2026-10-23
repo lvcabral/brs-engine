@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.n = 0
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+        m.timer = createObject("roSGNode", "Timer")
+        m.timer.duration = 0.05
+        m.timer.repeat = true
+        m.timer.observeField("fire", "onFire")
+    end sub
+
+    ' Writes start only after the task has launched.
+    sub onReady()
+        m.timer.control = "start"
+    end sub
+
+    sub onFire()
+        m.n++
+        m.task.cmd = m.n
+        if m.n >= 10 then m.timer.control = "stop"
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

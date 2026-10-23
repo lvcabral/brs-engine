@@ -94,7 +94,6 @@ export class StdDlgActionCardItem extends Group implements StdDlgItem {
         const leftIcon = type === "checkbox" || type === "radiobutton";
         const rightIcon = type === "more_info";
         const leftSpace = leftIcon ? this.iconSize + this.gap : 0;
-        const rightSpace = rightIcon ? this.iconSize + this.gap : 0;
         const contentX = this.pad + leftSpace;
         const lineGap = this.resolution === "FHD" ? 6 : 4;
 

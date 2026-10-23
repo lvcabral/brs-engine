@@ -407,16 +407,6 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Whether `port`, observing a field on behalf of this node, is a render-side copy that nothing
-     * will drain (see `Task.isDetachedPort`). Events for such a port are dropped instead of queued.
-     * @param _port Message port registered as a field observer with this node as host.
-     * @returns True when events pushed to the port would never be consumed.
-     */
-    isDetachedPort(_port: RoMessagePort): boolean {
-        return false;
-    }
-
-    /**
      * Looks up a field or method by name, mimicking BrightScript associative-array semantics.
      * @param index Field or method name as a BrightScript string value.
      * @throws Error when an unsupported index type is provided.
@@ -2470,6 +2460,15 @@ export class Node extends RoSGNode implements BrsValue {
         return this.owner;
     }
 
+    /**
+     * Whether a detached port observer still stands for a live port on this node's thread (only a
+     * running Task holds one; see `Task.launchedPorts`).
+     * @param _port The detached port registered as an observer.
+     */
+    holdsLaunchedPort(_port: RoMessagePort) {
+        return false;
+    }
+
     /** Sets the unique address for this node.
      * @param address Node address.
      */
@@ -2498,7 +2497,7 @@ export class Node extends RoSGNode implements BrsValue {
      * Checks if the node should perform a rendezvous through the task thread.
      * @returns True if the node is owned by another thread and we are in a task thread.
      */
-    protected shouldRendezvous(): boolean {
+    shouldRendezvous(): boolean {
         return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
     }
 

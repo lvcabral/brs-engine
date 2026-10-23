@@ -217,8 +217,7 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
 
     > **Fan-out must keep up with a hot field — batch it, and never queue what nothing drains** (#1263,
     > rooibos code coverage: one port-observed `entry` write per executed line). Each rule below
-    > regressed to a hang, OOM, lost or duplicated delivery on its own (the last four were found in
-    > review of #1264, with probe apps):
+    > regressed to a hang, OOM, lost or duplicated delivery on its own:
     >
     > -   **Batch consecutive `set`s into one slot hand-off.** `flushFanout` packs them as
     >     `{ batch: [...] }` (≤ `FANOUT_BATCH_MAX` updates) and `processThreadUpdate` applies them in
@@ -240,22 +239,44 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
     >     An item that doesn't fit waits; one too large on its own travels alone, as before batching.
     > -   **Apply a loaded batch from a task-side pending queue, and don't re-enter it from `tick`.**
     >     Loading resets the slot, so render can refill it while the batch is applied; and an item can
-    >     run BrightScript on the task thread (an XML `onChange`) whose `tick` lands back in
-    >     `processThreadUpdate`. Loading the next batch there reordered/lost updates; applying the rest
-    >     of the current one there re-entered the running observer, which `Field` skips (events lost).
-    >     So a re-entrant tick is a no-op (`applyingFanout`) and the outer loop carries on; a port
-    >     `wait()` inside the handler (`fromWait`) still drains, as on a device. The head advances
-    >     before each item is applied, so one that throws doesn't take the rest of its batch with it,
-    >     and the idle `wait()` doesn't sleep on the slot while items are still pending.
-    > -   **Once the task has launched (`started`), don't queue events on its render-side `m` ports.**
-    >     `Task.isDetachedPort` makes `Field.executeCallbacks` skip them: the task's real port receives
-    >     via fan-out, and the render copy is swept only at launch/stop, so each write leaked a full
-    >     `roSGNodeEvent` (~9KB). Pre-launch events are still queued — the launch replay needs them.
+    >     run BrightScript on the task thread (an observer of a node the task owns) whose `tick` lands
+    >     back in `processThreadUpdate`. Loading the next batch there reordered/lost updates; applying
+    >     the rest of the current one there re-entered the running observer, which `Field` skips. So a
+    >     re-entrant tick is a no-op (`applyingFanout`) and the outer loop carries on; a port `wait()`
+    >     inside the handler (`fromWait`) still drains. The head advances before each item is applied,
+    >     so one that throws doesn't take the rest of its batch with it, and the idle `wait()` doesn't
+    >     sleep on the slot while items are still pending.
+    > -   **At launch, the render-side `m` gives its ports up** (`detachLaunchedPorts`, see the next
+    >     note). The field observers registered with them in `init()` stay (they are how fan-out picks
+    >     its target tasks), but each port is detached so those notifications are dropped instead of
+    >     queued: the task's real port receives via fan-out, and every queued write leaked a full
+    >     `roSGNodeEvent` (~9KB). Pre-launch events are swept into the launch payload first. The Task
+    >     keeps the ports its latest launch handed over (`launchedPorts`), and `Field.isPortObserved`
+    >     counts a detached port only when its Task holds it — so a **re-run**, which gets no port,
+    >     stops being a fan-out target instead of being sent every write.
     >
     > Regression: `task-port-burst-app` in `test/cli/` (5 pre-launch + 20000 post-launch writes, each
     > received exactly once, bounded wall time); `DirectRendezvous.test.js` pins the batching, slot,
-    > launch, byte-cap, re-entrancy and throw rules. Probes: `test/simulator/probes/port-observer-leak-probe/`,
-    > and `task-fanout-batch-probe` on lvcabral's `probe/pr-1264-fanout-batch` branch.
+    > launch, byte-cap, re-entrancy and throw rules. Probes: `test/simulator/probes/port-observer-leak-probe/`
+    > and `test/simulator/probes/task-fanout-batch-probe/`.
+
+    > **A Task's XML `onChange` runs only on render, and render keeps a port-less clone of its `m`**
+    > (device-confirmed on OS 15.3.4, and stated in `threads.md` → "Task node objects ownership" /
+    > "Component global associative array"). A Task node is owned by render, so every observer
+    > callback on its fields runs there — whichever thread wrote the field — with render's `m`.
+    > Function-name observers already behave this way (registering one from the task rendezvouses it
+    > to render), including one the task registers in its own function on a field it writes itself
+    > (probe `function-observer-thread`). An XML `onChange` is registered on **both** copies of the
+    > node, so the task-side copy must not run it: `Field.dispatchObservers` skips the permanent
+    > observers on a task thread when the node isn't owned by that thread (`shouldRendezvous`). On each launch the task thread gets the original `m` and render
+    > a clone without message ports, which `checkTaskRun` models with `detachLaunchedPorts`: the
+    > render-side entries read `invalid`, so render code (an `onChange`, a function observer) can't
+    > read them — `m.port.getMessage()` there crashes on a device — and a **re-run** of the same task,
+    > launched from render's clone, gets `m.port = invalid` too. Running the task-side `onChange` was
+    > what let fan-out apply re-enter a running handler and lose port events. Regression:
+    > `task-onchange-thread-app` in `test/cli/`; probes `onchange-thread`, `function-observer-thread`,
+    > `rerun-port`, `render-port-read`, `single-reentrant`, `wait-in-handler` in
+    > `task-fanout-batch-probe`.
 
     > **A task thread's uncaught error terminates the whole app** (device-verified), exactly as it does on
     > the app thread — the task node is _not_ moved to `state = "stop"` so the app can carry on, and there

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.n = 0
+        m.total = 1000
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+        m.timer = createObject("roSGNode", "Timer")
+        m.timer.duration = 0.001
+        m.timer.repeat = true
+        m.timer.observeField("fire", "onFire")
+    end sub
+
+    sub onReady()
+        m.timer.control = "start"
+    end sub
+
+    ' Strictly increasing writes in bursts, so fan-out hands them over as batches.
+    sub onFire()
+        for i = 1 to 50
+            if m.n >= m.total
+                m.timer.control = "stop"
+                print "SCENE SENT: n=" + m.total.toStr()
+                return
+            end if
+            m.n++
+            m.task.request = m.n
+        end for
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="initObsTaskWrite" type="integer" />
+        <field id="runObsTaskWrite" type="integer" />
+        <field id="runObsRenderWrite" type="integer" />
+        <field id="sceneObsTaskWrite" type="integer" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    ' m.inTask is true only in the task thread's m; the render thread keeps a clone where it is false.
+    sub init()
+        m.top.functionName = "work"
+        m.inTask = false
+        m.top.observeField("initObsTaskWrite", "onObserved")
+    end sub
+
+    sub onObserved(event as object)
+        print "OBSERVER " + event.getField() + "=" + event.getData().toStr() + " inTask=" + m.inTask.toStr()
+    end sub
+
+    sub work()
+        m.inTask = true
+        port = CreateObject("roMessagePort")
+        m.top.observeField("runObsTaskWrite", "onObserved")
+        m.top.observeField("runObsRenderWrite", "onObserved")
+        m.top.observeField("report", port)
+        m.top.initObsTaskWrite = 1
+        m.top.runObsTaskWrite = 2
+        m.top.sceneObsTaskWrite = 4
+        m.top.ready = true
+        wait(1500, port)
+        m.top.report = "done"
+    end sub
+    ]]></script>
+</component>

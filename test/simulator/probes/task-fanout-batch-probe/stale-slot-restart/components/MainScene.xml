@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.runNo = 1
+        m.task.control = "run"
+        m.stopTimer = createObject("roSGNode", "Timer")
+        m.stopTimer.duration = 0.3
+        m.stopTimer.observeField("fire", "onStop")
+        m.runTimer = createObject("roSGNode", "Timer")
+        m.runTimer.duration = 1.5
+        m.runTimer.observeField("fire", "onRestart")
+    end sub
+
+    ' Run 1 is asleep: the write of 1 is handed to it but never read.
+    sub onReady()
+        m.task.value = 1
+        m.stopTimer.control = "start"
+    end sub
+
+    ' Stop, then write 2 while stopped; run 2 must start from 2 and never see 1.
+    sub onStop()
+        m.task.control = "stop"
+        m.task.value = 2
+        m.task.runNo = 2
+        m.runTimer.control = "start"
+    end sub
+
+    sub onRestart()
+        print "SCENE: restarting with value=" + m.task.value.toStr()
+        m.task.control = "run"
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

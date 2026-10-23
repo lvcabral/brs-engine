@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+    end sub
+
+    ' 99 small writes (~990K chars, under the 1M batch soft cap) then one 15.8MB write:
+    ' each fits the 16MB buffer alone, but packed together they exceed it.
+    sub onReady()
+        piece = String(10000, "a")
+        for i = 1 to 99
+            m.task.request = piece
+        end for
+        m.task.request = String(15800000, "b")
+        print "SCENE SENT: small=99 big=1"
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

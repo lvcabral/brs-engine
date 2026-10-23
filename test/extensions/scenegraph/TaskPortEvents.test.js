@@ -2,8 +2,8 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { Node, RoSGNodeEvent, collectPortNodeEvents, replayPortNodeEvents, brsValueOf, jsValueOf } = scenegraph;
-const { dropPortNodeEvents } = scenegraph;
-const { BrsString, RoAssociativeArray, RoMessagePort } = core;
+const { detachLaunchedPorts } = scenegraph;
+const { BrsInvalid, BrsString, RoAssociativeArray, RoMessagePort } = core;
 
 /** Simulates the structured/JSON round-trip TaskData undergoes when posted to the task thread. */
 function transfer(serialized) {
@@ -71,15 +71,17 @@ describe("pre-launch task port events", () => {
         expect(jsValueOf(delivered[0].fieldValue)).toEqual({ request: "geo", noParams: true });
     });
 
-    test("dropping the backlog leaves nothing to replay on a restart", () => {
-        // While a task runs, events reach it live and the render-side port copy just accumulates.
-        // A stop/run cycle must not replay that whole backlog as pre-launch events.
+    test("launch leaves the render-side m without its ports, and the ports stop queueing", () => {
+        // Device: the launched thread gets the original m; render keeps a clone where the port
+        // reads invalid, including for any later run of the same task.
         const node = new Node([], "Node");
         const { m, port } = makeM(node);
         port.pushMessage(new RoSGNodeEvent(node, new BrsString("params"), brsValueOf({ request: "a" })));
-        port.pushMessage(new RoSGNodeEvent(node, new BrsString("params"), brsValueOf({ request: "b" })));
 
-        dropPortNodeEvents(m);
+        detachLaunchedPorts(m);
+        expect(m.get(new BrsString("messagePort"))).toBe(BrsInvalid.Instance);
+        port.pushMessage(new RoSGNodeEvent(node, new BrsString("params"), brsValueOf({ request: "b" })));
+        expect(port.drainMessages(() => true)).toHaveLength(0);
         expect(collectPortNodeEvents(m, node)).toBeUndefined();
     });
 

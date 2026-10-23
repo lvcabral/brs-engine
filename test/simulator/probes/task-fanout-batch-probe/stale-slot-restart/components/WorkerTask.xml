@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="value" type="integer" alwaysNotify="true" onChange="onValue" />
+        <field id="runNo" type="integer" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "work"
+        m.inTask = false
+        m.seen = []
+    end sub
+
+    sub onValue(event as object)
+        if m.inTask then m.seen.push(event.getData().toStr())
+    end sub
+
+    sub work()
+        m.inTask = true
+        if m.top.runNo = 1
+            ' Busy in sleep() (no wait, no field access), so the write of 1 is never consumed here.
+            m.top.ready = true
+            sleep(1000)
+            return
+        end if
+        start = m.top.value
+        m.port = CreateObject("roMessagePort")
+        for i = 1 to 10
+            wait(100, m.port)
+        end for
+        m.top.report = "run 2: value at start=" + start.toStr() + " onChange=[" + m.seen.join(",") + "] value at end=" + m.top.value.toStr()
+    end sub
+    ]]></script>
+</component>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="cmd" type="integer" alwaysNotify="true" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    ' The port is created once, in init(); the docs say only the first launched thread receives it.
+    sub init()
+        m.top.functionName = "work"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("cmd", m.port)
+        m.runs = 0
+        m.list = [1, 2]
+        m.timer = CreateObject("roTimespan")
+    end sub
+
+    sub work()
+        m.runs++
+        line = "run " + m.runs.toStr() + ": port=" + type(m.port) + " list=" + type(m.list) + " timespan=" + type(m.timer)
+        if type(m.port) = "roMessagePort"
+            m.top.ready = true
+            msg = wait(2000, m.port)
+            line = line + " event=" + type(msg)
+        end if
+        print "TASK " + line
+        m.top.report = line
+    end sub
+    ]]></script>
+</component>

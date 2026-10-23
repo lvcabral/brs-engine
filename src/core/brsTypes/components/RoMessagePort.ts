@@ -16,6 +16,8 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     private readonly messageQueue: BrsEvent[];
     private readonly callbackQueue: Function[];
     private readonly callbackMap: Map<string, Function>;
+    /** No longer reachable by any script (see `detach`): pushed messages are dropped. */
+    private detached = false;
 
     constructor() {
         super("roMessagePort");
@@ -28,7 +30,23 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     }
 
     pushMessage(object: BrsEvent) {
-        this.messageQueue.push(object);
+        if (!this.detached) {
+            this.messageQueue.push(object);
+        }
+    }
+
+    /**
+     * Marks the port as unreachable by any script, discarding what it holds and dropping every
+     * later message, so a registration still pointing at it can't accumulate events nobody reads.
+     */
+    detach() {
+        this.detached = true;
+        this.messageQueue.length = 0;
+    }
+
+    /** Whether the port was detached, so a message built for it would be dropped. */
+    isDetached() {
+        return this.detached;
     }
 
     /**

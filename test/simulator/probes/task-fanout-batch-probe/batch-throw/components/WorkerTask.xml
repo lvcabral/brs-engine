@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="request" type="integer" alwaysNotify="true" onChange="onReq" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "drain"
+        m.applied = 0
+        m.inTask = false
+    end sub
+
+    ' One bad update: its observer throws, which the task's try/catch around wait() absorbs.
+    sub onReq(event as object)
+        if not m.inTask then return
+        m.applied++
+        if event.getData() = 5 then throw "boom on 5"
+    end sub
+
+    sub drain()
+        m.inTask = true
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("request", m.port)
+        m.top.ready = true
+        events = 0
+        caught = 0
+        for attempt = 0 to 40
+            try
+                msg = wait(100, m.port)
+                if type(msg) = "roSGNodeEvent" then events++
+            catch e
+                caught++
+            end try
+        end for
+        m.top.report = "onChange ran=" + m.applied.toStr() + " port events=" + events.toStr() + " caught=" + caught.toStr() + " final field=" + m.top.request.toStr()
+    end sub
+    ]]></script>
+</component>

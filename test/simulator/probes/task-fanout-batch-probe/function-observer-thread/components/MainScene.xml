@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="done" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.task = createObject("roSGNode", "WorkerTask")
+        m.task.observeField("sceneObsTaskWrite", "onSceneObserved")
+        m.task.observeField("ready", "onReady")
+        m.task.observeField("report", "onReport")
+        m.task.control = "run"
+    end sub
+
+    sub onSceneObserved(event as object)
+        print "SCENE OBSERVER " + event.getField() + "=" + event.getData().toStr()
+    end sub
+
+    sub onReady()
+        m.task.runObsRenderWrite = 3
+    end sub
+
+    sub onReport(event as object)
+        print "TASK SAW: "; event.getData()
+        m.top.done = true
+    end sub
+    ]]></script>
+</component>

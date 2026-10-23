@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="cmd" type="integer" alwaysNotify="true" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    ' Both observers are registered here, in init(), so the port lives in the task's m.
+    sub init()
+        m.top.functionName = "idle"
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("cmd", m.port)
+        m.top.observeField("cmd", "onCmd")
+        print "PORT in init: type=" + type(m.port)
+        m.calls = 0
+        m.got = 0
+    end sub
+
+    ' Function observer: runs on the writer (render) thread, which reads the same m.port.
+    sub onCmd()
+        m.calls++
+        if m.calls = 1 then print "PORT on render: type=" + type(m.port) + " ifMessagePort=" + (GetInterface(m.port, "ifMessagePort") <> invalid).toStr()
+        if GetInterface(m.port, "ifMessagePort") = invalid then return
+        msg = m.port.getMessage()
+        if type(msg) = "roSGNodeEvent" then m.got++
+        if m.calls = 10
+            m.top.report = "render onCmd calls=" + m.calls.toStr() + " port messages=" + m.got.toStr()
+        end if
+    end sub
+
+    ' The task never drains m.port, so the render-side getMessage() is the only reader.
+    sub idle()
+        m.top.ready = true
+        sleep(3000)
+    end sub
+    ]]></script>
+</component>

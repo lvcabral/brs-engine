@@ -355,7 +355,8 @@ Gate any new debug/inspection bookkeeping behind `BrsDevice.tracking` (or
   browser vs. node builds. Keep platform-specific imports inside these guards.
 - **ESLint** uses `@typescript-eslint` with the `prettier` config and type-aware rules (`await-thenable`,
   `promise-function-async`, `no-for-in-array`, `prefer-for-of`, `eqeqeq: smart`,
-  `logical-assignment-operators`, `no-case-declarations`); `import/no-extraneous-dependencies` is enforced.
+  `logical-assignment-operators`, `no-case-declarations`, `no-unused-vars` — unused imports and locals,
+  `_`-prefixed names exempt, mirroring SonarCloud `S1128`/`S1481`); `import/no-extraneous-dependencies` is enforced.
 - **Wrap `switch` `case`/`default` bodies in braces when they declare bindings** — a
   `let`/`const`/`function`/`class` under a bare `case` leaks into sibling cases. Enforced by ESLint
   (`no-case-declarations`).

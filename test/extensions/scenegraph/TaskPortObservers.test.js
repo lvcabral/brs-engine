@@ -51,6 +51,30 @@ describe("task port observer attribution", () => {
 
             expect(target.resolveField("payload").isPortObserved(host)).toBe(false);
         });
+
+        test("stops attributing a port once it is detached at launch", () => {
+            // A re-run task has no port of its own, so it must stop being a fan-out target.
+            const target = new Node([], "Node");
+            target.setValue("payload", new BrsString(""), false);
+            const watcher = new Node([], "WatcherTask");
+
+            const port = observeWithPort(target, "payload", watcher);
+            port.detach();
+
+            expect(target.resolveField("payload").isPortObserved(watcher)).toBe(false);
+        });
+
+        test("keeps attributing a detached port the running task took with it", () => {
+            const target = new Node([], "Node");
+            target.setValue("payload", new BrsString(""), false);
+            const watcher = new Node([], "WatcherTask");
+
+            const port = observeWithPort(target, "payload", watcher);
+            port.detach();
+            watcher.holdsLaunchedPort = (held) => held === port;
+
+            expect(target.resolveField("payload").isPortObserved(watcher)).toBe(true);
+        });
     });
 
     describe("remote port observers", () => {
