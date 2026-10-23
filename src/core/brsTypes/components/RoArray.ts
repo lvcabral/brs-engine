@@ -4,12 +4,14 @@ import {
     isBrsNumber,
     Int32,
     Float,
-    isBoxedNumber,
     isBoxable,
     isUnboxable,
     isBrsBoolean,
     isAnyNumber,
     jsValueOf,
+    toArrayIndex,
+    toIntegerArg,
+    omittedArg,
 } from "..";
 import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
@@ -195,27 +197,16 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     }
 
     get(index: BrsType) {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
+        if (index.kind === ValueKind.String) {
+            return this.getMethod(index.value) ?? BrsInvalid.Instance;
         }
-        switch (index.kind) {
-            case ValueKind.Float:
-                return this.getElements()[Math.trunc(index.getValue())] ?? BrsInvalid.Instance;
-            case ValueKind.Int32:
-                return this.getElements()[index.getValue()] ?? BrsInvalid.Instance;
-            case ValueKind.String:
-                return this.getMethod(index.value) ?? BrsInvalid.Instance;
-            default:
-                return BrsInvalid.Instance;
-        }
+        const idx = toArrayIndex(index);
+        return idx === undefined ? BrsInvalid.Instance : this.elements[idx] ?? BrsInvalid.Instance;
     }
 
     set(index: BrsType, value: BrsType, _isCaseSensitive = false, store: MemberStore = "build") {
-        if (isBoxedNumber(index)) {
-            index = index.unbox();
-        }
-        if (index.kind === ValueKind.Int32 || index.kind === ValueKind.Float) {
-            const idx = Math.trunc(index.getValue());
+        const idx = toArrayIndex(index);
+        if (idx !== undefined && idx >= 0) {
             value = this.addChildRef(value, store);
             this.removeChildRef(this.elements[idx]);
             this.elements[idx] = value;
@@ -408,17 +399,15 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     private readonly slice = new Callable("slice", {
         signature: {
             args: [
-                new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
-                new StdlibArgument("end", ValueKind.Int32 | ValueKind.Float, BrsInvalid.Instance),
+                new StdlibArgument("start", ValueKind.Dynamic, new Int32(0)),
+                new StdlibArgument("end", ValueKind.Dynamic, omittedArg),
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, start: Int32 | Float, end: Int32 | Float | BrsInvalid) => {
-            if (end instanceof BrsInvalid) {
-                return new RoArray(this.elements.slice(start.getValue()));
-            } else {
-                return new RoArray(this.elements.slice(start.getValue(), end.getValue()));
-            }
+        impl: (interpreter: Interpreter, start: BrsType, end: BrsType) => {
+            const from = toIntegerArg(interpreter, start);
+            const to = end === omittedArg ? undefined : toIntegerArg(interpreter, end);
+            return new RoArray(this.elements.slice(from, to));
         },
     });
 

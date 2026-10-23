@@ -8,8 +8,12 @@ import {
     BrsBoolean,
     isStringComp,
     BrsString,
+    Uninitialized,
+    toArrayIndex,
 } from ".";
 import { isBoxable, isUnboxable } from "./Boxing";
+import type { Interpreter } from "../interpreter";
+import { RuntimeError, RuntimeErrorDetail } from "../error/BrsError";
 import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
@@ -68,4 +72,28 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
 
     // everything else is uncastable; return `undefined` to represent that
     return;
+}
+
+/**
+ * Reads an `Integer` parameter of a built-in method the way a Roku device does: any numeric type, intrinsic or
+ * boxed, is accepted (`Float`/`Double` truncated, NaN as 0, a `LongInteger` keeping its low 32 bits), anything else is a
+ * type mismatch. Use it with a `ValueKind.Dynamic` argument; a numeric `ValueKind` would coerce the value first.
+ * @param interpreter the interpreter running the call.
+ * @param value the argument.
+ * @returns the integer value.
+ */
+export function toIntegerArg(interpreter: Interpreter, value: BrsType): number {
+    const integer = toArrayIndex(value);
+    if (integer === undefined) {
+        interpreter.addError(
+            new RuntimeError(
+                value instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch,
+                interpreter.location,
+                interpreter.getBacktrace()
+            )
+        );
+    }
+    return integer;
 }

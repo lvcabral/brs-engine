@@ -8,6 +8,8 @@ import {
     BrsInvalid,
     ValueKind,
     isBrsNumber,
+    hasNegativeSign,
+    deviceNaN,
     isBrsString,
     isBrsBoolean,
     isBrsCallable,
@@ -25,6 +27,7 @@ import {
     Int32,
     Int64,
     Float,
+    Double,
     Uninitialized,
     RoArray,
     RoByteArray,
@@ -41,6 +44,7 @@ import {
 } from "../brsTypes";
 import { BrsExtension, ISGNode, isSceneGraphNode } from "../extensions";
 import { tryCoerce } from "../brsTypes/Coercion";
+import { isWritableIndex } from "../brsTypes/interfaces/IfArray";
 import { Lexeme, GlobalFunctions } from "../lexer";
 import { isToken, Location } from "../lexer/Token";
 import { Expr, Stmt } from "../parser";
@@ -780,7 +784,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Minus:
             case Lexeme.MinusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.subtract(right);
+                    return deviceNaN(left.subtract(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -799,7 +803,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Star:
             case Lexeme.StarEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.multiply(right);
+                    return deviceNaN(left.multiply(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -817,7 +821,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             case Lexeme.Caret:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.pow(right);
+                    return deviceNaN(left.pow(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -836,7 +840,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Slash:
             case Lexeme.SlashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.divide(right);
+                    return deviceNaN(left.divide(right), left, right);
                 }
                 return this.addError(
                     new TypeMismatch({
@@ -853,7 +857,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 );
             case Lexeme.Mod:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.modulo(right);
+                    return deviceNaN(left.modulo(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -872,7 +876,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Backslash:
             case Lexeme.BackslashEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.intDivide(right);
+                    return deviceNaN(left.intDivide(right), left, right);
                 } else {
                     return this.addError(
                         new TypeMismatch({
@@ -891,7 +895,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             case Lexeme.Plus:
             case Lexeme.PlusEqual:
                 if (isBrsNumber(left) && isBrsNumber(right)) {
-                    return left.add(right);
+                    return deviceNaN(left.add(right), left, right);
                 } else if (isStringComp(left) && isStringComp(right)) {
                     return left.concat(right);
                 } else {
@@ -1795,6 +1799,9 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 current instanceof RoList ||
                 current instanceof RoXMLList
             ) {
+                if (!isWritableIndex(this, current, index)) {
+                    continue;
+                }
                 try {
                     current.set(index, value, false, "assign");
                 } catch (err: any) {
@@ -1870,7 +1877,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         switch (expression.operator.kind) {
             case Lexeme.Minus:
-                if (isBrsNumber(right)) {
+                if (right instanceof Float) {
+                    // Negated directly: multiplying by -1 would not flip the sign of a NaN.
+                    return new Float(-right.getValue());
+                } else if (right instanceof Double) {
+                    return new Double(-right.getValue());
+                } else if (isBrsNumber(right)) {
                     return right.multiply(new Int32(-1));
                 } else {
                     return this.addError(
@@ -2370,15 +2382,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Evaluates if a number is positive or NaN.
+     * Evaluates if a number has no negative sign (so `-0` and a negated NaN are not positive).
      * @param value Number to evaluate (number or Long)
-     * @returns True if the number is positive or NaN, false otherwise
+     * @returns True if the number's sign is positive, false otherwise
      */
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
             return value.isPositive();
         }
-        return Number.isNaN(value) || value >= 0;
+        return !hasNegativeSign(value);
     }
 
     /**

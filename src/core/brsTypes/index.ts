@@ -8,6 +8,7 @@ import { Int32 } from "./Int32";
 import { Int64 } from "./Int64";
 import { Float } from "./Float";
 import { Double } from "./Double";
+import { hasNegativeSign } from "./BrsNumber";
 import { Callable } from "./Callable";
 import { BrsCollection, BrsComponent, BrsIterable } from "./components/BrsComponent";
 import { RoString } from "./components/RoString";
@@ -23,6 +24,7 @@ import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
 import { ISGNode } from "../extensions";
 // BrightScript Type exports
 export * from "./BrsType";
+export { hasNegativeSign, nonFiniteText, signedSpecialText } from "./BrsNumber";
 export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";
@@ -245,6 +247,52 @@ export type BoxedNumber = RoInt | RoFloat | RoDouble | RoLongInteger;
  */
 export function isAnyNumber(value: BrsType): value is BrsNumber | BoxedNumber {
     return isBrsNumber(value) || isBoxedNumber(value);
+}
+
+/**
+ * The result of a numeric operation with the NaN sign a Roku device gives: a NaN that an operation creates from
+ * non-NaN operands (`Sqr(-1)`, `inf - inf`) has no sign, while the host CPU may set it (x86 does); a NaN operand's
+ * sign carries through, as on the device.
+ * @param result the result of the operation.
+ * @param operands the operation's operands.
+ * @returns `result`, or a positive NaN of the same type when the operation created a negative NaN.
+ */
+export function deviceNaN<T extends BrsType>(result: T, ...operands: BrsType[]): T {
+    if (
+        (result instanceof Float || result instanceof Double) &&
+        Number.isNaN(result.getValue()) &&
+        hasNegativeSign(result.getValue()) &&
+        !operands.some(
+            (operand) => isBrsNumber(operand) && operand.kind !== ValueKind.Int64 && Number.isNaN(operand.getValue())
+        )
+    ) {
+        return (result instanceof Float ? new Float(Number.NaN) : new Double(Number.NaN)) as T;
+    }
+    return result;
+}
+
+/**
+ * The element index a numeric value selects in an array-like container: `Float`/`Double` indexes are
+ * truncated (NaN is 0) and a `LongInteger` keeps only its low 32 bits, as on a Roku device.
+ * @param value the BrightScript value used as an index.
+ * @returns the index, or `undefined` if `value` is not a number.
+ */
+export function toArrayIndex(value: BrsType): number | undefined {
+    if (isBoxedNumber(value)) {
+        value = value.unbox();
+    }
+    switch (value.kind) {
+        case ValueKind.Int32:
+            return value.getValue();
+        case ValueKind.Int64:
+            return value.getValue().low;
+        case ValueKind.Float:
+        case ValueKind.Double:
+            // NaN reads as 0, as on a device; `|| 0` also turns -0 into 0.
+            return Math.trunc(value.getValue()) || 0;
+        default:
+            return undefined;
+    }
 }
 
 /**

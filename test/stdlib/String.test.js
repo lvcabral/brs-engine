@@ -274,8 +274,15 @@ describe("global string functions", () => {
             expect(Val.call(interpreter, new BrsString(""))).toEqual(new Float(0));
 
             expect(Val.call(interpreter, new BrsString("Not a Number"))).toEqual(new Float(0));
+        });
 
-            expect(Val.call(interpreter, new BrsString("10+2"))).toEqual(new Float(0));
+        it("reads the longest numeric prefix, like C's strtod", () => {
+            expect(Val.call(interpreter, new BrsString("10+2"))).toEqual(new Float(10));
+            expect(Val.call(interpreter, new BrsString("  12abc"))).toEqual(new Float(12));
+            expect(Val.call(interpreter, new BrsString("-.5e-1x"))).toEqual(new Float(-0.05));
+            expect(Val.call(interpreter, new BrsString("0x1A"))).toEqual(new Float(26));
+            expect(Val.call(interpreter, new BrsString("1e999"))).toEqual(new Float(Infinity));
+            expect(Number.isNaN(Val.call(interpreter, new BrsString("nanx")).getValue())).toBe(true);
         });
 
         it("returns a float from a string", () => {
