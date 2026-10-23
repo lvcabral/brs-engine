@@ -1,9 +1,10 @@
-import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Int32 } from "..";
+import { BrsBoolean, BrsInvalid, ValueKind, BrsType, Int32, isAnyNumber, Uninitialized } from "..";
 import { BrsComponent, BrsIterable } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { Interpreter } from "../../interpreter";
 import { Callable, StdlibArgument } from "../Callable";
 import { MemberStore } from "../Boxing";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 /**
  * BrightScript Interface ifArray
@@ -155,6 +156,26 @@ export class IfArray {
 }
 
 /**
+ * Checks a `GetEntry`/`SetEntry` index. Any numeric type (intrinsic or boxed) is passed on unchanged, so a
+ * `LongInteger` keeps its low 32 bits instead of being coerced to `Float`; anything else is a type mismatch.
+ * @param interpreter the interpreter running the call.
+ * @param index the index argument.
+ */
+export function checkEntryIndex(interpreter: Interpreter, index: BrsType) {
+    if (!isAnyNumber(index)) {
+        interpreter.addError(
+            new RuntimeError(
+                index instanceof Uninitialized
+                    ? RuntimeErrorDetail.UninitializedVariable
+                    : RuntimeErrorDetail.TypeMismatch,
+                interpreter.location,
+                interpreter.getBacktrace()
+            )
+        );
+    }
+}
+
+/**
  * Interface IfArrayGet
  * https://developer.roku.com/docs/references/brightscript/interfaces/ifarrayget.md
  */
@@ -168,10 +189,11 @@ export class IfArrayGet {
 
     readonly getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: BrsType) => {
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            checkEntryIndex(interpreter, index);
             return this.component.get(index) || BrsInvalid.Instance;
         },
     });
@@ -190,13 +212,11 @@ export class IfArraySet {
     }
     readonly setEntry = new Callable("setEntry", {
         signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tvalue", ValueKind.Dynamic),
-            ],
+            args: [new StdlibArgument("index", ValueKind.Dynamic), new StdlibArgument("tvalue", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, index: BrsType, tvalue: BrsType) => {
+        impl: (interpreter: Interpreter, index: BrsType, tvalue: BrsType) => {
+            checkEntryIndex(interpreter, index);
             return this.component.set(index, tvalue, false, "add");
         },
     });

@@ -24,14 +24,15 @@ export function isBoxable(value: BrsType): value is BrsType & Boxable {
 
 /**
  * How a member gets into a container, which decides what `type()` reports for it (device-verified in
- * `test/simulator/probes/type-legacy-probe`):
+ * `test/simulator/probes/type-legacy-probe` and `collection-index-probe`):
  * - `build`: the runtime fills the container (`ParseJson`, `Slice`, `Items`, `Append`, a node field copy, …):
  *   the member keeps the type it reports.
  * - `add`: a container literal or an add (`Push`, `Unshift`, `AddTail`, `AddHead`, any associative array
  *   assignment, `SetEntry`): numbers and booleans report their legacy name (`roInteger`, `roBoolean`, …).
- * - `assign`: an array or list index assignment (`a[i] = x`): numbers and booleans report their plain name.
+ * - `assign`: an array or list index assignment (`a[i] = x`): numbers, booleans and strings report their plain
+ *   name.
  *
- * Strings follow one rule in every case: a literal reports `roString`, a computed string `String`.
+ * Otherwise a literal string reports `roString` and a computed string `String`.
  */
 export type MemberStore = "build" | "add" | "assign";
 
@@ -58,6 +59,9 @@ export function containerMember<T extends BrsType>(value: T, store: MemberStore 
         case ValueKind.Double:
             return store === "add" ? asLegacyLiteral(value) : asPlain(value);
         case ValueKind.String:
+            if (store === "assign") {
+                return asPlain(value);
+            }
             return value.literal ? asLegacyLiteral(value) : value;
         default:
             return value;
@@ -92,8 +96,8 @@ function asLegacyLiteral<T extends BrsType>(value: T & Boxable): T {
 }
 
 /**
- * `value` as a computed value, which reports its plain type name (`Integer`, `Boolean`, …).
- * @param value Number or boolean.
+ * `value` as a computed value, which reports its plain type name (`Integer`, `Boolean`, `String`, …).
+ * @param value Number, boolean or string.
  * @returns `value` when it is not a literal, otherwise an unflagged copy.
  */
 function asPlain<T extends BrsType>(value: T & Boxable): T {
@@ -101,6 +105,8 @@ function asPlain<T extends BrsType>(value: T & Boxable): T {
         return value;
     }
     switch (value.kind) {
+        case ValueKind.String:
+            return new BrsString(value.value) as T;
         case ValueKind.Int32:
             return new Int32(value.getValue()) as T;
         case ValueKind.Int64:

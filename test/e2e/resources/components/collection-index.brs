@@ -1,5 +1,6 @@
 ' Indexed reads/writes on roByteArray, roArray, roList and roXMLList for every numeric index type
-' (intrinsic and boxed), negative and out-of-range indexes, through c[i] and GetEntry/SetEntry.
+' (intrinsic and boxed), negative and out-of-range indexes, through c[i] and GetEntry/SetEntry, and the
+' type() of what SetEntry and index assignment store.
 ' Expected output is the device trace in test/simulator/probes/collection-index-probe/device-trace.txt.
 sub main()
     out("start", [])
@@ -9,8 +10,9 @@ sub main()
     end for
     entryType()
     for each kind in ["ba", "arr", "list", "xml"]
-        out("read|" + kind + "|long-big", ["idx=" + desc(make(kind)[4294967297&])])
+        entryArgs(kind)
     end for
+    storedTypes()
     out("done", [])
 end sub
 
@@ -68,6 +70,7 @@ sub reads(kind as string)
     readCase(kind, "float-neg0.5", -0.5!)
     readCase(kind, "float-neg1.5", -1.5!)
     readCase(kind, "int-3", 3)
+    readCase(kind, "long-big", 4294967297&)
     readCase(kind, "double-big", 4294967297#)
 end sub
 
@@ -127,4 +130,72 @@ sub entryType()
     out("entryType", ["type=" + type(v), "type3=" + type(v, 3), "entry=" + type(ba.GetEntry(0))])
     v = v + 1
     out("entryCopy", ["v=" + v.ToStr(), "ba0=" + ba[0].ToStr()])
+end sub
+
+' GetEntry/SetEntry with a LongInteger past 32 bits and with non-numeric indexes.
+sub entryArgs(kind as string)
+    entryArg(kind, "long-big", 4294967297&)
+    entryArg(kind, "string-1", "1")
+    entryArg(kind, "invalid", invalid)
+    entryArg(kind, "bool", true)
+end sub
+
+sub entryArg(kind as string, name as string, i as dynamic)
+    if kind = "xml"
+        value = make("xml")[0]
+    else
+        value = 99
+    end if
+    c = make(kind)
+    try
+        entry = desc(c.GetEntry(i))
+    catch e
+        entry = "ERR:" + e.number.ToStr()
+    end try
+    try
+        c.SetEntry(i, value)
+        res = "count=" + c.Count().ToStr()
+        for k = 0 to c.Count() - 1
+            res = res + "," + desc(c[k])
+        end for
+    catch e
+        res = "ERR:" + e.number.ToStr()
+    end try
+    out("entryArgs|" + kind + "|" + name, ["get=" + entry, "set=" + res])
+end sub
+
+' type() of invalid, booleans, floats and strings stored by SetEntry vs. index assignment.
+sub storedTypes()
+    for each kind in ["arr", "list"]
+        names = ["invalid", "bool", "float", "double", "string", "stringVar", "computedString"]
+        for n = 0 to names.Count() - 1
+            a = make(kind)
+            b = make(kind)
+            if n = 0
+                a.SetEntry(1, invalid)
+                b[1] = invalid
+            else if n = 1
+                a.SetEntry(1, true)
+                b[1] = true
+            else if n = 2
+                a.SetEntry(1, 1.5)
+                b[1] = 1.5
+            else if n = 3
+                a.SetEntry(1, 2#)
+                b[1] = 2#
+            else if n = 4
+                a.SetEntry(1, "s")
+                b[1] = "s"
+            else if n = 5
+                str = "s"
+                a.SetEntry(1, str)
+                b[1] = str
+            else
+                str = "s" + "t"
+                a.SetEntry(1, str)
+                b[1] = str
+            end if
+            out("stored|" + kind + "|" + names[n], ["setEntry=" + type(a[1]), "index=" + type(b[1])])
+        end for
+    end for
 end sub

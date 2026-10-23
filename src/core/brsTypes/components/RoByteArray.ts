@@ -6,6 +6,7 @@ import { Interpreter } from "../../interpreter";
 import { validUri, writeUri } from "../../device/FileSystem";
 import { crc32 } from "crc";
 import { IfEnum } from "../interfaces/IfEnum";
+import { checkEntryIndex } from "../interfaces/IfArray";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
@@ -612,10 +613,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns an array entry based on the provided index. */
     private readonly getEntry = new Callable("getEntry", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, index: BrsType) => {
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            checkEntryIndex(interpreter, index);
             return this.get(index);
         },
     });
@@ -625,13 +627,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Sets an entry at a given index to the passed value. If index is beyond the bounds of the array, the array is expanded. */
     private readonly setEntry = new Callable("setEntry", {
         signature: {
-            args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("value", ValueKind.Dynamic),
-            ],
+            args: [new StdlibArgument("index", ValueKind.Dynamic), new StdlibArgument("value", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, value: BrsType) => {
+            checkEntryIndex(interpreter, index);
             if (!isBrsNumber(value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
