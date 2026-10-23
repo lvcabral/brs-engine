@@ -470,8 +470,6 @@ describe("RoByteArray", () => {
             });
             describe("enumeration", () => {
                 it("for each returns every byte in order, none skipped and no NaN at the end", () => {
-                    // issue #1251: getNext() used the post-increment enumIndex, so `for each` over
-                    // 01 02 03 04 produced 2, 3, 4, NaN on brs-engine (Roku prints 1, 2, 3, 4)
                     let arr = new RoByteArray(new Uint8Array([1, 2, 3, 4]));
                     let values = [];
                     while (arr.hasNext() === BrsBoolean.True) {
@@ -496,6 +494,19 @@ describe("RoByteArray", () => {
                     arr.getNext();
                     arr.resetNext();
                     expect(arr.getNext()).toEqual(new Int32(9));
+                });
+
+                it("Next returns invalid past the end and on an empty array", () => {
+                    let arr = new RoByteArray(new Uint8Array([10, 20]));
+                    let next = arr.getMethod("next");
+                    expect(next.call(interpreter)).toEqual(new Int32(10));
+                    expect(next.call(interpreter)).toEqual(new Int32(20));
+                    expect(next.call(interpreter)).toBe(BrsInvalid.Instance);
+                    expect(next.call(interpreter)).toBe(BrsInvalid.Instance);
+                    expect(arr.hasNext()).toBe(BrsBoolean.False);
+
+                    let empty = new RoByteArray();
+                    expect(empty.getMethod("next").call(interpreter)).toBe(BrsInvalid.Instance);
                 });
             });
         });
