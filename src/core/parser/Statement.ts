@@ -6,7 +6,7 @@ import { BlockEnd } from "./BlockEndReason";
 /** A set of reasons why a `Block` stopped executing. */
 export * from "./BlockEndReason";
 
-export interface Visitor<T> {
+export interface Visitor<_T> {
     visitAssignment(statement: Assignment): BrsType;
     visitContinueFor(statement: ContinueFor): never;
     visitContinueWhile(statement: ContinueWhile): never;

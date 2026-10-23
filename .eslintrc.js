@@ -47,6 +47,17 @@ module.exports = {
             }
         ],
         "@typescript-eslint/no-for-in-array": "error",
+        "@typescript-eslint/no-unused-vars": [
+            "error",
+            {
+                "vars": "all",
+                "args": "none",
+                "caughtErrors": "none",
+                "ignoreRestSiblings": true,
+                "varsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_"
+            }
+        ],
         "@typescript-eslint/no-var-requires": "error",
         "@typescript-eslint/prefer-for-of": "error",
         "@typescript-eslint/promise-function-async": "error",

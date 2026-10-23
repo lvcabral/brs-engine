@@ -345,8 +345,6 @@ export class Parser {
                 let functionType = advance();
                 let name: Identifier;
                 let returnType: ValueKind;
-                let leftParen: Token;
-                let rightParen: Token;
 
                 if (isSub) {
                     returnType = ValueKind.Void;
@@ -356,13 +354,13 @@ export class Parser {
 
                 let funcName = "(anonymous)";
                 if (isAnonymous) {
-                    leftParen = consume(`Expected '(' after ${functionType.text}`, Lexeme.LeftParen);
+                    consume(`Expected '(' after ${functionType.text}`, Lexeme.LeftParen);
                 } else {
                     name = consume(
                         `Expected ${functionType.text} name after '${functionType.text}'`,
                         Lexeme.Identifier
                     ) as Identifier;
-                    leftParen = consume(`Expected '(' after ${functionType.text} name`, Lexeme.LeftParen);
+                    consume(`Expected '(' after ${functionType.text} name`, Lexeme.LeftParen);
 
                     //prevent functions from ending with type designators
                     let lastChar = name.text.at(-1)!;
@@ -383,7 +381,7 @@ export class Parser {
                         args.push(signatureArgument());
                     } while (match(Lexeme.Comma));
                 }
-                rightParen = advance();
+                advance();
 
                 let maybeAs = peek();
                 if (check(Lexeme.Identifier) && maybeAs.text.toLowerCase() === "as") {
