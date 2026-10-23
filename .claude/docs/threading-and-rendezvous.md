@@ -267,8 +267,8 @@ A node's authoritative copy lives on its owner thread, so reading/writing a node
     > Function-name observers already behave this way (registering one from the task rendezvouses it
     > to render), including one the task registers in its own function on a field it writes itself
     > (probe `function-observer-thread`). An XML `onChange` is registered on **both** copies of the
-    > node, so the task-side copy must not run it: `Field.executeCallbacks` skips a `permanent`
-    > callback on a task thread when the node isn't owned by that thread. On each launch the task thread gets the original `m` and render
+    > node, so the task-side copy must not run it: `Field.dispatchObservers` skips the permanent
+    > observers on a task thread when the node isn't owned by that thread (`shouldRendezvous`). On each launch the task thread gets the original `m` and render
     > a clone without message ports, which `checkTaskRun` models with `detachLaunchedPorts`: the
     > render-side entries read `invalid`, so render code (an `onChange`, a function observer) can't
     > read them — `m.port.getMessage()` there crashes on a device — and a **re-run** of the same task,

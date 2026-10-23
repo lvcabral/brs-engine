@@ -57,6 +57,19 @@ function isLivePortFor(port: RoMessagePort, scope: Node) {
     return isAttachedPort(port) || scope.holdsLaunchedPort(port);
 }
 
+/**
+ * Whether a callback is a port observer, registered by `scope`, standing for a live port.
+ * @param callback The registered observer.
+ * @param scope Node that must have registered it.
+ */
+function isLivePortObserverOf(callback: BrsCallback, scope: Node) {
+    return (
+        callback.observer instanceof RoMessagePort &&
+        callback.hostNode === scope &&
+        isLivePortFor(callback.observer, scope)
+    );
+}
+
 export class Field {
     // Observer collections are allocated lazily. A node like ContentNode registers ~100 default
     // fields and is instantiated in the thousands (e.g. a TimeGrid EPG); eagerly allocating two
@@ -453,7 +466,9 @@ export class Field {
     }
 
     private dispatchObservers() {
-        if (this.permanentObservers) {
+        // An XML `onChange` runs on the thread that owns the node, whichever thread wrote the field
+        // (a Task node is owned by render), so a task thread skips it for a node it doesn't own.
+        if (this.permanentObservers && !this.permanentObservers[0]?.eventParams.node.shouldRendezvous()) {
             for (const observer of this.permanentObservers) {
                 this.executeCallbacks(observer);
             }
@@ -549,7 +564,6 @@ export class Field {
                 fieldName,
                 infoFields,
             },
-            permanent: mode === "permanent",
         };
         if (mode === "scoped") {
             this.scopedObservers ??= new Map();
@@ -564,25 +578,15 @@ export class Field {
         }
     }
 
-    getObserversWithPort(scope?: Node): BrsCallback[] {
-        const observers: BrsCallback[] = [];
-        if (this.unscopedObservers) {
-            for (const callback of this.unscopedObservers) {
-                if (callback.observer instanceof RoMessagePort) {
-                    observers.push(callback);
-                }
-            }
-        }
-        if (this.scopedObservers) {
-            for (const [node, callbacks] of this.scopedObservers) {
-                if (scope !== undefined && node !== scope) {
-                    continue;
-                }
-                for (const callback of callbacks) {
-                    if (callback.observer instanceof RoMessagePort) {
-                        observers.push(callback);
-                    }
-                }
+    /**
+     * The live port observers `scope` registered on this field (see `isPortObserved`).
+     * @param scope Node that registered them.
+     */
+    getObserversWithPort(scope: Node): BrsCallback[] {
+        const observers = this.unscopedObservers?.filter((callback) => isLivePortObserverOf(callback, scope)) ?? [];
+        for (const callback of this.scopedObservers?.get(scope) ?? []) {
+            if (isLivePortObserverOf(callback, scope)) {
+                observers.push(callback);
             }
         }
         return observers;
@@ -623,19 +627,8 @@ export class Field {
      */
     isPortObserved(scope: Node) {
         return (
-            (this.unscopedObservers?.some(
-                (callback) =>
-                    callback.observer instanceof RoMessagePort &&
-                    callback.hostNode === scope &&
-                    isLivePortFor(callback.observer, scope)
-            ) ??
-                false) ||
-            (this.scopedObservers
-                ?.get(scope)
-                ?.some(
-                    (callback) => callback.observer instanceof RoMessagePort && isLivePortFor(callback.observer, scope)
-                ) ??
-                false)
+            (this.unscopedObservers?.some((callback) => isLivePortObserverOf(callback, scope)) ?? false) ||
+            (this.scopedObservers?.get(scope)?.some((callback) => isLivePortObserverOf(callback, scope)) ?? false)
         );
     }
 
@@ -845,11 +838,6 @@ export class Field {
             if (isAttachedPort(callback.observer)) {
                 callback.observer.pushMessage(this.buildEvent(callback));
             }
-            return;
-        }
-        // An XML `onChange` runs on the thread that owns the node, whichever thread wrote the field
-        // (a Task node is owned by render), so a task thread skips it for a node it doesn't own.
-        if (callback.permanent && sgRoot.inTaskThread() && callback.eventParams.node.getOwner() !== sgRoot.threadId) {
             return;
         }
         // Snapshot the event (value + info fields) at notification time, matching the RoMessagePort

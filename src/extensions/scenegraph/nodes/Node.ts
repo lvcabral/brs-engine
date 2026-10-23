@@ -2497,7 +2497,7 @@ export class Node extends RoSGNode implements BrsValue {
      * Checks if the node should perform a rendezvous through the task thread.
      * @returns True if the node is owned by another thread and we are in a task thread.
      */
-    protected shouldRendezvous(): boolean {
+    shouldRendezvous(): boolean {
         return sgRoot.inTaskThread() && this.owner !== sgRoot.threadId;
     }
 

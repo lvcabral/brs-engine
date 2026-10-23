@@ -507,6 +507,7 @@ export class Task extends Node {
         // Fan-out not handed over yet belongs to the run that just ended (or never launched), and
         // `flushFanout` would otherwise deliver it to the next launch.
         this.fanoutQueue.length = 0;
+        this.launchedPorts = undefined;
         this.active = false;
     }
 
@@ -994,7 +995,6 @@ export class Task extends Node {
             return;
         }
         if (!this.started) {
-            this.launchedPorts = undefined;
             this.taskBuffer = new SharedObject();
             // Direct render→task buffers (responses + fan-out) are normally allocated at activation;
             // ensure they exist here too in case the task was started without going through activate.

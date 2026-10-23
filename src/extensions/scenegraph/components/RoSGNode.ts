@@ -247,7 +247,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
-    protected abstract shouldRendezvous(): boolean;
+    abstract shouldRendezvous(): boolean;
     protected abstract rendezvousCall(
         interpreter: Interpreter,
         method: string,
