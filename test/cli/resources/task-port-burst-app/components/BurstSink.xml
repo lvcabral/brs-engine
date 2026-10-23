@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component name="BurstSink" extends="Task">
+    <interface>
+        <field id="entry" type="assocarray" />
+        <field id="save" type="boolean" />
+        <field id="received" type="integer" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        ' Same shape as the rooibos code-coverage collector: port-observes a hot field from init().
+        sub init()
+            m.port = CreateObject("roMessagePort")
+            m.top.observeFieldScoped("entry", m.port)
+            m.top.observeFieldScoped("save", m.port)
+            m.top.functionName = "runTask"
+            m.top.control = "RUN"
+        end sub
+
+        sub runTask()
+            received = 0
+            while true
+                msg = wait(0, m.port)
+                if msg.getField() = "save" then
+                    m.top.received = received
+                    return
+                end if
+                received++
+            end while
+        end sub
+        ]]>
+    </script>
+</component>
