@@ -468,6 +468,47 @@ describe("RoByteArray", () => {
                     expect(result).toBe(BrsBoolean.from(expected));
                 });
             });
+            describe("enumeration", () => {
+                it("for each returns every byte in order, none skipped and no NaN at the end", () => {
+                    let arr = new RoByteArray(new Uint8Array([1, 2, 3, 4]));
+                    let values = [];
+                    while (arr.hasNext() === BrsBoolean.True) {
+                        values.push(arr.getNext().getValue());
+                    }
+                    expect(values).toEqual([1, 2, 3, 4]);
+                });
+
+                it("for each visits a single byte", () => {
+                    let arr = new RoByteArray(new Uint8Array([255]));
+                    expect(arr.getNext()).toEqual(new Int32(255));
+                    expect(arr.hasNext()).toBe(BrsBoolean.False);
+                });
+
+                it("for each visits nothing when the array is empty", () => {
+                    let arr = new RoByteArray();
+                    expect(arr.hasNext()).toBe(BrsBoolean.False);
+                });
+
+                it("starts over after a reset", () => {
+                    let arr = new RoByteArray(new Uint8Array([9, 8]));
+                    arr.getNext();
+                    arr.resetNext();
+                    expect(arr.getNext()).toEqual(new Int32(9));
+                });
+
+                it("Next returns invalid past the end and on an empty array", () => {
+                    let arr = new RoByteArray(new Uint8Array([10, 20]));
+                    let next = arr.getMethod("next");
+                    expect(next.call(interpreter)).toEqual(new Int32(10));
+                    expect(next.call(interpreter)).toEqual(new Int32(20));
+                    expect(next.call(interpreter)).toBe(BrsInvalid.Instance);
+                    expect(next.call(interpreter)).toBe(BrsInvalid.Instance);
+                    expect(arr.hasNext()).toBe(BrsBoolean.False);
+
+                    let empty = new RoByteArray();
+                    expect(empty.getMethod("next").call(interpreter)).toBe(BrsInvalid.Instance);
+                });
+            });
         });
     });
 });
