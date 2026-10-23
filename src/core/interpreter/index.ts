@@ -8,6 +8,7 @@ import {
     BrsInvalid,
     ValueKind,
     isBrsNumber,
+    hasNegativeSign,
     isBrsString,
     isBrsBoolean,
     isBrsCallable,
@@ -25,6 +26,7 @@ import {
     Int32,
     Int64,
     Float,
+    Double,
     Uninitialized,
     RoArray,
     RoByteArray,
@@ -1874,7 +1876,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
 
         switch (expression.operator.kind) {
             case Lexeme.Minus:
-                if (isBrsNumber(right)) {
+                if (right instanceof Float) {
+                    // Negated directly: multiplying by -1 would not flip the sign of a NaN.
+                    return new Float(-right.getValue());
+                } else if (right instanceof Double) {
+                    return new Double(-right.getValue());
+                } else if (isBrsNumber(right)) {
                     return right.multiply(new Int32(-1));
                 } else {
                     return this.addError(
@@ -2374,15 +2381,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Evaluates if a number is positive or NaN.
+     * Evaluates if a number has no negative sign (so `-0` and a negated NaN are not positive).
      * @param value Number to evaluate (number or Long)
-     * @returns True if the number is positive or NaN, false otherwise
+     * @returns True if the number's sign is positive, false otherwise
      */
     private isPositive(value: number | Long): boolean {
         if (value instanceof Long) {
             return value.isPositive();
         }
-        return Number.isNaN(value) || value >= 0;
+        return !hasNegativeSign(value);
     }
 
     /**

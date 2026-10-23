@@ -1,7 +1,7 @@
 import { BrsType, BrsBoolean, isNumberComp } from ".";
 import { ValueKind, Comparable } from "./BrsType";
 import { Boxable } from "./Boxing";
-import { BrsNumber, Numeric } from "./BrsNumber";
+import { BrsNumber, Numeric, signedSpecialText } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
@@ -34,7 +34,12 @@ export class Float implements Numeric, Comparable, Boxable {
      */
     constructor(value: number | Long, public literal: boolean = false, public legacy: boolean = false) {
         if (value instanceof Long) value = value.toNumber();
-        this.value = Number.parseFloat(Math.fround(value).toPrecision(IEEE_FLOAT_SIGFIGS));
+        const rounded = Math.fround(value);
+        // NaN, infinities and zero are kept as is, so a NaN keeps its sign and -0 stays -0.
+        this.value =
+            Number.isFinite(rounded) && rounded !== 0
+                ? Number.parseFloat(rounded.toPrecision(IEEE_FLOAT_SIGFIGS))
+                : rounded;
     }
 
     /**
@@ -214,7 +219,7 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return Number.isNaN(this.value) ? "nan" : vsprintf("%g", [this.value]);
+        return signedSpecialText(this.value) ?? vsprintf("%g", [this.value]);
     }
 
     box() {
