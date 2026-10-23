@@ -36,7 +36,6 @@ import { getValueKindFromFieldType } from "../factory/NodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
 import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
 import { convertHexColor } from "../SGUtil";
-import { sgRoot } from "../SGRoot";
 
 /**
  * Whether a port observer can still receive events (see `detachLaunchedPorts`). Optional-called so
