@@ -145,7 +145,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                 this.enumIndex = -1;
             }
         }
-        return new Int32(this.elements[this.enumIndex]);
+        return new Int32(this.elements[index]);
     }
 
     updateNext() {
