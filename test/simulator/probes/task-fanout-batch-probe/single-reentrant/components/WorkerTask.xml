@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="WorkerTask" extends="Task">
+    <interface>
+        <field id="request" type="integer" alwaysNotify="true" onChange="onReq" />
+        <field id="ready" type="boolean" />
+        <field id="report" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "drain"
+        m.inTask = false
+        m.seen = []
+    end sub
+
+    ' XML onChange on the task thread. The first value keeps the handler busy (no wait/sleep) for
+    ' 500ms while the Scene keeps writing, one value per 20ms, so each arrives as a lone update.
+    sub onReq(event as object)
+        v = event.getData()
+        if v <= 3 then print "ONCHANGE v=" + v.toStr() + " inTask=" + m.inTask.toStr()
+        if not m.inTask then return
+        m.seen.push(v)
+        if v = 1
+            ts = CreateObject("roTimespan")
+            x = 0
+            while ts.TotalMilliseconds() < 500
+                x = x + 1
+            end while
+        end if
+    end sub
+
+    sub drain()
+        m.inTask = true
+        m.port = CreateObject("roMessagePort")
+        m.top.observeField("request", m.port)
+        m.top.ready = true
+        portCount = 0
+        idle = 0
+        while idle < 20
+            msg = wait(100, m.port)
+            if type(msg) = "roSGNodeEvent"
+                idle = 0
+                portCount++
+            else
+                idle++
+            end if
+        end while
+        inversions = 0
+        missing = []
+        last = 0
+        present = {}
+        for each v in m.seen
+            if v < last then inversions++
+            last = v
+            present[v.toStr()] = true
+        end for
+        for v = 1 to 30
+            if not present.doesExist(v.toStr()) then missing.push(v.toStr())
+        end for
+        m.top.report = "onChange n=" + m.seen.count().toStr() + " inversions=" + inversions.toStr() + " missing=[" + missing.join(",") + "] | port n=" + portCount.toStr() + " | final field=" + m.top.request.toStr()
+    end sub
+    ]]></script>
+</component>
