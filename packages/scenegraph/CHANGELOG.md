@@ -2,6 +2,19 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.6.2"></a>
+
+## [v0.6.2 (beta) - Task Fan-out Batching and Render-thread onChange](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.2) - 23 October 2026
+
+This release reworks how field writes reach a running `Task`. Render→Task fan-out now packs consecutive writes into one hand-off instead of one per frame, and a launched Task's render-side message ports no longer pile up events nobody reads — together these fix Rooibos code-coverage suites that hung or ran out of memory. A Task's XML `onChange` now runs only on the render thread, which owns the Task node, as on a Roku device; render keeps a copy of the Task's `m` without its message ports, so a re-run sees them as `invalid`. Requires `brs-engine` v2.6.2 or newer. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Batched render→Task fan-out and stopped leaking port events for a running Task by [@markwpearce](https://github.com/markwpearce) in [#1264](https://github.com/lvcabral/brs-engine/pull/1264)
+* (rsg) A Task's XML `onChange` now runs only on the render thread, and its message ports are kept out of render's `m` by [@lvcabral](https://github.com/lvcabral) in [#1268](https://github.com/lvcabral/brs-engine/pull/1268)
+
+[Full Changelog][v0.6.2]
+
 <a name="v0.6.1"></a>
 
 ## [v0.6.1 (beta) - ChannelStore Roku Customer ID](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.1) - 10 October 2026
@@ -456,6 +469,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.6.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.1...brs-sg-v0.6.2
 [v0.6.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.0...brs-sg-v0.6.1
 [v0.6.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.4...brs-sg-v0.6.0
 [v0.5.4]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.3...brs-sg-v0.5.4
