@@ -32,7 +32,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
         if (rawFlags.includes("x")) {
             pattern = RoRegex.stripFreeSpacing(pattern);
         }
-        this.jsRegex = new RegExp(pattern, this.parseFlags(rawFlags));
+        this.jsRegex = RoRegex.compile(pattern, this.parseFlags(rawFlags));
 
         this.registerMethods({
             ifRegex: [this.isMatch, this.match, this.replace, this.replaceAll, this.split, this.matchAll],
@@ -77,6 +77,64 @@ export class RoRegex extends BrsComponent implements BrsValue {
     }
 
     private static readonly whitespacePattern = /\s/;
+
+    /**
+     * Compiles a pattern to a JS RegExp, tolerating constructs that are valid PCRE (what Roku's
+     * roRegex uses) but rejected by JavaScript. A raw SyntaxError must never escape: it terminates
+     * the whole app instead of being reported as a BrightScript error. The inline option-setting
+     * group `(?-)` - an empty option list, a documented PCRE no-op that JavaScript rejects as
+     * "Invalid group" - is stripped on the retry path; anything still invalid raises a
+     * RuntimeError so the engine reports it through its normal error handling.
+     * @param pattern Pattern as passed to CreateObject
+     * @param parsedFlags Flags already filtered by parseFlags
+     * @returns the compiled regular expression
+     */
+    private static compile(pattern: string, parsedFlags: string): RegExp {
+        try {
+            return new RegExp(pattern, parsedFlags);
+        } catch (e) {
+            try {
+                return new RegExp(RoRegex.stripNoOpOptionGroups(pattern), parsedFlags);
+            } catch (e2) {
+                throw new RuntimeError(RuntimeErrorDetail.BadFunctionOrArrayParam);
+            }
+        }
+    }
+
+    /**
+     * Removes PCRE inline option-setting groups with an empty option list - `(?-)` - which PCRE
+     * accepts as a no-op and JavaScript rejects. Escaped characters and character classes are
+     * left untouched (there `(?-)` is a literal character sequence, not a group).
+     * @param pattern Original pattern, as passed to CreateObject
+     * @returns Pattern without the no-op option-setting groups
+     */
+    private static stripNoOpOptionGroups(pattern: string): string {
+        let result = "";
+        let inClass = false;
+        let i = 0;
+        while (i < pattern.length) {
+            const char = pattern[i];
+            if (char === "\\" && i + 1 < pattern.length) {
+                result += pattern.slice(i, i + 2);
+                i += 2;
+                continue;
+            }
+            if (!inClass && pattern.startsWith("(?-)", i)) {
+                i += 4;
+                continue;
+            }
+            i++;
+            if (inClass) {
+                if (char === "]") {
+                    inClass = false;
+                }
+            } else if (char === "[") {
+                inClass = true;
+            }
+            result += char;
+        }
+        return result;
+    }
 
     /**
      * Implements the "x" (extended/free-spacing) flag, which JS RegExp has no native flag for:

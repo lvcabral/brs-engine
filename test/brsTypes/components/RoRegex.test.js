@@ -234,4 +234,30 @@ describe("RoRegex", () => {
             expect(result).toBe(BrsBoolean.True);
         });
     });
+
+    describe("PCRE-only patterns", () => {
+        // issue #1255: patterns that are valid PCRE (what Roku's roRegex uses) but rejected
+        // by JavaScript used to kill the app with an uncaught SyntaxError.
+        it("compiles the empty option-setting group (?-) as a no-op and still matches", () => {
+            let regx = new RoRegex(new BrsString("^(?:(?-))?(\\d+)$"));
+            let isMatch = regx.getMethod("ismatch");
+            expect(isMatch.call(interpreter, new BrsString("123"))).toBe(BrsBoolean.True);
+            expect(isMatch.call(interpreter, new BrsString("abc"))).toBe(BrsBoolean.False);
+        });
+
+        it("keeps a character class that spells (?- out literally", () => {
+            let regx = new RoRegex(new BrsString("[(?-]+"));
+            let isMatch = regx.getMethod("ismatch");
+            expect(isMatch.call(interpreter, new BrsString("(?-"))).toBe(BrsBoolean.True);
+            expect(isMatch.call(interpreter, new BrsString("x"))).toBe(BrsBoolean.False);
+        });
+
+        it("raises a BrightScript runtime error instead of crashing on untranslatable patterns", () => {
+            expect(() => new RoRegex(new BrsString("(?i)"))).toThrow();
+        });
+
+        it("raises a BrightScript runtime error for a plain invalid pattern", () => {
+            expect(() => new RoRegex(new BrsString("("))).toThrow();
+        });
+    });
 });
