@@ -1,4 +1,4 @@
-import { BrsType, Float, Int32, isBrsNumber, jsValueOf, toArrayIndex } from "..";
+import { BrsType, Float, Int32, isBrsNumber, jsValueOf, toArrayIndex, toIntegerArg, Uninitialized } from "..";
 import { BrsValue, ValueKind, BrsBoolean, BrsInvalid, BrsString } from "../BrsType";
 import { BrsComponent, BrsIterable } from "./BrsComponent";
 import { Callable, StdlibArgument } from "../Callable";
@@ -6,8 +6,8 @@ import { Interpreter } from "../../interpreter";
 import { validUri, writeUri } from "../../device/FileSystem";
 import { crc32 } from "crc";
 import { IfEnum } from "../interfaces/IfEnum";
-import { checkEntryIndex } from "../interfaces/IfArray";
 import { BrsDevice } from "../../device/BrsDevice";
+import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 
 export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     readonly kind = ValueKind.Object;
@@ -357,12 +357,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns the signed byte at the specified zero-based index in the Byte Array. */
     private readonly getSignedByte = new Callable("getSignedByte", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            const idx = Math.trunc(index.getValue());
-            if (idx < this.elements.length) {
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            const idx = toIntegerArg(interpreter, index);
+            if (idx >= 0 && idx < this.elements.length) {
                 let byte = (this.elements[idx] << 24) >> 24;
                 return new Int32(byte);
             }
@@ -373,12 +373,12 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Returns the signed long (four bytes) starting at the specified zero-based long index. */
     private readonly getSignedLong = new Callable("getSignedLong", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            const idx = Math.trunc(index.getValue()) * 4; // Multiply index by 4
-            if (idx < this.elements.length - 3) {
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            const idx = toIntegerArg(interpreter, index) * 4;
+            if (idx >= 0 && idx < this.elements.length - 3) {
                 const dataView = new DataView(this.elements.buffer, idx, 4);
                 const long = dataView.getInt32(0, this.isLittleEndian());
                 return new Int32(long);
@@ -391,19 +391,28 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private readonly getCRC32 = new Callable("getCRC32", {
         signature: {
             args: [
-                new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
-                new StdlibArgument("length", ValueKind.Int32 | ValueKind.Float, new Int32(-1)),
+                new StdlibArgument("index", ValueKind.Dynamic, Uninitialized.Instance),
+                new StdlibArgument("length", ValueKind.Dynamic, Uninitialized.Instance),
             ],
             returns: ValueKind.Int32,
         },
-        impl: (_: Interpreter, index: Int32 | Float, length: Int32 | Float) => {
-            const idx = Math.trunc(index.getValue());
-            const len = Math.trunc(length.getValue());
-            if (idx > 0 || len > 0) {
-                const end = len < 1 ? undefined : idx + len;
-                return new Int32(crc32(Buffer.from(this.elements.slice(idx, end))));
+        impl: (interpreter: Interpreter, index: BrsType, length: BrsType) => {
+            if (index instanceof Uninitialized) {
+                return new Int32(crc32(asBuffer(this.elements)) | 0);
+            } else if (length instanceof Uninitialized) {
+                // There is no one-argument form.
+                interpreter.addError(
+                    new RuntimeError(
+                        RuntimeErrorDetail.MemberFunctionNotFound,
+                        interpreter.location,
+                        interpreter.getBacktrace()
+                    )
+                );
             }
-            return new Int32(crc32(Buffer.from(this.elements)));
+            const idx = toIntegerArg(interpreter, index);
+            const len = toIntegerArg(interpreter, length);
+            const bytes = idx < 0 || len < 1 ? new Uint8Array() : this.elements.subarray(idx, idx + len);
+            return new Int32(crc32(asBuffer(bytes)) | 0);
         },
     });
 
@@ -411,13 +420,13 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private readonly setResize = new Callable("setResize", {
         signature: {
             args: [
-                new StdlibArgument("minSize", ValueKind.Int32 | ValueKind.Float),
+                new StdlibArgument("minSize", ValueKind.Dynamic),
                 new StdlibArgument("autoResize", ValueKind.Boolean),
             ],
             returns: ValueKind.Void,
         },
-        impl: (_: Interpreter, minSize: Int32 | Float, autoResize: BrsBoolean) => {
-            this.maxSize = Math.max(Math.trunc(minSize.getValue()), this.elements.length);
+        impl: (interpreter: Interpreter, minSize: BrsType, autoResize: BrsBoolean) => {
+            this.maxSize = Math.max(toIntegerArg(interpreter, minSize), this.elements.length);
             this.resizable = autoResize.toBoolean();
             return BrsInvalid.Instance;
         },
@@ -546,11 +555,11 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     /** Deletes the indicated array entry, and shifts all entries up. This decreases the array length by one. */
     private readonly delete = new Callable("delete", {
         signature: {
-            args: [new StdlibArgument("index", ValueKind.Int32 | ValueKind.Float)],
+            args: [new StdlibArgument("index", ValueKind.Dynamic)],
             returns: ValueKind.Boolean,
         },
-        impl: (_: Interpreter, index: Int32 | Float) => {
-            const idx = Math.trunc(index.getValue());
+        impl: (interpreter: Interpreter, index: BrsType) => {
+            const idx = toIntegerArg(interpreter, index);
             if (idx < 0 || idx >= this.elements.length) {
                 return BrsBoolean.False;
             }
@@ -617,7 +626,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter, index: BrsType) => {
-            checkEntryIndex(interpreter, index);
+            toIntegerArg(interpreter, index);
             return this.get(index);
         },
     });
@@ -631,7 +640,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, index: BrsType, value: BrsType) => {
-            checkEntryIndex(interpreter, index);
+            toIntegerArg(interpreter, index);
             if (!isBrsNumber(value)) {
                 BrsDevice.stderr.write(
                     `warning,BRIGHTSCRIPT: ERROR: roByteArray.SetEntry: set ignored for non-numeric value: ${interpreter.formatLocation()}`
@@ -647,17 +656,15 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
     private readonly slice = new Callable("slice", {
         signature: {
             args: [
-                new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
-                new StdlibArgument("end", ValueKind.Int32 | ValueKind.Float, BrsInvalid.Instance),
+                new StdlibArgument("start", ValueKind.Dynamic, new Int32(0)),
+                new StdlibArgument("end", ValueKind.Dynamic, Uninitialized.Instance),
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, start: BrsType, end: BrsType) => {
-            if (end instanceof BrsInvalid) {
-                return new RoByteArray(this.elements.slice(jsValueOf(start)));
-            } else {
-                return new RoByteArray(this.elements.slice(jsValueOf(start), jsValueOf(end)));
-            }
+        impl: (interpreter: Interpreter, start: BrsType, end: BrsType) => {
+            const from = toIntegerArg(interpreter, start);
+            const to = end instanceof Uninitialized ? undefined : toIntegerArg(interpreter, end);
+            return new RoByteArray(this.elements.slice(from, to));
         },
     });
 
@@ -684,4 +691,9 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             return BrsBoolean.from(this.resizable);
         },
     });
+}
+
+/** A `Buffer` view of `bytes`, without copying them. */
+function asBuffer(bytes: Uint8Array) {
+    return Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }

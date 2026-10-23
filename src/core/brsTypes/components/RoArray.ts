@@ -10,6 +10,8 @@ import {
     isAnyNumber,
     jsValueOf,
     toArrayIndex,
+    toIntegerArg,
+    Uninitialized,
 } from "..";
 import { containerMember, CopyVisited, fieldCopyMember, MemberStore } from "../Boxing";
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid, Comparable } from "../BrsType";
@@ -397,17 +399,15 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
     private readonly slice = new Callable("slice", {
         signature: {
             args: [
-                new StdlibArgument("start", ValueKind.Int32 | ValueKind.Float, new Int32(0)),
-                new StdlibArgument("end", ValueKind.Int32 | ValueKind.Float, BrsInvalid.Instance),
+                new StdlibArgument("start", ValueKind.Dynamic, new Int32(0)),
+                new StdlibArgument("end", ValueKind.Dynamic, Uninitialized.Instance),
             ],
             returns: ValueKind.Object,
         },
-        impl: (_: Interpreter, start: Int32 | Float, end: Int32 | Float | BrsInvalid) => {
-            if (end instanceof BrsInvalid) {
-                return new RoArray(this.elements.slice(start.getValue()));
-            } else {
-                return new RoArray(this.elements.slice(start.getValue(), end.getValue()));
-            }
+        impl: (interpreter: Interpreter, start: BrsType, end: BrsType) => {
+            const from = toIntegerArg(interpreter, start);
+            const to = end instanceof Uninitialized ? undefined : toIntegerArg(interpreter, end);
+            return new RoArray(this.elements.slice(from, to));
         },
     });
 

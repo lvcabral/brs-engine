@@ -1,5 +1,5 @@
 import { BrsValue, ValueKind, BrsString, BrsBoolean, BrsInvalid } from "../BrsType";
-import { BrsType, Float, Int32, RoAssociativeArray, RoByteArray, RoDateTime, toAssociativeArray } from "..";
+import { BrsType, Int32, toIntegerArg, RoAssociativeArray, RoByteArray, RoDateTime, toAssociativeArray } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
@@ -77,7 +77,10 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     tagValue = tag.value.toString();
                 }
         }
-        return toAssociativeArray({ tag: tag.type, tagValue: tagValue });
+        return new RoAssociativeArray([
+            { name: new BrsString("tag"), value: new Int32(tag.type).box() },
+            { name: new BrsString("value"), value: new BrsString(tagValue).box() },
+        ]);
     }
 
     private processBufferTag(tagType: string, tagValue: Buffer): string {
@@ -318,13 +321,12 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
      */
     private readonly getRawExifTag = new Callable("getRawExifTag", {
         signature: {
-            args: [
-                new StdlibArgument("ifd", ValueKind.Int32 | ValueKind.Float),
-                new StdlibArgument("tagnum", ValueKind.Int32 | ValueKind.Float),
-            ],
+            args: [new StdlibArgument("ifd", ValueKind.Dynamic), new StdlibArgument("tagnum", ValueKind.Dynamic)],
             returns: ValueKind.Dynamic,
         },
-        impl: (_: Interpreter, ifd: Int32 | Float, tagnum: Int32 | Float) => {
+        impl: (interpreter: Interpreter, ifdArg: BrsType, tagnumArg: BrsType) => {
+            const ifd = toIntegerArg(interpreter, ifdArg);
+            const tagnum = toIntegerArg(interpreter, tagnumArg);
             if (!this.fileData) {
                 return BrsInvalid.Instance;
             }
@@ -335,7 +337,7 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                 parser.enableTagNames(false);
                 parser.enableImageSize(false);
                 const result = parser.parse();
-                const tagsMap = ifd.getValue() === ExifSections.GPS ? exifTags.gps : exifTags.exif;
+                const tagsMap = ifd === ExifSections.GPS ? exifTags.gps : exifTags.exif;
                 const sectionIdMap: { [key: number]: ExifSections } = {
                     0: ExifSections.Image,
                     1: ExifSections.Thumbnail,
@@ -343,8 +345,11 @@ export class RoImageMetadata extends BrsComponent implements BrsValue {
                     3: ExifSections.GPS,
                     4: ExifSections.EXIF, // the exif-parser library mix interoperability tags with exif tags
                 };
-                const sectionId = sectionIdMap[ifd.getValue()] ?? ExifSections.EXIF;
-                const tag = this.findValue(result.tags, sectionId, tagnum.getValue());
+                const sectionId = sectionIdMap[ifd];
+                if (sectionId === undefined) {
+                    return new RoAssociativeArray([]);
+                }
+                const tag = this.findValue(result.tags, sectionId, tagnum);
                 return tag ? this.getTagData(tag, tagsMap) : new RoAssociativeArray([]);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
