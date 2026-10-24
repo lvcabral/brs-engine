@@ -98,7 +98,7 @@ describe("interpreter variables", () => {
             test.each([
                 // pairs of [type, rhs, lhs_result]
                 ["integer", new Int32(-5), new Double(-5)],
-                ["float", new Float(3.14159), new Double(3.14159)],
+                ["float", new Float(3.14159), new Double(Math.fround(3.14159))],
                 ["double", new Double(2.71828), new Double(2.71828)],
                 ["longinteger", new Int64(2147483647119), new Double(2147483647119)],
             ])("from %s to integer", (_type, rhs, lhs_result) => {

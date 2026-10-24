@@ -98,7 +98,7 @@ describe("interpreter arithmetic", () => {
 
         let [minusFour, pi] = interpreter.exec(ast);
         expect(minusFour.getValue()).toBe(-4);
-        expect(pi.getValue()).toBe(3.14159);
+        expect(pi.getValue()).toBe(Math.fround(3.14159));
     });
 
     it("supports silly amounts of mixed unary prefix operators", () => {

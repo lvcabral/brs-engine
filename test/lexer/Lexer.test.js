@@ -326,6 +326,16 @@ describe("lexer", () => {
             expect(f.literal).toEqual(new Float(0.00000008, true));
         });
 
+        it("respects '!' suffix on literals with 10 or more digits", () => {
+            for (const text of ["0.000123456789", "12345678901"]) {
+                let { tokens, errors } = Lexer.scan(`${text}!`);
+                expect(errors).toEqual([]);
+                expect(tokens[0].kind).toBe(Lexeme.Float);
+                expect(tokens[0].literal).toEqual(new Float(Number(text), true));
+                expect(tokens[1].kind).toBe(Lexeme.Eof);
+            }
+        });
+
         it("forces literals with a decimal into floats", () => {
             let f = Lexer.scan("1.0").tokens[0];
             expect(f.kind).toBe(Lexeme.Float);

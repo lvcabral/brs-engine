@@ -2,6 +2,7 @@ import { Callable, ValueKind, BrsString, Int32, Float, Double, StdlibArgument, B
 import { Interpreter } from "../interpreter";
 import { BrsNumber } from "../brsTypes/BrsNumber";
 import Long from "long";
+import { sprintf } from "@lvcabral/sprintf";
 
 /** Converts the string to all uppercase. */
 export const UCase = new Callable("UCase", {
@@ -165,7 +166,8 @@ export const Str = new Callable("Str", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, value: Double): BrsString => {
-        const text = value.toString();
+        // A device converts the value to a Float and writes 7 significant digits (Str(1e300#) is " inf").
+        const text = sprintf("%.7g", Math.fround(value.getValue()));
         return new BrsString(text.startsWith("-") ? text : " " + text);
     },
 });

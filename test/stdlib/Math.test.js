@@ -108,7 +108,7 @@ describe("global math functions", () => {
 
     describe("Exp", () => {
         it("calculates a natural exponent", () => {
-            expect(Exp.call(interpreter, new Float(12.7)).value).toBeCloseTo(327747.901874, 1);
+            expect(Exp.call(interpreter, new Float(12.7)).value).toBe(Math.fround(Math.exp(Math.fround(12.7))));
         });
     });
 

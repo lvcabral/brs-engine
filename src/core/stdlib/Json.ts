@@ -20,6 +20,20 @@ import {
     RoInvalid,
 } from "../brsTypes";
 import { BrsDevice } from "../device/BrsDevice";
+import { sprintf } from "@lvcabral/sprintf";
+
+/**
+ * Writes a Float or Double the way a device's FormatJson does: a whole number below 2^53 in full, a larger whole
+ * number with 10 significant digits, anything else like `%g`.
+ * @param value the number.
+ * @returns the JSON text.
+ */
+function jsonFloat(value: number): string {
+    if (Number.isSafeInteger(value)) {
+        return sprintf("%.0f", value);
+    }
+    return sprintf(Number.isInteger(value) ? "%.10g" : "%g", value);
+}
 
 /**
  * Converts a BrsType value to its representation as a JSON string. If no such
@@ -37,9 +51,10 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
             return "null";
         case ValueKind.String:
             return jsonString(x.toString(), (flags & 1) === 0);
-        case ValueKind.Boolean:
         case ValueKind.Double:
         case ValueKind.Float:
+            return jsonFloat(x.getValue());
+        case ValueKind.Boolean:
         case ValueKind.Int32:
         case ValueKind.Int64:
             return x.toString();

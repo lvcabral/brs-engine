@@ -372,7 +372,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         if (isBrsString(value)) {
             return value.getValue().trim();
         }
-        return isAnyNumber(value) ? jsValueOf(value).toString() : "";
+        return isAnyNumber(value) ? value.toString() : "";
     }
 
     /**
