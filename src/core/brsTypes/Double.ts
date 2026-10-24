@@ -131,12 +131,10 @@ export class Double implements Numeric, Comparable, Boxable {
 
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
-            case ValueKind.Int32:
-                return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Int64:
-                return new Int64(this.getValue()).pow(exponent);
+                return new Double(Math.pow(this.getValue(), exponent.getValue().toNumber()));
+            case ValueKind.Int32:
             case ValueKind.Float:
-                return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Double:
                 return new Double(Math.pow(this.getValue(), exponent.getValue()));
         }

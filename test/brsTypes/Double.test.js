@@ -209,26 +209,24 @@ describe("Double", () => {
     });
 
     describe("exponentiation", () => {
-        let nine = new Int32(9);
+        let nine = new Double(9);
 
-        it("raises to Int32 powers", () => {
-            let three = new Int32(3);
-            let result = nine.pow(three);
-            expect(result.kind).toBe(ValueKind.Float);
+        it("raises to Int32 powers as a Double", () => {
+            let result = nine.pow(new Int32(3));
+            expect(result.kind).toBe(ValueKind.Double);
             expect(result.getValue()).toBe(729);
+            expect(new Double(2).pow(new Int32(-1074)).getValue()).toBe(5e-324);
         });
 
-        it("raises to Int64 powers", () => {
-            let three = new Int64(3);
-            let result = nine.pow(three);
-            expect(result.kind).toBe(ValueKind.Int64);
-            expect(result.getValue().toNumber()).toBe(729);
+        it("raises to Int64 powers as a Double", () => {
+            let result = new Double(1.5).pow(new Int64(2));
+            expect(result.kind).toBe(ValueKind.Double);
+            expect(result.getValue()).toBe(2.25);
         });
 
-        it("raises to Float powers", () => {
-            let oneHalf = new Float(0.5);
-            let result = nine.pow(oneHalf);
-            expect(result.kind).toBe(ValueKind.Float);
+        it("raises to Float powers as a Double", () => {
+            let result = nine.pow(new Float(0.5));
+            expect(result.kind).toBe(ValueKind.Double);
             expect(result.getValue()).toBe(3);
         });
 

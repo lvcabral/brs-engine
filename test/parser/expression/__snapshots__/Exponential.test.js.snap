@@ -95,7 +95,7 @@ exports[`parser > exponential expressions > parses exponential operators 1`] = `
 ]
 `;
 
-exports[`parser > exponential expressions > parses repeated exponential operators as left-associative 1`] = `
+exports[`parser > exponential expressions > parses repeated exponential operators as right-associative 1`] = `
 [
   Assignment {
     "name": {
@@ -133,26 +133,26 @@ exports[`parser > exponential expressions > parses repeated exponential operator
       },
     },
     "value": Binary {
-      "left": Binary {
-        "left": Literal {
-          "_location": {
-            "end": {
-              "column": -9,
-              "line": -9,
-            },
-            "start": {
-              "column": -9,
-              "line": -9,
-            },
+      "left": Literal {
+        "_location": {
+          "end": {
+            "column": -9,
+            "line": -9,
           },
-          "value": Int32 {
-            "kind": 4,
-            "legacy": false,
-            "literal": false,
-            "value": 2,
+          "start": {
+            "column": -9,
+            "line": -9,
           },
         },
-        "right": Literal {
+        "value": Int32 {
+          "kind": 4,
+          "legacy": false,
+          "literal": false,
+          "value": 2,
+        },
+      },
+      "right": Binary {
+        "left": Literal {
           "_location": {
             "end": {
               "column": -9,
@@ -170,6 +170,24 @@ exports[`parser > exponential expressions > parses repeated exponential operator
             "value": 3,
           },
         },
+        "right": Literal {
+          "_location": {
+            "end": {
+              "column": -9,
+              "line": -9,
+            },
+            "start": {
+              "column": -9,
+              "line": -9,
+            },
+          },
+          "value": Int32 {
+            "kind": 4,
+            "legacy": false,
+            "literal": false,
+            "value": 4,
+          },
+        },
         "token": {
           "isReserved": false,
           "kind": "Caret",
@@ -185,24 +203,6 @@ exports[`parser > exponential expressions > parses repeated exponential operator
             },
           },
           "text": "^",
-        },
-      },
-      "right": Literal {
-        "_location": {
-          "end": {
-            "column": -9,
-            "line": -9,
-          },
-          "start": {
-            "column": -9,
-            "line": -9,
-          },
-        },
-        "value": Int32 {
-          "kind": 4,
-          "legacy": false,
-          "literal": false,
-          "value": 4,
         },
       },
       "token": {
