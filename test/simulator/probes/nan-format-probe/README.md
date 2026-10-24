@@ -10,7 +10,7 @@ real Roku vs. brs-engine. Written for PR #1270, after `numeric-args-probe` showe
 | `plain` | `print` of ordinary Float, Double and Integer values, for the spacing. |
 | `val` / `val10` | `Val(s)`, `Val(s, 10)` and `Val(s, 16)` for numbers with trailing text, whitespace, exponents, hex, signs, `nan`/`inf`/`infinity` spellings, and out-of-range values. |
 | `radix` | `Val(s, radix)` overflow, negatives, radix 0 (auto), 2, 8, 36 and invalid radixes. |
-| `types` / `sprintf` / `format` | Format strings from #1272 for `@lvcabral/sprintf`, through `ToStr(format)` and `roString.Format()`: `%a`/`%A`, upper-case conversions, the space flag, flag order, `#`, `%i`/`%u`/`%o`/`%X`/`%c`/`%s`, rounding of halfway values, `%.3g` and `%f` of large values. |
+| `types` / `sprintf` / `format` | Format strings from #1272 and lvcabral/sprintf.js#8 for `@lvcabral/sprintf`, through `ToStr(format)` and `roString.Format()`: `%a`/`%A`, upper-case conversions, the space flag, flag order, `#`, `%i`/`%u`/`%o`/`%X`/`%c`/`%s`, rounding of halfway values, `%g` precision, and `%f`/`%e` of large and subnormal values. |
 
 `0! / 0!` is a divide-by-zero error (20) on the device, so NaN comes from `Sqr(-1)`.
 
@@ -58,7 +58,7 @@ Open: `print` writes a space after every `Float`/`Double` on the device (` 5.5 `
 ## Format strings (Streaming Stick, OS 15.3.4, 2026-10-24)
 
 Added for #1272, after upgrading `@lvcabral/sprintf` to 1.3.0, which writes NaN, infinity and `-0` like C (so the
-engine's `formatSignedSpecial` workaround is gone). What the device does:
+engine's `formatSignedSpecial` workaround is gone), and re-run with 1.3.1. What the device does:
 
 - `ToStr(format)` rejects `%a`, `%A`, `%i`, `%u` and the `#` flag with Invalid Format Specifier (36);
   `roString.Format()` rejects the same ones with Type Mismatch (24, message `Type Mismatch.`). The library accepts
@@ -68,16 +68,17 @@ engine's `formatSignedSpecial` workaround is gone). What the device does:
   engine does not copy this.
 - Flags are accepted in any order and repeated (`%+ d` and `% +d` are `+5`, `%-+5d` is `+5   `, `%0-5d` is `5    `);
   the space flag works (`% d` is ` 5`, `% 05d` is ` 0005`). Upper-case conversions write `-INF`, `NAN`, `1E-05`.
+- Rounding follows glibc: the exact binary value is rounded, halfway cases to even (`%.0f` of `2.5#` is `2`, of
+  `3.5#` is `4`, `%5.1f` of `2.25#` is `  2.2`, `%.2f` of `2.675#` is `2.67`); `%g` with a precision switches to
+  exponent form like C (`%.3g` of `123456.789#` is `1.23e+05`, `%.2g` of `100#` is `1e+02`); `%f` writes large values
+  in full (`1e22#` is `10000000000000000000000.000000`). sprintf 1.3.0 rounded ties up and wrote `123000` and
+  `1e+300`; 1.3.1 (lvcabral/sprintf.js#8) matches every case, and the e2e fixture now includes them.
 - A negated NaN keeps its sign through `Format()` too (`"%f".Format(-dnan)` is `-nan`). V8 clears that sign when a
   NaN is stored in a numeric array, so the engine passes the values to `sprintf` in an array that starts with the
   format string.
+- A `Double` read back from an array literal reports `roFloat` from `type()` on the device, even `1e300#` (the value
+  keeps its precision). The engine does the same.
 
 Open:
 
-- Rounding: the device rounds the exact binary value, halfway cases to even (`%.0f` of `2.5#` is `2`, of `0.5#` is
-  `0`, `%.0e` of `2.5#` is `2e+00`, `%5.1f` of `2.25#` is `  2.2`), writes `%.3g` of `123456.789#` as `1.23e+05`
-  and `%f` of `1e300#` with all its digits. sprintf 1.3.0 gives `3`, `1`, `3e+00`, `  2.3`, `123000` and `1e+300`.
-  The e2e fixture leaves these cases out.
-- `2# ^ -1074` is a `Double` on the device (`4.94066e-324`); in the engine `Double ^ Integer` is a `Float` (0 here).
-- A `Double` read back from an array literal reports `roFloat` from `type()` on the device, even `1e300#` (the value
-  keeps its precision). The engine does the same.
+- `2# ^ -1074` is a `Double` on the device (`4.94066e-324`); in the engine `Double ^ Integer` is a `Float` (0 here), #1283.
