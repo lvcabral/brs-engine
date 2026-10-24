@@ -1,6 +1,5 @@
 ' The type and value of x ^ y for every pair of numeric types, and the precedence of ^ over unary minus. Expected
-' output is the device trace in test/simulator/probes/pow-type-probe/device-trace.txt, without the `1.1! ^ 2` line
-' (the engine keeps a Float rounded to 7 digits, so %.17g prints 1.21).
+' output is the device trace in test/simulator/probes/pow-type-probe/device-trace.txt.
 sub main()
     print "PROBE|start"
     r = 2 ^ 2
@@ -221,6 +220,8 @@ sub main()
     print "PROBE|assoc|2^3^2|" + type(r, 3) + "|" + r.ToStr()
     r = 1.1# ^ 2
     print "PROBE|prec|1.1#^2|" + type(r, 3) + "|" + r.ToStr("%.17g")
+    r = 1.1! ^ 2
+    print "PROBE|prec|1.1!^2|" + type(r, 3) + "|" + r.ToStr("%.17g")
     r = 3& ^ 40
     print "PROBE|prec|3&^40|" + type(r, 3) + "|" + r.ToStr()
     r = 3 ^ 40

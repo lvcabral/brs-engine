@@ -39,6 +39,5 @@ Before #1283 the engine picked the type from the exponent alone (`Double ^ Integ
 a `LongInteger` from a truncated base, `Integer ^ Integer` always a `Float`), parsed unary minus before `^`
 (`-2 ^ 2` was 4, `-2 ^ 0.5` was nan) and made `^` left-associative (`2 ^ 3 ^ 2` was 64).
 
-`engine-trace.txt` now matches `device-trace.txt` except for `1.1! ^ 2` with `%.17g`: the device prints the float32
-value `1.2100000381469727`, the engine `1.21`, because it keeps a `Float` rounded to 7 significant digits. The e2e
-fixture (`test/e2e/resources/pow-types.brs`) leaves that line out.
+`engine-trace.txt` matches `device-trace.txt`. Until #1286 the `1.1! ^ 2` line differed (the engine kept a `Float`
+rounded to 7 digits, so `%.17g` printed `1.21`).
