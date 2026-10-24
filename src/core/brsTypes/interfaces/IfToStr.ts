@@ -4,7 +4,6 @@ import {
     Callable,
     isBoxedNumber,
     isComparable,
-    nonFiniteText,
     RoBoolean,
     RoInvalid,
     RoString,
@@ -15,7 +14,7 @@ import { BrsComponent } from "../components/BrsComponent";
 import { BrsDevice } from "../../device/BrsDevice";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { Interpreter } from "../../interpreter";
-import { vsprintf } from "@lvcabral/sprintf";
+import { sprintf } from "@lvcabral/sprintf";
 
 /**
  * BrightScript Interface ifToStr
@@ -71,14 +70,18 @@ export class IfToStr {
                 );
             }
             const value = this.component.getValue();
-            const formatText = typeof value === "number" ? formatSignedSpecial(format.value, value) : format.value;
-            const tokens = formatText.split("%").length - 1;
+            const tokens = format.value.split("%").length - 1;
             if (tokens === 0) {
-                return new BrsString(formatText);
+                return new BrsString(format.value);
             }
-            const params = new Array(tokens).fill(value);
+            // Starting with the format keeps the array untyped: V8 clears the sign of a NaN stored in a numeric array.
+            const args: [string, ...any[]] = [format.value];
+            for (let i = 0; i < tokens; i++) {
+                args.push(value);
+            }
             try {
-                return new BrsString(vsprintf(formatText, params));
+                checkFormatSpecifiers(format.value);
+                return new BrsString(sprintf(...args));
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(
@@ -96,36 +99,17 @@ export class IfToStr {
     });
 }
 
+const unsupportedConversions = new Set(["a", "A", "i", "u"]);
+
 /**
- * Writes `-0` or a non-finite number into the floating-point conversions (`%f`, `%g`, `%e`, `%a`) of a format string
- * the way C's printf does on a device, which the sprintf library gets wrong: `nan`/`inf` with the sign and width
- * flags (no precision or zero padding), and `-0` with its sign.
+ * Rejects the conversions and flag the sprintf library accepts but a device does not: `%a`, `%A`, `%i`, `%u` and `#`.
  * @param format the format string.
- * @param value the number being formatted.
- * @returns the format string, with those conversions already written when `value` is one of these numbers.
+ * @throws an `Error` with an "unsupported placeholder" message.
  */
-function formatSignedSpecial(format: string, value: number) {
-    const text = nonFiniteText(value);
-    if (text === undefined && !Object.is(value, -0)) {
-        return format;
+export function checkFormatSpecifiers(format: string) {
+    for (const [spec, flags, conversion] of format.matchAll(/%([-+ 0#]*)\d*(?:\.\d*)?(.?)/g)) {
+        if (conversion !== "%" && (flags.includes("#") || unsupportedConversions.has(conversion))) {
+            throw new Error(`[sprintf] unsupported placeholder ${spec}`);
+        }
     }
-    const spec = /%([-+ 0#]*)(\d*)((?:\.\d*)?)([aAeEfFgG])/g;
-    return format.replaceAll(spec, (_spec, flags: string, width: string, precision: string, conversion: string) => {
-        const size = Number(width);
-        if (text === undefined) {
-            // -0: format a zero without sign flags or width, then add the sign.
-            const zero = vsprintf(`%${flags.replaceAll(/[-+ 0]/g, "")}${precision}${conversion}`, [0]);
-            if (flags.includes("-")) {
-                return ("-" + zero).padEnd(size);
-            }
-            return flags.includes("0") ? "-" + zero.padStart(size - 1, "0") : ("-" + zero).padStart(size);
-        }
-        let sign = "";
-        if (!text.startsWith("-") && flags.includes("+")) {
-            sign = "+";
-        } else if (!text.startsWith("-") && flags.includes(" ")) {
-            sign = " ";
-        }
-        return flags.includes("-") ? (sign + text).padEnd(size) : (sign + text).padStart(size);
-    });
 }

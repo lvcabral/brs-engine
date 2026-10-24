@@ -140,7 +140,7 @@ export function signedSpecialText(value: number): string | undefined {
  * @param value the number.
  * @returns the text, or `undefined` for a finite number.
  */
-export function nonFiniteText(value: number): string | undefined {
+function nonFiniteText(value: number): string | undefined {
     if (Number.isFinite(value)) {
         return undefined;
     } else if (Number.isNaN(value)) {

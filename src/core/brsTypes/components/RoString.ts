@@ -10,7 +10,7 @@ import { Int32 } from "../Int32";
 import { Float } from "../Float";
 import { RuntimeError, RuntimeErrorDetail } from "../../error/BrsError";
 import { sprintf } from "@lvcabral/sprintf";
-import { IfToStr } from "../interfaces/IfToStr";
+import { checkFormatSpecifiers, IfToStr } from "../interfaces/IfToStr";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoString extends BrsComponent implements BrsValue, Comparable, Unboxable {
@@ -621,7 +621,8 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
             },
             impl: (interpreter: Interpreter, ...additionalArgs: BrsType[]) => {
                 // Documentation: https://developer.roku.com/docs/references/brightscript/language/format-strings.md
-                let args: any[] = [];
+                // Starting with the format keeps the array untyped: V8 clears the sign of a NaN stored in a numeric array.
+                const args: [string, ...any[]] = [this.intrinsic.value];
                 if (additionalArgs.length > 0) {
                     for (let element of additionalArgs) {
                         if (isUnboxable(element)) {
@@ -635,14 +636,16 @@ export class RoString extends BrsComponent implements BrsValue, Comparable, Unbo
                     }
                 }
                 try {
-                    return new BrsString(sprintf(this.intrinsic.value, ...args));
+                    checkFormatSpecifiers(this.intrinsic.value);
+                    return new BrsString(sprintf(...args));
                 } catch (err: any) {
                     if (BrsDevice.isDevMode) {
                         BrsDevice.stderr.write(
                             `warning,roString.format() Error: ${err.message} at ${interpreter.formatLocation()}`
                         );
                     }
-                    const errorDetail = err.message?.includes("expecting number")
+                    // A device reports a specifier it does not support as a type mismatch here, unlike in ToStr().
+                    const errorDetail = /expecting number|unsupported placeholder/.test(err.message)
                         ? RuntimeErrorDetail.TypeMismatch
                         : RuntimeErrorDetail.InvalidFormatSpecifier;
                     throw new RuntimeError(errorDetail, interpreter.location, interpreter.getBacktrace());
