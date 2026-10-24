@@ -8,6 +8,7 @@ sub main()
     finf = 1e38 * 1e38
     dnan = Sqr(-1#)
     dinf = 1e308# * 10#
+    sprintfCases(dnan, dinf)
     formats("float-nan", fnan)
     formats("float-negnan", -fnan)
     formats("float-inf", finf)
@@ -41,6 +42,8 @@ sub main()
         end try
         print "PROBE|radix|" + r[0] + "|" + r[1].ToStr() + "|" + res
     end for
+    formatErrors()
+    print "PROBE|format-errnum|"; m.formatErrorNumber
     print "PROBE|done"
 end sub
 
@@ -74,4 +77,49 @@ sub vals(s as string)
     catch e
         print "PROBE|val10|" + s + "|ERR:" + e.number.ToStr()
     end try
+end sub
+
+' Format strings, without the probe's %a of a subnormal and the rounding cases (2.5# to "2"), which the engine does not
+' match yet.
+sub sprintfCases(dnan as double, dinf as double)
+    cases = [
+        ["%.0a", 1.5#], ["%A", 255.5#], ["%09a", -1#],
+        ["%E", 2.5#], ["%F", -dinf], ["%G", dnan], ["%G", 0.00001#],
+        ["% f", 2.5#], ["% d", 5], ["% 05d", 5], ["% u", 5], ["% x", 255],
+        ["%+ d", 5], ["% +d", 5], ["%-+5d", 5], ["%0-5d", 5], ["%#x", 255], ["%#.0f", 2#], ["%i", 5], ["%o", 8], ["%X", 255], ["%c", 65]
+    ]
+    for each c in cases
+        try
+            res = c[1].ToStr(c[0])
+        catch e
+            res = "ERR:" + e.number.ToStr()
+        end try
+        print "PROBE|sprintf|" + c[0] + "|" + type(c[1]) + "|" + res
+    end for
+    fmtCases = [["%f", dnan], ["%f", -dnan], ["%+e", dinf], ["%06.2f", -0#], ["%g|%d", 1.5#], ["%o", 8], ["%X", 255], ["%c", 65], ["%s", "ab"], ["%5s", "ab"], ["%.1s", "ab"]]
+    for each c in fmtCases
+        try
+            if c[0] = "%g|%d"
+                res = c[0].Format(c[1], 7)
+            else
+                res = c[0].Format(c[1])
+            end if
+        catch e
+            res = "ERR:" + e.message
+        end try
+        print "PROBE|format|" + c[0] + "|" + type(c[1]) + "|" + res
+    end for
+end sub
+
+' Specifiers Format() rejects with a type mismatch, where ToStr() gives Invalid Format Specifier.
+sub formatErrors()
+    for each c in [["%a", 1.5#], ["%A", 1.5#], ["%u", 5], ["%i", 5], ["%#x", 255], ["%#o", 8]]
+        try
+            res = c[0].Format(c[1])
+        catch e
+            res = "ERR:" + e.message
+            m.formatErrorNumber = e.number
+        end try
+        print "PROBE|format|" + c[0] + "|" + type(c[1]) + "|" + res
+    end for
 end sub

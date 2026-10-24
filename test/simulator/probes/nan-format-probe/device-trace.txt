@@ -1,4 +1,50 @@
 PROBE|start
+PROBE|types|Double|Double|Double|roFloat|roFloat|4.94066e-324|4.94066e-324
+PROBE|sprintf|%a|roFloat|ERR:36
+PROBE|sprintf|%.3a|roFloat|ERR:36
+PROBE|sprintf|%.0a|roFloat|ERR:36
+PROBE|sprintf|%.0a|roFloat|ERR:36
+PROBE|sprintf|%.1a|roFloat|ERR:36
+PROBE|sprintf|%a|roFloat|ERR:36
+PROBE|sprintf|%A|roFloat|ERR:36
+PROBE|sprintf|%09a|roFloat|ERR:36
+PROBE|sprintf|%a|roFloat|ERR:36
+PROBE|sprintf|%E|roFloat|2.500000E+00
+PROBE|sprintf|%F|roFloat|-INF
+PROBE|sprintf|%G|roFloat|NAN
+PROBE|sprintf|%G|roFloat|1E-05
+PROBE|sprintf|% f|roFloat| 2.500000
+PROBE|sprintf|% d|roInteger| 5
+PROBE|sprintf|% 05d|roInteger| 0005
+PROBE|sprintf|% u|roInteger|ERR:36
+PROBE|sprintf|% x|roInteger|ff
+PROBE|sprintf|%+ d|roInteger|+5
+PROBE|sprintf|% +d|roInteger|+5
+PROBE|sprintf|%-+5d|roInteger|+5   
+PROBE|sprintf|%0-5d|roInteger|5    
+PROBE|sprintf|%#x|roInteger|ERR:36
+PROBE|sprintf|%#.0f|roFloat|ERR:36
+PROBE|sprintf|%i|roInteger|ERR:36
+PROBE|sprintf|%o|roInteger|10
+PROBE|sprintf|%X|roInteger|FF
+PROBE|sprintf|%c|roInteger|A
+PROBE|sprintf|%.0f|roFloat|2
+PROBE|sprintf|%.0f|roFloat|0
+PROBE|sprintf|%.0e|roFloat|2e+00
+PROBE|sprintf|%5.1f|roFloat|  2.2
+PROBE|sprintf|%.3g|roFloat|1.23e+05
+PROBE|sprintf|%f|roFloat|1000000000000000052504760255204420248704468581108159154915854115511802457988908195786371375080447864043704443832883878176942523235360430575644792184786706982848387200926575803737830233794788090059368953234970799945081119038967640880074652742780142494579258788820056842838115669472196386865459400540160.000000
+PROBE|format|%f|roFloat|nan
+PROBE|format|%f|roFloat|-nan
+PROBE|format|%+e|roFloat|+inf
+PROBE|format|%06.2f|roFloat|-00.00
+PROBE|format|%g|%d|roFloat|1.5|7
+PROBE|format|%o|roInteger|10
+PROBE|format|%X|roInteger|FF
+PROBE|format|%c|roInteger|A
+PROBE|format|%s|roString|ab
+PROBE|format|%5s|roString|   ab
+PROBE|format|%.1s|roString|a
 PROBE|float-nan|type=Float|tostr=nan|str= nan|boxed=nan
 PROBE|float-nan|fmt=nan,nan,nan,  nan
 PROBE|float-nan|json=[nan]
@@ -235,4 +281,11 @@ PROBE|radix|12|-1|Integer|0
 PROBE|radix|-2147483648|10|Integer|-2147483648
 PROBE|radix|-2147483649|10|Integer|-2147483648
 PROBE|radix|4294967295|10|Integer|2147483647
+PROBE|format|%a|roFloat|ERR:Type Mismatch.
+PROBE|format|%A|roFloat|ERR:Type Mismatch.
+PROBE|format|%u|roInteger|ERR:Type Mismatch.
+PROBE|format|%i|roInteger|ERR:Type Mismatch.
+PROBE|format|%#x|roInteger|ERR:Type Mismatch.
+PROBE|format|%#o|roInteger|ERR:Type Mismatch.
+PROBE|format-errnum| 24
 PROBE|done

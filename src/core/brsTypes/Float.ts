@@ -1,13 +1,13 @@
 import { BrsType, BrsBoolean, isNumberComp } from ".";
 import { ValueKind, Comparable } from "./BrsType";
 import { Boxable } from "./Boxing";
-import { BrsNumber, Numeric, signedSpecialText } from "./BrsNumber";
+import { BrsNumber, Numeric } from "./BrsNumber";
 import { Int32 } from "./Int32";
 import { Double } from "./Double";
 import { Int64 } from "./Int64";
 import { RoFloat } from "./components/RoFloat";
 import Long from "long";
-import { vsprintf } from "@lvcabral/sprintf";
+import { sprintf } from "@lvcabral/sprintf";
 
 /**
  * Number of significant digits represented in an IEEE 32-bit floating point number.
@@ -219,7 +219,7 @@ export class Float implements Numeric, Comparable, Boxable {
     }
 
     toString(parent?: BrsType): string {
-        return signedSpecialText(this.value) ?? vsprintf("%g", [this.value]);
+        return sprintf("%g", this.value);
     }
 
     box() {
