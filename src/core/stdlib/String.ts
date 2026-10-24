@@ -158,7 +158,7 @@ export const Mid = new Callable(
 /**
  * Return a string from a numeric value. If it is positive, prefix it with a space.
  * Like a device, any numeric type is converted to a Float and written with 7 significant digits
- * (`Str(2166136261&)` is " 2.166136e+09").
+ * (`Str(2166136261&)` is " 2.166136e+09", `Str(1e300#)` is " inf").
  */
 export const Str = new Callable("Str", {
     signature: {
@@ -166,7 +166,6 @@ export const Str = new Callable("Str", {
         returns: ValueKind.String,
     },
     impl: (_: Interpreter, value: Double): BrsString => {
-        // A device converts the value to a Float and writes 7 significant digits (Str(1e300#) is " inf").
         const text = sprintf("%.7g", Math.fround(value.getValue()));
         return new BrsString(text.startsWith("-") ? text : " " + text);
     },

@@ -30,9 +30,11 @@ import { sprintf } from "@lvcabral/sprintf";
  */
 function jsonFloat(value: number): string {
     if (Number.isSafeInteger(value)) {
-        return sprintf("%.0f", value);
+        return Object.is(value, -0) ? "-0" : String(value);
+    } else if (Number.isInteger(value)) {
+        return sprintf("%.10g", value);
     }
-    return sprintf(Number.isInteger(value) ? "%.10g" : "%g", value);
+    return sprintf("%g", value);
 }
 
 /**
