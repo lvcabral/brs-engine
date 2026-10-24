@@ -2,7 +2,7 @@ const brs = require("../../packages/node/bin/brs.node");
 const { UCase, LCase, Asc, Chr, Left, Right, Instr, Len, Mid, Str, StrI, Substitute, Val, StrToI, STRING, StringI } =
     brs.stdlib;
 const { Interpreter } = brs;
-const { BrsString, Int32, Int64, Float } = brs.types;
+const { BrsString, Int32, Int64, Float, Double } = brs.types;
 
 const interpreter = new Interpreter();
 
@@ -142,14 +142,15 @@ describe("global string functions", () => {
             expect(Str.call(interpreter, new Int64(-456))).toEqual(new BrsString("-456"));
         });
 
-        it("preserves full precision for large LongInteger values", () => {
-            // 2166136261 is the FNV-1a offset basis (10 digits) - exceeds Float32 precision
-            expect(Str.call(interpreter, new Int64(2166136261))).toEqual(new BrsString(" 2166136261"));
+        it("writes a large LongInteger as a Float with 7 significant digits, like a device", () => {
+            expect(Str.call(interpreter, new Int64(2166136261))).toEqual(new BrsString(" 2.166136e+09"));
+            expect(Str.call(interpreter, new Int64(4294967295))).toEqual(new BrsString(" 4.294967e+09"));
         });
 
-        it("preserves full precision for max 32-bit unsigned value as LongInteger", () => {
-            // 4294967295 = 0xFFFFFFFF - max value that fits in 32-bit unsigned
-            expect(Str.call(interpreter, new Int64(4294967295))).toEqual(new BrsString(" 4294967295"));
+        it("writes a Double as a Float with 7 significant digits, like a device", () => {
+            expect(Str.call(interpreter, new Double(1 / 3))).toEqual(new BrsString(" 0.3333333"));
+            expect(Str.call(interpreter, new Double(1e300))).toEqual(new BrsString(" inf"));
+            expect(Str.call(interpreter, new Int32(16777217))).toEqual(new BrsString(" 1.677722e+07"));
         });
     });
 

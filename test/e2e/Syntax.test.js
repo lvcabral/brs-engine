@@ -155,6 +155,7 @@ describe("end to end syntax", () => {
             "PROBE|var|i^f|Float|1.15348e+06",
             "PROBE|assoc|2^3^2|Integer|512",
             "PROBE|prec|1.1#^2|Double|1.2100000000000002",
+            "PROBE|prec|1.1!^2|Float|1.2100000381469727",
             "PROBE|prec|3&^40|Double|1.21577e+19",
             "PROBE|prec|3^40|Integer|689956897",
             "PROBE|mix|-2^2*3|Integer|-12",
@@ -266,7 +267,7 @@ describe("end to end syntax", () => {
             "0.123.toStr() = 0.123",
             "123.4567 = 123.457",
             "123.4567.toStr() = 123.457",
-            "double = 10000.46", // RBI 10000.45703125
+            "double = 10000.45703125", // RBI 10000.45703125
             "double.toStr() = 10000.5",
             " 40",
             "40",

@@ -2,18 +2,15 @@ const brs = require("../../packages/node/bin/brs.node");
 const { ValueKind, Int32, Int64, Float, Double, BrsString, BrsBoolean, BrsInvalid } = brs.types;
 
 describe("Float", () => {
-    it("doesn't rounds initial values", () => {
-        let threePointFour = new Float(3.4);
-        let threePointFive = new Float(3.5);
-        expect(threePointFour.getValue()).toBeCloseTo(3.4, 7);
-        expect(threePointFive.getValue()).toBeCloseTo(3.5, 7);
+    it("keeps the 32-bit floating point value", () => {
+        expect(new Float(3.4).getValue()).toBe(Math.fround(3.4));
+        expect(new Float(3.5).getValue()).toBe(3.5);
+        expect(new Float(16777217).getValue()).toBe(16777216);
     });
 
     it("creates floats from strings", () => {
-        let threePointFour = Float.fromString("3.4");
-        let threePointFive = Float.fromString("3.5");
-        expect(threePointFour.getValue()).toBeCloseTo(3.4, 7);
-        expect(threePointFive.getValue()).toBeCloseTo(3.5, 7);
+        expect(Float.fromString("3.4").getValue()).toBe(Math.fround(3.4));
+        expect(Float.fromString("3.5").getValue()).toBe(3.5);
     });
 
     describe("addition", () => {
@@ -229,7 +226,7 @@ describe("Float", () => {
             let oneHalf = new Float(0.5);
             let result = onePointFive.pow(oneHalf);
             expect(result.kind).toBe(ValueKind.Float);
-            expect(result.getValue()).toBeCloseTo(1.224745, 7);
+            expect(result.getValue()).toBe(Math.fround(Math.sqrt(1.5)));
         });
 
         it("raises to Double powers", () => {

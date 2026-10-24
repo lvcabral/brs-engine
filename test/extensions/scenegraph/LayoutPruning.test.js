@@ -203,10 +203,10 @@ describe("pruned layout refresh", () => {
         expect(comp.getBoundingRect("toParent", interpreter)).toEqual({
             x: 0,
             y: -27.5,
-            width: 0.0001,
+            width: Math.fround(0.0001),
             height: 55,
         });
-        expect(button.rectToParent).toEqual({ x: 0, y: -27.5, width: 0.0001, height: 55 });
+        expect(button.rectToParent).toEqual({ x: 0, y: -27.5, width: Math.fround(0.0001), height: 55 });
     });
 
     test("a zero-width subtree re-measured at [0,0] keeps its in-tree scene rects (real-app regression)", () => {

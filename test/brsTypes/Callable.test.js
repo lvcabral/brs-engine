@@ -208,7 +208,7 @@ describe("Callable", () => {
                 test.each([
                     // pairs of [type, input, coerced_value]
                     ["integer", new BrsTypes.Int32(-5), new BrsTypes.Double(-5)],
-                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Double(3.14159)],
+                    ["float", new BrsTypes.Float(3.14159), new BrsTypes.Double(Math.fround(3.14159))],
                     ["double", new BrsTypes.Double(2.71828), new BrsTypes.Double(2.71828)],
                     ["longinteger", new BrsTypes.Int64(2147483647119), new BrsTypes.Double(2147483647119)],
                 ])("from %s to double", (_type, input, output) => {

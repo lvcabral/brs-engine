@@ -2,8 +2,19 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { ChannelStore, ContentNode, toContentNode } = scenegraph;
-const { BrsBoolean, BrsDevice, BrsString, Int32, RoAssociativeArray, RoChannelStore, isInvalid, toAssociativeArray } =
-    core;
+const {
+    BrsBoolean,
+    BrsDevice,
+    BrsString,
+    Double,
+    Float,
+    Int32,
+    Int64,
+    RoAssociativeArray,
+    RoChannelStore,
+    isInvalid,
+    toAssociativeArray,
+} = core;
 
 // The mocked ChannelStore commands, checked against Roku's reference for the node
 // (REFERENCES/scenegraph/control-nodes/channelstore.md) and for ifChannelStore. The end-to-end
@@ -194,6 +205,23 @@ describe("ChannelStore mocked commands", () => {
                 status: "Success",
                 total: "2.99",
             });
+        });
+
+        test("echoes a numeric price of any type with its short text", () => {
+            const cases = [
+                [new Float(2.99), "2.99"],
+                [new Float(1234567), "1234567"],
+                [new Float(1234567.5), "1234567.5"],
+                [new Float(2.99).box(), "2.99"],
+                [new Double(2.99), "2.99"],
+                [new Int32(3), "3"],
+                [new Int64(2166136261), "2166136261"],
+            ];
+            for (const [price, total] of cases) {
+                const request = toAssociativeArray({ code: "MOVIE1" });
+                request.set(new BrsString("price"), price);
+                expect(fakeStore().requestPartnerOrderData(request, "MOVIE1")).toMatchObject({ total });
+            }
         });
 
         test("a request missing a required field is rejected as an invalid request", () => {

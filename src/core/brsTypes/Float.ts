@@ -9,12 +9,6 @@ import { RoFloat } from "./components/RoFloat";
 import Long from "long";
 import { sprintf } from "@lvcabral/sprintf";
 
-/**
- * Number of significant digits represented in an IEEE 32-bit floating point number.
- * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Typed_arrays#Typed_array_views
- */
-const IEEE_FLOAT_SIGFIGS = 7;
-
 export class Float implements Numeric, Comparable, Boxable {
     readonly kind = ValueKind.Float;
     private readonly value: number;
@@ -29,17 +23,10 @@ export class Float implements Numeric, Comparable, Boxable {
 
     /**
      * Creates a new BrightScript floating-point value representing the provided `value`.
-     * @param value the value to store in the BrightScript float, rounded to 32-bit floating point
-     *              precision and maintaining only seven significant digits of accuracy.
+     * @param value the value to store in the BrightScript float, rounded to 32-bit floating point precision.
      */
     constructor(value: number | Long, public literal: boolean = false, public legacy: boolean = false) {
-        if (value instanceof Long) value = value.toNumber();
-        const rounded = Math.fround(value);
-        // NaN, infinities and zero are kept as is, so a NaN keeps its sign and -0 stays -0.
-        this.value =
-            Number.isFinite(rounded) && rounded !== 0
-                ? Number.parseFloat(rounded.toPrecision(IEEE_FLOAT_SIGFIGS))
-                : rounded;
+        this.value = Math.fround(value instanceof Long ? value.toNumber() : value);
     }
 
     /**

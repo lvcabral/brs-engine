@@ -24,7 +24,7 @@ import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
 import { ISGNode } from "../extensions";
 // BrightScript Type exports
 export * from "./BrsType";
-export { hasNegativeSign, signedSpecialText } from "./BrsNumber";
+export { hasNegativeSign } from "./BrsNumber";
 export * from "./Int32";
 export * from "./Int64";
 export * from "./Float";

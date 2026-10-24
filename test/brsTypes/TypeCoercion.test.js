@@ -115,7 +115,7 @@ describe("type coercion", () => {
             it.each([
                 // pairs of [type, input, coerced_value]
                 ["integer", new Int32(-5), new Double(-5)],
-                ["float", new Float(3.14159), new Double(3.14159)],
+                ["float", new Float(3.14159), new Double(Math.fround(3.14159))],
                 ["longinteger", new Int64(2147483647119), new Double(2147483647119)],
             ])("returns double for %s target", (_type, input, output) => {
                 expect(tryCoerce(input, ValueKind.Double)).toEqual(output);

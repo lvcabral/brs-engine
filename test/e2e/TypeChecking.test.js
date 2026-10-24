@@ -104,7 +104,7 @@ describe("function argument type checking", () => {
             "assigning RHS of type 'float' with value: 3.14159",
             "integer% =  3",
             "float! =  3.14159",
-            "double# =  3.14159",
+            "double# =  3.1415901184082",
             "longinteger& =  3",
             "assigning RHS of type 'integer' with value: 13",
             "integer% =  13",
