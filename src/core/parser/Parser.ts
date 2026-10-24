@@ -1402,21 +1402,9 @@ export class Parser {
         }
 
         function multiplicative(): Expression {
-            let expr = exponential();
-
-            while (match(Lexeme.Slash, Lexeme.Backslash, Lexeme.Star, Lexeme.Mod)) {
-                let operator = previous();
-                let right = exponential();
-                expr = new Expr.Binary(expr, operator, right);
-            }
-
-            return expr;
-        }
-
-        function exponential(): Expression {
             let expr = prefixUnary();
 
-            while (match(Lexeme.Caret)) {
+            while (match(Lexeme.Slash, Lexeme.Backslash, Lexeme.Star, Lexeme.Mod)) {
                 let operator = previous();
                 let right = prefixUnary();
                 expr = new Expr.Binary(expr, operator, right);
@@ -1436,7 +1424,20 @@ export class Parser {
                 return new Expr.Unary(operator, right);
             }
 
-            return call();
+            return exponential();
+        }
+
+        /** `^` binds tighter than unary minus (`-2 ^ 2` is -4) and is right-associative (`2 ^ 3 ^ 2` is 512). */
+        function exponential(): Expression {
+            let expr = call();
+
+            if (match(Lexeme.Caret)) {
+                let operator = previous();
+                let right = prefixUnary();
+                expr = new Expr.Binary(expr, operator, right);
+            }
+
+            return expr;
         }
 
         function call(): Expression {

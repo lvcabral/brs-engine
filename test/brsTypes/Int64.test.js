@@ -213,18 +213,18 @@ describe("Int64", () => {
     describe("exponentiation", () => {
         let nine = new Int64(9);
 
-        it("raises to Int32 powers", () => {
-            let three = new Int32(3);
-            let result = nine.pow(three);
-            expect(result.kind).toBe(ValueKind.Int64);
-            expect(result.getValue().toNumber()).toBe(729);
+        it("raises to Int32 powers as a Double", () => {
+            let result = nine.pow(new Int32(3));
+            expect(result.kind).toBe(ValueKind.Double);
+            expect(result.getValue()).toBe(729);
+            expect(new Int64(2).pow(new Int32(-1)).getValue()).toBe(0.5);
         });
 
-        it("raises to Int64 powers", () => {
-            let three = new Int64(3);
-            let result = nine.pow(three);
-            expect(result.kind).toBe(ValueKind.Int64);
-            expect(result.getValue().toNumber()).toBe(729);
+        it("raises to Int64 powers as a Double", () => {
+            let result = nine.pow(new Int64(3));
+            expect(result.kind).toBe(ValueKind.Double);
+            expect(result.getValue()).toBe(729);
+            expect(new Int64(3).pow(new Int64(40)).getValue()).toBe(Math.pow(3, 40));
         });
 
         it("raises to Float powers", () => {

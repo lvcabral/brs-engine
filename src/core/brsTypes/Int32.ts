@@ -157,9 +157,12 @@ export class Int32 implements Numeric, Comparable, Boxable {
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
+                if (exponent.getValue() >= 0) {
+                    return new Int32(integerPow(this.getValue(), exponent.getValue()));
+                }
                 return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Int64:
-                return new Int64(this.getValue()).pow(exponent);
+                return new Double(Math.pow(this.getValue(), exponent.getValue().toNumber()));
             case ValueKind.Float:
                 return new Float(Math.pow(this.getValue(), exponent.getValue()));
             case ValueKind.Double:
@@ -237,4 +240,23 @@ export class Int32 implements Numeric, Comparable, Boxable {
     box() {
         return new RoInt(this);
     }
+}
+
+/**
+ * Raises an Integer to a non-negative Integer power with 32-bit multiplication, wrapping around on overflow like a
+ * device (`2 ^ 31` is -2147483648).
+ * @param base the base.
+ * @param exponent the exponent, 0 or more.
+ * @returns the low 32 bits of the exact power, as a signed integer.
+ */
+function integerPow(base: number, exponent: number): number {
+    let result = 1;
+    let factor = base;
+    for (let rest = exponent; rest > 0; rest >>>= 1) {
+        if (rest & 1) {
+            result = Math.imul(result, factor);
+        }
+        factor = Math.imul(factor, factor);
+    }
+    return result;
 }

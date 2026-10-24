@@ -146,13 +146,12 @@ export class Int64 implements Numeric, Comparable, Boxable {
     pow(exponent: BrsNumber): BrsNumber {
         switch (exponent.kind) {
             case ValueKind.Int32:
-                return new Int64(Math.pow(this.getValue().toNumber(), exponent.getValue()));
-            case ValueKind.Float:
-                return new Float(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Double:
                 return new Double(Math.pow(this.getValue().toNumber(), exponent.getValue()));
+            case ValueKind.Float:
+                return new Float(Math.pow(this.getValue().toNumber(), exponent.getValue()));
             case ValueKind.Int64:
-                return new Int64(Math.pow(this.getValue().toNumber(), exponent.getValue().toNumber()));
+                return new Double(Math.pow(this.getValue().toNumber(), exponent.getValue().toNumber()));
         }
     }
 
