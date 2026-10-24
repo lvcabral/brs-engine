@@ -511,7 +511,13 @@ export class Lexer {
                 advance();
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;
-            } else if (numberOfDigits >= 10 && !["&", "e", "d", "!"].includes(designator)) {
+            } else if (
+                numberOfDigits >= 10 &&
+                designator !== "&" &&
+                designator !== "e" &&
+                designator !== "d" &&
+                designator !== "!"
+            ) {
                 // numeric literals over 10 digits with no type designator are implicitly Doubles
                 addToken(Lexeme.Double, Double.fromString(asString));
                 return;

@@ -9,6 +9,7 @@ import {
     FlexObject,
     isBrsString,
     isAnyNumber,
+    isUnboxable,
     jsValueOf,
 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
@@ -372,7 +373,26 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         if (isBrsString(value)) {
             return value.getValue().trim();
         }
-        return isAnyNumber(value) ? value.toString() : "";
+        if (!isAnyNumber(value)) {
+            return "";
+        }
+        const number = jsValueOf(value);
+        const isFloat = (isUnboxable(value) ? value.unbox() : value).kind === ValueKind.Float;
+        return isFloat ? RoChannelStore.float32Text(number) : number.toString();
+    }
+
+    /**
+     * Writes a float32 value with the fewest digits that read back as the same value (`2.99!` is "2.99", not
+     * "2.990000009536743"; `1234567!` is "1234567").
+     */
+    private static float32Text(value: number): string {
+        for (let digits = 1; digits < 9; digits++) {
+            const shortest = Number(value.toPrecision(digits));
+            if (Math.fround(shortest) === value) {
+                return shortest.toString();
+            }
+        }
+        return value.toString();
     }
 
     /**

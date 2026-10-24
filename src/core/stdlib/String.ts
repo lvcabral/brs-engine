@@ -157,8 +157,8 @@ export const Mid = new Callable(
 
 /**
  * Return a string from a numeric value. If it is positive, prefix it with a space.
- * Uses a single Double overload so that Float, Int32, and Int64 all coerce without
- * precision loss (JavaScript numbers are 64-bit doubles natively).
+ * Like a device, any numeric type is converted to a Float and written with 7 significant digits
+ * (`Str(2166136261&)` is " 2.166136e+09").
  */
 export const Str = new Callable("Str", {
     signature: {
