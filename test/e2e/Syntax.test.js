@@ -157,6 +157,9 @@ describe("end to end syntax", () => {
             "PROBE|prec|1.1#^2|Double|1.2100000000000002",
             "PROBE|prec|3&^40|Double|1.21577e+19",
             "PROBE|prec|3^40|Integer|689956897",
+            "PROBE|mix|-2^2*3|Integer|-12",
+            "PROBE|mix|2*-3^2|Integer|-18",
+            "PROBE|mix|-2^-1|Float|-0.5",
             "PROBE|done",
         ]);
     });

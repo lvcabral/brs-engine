@@ -32,7 +32,8 @@ The result type comes from both operands, and for two Integers from the sign of 
 | `Integer ^ Integer`, `y < 0` | `Float` (`2 ^ -1` is 0.5, `2 ^ -1074` is 0) |
 
 `^` binds tighter than unary minus (`-2 ^ 2` is -4, `-8# ^ 0.5#` is -2.82843) and is right-associative
-(`2 ^ 3 ^ 2` is 512), as the language reference says.
+(`2 ^ 3 ^ 2` is 512), as the language reference says. Unary minus sits between `^` and `*`: `-2 ^ 2 * 3` is -12 and
+`2 * -3 ^ 2` is -18.
 
 Before #1283 the engine picked the type from the exponent alone (`Double ^ Integer` was a `Float`, `Double ^ LongInteger`
 a `LongInteger` from a truncated base, `Integer ^ Integer` always a `Float`), parsed unary minus before `^`

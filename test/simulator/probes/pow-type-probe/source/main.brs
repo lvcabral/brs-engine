@@ -228,5 +228,12 @@ sub main()
     print "PROBE|prec|3&^40|" + type(r, 3) + "|" + r.ToStr()
     r = 3 ^ 40
     print "PROBE|prec|3^40|" + type(r, 3) + "|" + r.ToStr()
+    ' Unary minus between ^ and *.
+    r = -2 ^ 2 * 3
+    print "PROBE|mix|-2^2*3|" + type(r, 3) + "|" + r.ToStr()
+    r = 2 * -3 ^ 2
+    print "PROBE|mix|2*-3^2|" + type(r, 3) + "|" + r.ToStr()
+    r = -2 ^ -1
+    print "PROBE|mix|-2^-1|" + type(r, 3) + "|" + r.ToStr()
     print "PROBE|done"
 end sub
