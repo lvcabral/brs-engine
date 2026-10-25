@@ -141,7 +141,6 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
-    /** Also called by `Pop`, `Shift`, `Unshift` and `Delete`: on a device they restart the enumeration. */
     resetNext() {
         this.enumIndex = this.elements.length > 0 ? 0 : -1;
     }

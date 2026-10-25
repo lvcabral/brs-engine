@@ -128,7 +128,6 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
 
     /** With `keepPosition` (`Delete`), the enumeration stays on the same element; `Pop` and `Shift` keep the index. */
     remove(index: number, keepPosition: boolean = false) {
-        const inRange = index >= 0 && index < this.elements.length;
         let removed;
         if (index === 0) {
             removed = this.elements.shift();
@@ -137,7 +136,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
         } else {
             removed = this.elements.splice(index, 1)[0];
         }
-        if (keepPosition && inRange && this.enumIndex > index) {
+        if (keepPosition && this.enumIndex > index) {
             this.enumIndex--;
         }
         // An ended enumeration stays ended.
