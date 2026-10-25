@@ -226,7 +226,7 @@ export class RoArray extends BrsComponent implements BrsValue, BrsArray {
                 this.enumIndex = -1;
             }
         }
-        return this.elements[index];
+        return this.elements[index] ?? BrsInvalid.Instance;
     }
 
     resetNext() {
