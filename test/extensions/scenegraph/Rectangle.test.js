@@ -1,7 +1,7 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, Node } = scenegraph;
+const { SGNodeFactory, Node, Group } = scenegraph;
 const { Float, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
@@ -214,6 +214,22 @@ describe("Rectangle node scale", () => {
 
         const scaleCalls = spy.mock.calls.filter(([field]) => field === "scale");
         expect(scaleCalls.length).toBe(1);
+        spy.mockRestore();
+    });
+
+    test("unscaled, unrotated Groups never read scaleRotateCenter while rendering", () => {
+        const group = SGNodeFactory.createNode("Group");
+        group.setValue("translation", vector([30, 40]));
+        const inner = SGNodeFactory.createNode("Group");
+        inner.appendChildToParent(rectangle({ translation: [10, 20] }));
+        group.appendChildToParent(inner);
+        const spy = vi.spyOn(Node.prototype, "getValue");
+        group.renderNode(fakeInterpreter, [0, 0], 0, 1, { doDrawRotatedRect() {} });
+
+        const groupCenterReads = spy.mock.calls.filter(
+            ([field], call) => field === "scaleRotateCenter" && spy.mock.contexts[call].constructor === Group
+        );
+        expect(groupCenterReads.length).toBe(0);
         spy.mockRestore();
     });
 });

@@ -279,6 +279,9 @@ export class Group extends Node {
         const translation = this.getValueJS("translation") as number[];
         // Adjust translation based on scale and rotation center
         scale ??= this.getValueJS("scale") as number[];
+        if (scale[0] === 1 && scale[1] === 1) {
+            return translation;
+        }
         const scaleRotateCenter = this.getScaleRotateCenter();
         const scaleDiffX = scaleRotateCenter[0] * (scale[0] - 1);
         const scaleDiffY = scaleRotateCenter[1] * (scale[1] - 1);
@@ -779,12 +782,13 @@ export class Group extends Node {
             const parent = this.parent;
             parent.rectLocal = unionRect(parent.rectLocal, this.rectToParent);
             const parentScale = parent.getValueJS("scale") as number[];
+            const parentRotation = parent.getRotation();
             const inParent = transformLocalRect(
                 this.rectToParent,
                 parent.getTranslation(parentScale),
                 parentScale,
-                parent.getRotation(),
-                parent.getScaleRotateCenter()
+                parentRotation,
+                parentRotation === 0 ? [0, 0] : parent.getScaleRotateCenter()
             );
             parent.rectToParent = unionRect(parent.rectToParent, inParent);
             parent.rectToScene = unionRect(parent.rectToScene, this.rectToScene);
@@ -929,10 +933,12 @@ export class Group extends Node {
         scale?: number[]
     ) {
         let childOrigin = origin;
-        const center = this.getScaleRotateCenter();
-        if (angle !== 0 && (center[0] !== 0 || center[1] !== 0)) {
-            const turned = rotateTranslation(center, angle);
-            childOrigin = [origin[0] + center[0] - turned[0], origin[1] + center[1] - turned[1]];
+        if (angle !== 0) {
+            const center = this.getScaleRotateCenter();
+            if (center[0] !== 0 || center[1] !== 0) {
+                const turned = rotateTranslation(center, angle);
+                childOrigin = [origin[0] + center[0] - turned[0], origin[1] + center[1] - turned[1]];
+            }
         }
         // A childless node has nothing to scale, so it skips the field read and the canvas bracket.
         if (this.children.length > 0) {
@@ -1078,8 +1084,9 @@ export class Group extends Node {
         if (!Number.isFinite(this.rectLocal.x)) {
             return;
         }
-        const center = this.getScaleRotateCenter();
-        this.rectToParent = transformLocalRect(this.rectLocal, nodeTrans, scale, this.getRotation(), center);
+        const ownRotation = this.getRotation();
+        const center = ownRotation === 0 && rotation === 0 ? [0, 0] : this.getScaleRotateCenter();
+        this.rectToParent = transformLocalRect(this.rectLocal, nodeTrans, scale, ownRotation, center);
         this.rectToScene = mapRectToScene(
             this.sceneMap,
             transformLocalRect(this.rectLocal, drawTrans, scale, rotation, center)
