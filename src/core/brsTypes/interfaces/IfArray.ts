@@ -98,7 +98,7 @@ export class IfArray {
             if (index.lessThan(new Int32(0)).toBoolean()) {
                 return BrsBoolean.False;
             }
-            return this.component.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
+            return this.component.remove(index.getValue(), true) ? BrsBoolean.True : BrsBoolean.False;
         },
     });
 
@@ -249,7 +249,7 @@ export interface BrsArray extends BrsIterable {
 
     add(value: BrsType, toTail: boolean, store?: MemberStore): void;
 
-    remove(index: number): BrsType | undefined;
+    remove(index: number, keepPosition?: boolean): BrsType | undefined;
 
     clear(): void;
 

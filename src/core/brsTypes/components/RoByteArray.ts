@@ -141,6 +141,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
         }
     }
 
+    /** Also called by `Pop`, `Shift`, `Unshift` and `Delete`: on a device they restart the enumeration. */
     resetNext() {
         this.enumIndex = this.elements.length > 0 ? 0 : -1;
     }
@@ -474,7 +475,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             let array = new Uint8Array(index);
             array.set(this.elements.slice(0, index), 0);
             this.elements = array;
-            return item ? new Int32(item) : BrsInvalid.Instance;
+            this.resetNext();
+            return new Int32(item);
         },
     });
 
@@ -521,7 +523,8 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             let array = new Uint8Array(this.elements.length - 1);
             array.set(this.elements.slice(1));
             this.elements = array;
-            return item ? new Int32(item) : BrsInvalid.Instance;
+            this.resetNext();
+            return new Int32(item);
         },
     });
 
@@ -538,7 +541,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
                     array[0] = jsValueOf(byte);
                     array.set(this.elements, 1);
                     this.elements = array;
-                    this.updateNext();
+                    this.resetNext();
                     this.updateCapacity(1.25);
                 } else {
                     BrsDevice.stderr.write(
@@ -569,6 +572,7 @@ export class RoByteArray extends BrsComponent implements BrsValue, BrsIterable {
             array.set(this.elements.slice(0, idx), 0);
             array.set(this.elements.slice(idx + 1), idx);
             this.elements = array;
+            this.resetNext();
             return BrsBoolean.True;
         },
     });

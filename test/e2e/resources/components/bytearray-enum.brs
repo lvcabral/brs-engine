@@ -1,12 +1,12 @@
-' for each and ifEnum (IsNext/Next/Reset/IsEmpty) on roByteArray, with roArray as a baseline.
-' Expected output is the device trace in test/simulator/probes/bytearray-enum-probe/device-trace.txt,
-' except ba.popDuring (Pop inside a for each restarts a roByteArray enumeration on the device).
+' for each and ifEnum (IsNext/Next/Reset/IsEmpty) on roByteArray, with roArray and roList as baselines.
+' Expected output is the device trace in test/simulator/probes/bytearray-enum-probe/device-trace.txt.
 sub main()
     out("start", [])
-    for each kind in ["ba", "arr"]
+    for each kind in ["ba", "arr", "list"]
         forEachCases(kind)
         enumCases(kind)
         mutationCases(kind)
+        restartCases(kind)
     end for
     out("done", [])
 end sub
@@ -24,7 +24,7 @@ function make(kind as string, hex as string) as object
         c = CreateObject("roByteArray")
         c.FromHexString(hex)
     else
-        c = CreateObject("roArray", 4, true)
+        if kind = "list" then c = CreateObject("roList") else c = CreateObject("roArray", 4, true)
         for i = 0 to Len(hex) - 1 step 2
             c.Push(Val(Mid(hex, i + 1, 2), 16))
         end for
@@ -109,15 +109,13 @@ sub mutationCases(kind as string)
     end for
     out(kind + ".pushDuring", [s, c.Count().toStr()])
 
-    if kind = "arr"
-        c = make(kind, "010203")
-        s = ""
-        for each b in c
-            s = s + b.toStr() + ","
-            if b = 1 then c.Pop()
-        end for
-        out(kind + ".popDuring", [s, c.Count().toStr()])
-    end if
+    c = make(kind, "010203")
+    s = ""
+    for each b in c
+        s = s + b.toStr() + ","
+        if b = 1 then c.Pop()
+    end for
+    out(kind + ".popDuring", [s, c.Count().toStr()])
 
     c = make(kind, "010203")
     s = ""
@@ -133,4 +131,130 @@ sub mutationCases(kind as string)
         b = b + 100
     end for
     out(kind + ".loopVarCopy", [walk(c)])
+end sub
+
+' Applies one mutation the first time the loop reads `trigger`, to see whether the enumeration restarts at
+' index 0 or continues. Capped at 12 reads in case a restart repeats forever.
+function mutateDuring(kind as string, hex as string, trigger as integer, op as string) as string
+    c = make(kind, hex)
+    s = ""
+    n = 0
+    done = false
+    for each b in c
+        s = s + b.toStr() + ","
+        n = n + 1
+        if n >= 12 then exit for
+        if b = trigger and not done
+            done = true
+            applyOp(kind, c, op)
+        end if
+    end for
+    return s + "|" + c.Count().toStr()
+end function
+
+sub applyOp(kind as string, c as object, op as string)
+    if op = "pop"
+        c.Pop()
+    else if op = "shift"
+        c.Shift()
+    else if op = "delete0"
+        c.Delete(0)
+    else if op = "deleteLast"
+        c.Delete(c.Count() - 1)
+    else if op = "delete1"
+        c.Delete(1)
+    else if op = "delete2"
+        c.Delete(2)
+    else if op = "clear"
+        c.Clear()
+    else if op = "append"
+        c.Append(make(kind, "0506"))
+    else if op = "unshift"
+        c.Unshift(9)
+    else if op = "push"
+        c.Push(9)
+    else if op = "setEntry0"
+        c[0] = 99
+    else if op = "setResize"
+        c.SetResize(10, true)
+    else if op = "fromHex"
+        c.FromHexString("0A0B0C0D")
+    else if op = "fromAscii"
+        c.FromAsciiString("AB")
+    else if op = "fromBase64"
+        c.FromBase64String("CgsM")
+    else if op = "readFile"
+        c.ReadFile("tmp:/probe.bin")
+    end if
+end sub
+
+sub restartCases(kind as string)
+    if kind = "ba"
+        f = CreateObject("roByteArray")
+        f.FromHexString("1E1F")
+        f.WriteFile("tmp:/probe.bin")
+    end if
+    ops = ["pop", "shift", "delete0", "deleteLast", "clear", "append", "unshift", "push", "setEntry0"]
+    if kind = "ba" then ops.Append(["setResize", "fromHex", "fromAscii", "fromBase64", "readFile"])
+    for each op in ops
+        ' Mutate on the second element, then on the first.
+        out(kind + ".r2." + op, [mutateDuring(kind, "01020304", 2, op)])
+        out(kind + ".r1." + op, [mutateDuring(kind, "01020304", 1, op)])
+    end for
+    ' Delete before, at and after the current position, mutating on the third element.
+    for each op in ["delete1", "delete2", "deleteLast"]
+        out(kind + ".r3." + op, [mutateDuring(kind, "01020304", 3, op)])
+    end for
+
+    ' Unshift after the enumeration ended.
+    c = make(kind, "0102")
+    walk(c)
+    c.Unshift(9)
+    out(kind + ".unshiftAfterEnd", [c.IsNext().toStr(), show(c.Next())])
+
+    ' Unshift onto a new empty and a cleared object.
+    c = make(kind, "")
+    c.Unshift(9)
+    out(kind + ".unshiftEmpty", [c.IsNext().toStr(), show(c.Next())])
+    c = make(kind, "0102")
+    c.Clear()
+    c.Unshift(9)
+    out(kind + ".unshiftCleared", [c.IsNext().toStr(), show(c.Next())])
+
+    ' Delete, Pop and Shift after the enumeration ended.
+    for each op in ["delete0", "pop", "shift"]
+        c = make(kind, "010203")
+        walk(c)
+        applyOp(kind, c, op)
+        out(kind + ".afterEnd." + op, [c.IsNext().toStr(), show(c.Next())])
+    end for
+
+    ' A zero element returned by Pop and Shift.
+    c = make(kind, "000100")
+    out(kind + ".zeroPopShift", [show(c.Pop()), show(c.Shift()), c.Count().toStr()])
+
+    ' Pop during a manual IsNext/Next loop: is it the enumerator or for each?
+    c = make(kind, "01020304")
+    c.Reset()
+    s = ""
+    n = 0
+    done = false
+    while c.IsNext() and n < 12
+        v = c.Next()
+        s = s + v.toStr() + ","
+        n = n + 1
+        if v = 2 and not done
+            done = true
+            c.Pop()
+        end if
+    end while
+    out(kind + ".manualPop", [s, c.Count().toStr()])
+
+    ' Pop outside any loop after a partial Next(): where does Next() continue?
+    c = make(kind, "01020304")
+    c.Reset()
+    c.Next()
+    c.Next()
+    c.Pop()
+    out(kind + ".nextThenPop", [c.IsNext().toStr(), show(c.Next())])
 end sub
