@@ -71,12 +71,10 @@ function jsonOf(x: BrsType, flags: number = 0, key: string = ""): string {
                     .join(",")}}`;
             }
             if (x instanceof RoArray) {
-                return `[${x
-                    .getElements()
-                    .map((el: BrsType) => {
-                        return jsonOf(el, flags, key);
-                    })
-                    .join(",")}]`;
+                // Array.from visits the holes (entries never set) that map() would skip.
+                return `[${Array.from(x.getElements(), (el: BrsType | undefined) => {
+                    return jsonOf(el ?? BrsInvalid.Instance, flags, key);
+                }).join(",")}]`;
             }
             if (isUnboxable(x)) {
                 return jsonOf(x.unbox(), flags, key);

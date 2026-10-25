@@ -606,6 +606,29 @@ describe("end to end brightscript functions", () => {
         ]);
     });
 
+    test("components/sparse-array.brs", async () => {
+        await execute([resourceFile("components", "sparse-array.brs")], outputStreams);
+
+        // Device trace: test/simulator/probes/sparse-array-probe/device-trace.txt
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "PROBE|start",
+            "PROBE|count|4",
+            "PROBE|forEach|invalid:Invalid,Integer:1,invalid:Invalid,Integer:3,",
+            "PROBE|manualNext|invalid:Invalid,Integer:1,invalid:Invalid,Integer:3,",
+            "PROBE|index|invalid:Invalid|invalid:Invalid|invalid:Invalid",
+            "PROBE|getEntry|invalid:Invalid|invalid:Invalid",
+            "PROBE|peekShift|Integer:1|invalid:Invalid",
+            "PROBE|popTail|invalid:Invalid|4",
+            "PROBE|deleteHole|true|3|Integer:1",
+            "PROBE|deleteHoleDuring|invalid:Invalid,Integer:1,invalid:Invalid,Integer:3,|3",
+            "PROBE|join|String",
+            "PROBE|isInvalid|true|Invalid",
+            "PROBE|append|3",
+            "PROBE|json|[null,1,null,3]",
+            "PROBE|done",
+        ]);
+    });
+
     test("components/numeric-args.brs", async () => {
         await execute([resourceFile("components", "numeric-args.brs")], outputStreams);
 
