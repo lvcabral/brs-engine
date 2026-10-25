@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, BrsBoolean, Float, RoArray } = core;
+const { BrsDevice, BrsString, BrsBoolean, BrsInvalid, Float, RoArray } = core;
 
 /** Minimal interpreter accepted by renderNode → renderChildren (never dereferenced when draw2D is absent). */
 const fakeInterpreter = {};
@@ -123,6 +123,14 @@ describe("Label node wrap/vertAlign", () => {
 
         const ys = captureLineYs(label);
         expect(new Set(ys).size).toBe(3); // three distinct line positions, not stacked on one y
+    });
+
+    test("font set to invalid keeps drawing with the default font", () => {
+        const label = SGNodeFactory.createNode("Label");
+        label.setValue("text", new BrsString("hello"));
+        label.setValue("font", BrsInvalid.Instance);
+
+        expect(captureLineTexts(label)).toEqual(["hello"]);
     });
 
     /**

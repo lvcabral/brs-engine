@@ -408,7 +408,7 @@ export class Group extends Node {
         index: number = 0,
         scale?: number[]
     ) {
-        const drawFont = font.createDrawFont();
+        const drawFont = (isFont(font) ? font : (SGNodeFactory.createNode(SGNodeType.Font) as Font)).createDrawFont();
         if (!(drawFont instanceof RoFont)) {
             return { text: fullText, width: 0, height: 0, ellipsized: false };
         }
@@ -475,7 +475,7 @@ export class Group extends Node {
         draw2D?: IfDraw2D,
         scale?: number[]
     ): MeasuredText {
-        const drawFont = font.createDrawFont();
+        const drawFont = (isFont(font) ? font : (SGNodeFactory.createNode(SGNodeType.Font) as Font)).createDrawFont();
         if (!(drawFont instanceof RoFont)) {
             return { text, width: rect.width, height: 0, ellipsized: false };
         }
