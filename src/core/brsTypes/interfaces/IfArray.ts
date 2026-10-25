@@ -95,10 +95,13 @@ export class IfArray {
             returns: ValueKind.Boolean,
         },
         impl: (_: Interpreter, index: Int32) => {
-            if (index.lessThan(new Int32(0)).toBoolean()) {
+            const idx = index.getValue();
+            // A hole (an entry never set) is still an entry: deleting it succeeds.
+            if (idx < 0 || idx >= this.component.getValue().length) {
                 return BrsBoolean.False;
             }
-            return this.component.remove(index.getValue()) ? BrsBoolean.True : BrsBoolean.False;
+            this.component.remove(idx, true);
+            return BrsBoolean.True;
         },
     });
 
@@ -249,7 +252,7 @@ export interface BrsArray extends BrsIterable {
 
     add(value: BrsType, toTail: boolean, store?: MemberStore): void;
 
-    remove(index: number): BrsType | undefined;
+    remove(index: number, keepPosition?: boolean): BrsType | undefined;
 
     clear(): void;
 
