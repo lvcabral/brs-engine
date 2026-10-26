@@ -25,7 +25,6 @@ export class Timer extends Node {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
-        sgRoot.timers.push(this);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -37,8 +36,12 @@ export class Timer extends Node {
             if (control === "start") {
                 this.lastFireTime = sgClock.perfNow();
                 this.active = true;
+                if (!sgRoot.timers.includes(this)) {
+                    sgRoot.timers.push(this);
+                }
             } else if (control === "stop") {
                 this.active = false;
+                this.release();
             } else {
                 control = "none";
             }
@@ -47,6 +50,13 @@ export class Timer extends Node {
             return;
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    private release() {
+        const index = sgRoot.timers.indexOf(this);
+        if (index > -1) {
+            sgRoot.timers.splice(index, 1);
+        }
     }
 
     setCallback(callback: Function) {
@@ -60,6 +70,9 @@ export class Timer extends Node {
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
             this.active = repeat;
+            if (!repeat) {
+                this.release();
+            }
             this.fields.get("fire")?.setValue(BrsInvalid.Instance);
             if (this.jsCallback) {
                 this.jsCallback();

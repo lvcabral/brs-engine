@@ -655,7 +655,7 @@ export class SGRoot {
      */
     processTimers(): boolean {
         let fired = false;
-        for (const timer of this._timers) {
+        for (const timer of this._timers.slice()) {
             if (timer.active && timer.checkFire()) {
                 fired = true;
             }
