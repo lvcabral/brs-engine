@@ -27,6 +27,10 @@ import {
     ExtVolInitialSize,
     ExtVolMaxSize,
     BufferType,
+    AppData,
+    ChannelCredData,
+    ChannelCredInitialSize,
+    ChannelCredMaxSize,
 } from "../common";
 import { collectGraphicsData } from "./Graphics";
 import SharedObject from "../SharedObject";
@@ -92,6 +96,13 @@ export class BrsDevice {
     /** Array Buffer to Share the Registry across threads */
     private static registryVersion: number = 0;
     private static sharedRegistry?: SharedObject;
+
+    /** Channel credential store: the simulated Roku cloud store behind StoreChannelCredData, keyed
+     * `developerId.channelId`. Shared across threads through its own buffer and persisted by the host
+     * — never part of the registry, which is the app's own storage. */
+    private static channelCredentials = new Map<string, string>();
+    private static channelCredVersion: number = 0;
+    private static sharedChannelCreds?: SharedObject;
 
     /**
      * Returns the SharedArrayBuffer used for the tmp: volume.
@@ -292,6 +303,70 @@ export class BrsDevice {
     }
 
     /**
+     * Returns the app currently running, as listed in the device's app list.
+     * @returns The running app, or `undefined` when none is listed (e.g. a bare `.brs` run)
+     */
+    static getRunningApp(): AppData | undefined {
+        return this.deviceInfo.appList?.find((app: AppData) => app.running);
+    }
+
+    /**
+     * Loads the channel credential store, from the buffer shared with the other threads or from a
+     * plain map (a persisted copy, when no buffer is shared).
+     * @param data Map or SharedArrayBuffer with the store content
+     */
+    static setChannelCredentials(data: Map<string, string> | SharedArrayBuffer) {
+        if (data instanceof SharedArrayBuffer) {
+            this.sharedChannelCreds = new SharedObject(ChannelCredInitialSize, ChannelCredMaxSize);
+            this.sharedChannelCreds.setBuffer(data);
+            this.channelCredVersion = -1;
+            this.refreshChannelCredentials();
+        } else {
+            this.channelCredentials = new Map(data);
+        }
+    }
+
+    /**
+     * Reads an artifact from the channel credential store.
+     * @param key Store key (`developerId.channelId`)
+     * @returns The stored artifact, or `undefined` when nothing is stored
+     */
+    static getChannelCredential(key: string): string | undefined {
+        this.refreshChannelCredentials();
+        return this.channelCredentials.get(key);
+    }
+
+    /**
+     * Writes an artifact to the channel credential store (an empty one clears the entry), then
+     * publishes the store to the other threads and to the host, for persistence.
+     * @param key Store key (`developerId.channelId`)
+     * @param value Artifact to store
+     */
+    static setChannelCredential(key: string, value: string) {
+        this.refreshChannelCredentials();
+        if (value === "") {
+            this.channelCredentials.delete(key);
+        } else {
+            this.channelCredentials.set(key, value);
+        }
+        if (this.sharedChannelCreds) {
+            this.sharedChannelCreds.store(Object.fromEntries(this.channelCredentials));
+            this.channelCredVersion = this.sharedChannelCreds.getVersion();
+        }
+        const data: ChannelCredData = { channelCredentials: this.channelCredentials };
+        postMessage(data);
+    }
+
+    /** Reloads the channel credential store if another thread published a newer version. */
+    private static refreshChannelCredentials() {
+        const shared = this.sharedChannelCreds;
+        if (shared && shared.getVersion() !== this.channelCredVersion) {
+            this.channelCredVersion = shared.getVersion();
+            this.channelCredentials = new Map(Object.entries(shared.load()));
+        }
+    }
+
+    /**
      * Sets up the device shared array for inter-thread communication.
      * @param sharedArray Int32Array to be used as the shared array
      */
@@ -306,7 +381,7 @@ export class BrsDevice {
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (const key of Object.keys(deviceInfo) as (keyof DeviceInfo)[]) {
-            if (key.startsWith("registry") || key === "assets") {
+            if (key.startsWith("registry") || key.startsWith("channelCred") || key === "assets") {
                 continue;
             }
             const newValue = this.normalizeDeviceInfoValue(key, deviceInfo[key]);

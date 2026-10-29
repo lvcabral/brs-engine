@@ -51,6 +51,8 @@ export interface DeviceInfo {
     logLevel: LogLevel;
     registry?: Map<string, string>;
     registryBuffer?: SharedArrayBuffer;
+    channelCredentials?: Map<string, string>;
+    channelCredBuffer?: SharedArrayBuffer;
     models?: Map<string, string[]>;
     audioCodecs?: string[];
     videoFormats?: Map<string, string[]>;
@@ -307,6 +309,23 @@ export interface RegistryData {
     readonly current: Map<string, string>;
     readonly removed: string[];
     isDirty: boolean;
+}
+
+/**
+ * Channel credential store contents (see `BrsDevice.channelCredentials`), posted to the host whenever
+ * an app stores an artifact, so it can persist the store.
+ */
+export interface ChannelCredData {
+    readonly channelCredentials: Map<string, string>;
+}
+
+/**
+ * Type guard to check if a value is a ChannelCredData object.
+ * @param value the value to check
+ * @returns true if the value is a ChannelCredData object, false otherwise
+ */
+export function isChannelCredData(value: any): value is ChannelCredData {
+    return value && typeof value === "object" && isTypeOf(value.channelCredentials, "Map");
 }
 
 /**
@@ -770,6 +789,12 @@ export const ExtVolMaxSize = 32 * 1024 * 1024;
 // Registry constants
 export const RegistryInitialSize = 32 * 1024;
 export const RegistryMaxSize = 64 * 1024;
+
+// Channel credential store constants (the simulated Roku cloud store behind StoreChannelCredData)
+export const ChannelCredInitialSize = 4 * 1024;
+export const ChannelCredMaxSize = 256 * 1024;
+/** Largest artifact a single app may store, in UTF-8 bytes (an engine limit; Roku documents none). */
+export const ChannelCredMaxDataSize = 16 * 1024;
 
 // Key Buffer Constants
 export const KeyBufferSize = 5;

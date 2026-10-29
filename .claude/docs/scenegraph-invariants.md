@@ -764,6 +764,18 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > treated as app-initiated. Any change to dispatch semantics must be re-checked against *both* paths
    > and all five counters. Regression: `init-focus-observer-app` (deferred delivery + no double-fire)
    > plus the cascade apps above.
+   >
+   > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
+   > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
+   > never inside the `command`/`request` write. It is drained (`deliverMessageLoopCallbacks`) **only**
+   > from the core `onMessageLoop` extension hook — each `roMessagePort` `wait`/`GetMessage`/`PeekMessage`
+   > pass on any thread, before the port is checked — and **never from the per-statement `tick`**:
+   > a statement boundary is not a message-loop boundary (`onKeyEvent`, a `callFunc`'d function, `Main`
+   > or a Task body keep running after issuing a command), so do not merge it into the construction
+   > queue. Each pass runs only what was queued before it, one callback at a time (a chained command
+   > waits a pass; a throw leaves the rest queued). Regression: `channelstore-node-app` in `test/cli/`
+   > (re-entrant start sequence, next-statement check in Main and in a Task) and
+   > `ChannelStoreCommands.test.js`.
 
    > **Argument binding is device-measured — `Field.satisfiedByEvent` (do not "generalize" it).** An
    > observer registered by *name* is invoked with the `roSGNodeEvent` **only when it declares exactly one

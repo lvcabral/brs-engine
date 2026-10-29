@@ -163,6 +163,14 @@ export class Field {
      * semantics, which would be wrong for a value with more than two meaningful states.
      */
     private static readonly pendingConstructionCallbacks: (() => void)[] = [];
+    /** Callbacks queued with `runOnMessageLoop`. */
+    private static readonly messageLoopCallbacks: (() => void)[] = [];
+
+    /** True when deferred work may be dispatched: not mid-init, not inside another observer, not
+     *  already draining. */
+    private static canDeliverDeferred(): boolean {
+        return Field.initDepth === 0 && Field.observerDepth === 0 && !Field.draining;
+    }
 
     /** True while inside a component's `init()` hierarchy walk (construction). */
     static isConstructing(): boolean {
@@ -183,17 +191,37 @@ export class Field {
      * not already draining).
      */
     static deliverPendingConstructionCallbacks() {
-        if (
-            Field.pendingConstructionCallbacks.length > 0 &&
-            Field.initDepth === 0 &&
-            Field.observerDepth === 0 &&
-            !Field.draining
-        ) {
+        if (Field.pendingConstructionCallbacks.length > 0 && Field.canDeliverDeferred()) {
             const callbacks = Field.pendingConstructionCallbacks.splice(0);
             for (const callback of callbacks) {
                 callback();
             }
         }
+    }
+
+    /**
+     * Queues a callback to run from this thread's message loop (a `wait()`/`GetMessage` pass, via the
+     * extension's `onMessageLoop` hook), after the code that queued it has returned. For a node whose
+     * operation completes asynchronously on a device, so its result must not be published (nor its
+     * observers run) inside the field write that started it — see `ChannelStore.publish`. Unlike the
+     * construction queue this is never drained from `tick`: a statement boundary is not a message-loop
+     * boundary (`onKeyEvent`, a `callFunc`'d function, `Main` or a Task body keep running).
+     */
+    static runOnMessageLoop(callback: () => void) {
+        Field.messageLoopCallbacks.push(callback);
+    }
+
+    /**
+     * Runs the callbacks queued with `runOnMessageLoop` before this call (a chained command waits for
+     * the next pass), one at a time (one that throws leaves the rest queued).
+     * @returns True if any callback ran.
+     */
+    static deliverMessageLoopCallbacks(): boolean {
+        const count = Field.canDeliverDeferred() ? Field.messageLoopCallbacks.length : 0;
+        for (let i = 0; i < count; i++) {
+            Field.messageLoopCallbacks.shift()!();
+        }
+        return count > 0;
     }
 
     /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
@@ -236,12 +264,7 @@ export class Field {
      * observer, not already draining).
      */
     static deliverPendingInitFocus() {
-        if (
-            Field.pendingInitFocusFields.size > 0 &&
-            Field.initDepth === 0 &&
-            Field.observerDepth === 0 &&
-            !Field.draining
-        ) {
+        if (Field.pendingInitFocusFields.size > 0 && Field.canDeliverDeferred()) {
             Field.drainInitFocus();
         }
     }
@@ -288,6 +311,7 @@ export class Field {
         Field.deferredQueue.length = 0;
         Field.pendingInitFocusFields.clear();
         Field.pendingConstructionCallbacks.length = 0;
+        Field.messageLoopCallbacks.length = 0;
     }
 
     constructor(

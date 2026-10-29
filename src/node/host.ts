@@ -21,10 +21,13 @@ import {
     isGraphicsData,
     isNDKStart,
     isRegistryData,
+    isChannelCredData,
     isTaskData,
     isThreadUpdate,
     RegistryInitialSize,
     RegistryMaxSize,
+    ChannelCredInitialSize,
+    ChannelCredMaxSize,
     TaskState,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
@@ -116,12 +119,11 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
         new Int32Array(sharedBuffer).fill(-1);
     }
     controlArray = new Int32Array(sharedBuffer);
-    // Share the registry across all threads (render + tasks), mirroring the browser API.
-    if (!payload.device.registryBuffer) {
-        const registryBuffer = new SharedObject(RegistryInitialSize, RegistryMaxSize);
-        registryBuffer.store(Object.fromEntries(payload.device.registry ?? new Map()));
-        payload.device.registryBuffer = registryBuffer.getBuffer();
-    }
+    // Share the registry and the channel credential store across all threads (render + tasks),
+    // mirroring the browser API.
+    const device = payload.device;
+    device.registryBuffer ??= sharedMapBuffer(device.registry, RegistryInitialSize, RegistryMaxSize);
+    device.channelCredBuffer ??= sharedMapBuffer(device.channelCredentials, ChannelCredInitialSize, ChannelCredMaxSize);
     initTaskModule(sharedBuffer, workerEntry, taskNotify);
     currentPayload = payload;
     return new Promise<AppResult>((resolve) => {
@@ -189,6 +191,19 @@ function taskNotify(event: string, data?: any) {
 }
 
 /**
+ * Creates a buffer to share a string map across threads, seeded with its initial content.
+ * @param map Initial content (empty when omitted)
+ * @param initialSize Initial buffer size, in bytes
+ * @param maxSize Maximum buffer size, in bytes
+ * @returns The shared buffer
+ */
+function sharedMapBuffer(map: Map<string, string> | undefined, initialSize: number, maxSize: number) {
+    const shared = new SharedObject(initialSize, maxSize);
+    shared.store(Object.fromEntries(map ?? new Map()));
+    return shared.getBuffer();
+}
+
+/**
  * Stops all task workers and the app worker, releasing host state.
  */
 async function cleanupApp() {
@@ -225,6 +240,8 @@ function mainCallback(data: any) {
         notifyAll("frame", new NodeImageData(pixels, data.frameWidth, data.frameHeight));
     } else if (isRegistryData(data)) {
         notifyAll("registry", data);
+    } else if (isChannelCredData(data)) {
+        notifyAll("channelCredentials", data);
     } else if (isGraphicsData(data)) {
         notifyAll("graphics", data);
     } else if (isExtensionInfo(data)) {

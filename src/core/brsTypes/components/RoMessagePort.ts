@@ -98,6 +98,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             if (interpreter.debugMode === DebugMode.EXIT) {
                 return BrsInvalid.Instance;
             }
+            this.runMessageLoopHooks(interpreter);
             const msg = this.getNextMessage();
             if (msg instanceof BrsEvent) {
                 return msg;
@@ -115,6 +116,13 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             }
         }
         return BrsInvalid.Instance;
+    }
+
+    /** Lets extensions run work deferred to the message loop, so its events are seen this pass. */
+    private runMessageLoopHooks(interpreter: Interpreter) {
+        for (const ext of interpreter.extensions.values()) {
+            ext.onMessageLoop?.(interpreter);
+        }
     }
 
     private updateMessageQueue(interpreter?: Interpreter, wait?: number) {
@@ -159,6 +167,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            this.runMessageLoopHooks(interpreter);
             this.updateMessageQueue(interpreter, PORT_NO_WAIT);
             return this.getNextMessage();
         },
@@ -171,6 +180,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
             returns: ValueKind.Dynamic,
         },
         impl: (interpreter: Interpreter) => {
+            this.runMessageLoopHooks(interpreter);
             this.updateMessageQueue(interpreter, PORT_NO_WAIT);
             if (this.messageQueue.length > 0) {
                 return this.messageQueue[0];

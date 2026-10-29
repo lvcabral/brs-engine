@@ -43,6 +43,7 @@ import {
     AppData,
     SupportedExtension,
     isRegistryData,
+    isChannelCredData,
     isGraphicsData,
     isRendezvousEvent,
     ExtensionInfo,
@@ -103,7 +104,7 @@ program
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
     .option("-x, --ext-vol <path>", "Path to directory or zip file from which `ext1:` will be mounted.")
     .option("-k, --deep-link <params>", "Parameters to be passed to the application. (format: key=value,...)")
-    .option("-y, --registry", "Persist the simulated device registry on disk.", false)
+    .option("-y, --registry", "Persist the simulated device registry (and channel credentials) on disk.", false)
     .action(async (brsFiles, program) => {
         if (typeof program.image === "string" && !isNumber(program.image)) {
             // `-i <file>`: commander consumed the app path as the optional [percent]
@@ -137,6 +138,7 @@ program
             deviceData.logLevel = program.logLevel;
             if (program.registry) {
                 deviceData.registry = getRegistry();
+                deviceData.channelCredentials = getChannelCredentials();
             }
             deviceData.appList = new Array<AppData>();
         }
@@ -508,8 +510,8 @@ function hostCallback(event: string, data: any) {
             handleDebuggerCommand(command);
         }
         handleStringMessage(data);
-    } else if (["frame", "registry", "graphics", "rendezvous"].includes(event)) {
-        // The revived ImageData, RegistryData, GraphicsData and RendezvousEvent shapes are the
+    } else if (["frame", "registry", "channelCredentials", "graphics", "rendezvous"].includes(event)) {
+        // The revived ImageData, RegistryData, ChannelCredData, GraphicsData and RendezvousEvent shapes are the
         // same the in-process engine posts, so the existing message handler applies unchanged.
         messageCallback(data);
     } else if (event === "error") {
@@ -561,23 +563,59 @@ function getLocalIps() {
  * @returns Map containing the persisted registry key-value pairs
  */
 function getRegistry(): Map<string, string> {
-    let registry = new Map<string, string>();
+    return readStringMap("registry.json", (key) => key.split(".")[1] !== "Transient");
+}
+
+/**
+ * Loads the persisted channel credential store (the simulated Roku cloud store behind
+ * `StoreChannelCredData`), kept in its own file beside the registry.
+ * @returns Map containing the stored artifacts, keyed by `developerId.channelId`
+ */
+function getChannelCredentials(): Map<string, string> {
+    return readStringMap("channel-credentials.json");
+}
+
+/**
+ * Reads a string map persisted as JSON `[key, value]` pairs in the user data folder.
+ * @param fileName File name within the data folder
+ * @param keep Optional filter on the keys to load
+ * @returns Map with the persisted string pairs (empty when the file does not exist)
+ */
+function readStringMap(fileName: string, keep: (key: string) => boolean = () => true): Map<string, string> {
+    const map = new Map<string, string>();
+    const filePath = path.resolve(paths.data, fileName);
+    if (!fs.existsSync(filePath)) {
+        return map;
+    }
     try {
-        const strRegistry = fs.readFileSync(path.resolve(paths.data, "registry.json"));
-        if (strRegistry?.length) {
-            const parsed = JSON.parse(strRegistry.toString("utf8"));
-            if (typeof parsed === "object" && parsed !== null) {
-                for (const [key, value] of new Map(parsed)) {
-                    if (typeof key === "string" && typeof value === "string" && key.split(".")[1] !== "Transient") {
-                        registry.set(key, value);
-                    }
+        const parsed = JSON.parse(fs.readFileSync(filePath).toString("utf8"));
+        if (typeof parsed === "object" && parsed !== null) {
+            for (const [key, value] of new Map(parsed)) {
+                if (typeof key === "string" && typeof value === "string" && keep(key)) {
+                    map.set(key, value);
                 }
             }
         }
     } catch (err: any) {
         console.error(chalk.red(err.message));
     }
-    return registry;
+    return map;
+}
+
+/**
+ * Persists a string map as JSON `[key, value]` pairs in the user data folder.
+ * @param fileName File name within the data folder
+ * @param map The map to persist
+ */
+function writeStringMap(fileName: string, map: Map<string, string>) {
+    try {
+        if (!fs.existsSync(paths.data)) {
+            fs.mkdirSync(paths.data, { recursive: true });
+        }
+        fs.writeFileSync(path.resolve(paths.data, fileName), JSON.stringify([...map]));
+    } catch (err: any) {
+        console.error(chalk.red(err.message));
+    }
 }
 
 /**
@@ -774,15 +812,11 @@ function messageCallback(message: any, _?: any) {
             brsWorker?.postMessage(message.current);
         }
         if (program.registry) {
-            const strRegistry = JSON.stringify([...message.current]);
-            try {
-                if (!fs.existsSync(paths.data)) {
-                    fs.mkdirSync(paths.data, { recursive: true });
-                }
-                fs.writeFileSync(path.resolve(paths.data, "registry.json"), strRegistry);
-            } catch (err: any) {
-                console.error(chalk.red(err.message));
-            }
+            writeStringMap("registry.json", message.current);
+        }
+    } else if (isChannelCredData(message)) {
+        if (program.registry) {
+            writeStringMap("channel-credentials.json", message.channelCredentials);
         }
     }
 }

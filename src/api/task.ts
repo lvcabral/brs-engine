@@ -10,6 +10,7 @@ import {
     isExtensionInfo,
     isNDKStart,
     isRegistryData,
+    isChannelCredData,
     isRendezvousEvent,
     isTaskData,
     isThreadUpdate,
@@ -240,6 +241,8 @@ export function resetTasks() {
 function taskCallback(event: MessageEvent) {
     if (isRegistryData(event.data)) {
         notifyAll("registry", event.data);
+    } else if (isChannelCredData(event.data)) {
+        notifyAll("channelCredentials", event.data);
     } else if (isRendezvousEvent(event.data)) {
         notifyAll("rendezvous", event.data.rendezvous);
     } else if (isExtensionInfo(event.data)) {

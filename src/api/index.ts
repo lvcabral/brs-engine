@@ -25,6 +25,10 @@ import {
     isThreadUpdate,
     RegistryInitialSize,
     RegistryMaxSize,
+    ChannelCredData,
+    ChannelCredInitialSize,
+    ChannelCredMaxSize,
+    isChannelCredData,
     getNow,
     Platform,
     RegistryData,
@@ -154,6 +158,9 @@ let httpConnectLog: boolean = false;
 // App Workers and Shared Buffers
 let brsWorker: Worker;
 const registryBuffer = new SharedObject(RegistryInitialSize, RegistryMaxSize);
+const channelCredBuffer = new SharedObject(ChannelCredInitialSize, ChannelCredMaxSize);
+/** localStorage entry holding the channel credential store, as JSON [key, value] pairs. */
+const channelCredStorageKey = "brs-engine:channel-credentials";
 let sharedBuffer: ArrayBufferLike;
 let sharedArray: Int32Array;
 let currentPayload: AppPayload;
@@ -175,6 +182,8 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
             "firmwareVersion",
             "registry",
             "registryBuffer",
+            "channelCredentials",
+            "channelCredBuffer",
             "models",
             "remoteControls",
             "audioCodecs",
@@ -200,6 +209,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
         showStats = options.showStats;
     }
     loadRegistry();
+    loadChannelCredentials();
     // Shared buffer (Keys, Sounds and Debug Commands)
     const length = DataBufferIndex + DataBufferSize;
     try {
@@ -301,6 +311,8 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
             handleNDKStart(data);
         } else if (event === "registry") {
             handleRegistryUpdate(data);
+        } else if (event === "channelCredentials") {
+            handleChannelCredUpdate(data);
         } else if (event === "captionMode") {
             notifyAll(event, data);
         } else if (event === "rendezvous") {
@@ -845,6 +857,8 @@ function mainCallback(event: MessageEvent) {
         updateBuffer(event.data);
     } else if (isRegistryData(event.data)) {
         handleRegistryUpdate(event.data);
+    } else if (isChannelCredData(event.data)) {
+        handleChannelCredUpdate(event.data);
     } else if (isGraphicsData(event.data)) {
         for (const resolve of pendingGraphics.splice(0)) {
             resolve(event.data.graphics);
@@ -945,6 +959,34 @@ function handleNDKStart(data: NDKStart) {
         } else {
             apiException("warning", `[api] NDKLauncher:  SDKLauncher "channelId" parameter not found!`);
         }
+    }
+}
+
+/**
+ * Loads the channel credential store (the simulated Roku cloud store behind StoreChannelCredData)
+ * from browser localStorage into the buffer shared with the app and task threads.
+ */
+function loadChannelCredentials() {
+    let store: Record<string, string> = {};
+    try {
+        const saved = globalThis.localStorage.getItem(channelCredStorageKey);
+        if (saved) {
+            store = Object.fromEntries(JSON.parse(saved));
+        }
+    } catch (err: any) {
+        apiException("warning", `[api] Unable to load the channel credential store: ${err.message}`);
+    }
+    channelCredBuffer.store(store);
+    deviceData.channelCredBuffer = channelCredBuffer.getBuffer();
+}
+
+/**
+ * Persists the channel credential store to localStorage after an app stored an artifact.
+ * @param data ChannelCredData object with the whole store
+ */
+function handleChannelCredUpdate(data: ChannelCredData) {
+    if (Platform.inBrowser) {
+        globalThis.localStorage.setItem(channelCredStorageKey, JSON.stringify([...data.channelCredentials]));
     }
 }
 

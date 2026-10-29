@@ -58,7 +58,7 @@ Options:
   -r, --root <directory>    The root directory from which `pkg:` paths will be resolved.
   -x, --ext-vol <path>      Path to directory or zip file from which `ext1:` will be mounted.
   -k, --deep-link <params>  Parameters to be passed to the application. (format: key=value,...)
-  -y, --registry            Persist the simulated device registry on disk.
+  -y, --registry            Persist the simulated device registry (and channel credentials) on disk.
   -v, --version             output the version number
   -h, --help                output usage information
 ```
@@ -168,7 +168,7 @@ $ brs-cli ../tests/test-sandbox.zip
 * If the app has `ifDraw2D` screens, the app will run but nothing is displayed, unless you use one of the screen rendering options `--ascii`, `--unicode` or `--image` (see below).
 * The app runs on a dedicated worker thread, so you can control it interactively with the keyboard (see below) or via the `--ecp` option.
 * SceneGraph `Task` nodes run on their own worker threads, mirroring the browser engine and a real device.
-* Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions.
+* Use the flag `--registry` to have the device registry data saved to the disk, and restored in following app executions. It also persists, in a separate `channel-credentials.json` file, the artifacts apps store with `StoreChannelCredData` (the simulated Roku cloud credential store), which are never part of the registry.
 * Use the flag `--ext-vol` to mount a directory or zip archive as the `ext1:` volume.
 * To send parameters (deep linking) to the app, use the flag `--deep-link` followed by the parameters in the format: key=value,...
 

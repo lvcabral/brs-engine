@@ -5,7 +5,7 @@ import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoTimespan } from "./RoTimespan";
-import { AppData, AppExitReason, isAppData } from "../../common";
+import { AppExitReason, isAppData } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoAppManager extends BrsComponent implements BrsValue {
@@ -133,7 +133,7 @@ export class RoAppManager extends BrsComponent implements BrsValue {
             returns: ValueKind.Object,
         },
         impl: (_: Interpreter) => {
-            const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
+            const app = BrsDevice.getRunningApp();
             const exitInfo = {
                 exit_code: app?.exitReason ?? AppExitReason.Unknown,
                 media_player_state: "stopped",
