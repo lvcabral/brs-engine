@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="FontTask" extends="Task">
+    <interface>
+        <field id="target" type="node" />
+        <field id="done" type="boolean" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.functionName = "runTask"
+end sub
+
+sub runTask()
+    lbl = m.top.target
+    lbl.font = invalid
+    print "PROBE|task|Label.font|invalid|value=" + describeFont(lbl.font)
+    lbl.font = "font:NoSuchFont"
+    print "PROBE|task|Label.font|font:NoSuchFont|value=" + describeFont(lbl.font)
+    ' A Label the Task creates is owned by the Task thread, so these writes stay on it.
+    own = CreateObject("roSGNode", "Label")
+    own.text = "task owned"
+    cases = [
+        { name: "invalid", value: invalid },
+        { name: "font:NoSuchFont", value: "font:NoSuchFont" },
+        { name: "string-garbage", value: "garbage" },
+        { name: "string-empty", value: "" },
+        { name: "node-Rectangle", value: CreateObject("roSGNode", "Rectangle") },
+        { name: "integer-5", value: 5 },
+    ]
+    for each c in cases
+        own.font = "font:LargeBoldSystemFont"
+        own.font = c.value
+        print "PROBE|task-owned|Label.font|" + c.name + "|value=" + describeFont(own.font)
+        own.font = "font:LargeBoldSystemFont"
+        ok = own.setField("font", c.value)
+        print "PROBE|task-owned|Label.font|setField-" + c.name + "|ret=" + ok.toStr() + "|value=" + describeFont(own.font)
+    end for
+    m.top.done = true
+end sub
+
+function describeFont(v as dynamic) as string
+    if v = invalid then return "invalid"
+    if type(v) <> "roSGNode" then return type(v)
+    return v.subtype() + "(uri=" + v.uri + ",size=" + v.size.toStr() + ")"
+end function
+    ]]></script>
+</component>

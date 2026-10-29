@@ -34,7 +34,7 @@ import { Node } from "./Node";
 import { RoSGNodeEvent } from "../events/RoSGNodeEvent";
 import { getValueKindFromFieldType } from "../factory/NodeFactory";
 import { fromAssociativeArray, toAssociativeArray, jsValueOf } from "../factory/Serializer";
-import { BrsCallback, FieldKind, isContentNode } from "../SGTypes";
+import { BrsCallback, FieldKind, isContentNode, isFont } from "../SGTypes";
 import { convertHexColor } from "../SGUtil";
 
 /**
@@ -528,6 +528,9 @@ export class Field {
             return value.elements.every((element) => isBrsString(element));
         } else if (this.type === FieldKind.Node && value instanceof Node) {
             return true;
+        } else if (this.type === FieldKind.Font && (isBrsString(value) || value instanceof Node)) {
+            // Any string or node is taken: one that is not a usable Font is stored as invalid.
+            return true;
         } else if (this.type === FieldKind.Rect2D && value instanceof RoArray) {
             return value.elements.length === 4 && value.elements.every((element) => isAnyNumber(element));
         } else if (this.type === FieldKind.Rect2D && value instanceof RoAssociativeArray) {
@@ -717,6 +720,9 @@ export class Field {
             value = this.convertColorArray(value);
         } else if (this.type === FieldKind.String && isStringComp(value)) {
             value = new BrsString(value.getValue());
+        } else if (this.type === FieldKind.Font && value instanceof Node && !isFont(value)) {
+            // A device stores invalid for a node that is not a Font, without a type mismatch warning.
+            value = BrsInvalid.Instance;
         }
         if (isBoxable(value)) {
             value = value.box();

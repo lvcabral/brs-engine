@@ -14,7 +14,6 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
-import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { sgClock } from "../SGClock";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
@@ -896,7 +895,7 @@ export class TimeGrid extends ArrayGrid {
             );
         }
         const headerText = (this.getValueJS("channelInfoColumnLabel") as string) || this.dayLabel(this.viewStartTime);
-        const infoFont = this.getValue("channelInfoFont") as Font;
+        const infoFont = this.getValue("channelInfoFont");
         const infoColor = this.getValueJS("channelInfoTextColor") as number;
         const infoPad = isFHD ? 20 : 14;
         this.drawText(
@@ -912,7 +911,7 @@ export class TimeGrid extends ArrayGrid {
             "...",
             textIndex++
         );
-        const timeLabelFont = this.getValue("timeLabelFont") as Font;
+        const timeLabelFont = this.getValue("timeLabelFont");
         const timeLabelColor = this.getValueJS("timeLabelColor") as number;
         const timeLabelOffset = (this.getValueJS("timeLabelOffset") as number) ?? 14;
         const slot = 1800;
@@ -940,7 +939,7 @@ export class TimeGrid extends ArrayGrid {
         }
 
         // --- Channel rows ---
-        const programFont = this.getValue("programTitleFont") as Font;
+        const programFont = this.getValue("programTitleFont");
         const programColor = this.getValueJS("programTitleColor") as number;
         const programFocusColor = this.getValueJS("programTitleFocusedColor") as number;
         const programMargin = (this.getValueJS("programHorizMargin") as number) ?? 14;
@@ -1164,7 +1163,7 @@ export class TimeGrid extends ArrayGrid {
             );
         } else {
             const title = (channel.getValueJS("TITLE") as string) ?? "";
-            const font = this.getValue("channelInfoFont") as Font;
+            const font = this.getValue("channelInfoFont");
             const color = this.getValueJS("channelInfoTextColor") as number;
             const pad = this.resolution === "FHD" ? 20 : 14;
             const textRect = {
@@ -1203,7 +1202,7 @@ export class TimeGrid extends ArrayGrid {
 
     protected renderLoading(rect: Rect, opacity: number, draw2D: IfDraw2D | undefined, textIndex: number) {
         const text = (this.getValueJS("loadingDataText") as string) || "Loading Data…";
-        const font = this.getValue("programTitleFont") as Font;
+        const font = this.getValue("programTitleFont");
         const color = this.getValueJS("programTitleColor") as number;
         this.drawText(text, font, color, opacity, rect, "center", "center", 0, draw2D, "...", textIndex);
     }

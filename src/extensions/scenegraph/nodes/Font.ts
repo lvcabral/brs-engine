@@ -13,7 +13,7 @@ import {
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
 import { Node } from "./Node";
-import { FieldKind, FieldModel } from "../SGTypes";
+import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 
 export class Font extends Node {
@@ -73,6 +73,15 @@ export class Font extends Node {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Resolves a font field's value to a draw font. A font field holds invalid once it is set to
+     * invalid, to a name that does not resolve, or to anything that is not a Font node; a device then
+     * draws no text and measures it as 0x0, so callers take their no-font path on BrsInvalid.
+     */
+    static drawFontOf(font: BrsType | undefined): RoFont | BrsInvalid {
+        return isFont(font) ? font.createDrawFont() : BrsInvalid.Instance;
     }
 
     createDrawFont() {

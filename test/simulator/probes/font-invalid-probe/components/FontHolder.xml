@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A Node (not a Group) with XML-declared font fields: with no value, and with a value. -->
+<component name="FontHolder" extends="Node">
+    <interface>
+        <field id="plainFont" type="font" />
+        <field id="namedFont" type="font" value="font:LargeBoldSystemFont" />
+        <field id="garbageFont" type="font" value="garbage" />
+        <field id="unknownFont" type="font" value="font:NoSuchFont" />
+    </interface>
+</component>

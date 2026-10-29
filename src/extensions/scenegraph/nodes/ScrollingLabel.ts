@@ -64,16 +64,11 @@ export class ScrollingLabel extends Label {
     }
 
     // Helper to check if scrolling is necessary and calculate initial values
-    private checkForScrolling() {
-        const font = this.getValue("font") as Font;
-        const drawFont = font.createDrawFont();
-        if (!(drawFont instanceof RoFont)) {
-            return;
-        }
+    private checkForScrolling(drawFont = Font.drawFontOf(this.getValue("font"))) {
         const text = this.getValueJS("text") as string;
         const maxWidth = this.getValueJS("maxWidth") as number;
         const ellipsis = this.getValueJS("ellipsisText") || "...";
-        if (!text || !font || maxWidth <= 0 || !(drawFont instanceof RoFont)) {
+        if (!text || maxWidth <= 0 || !(drawFont instanceof RoFont)) {
             // Cannot determine scrolling need without necessary info or drawing context
             this.needsScrolling = false;
             this.scrollState = ScrollState.STATIC;
@@ -173,13 +168,12 @@ export class ScrollingLabel extends Label {
         scale?: number[]
     ): MeasuredText {
         const text = this.getValueJS("text") as string;
-        if (this.isDirty || (this.fullTextWidth === 0 && text)) {
-            this.checkForScrolling();
-        }
-        const font = this.getValue("font") as Font;
-        const drawFont = font.createDrawFont();
+        const drawFont = Font.drawFontOf(this.getValue("font"));
         if (!(drawFont instanceof RoFont)) {
             return { text, width: 0, height: 0, ellipsized: false };
+        }
+        if (this.isDirty || (this.fullTextWidth === 0 && text)) {
+            this.checkForScrolling(drawFont);
         }
         const scrollSpeed = this.getValueJS("scrollSpeed") as number;
         const repeatCount = this.getValueJS("repeatCount") as number;

@@ -21,7 +21,6 @@ import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { Font } from "./Font";
 
 export enum FocusStyle {
     FixedFocusWrap = "fixedFocusWrap",
@@ -810,7 +809,7 @@ export class ArrayGrid extends Group {
         const divRect = { ...itemRect, height: dividerHeight };
         let margin = 0;
         if (title.length !== 0) {
-            const font = this.getValue("sectionDividerFont") as Font;
+            const font = this.getValue("sectionDividerFont");
             const color = this.getValueJS("sectionDividerTextColor");
             const size = this.drawText(
                 title,

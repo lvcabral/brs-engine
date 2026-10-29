@@ -12,11 +12,10 @@ import {
     RoFont,
     isBrsString,
 } from "brs-engine";
-import { FieldKind, FieldModel } from "../SGTypes";
+import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
-import { Font } from "./Font";
 import { Group } from "./Group";
 import { Poster } from "./Poster";
 import { Label } from "./Label";
@@ -107,7 +106,7 @@ export class PosterGrid extends ArrayGrid {
     private readonly focusUri = "common:/images/focus_grid.9.png";
     private readonly layoutByIndex = new Map<number, PosterItemLayout>();
     private pendingIndex: number = -1;
-    private fontHeightCache = new WeakMap<Font, number>();
+    private fontHeightCache = new WeakMap<object, number>();
     private readonly focusPaddingX: number;
     private readonly focusPaddingTop: number;
     private readonly focusPaddingBottom: number;
@@ -929,8 +928,8 @@ export class PosterGrid extends ArrayGrid {
         const meta = this.getPosterMetadata(index);
         const caption1Lines = Math.max(0, this.resolveCaptionLines(meta?.caption1Lines, "caption1NumLines"));
         const caption2Lines = Math.max(0, this.resolveCaptionLines(meta?.caption2Lines, "caption2NumLines"));
-        const font1 = this.getValue("caption1Font") as Font;
-        const font2 = this.getValue("caption2Font") as Font;
+        const font1 = this.getValue("caption1Font");
+        const font2 = this.getValue("caption2Font");
         const lineSpacing = Number(this.getValueJS("captionLineSpacing")) || 0;
         const height1 =
             caption1Lines > 0
@@ -959,13 +958,16 @@ export class PosterGrid extends ArrayGrid {
         return Number(this.getValueJS(field)) || 0;
     }
 
-    private measureFontHeight(font: Font) {
-        const defaultHeight = this.resolution === "FHD" ? 36 : 24;
-        if (!font) return defaultHeight;
+    private measureFontHeight(font: BrsType) {
+        // A caption font that is not a Font takes no caption height on a device (font-invalid-probe).
+        if (!isFont(font)) return 0;
         const cached = this.fontHeightCache.get(font);
         if (cached) return cached;
         const drawFont = font.createDrawFont();
-        const height = drawFont instanceof RoFont ? drawFont.measureTextHeight() : defaultHeight;
+        let height = this.resolution === "FHD" ? 36 : 24;
+        if (drawFont instanceof RoFont) {
+            height = drawFont.measureTextHeight();
+        }
         this.fontHeightCache.set(font, height);
         return height;
     }

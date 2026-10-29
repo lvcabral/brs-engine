@@ -1,4 +1,5 @@
 import {
+    BrsInvalid,
     BrsString,
     BrsType,
     Callable,
@@ -6,6 +7,7 @@ import {
     Interpreter,
     isUnboxable,
     RoArray,
+    RoFont,
     RoMessagePort,
     ValueKind,
 } from "brs-engine";
@@ -172,11 +174,7 @@ export namespace FieldKind {
             case "roassociativearray":
                 return FieldKind.AssocArray;
             case "rosgnode": {
-                const node = brsType as Node;
-                if (node.nodeType.toLowerCase() === "font") {
-                    return FieldKind.Font;
-                }
-                return FieldKind.Node;
+                return isFont(brsType) ? FieldKind.Font : FieldKind.Node;
             }
             default:
                 return undefined;
@@ -208,6 +206,7 @@ export function isContentNode(value: BrsType): value is ContentNodeLike {
 type FontLike = Node & {
     setSize(fontSize: number): void;
     setSystemFont(fontName: string): boolean;
+    createDrawFont(): RoFont | BrsInvalid;
 };
 
 /**
@@ -216,11 +215,12 @@ type FontLike = Node & {
  * @param value BrsType to check
  * @returns True if value is a Font node, false otherwise
  */
-export function isFont(value: BrsType): value is FontLike {
+export function isFont(value: BrsType | undefined): value is FontLike {
     return (
         value instanceof Node &&
         typeof (value as FontLike).setSize === "function" &&
-        typeof (value as FontLike).setSystemFont === "function"
+        typeof (value as FontLike).setSystemFont === "function" &&
+        typeof (value as FontLike).createDrawFont === "function"
     );
 }
 

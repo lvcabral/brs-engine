@@ -1174,7 +1174,7 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
             returnValue = defaultValue ?? new RoInvalid();
             break;
         case "font":
-            returnValue = parseFont(value ?? "", defaultValue);
+            returnValue = parseFont(value);
             break;
         case "boolarray": {
             // Roku accepts a scalar shorthand for boolean arrays (e.g. showRowLabel="true" or
@@ -1244,20 +1244,19 @@ export function getBrsValueFromFieldType(type: string, value?: string, defaultVa
 /**
  * Parses a string representation of a font into a Font object.
  * Supports system fonts prefixed with "font:".
- * @param value String representation of the font
- * @param defaultValue Optional default value to return if parsing fails
- * @returns Font object or BrsInvalid if parsing fails
+ * @param value String representation of the font, undefined for a field declared without a value
+ * @returns The default Font when there is no value, a Font for a known system font name, or
+ *   BrsInvalid for any other string (a device stores invalid for those, see font-invalid-probe)
  */
-function parseFont(value: string, defaultValue?: BrsType): BrsType {
-    let returnValue: BrsType = new Font();
-    if (
-        returnValue instanceof Font &&
-        value?.startsWith("font:") &&
-        !returnValue.setSystemFont(value.slice(5).toLowerCase())
-    ) {
-        returnValue = defaultValue ?? BrsInvalid.Instance;
+function parseFont(value?: string): BrsType {
+    if (value === undefined) {
+        return new Font();
     }
-    return returnValue;
+    if (!value.startsWith("font:")) {
+        return BrsInvalid.Instance;
+    }
+    const font = new Font();
+    return font.setSystemFont(value.slice(5).toLowerCase()) ? font : BrsInvalid.Instance;
 }
 
 /**

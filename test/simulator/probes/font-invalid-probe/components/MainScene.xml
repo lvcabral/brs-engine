@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <script type="text/brightscript" uri="MainScene.brs" />
+    <children>
+        <Timer id="startTimer" duration="5" repeat="false" />
+        <Timer id="renderTimer" duration="2" repeat="false" />
+        <Timer id="layoutTimer" duration="2" repeat="false" />
+        <Group id="stage" />
+        <!-- Font attributes in XML that do not name a usable font. -->
+        <Label id="xmlGarbage" text="xml garbage" visible="false" font="garbage" />
+        <Label id="xmlUnknown" text="xml unknown" visible="false" font="font:NoSuchFont" />
+        <Label id="xmlEmpty" text="xml empty" visible="false" font="" />
+        <Label id="xmlNamed" text="xml named" visible="false" font="font:LargeBoldSystemFont" />
+        <Group id="layout" />
+    </children>
+</component>

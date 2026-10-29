@@ -2,7 +2,6 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { AAMember, Interpreter, BrsString, BrsType, Int32, RoBitmap, IfDraw2D, Rect, RectRect } from "brs-engine";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
-import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { brsValueOf } from "../factory/Serializer";
@@ -180,7 +179,7 @@ export class LabelList extends ArrayGrid {
         iconBmp?: RoBitmap,
         draw2D?: IfDraw2D
     ) {
-        const font = this.getValue("font") as Font;
+        const font = this.getValue("font");
         const color = this.getValueJS("color") as number;
         const align = this.getValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
@@ -201,7 +200,7 @@ export class LabelList extends ArrayGrid {
         iconBmp?: RoBitmap,
         draw2D?: IfDraw2D
     ) {
-        const font = this.getValue(nodeFocus ? "focusedFont" : "font") as Font;
+        const font = this.getValue(nodeFocus ? "focusedFont" : "font");
         const color = this.getValueJS(nodeFocus ? "focusedColor" : "color") as number;
         const align = this.getValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };

@@ -2,6 +2,7 @@ import {
     AAMember,
     Interpreter,
     BrsBoolean,
+    BrsInvalid,
     BrsDevice,
     BrsString,
     BrsType,
@@ -84,7 +85,11 @@ export class RowList extends ArrayGrid {
     // focus/scroll only when a NEW content tree is assigned — a plain re-parse (triggered whenever a
     // descendant ContentNode is marked changed) must preserve each row's focused column/scroll.
     private parsedContentNode?: ContentNode;
-    private readonly titleHeight: number;
+    // The row label font and its line height, resolved the first time a row label is laid out and
+    // then kept: a device lays the label out once, so a later `rowLabelFont` write changes neither the
+    // label text nor its space, while a font that is invalid from the start leaves no label and no
+    // space (test/simulator/probes/font-invalid-probe).
+    private labelFont?: { drawFont: RoFont | BrsInvalid; height: number };
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.RowList) {
         super([], name);
@@ -125,9 +130,6 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset = []; // Initialize scroll offset tracking
         this.hasNinePatch = true;
         this.focusField = "rowListHasFocus";
-        const font = this.getValue("rowLabelFont") as Font;
-        const drawFont = font.createDrawFont();
-        this.titleHeight = drawFont instanceof RoFont ? drawFont.measureTextHeight() : 0;
 
         // Initialize focus properly
         this.focusIndex = 0;
@@ -1100,7 +1102,6 @@ export class RowList extends ArrayGrid {
         if (!showShortRows && this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]))) {
             return;
         }
-        const font = this.getValue("rowLabelFont") as Font;
         const color = this.getValueJS("rowLabelColor");
         const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
         // Right edge is inset from the list's right edge by rowCounterRightOffset, or (when unset) by the
@@ -1109,7 +1110,7 @@ export class RowList extends ArrayGrid {
         const listWidth = context.itemSize[0] || this.sceneRect.width;
         const rightEdge = context.rect.x + listWidth - rightInset;
         const counterText = `${(this.rowFocus[rowIndex] ?? 0) + 1} of ${numCols}`;
-        const drawFont = font.createDrawFont();
+        const drawFont = this.getLabelFont().drawFont;
         if (!(drawFont instanceof RoFont)) {
             return;
         }
@@ -1123,6 +1124,18 @@ export class RowList extends ArrayGrid {
         context.draw2D?.doDrawRotatedText(counterText, textX, textY, color, context.opacity, drawFont, 0);
     }
 
+    private get titleHeight() {
+        return this.getLabelFont().height;
+    }
+
+    private getLabelFont() {
+        if (!this.labelFont) {
+            const drawFont = Font.drawFontOf(this.getValue("rowLabelFont"));
+            this.labelFont = { drawFont, height: drawFont instanceof RoFont ? drawFont.measureTextHeight() : 0 };
+        }
+        return this.labelFont;
+    }
+
     protected renderRowDivider(title: string, itemRect: Rect, opacity: number, rowIndex: number, draw2D?: IfDraw2D) {
         const offset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
         const divRect = {
@@ -1132,7 +1145,6 @@ export class RowList extends ArrayGrid {
         };
 
         if (title.length !== 0) {
-            const font = this.getValue("rowLabelFont") as Font;
             const color = this.getValueJS("rowLabelColor");
             // Draw directly rather than via `drawText`: that helper caches the measured text in
             // `cachedLines` keyed by row index and only refreshes it when the RowList node itself is
@@ -1140,7 +1152,7 @@ export class RowList extends ArrayGrid {
             // without dirtying the RowList, so a title updated after the first render would keep drawing
             // the stale cached value. Re-measuring every frame keeps the label in sync with the content
             // (and matches how the row counter is drawn).
-            const drawFont = font.createDrawFont();
+            const drawFont = this.getLabelFont().drawFont;
             if (drawFont instanceof RoFont) {
                 const measured = drawFont.measureText(title, divRect.width, "...");
                 const textY = divRect.y + Math.max(0, (this.titleHeight - measured.height) / 2);
