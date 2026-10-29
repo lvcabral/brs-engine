@@ -197,7 +197,8 @@ Optional functionality plugs in through the `BrsExtension` contract. Lifecycle h
 | `onInit(interpreter)` | After the interpreter is constructed (register `CreateObject` types here). |
 | `onBeforeExecute(interpreter, payload)` | Before the app's `Main` runs (may be async — e.g. load XML components). |
 | `updateSourceMap(sourceMap)` | While building the debug source map. |
-| `tick(interpreter)` | Each interpreter tick / event-loop iteration. |
+| `tick(interpreter)` | Before each statement the interpreter executes. |
+| `onMessageLoop(interpreter)` | Each `roMessagePort` `wait`/`GetMessage`/`PeekMessage` pass — the thread's real message-loop boundary (invoked from `RoMessagePort`). |
 | `execTask(interpreter, payload)` | When the worker spins up to run a SceneGraph `Task`. |
 
 Registration / loading:

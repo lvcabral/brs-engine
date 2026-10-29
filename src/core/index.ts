@@ -380,6 +380,9 @@ export function getReplInterpreter(payload: Partial<AppPayload>) {
         if (payload.device.registry?.size) {
             BrsDevice.setRegistry(payload.device.registry);
         }
+        if (payload.device.channelCredentials?.size) {
+            BrsDevice.setChannelCredentials(payload.device.channelCredentials);
+        }
         BrsDevice.setDeviceInfo(payload.device);
     }
     try {
@@ -912,6 +915,11 @@ function setupPayload(interpreter: Interpreter, payload: AppPayload | TaskPayloa
         BrsDevice.setRegistry(payload.device.registryBuffer);
     } else if (payload.device.registry?.size) {
         BrsDevice.setRegistry(payload.device.registry);
+    }
+    if (payload.device.channelCredBuffer) {
+        BrsDevice.setChannelCredentials(payload.device.channelCredBuffer);
+    } else if (payload.device.channelCredentials?.size) {
+        BrsDevice.setChannelCredentials(payload.device.channelCredentials);
     }
     setupTranslations(interpreter);
     return setupPackageFiles(payload);

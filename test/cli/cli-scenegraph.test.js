@@ -1662,6 +1662,12 @@ describe.concurrent("cli scenegraph", () => {
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
+        // The scene's lines come first: a re-entrant start sequence whose `channelCred` observer
+        // re-runs the step that issued the command. The result must not be delivered inside the
+        // `command` write (it recursed into a stack overflow when it was) — on a device every
+        // ChannelStore command completes asynchronously. Nor may it arrive on the next statement of code
+        // outside an observer (Main, a Task body): only from the thread's message loop, its wait().
+        //
         // Covers the whole command surface documented for the ChannelStore node. Values that come
         // from a generated id are asserted as "present"/"matches" rather than literally, so the test
         // does not pin an id; everything else is pinned by csfake/*.xml or the canned account table.
@@ -1674,7 +1680,9 @@ describe.concurrent("cli scenegraph", () => {
         // Republishing keeps the app's own order node and its order-level `action`, and a cart
         // emptied by a negative quantity cannot be ordered.
         // getChannelCred: `json` must be real JSON, since the documented usage is ParseJson() on it;
-        // `channel_data` appears only after storeChannelCredData ran.
+        // `channel_data` appears only after storeChannelCredData ran, and is then visible to every
+        // store on every thread, since the credential lives in the Roku cloud per app rather than on
+        // one node — in a store of its own, never the app's registry.
         // confirmPartnerOrder must fail without a preceding requestPartnerOrder billing check.
         // Without fakeServer the store-backed commands report their documented failure payload, but
         // the credential store still works — it holds the app's own artifact, not a mocked store
@@ -1692,6 +1700,12 @@ describe.concurrent("cli scenegraph", () => {
         // two lines rather than assuming the change broke something.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== ChannelStore Node Test ===",
+            "channelCred pending after the command: true",
+            "channelCred received: true",
+            "start sequence complete",
+            "-- message-loop delivery --",
+            "pending on the next statement: true",
+            "delivered from wait(): true",
             "-- deltaOrder --",
             "order children: 2",
             "  item: TCSMS1 qty=1",
@@ -1722,6 +1736,9 @@ describe.concurrent("cli scenegraph", () => {
             "fields: email",
             "-- getUserRegionData --",
             "region: CA 95110 USA",
+            "-- getChannelCred (nothing stored) --",
+            "channel_data present: false",
+            "pucid present: true",
             "-- storeChannelCredData --",
             "status: 0",
             "response.status: success",
@@ -1734,9 +1751,8 @@ describe.concurrent("cli scenegraph", () => {
             "token_type: urn:roku:pucid:token_type:pucid_token",
             "channel_data: test app cred data",
             "pucid present: true",
-            "-- getChannelCred (nothing stored) --",
-            "channel_data present: false",
-            "pucid present: true",
+            "-- getChannelCred (another store) --",
+            "channel_data: test app cred data",
             "-- requestPartnerOrder --",
             "status: Success",
             "tax: 0.00",
@@ -1766,6 +1782,9 @@ describe.concurrent("cli scenegraph", () => {
             "requestid: 1",
             "requestStatus: -4 Invalid request NoSuchCommand bad-1",
             "result keys: 0",
+            // A Task thread delivers through its own wait(), and shares the credential store.
+            "-- Task thread --",
+            "pending: true, channel_data: prod token",
             "=== ChannelStore Node Test Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",

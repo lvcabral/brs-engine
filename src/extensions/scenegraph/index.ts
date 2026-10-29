@@ -192,6 +192,11 @@ export class BrightScriptExtension implements BrsExtension {
         }
     }
 
+    onMessageLoop(_: Interpreter) {
+        // Results of operations that are asynchronous on a device (see Field.runOnMessageLoop).
+        Field.deliverMessageLoopCallbacks();
+    }
+
     execTask(interpreter: Interpreter, payload: TaskPayload) {
         const taskData = payload.taskData;
         const taskNode = initializeTask(interpreter, taskData);

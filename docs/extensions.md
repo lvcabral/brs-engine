@@ -96,7 +96,8 @@ Note: In production environments you must copy `assets/common.zip` from this pac
    - `onInit` – called once per interpreter before any payload runs. Use it to register new `CreateObject` factories or global functions.
    - `onBeforeExecute` – called for each payload (apps and tasks) before execution. Use it to prepare resources, parse manifests, or update `BrsDevice` state.
    - `updateSourceMap` – push extra files into the debugger/source map.
-   - `tick` – receive a callback on each interpreter tick (good for polling or background work).
+   - `tick` – receive a callback on each interpreter tick, before every statement (good for polling or background work).
+   - `onMessageLoop` – receive a callback on each message-loop pass (`wait`/`GetMessage`/`PeekMessage` on any `roMessagePort`), before the port is checked. Use it for work that must run only once the app's code has returned to its event loop, such as delivering results of operations that are asynchronous on a device.
    - `execTask` – handle `Task` thread payloads if your extension owns custom task nodes.
 
 2. **Register a factory** – call `registerExtension(() => new MyExtension())` exactly once before you spin up interpreters. The factory pattern ensures each interpreter gets a fresh instance, and hosts can still gate which modules load by editing `DeviceInfo.extensions`.

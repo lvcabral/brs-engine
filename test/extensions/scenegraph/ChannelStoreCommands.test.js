@@ -1,10 +1,11 @@
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { ChannelStore, ContentNode, toContentNode } = scenegraph;
+const { ChannelStore, ContentNode, Field, toContentNode } = scenegraph;
 const {
     BrsBoolean,
     BrsDevice,
+    ChannelCredMaxDataSize,
     BrsString,
     Double,
     Float,
@@ -50,12 +51,28 @@ function fakeNode() {
     return node;
 }
 
+/**
+ * Writes a ChannelStore input field, then runs the message loop once. Commands complete
+ * asynchronously (as on a device), so their result fields are only written from the message loop.
+ */
+function send(node, field, value) {
+    node.setValue(field, value);
+    Field.deliverMessageLoopCallbacks();
+}
+
 /** Builds a ContentNode from plain field values. */
 function contentNode(fields) {
     return toContentNode(toAssociativeArray(fields));
 }
 
 describe("ChannelStore mocked commands", () => {
+    // The credential store is device-level (it stands in for the Roku cloud store) and outlives any
+    // one store instance, so clear it around every test.
+    beforeEach(() => {
+        Field.resetDispatch();
+        new RoChannelStore().storeCredData("");
+    });
+
     describe("user account data", () => {
         // Note the result names differ from the request names: `street` yields street1 + street2 and
         // `firstname` yields firstName.
@@ -136,6 +153,19 @@ describe("ChannelStore mocked commands", () => {
             expect(after.channel_data).toBe("token-1");
             // A PUCID is stable for the same user and app, so it must not change between calls.
             expect(after.roku_pucid).toBe(payload.roku_pucid);
+        });
+
+        test("an artifact over the size limit is rejected with the documented failure shape", () => {
+            const store = new RoChannelStore();
+            const status = store.storeCredData("x".repeat(ChannelCredMaxDataSize + 1));
+            expect(status.get(new BrsString("status")).getValue()).toBe(-1);
+            const response = JSON.parse(stringOf(status, "response"));
+            expect(response.status).toBe("failure");
+            expect(response.error_detail).toContain(String(ChannelCredMaxDataSize));
+            expect(JSON.parse(stringOf(store.getChannelCredData(), "json")).channel_data).toBeUndefined();
+            // Exactly at the limit is accepted.
+            const atLimit = store.storeCredData("x".repeat(ChannelCredMaxDataSize));
+            expect(atLimit.get(new BrsString("status")).getValue()).toBe(0);
         });
 
         test("the mocked PUCID is stable for the same app and device", () => {
@@ -348,16 +378,103 @@ describe("ChannelStore mocked commands", () => {
     });
 
     describe("the node's command dispatch", () => {
+        test("publishes the result from the message loop, never inside the command write", () => {
+            // On a device every command is an asynchronous query. An observer that runs inside the
+            // `command` write can re-enter the code that issued the command before it returns.
+            const node = new ChannelStore();
+            node.setValue("command", new BrsString("getChannelCred"));
+            expect(isInvalid(node.getValue("channelCred"))).toBe(true);
+            Field.deliverMessageLoopCallbacks();
+            expect(node.getValue("channelCred")).toBeInstanceOf(ContentNode);
+        });
+
+        test("a statement boundary is not a message-loop boundary", () => {
+            // The per-statement tick drains construction callbacks, but must not deliver a result:
+            // code that issued a command (onKeyEvent, a callFunc'd function, Main) is still running.
+            const node = new ChannelStore();
+            node.setValue("command", new BrsString("getChannelCred"));
+            Field.deliverPendingConstructionCallbacks();
+            expect(isInvalid(node.getValue("channelCred"))).toBe(true);
+            Field.deliverMessageLoopCallbacks();
+            expect(node.getValue("channelCred")).toBeInstanceOf(ContentNode);
+        });
+
+        test("a delivery that throws leaves the later results queued", () => {
+            Field.runOnMessageLoop(() => {
+                throw new Error("observer failure");
+            });
+            const node = new ChannelStore();
+            node.setValue("command", new BrsString("getChannelCred"));
+            expect(() => Field.deliverMessageLoopCallbacks()).toThrow("observer failure");
+            expect(isInvalid(node.getValue("channelCred"))).toBe(true);
+            Field.deliverMessageLoopCallbacks();
+            expect(node.getValue("channelCred")).toBeInstanceOf(ContentNode);
+        });
+
+        test("work queued while delivering waits for the next message-loop pass", () => {
+            // A result observer that issues the next command must not starve the loop.
+            let ran = false;
+            Field.runOnMessageLoop(() => Field.runOnMessageLoop(() => (ran = true)));
+            expect(Field.deliverMessageLoopCallbacks()).toBe(true);
+            expect(ran).toBe(false);
+            expect(Field.deliverMessageLoopCallbacks()).toBe(true);
+            expect(ran).toBe(true);
+            expect(Field.deliverMessageLoopCallbacks()).toBe(false);
+        });
+
+        test("the result reflects the inputs as they were when the command was issued", () => {
+            const node = fakeNode();
+            node.setValue("requestedUserData", new BrsString("email"));
+            node.setValue("command", new BrsString("getUserData"));
+            node.setValue("requestedUserData", new BrsString("zip"));
+            Field.deliverMessageLoopCallbacks();
+            const userData = node.getValue("userData");
+            expect(userData.getValue("email").getValue()).toBe("john.doe@email.com");
+            expect(isInvalid(userData.getValue("zip"))).toBe(true);
+        });
+
+        test("a stored credential is visible to every ChannelStore node and roChannelStore", () => {
+            // It lives in the Roku cloud, per app, not on the node that stored it.
+            const writer = new ChannelStore();
+            send(writer, "channelCredData", new BrsString("shared-token"));
+            send(writer, "command", new BrsString("storeChannelCredData"));
+
+            const reader = new ChannelStore();
+            send(reader, "command", new BrsString("getChannelCred"));
+            const json = JSON.parse(reader.getValue("channelCred").getValue("json").getValue());
+            expect(json.channel_data).toBe("shared-token");
+            expect(JSON.parse(stringOf(new RoChannelStore().getChannelCredData(), "json")).channel_data).toBe(
+                "shared-token"
+            );
+            // It is kept in its own store: the registry is the app's, and gets nothing.
+            expect(BrsDevice.registry.current.size).toBe(0);
+
+            // The key includes the developer id: side-loaded apps all report the `dev` channel id.
+            const devId = BrsDevice.deviceInfo.developerId;
+            try {
+                BrsDevice.deviceInfo.developerId = "otherdev";
+                const foreign = JSON.parse(stringOf(new RoChannelStore().getChannelCredData(), "json"));
+                expect(foreign.channel_data).toBeUndefined();
+            } finally {
+                BrsDevice.deviceInfo.developerId = devId;
+            }
+
+            // Storing an empty artifact clears it.
+            new RoChannelStore().storeCredData("");
+            const cleared = JSON.parse(stringOf(new RoChannelStore().getChannelCredData(), "json"));
+            expect(cleared.channel_data).toBeUndefined();
+        });
+
         test("getUserData honors requestedUserData and the requestedUserDataInfo context", () => {
             const node = fakeNode();
             node.setValue("requestedUserData", new BrsString("email,zip"));
-            node.setValue("command", new BrsString("getUserData"));
+            send(node, "command", new BrsString("getUserData"));
             let userData = node.getValue("userData");
             expect(userData.getValue("email").getValue()).toBe("john.doe@email.com");
             expect(userData.getValue("zip").getValue()).toBe("95110");
 
             node.setValue("requestedUserDataInfo", contentNode({ context: "signin" }));
-            node.setValue("command", new BrsString("getUserData"));
+            send(node, "command", new BrsString("getUserData"));
             userData = node.getValue("userData");
             expect(userData.getValue("email").getValue()).toBe("john.doe@email.com");
             // A sign-in RFI screen never returns the zip code.
@@ -371,14 +488,14 @@ describe("ChannelStore mocked commands", () => {
             const info = new ContentNode();
             info.setValueSilent("context", new Int32(1));
             node.setValue("requestedUserDataInfo", info);
-            node.setValue("command", new BrsString("getUserData"));
+            send(node, "command", new BrsString("getUserData"));
             // Signup returns the full set, so a field a signin request would drop is present.
             expect(node.getValue("userData").getValue("zip").getValue()).toBe("95110");
         });
 
         test("getUserData reports invalid while fakeServer is off, as a declined request does", () => {
             const node = new ChannelStore();
-            node.setValue("command", new BrsString("getUserData"));
+            send(node, "command", new BrsString("getUserData"));
             expect(isInvalid(node.getValue("userData"))).toBe(true);
         });
 
@@ -387,12 +504,12 @@ describe("ChannelStore mocked commands", () => {
             // as an roAssociativeArray while channelCred is documented as a ContentNode.
             const node = fakeNode();
             node.setValue("channelCredData", new BrsString("token-1"));
-            node.setValue("command", new BrsString("storeChannelCredData"));
+            send(node, "command", new BrsString("storeChannelCredData"));
             const status = node.getValue("storeChannelCredDataStatus");
             expect(status).toBeInstanceOf(RoAssociativeArray);
             expect(JSON.parse(stringOf(status, "response")).status).toBe("success");
 
-            node.setValue("command", new BrsString("getChannelCred"));
+            send(node, "command", new BrsString("getChannelCred"));
             const cred = node.getValue("channelCred");
             expect(cred).toBeInstanceOf(ContentNode);
             expect(JSON.parse(cred.getValue("json").getValue()).channel_data).toBe("token-1");
@@ -404,7 +521,7 @@ describe("ChannelStore mocked commands", () => {
                 "requestPartnerOrder",
                 contentNode({ code: "MOVIE1", price: "2.99", priceDisplay: "3.99", title: "Test Movie" })
             );
-            node.setValue("command", new BrsString("requestPartnerOrder"));
+            send(node, "command", new BrsString("requestPartnerOrder"));
             const request = node.getValue("requestPartnerOrderStatus");
             // This field names the order id `orderId`; ifChannelStore names the same value `id`.
             expect(request.getValue("status").getValue()).toBe("Success");
@@ -413,13 +530,13 @@ describe("ChannelStore mocked commands", () => {
             expect(orderId).not.toBe("");
 
             node.setValue("confirmPartnerOrder", contentNode({ orderId: orderId, code: "MOVIE1", price: "2.99" }));
-            node.setValue("command", new BrsString("confirmPartnerOrder"));
+            send(node, "command", new BrsString("confirmPartnerOrder"));
             const confirmation = node.getValue("confirmPartnerOrderStatus");
             expect(confirmation.getValue("status").getValue()).toBe("Success");
             expect(confirmation.getValue("purchaseId").getValue()).not.toBe("");
 
             // Confirming again reuses a consumed order id and must report the failure keys instead.
-            node.setValue("command", new BrsString("confirmPartnerOrder"));
+            send(node, "command", new BrsString("confirmPartnerOrder"));
             const replay = node.getValue("confirmPartnerOrderStatus");
             expect(replay.getValue("status").getValue()).toBe("Failure");
             expect(replay.getValue("errorCode").getValue()).toBe("-3");
@@ -431,7 +548,7 @@ describe("ChannelStore mocked commands", () => {
             // has to re-derive the request state from the node's own fields.
             const node = new ChannelStore();
             node.setValueSilent("fakeServer", BrsBoolean.True);
-            node.setValue("command", new BrsString("getUserData"));
+            send(node, "command", new BrsString("getUserData"));
             expect(node.getValue("userData").getValue("email").getValue()).toBe("john.doe@email.com");
         });
     });
@@ -450,7 +567,7 @@ describe("ChannelStore mocked commands", () => {
         // Shape and matching rules measured on a device (test/simulator/probes/roku-customer-id-probe).
         test("requestStatus has the device's lowercase keys, in its order, with an incrementing requestid", () => {
             const node = new ChannelStore();
-            node.setValue("request", toAssociativeArray({ command: "GetRokuCustomerId" }));
+            send(node, "request", toAssociativeArray({ command: "GetRokuCustomerId" }));
             const first = node.getValue("requestStatus");
             expect(keysOf(first)).toEqual(["result", "command", "status", "context", "statusmessage", "requestid"]);
             expect(first.get(new BrsString("status")).getValue()).toBe(1);
@@ -462,14 +579,14 @@ describe("ChannelStore mocked commands", () => {
             );
             expect(first.get(new BrsString("requestid")).getValue()).toBe(0);
 
-            node.setValue("request", toAssociativeArray({ command: "GetRokuCustomerId" }));
+            send(node, "request", toAssociativeArray({ command: "GetRokuCustomerId" }));
             expect(node.getValue("requestStatus").get(new BrsString("requestid")).getValue()).toBe(1);
         });
 
         test("echoes the context of a request with a string command", () => {
             const node = new ChannelStore();
             for (const command of ["GetRokuCustomerId", "NoSuchCommand"]) {
-                node.setValue("request", toAssociativeArray({ command: command, context: { id: "ctx", n: 7 } }));
+                send(node, "request", toAssociativeArray({ command: command, context: { id: "ctx", n: 7 } }));
                 const context = node.getValue("requestStatus").get(new BrsString("context"));
                 expect(stringOf(context, "id")).toBe("ctx");
                 expect(context.get(new BrsString("n")).getValue()).toBe(7);
@@ -485,7 +602,7 @@ describe("ChannelStore mocked commands", () => {
             ["a non-string command", { command: 42 }, "", []],
         ])("%s reports Invalid request with an empty result", (_label, fields, echoed, contextKeys) => {
             const node = new ChannelStore();
-            node.setValue("request", toAssociativeArray({ ...fields, context: { id: "ctx" } }));
+            send(node, "request", toAssociativeArray({ ...fields, context: { id: "ctx" } }));
             const status = node.getValue("requestStatus");
             expect(status.get(new BrsString("status")).getValue()).toBe(-4);
             expect(stringOf(status, "statusmessage")).toBe("Invalid request");

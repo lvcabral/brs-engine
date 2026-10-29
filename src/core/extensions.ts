@@ -16,6 +16,9 @@ export interface BrsExtension {
     onBeforeExecute?(interpreter: Interpreter, payload: AppPayload | TaskPayload): void | Promise<void>;
     updateSourceMap?(sourceMap: Map<string, string>): void;
     tick?(interpreter: Interpreter): void;
+    /** Each pass of a message loop (`wait`/`GetMessage`/`PeekMessage` on any `roMessagePort`), before
+     * the port is checked: the thread has returned to its event loop, unlike at a `tick`. */
+    onMessageLoop?(interpreter: Interpreter): void;
     execTask?(interpreter: Interpreter, payload: TaskPayload): void;
     // Add hooks as needed
 }

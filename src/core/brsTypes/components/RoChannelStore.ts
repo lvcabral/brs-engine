@@ -17,7 +17,7 @@ import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoChannelStoreEvent } from "../events/RoChannelStoreEvent";
 import { RoAssociativeArray } from "./RoAssociativeArray";
-import { AppData, genHexAddress } from "../../common";
+import { ChannelCredMaxDataSize, genHexAddress } from "../../common";
 import { XmlDocument, XmlElement, XmlNode } from "xmldoc";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
@@ -35,7 +35,6 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
     private readonly id: number;
     private readonly order: RoAssociativeArray[];
     private orderInfo: RoAssociativeArray | BrsInvalid;
-    private credData: string;
     private partnerOrderId: string;
     private partnerPurchaseId: string;
     private fakeServerEnabled: boolean;
@@ -46,7 +45,6 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         this.id = 103809000 + Math.floor(Math.random() * 100) + 1;
         this.order = [];
         this.orderInfo = BrsInvalid.Instance;
-        this.credData = "";
         this.partnerOrderId = "";
         this.partnerPurchaseId = "";
         this.fakeServerEnabled = false;
@@ -247,6 +245,19 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
         return toAssociativeArray(RoChannelStore.accountFields(["state", "zip", "country"]));
     }
 
+    /** Id of the running app, as reported by `GetChannelCred` (`dev` for a side-loaded app). */
+    private static channelId(): string {
+        return BrsDevice.getRunningApp()?.id ?? "dev";
+    }
+
+    /**
+     * Key of the running app's entry in the channel credential store. Side-loaded apps all report
+     * the `dev` channel id, so the developer id is part of the key to keep them apart.
+     */
+    private static credDataKey(): string {
+        return `${BrsDevice.deviceInfo.developerId}.${RoChannelStore.channelId()}`;
+    }
+
     /**
      * Mocks `StoreChannelCredData`: stores the artifact that `GetChannelCred` later returns as
      * `channel_data`.
@@ -259,7 +270,16 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
      *          `status` is 0 on success (the inverse of the catalog/order convention).
      */
     storeCredData(data: string): RoAssociativeArray {
-        this.credData = data;
+        // Per app and account, like the Roku cloud store — shared by every store instance and thread.
+        if (new TextEncoder().encode(data).length > ChannelCredMaxDataSize) {
+            // An engine limit (Roku documents none), reported with the documented failure shape.
+            const detail = `The artifact exceeds the ${ChannelCredMaxDataSize}-byte limit`;
+            return toAssociativeArray({
+                response: JSON.stringify({ status: "failure", error: "invalid data", error_detail: detail }),
+                status: -1,
+            });
+        }
+        BrsDevice.setChannelCredential(RoChannelStore.credDataKey(), data);
         // `error_detail` is documented as uninitialized on success, so it is omitted entirely.
         return toAssociativeArray({ response: JSON.stringify({ status: "success", error: "none" }), status: 0 });
     }
@@ -272,8 +292,7 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
      *          usage succeeds.
      */
     getChannelCredData(): RoAssociativeArray {
-        const app = BrsDevice.deviceInfo.appList?.find((app: AppData) => app.running);
-        const channelId = app?.id ?? "dev";
+        const channelId = RoChannelStore.channelId();
         const deviceId = BrsDevice.deviceInfo.clientId;
         const payload: FlexObject = {
             // A PUCID identifies the same user and app across every device linked to one Roku
@@ -282,8 +301,9 @@ export class RoChannelStore extends BrsComponent implements BrsValue {
             token_type: "urn:roku:pucid:token_type:pucid_token",
         };
         // Returned only when the app actually stored something with StoreChannelCredData().
-        if (this.credData !== "") {
-            payload.channel_data = this.credData;
+        const credData = BrsDevice.getChannelCredential(RoChannelStore.credDataKey());
+        if (credData) {
+            payload.channel_data = credData;
         }
         return toAssociativeArray({
             channelID: channelId,

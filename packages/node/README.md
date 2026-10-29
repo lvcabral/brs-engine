@@ -44,7 +44,7 @@ The **BrightScript Simulation Engine** provides a complete BrightScript interpre
 - **Screen resolutions** - Support for various Roku display modes
 - **Input Handling** - Keyboard and gamepad simulation for remote control input, see [docs](https://github.com/lvcabral/brs-engine/blob/master/docs/remote-control.md) for more details
 - **File System Simulation** - Including `pkg:/`, `tmp:/`, `cachefs:/`, `common:/` and `ext1:/` volumes
-- **Registry simulation** - Roku device registry emulation, persisted to a local `registry.json` in the user data folder when `--registry` is used
+- **Registry simulation** - Roku device registry emulation, persisted to a local `registry.json` in the user data folder when `--registry` is used (channel credentials stored with `StoreChannelCredData` go to a separate `channel-credentials.json`)
 - **Micro Debugger** - Step-through debugging capabilities, similar to the Roku experience
 - **ECP Server** - [External Control Protocol](https://developer.roku.com/dev/docs/external-control-api) for remote control
 - **SSDP Discovery** - Device discovery simulation

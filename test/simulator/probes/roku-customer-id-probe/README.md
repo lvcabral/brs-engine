@@ -48,11 +48,11 @@ brs-cli --root test/simulator/probes/roku-customer-id-probe
 
 `engine-trace.txt` is the brs-engine baseline (default `customerId`).
 
-> **Why the next request is sent from a timer:** the engine completes a request synchronously, so a
-> request sent from inside the `requestStatus` observer has its reply written while that field is
-> still notifying, and the engine's per-field re-entrancy guard drops the nested notification. On a
-> device the reply arrives later, so chaining from the observer should work there. The `basic` case
-> sends from `init()`, and every later one from the `gap` timer, to keep both runs comparable.
+> **Why the next request is sent from a timer:** the engine used to complete a request
+> synchronously, so a request sent from inside the `requestStatus` observer had its reply written
+> while that field was still notifying, and the engine's per-field re-entrancy guard dropped the
+> nested notification. Replies are now published from the message loop, as on a device, so chaining
+> from the observer works too. The timer is kept so the device and engine traces stay comparable.
 
 > The customer id is account data — redact it before committing a device trace if needed (keep its
 > length and character classes intact).

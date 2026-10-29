@@ -11,6 +11,7 @@ import {
     RoChannelStore,
 } from "brs-engine";
 import { Node } from "./Node";
+import { Field } from "./Field";
 import { ContentNode } from "./ContentNode";
 import { jsValueOf, fromContentNode, toContentNode, toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, FieldModel } from "../SGTypes";
@@ -81,6 +82,15 @@ export class ChannelStore extends Node {
     }
 
     /**
+     * Publishes a command's result from the message loop, as a device's asynchronous query does — an
+     * observer running inside the `command` write could re-enter the code that issued it. The result
+     * is computed eagerly, from the inputs as they were when the command was issued.
+     */
+    private publish(field: string, value: BrsType) {
+        Field.runOnMessageLoop(() => super.setValue(field, value));
+    }
+
+    /**
      * Runs a command sent through the generic request framework and publishes `requestStatus`.
      *
      * Shape measured on a device (`test/simulator/probes/roku-customer-id-probe`): every key is
@@ -109,7 +119,7 @@ export class ChannelStore extends Node {
         status.set(new BrsString("statusmessage"), new BrsString(known ? "Success" : "Invalid request"));
         status.set(new BrsString("requestid"), new Int32(this.nextRequestId));
         this.nextRequestId++;
-        super.setValue("requestStatus", status);
+        this.publish("requestStatus", status);
     }
 
     /**
@@ -222,7 +232,7 @@ export class ChannelStore extends Node {
                 break;
             case "getuserregiondata": {
                 const region = this.channelStore.getRegionData();
-                super.setValue("userRegionData", region ? toContentNode(region) : BrsInvalid.Instance);
+                this.publish("userRegionData", region ? toContentNode(region) : BrsInvalid.Instance);
                 break;
             }
             case "getcatalog":
@@ -244,16 +254,16 @@ export class ChannelStore extends Node {
                 result.setValueSilent("status", new Int32(1));
                 result.setValueSilent("nonce", this.getValue("nonce"));
                 result.setValueSilent("token", this.channelStore.getAttestationToken());
-                super.setValue("deviceAttestationToken", result);
+                this.publish("deviceAttestationToken", result);
                 break;
             }
             case "storechannelcreddata": {
                 const data = (this.getValueJS("channelCredData") as string) ?? "";
-                super.setValue("storeChannelCredDataStatus", this.channelStore.storeCredData(data));
+                this.publish("storeChannelCredDataStatus", this.channelStore.storeCredData(data));
                 break;
             }
             case "getchannelcred": {
-                super.setValue("channelCred", toContentNode(this.channelStore.getChannelCredData()));
+                this.publish("channelCred", toContentNode(this.channelStore.getChannelCredData()));
                 break;
             }
             case "requestpartnerorder":
@@ -286,7 +296,7 @@ export class ChannelStore extends Node {
             // `ifChannelStore` names the order id `id`; this node names the same value `orderId`.
             status.setValueSilent(key === "id" ? "orderId" : key, new BrsString(value));
         }
-        super.setValue(`${command}Status`, status);
+        this.publish(`${command}Status`, status);
     }
 
     private setStoreData(command: string, field: string) {
@@ -298,7 +308,7 @@ export class ChannelStore extends Node {
         for (const item of catalog) {
             result.appendChildToParent(toContentNode(item));
         }
-        super.setValue(field, result);
+        this.publish(field, result);
     }
 
     /**
@@ -315,7 +325,7 @@ export class ChannelStore extends Node {
         const info = this.getValue("requestedUserDataInfo");
         const context = info instanceof Node ? ChannelStore.textOf(info.getValue("context")) : "";
         const data = this.channelStore.getUserAccountData(requested, context || "signup");
-        super.setValue("userData", data ? toContentNode(data) : BrsInvalid.Instance);
+        this.publish("userData", data ? toContentNode(data) : BrsInvalid.Instance);
     }
 
     private doOrder() {
@@ -327,6 +337,6 @@ export class ChannelStore extends Node {
         for (const item of order) {
             result.appendChildToParent(toContentNode(item));
         }
-        super.setValue("orderStatus", result);
+        this.publish("orderStatus", result);
     }
 }

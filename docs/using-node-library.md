@@ -413,6 +413,7 @@ app can run on the host at a time. Packaging (`.bpk` generation) is not supporte
 `executeApp` — use the synchronous `executeFile` for that.
 
 Host events: `message` (engine strings), `frame` (ImageData), `registry` (RegistryData),
+`channelCredentials` (ChannelCredData),
 `graphics` (texture-memory data), `launch` (roAppManager launch requests), `ndkStart`,
 `component` (display/caption state objects), `stdout`/`stderr` (console output written directly
 inside a worker thread — the workers' streams are piped to the host, never to the terminal),
@@ -844,6 +845,9 @@ runs through `executeApp`.
 - `frame` - a node-canvas `ImageData` with the latest rendered frame. Always emitted, and unrelated to
   the browser library's opt-in `framePainted` event, which carries a frame counter instead
 - `registry` - `RegistryData` to persist (`{ current: Map, ... }`)
+- `channelCredentials` - `ChannelCredData` to persist (`{ channelCredentials: Map }`): the simulated
+  Roku cloud store behind `StoreChannelCredData`, kept apart from the registry. Pass it back as
+  `device.channelCredentials` on the next run to restore it
 - `graphics` - texture-memory debug data
 - `launch` / `ndkStart` - app-launch requests
 - `component` - display/caption state objects

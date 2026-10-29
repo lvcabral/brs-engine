@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Runs a ChannelStore command on a Task thread: the result is still pending on the statement after
+    the command, and arrives through the Task's own message loop (its wait() on a port). It also reads
+    the credential stored earlier by Main: the store is shared by every thread, like the Roku cloud.
+-->
+<component name="CredTask" extends="Task">
+    <interface>
+        <field id="result" type="string" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.functionName = "checkChannelCred"
+    end sub
+
+    sub checkChannelCred()
+        port = createObject("roMessagePort")
+        store = createObject("roSGNode", "ChannelStore")
+        store.observeField("channelCred", port)
+        store.command = "getChannelCred"
+        pending = (store.channelCred = invalid)
+        msg = wait(2000, port)
+        if type(msg) <> "roSGNodeEvent"
+            m.top.result = "timed out"
+            return
+        end if
+        json = parseJson(msg.getData().json)
+        m.top.result = "pending: " + pending.toStr() + ", channel_data: " + json.channel_data
+    end sub
+    ]]></script>
+</component>
