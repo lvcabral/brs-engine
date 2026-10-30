@@ -198,6 +198,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (sgRoot.scene instanceof Scene) {
                 const libsUpdated = sgRoot.processComponentLibraries();
                 const timersFired = sgRoot.processTimers();
+                const clockUpdated = sgRoot.processClock();
                 const animUpdated = sgRoot.processAnimations();
                 const tasksUpdated = sgRoot.processTasks();
                 const queuesDrained = sgRoot.processRenderQueues();
@@ -207,6 +208,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 this.isDirty ||=
                     libsUpdated ||
                     timersFired ||
+                    clockUpdated ||
                     animUpdated ||
                     tasksUpdated ||
                     queuesDrained ||

@@ -14,9 +14,9 @@ import {
 import { jsValueOf } from "../factory/Serializer";
 import { Label } from "./Label";
 import { Poster } from "./Poster";
-import { Timer } from "./Timer";
 import { Rectangle } from "./Rectangle";
 import { Group } from "./Group";
+import { sgRoot } from "../SGRoot";
 
 export class Overhang extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -43,7 +43,6 @@ export class Overhang extends Group {
         { name: "rightDividerVertOffset", type: "float", value: "0.0" },
         { name: "height", type: "float", value: "115" },
     ];
-    private readonly clock: Timer;
     private readonly backRect: Rectangle;
     private readonly backPoster: Poster;
     private readonly optionsIcon: Poster;
@@ -58,6 +57,8 @@ export class Overhang extends Group {
     private readonly width: number;
     private height: number;
     private customLogo: boolean = false;
+    /** The sgRoot.clockMinute the clock was last refreshed for. */
+    private clockMinute: number = sgRoot.clockMinute;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.Overhang) {
         super([], name);
@@ -101,13 +102,6 @@ export class Overhang extends Group {
         this.backRect.setValueSilent("visible", BrsBoolean.False);
         this.optionsText.setValue("text", new BrsString(BrsDevice.getTerm("for Options")));
         this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        this.clock = new Timer();
-        this.clock.setCallback(() => {
-            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        });
-        this.clock.setValueSilent("repeat", BrsBoolean.True);
-        this.clock.setValue("control", new BrsString("start"));
-        this.appendChildToParent(this.clock);
     }
 
     private updateChildren() {
@@ -145,15 +139,9 @@ export class Overhang extends Group {
         // Update clock
         const showClock = this.getValueJS("showClock") as boolean;
         const clockText = this.getValueJS("clockText") as string;
-        const clockState = this.clock.getValueJS("control") as string;
-        if (showClock && clockText) {
-            this.clock.setValue("control", new BrsString("stop"));
-            this.clockText.setValue("text", new BrsString(clockText));
-        } else if (showClock && clockState !== "start") {
-            this.clock.setValue("control", new BrsString("start"));
-            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        } else if (!showClock && clockState === "start") {
-            this.clock.setValue("control", new BrsString("stop"));
+        this.clockMinute = sgRoot.clockMinute;
+        if (showClock) {
+            this.clockText.setValue("text", new BrsString(clockText || BrsDevice.getTime()));
         }
         this.clockText.setValue("visible", BrsBoolean.from(showClock));
         // Update options
@@ -239,6 +227,10 @@ export class Overhang extends Group {
         if (!this.isVisible()) {
             this.updateRenderTracking(true);
             return;
+        }
+        // A new minute re-runs updateChildren so the clock (and the layout around its width) refreshes.
+        if (this.isPaintPass(draw2D) && this.clockMinute !== sgRoot.clockMinute) {
+            this.isDirty = true;
         }
         if (this.isDirty) {
             this.updateChildren();

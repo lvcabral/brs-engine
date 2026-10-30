@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Timer Control Probe. A step Timer (`driver`) walks the cases one second apart so every probed
+    Timer gets real frames to fire in. Probed Timers are created in script, so the step Timer is the
+    only one declared here. Fire times are reported in 100 ms buckets so frame jitter does not
+    change the trace.
+-->
+<component name="TimerProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript" uri="TimerProbeScene.brs" />
+    <children>
+        <Timer id="driver" duration="1" repeat="true" />
+    </children>
+</component>
