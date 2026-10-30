@@ -7,7 +7,7 @@ import { SGNodeType } from ".";
 
 export class Timer extends Node {
     readonly defaultFields: FieldModel[] = [
-        { name: "control", type: "string", value: "none" },
+        { name: "control", type: "string", value: "none", alwaysNotify: true },
         { name: "repeat", type: "boolean", value: "false" },
         { name: "duration", type: "time", value: "1.0" },
         { name: "fire", type: "object", alwaysNotify: true },
@@ -25,7 +25,6 @@ export class Timer extends Node {
 
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(members);
-        sgRoot.timers.push(this);
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
@@ -37,10 +36,15 @@ export class Timer extends Node {
             if (control === "start") {
                 this.lastFireTime = sgClock.perfNow();
                 this.active = true;
-            } else if (control === "stop") {
-                this.active = false;
+                sgRoot.trackTimer(this);
             } else {
-                control = "none";
+                // On a device any value other than "start" stops a running Timer, and one it does
+                // not recognize reads back as "".
+                this.active = false;
+                sgRoot.releaseTimer(this);
+                if (control !== "stop" && control !== "none") {
+                    control = "";
+                }
             }
             field.setValue(new BrsString(control));
             this.fields.set(mapKey, field);
@@ -56,13 +60,17 @@ export class Timer extends Node {
     checkFire() {
         const now = sgClock.perfNow();
         const duration = this.getValueJS("duration") as number;
-        const repeat = this.getValueJS("repeat") as boolean;
         if (this.active && (now - this.lastFireTime) / 1000 >= duration) {
             this.lastFireTime = now;
-            this.active = repeat;
+            this.active = this.getValueJS("repeat") as boolean;
             this.fields.get("fire")?.setValue(BrsInvalid.Instance);
             if (this.jsCallback) {
                 this.jsCallback();
+            }
+            // A one-shot Timer reads "stop" after its fire observers run, unless one of them wrote
+            // `control` (a restart keeps it running).
+            if (!this.active && this.getValueJS("control") === "start") {
+                this.setValue("control", new BrsString("stop"));
             }
             return true;
         }

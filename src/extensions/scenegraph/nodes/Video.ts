@@ -36,7 +36,6 @@ import { Label } from "./Label";
 import { Node } from "./Node";
 import { Poster } from "./Poster";
 import { ScrollingLabel } from "./ScrollingLabel";
-import { Timer } from "./Timer";
 import { TrickPlayBar } from "./TrickPlayBar";
 import { ProgressBar } from "./ProgressBar";
 
@@ -132,6 +131,8 @@ export class Video extends Group {
     private readonly audioTracks: MediaTrack[] = [];
     private readonly subtitleTracks: MediaTrack[] = [];
     private readonly clockText: Label;
+    /** The sgRoot.clockMinute the clock was last refreshed for. */
+    private clockMinute: number = sgRoot.clockMinute;
     private readonly spinner: BusySpinner;
     private readonly pausedIcon: Poster;
     private readonly trickPlayBar: TrickPlayBar;
@@ -214,15 +215,6 @@ export class Video extends Group {
         if (sgRoot.inTaskThread() || sgRoot.deserializing) {
             return;
         }
-        // Initialize Clock Timer
-        const clock = new Timer();
-        clock.setCallback(() => {
-            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
-        });
-        clock.setValueSilent("repeat", BrsBoolean.True);
-        clock.setValue("control", new BrsString("start"));
-        this.appendChildToParent(clock);
-
         // Reset UI state
         this.showUI(false);
 
@@ -584,7 +576,7 @@ export class Video extends Group {
     }
 
     // The Video's children are all internal presentation nodes (trick-play bar, header
-    // labels, spinner, paused icon, background overlay, clock timer) created in the
+    // labels, spinner, paused icon, background overlay) created in the
     // constructor and referenced by private fields that `showUI` updates every frame. They
     // must never be serialized to a Task thread: a Task's `updateSGNode` reconciliation
     // would replace them with fresh copies, splitting the rendered children from the fields
@@ -764,6 +756,10 @@ export class Video extends Group {
         if (!this.isVisible() || sgRoot.inTaskThread()) {
             this.updateRenderTracking(true);
             return;
+        }
+        if (this.isPaintPass(draw2D) && this.clockMinute !== sgRoot.clockMinute) {
+            this.clockMinute = sgRoot.clockMinute;
+            this.clockText.setValue("text", new BrsString(BrsDevice.getTime()));
         }
         const drawTrans = this.getDrawTranslation(origin, angle);
         const size = this.getDimensions();

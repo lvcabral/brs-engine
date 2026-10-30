@@ -1,0 +1,62 @@
+PROBE|000|boot|start
+PROBE|001|A.created|control=none
+PROBE|002|A.onControl|data=start
+PROBE|003|A.started|control=start
+PROBE|004|A.onFire|fires=1 control=start at=3
+PROBE|005|A.onControl|data=stop
+PROBE|006|A.afterFire|control=stop fires=1
+PROBE|007|A.onControl|data=start
+PROBE|008|A.guard|restarted=true control=start
+PROBE|009|B.onControl|data=start
+PROBE|010|A.onFire|fires=2 control=start at=3
+PROBE|011|A.onControl|data=stop
+PROBE|012|B.onFire|fires=1 control=start at=3
+PROBE|013|B.onControl|data=stop
+PROBE|014|A.afterGuard|control=stop fires=2
+PROBE|015|B.afterFire|control=stop fires=1
+PROBE|016|B.onControl|data=start
+PROBE|017|B.restarted|control=start
+PROBE|018|C.onControl|data=start
+PROBE|019|B.onFire|fires=2 control=start at=3
+PROBE|020|B.onControl|data=stop
+PROBE|021|C.onFire|fires=1 control=start at=3
+PROBE|022|C.onFire|fires=2 control=start at=6
+PROBE|023|C.onFire|fires=3 control=start at=9
+PROBE|024|B.afterRestart|control=stop fires=2
+PROBE|025|C.running|control=start firesAtLeast3=true
+PROBE|026|C.onControl|data=stop
+PROBE|027|C.stopped|control=stop
+PROBE|028|D.onControl|data=start
+PROBE|029|D.onControl|data=start
+PROBE|030|D.restartWhileRunning|control=start at=3
+PROBE|031|D.onFire|fires=1 control=start at=8
+PROBE|032|D.onControl|data=stop
+PROBE|033|D.afterFire|control=stop fires=1
+PROBE|034|E.onControl|data=start
+PROBE|035|E.onControl|data=none
+PROBE|036|E.none|control=none
+PROBE|037|F.onControl|data=stop
+PROBE|038|F.stopBeforeStart|control=stop
+PROBE|039|F.onControl|data=
+PROBE|040|F.unknown|control=
+PROBE|041|F.onControl|data=start
+PROBE|042|F.upper|control=start
+PROBE|043|F.onFire|fires=1 control=start
+PROBE|044|F.onControl|data=stop
+PROBE|045|E.afterNone|control=none fires=0
+PROBE|046|F.afterUpper|control=stop fires=1
+PROBE|047|F.onControl|data=stop
+PROBE|048|G.onControl|data=start
+PROBE|049|H.onControl|data=start
+PROBE|050|H.onControl|data=
+PROBE|051|H.unknown|control=
+PROBE|052|G.onFire|fires=1 control=start at=3
+PROBE|053|G.onControl|data=start
+PROBE|054|G.selfRestart|control=start
+PROBE|055|G.onFire|fires=2 control=start at=6
+PROBE|056|G.onControl|data=stop
+PROBE|057|G.afterSelfRestart|control=stop fires=2
+PROBE|058|H.afterUnknown|control= fires=0
+PROBE|059|G.onControl|data=stop
+PROBE|060|end|
+PROBE|999|boot|end

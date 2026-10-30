@@ -18,6 +18,7 @@ import {
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
+import { sgClock } from "./SGClock";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
@@ -46,6 +47,8 @@ export class SGRoot {
     private readonly _autoSub: { search: string; replace: string };
     private readonly _threads: Map<number, { task?: Task; info: ThreadInfo }>;
     private readonly _timers: Timer[];
+    private _walkingTimers: boolean = false;
+    private _clockMinute: number = Math.floor(sgClock.now() / 60000);
     private readonly _animations: AnimationBase[];
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
@@ -185,8 +188,13 @@ export class SGRoot {
         return this._sfx;
     }
 
-    get timers(): Timer[] {
+    get timers(): readonly Timer[] {
         return this._timers;
+    }
+
+    /** The wall-clock minute (ms / 60000) that node clocks (Overhang, Video) should show. */
+    get clockMinute(): number {
+        return this._clockMinute;
     }
 
     get animations(): AnimationBase[] {
@@ -655,12 +663,69 @@ export class SGRoot {
      */
     processTimers(): boolean {
         let fired = false;
-        for (const timer of this._timers) {
-            if (timer.active && timer.checkFire()) {
-                fired = true;
+        this._walkingTimers = true;
+        try {
+            // Walk the live array: a Timer started by a fire observer is appended and still checked in
+            // this pass. Releases made during the walk are deferred to the end of it.
+            for (const timer of this._timers) {
+                if (timer.active && timer.checkFire()) {
+                    fired = true;
+                }
             }
+        } finally {
+            this._walkingTimers = false;
+        }
+        // Only a fire runs code that can release a timer, so a pass with no fire has nothing to drop.
+        if (fired) {
+            let kept = 0;
+            for (const timer of this._timers) {
+                if (timer.active) {
+                    this._timers[kept] = timer;
+                    kept++;
+                }
+            }
+            this._timers.length = kept;
         }
         return fired;
+    }
+
+    /**
+     * Advances the wall-clock minute shown by node clocks; each clock refreshes its text when it
+     * next paints.
+     * @returns True when the minute changed, so the screen repaints
+     */
+    processClock(): boolean {
+        const minute = Math.floor(sgClock.now() / 60000);
+        if (minute === this._clockMinute) {
+            return false;
+        }
+        this._clockMinute = minute;
+        return true;
+    }
+
+    /**
+     * Tracks a started Timer so processTimers checks it.
+     * @param timer Timer whose control was set to "start"
+     */
+    trackTimer(timer: Timer) {
+        if (!this._timers.includes(timer)) {
+            this._timers.push(timer);
+        }
+    }
+
+    /**
+     * Stops tracking a Timer that was stopped or fired its last time, so it can be freed.
+     * During processTimers the removal is deferred to the end of the walk.
+     * @param timer Timer that is no longer active
+     */
+    releaseTimer(timer: Timer) {
+        if (this._walkingTimers) {
+            return;
+        }
+        const index = this._timers.indexOf(timer);
+        if (index > -1) {
+            this._timers.splice(index, 1);
+        }
     }
 
     /**
