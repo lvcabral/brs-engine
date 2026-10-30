@@ -192,13 +192,13 @@ export class TargetGroup extends Group {
             // The items are placed from drawTrans in local units: the group's own scale applies to
             // them as a frame, like to children. DEVICE-MEASURED (Roku OS 15.3, probe
             // `test/simulator/probes/group-scale-probe` R4): a TargetGroup scaled 0.5 draws its
-            // 200x200 targets at 100x100, 120 apart instead of 240.
-            const frame = this.openScaleFrame(drawTrans, scale, draw2D);
-            try {
+            // 200x200 targets at 100x100, 120 apart instead of 240. The items are parented to the
+            // group, but updateBoundingRects below replaces every rect they would union into.
+            this.rederivesBounds = true;
+            this.withScaleFrame(drawTrans, scale, draw2D, () => {
                 this.renderItems(interpreter, targetSet, drawTrans, rotation, opacity, draw2D);
-            } finally {
-                this.closeScaleFrame(frame, draw2D);
-            }
+            });
+            this.rederivesBounds = false;
         }
 
         const size = this.getDimensions();

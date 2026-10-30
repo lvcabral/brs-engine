@@ -80,8 +80,9 @@ translation. How the engine composes that, each part of which broke something du
 
 - **Two anchors, not one.** `getDrawTranslation` is the node's unrotated local origin — where text and
   grid items are placed from. A draw that turns around `x + scale * center` (`doDrawRotatedRect`,
-  `doDrawRotatedBitmap`, the Effect clip, `transformLocalRect`) must start at `getPivotAnchor` instead,
-  which differs only under an inherited rotation. Folding the pivot shift into `getDrawTranslation`
+  `doDrawRotatedBitmap`, the Effect clip, `transformLocalRect`) must start at the pivot anchor instead
+  (`SGUtil.pivotAnchor`; nodes get their draw rect from `getPivotDrawRect`), which differs only under an
+  inherited rotation. Folding the pivot shift into `getDrawTranslation`
   fixed Rectangles and moved every Label/grid ~120 px under a rotated parent.
 - **`updateBoundingRects` takes the UNSCALED box at the draw translation** (plus outsets) and applies the
   node's own transform itself (`placeLocalRect`). Do not pass a pre-scaled rect: `rectLocal` would carry
@@ -90,10 +91,11 @@ translation. How the engine composes that, each part of which broke something du
 - **The node's own rotation is `rotation - inheritedAngle`**, with `inheritedAngle` stashed by the
   `renderNode` template. A node type that ignores its own rotation passes the inherited angle and is then
   placed unrotated — consistent with how it draws.
-- **A node's scale reaches its descendants as a scale frame** (`openScaleFrame`: canvas transform via
+- **A node's scale reaches its descendants as a scale frame** (`withScaleFrame`: canvas transform via
   `IfDraw2D.pushScaleFrame` + `sgRoot.sceneMap` for scene rects), opened by `Group.renderChildren`. A node
-  type that places children itself overrides `renderChildNodes`, never `renderChildren` (PanelSet), and
-  one that draws items outside `renderChildren` opens the frame around them (ArrayGrid around
+  type that places children itself overrides `renderChildNodes`, never `renderChildren` (PanelSet,
+  PosterGridItem), and
+  one that draws items outside `renderChildren` runs them inside the frame (ArrayGrid around
   `renderContent`, TargetGroup around its items) and returns `[1,1]` from `contentScale` so its own draw
   helpers don't scale a second time.
 - **The frame is on the clip stack.** Child traversals run app BrightScript and push clips; a plain
@@ -102,7 +104,8 @@ translation. How the engine composes that, each part of which broke something du
 - **Screen-edge culling inside a frame uses `visibleSceneRect()`**, the screen mapped into the current
   drawing units — testing `sceneRect` directly dropped rows a scaled list still shows on screen.
 - **Child unions are cheap.** A container's `rectToParent`/`rectToScene` are re-derived from `rectLocal`
-  after its children (`boundsFromLocal`), so children only union into `rectLocal`; a renderable parent's
+  after its children, and a grid's or TargetGroup's after its items (`rederivesBounds`), so those children
+  only union into `rectLocal`; a renderable parent's
   transform is reused from its own `placeLocalRect` (`placedTrans`/`placedScale`/...) rather than read
   again per child. Regressions: `ScaleRotateFrame.test.js`, `Rectangle.test.js` ("Group scale…"),
   `IfDraw2D.test.js` (`pushScaleFrame`).

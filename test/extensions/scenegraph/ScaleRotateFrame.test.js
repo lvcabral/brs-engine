@@ -317,12 +317,18 @@ describe("own scale reaches the content of node types that place it themselves",
         expect(draw2D.texts.map((t) => t.text)).toEqual(["Row 0", "Row 1", "Row 2"]);
     });
 
-    test("renderChildren scales an offset child origin around the node, not around the offset", () => {
+    test("a renderChildNodes override that offsets the children is scaled around the node, not the offset", () => {
         // PosterGridItem lays its children out below a caption: the offset is in local units.
-        const group = node("Group", { scale: [0.5, 0.5] });
+        class CaptionedGroup extends Group {
+            renderChildNodes(interpreter, origin, ...rest) {
+                super.renderChildNodes(interpreter, [origin[0], origin[1] + 30], ...rest);
+            }
+        }
+        const group = new CaptionedGroup();
+        group.setValue("scale", vector([0.5, 0.5]));
         const child = node("Rectangle", { width: 10, height: 10 });
         group.appendChildToParent(child);
-        group.renderChildren(fakeInterpreter, [100, 100], 0, 1, recordingDraw2D(), [0.5, 0.5], [0, 30]);
+        group.renderChildren(fakeInterpreter, [100, 100], 0, 1, recordingDraw2D());
 
         // Read straight off the node: getBoundingRect would refresh the detached tree from its root.
         expect(child.rectToScene).toEqual({ x: 100, y: 115, width: 5, height: 5 });

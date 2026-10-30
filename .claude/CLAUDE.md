@@ -281,11 +281,10 @@ rules, the silence-based timeout, and the all-thread debugger halt), read
    `<MyNode>` resolve.
 4. Follow the `renderNodeContent` contract and the visibility/measurement rule in
    [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md). Hand `updateBoundingRects`
-   the node's UNSCALED box at its draw translation; a draw that turns around the node's pivot starts at
-   `getPivotAnchor`, not at the draw translation; a node that places its own items outside
-   `renderChildren` wraps them in `openScaleFrame` (see "Scale, rotation and the pivot" there). If its
-   layout assigns its **own** `translation`, do that in `prepareRender` so the clip is positioned from
-   the settled value.
+   the node's UNSCALED box at its draw translation; a draw that turns around the node's pivot gets its
+   rect from `getPivotDrawRect`; a node that places its own items outside `renderChildren` runs them
+   inside `withScaleFrame` (see "Scale, rotation and the pivot" there). If its layout assigns its
+   **own** `translation`, do that in `prepareRender` so the clip is positioned from the settled value.
 5. If the node builds visible children in its constructor and keeps private references to them, override
    `serializesChildren()` to `false` — see
    [`.claude/docs/threading-and-rendezvous.md`](docs/threading-and-rendezvous.md).

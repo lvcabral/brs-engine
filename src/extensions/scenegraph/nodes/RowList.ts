@@ -956,6 +956,9 @@ export class RowList extends ArrayGrid {
             }
         }
 
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
+        const screenRight = screen.x + screen.width;
         for (let c = 0; c < (renderMode === "wrapMode" ? numCols : endCol - startCol); c++) {
             let colIndex = startCol + c;
 
@@ -983,8 +986,7 @@ export class RowList extends ArrayGrid {
             );
             itemRect.x += itemRect.width + spacing[0];
 
-            const screen = this.visibleSceneRect();
-            if (itemRect.x > screen.x + screen.width) {
+            if (itemRect.x > screenRight) {
                 break;
             }
         }

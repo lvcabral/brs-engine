@@ -13,6 +13,7 @@ import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { brsValueOf } from "../factory/Serializer";
+import { invertSceneMap } from "../SGUtil";
 
 export class MaskGroup extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -84,8 +85,9 @@ export class MaskGroup extends Group {
 
         // Children were already drawn at the group opacity, so composite the masked result as-is,
         // undoing the ancestors' scale on the main canvas so offscreen pixels land 1:1 on screen.
-        if (map.sx !== 0 && map.sy !== 0) {
-            draw2D.doDrawScaledObject(-map.bx / map.sx, -map.by / map.sy, 1 / map.sx, 1 / map.sy, offscreen);
+        const inverse = invertSceneMap(map);
+        if (inverse) {
+            draw2D.doDrawScaledObject(inverse.bx, inverse.by, inverse.sx, inverse.sy, offscreen);
         }
         releaseCanvas(offscreen.getCanvas());
     }

@@ -21,6 +21,7 @@ import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
+import { UNIT_SCALE } from "../SGUtil";
 
 export enum FocusStyle {
     FixedFocusWrap = "fixedFocusWrap",
@@ -68,8 +69,6 @@ export declare namespace ArrayGrid {
  * that param only ever reaches `renderChildren`, and this poster is never given scenegraph children.
  */
 const noopInterpreter = {} as Interpreter;
-/** `contentScale` of a grid: its scale frame already carries the `scale` field. Never mutated. */
-const UNSCALED = [1, 1];
 
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -602,12 +601,13 @@ export class ArrayGrid extends Group {
         // helpers from applying it again). DEVICE-MEASURED (Roku OS 15.3, probe
         // `test/simulator/probes/group-scale-probe` R4): a LabelList scaled 0.5 at [500,820] draws
         // its 300x50 items at 150x25, 25 apart, and reports boundingRect {482,816,186,102}.
-        const frame = this.openScaleFrame(drawTrans, scale, draw2D);
-        try {
+        // The item components are parented to the grid, but updateBoundingRects below replaces
+        // every rect they would union into.
+        this.rederivesBounds = true;
+        this.withScaleFrame(drawTrans, scale, draw2D, () => {
             this.renderContent(interpreter, rect, rotation, opacity, draw2D);
-        } finally {
-            this.closeScaleFrame(frame, draw2D);
-        }
+        });
+        this.rederivesBounds = false;
         // The grid was just laid out for the current focus/scroll state, so item rects are fresh.
         this.focusLayoutDirty = false;
         this.updateBoundingRects(rect, origin, rotation, scale);
@@ -617,7 +617,7 @@ export class ArrayGrid extends Group {
 
     /** The grid's own scale is applied as a frame around its whole content (`renderNodeContent`). */
     protected contentScale(): number[] {
-        return UNSCALED;
+        return UNIT_SCALE;
     }
 
     protected renderContent(

@@ -105,6 +105,23 @@ export interface SceneMap {
 
 export const IDENTITY_SCENE_MAP: SceneMap = Object.freeze({ sx: 1, sy: 1, bx: 0, by: 0 });
 
+/** The default `scale` field value, for code that needs one without reading a field. Never mutated. */
+export const UNIT_SCALE: number[] = [1, 1];
+
+/**
+ * The map back from scene coordinates to the ones `map` maps from, or undefined when `map`
+ * collapses an axis (scale 0: nothing to map back).
+ */
+export function invertSceneMap(map: SceneMap): SceneMap | undefined {
+    if (map === IDENTITY_SCENE_MAP) {
+        return map;
+    }
+    if (map.sx === 0 || map.sy === 0) {
+        return undefined;
+    }
+    return { sx: 1 / map.sx, sy: 1 / map.sy, bx: -map.bx / map.sx, by: -map.by / map.sy };
+}
+
 /** Composes `map` with an inner scale of `[sx, sy]` around the pivot `(px, py)`. */
 export function composeSceneScale(map: SceneMap, px: number, py: number, sx: number, sy: number): SceneMap {
     return {

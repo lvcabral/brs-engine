@@ -282,14 +282,8 @@ export class AnimatedImage extends Group {
             this.drawable.renderAtElapsed(this.elapsedMs);
             sgRoot.makeDirty();
         }
-        const rect = this.contentRect(drawTrans);
-        // Bounds in local units at the draw translation; the image itself turns around
-        // `x + scale * center`, so under a rotated ancestor it starts at the pivot anchor (and
-        // `drawImage` writes the drawn, scaled size back into `rect`).
-        const bounds = { ...rect };
-        const anchor = this.getPivotAnchor(drawTrans, angle, scale);
-        rect.x = anchor[0];
-        rect.y = anchor[1];
+        const bounds = this.contentRect(drawTrans);
+        const rect = this.getPivotDrawRect(bounds, angle, scale);
         if (this.frameSource) {
             const mode = (this.getValueJS("loadDisplayMode") as string).trim().toLowerCase();
             if (mode === "scaletofit") {

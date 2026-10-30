@@ -558,13 +558,10 @@ export class IfDraw2D {
      * @returns The depth to hand back to `popScaleFrame`, or -1 when nothing was pushed (scale [1,1]).
      */
     pushScaleFrame(pivotX: number, pivotY: number, scaleX: number, scaleY: number): number {
-        if (scaleX === 1 && scaleY === 1) {
+        if (!this.pushScale(pivotX, pivotY, scaleX, scaleY)) {
             return -1;
         }
         const depth = this.clipDepth;
-        const ctx = this.component.getContext();
-        ctx.save();
-        composeScalePivot(ctx, this.component.x + pivotX, this.component.y + pivotY, scaleX, scaleY);
         this.clipDepth++;
         return depth;
     }

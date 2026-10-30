@@ -162,12 +162,9 @@ export class Poster extends Group {
                     rect.height = bitmap.height;
                 }
             }
-            // The image turns around `x + scale * center`, so under a rotated ancestor it starts at
-            // the pivot anchor; the bounding rects are placed from the draw translation.
-            const anchor = this.getPivotAnchor(drawTrans, angle, scale, center);
             applyNodeEffect(
                 this,
-                { ...rect, x: anchor[0], y: anchor[1] },
+                this.getPivotDrawRect(rect, angle, scale, center),
                 draw2D,
                 opacity,
                 (rect, rotation, scale) => {
@@ -198,7 +195,7 @@ export class Poster extends Group {
                 // Drawn at the scale `applyNodeEffect` hands back: the node's own outside an Effect,
                 // [1,1] inside one, whose clip frame already carries it (as for a Rectangle), so the
                 // image, its rounded clip and its border share one pivot.
-                [scale[0], scale[1]]
+                scale as [number, number]
             );
         }
         this.updateBoundingRects(rect, origin, rotation, scale);
