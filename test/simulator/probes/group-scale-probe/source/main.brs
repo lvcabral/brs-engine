@@ -13,15 +13,24 @@
 ' Capture on device with:  telnet <roku-ip> 8085
 ' Capture in the engine with:
 '     node packages/node/bin/brs.cli.js --root test/simulator/probes/group-scale-probe
-sub Main()
-    print "PROBE|000|boot|start|"
+'
+' Launch param `scene=review` runs page 2 (GroupScaleReviewScene, the PR #1291 review cases);
+' `run=<nonce>` is echoed on the start line to tell a fresh device run from console replays.
+sub Main(args as dynamic)
+    sceneName = "GroupScaleScene"
+    runId = ""
+    if type(args) = "roAssociativeArray"
+        if args.scene = "review" then sceneName = "GroupScaleReviewScene"
+        if args.run <> invalid then runId = args.run
+    end if
+    print "PROBE|000|boot|start|scene=" + sceneName + " run=" + runId
     di = CreateObject("roDeviceInfo")
     print "PROBE|000|boot|device|model=" + di.GetModelDisplayName() + " os=" + di.GetOSVersion().major + "." + di.GetOSVersion().minor
 
     screen = CreateObject("roSGScreen")
     port = CreateObject("roMessagePort")
     screen.setMessagePort(port)
-    scene = screen.CreateScene("GroupScaleScene")
+    scene = screen.CreateScene(sceneName)
     screen.show()
 
     holdUntil = invalid
