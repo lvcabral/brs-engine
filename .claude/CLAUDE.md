@@ -382,7 +382,7 @@ Gate any new debug/inspection bookkeeping behind `BrsDevice.tracking` (or
 
 ## Roku reference documentation (`external/dev-doc` submodule)
 
-Roku's official docs ([rokudev/dev-doc](https://github.com/rokudev/dev-doc), branch `v2.0`) are vendored as
+Roku's official docs ([rokudev/dev-doc](https://gitlab.com/rokudev/dev-doc), branch `v2.0`) are vendored as
 a **git submodule** at `external/dev-doc`. The BrightScript + SceneGraph reference under
 **`external/dev-doc/docs/REFERENCES/`** (Markdown + YAML frontmatter) is the **authoritative spec** —
 consult it whenever implementing, fixing, or verifying a feature so simulated behavior matches a real
