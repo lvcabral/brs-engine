@@ -395,6 +395,54 @@ describe("IfDraw2D", () => {
         });
     });
 
+    describe("pushScaleFrame/popScaleFrame", () => {
+        it("is a no-op at scale [1,1] and returns -1", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            expect(ifd.pushScaleFrame(0, 0, 1, 1)).toBe(-1);
+            expect(ifd.getClipDepth()).toBe(0);
+            ifd.popScaleFrame(-1);
+            expect(ifd.getClipDepth()).toBe(0);
+        });
+
+        it("scales what is drawn inside it around the pivot, and only that", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            const depth = ifd.pushScaleFrame(2, 2, 0.5, 0.5);
+            ifd.doDrawRotatedRect({ x: 2, y: 2, width: 8, height: 8 }, 0x00ff00ff | 0, 0);
+            ifd.popScaleFrame(depth);
+            ifd.doDrawRotatedRect({ x: 8, y: 8, width: 2, height: 2 }, 0xff0000ff | 0, 0);
+
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 5, 5)).toEqual([0, 255, 0, 255]);
+            expect(pixelAt(ctx, 10, 7, 7)[3]).toBe(0);
+            expect(pixelAt(ctx, 10, 9, 9)).toEqual([255, 0, 0, 255]);
+        });
+
+        it("unwinds a clip left open inside it, so its own scale does not leak to later draws", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            const depth = ifd.pushScaleFrame(0, 0, 0.5, 0.5);
+            ifd.pushClip({ x: 0, y: 0, width: 4, height: 4 });
+            expect(ifd.getClipDepth()).toBe(2);
+            ifd.popScaleFrame(depth);
+            expect(ifd.getClipDepth()).toBe(0);
+            // Unscaled and unclipped again: a full-size fill covers the far corner.
+            ifd.doDrawRotatedRect({ x: 0, y: 0, width: 10, height: 10 }, 0x00ff00ff | 0, 0);
+            expect(pixelAt(bmp.getContext(), 10, 9, 9)).toEqual([0, 255, 0, 255]);
+        });
+
+        it("is unwound by resetClips when it never gets popped", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            ifd.pushScaleFrame(0, 0, 0.5, 0.5);
+            ifd.resetClips();
+            expect(ifd.getClipDepth()).toBe(0);
+            ifd.doDrawRotatedRect({ x: 0, y: 0, width: 10, height: 10 }, 0x00ff00ff | 0, 0);
+            expect(pixelAt(bmp.getContext(), 10, 9, 9)).toEqual([0, 255, 0, 255]);
+        });
+    });
+
     describe("do* drawing primitives", () => {
         it("doClearCanvas fills the whole canvas", () => {
             const bmp = makeBitmap(5, 5, true);

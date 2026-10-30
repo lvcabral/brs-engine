@@ -124,7 +124,12 @@ export function mapRectToScene(map: SceneMap, rect: Rect): Rect {
     if (map === IDENTITY_SCENE_MAP) {
         return rect;
     }
-    return scaleRect(rect.x * map.sx + map.bx, rect.y * map.sy + map.by, rect.width * map.sx, rect.height * map.sy);
+    return normalizedRect(
+        rect.x * map.sx + map.bx,
+        rect.y * map.sy + map.by,
+        rect.width * map.sx,
+        rect.height * map.sy
+    );
 }
 
 /**
@@ -140,7 +145,7 @@ export function transformLocalRect(
     rotation: number,
     center: number[]
 ): Rect {
-    const box = scaleRect(
+    const box = normalizedRect(
         anchor[0] + rect.x * scale[0],
         anchor[1] + rect.y * scale[1],
         rect.width * scale[0],
@@ -153,7 +158,27 @@ export function transformLocalRect(
     return rotateRect(box, rotation, pivot);
 }
 
-function scaleRect(x: number, y: number, width: number, height: number): Rect {
+/**
+ * The anchor that puts a node's pivot where an inherited rotation `angle` turns it. A node at draw
+ * translation `drawTrans` (its unrotated local origin, `origin + R(angle) * translation`) has its
+ * pivot at `drawTrans + R(angle)(scale * center)`. Draws that rotate around
+ * `anchor + scale * center` must therefore start at `drawTrans + R(angle)(scale * center) -
+ * scale * center`.
+ */
+export function pivotAnchor(drawTrans: number[], angle: number, scale: number[], center: number[]): number[] {
+    if (angle === 0 || (center[0] === 0 && center[1] === 0)) {
+        return drawTrans;
+    }
+    const scaledCenter = [center[0] * scale[0], center[1] * scale[1]];
+    const turned = rotateTranslation(scaledCenter, angle);
+    return [drawTrans[0] + turned[0] - scaledCenter[0], drawTrans[1] + turned[1] - scaledCenter[1]];
+}
+
+/**
+ * A rect from a corner and a signed extent: a negative width/height (a mirroring scale) moves x/y
+ * to the new left/top edge and is made non-negative, so `unionRect`'s far-edge math keeps working.
+ */
+export function normalizedRect(x: number, y: number, width: number, height: number): Rect {
     return {
         x: width < 0 ? x + width : x,
         y: height < 0 ? y + height : y,

@@ -176,7 +176,8 @@ export class TargetGroup extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
 
@@ -188,13 +189,22 @@ export class TargetGroup extends Group {
 
         const targetSet = this.getActiveTargetSet();
         if (targetSet) {
-            this.renderItems(interpreter, targetSet, drawTrans, rotation, opacity, draw2D);
+            // The items are placed from drawTrans in local units: the group's own scale applies to
+            // them as a frame, like to children. DEVICE-MEASURED (Roku OS 15.3, probe
+            // `test/simulator/probes/group-scale-probe` R4): a TargetGroup scaled 0.5 draws its
+            // 200x200 targets at 100x100, 120 apart instead of 240.
+            const frame = this.openScaleFrame(drawTrans, scale, draw2D);
+            try {
+                this.renderItems(interpreter, targetSet, drawTrans, rotation, opacity, draw2D);
+            } finally {
+                this.closeScaleFrame(frame, draw2D);
+            }
         }
 
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 

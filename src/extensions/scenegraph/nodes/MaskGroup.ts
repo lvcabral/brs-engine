@@ -74,9 +74,9 @@ export class MaskGroup extends Group {
         // The mask coordinate system origin is the group origin in scene space (translation applied).
         // Note: any rotation on the MaskGroup itself rotates the children (handled above) but the mask
         // is applied in axis-aligned scene space, which is an accepted limitation of the simulation.
-        // DEVICE-OBSERVED (Roku OS 16, probe `group-scale-probe` S8): an ancestor's scale moves the
-        // mask with the content but leaves `maskSize` unscaled, so a 200x200 round mask over content
-        // scaled to 100x100 shows a quarter circle.
+        // DEVICE-OBSERVED (Roku OS 16, probe `test/simulator/probes/group-scale-probe` S8): an
+        // ancestor's scale moves the mask with the content but leaves `maskSize` unscaled, so a
+        // 200x200 round mask over content scaled to 100x100 shows a quarter circle.
         const nodeTrans = this.getTranslation();
         const maskX = (origin[0] + nodeTrans[0]) * map.sx + map.bx;
         const maskY = (origin[1] + nodeTrans[1]) * map.sy + map.by;

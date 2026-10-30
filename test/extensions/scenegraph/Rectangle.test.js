@@ -26,8 +26,8 @@ function rectangle({ width = 100, height = 50, translation = [0, 0], scale, scal
 }
 
 /**
- * Fake draw target that records what lands on SCREEN: it composes `pushScale` around its pivot
- * the way the canvas does, and maps each draw call and clip through it. Assertions then check
+ * Fake draw target that records what lands on SCREEN: it composes `pushScale`/`pushScaleFrame`
+ * around their pivot the way the canvas does, and maps each draw call and clip through it. Assertions then check
  * where content appears, not how the engine splits a transform between draw arguments and the
  * canvas. Own-scale pivots are not modelled: the drawn nodes use the default scaleRotateCenter.
  */
@@ -54,6 +54,15 @@ function screenRecorder() {
         },
         popScale() {
             stack.pop();
+        },
+        pushScaleFrame(px, py, sx, sy) {
+            rec.pushScale(px, py, sx, sy);
+            return stack.length - 2;
+        },
+        popScaleFrame(depth) {
+            if (depth >= 0) {
+                stack.pop();
+            }
         },
         pushClip(r) {
             rec.clips.push(toScreen(r.x, r.y, r.width, r.height));
@@ -82,8 +91,8 @@ function screenRecorder() {
  * Rectangle as if it were full size (the exact symptom reported against TextIconButton's Label,
  * reproduced here for Rectangle since it shares the same underlying gap). Fixed by (1) threading
  * the node's own scale field through to `doDrawRotatedRect`'s new trailing scaleX/scaleY params
- * for drawing, and (2) folding scale into the rect passed to `updateBoundingRects` via the new
- * `Group.applyScale` helper, so a rendered node's own reported footprint agrees with what it paints.
+ * for drawing, and (2) taking the node's local rect through its scale in `updateBoundingRects`, so
+ * a rendered node's own reported footprint agrees with what it paints.
  */
 describe("Rectangle node scale", () => {
     test("scale=[1,1] (default) draws with scaleX=1/scaleY=1 and the node's plain unscaled rect", () => {
@@ -203,7 +212,7 @@ describe("Rectangle node scale", () => {
      * Efficiency regression: `getTranslation()` already reads the `scale` field internally (to
      * compensate the drawn position for `scaleRotateCenter`), so `renderNodeContent` must fetch
      * `scale` ONCE and thread it into `getDrawTranslation(origin, angle, scale)` rather than
-     * reading the field a second time for `applyScale`/`doDrawRotatedRect` — a real, avoidable
+     * reading the field a second time for `updateBoundingRects`/`doDrawRotatedRect` — a real, avoidable
      * double allocation (getValueJS on a vector2d field allocates a WeakSet + a fresh array) that
      * slipped in when scale support was first wired into these node types.
      */

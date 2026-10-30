@@ -259,7 +259,8 @@ export class PosterGrid extends ArrayGrid {
         const placement = this.getCaptionPlacement();
         const captionsExtendLayout = this.requiresCaptionZone(placement);
         const hasSections = this.metadata.length > 0;
-        const sceneBottom = (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0);
+        const screen = this.visibleSceneRect();
+        const sceneBottom = (screen?.y ?? 0) + (screen?.height ?? 0);
         let lastRowIndex = -1;
         let lastRowNumber = -1;
         let renderedRows = 0;
@@ -469,7 +470,8 @@ export class PosterGrid extends ArrayGrid {
             // extent, so breaking on the scene edge must not silently drop it.
             const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             itemRect.y += rowHeightWithCaptions + rowGap;
-            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
+            const screen = this.visibleSceneRect();
+            if (itemRect.y > (screen?.y ?? 0) + (screen?.height ?? 0)) {
                 break;
             }
         }
@@ -1142,8 +1144,7 @@ class PosterGridItem extends Group {
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();
         this.updateBoundingRects(rect, origin, rotation);
-        const childOrigin = [drawTrans[0], drawTrans[1] + offsetY];
-        this.renderChildren(interpreter, childOrigin, rotation, combinedOpacity, draw2D);
+        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D, undefined, [0, offsetY]);
         this.nodeRenderingDone(origin, angle, combinedOpacity, draw2D);
     }
 

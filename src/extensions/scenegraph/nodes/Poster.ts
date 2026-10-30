@@ -117,7 +117,8 @@ export class Poster extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const loadStatus = this.getValueJS("loadStatus") as string;
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
@@ -151,12 +152,25 @@ export class Poster extends Group {
                     rect.height = clamped.height;
                 }
             }
+            if (!bitmap.ninePatch && mode !== "scaletofit" && mode !== "scaletozoom") {
+                // `drawImage` draws a 0 extent at the bitmap's own size. Resolved here so the bounding
+                // rects get that size too, in local units (`drawImage` writes back the scaled one).
+                if (rect.width === 0) {
+                    rect.width = bitmap.width;
+                }
+                if (rect.height === 0) {
+                    rect.height = bitmap.height;
+                }
+            }
+            // The image turns around `x + scale * center`, so under a rotated ancestor it starts at
+            // the pivot anchor; the bounding rects are placed from the draw translation.
+            const anchor = this.getPivotAnchor(drawTrans, angle, scale, center);
             applyNodeEffect(
                 this,
-                rect,
+                { ...rect, x: anchor[0], y: anchor[1] },
                 draw2D,
                 opacity,
-                (rect, rotation) => {
+                (rect, rotation, scale) => {
                     // Normalize HERE, not only inside `drawImage`: the `scaletozoom` branch below goes
                     // straight to `doDrawCroppedBitmap`, so an un-normalized default (stored as -1)
                     // reached the draw and tinted the poster — washing out every partially transparent
@@ -171,25 +185,24 @@ export class Poster extends Group {
                     }
                     bitmap.scaleMode = 1;
                     if (mode === "scaletofit") {
-                        this.drawImage(bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba);
+                        this.drawImage(bitmap, this.scaleToFit(rect), rotation, alpha, draw2D, rgba, scale);
                     } else if (mode === "scaletozoom") {
                         draw2D?.doDrawCroppedBitmap(bitmap, this.scaleToZoom(rect), rect, rgba, alpha);
                     } else {
                         // "limitsize" (already clamped above) and "noscale"/default both draw at `rect` as-is.
-                        this.drawImage(bitmap, rect, rotation, alpha, draw2D, rgba);
+                        this.drawImage(bitmap, rect, rotation, alpha, draw2D, rgba, scale);
                     }
                 },
                 rotation,
-                center
-                // `scale` is deliberately left at applyNodeEffect's default ([1,1]): `Group.drawImage`
-                // reads this node's `scale` field directly and applies it internally regardless of
-                // what runs it, so composing the same scale again here would double it. Known gap:
-                // the effect's clip/border/gradient do not scale with a scaled Poster (the image
-                // content still does, via `drawImage`, unaffected by this).
+                center,
+                // Drawn at the scale `applyNodeEffect` hands back: the node's own outside an Effect,
+                // [1,1] inside one, whose clip frame already carries it (as for a Rectangle), so the
+                // image, its rounded clip and its border share one pivot.
+                [scale[0], scale[1]]
             );
         }
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 

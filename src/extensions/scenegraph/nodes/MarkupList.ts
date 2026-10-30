@@ -153,7 +153,7 @@ export class MarkupList extends ArrayGrid {
             // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
             // which differs as soon as the list is scrolled (rowHeights above already does this).
             itemRect.y += itemRect.height + (rowSpacings[rowIndex] ?? spacing[1]);
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(this.visibleSceneRect(), itemRect)) {
                 break;
             }
         }

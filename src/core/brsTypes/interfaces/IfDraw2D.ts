@@ -34,7 +34,10 @@ export type MeasuredText = { text: string; width: number; height: number; ellips
  */
 export class IfDraw2D {
     private readonly component: BrsDraw2D;
-    /** Depth of the active pushClip()/popClip() stack, so an unbalanced frame can be unwound. */
+    /**
+     * Depth of the active clip stack (pushClip/pushRoundedClip and pushScaleFrame entries), so an
+     * unbalanced frame can be unwound.
+     */
     private clipDepth: number = 0;
 
     constructor(component: BrsDraw2D) {
@@ -169,7 +172,7 @@ export class IfDraw2D {
             // risk a fused rotate+scale transform (see doDrawRotatedBitmap) would hit there.
             // Pivot is rect.x/y as-is, NOT + rotationCenterX/Y: rect.x/y already bakes in
             // scaleRotateCenter's position compensation via Group.getTranslation(), so adding the
-            // center again here would double-count it (see Group.applyScale for the derivation).
+            // center again here would double-count it (see Group.getTranslation).
             composeScalePivot(ctx, baseX + rect.x, baseY + rect.y, scaleX, scaleY);
         }
         if (rotation === 0) {
@@ -491,7 +494,8 @@ export class IfDraw2D {
     }
 
     /**
-     * Unwinds any clipping regions still active, restoring the context to its unclipped state.
+     * Unwinds any clipping regions (and `pushScaleFrame` frames) still active, restoring the context
+     * to its unclipped, untransformed state.
      *
      * `pushClip` is `ctx.save()` and `popClip` is `ctx.restore()`, so an unbalanced pair is not a
      * transient glitch: the canvas keeps the stale clip for the rest of its life, and every later
@@ -523,7 +527,8 @@ export class IfDraw2D {
      *
      * Kept independent of the clip stack: this only ever brackets a synchronous, JS-only draw call
      * with a try/finally around it (no BrightScript runs in between), so there's no equivalent of
-     * the cross-frame clip leak that `resetClips()` guards against.
+     * the cross-frame clip leak that `resetClips()` guards against. A scale that brackets code which
+     * can push clips or run BrightScript must use `pushScaleFrame` instead.
      *
      * @returns Whether a transform was pushed (false at scale [1,1] - caller can skip popScale()).
      */
@@ -540,6 +545,38 @@ export class IfDraw2D {
     /** Pairs with a `pushScale()` call that returned true. */
     popScale(): void {
         this.component.getContext().restore();
+    }
+
+    /**
+     * Opens a scale-around-pivot frame that stays on the canvas while a whole subtree draws inside
+     * it: a SceneGraph `Group`'s `scale` applied to its children. Same transform as `pushScale`, but
+     * the code inside runs app BrightScript (item `init()`, observers) and pushes clips of its own,
+     * so the frame is an entry on the clip stack: `popScaleFrame` first unwinds any clip left open
+     * inside it (otherwise its `ctx.restore()` would pop that clip and leave the scale on the
+     * canvas for every later sibling), and `resetClips()` unwinds a frame that never got popped.
+     *
+     * @returns The depth to hand back to `popScaleFrame`, or -1 when nothing was pushed (scale [1,1]).
+     */
+    pushScaleFrame(pivotX: number, pivotY: number, scaleX: number, scaleY: number): number {
+        if (scaleX === 1 && scaleY === 1) {
+            return -1;
+        }
+        const depth = this.clipDepth;
+        const ctx = this.component.getContext();
+        ctx.save();
+        composeScalePivot(ctx, this.component.x + pivotX, this.component.y + pivotY, scaleX, scaleY);
+        this.clipDepth++;
+        return depth;
+    }
+
+    /** Closes the frame `pushScaleFrame` returned `depth` for, with every clip still open inside it. */
+    popScaleFrame(depth: number): void {
+        if (depth < 0) {
+            return;
+        }
+        while (this.clipDepth > depth) {
+            this.popClip();
+        }
     }
 
     drawNinePatch(bitmap: RoBitmap, rect: Rect, rgba?: number, opacity?: number) {

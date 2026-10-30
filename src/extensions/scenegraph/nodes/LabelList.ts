@@ -140,7 +140,7 @@ export class LabelList extends ArrayGrid {
             this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             itemRect.y += itemRect.height + (rowSpacings[index] ?? rowSpacingDefault);
             lastIndex = index;
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(this.visibleSceneRect(), itemRect)) {
                 break;
             }
         }

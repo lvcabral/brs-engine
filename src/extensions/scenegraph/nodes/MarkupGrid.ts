@@ -241,13 +241,13 @@ export class MarkupGrid extends ArrayGrid {
                 this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 lastIndex = index;
-                if (!RectRect(this.sceneRect, itemRect)) {
+                if (!RectRect(this.visibleSceneRect(), itemRect)) {
                     break;
                 }
             }
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[absoluteRow] ?? spacing[1]);
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(this.visibleSceneRect(), itemRect)) {
                 break;
             }
         }

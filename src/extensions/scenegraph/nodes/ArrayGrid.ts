@@ -68,6 +68,8 @@ export declare namespace ArrayGrid {
  * that param only ever reaches `renderChildren`, and this poster is never given scenegraph children.
  */
 const noopInterpreter = {} as Interpreter;
+/** `contentScale` of a grid: its scale frame already carries the `scale` field. Never mutated. */
+const UNSCALED = [1, 1];
 
 export class ArrayGrid extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -583,7 +585,8 @@ export class ArrayGrid extends Group {
             }
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const size = this.getDimensions();
         const rect = { x: drawTrans[0], y: drawTrans[1], ...size };
         const rotation = angle + this.getRotation();
@@ -594,12 +597,27 @@ export class ArrayGrid extends Group {
             content.changed = false;
         }
         // The clippingRect bracket lives in the renderNode template, so it wraps this whole body.
-        this.renderContent(interpreter, rect, rotation, opacity, draw2D);
+        // Items, focus feedback and every other part are laid out in local units from drawTrans, so
+        // the grid's own scale applies to all of them as one frame (`contentScale` keeps the draw
+        // helpers from applying it again). DEVICE-MEASURED (Roku OS 15.3, probe
+        // `test/simulator/probes/group-scale-probe` R4): a LabelList scaled 0.5 at [500,820] draws
+        // its 300x50 items at 150x25, 25 apart, and reports boundingRect {482,816,186,102}.
+        const frame = this.openScaleFrame(drawTrans, scale, draw2D);
+        try {
+            this.renderContent(interpreter, rect, rotation, opacity, draw2D);
+        } finally {
+            this.closeScaleFrame(frame, draw2D);
+        }
         // The grid was just laid out for the current focus/scroll state, so item rects are fresh.
         this.focusLayoutDirty = false;
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
+    }
+
+    /** The grid's own scale is applied as a frame around its whole content (`renderNodeContent`). */
+    protected contentScale(): number[] {
+        return UNSCALED;
     }
 
     protected renderContent(

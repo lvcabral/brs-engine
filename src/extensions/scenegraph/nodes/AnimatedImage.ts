@@ -262,7 +262,8 @@ export class AnimatedImage extends Group {
             this.updateRenderTracking(true);
             return;
         }
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
         // Advance playback only on a paint pass; a layout pass draws the already-rendered frame
@@ -282,6 +283,13 @@ export class AnimatedImage extends Group {
             sgRoot.makeDirty();
         }
         const rect = this.contentRect(drawTrans);
+        // Bounds in local units at the draw translation; the image itself turns around
+        // `x + scale * center`, so under a rotated ancestor it starts at the pivot anchor (and
+        // `drawImage` writes the drawn, scaled size back into `rect`).
+        const bounds = { ...rect };
+        const anchor = this.getPivotAnchor(drawTrans, angle, scale);
+        rect.x = anchor[0];
+        rect.y = anchor[1];
         if (this.frameSource) {
             const mode = (this.getValueJS("loadDisplayMode") as string).trim().toLowerCase();
             if (mode === "scaletofit") {
@@ -302,8 +310,8 @@ export class AnimatedImage extends Group {
                 this.drawImage(this.drawable, rect, rotation, opacity, draw2D);
             }
         }
-        this.updateBoundingRects(rect, origin, rotation);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(bounds, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

@@ -374,7 +374,8 @@ export class ZoomRowList extends ArrayGrid {
             lastRenderedRow = rowIndex;
 
             currentY = rowTop + metrics.rowHeight + metrics.spacingY;
-            if (this.sceneRect.height > 0 && currentY > this.sceneRect.y + this.sceneRect.height) {
+            const screen = this.visibleSceneRect();
+            if (screen.height > 0 && currentY > screen.y + screen.height) {
                 break;
             }
         }

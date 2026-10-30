@@ -561,10 +561,11 @@ export class LayoutGroup extends Group {
         const dims = child.getDimensions();
         const cached = this.childSizes.get(child);
 
-        // A child scaled all the way to [0,0] legitimately renders a zero-size rect (Group.applyScale),
-        // which fails the cached-rect gate above and lands here. getDimensions() reads the child's raw,
-        // scale-unaware width/height field, so fold the child's own scale in before using it (via the
-        // same scaledExtent normalization Group.applyScale uses) — otherwise a fully collapsed child
+        // A child scaled all the way to [0,0] legitimately reports a zero-size boundingRect
+        // (Group.updateBoundingRects), which fails the cached-rect gate above and lands here.
+        // getDimensions() reads the child's raw, scale-unaware width/height field, so fold the child's
+        // own scale in before using it (the same non-negative extent SGUtil.normalizedRect keeps for a
+        // mirroring scale) — otherwise a fully collapsed child
         // (e.g. hidden via scale rather than the visible field) is measured at its pre-collapse size
         // and the LayoutGroup spaces siblings as if it were still full size.
         const scale = child.getValueJS("scale") as number[] | undefined;
