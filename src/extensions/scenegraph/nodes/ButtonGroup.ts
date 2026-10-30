@@ -16,7 +16,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { jsValueOf } from "../factory/Serializer";
 import { Button } from "./Button";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 import { Label } from "./Label";
 import { Group } from "./Group";
 import { LayoutGroup } from "./LayoutGroup";
@@ -228,9 +228,8 @@ export class ButtonGroup extends LayoutGroup {
             return;
         }
         const buttonsCount = Math.max(buttons.length, this.children.length);
-        const focusedFont = this.getValue("focusedTextFont") as Font;
         const buttonHeight = this.getValueJS("buttonHeight") as number;
-        this.width = this.calculateButtonWidth(buttons, focusedFont.createDrawFont());
+        this.width = this.calculateButtonWidth(buttons, Font.drawFontOf(this.getValue("focusedTextFont")));
         for (let i = 0; i < buttonsCount; i++) {
             const buttonText = buttons[i];
             if (buttonText) {

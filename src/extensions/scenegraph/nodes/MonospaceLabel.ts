@@ -2,7 +2,7 @@ import { AAMember, BrsType, IfDraw2D, MeasuredText, Rect, RoFont } from "brs-eng
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Label } from "./Label";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 import { rotateTranslation } from "../SGUtil";
 
 /**
@@ -42,8 +42,7 @@ export class MonospaceLabel extends Label {
         draw2D?: IfDraw2D,
         scale?: number[]
     ): MeasuredText {
-        const font = this.getValue("font") as Font;
-        const drawFont = font.createDrawFont();
+        const drawFont = Font.drawFontOf(this.getValue("font"));
         const fullText = (this.getValueJS("text") as string) ?? "";
         if (!(drawFont instanceof RoFont)) {
             return { text: fullText, width: 0, height: 0, ellipsized: false };

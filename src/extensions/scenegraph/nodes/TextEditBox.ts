@@ -99,8 +99,7 @@ export class TextEditBox extends Group {
         // padding it out to that same chrome height, which used to push the text out of a tight
         // custom background entirely.
         const fallbackLineHeight = this.resolution === "FHD" ? 36 : 24;
-        const font = this.textLabel.getValue("font") as Font;
-        const drawFont = font.createDrawFont();
+        const drawFont = Font.drawFontOf(this.textLabel.getValue("font"));
         this.lineHeight = drawFont instanceof RoFont ? drawFont.measureTextHeight() : fallbackLineHeight;
 
         this.chromePaddingX = this.resolution === "FHD" ? 33 : 22;
@@ -382,8 +381,7 @@ export class TextEditBox extends Group {
                 textToMeasure = text.substring(0, Math.min(cursorPosition, text.length));
             }
             if (this.drawFont === undefined) {
-                const font = this.textLabel.getValue("font") as Font;
-                const maybeFont = font.createDrawFont();
+                const maybeFont = Font.drawFontOf(this.textLabel.getValue("font"));
                 if (maybeFont instanceof RoFont) {
                     this.drawFont = maybeFont;
                 } else {

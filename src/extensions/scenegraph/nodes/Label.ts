@@ -1,6 +1,5 @@
 import { AAMember, Interpreter, BrsBoolean, BrsType, Float, IfDraw2D, MeasuredText, Rect } from "brs-engine";
 import { Group } from "./Group";
-import type { Font } from "./Font";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 
@@ -95,7 +94,7 @@ export class Label extends Group {
     }
 
     protected renderLabel(rect: Rect, rotation: number, opacity: number, draw2D?: IfDraw2D, scale?: number[]) {
-        const font = this.getValue("font") as Font;
+        const font = this.getValue("font");
         const color = this.getValueJS("color") as number;
         const textField = this.getValueJS("text") as string;
         const horizAlign = this.getValueJS("horizAlign") || "left";

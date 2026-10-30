@@ -14,7 +14,7 @@ import {
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 
 // Width reserved for the scrollbar (right side of the node)
 const SCROLLBAR_WIDTH_HD = 36;
@@ -173,8 +173,7 @@ export class ScrollableText extends Group {
     }
 
     private renderContent(draw2D: IfDraw2D, rect: Rect, rotation: number, opacity: number, scale: number[]) {
-        const font = this.getValue("font") as Font;
-        const drawFont = font?.createDrawFont();
+        const drawFont = Font.drawFontOf(this.getValue("font"));
         if (!(drawFont instanceof RoFont)) {
             return;
         }

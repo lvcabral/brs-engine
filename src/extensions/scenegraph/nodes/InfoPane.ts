@@ -13,7 +13,7 @@ import {
 import { Group } from "./Group";
 import type { Label } from "./Label";
 import type { Poster } from "./Poster";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { jsValueOf } from "../factory/Serializer";
@@ -296,11 +296,7 @@ export class InfoPane extends Group {
         if (!wrap || width <= 0) {
             return measuredHeight;
         }
-        const fontNode = label.getValue("font");
-        if (!fontNode || typeof (fontNode as Font).createDrawFont !== "function") {
-            return measuredHeight;
-        }
-        const drawFont = (fontNode as Font).createDrawFont();
+        const drawFont = Font.drawFontOf(label.getValue("font"));
         if (!(drawFont instanceof RoFont)) {
             return measuredHeight;
         }

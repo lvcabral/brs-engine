@@ -22,7 +22,7 @@ import { Font } from "./Font";
 import { Group } from "./Group";
 import { Node } from "./Node";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
-import { FieldKind, FieldModel } from "../SGTypes";
+import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { resolveRowItemSubpart } from "../SGUtil";
 import { SGNodeType } from ".";
 
@@ -708,10 +708,7 @@ export class ZoomRowList extends ArrayGrid {
         const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
         const color = this.resolveColor(this.getValueJS("rowTitleColor"), rowIndex, 0xffffffff);
         const fontValue = this.getValue("rowTitleFont");
-        if (!(fontValue instanceof Font)) {
-            return 0;
-        }
-        const drawFont = fontValue.createDrawFont();
+        const drawFont = Font.drawFontOf(fontValue);
         if (!(drawFont instanceof RoFont)) {
             return 0;
         }
@@ -747,20 +744,12 @@ export class ZoomRowList extends ArrayGrid {
         const rawOffsets = this.getValueJS("rowCounterOffset");
         const offset = this.resolveVector(rawOffsets, rowIndex, [0, 0]);
         const color = this.resolveColor(this.getValueJS("rowCounterColor"), rowIndex, 0xffffffff);
-        const counterFontValue = this.getValue("rowCounterFont");
-        let fontToUse: Font | undefined;
-        if (counterFontValue instanceof Font) {
-            fontToUse = counterFontValue;
-        } else {
-            const titleFont = this.getValue("rowTitleFont");
-            if (titleFont instanceof Font) {
-                fontToUse = titleFont;
-            }
+        // The counter falls back to the row title font when it has no font of its own.
+        let font = this.getValue("rowCounterFont");
+        if (!isFont(font)) {
+            font = this.getValue("rowTitleFont");
         }
-        if (!fontToUse) {
-            return 0;
-        }
-        const drawFont = fontToUse.createDrawFont();
+        const drawFont = Font.drawFontOf(font);
         if (!(drawFont instanceof RoFont)) {
             return 0;
         }
@@ -771,7 +760,7 @@ export class ZoomRowList extends ArrayGrid {
             width: offset[0] || this.rowWidth,
             height: drawFont.measureTextHeight() + this.gap,
         };
-        this.drawText(counterText, fontToUse, color, opacity, textRect, "right", "top", 0, draw2D, "", 0);
+        this.drawText(counterText, font, color, opacity, textRect, "right", "top", 0, draw2D, "", 0);
         return textRect.height + offset[1];
     }
 

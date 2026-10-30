@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RowItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+    </interface>
+    <children>
+        <Rectangle width="120" height="60" color="0xC85A28FF" />
+    </children>
+</component>

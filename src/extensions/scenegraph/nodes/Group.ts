@@ -2,7 +2,6 @@ import {
     AAMember,
     Interpreter,
     BrsBoolean,
-    BrsInvalid,
     BrsString,
     BrsType,
     Float,
@@ -14,13 +13,12 @@ import {
     RoAssociativeArray,
     RoBitmap,
     RoFont,
-    ValueKind,
     IfDraw2D,
     MeasuredText,
     Rect,
 } from "brs-engine";
 import { sgRoot } from "../SGRoot";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 import type { Label } from "./Label";
 import type { Poster } from "./Poster";
 import type { Rectangle } from "./Rectangle";
@@ -115,15 +113,7 @@ export class Group extends Node {
         const mapKey = index.toLowerCase();
         const field = this.fields.get(mapKey);
 
-        if (field?.getType() === FieldKind.Font && isBrsString(value)) {
-            const strFont = value.getValue();
-            const font = SGNodeFactory.createNode(SGNodeType.Font) as Font;
-            if (strFont.startsWith("font:") && font.setSystemFont(strFont.slice(5).toLowerCase())) {
-                value = font;
-            } else {
-                value = BrsInvalid.Instance;
-            }
-        } else if (field?.getType() === FieldKind.Color && isBrsString(value)) {
+        if (field?.getType() === FieldKind.Color && isBrsString(value)) {
             let strColor = value.getValue();
             if (strColor.length) {
                 value = new Int32(convertHexColor(strColor));
@@ -228,8 +218,8 @@ export class Group extends Node {
         }
         if (systemFont) {
             const font = label.getValue("font");
-            if (font && font.kind === ValueKind.Object && "setSystemFont" in font) {
-                (font as unknown as Font).setSystemFont(systemFont);
+            if (isFont(font)) {
+                font.setSystemFont(systemFont);
             }
         }
         if (maxWidth !== undefined) {
@@ -396,7 +386,7 @@ export class Group extends Node {
 
     protected drawText(
         fullText: string,
-        font: Font,
+        font: BrsType,
         color: number,
         opacity: number,
         rect: Rect,
@@ -408,7 +398,7 @@ export class Group extends Node {
         index: number = 0,
         scale?: number[]
     ) {
-        const drawFont = font.createDrawFont();
+        const drawFont = Font.drawFontOf(font);
         if (!(drawFont instanceof RoFont)) {
             return { text: fullText, width: 0, height: 0, ellipsized: false };
         }
@@ -460,7 +450,7 @@ export class Group extends Node {
 
     protected drawTextWrap(
         text: string,
-        font: Font,
+        font: BrsType,
         color: number,
         opacity: number,
         rect: Rect,
@@ -475,7 +465,7 @@ export class Group extends Node {
         draw2D?: IfDraw2D,
         scale?: number[]
     ): MeasuredText {
-        const drawFont = font.createDrawFont();
+        const drawFont = Font.drawFontOf(font);
         if (!(drawFont instanceof RoFont)) {
             return { text, width: rect.width, height: 0, ellipsized: false };
         }

@@ -4,7 +4,7 @@ import { AAMember, Interpreter, BrsBoolean, BrsString, Float, IfDraw2D, RoFont }
 import { Group } from "./Group";
 import type { Poster } from "./Poster";
 import type { Label } from "./Label";
-import type { Font } from "./Font";
+import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 
 export class Button extends Group {
@@ -112,8 +112,8 @@ export class Button extends Group {
         const labelMax = maxWidth - this.margin * 2 - iconGap;
 
         const text = this.getValueJS("text") as string;
-        const font = this.getValue(nodeFocus ? "focusedTextFont" : "textFont") as Font;
-        const drawFont = font.createDrawFont();
+        const font = this.getValue(nodeFocus ? "focusedTextFont" : "textFont");
+        const drawFont = Font.drawFontOf(font);
         const measured = drawFont instanceof RoFont ? drawFont.measureText(text, labelMax) : { width: 0, height: 0 };
         const labelCalc = Math.max(measured.width, labelMin);
         this.width = Math.max(labelCalc + this.margin * 2 + iconGap, minWidth);
