@@ -6,7 +6,7 @@ description: Look up Roku's official BrightScript/SceneGraph spec in the externa
 # brs-reference
 
 Roku's **official**, open-sourced BrightScript + SceneGraph reference docs are vendored as
-a git submodule ([rokudev/dev-doc](https://github.com/rokudev/dev-doc), branch `v2.0`) at
+a git submodule ([rokudev/dev-doc](https://gitlab.com/rokudev/dev-doc), branch `v2.0`) at
 `external/dev-doc`. The reference pages live under **`external/dev-doc/docs/REFERENCES/`**
 (Markdown with YAML frontmatter). They are the authoritative spec for *what the behavior
 should be* — the brs-engine code is *how we simulate it*. Reach for this skill whenever a
