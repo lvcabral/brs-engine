@@ -801,11 +801,12 @@ export class RowList extends ArrayGrid {
         const clip = xOffset + rowWidth > context.itemSize[0];
         if (clip) {
             const focusMargin = this.getValueJS("drawFocusFeedback") ? this.marginX : 0;
+            const screen = this.visibleSceneRect();
             context.draw2D?.pushClip({
                 x: context.rect.x - focusMargin,
-                y: this.sceneRect.y,
+                y: screen.y,
                 width: context.itemSize[0] + focusMargin * 2,
-                height: this.sceneRect.height,
+                height: screen.height,
             });
         }
         try {
@@ -835,7 +836,8 @@ export class RowList extends ArrayGrid {
         // scrolls by translating the list itself can park earlier rows off the top — and a full row of
         // clearance up there would abort the pass before reaching the focused row, blanking it and
         // every row below it.
-        return context.itemRect.y < this.sceneRect.y + this.sceneRect.height;
+        const screen = this.visibleSceneRect();
+        return context.itemRect.y < screen.y + screen.height;
     }
 
     private getRowXOffset(rowIndex: number): number {
@@ -954,6 +956,9 @@ export class RowList extends ArrayGrid {
             }
         }
 
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
+        const screenRight = screen.x + screen.width;
         for (let c = 0; c < (renderMode === "wrapMode" ? numCols : endCol - startCol); c++) {
             let colIndex = startCol + c;
 
@@ -981,7 +986,7 @@ export class RowList extends ArrayGrid {
             );
             itemRect.x += itemRect.width + spacing[0];
 
-            if (itemRect.x > this.sceneRect.x + this.sceneRect.width) {
+            if (itemRect.x > screenRight) {
                 break;
             }
         }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- TargetGroup item for GroupScaleReviewScene R4: a filled box the size of its target rect. -->
+<component name="ProbeTargetItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+        <field id="currRect" type="rect2d" onChange="onRect" />
+    </interface>
+    <children>
+        <Rectangle id="box" color="0xE08040FF" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+        sub onRect()
+            fill = m.top.findNode("box")
+            fill.width = m.top.currRect.width
+            fill.height = m.top.currRect.height
+        end sub
+    ]]></script>
+</component>

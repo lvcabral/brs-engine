@@ -91,6 +91,120 @@ export function rotateRect(rect: Rect, rotation: number, center?: number[]): Rec
 }
 
 /**
+ * Axis-aligned map from the coordinates a node draws in to scene (screen) coordinates:
+ * `scene = s * v + b` per axis. Ancestor `scale` is applied once, as a canvas transform around each
+ * scaled Group's children, so nodes keep drawing in their parent's local units and only their
+ * scene-space bounding rects need this map.
+ */
+export interface SceneMap {
+    sx: number;
+    sy: number;
+    bx: number;
+    by: number;
+}
+
+export const IDENTITY_SCENE_MAP: SceneMap = Object.freeze({ sx: 1, sy: 1, bx: 0, by: 0 });
+
+/** The default `scale` field value, for code that needs one without reading a field. Never mutated. */
+export const UNIT_SCALE: number[] = [1, 1];
+
+/**
+ * The map back from scene coordinates to the ones `map` maps from, or undefined when `map`
+ * collapses an axis (scale 0: nothing to map back).
+ */
+export function invertSceneMap(map: SceneMap): SceneMap | undefined {
+    if (map === IDENTITY_SCENE_MAP) {
+        return map;
+    }
+    if (map.sx === 0 || map.sy === 0) {
+        return undefined;
+    }
+    return { sx: 1 / map.sx, sy: 1 / map.sy, bx: -map.bx / map.sx, by: -map.by / map.sy };
+}
+
+/** Composes `map` with an inner scale of `[sx, sy]` around the pivot `(px, py)`. */
+export function composeSceneScale(map: SceneMap, px: number, py: number, sx: number, sy: number): SceneMap {
+    return {
+        sx: map.sx * sx,
+        sy: map.sy * sy,
+        bx: map.sx * px * (1 - sx) + map.bx,
+        by: map.sy * py * (1 - sy) + map.by,
+    };
+}
+
+export function sameSceneMap(a: SceneMap, b: SceneMap) {
+    return a === b || (a.sx === b.sx && a.sy === b.sy && a.bx === b.bx && a.by === b.by);
+}
+
+/** Maps a rect through `map`, keeping a non-negative width/height under a negative scale. */
+export function mapRectToScene(map: SceneMap, rect: Rect): Rect {
+    if (map === IDENTITY_SCENE_MAP) {
+        return rect;
+    }
+    return normalizedRect(
+        rect.x * map.sx + map.bx,
+        rect.y * map.sy + map.by,
+        rect.width * map.sx,
+        rect.height * map.sy
+    );
+}
+
+/**
+ * Bounding box of a node-local rect placed in the space its node draws in: `anchor + scale * v`,
+ * rotated by `rotation` around `anchor + scale * center`. `center` is the node's unscaled
+ * `scaleRotateCenter`; `anchor` is its pivot-compensated translation (parent space) or draw
+ * translation.
+ */
+export function transformLocalRect(
+    rect: Rect,
+    anchor: number[],
+    scale: number[],
+    rotation: number,
+    center: number[]
+): Rect {
+    const box = normalizedRect(
+        anchor[0] + rect.x * scale[0],
+        anchor[1] + rect.y * scale[1],
+        rect.width * scale[0],
+        rect.height * scale[1]
+    );
+    if (rotation === 0) {
+        return box;
+    }
+    const pivot = [anchor[0] + center[0] * scale[0] - box.x, anchor[1] + center[1] * scale[1] - box.y];
+    return rotateRect(box, rotation, pivot);
+}
+
+/**
+ * The anchor that puts a node's pivot where an inherited rotation `angle` turns it. A node at draw
+ * translation `drawTrans` (its unrotated local origin, `origin + R(angle) * translation`) has its
+ * pivot at `drawTrans + R(angle)(scale * center)`. Draws that rotate around
+ * `anchor + scale * center` must therefore start at `drawTrans + R(angle)(scale * center) -
+ * scale * center`.
+ */
+export function pivotAnchor(drawTrans: number[], angle: number, scale: number[], center: number[]): number[] {
+    if (angle === 0 || (center[0] === 0 && center[1] === 0)) {
+        return drawTrans;
+    }
+    const scaledCenter = [center[0] * scale[0], center[1] * scale[1]];
+    const turned = rotateTranslation(scaledCenter, angle);
+    return [drawTrans[0] + turned[0] - scaledCenter[0], drawTrans[1] + turned[1] - scaledCenter[1]];
+}
+
+/**
+ * A rect from a corner and a signed extent: a negative width/height (a mirroring scale) moves x/y
+ * to the new left/top edge and is made non-negative, so `unionRect`'s far-edge math keeps working.
+ */
+export function normalizedRect(x: number, y: number, width: number, height: number): Rect {
+    return {
+        x: width < 0 ? x + width : x,
+        y: height < 0 ? y + height : y,
+        width: Math.abs(width),
+        height: Math.abs(height),
+    };
+}
+
+/**
  * Rotates a translation vector by a given angle.
  * @param translation Translation vector [x, y]
  * @param rotation Rotation angle in radians
