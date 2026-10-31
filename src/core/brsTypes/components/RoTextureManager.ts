@@ -36,6 +36,17 @@ import {
 const SyncWaitMs = 30000;
 const NoEvents: readonly RoTextureRequestEvent[] = Object.freeze([]);
 
+/** An image loading in the background, shared by every request for its URI. */
+interface TextureJob {
+    job: BackgroundJob<ImageJobResult>;
+    /** Request headers of a download (see `headersKey`); a local file has none. */
+    headers?: string;
+}
+
+function headersKey(headers: Map<string, string>) {
+    return JSON.stringify([...headers]);
+}
+
 // Singleton instance of RoTextureManager
 let textureManager: RoTextureManager;
 
@@ -46,7 +57,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     private readonly brsFS = BrsDevice.fileSystem;
     readonly requests: Map<number, RoTextureRequest>;
     /** Images loading in the background, each shared by every request for its URI. */
-    private readonly jobs: Map<string, BackgroundJob<ImageJobResult>>;
+    private readonly jobs: Map<string, TextureJob>;
     private port?: RoMessagePort;
     // ifHttpAgent Interface
     readonly customHeaders: Map<string, string>;
@@ -59,7 +70,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         this.certificatesFile = DefaultCertificatesFile;
         this.requests = new Map<number, RoTextureRequest>();
         this.textures = new Map<string, RoBitmap>();
-        this.jobs = new Map<string, BackgroundJob<ImageJobResult>>();
+        this.jobs = new Map<string, TextureJob>();
         this.failedLocalUris = new Set<string>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
@@ -98,7 +109,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
     dispose() {
         this.textures.clear();
-        for (const job of this.jobs.values()) {
+        for (const { job } of this.jobs.values()) {
             job.cancel();
         }
         this.jobs.clear();
@@ -115,7 +126,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             return NoEvents;
         }
         let failed: Set<string> | undefined;
-        for (const [uri, job] of this.jobs) {
+        for (const [uri, { job }] of this.jobs) {
             if (job.poll()) {
                 this.jobs.delete(uri);
                 if (this.applyJobResult(uri, job) === null) {
@@ -151,31 +162,35 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             }
             return null;
         }
-        return this.cacheTexture(uri, new RoBitmap({ width, height, data: result.payload }, uri));
+        const bitmap = new RoBitmap({ width, height, data: result.payload }, uri);
+        return bitmap.isValid() ? this.cacheTexture(uri, bitmap) : null;
     }
 
     /**
      * Starts loading an asynchronous request's image in the background: downloading it (remote
      * URIs) and decoding it. Does nothing if it's cached or already loading; if it can't run in the
-     * background, the image is loaded synchronously when the request is delivered.
+     * background, the image is loaded synchronously when the request is delivered. Without a
+     * message port nothing would ever collect the result, so no job is started.
      */
     private startJob(request: RoTextureRequest) {
         const uri = request.uri;
-        if (this.textures.has(uri) || this.jobs.has(uri) || !backgroundAvailable()) {
+        if (!this.port || this.textures.has(uri) || this.jobs.has(uri) || !backgroundAvailable()) {
             return;
         }
-        let job: BackgroundJob<ImageJobResult> | undefined;
         if (uri.startsWith("http")) {
-            job = startBackgroundJob({ kind: "image", http: this.downloadParams(uri) });
-        } else {
-            const data = this.loadLocalFile(uri);
-            if (data) {
-                // A copy owned by the job (it's transferred), never the file system's cached buffer
-                job = startBackgroundJob({ kind: "image", image: new Uint8Array(data) });
+            const job = startBackgroundJob<ImageJobResult>({ kind: "image", http: this.downloadParams(uri) });
+            if (job) {
+                this.jobs.set(uri, { job, headers: headersKey(this.customHeaders) });
             }
+            return;
         }
+        const data = this.loadLocalFile(uri);
+        // A copy owned by the job (it's transferred), never the file system's cached buffer
+        const job = data
+            ? startBackgroundJob<ImageJobResult>({ kind: "image", image: new Uint8Array(data) })
+            : undefined;
         if (job) {
-            this.jobs.set(uri, job);
+            this.jobs.set(uri, { job });
         }
     }
 
@@ -223,7 +238,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             if (getVolume(uri) === volume) {
                 this.textures.delete(uri);
                 this.failedLocalUris.delete(uri);
-                this.jobs.get(uri)?.cancel();
+                this.jobs.get(uri)?.job.cancel();
                 this.jobs.delete(uri);
             }
         }
@@ -234,9 +249,11 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (bitmap) {
             return bitmap;
         }
-        const job = this.jobs.get(uri);
-        if (job) {
-            // Already loading in the background: wait for it rather than loading the image twice.
+        const entry = this.jobs.get(uri);
+        // Already loading in the background with the same headers: wait for it rather than
+        // loading the image twice. Other headers (e.g. a Poster's own) get a load of their own.
+        if (entry && (entry.headers === undefined || entry.headers === headersKey(headers ?? this.customHeaders))) {
+            const job = entry.job;
             this.jobs.delete(uri);
             if (job.wait(SyncWaitMs)) {
                 const loaded = this.applyJobResult(uri, job);
@@ -259,7 +276,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
     /** Stops loading an image in the background once no request is waiting for it. */
     private cancelUnusedJob(uri: string) {
-        const job = this.jobs.get(uri);
+        const job = this.jobs.get(uri)?.job;
         if (!job) {
             return;
         }

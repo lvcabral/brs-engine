@@ -314,6 +314,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     dispose() {
+        this.cancelAsyncTransfers();
         this.port?.unregisterCallback(this.getComponentName(), this.callbackKey);
         this.sseTransport?.dispose();
         this.port?.removeReference();
@@ -466,17 +467,19 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             return this.executeRequest(options);
         }
         const { meta, payload } = job.result;
-        this.failureReason = meta.statusText;
+        // A result the thread couldn't receive (e.g. too large) carries only `error`
+        const status = meta.status ?? -1;
+        this.failureReason = meta.statusText ?? meta.error ?? "";
         if (meta.error) {
             this.logTransferError(options, transfer.url, meta.error);
         }
-        // TextDecoder rejects views on shared memory, and a saved file must outlive the buffer
-        const body = payload.slice();
-        if (options.outFile && meta.status === 200) {
-            this.saveDownloadedFile(options.outFile, body.buffer);
+        // Copied out of shared memory only when used: TextDecoder rejects shared views, and a
+        // saved file must outlive the buffer (`Buffer.from` then wraps the copy without another)
+        if (options.outFile && status === 200) {
+            this.saveDownloadedFile(options.outFile, payload.slice().buffer);
         }
-        const text = options.responseType === "text" ? textDecoder.decode(body) : "";
-        return new RoURLEvent(this.identity, transfer.host, text, meta.status, this.failureReason, meta.headers);
+        const text = options.responseType === "text" ? textDecoder.decode(payload.slice()) : "";
+        return new RoURLEvent(this.identity, transfer.host, text, status, this.failureReason, meta.headers ?? "");
     }
 
     /** Stops every running asynchronous transfer. */

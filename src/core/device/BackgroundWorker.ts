@@ -116,6 +116,8 @@ let spawnTime = 0;
 let lastBeat = -1;
 let lastBeatTime = 0;
 let lastAliveCheck = 0;
+/** Heartbeat value when the helper stalled; it's used again once the heartbeat moves on. */
+let stalledBeat: number | undefined;
 let nextJobId = 1;
 let workerEntry: string | undefined;
 const activeJobs = new Map<number, BackgroundJob>();
@@ -199,9 +201,13 @@ export class BackgroundJob<T = any> {
 function connectBackgroundPort(port: MessagePort, aliveBuffer: SharedArrayBuffer) {
     helper = {
         postMessage: (message: BackgroundMessage, transfer?: any) => port.postMessage(message, transfer ?? []),
-        terminate: () => port.close(),
+        terminate: () => {
+            port.postMessage({ bg: "close" });
+            port.close();
+        },
     };
     helperUnavailable = false;
+    stalledBeat = undefined;
     alive = new Int32Array(aliveBuffer);
     spawnTime = performance.now();
     lastBeat = -1;
@@ -225,6 +231,15 @@ export function backgroundAvailable(): boolean {
     if (!helper && !helperUnavailable) {
         helper = spawnHelper();
         helperUnavailable = !helper;
+    }
+    if (helper && alive && stalledBeat !== undefined) {
+        const beat = Atomics.load(alive, BeatIdx);
+        if (beat === stalledBeat) {
+            return false;
+        }
+        stalledBeat = undefined;
+        lastBeat = beat;
+        lastBeatTime = performance.now();
     }
     return !!helper;
 }
@@ -307,19 +322,25 @@ function checkHelperAlive() {
     if (beat !== lastBeat) {
         lastBeat = beat;
         lastBeatTime = now;
-    } else if (now - lastBeatTime > StallTimeoutMs) {
-        loseHelper(false);
+    } else if (now - lastBeatTime > StallTimeoutMs && stalledBeat === undefined) {
+        // Busy (e.g. a huge decode) or hung: run what's in flight synchronously, and send new
+        // jobs again once the heartbeat moves (`backgroundAvailable`)
+        stalledBeat = beat;
+        for (const job of activeJobs.values()) {
+            job.cancel();
+        }
     }
 }
 
 /**
  * Drops the helper and settles its running jobs without a result. A helper that never booted
- * (e.g. its script can't load) is not respawned; one that crashed or stalled is, on next use.
+ * (e.g. its script can't load) is not respawned; one that crashed is, on next use (Node).
  */
 function loseHelper(permanent: boolean) {
     const worker = helper;
     helper = undefined;
     alive = undefined;
+    stalledBeat = undefined;
     helperUnavailable ||= permanent;
     for (const job of activeJobs.values()) {
         job.settle();
@@ -344,7 +365,9 @@ type BackgroundMessage =
     | { bg: "connect"; port: MessagePort; alive: SharedArrayBuffer }
     | { bg: "job"; id: number; control: SharedArrayBuffer; params: BackgroundJobParams }
     | { bg: "buffer"; id: number; buffer: SharedArrayBuffer }
-    | { bg: "cancel"; id: number };
+    | { bg: "cancel"; id: number }
+    /** To the helper over a thread's port: the thread is done with it (browser). */
+    | { bg: "close" };
 
 interface HeldJob {
     control: Int32Array;
@@ -369,9 +392,19 @@ export function handleBackgroundMessage(message: BackgroundMessage, jobs: HeldJo
         Atomics.store(aliveView, BootedIdx, 1);
         setInterval(() => Atomics.add(aliveView, BeatIdx, 1), HeartbeatMs);
     } else if (message.bg === "port") {
+        const port = message.port;
         const portJobs: HeldJobs = new Map();
-        message.port.onmessage = (event: MessageEvent) => {
-            if (isBackgroundMessage(event.data)) {
+        port.onmessage = (event: MessageEvent) => {
+            if (!isBackgroundMessage(event.data)) {
+                return;
+            }
+            if (event.data.bg === "close") {
+                for (const held of portJobs.values()) {
+                    held.xhr?.abort();
+                }
+                portJobs.clear();
+                port.close();
+            } else {
                 handleBackgroundMessage(event.data, portJobs);
             }
         };
