@@ -207,6 +207,14 @@ function connectBackgroundPort(port: MessagePort, aliveBuffer: SharedArrayBuffer
     lastBeat = -1;
 }
 
+/**
+ * Whether this thread has jobs in flight. A port callback that blocks while idle (a SceneGraph
+ * Task waiting for field updates) must wake regularly while it's true, or nothing polls the jobs.
+ */
+export function backgroundJobsPending(): boolean {
+    return activeJobs.size > 0;
+}
+
 /** Sets the engine bundle the Node helper worker runs (the host's configurable worker entry). */
 export function setBackgroundWorkerEntry(entry: string | undefined) {
     workerEntry = entry;

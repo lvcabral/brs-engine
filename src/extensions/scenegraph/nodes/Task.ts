@@ -25,6 +25,7 @@ import {
     getNow,
     PORT_NO_WAIT,
     RoMessagePort,
+    backgroundJobsPending,
 } from "brs-engine";
 import { sgClock } from "../SGClock";
 import { sgRoot } from "../SGRoot";
@@ -44,6 +45,9 @@ import { ContentNode } from "./ContentNode";
 import { Global } from "./Global";
 import { SGNodeType } from ".";
 import type { Field, Scene } from "..";
+
+/** How often an idle Task wakes to let the port poll its in-flight background jobs. */
+const BackgroundPollMs = 10;
 
 /**
  * Maximum time (ms) a blocking rendezvous wait sleeps before re-checking cooperative conditions.
@@ -973,7 +977,12 @@ export class Task extends Node {
             // Don't sleep on the slot while a loaded batch still has items to apply (left behind by
             // an item that threw): they are already here, and the slot may stay idle indefinitely.
             if (wait !== PORT_NO_WAIT && this.pendingFanoutHead >= this.pendingFanout.length) {
-                const timeout = wait === 0 ? undefined : wait;
+                let timeout = wait === 0 ? undefined : wait;
+                // Background jobs (async transfers, textures) settle through the port's other
+                // callbacks, which only run once this wait returns, so wake up to let them poll.
+                if (backgroundJobsPending()) {
+                    timeout = Math.min(timeout ?? BackgroundPollMs, BackgroundPollMs);
+                }
                 this.taskBuffer.waitVersion(0, timeout);
             }
             this.processThreadUpdate(this.taskBuffer, true);

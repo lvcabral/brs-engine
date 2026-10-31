@@ -55,6 +55,7 @@ export * from "./device/FileSystem";
 export * from "./packageEncryption";
 export { default as SharedObject } from "./SharedObject";
 export { SharedEventQueue } from "./SharedEventQueue";
+export { backgroundJobsPending } from "./device/BackgroundWorker";
 export type { ISGNode } from "./extensions";
 export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
 export { Lexer, Lexeme, Token, ReservedWords, isToken } from "./lexer";
@@ -87,6 +88,7 @@ import * as TypeMismatchExports from "./error/TypeMismatch";
 import * as ExtensionsExports from "./extensions";
 import * as RoFontRegistryExports from "./brsTypes/components/RoFontRegistry";
 import * as FileSystemExports from "./device/FileSystem";
+import * as BackgroundWorkerExports from "./device/BackgroundWorker";
 import * as stdlibModule from "./stdlib";
 import * as netlibModule from "./interpreter/Network";
 import { Preprocessor } from "./preprocessor/Preprocessor";
@@ -198,6 +200,7 @@ function createWorkerExports() {
         BrsDeviceExports,
         RoFontRegistryExports,
         FileSystemExports,
+        BackgroundWorkerExports,
         ExtensionsExports,
         LexerExports,
         ParserExports,
