@@ -444,6 +444,21 @@ describe("FileSystem Reliability Tests - cachefs: volume", () => {
         expect(fileSystem.readFileSync("cachefs:/data.json", "utf8")).toBe("{}");
     });
 
+    test("keeps file name case across launches while matching names regardless of case", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        launch(cacheBuffer);
+        fileSystem.mkdirSync("cachefs:/Images");
+        fileSystem.writeFileSync("cachefs:/Images/Logo.PNG", "logo");
+        fileSystem.writeFileSync("CACHEFS:/images/logo.png", "updated"); // same file
+        launch(cacheBuffer);
+        expect(fileSystem.readdirSync("cachefs:/")).toEqual(["Images"]);
+        expect(fileSystem.readdirSync("cachefs:/IMAGES")).toEqual(["Logo.PNG"]);
+        expect(fileSystem.readFileSync("cachefs:/images/LOGO.png", "utf8")).toBe("updated");
+        fileSystem.renameSync("cachefs:/images/logo.png", "cachefs:/Images/logo.png");
+        expect(fileSystem.readdirSync("cachefs:/Images")).toEqual(["logo.png"]);
+        expect(fileSystem.readFileSync("cachefs:/Images/Logo.PNG", "utf8")).toBe("updated");
+    });
+
     test("mounts an unreadable buffer empty without breaking the other volumes", () => {
         const cacheBuffer = new SharedArrayBuffer(volumeSize);
         const header = new DataView(cacheBuffer);
@@ -485,6 +500,21 @@ describe("FileSystem Reliability Tests - cachefs: volume", () => {
         launch(cacheBuffer);
         expect(() => fileSystem.writeFileSync("cachefs:/huge.bin", generateTestData(volumeSize))).toThrow();
         expect(fileSystem.existsSync("cachefs:/huge.bin")).toBe(false);
+        fileSystem.writeFileSync("cachefs:/small.txt", "still writable");
+        expect(fileSystem.readFileSync("cachefs:/small.txt", "utf8")).toBe("still writable");
+    });
+
+    test("reclaims wasted space on launch without evicting files that fit", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        launch(cacheBuffer);
+        fileSystem.writeFileSync("cachefs:/f1.bin", generateTestData(300 * 1024));
+        fileSystem.writeFileSync("cachefs:/f2.bin", generateTestData(300 * 1024));
+        const rewritten = generateTestData(310 * 1024, 1);
+        fileSystem.writeFileSync("cachefs:/f1.bin", rewritten); // grows, so it is reallocated
+        launch(cacheBuffer);
+        expect(fileSystem.readdirSync("cachefs:/").sort()).toEqual(["f1.bin", "f2.bin"]);
+        expect(fileSystem.readFileSync("cachefs:/f1.bin", "utf8")).toBe(rewritten);
+        fileSystem.writeFileSync("cachefs:/f3.bin", generateTestData(300 * 1024)); // fits after compaction
     });
 
     test("reclaims the space of rewritten files on each launch", () => {
