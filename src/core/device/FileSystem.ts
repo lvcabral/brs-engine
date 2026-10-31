@@ -102,13 +102,12 @@ export class FileSystem {
         this.overlay.clear();
         this.protectedSource.clear();
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
-        // Basic mounts: common:, tmp:, cachefs:, pkg:
+        // Basic mounts: common:, tmp:, pkg: (cachefs: is mounted on its own, see mountCacheFS)
         if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
         Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
         if (zenFS.mounts.has("/tmp:")) zenFS.umount("tmp:");
         Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
         if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
-        Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
         if (root && pkgZip === undefined) {
             this._root = root;
             this.pfs = nodeFS;
@@ -123,12 +122,31 @@ export class FileSystem {
         }
         // Apply basic configuration
         zenFS.configureSync(fsConfig);
+        this.mountCacheFS(cacheFS);
         // ext1: volume
         if (ext?.length) {
             this.setExt(ext);
         } else if (extZip) {
             this.mountExt(extZip);
         }
+    }
+
+    /**
+     * Mounts the cachefs: volume, which the host keeps across app launches. A worker terminated
+     * mid-write can leave the buffer unreadable; it then starts empty, like a device eviction.
+     * @param buffer ArrayBufferLike with the cacheFS volume buffer.
+     */
+    private mountCacheFS(buffer: ArrayBufferLike) {
+        const mount = () =>
+            zenFS.resolveMountConfigSync({ backend: zenFS.SingleBuffer, buffer: buffer, caseFold: "lower" as const });
+        let cachefs;
+        try {
+            cachefs = mount();
+        } catch {
+            new Uint8Array(buffer).fill(0);
+            cachefs = mount();
+        }
+        zenFS.mount("cachefs:", cachefs);
     }
 
     /**

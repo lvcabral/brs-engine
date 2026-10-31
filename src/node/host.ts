@@ -15,6 +15,7 @@ import {
     DataBufferSize,
     DataType,
     DebugCommand,
+    DeviceInfo,
     isAppData,
     isExtensionInfo,
     isFrameData,
@@ -97,6 +98,8 @@ let terminateReason: AppExitReason | undefined;
 // exit (the worker's own "end" message) doesn't leave a stale timer that could fire against a
 // later, unrelated app run once this one has already finished.
 let terminateTimer: NodeJS.Timeout | undefined;
+// cachefs: volumes, keyed by developer ID, kept across app runs until the process exits.
+const cacheVolumes = new Map<string, SharedArrayBuffer>();
 
 /**
  * Executes a BrightScript app on a dedicated worker thread, with SceneGraph Task support.
@@ -124,6 +127,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
     const device = payload.device;
     device.registryBuffer ??= sharedMapBuffer(device.registry, RegistryInitialSize, RegistryMaxSize);
     device.channelCredBuffer ??= sharedMapBuffer(device.channelCredentials, ChannelCredInitialSize, ChannelCredMaxSize);
+    device.cacheFSBuffer ??= getCacheVolume(device);
     initTaskModule(sharedBuffer, workerEntry, taskNotify);
     currentPayload = payload;
     return new Promise<AppResult>((resolve) => {
@@ -201,6 +205,21 @@ function sharedMapBuffer(map: Map<string, string> | undefined, initialSize: numb
     const shared = new SharedObject(initialSize, maxSize);
     shared.store(Object.fromEntries(map ?? new Map()));
     return shared.getBuffer();
+}
+
+/**
+ * Returns the cachefs: volume buffer for the device's developer ID, allocating one when missing
+ * or when the configured volume size changed.
+ * @param device Device configuration with the developer ID and volume size
+ * @returns SharedArrayBuffer backing the cachefs: volume
+ */
+function getCacheVolume(device: DeviceInfo) {
+    let buffer = cacheVolumes.get(device.developerId);
+    if (buffer?.byteLength !== device.cacheFSVolSize) {
+        buffer = new SharedArrayBuffer(device.cacheFSVolSize);
+        cacheVolumes.set(device.developerId, buffer);
+    }
+    return buffer;
 }
 
 /**

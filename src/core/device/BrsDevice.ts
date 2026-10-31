@@ -138,6 +138,11 @@ export class BrsDevice {
             this.extVolVersion = this.extVolume.getVersion();
             this.extVolMounted = uev === 1;
         }
+        // The host keeps cachefs: across app launches (cleared only on "reboot"), as on a device.
+        const hostCache = payload.device.cacheFSBuffer;
+        if (hostCache?.byteLength === payload.device.cacheFSVolSize) {
+            this.cacheFS = hostCache;
+        }
         try {
             this.fileSystem.setup(
                 payload.device.assets,

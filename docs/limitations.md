@@ -26,6 +26,7 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * By default, the external volume (`ext1:`) and the writeable volumes (`tmp:` `cachefs:`) are limited to 32 MB each.
   * The writable volumes `tmp:` and `cachefs:` limits are configurable, see [customization documentation](./customization.md); 
   * The `ext1:` limit is fixed.
+  * As on a device, `tmp:` is emptied on every app launch, while `cachefs:` is shared per developer ID and survives app relaunches for the session (browser page or Node.js process) — reloading the page or exiting the process acts as a device reboot and clears it. The CLI (`brs-cli`) runs one app per process, so it always starts with an empty `cachefs:`. Cache eviction under memory pressure is not simulated.
 * Audio playback is implemented via `roAudioResources`, `roAudioPlayer` components and `SoundEffect`, `Audio` nodes, but with some limitations:
   * Only one instance of `roAudioPlayer` component or `Audio` node should be used, if more are created those will share the content playlist.
   * If the `roAudioPlayer` component or `Audio` node instance is destroyed the audio keeps playing, make sure to stop the playback before discarding the object.
