@@ -142,6 +142,8 @@ export class BrsDevice {
         const hostCache = payload.device.cacheFSBuffer;
         if (hostCache?.byteLength === payload.device.cacheFSVolSize) {
             this.cacheFS = hostCache;
+        } else if (hostCache) {
+            this.stderr.write("warning,[BrsDevice] Host cachefs: buffer size mismatch, using an empty volume.");
         }
         try {
             this.fileSystem.setup(
@@ -151,7 +153,8 @@ export class BrsDevice {
                 payload.pkgZip,
                 this.extVolMounted ? this.extVolume.loadData() : undefined,
                 payload.root,
-                payload.ext
+                payload.ext,
+                payload.taskData === undefined
             );
         } catch (err: any) {
             this.stderr.write(`error,[BrsDevice] Error setting up file system: ${err.message}`);
@@ -386,7 +389,12 @@ export class BrsDevice {
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (const key of Object.keys(deviceInfo) as (keyof DeviceInfo)[]) {
-            if (key.startsWith("registry") || key.startsWith("channelCred") || key === "assets") {
+            if (
+                key.startsWith("registry") ||
+                key.startsWith("channelCred") ||
+                key === "assets" ||
+                key === "cacheFSBuffer"
+            ) {
                 continue;
             }
             const newValue = this.normalizeDeviceInfoValue(key, deviceInfo[key]);

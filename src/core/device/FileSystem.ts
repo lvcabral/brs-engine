@@ -89,6 +89,7 @@ export class FileSystem {
      * @param extZip Optional ArrayBufferLike with the external storage zip file data.
      * @param root Optional root path for pkg: volume (uses Node.js fs if provided)
      * @param ext Optional external storage path for ext1: volume (uses Node.js fs if provided)
+     * @param compactCache True on app launch (no other thread is using cachefs:) to rebuild the volume
      */
     setup(
         commonZip: ArrayBufferLike,
@@ -97,12 +98,13 @@ export class FileSystem {
         pkgZip?: ArrayBufferLike,
         extZip?: ArrayBufferLike,
         root?: string,
-        ext?: string
+        ext?: string,
+        compactCache: boolean = false
     ) {
         this.overlay.clear();
         this.protectedSource.clear();
         const fsConfig = { mounts: {}, caseFold: "lower" as const };
-        // Basic mounts: common:, tmp:, pkg: (cachefs: is mounted on its own, see mountCacheFS)
+        // Basic mounts: common:, tmp:, pkg: (cachefs: is mounted on its own below)
         if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
         Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
         if (zenFS.mounts.has("/tmp:")) zenFS.umount("tmp:");
@@ -122,7 +124,11 @@ export class FileSystem {
         }
         // Apply basic configuration
         zenFS.configureSync(fsConfig);
-        this.mountCacheFS(cacheFS);
+        if (compactCache) {
+            this.compactCacheFS(cacheFS);
+        } else {
+            zenFS.mount("cachefs:", cacheFSMount(cacheFS));
+        }
         // ext1: volume
         if (ext?.length) {
             this.setExt(ext);
@@ -132,21 +138,55 @@ export class FileSystem {
     }
 
     /**
-     * Mounts the cachefs: volume, which the host keeps across app launches. A worker terminated
-     * mid-write can leave the buffer unreadable; it then starts empty, like a device eviction.
+     * Mounts the cachefs: volume the host keeps across app launches, rebuilt with only its live files.
+     * The buffer allocates by bumping, so space from rewritten or deleted files is reclaimed here, and a
+     * write lock left by a worker terminated mid-write is cleared. An unreadable buffer starts empty,
+     * like a device eviction. Only safe while no other thread has the volume mounted.
      * @param buffer ArrayBufferLike with the cacheFS volume buffer.
      */
-    private mountCacheFS(buffer: ArrayBufferLike) {
-        const mount = () =>
-            zenFS.resolveMountConfigSync({ backend: zenFS.SingleBuffer, buffer: buffer, caseFold: "lower" as const });
-        let cachefs;
+    private compactCacheFS(buffer: ArrayBufferLike) {
+        const entries: [string, Uint8Array | undefined][] = [];
         try {
-            cachefs = mount();
+            for (let block: zenFS.MetadataBlock | undefined = new zenFS.SuperBlock(buffer, 0).metadata; block; ) {
+                block.locked = 0;
+                block = block.previous;
+            }
+            zenFS.mount("cachefs:", cacheFSMount(buffer));
+            this.collectCacheEntries("cachefs:/", entries);
         } catch {
-            new Uint8Array(buffer).fill(0);
-            cachefs = mount();
+            entries.length = 0;
         }
-        zenFS.mount("cachefs:", cachefs);
+        if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
+        new Uint8Array(buffer).fill(0);
+        zenFS.mount("cachefs:", cacheFSMount(buffer));
+        try {
+            for (const [entryPath, data] of entries) {
+                if (data) {
+                    this.cfs.writeFileSync(entryPath, data);
+                } else {
+                    this.cfs.mkdirSync(entryPath);
+                }
+            }
+        } catch {
+            // Volume full: keep what was restored, the rest is evicted.
+        }
+    }
+
+    /**
+     * Reads the cachefs: tree, parents before children: `undefined` data marks a directory.
+     * @param dir Directory path to read
+     * @param entries Collected `[path, data]` pairs
+     */
+    private collectCacheEntries(dir: string, entries: [string, Uint8Array | undefined][]) {
+        for (const name of this.cfs.readdirSync(dir)) {
+            const entryPath = `${dir}${name}`;
+            if (this.cfs.statSync(entryPath).isDirectory()) {
+                entries.push([entryPath, undefined]);
+                this.collectCacheEntries(`${entryPath}/`, entries);
+            } else {
+                entries.push([entryPath, new Uint8Array(this.cfs.readFileSync(entryPath))]);
+            }
+        }
     }
 
     /**
@@ -348,12 +388,7 @@ export class FileSystem {
         zenFS.mount("tmp:", tmp);
         zenFS.umount("cachefs:");
         this.notifyAll("cachefs:");
-        const cachefs = zenFS.resolveMountConfigSync({
-            backend: zenFS.SingleBuffer,
-            buffer: cacheFSBuffer,
-            caseFold: "lower" as const,
-        });
-        zenFS.mount("cachefs:", cachefs);
+        zenFS.mount("cachefs:", cacheFSMount(cacheFSBuffer));
     }
 
     /**
@@ -666,6 +701,15 @@ export class FileSystem {
         }
         return results;
     }
+}
+
+/**
+ * Resolves the zenFS mount for a cachefs: volume buffer.
+ * @param buffer ArrayBufferLike with the cacheFS volume buffer.
+ * @returns The file system to mount at cachefs:
+ */
+function cacheFSMount(buffer: ArrayBufferLike) {
+    return zenFS.resolveMountConfigSync({ backend: zenFS.SingleBuffer, buffer: buffer, caseFold: "lower" as const });
 }
 
 /**

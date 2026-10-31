@@ -1,22 +1,3 @@
-describe("FileSystem Reliability Tests - cachefs: volume", () => {
-    test("mounts an unreadable cachefs: buffer empty without breaking the other volumes", () => {
-        const commonZip = new Uint8Array(
-            nodeFS.readFileSync(path.join(__dirname, "../../packages/node/assets/common.zip"))
-        ).buffer;
-        const cacheBuffer = new SharedArrayBuffer(1024 * 1024);
-        const header = new DataView(cacheBuffer);
-        header.setUint32(0, 0xdeadbeef, true); // bad checksum
-        header.setUint32(4, 0x62732e7a, true); // valid SingleBuffer magic
-        const fileSystem = BrsDevice.fileSystem;
-        fileSystem.setup(commonZip, new SharedArrayBuffer(1024 * 1024), cacheBuffer);
-
-        expect(fileSystem.existsSync("common:/certs/ca-bundle.crt")).toBe(true);
-        expect(fileSystem.readdirSync("cachefs:/")).toEqual([]);
-        fileSystem.writeFileSync("cachefs:/probe.txt", "cached");
-        expect(fileSystem.readFileSync("cachefs:/probe.txt", "utf8")).toBe("cached");
-    });
-});
-
 /**
  * FileSystem Reliability Tests - tmp: volume
  *
@@ -28,6 +9,7 @@ const brs = require("../../packages/node/bin/brs.node");
 const { Interpreter, BrsDevice } = brs;
 const nodeFS = require("fs");
 const path = require("path");
+const zenFS = require("@zenfs/core");
 
 let interpreter;
 let fs;
@@ -434,3 +416,73 @@ async function testFileIntegrity(fs, name, size) {
     expect(content.length).toBe(size);
     expect(content).toBe(data);
 }
+
+describe("FileSystem Reliability Tests - cachefs: volume", () => {
+    const commonZip = new Uint8Array(nodeFS.readFileSync(path.join(__dirname, "../../packages/node/assets/common.zip")))
+        .buffer;
+    const volumeSize = 1024 * 1024;
+    const fileSystem = BrsDevice.fileSystem;
+
+    // Mounts the volumes as an app launch does (cachefs: compacted, no other thread using it).
+    function launch(cacheBuffer) {
+        fileSystem.setup(
+            commonZip,
+            new SharedArrayBuffer(volumeSize),
+            cacheBuffer,
+            undefined,
+            undefined,
+            undefined,
+            undefined,
+            true
+        );
+    }
+
+    afterAll(() => {
+        BrsDevice.resetMemoryVolumes();
+    });
+
+    test("keeps files and directories across launches", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        launch(cacheBuffer);
+        fileSystem.mkdirSync("cachefs:/images");
+        fileSystem.writeFileSync("cachefs:/images/logo.txt", "logo");
+        fileSystem.writeFileSync("cachefs:/data.json", "{}");
+        launch(cacheBuffer);
+        expect(fileSystem.readFileSync("cachefs:/images/logo.txt", "utf8")).toBe("logo");
+        expect(fileSystem.readFileSync("cachefs:/data.json", "utf8")).toBe("{}");
+    });
+
+    test("mounts an unreadable buffer empty without breaking the other volumes", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        const header = new DataView(cacheBuffer);
+        header.setUint32(0, 0xdeadbeef, true); // bad checksum
+        header.setUint32(4, 0x62732e7a, true); // valid SingleBuffer magic
+        launch(cacheBuffer);
+        expect(fileSystem.existsSync("common:/certs/ca-bundle.crt")).toBe(true);
+        expect(fileSystem.readdirSync("cachefs:/")).toEqual([]);
+        fileSystem.writeFileSync("cachefs:/probe.txt", "cached");
+        expect(fileSystem.readFileSync("cachefs:/probe.txt", "utf8")).toBe("cached");
+    });
+
+    test("clears a write lock left by a worker terminated mid-write", { timeout: 5000 }, () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        launch(cacheBuffer);
+        fileSystem.writeFileSync("cachefs:/probe.txt", "cached");
+        new zenFS.SuperBlock(cacheBuffer, 0).metadata.locked = 1;
+        launch(cacheBuffer);
+        expect(fileSystem.readFileSync("cachefs:/probe.txt", "utf8")).toBe("cached");
+    });
+
+    test("reclaims the space of rewritten files on each launch", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        const data = generateTestData(400 * 1024);
+        for (let run = 0; run < 5; run++) {
+            launch(cacheBuffer);
+            if (fileSystem.existsSync("cachefs:/asset.bin")) {
+                fileSystem.unlinkSync("cachefs:/asset.bin");
+            }
+            fileSystem.writeFileSync("cachefs:/asset.bin", data);
+        }
+        expect(fileSystem.readFileSync("cachefs:/asset.bin", "utf8")).toBe(data);
+    });
+});
