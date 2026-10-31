@@ -7,32 +7,38 @@ import {
     startBackgroundJob,
 } from "../../src/core/device/BackgroundWorker.ts";
 
-// These tests drive the helper-worker side in-process, playing the interpreter thread's part of
-// the protocol by hand: post a job, wait for Ready, send a buffer of the announced size, then
-// read the result once Delivered.
+const { pollUntil } = require("../testUtils/pollUntil");
+
+// These tests drive the helper side in-process, connected like a host connects an interpreter
+// thread (a MessageChannel port per thread), and play the thread's part of the protocol by hand:
+// post a job, wait for Ready, send a buffer of the announced size, then read the result once
+// Delivered.
 const Running = 0;
 const Ready = 1;
 const Delivered = 2;
 let nextId = 1000;
+let nextThread = 1;
 
-async function waitForState(control, state, timeoutMs = 5000) {
-    const deadline = Date.now() + timeoutMs;
-    while (Atomics.load(control, 0) !== state) {
-        if (Date.now() > deadline) {
-            throw new Error(`timed out waiting for state ${state}, at ${Atomics.load(control, 0)}`);
-        }
-        await new Promise((resolve) => setTimeout(resolve, 5));
-    }
+/** Registers a thread port with the helper, returning the thread's end of it. */
+function connectThread() {
+    const channel = new MessageChannel();
+    handleBackgroundMessage({ bg: "port", thread: nextThread++, port: channel.port1 });
+    return channel.port2;
 }
 
-async function runJob(params) {
-    const id = nextId++;
-    const control = new Int32Array(new SharedArrayBuffer(16));
-    handleBackgroundMessage({ bg: "job", id, control: control.buffer, params });
-    await waitForState(control, Ready);
+async function reachesState(control, state) {
+    expect(await pollUntil(() => Atomics.load(control, 0) === state)).toBe(true);
+}
+
+const thread = connectThread();
+
+async function runJob(params, port = thread, id = nextId++) {
+    const control = new Int32Array(new SharedArrayBuffer(8));
+    port.postMessage({ bg: "job", id, control: control.buffer, params });
+    await reachesState(control, Ready);
     const buffer = new SharedArrayBuffer(control[1]);
-    handleBackgroundMessage({ bg: "buffer", id, buffer });
-    expect(Atomics.load(control, 0)).toBe(Delivered);
+    port.postMessage({ bg: "buffer", id, buffer });
+    await reachesState(control, Delivered);
     const metaLength = new DataView(buffer).getUint32(0);
     const meta = JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 4, metaLength).slice()));
     return { meta, payload: new Uint8Array(buffer, 4 + metaLength).slice() };
@@ -98,43 +104,39 @@ describe("BackgroundWorker", () => {
         expect(startBackgroundJob({ kind: "image", image: new Uint8Array(image) })).toBeUndefined();
     });
 
-    it("marks the helper as booted and keeps a heartbeat", async () => {
-        const alive = new Int32Array(new SharedArrayBuffer(8));
-        handleBackgroundMessage({ bg: "init", alive: alive.buffer });
-        expect(Atomics.load(alive, 0)).toBe(1);
-        const beat = Atomics.load(alive, 1);
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        expect(Atomics.load(alive, 1)).toBeGreaterThan(beat);
+    it("bumps the heartbeat when it boots, and then periodically", async () => {
+        const heartbeat = new Int32Array(new SharedArrayBuffer(4));
+        handleBackgroundMessage({ bg: "init", heartbeat: heartbeat.buffer });
+        expect(Atomics.load(heartbeat, 0)).toBe(1);
+        expect(await pollUntil(() => Atomics.load(heartbeat, 0) > 1, 2000)).toBe(true);
     });
 
-    it("runs jobs from a connected interpreter thread's port, with ids scoped to that port", async () => {
-        // Browser setup: the page connects each interpreter thread to the helper with a MessageChannel.
-        const threads = [new MessageChannel(), new MessageChannel()];
-        for (const channel of threads) {
-            handleBackgroundMessage({ bg: "port", port: channel.port1 });
-        }
-        const sizes = [];
-        for (const [index, channel] of threads.entries()) {
+    it("scopes job ids to each thread's port", async () => {
+        const ports = [connectThread(), connectThread()];
+        const widths = [];
+        for (const [index, port] of ports.entries()) {
             // Both threads use the same job id
-            const control = new Int32Array(new SharedArrayBuffer(8));
-            channel.port2.postMessage({
-                bg: "job",
-                id: 1,
-                control: control.buffer,
-                params: { kind: "image", image: new Uint8Array(png(index + 1, 1)) },
-            });
-            await waitForState(control, Ready);
-            const buffer = new SharedArrayBuffer(control[1]);
-            channel.port2.postMessage({ bg: "buffer", id: 1, buffer });
-            await waitForState(control, Delivered);
-            const metaLength = new DataView(buffer).getUint32(0);
-            sizes.push(JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 4, metaLength).slice())).width);
+            const { meta } = await runJob({ kind: "image", image: new Uint8Array(png(index + 1, 1)) }, port, 1);
+            widths.push(meta.width);
         }
-        expect(sizes).toEqual([1, 2]);
-        for (const channel of threads) {
-            channel.port1.close();
-            channel.port2.close();
-        }
+        expect(widths).toEqual([1, 2]);
+    });
+
+    it("drops a released thread's jobs", async () => {
+        const id = nextThread;
+        const port = connectThread();
+        const control = new Int32Array(new SharedArrayBuffer(8));
+        port.postMessage({
+            bg: "job",
+            id: 1,
+            control: control.buffer,
+            params: { kind: "http", http: httpParams(`${baseUrl}/slow`) },
+        });
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        handleBackgroundMessage({ bg: "release", thread: id });
+        // The slow response would have arrived by now; the aborted job never publishes it
+        await new Promise((resolve) => setTimeout(resolve, 2300));
+        expect(Atomics.load(control, 0)).toBe(Running);
     });
 
     describe("image jobs", () => {
@@ -214,14 +216,10 @@ describe("BackgroundWorker", () => {
 
         it("never publishes a cancelled job", async () => {
             const id = nextId++;
-            const control = new Int32Array(new SharedArrayBuffer(16));
-            handleBackgroundMessage({
-                bg: "job",
-                id,
-                control: control.buffer,
-                params: { kind: "http", http: httpParams(`${baseUrl}/slow`) },
-            });
-            handleBackgroundMessage({ bg: "cancel", id });
+            const control = new Int32Array(new SharedArrayBuffer(8));
+            const params = { kind: "http", http: httpParams(`${baseUrl}/slow`) };
+            thread.postMessage({ bg: "job", id, control: control.buffer, params });
+            thread.postMessage({ bg: "cancel", id });
             await new Promise((resolve) => setTimeout(resolve, 300));
             expect(Atomics.load(control, 0)).toBe(Running);
         });

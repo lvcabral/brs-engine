@@ -130,7 +130,12 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
         if (this.callbackMap.size > 0) {
             for (const [_, callback] of this.callbackMap.entries()) {
                 const events = callback(interpreter, wait);
-                this.messageQueue.push(...events.filter((e: BrsType) => e instanceof BrsEvent));
+                // Runs on every poll of the busy loop: push in place, never build a filtered copy
+                for (const event of events) {
+                    if (event instanceof BrsEvent) {
+                        this.messageQueue.push(event);
+                    }
+                }
             }
         }
     }

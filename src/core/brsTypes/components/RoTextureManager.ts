@@ -26,6 +26,7 @@ import { BrsDevice } from "../../device/BrsDevice";
 import { DefaultCertificatesFile } from "../../common";
 import {
     BackgroundJob,
+    BackgroundJobParams,
     HttpJobParams,
     ImageJobResult,
     backgroundAvailable,
@@ -125,25 +126,31 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (this.requests.size === 0) {
             return NoEvents;
         }
-        let failed: Set<string> | undefined;
+        // Images loaded in the background this poll (`null` if they failed); a job lost with its
+        // worker isn't here, so its requests load the image synchronously
+        let settled: Map<string, RoBitmap | null> | undefined;
         for (const [uri, { job }] of this.jobs) {
             if (job.poll()) {
                 this.jobs.delete(uri);
-                if (this.applyJobResult(uri, job) === null) {
-                    failed ??= new Set<string>();
-                    failed.add(uri);
+                const bitmap = this.applyJobResult(uri, job);
+                if (bitmap !== undefined) {
+                    settled ??= new Map();
+                    settled.set(uri, bitmap);
                 }
             }
         }
-        const events: RoTextureRequestEvent[] = [];
+        let events: RoTextureRequestEvent[] | undefined;
         for (const request of this.requests.values()) {
-            if (this.jobs.has(request.uri)) {
+            const uri = request.uri;
+            if (this.jobs.has(uri)) {
                 continue;
             }
-            events.push(this.createEvent(request, failed?.has(request.uri) ? null : undefined));
+            const bitmap = settled?.has(uri) ? settled.get(uri) : this.loadTexture(uri);
+            events ??= [];
+            events.push(this.createEvent(request, bitmap));
             this.requests.delete(request.identity);
         }
-        return events;
+        return events ?? NoEvents;
     }
 
     /**
@@ -155,13 +162,14 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (!result) {
             return undefined;
         }
-        const { width, height, error } = result.meta;
-        if (error) {
+        if (result.failure !== undefined || result.meta.error) {
             if (BrsDevice.isDevMode) {
+                const error = result.failure ?? result.meta.error;
                 BrsDevice.stderr.write(`warning,[roTextureManager] Error requesting texture ${uri}: ${error}`);
             }
             return null;
         }
+        const { width, height } = result.meta;
         const bitmap = new RoBitmap({ width, height, data: result.payload }, uri);
         return bitmap.isValid() ? this.cacheTexture(uri, bitmap) : null;
     }
@@ -177,20 +185,22 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (!this.port || this.textures.has(uri) || this.jobs.has(uri) || !backgroundAvailable()) {
             return;
         }
+        let params: BackgroundJobParams;
+        let headers: string | undefined;
         if (uri.startsWith("http")) {
-            const job = startBackgroundJob<ImageJobResult>({ kind: "image", http: this.downloadParams(uri) });
-            if (job) {
-                this.jobs.set(uri, { job, headers: headersKey(this.customHeaders) });
+            params = { kind: "image", http: this.downloadParams(uri) };
+            headers = headersKey(this.customHeaders);
+        } else {
+            const data = this.loadLocalFile(uri);
+            if (!data) {
+                return;
             }
-            return;
+            // A copy owned by the job (it's transferred), never the file system's cached buffer
+            params = { kind: "image", image: new Uint8Array(data) };
         }
-        const data = this.loadLocalFile(uri);
-        // A copy owned by the job (it's transferred), never the file system's cached buffer
-        const job = data
-            ? startBackgroundJob<ImageJobResult>({ kind: "image", image: new Uint8Array(data) })
-            : undefined;
+        const job = startBackgroundJob<ImageJobResult>(params);
         if (job) {
-            this.jobs.set(uri, { job });
+            this.jobs.set(uri, { job, headers });
         }
     }
 
@@ -204,11 +214,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         };
     }
 
-    /** Builds a request's event; `bitmap` is `null` if its image already failed to load. */
-    private createEvent(
-        request: RoTextureRequest,
-        bitmap: RoBitmap | null | undefined = this.loadTexture(request.uri)
-    ) {
+    /** Builds a request's event with its loaded image (`null` or `undefined` if it failed to load). */
+    private createEvent(request: RoTextureRequest, bitmap: RoBitmap | null | undefined) {
         if (bitmap?.isValid()) {
             const needsResize =
                 !!request.size &&
@@ -364,7 +371,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
                 this.requests.set(req.identity, req);
                 this.startJob(req);
             } else if (this.port) {
-                this.port.pushMessage(this.createEvent(req));
+                this.port.pushMessage(this.createEvent(req, this.loadTexture(req.uri)));
             }
             return Uninitialized.Instance;
         },

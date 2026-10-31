@@ -399,17 +399,22 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         if (this.asyncTransfers.length === 0) {
             return this.getSseEvents();
         }
-        const events: BrsEvent[] = [];
+        let events: BrsEvent[] | undefined;
         for (let index = 0; index < this.asyncTransfers.length; ) {
             const transfer = this.asyncTransfers[index];
             if (transfer.job.poll()) {
                 this.asyncTransfers.splice(index, 1);
+                events ??= [];
                 events.push(this.asyncTransferEvent(transfer));
             } else {
                 index++;
             }
         }
-        events.push(...this.getSseEvents());
+        const sse = this.getSseEvents();
+        if (!events) {
+            return sse;
+        }
+        events.push(...sse);
         return events;
     }
 
@@ -466,10 +471,15 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             // The background worker was lost: run the transfer synchronously instead
             return this.executeRequest(options);
         }
+        if (job.result.failure !== undefined) {
+            // The thread couldn't receive the result (e.g. too large)
+            this.failureReason = job.result.failure;
+            this.logTransferError(options, transfer.url, this.failureReason);
+            return new RoURLEvent(this.identity, transfer.host, "", -1, this.failureReason, "");
+        }
         const { meta, payload } = job.result;
-        // A result the thread couldn't receive (e.g. too large) carries only `error`
-        const status = meta.status ?? -1;
-        this.failureReason = meta.statusText ?? meta.error ?? "";
+        const status = meta.status;
+        this.failureReason = meta.statusText;
         if (meta.error) {
             this.logTransferError(options, transfer.url, meta.error);
         }
@@ -479,7 +489,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             this.saveDownloadedFile(options.outFile, payload.slice().buffer);
         }
         const text = options.responseType === "text" ? textDecoder.decode(payload.slice()) : "";
-        return new RoURLEvent(this.identity, transfer.host, text, status, this.failureReason, meta.headers ?? "");
+        return new RoURLEvent(this.identity, transfer.host, text, status, this.failureReason, meta.headers);
     }
 
     /** Stops every running asynchronous transfer. */

@@ -33,6 +33,7 @@ import {
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks } from "./task";
+import { connectBackground, releaseBackground } from "./backgroundHost";
 
 /**
  * Node worker host: runs a BrightScript app on a dedicated `worker_threads` thread (the render
@@ -87,6 +88,8 @@ function notifyAll(eventName: string, eventData?: any) {
 
 // App worker state
 let appWorker: Worker | undefined;
+/** The app thread's connection to the background worker (`backgroundHost.ts`). */
+let appBackgroundThread: number | undefined;
 let currentPayload: AppPayload | undefined;
 let controlArray: Int32Array | undefined;
 let finishApp: ((result: AppResult) => void) | undefined;
@@ -137,7 +140,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
         // console output from inside the worker (engine diagnostics, third-party libraries)
         // must reach the host as an event, never the terminal directly — in frame-rendering
         // modes a stray write lands inside the frame region and flickers the screen.
-        appWorker = new Worker(workerEntry, { stdout: true, stderr: true, workerData: { workerEntry } });
+        appWorker = new Worker(workerEntry, { stdout: true, stderr: true });
         appWorker.stdout.on("data", (chunk: Buffer) => notifyAll("stdout", chunk.toString()));
         appWorker.stderr.on("data", (chunk: Buffer) => notifyAll("stderr", chunk.toString()));
         appWorker.on("message", mainCallback);
@@ -146,6 +149,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
             finishApp?.({ exitReason: AppExitReason.Crashed });
         });
         appWorker.postMessage(sharedBuffer);
+        appBackgroundThread = connectBackground(appWorker, workerEntry);
         appWorker.postMessage(payload);
     });
 }
@@ -210,6 +214,8 @@ function sharedMapBuffer(map: Map<string, string> | undefined, initialSize: numb
  */
 async function cleanupApp() {
     await resetTasks();
+    releaseBackground(appBackgroundThread);
+    appBackgroundThread = undefined;
     const worker = appWorker;
     appWorker = undefined;
     currentPayload = undefined;

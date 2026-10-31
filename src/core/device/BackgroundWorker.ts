@@ -7,28 +7,27 @@
  *--------------------------------------------------------------------------------------------*/
 /**
  * Background worker: runs the work a device does off the BrightScript thread (asynchronous HTTP
- * transfers, texture downloads and image decoding) on a helper worker, one per interpreter thread.
- * The helper runs the same engine bundle, so no extra deployment file is needed.
+ * transfers, texture downloads and image decoding) on a helper worker. The host starts the helper
+ * (`src/api/backgroundHost.ts` in the browser, `src/node/backgroundHost.ts` in Node), running the
+ * same engine bundle, and connects every interpreter thread (the app and each Task) to it through
+ * its own `MessagePort`, sent before the thread's payload. The host does it because a browser only
+ * starts a nested worker once its parent turns its event loop, which an interpreter thread never
+ * does while an app runs.
  *
- * The interpreter thread busy-spins in `RoMessagePort.wait()` and never turns its event loop, so it
- * can't receive `postMessage` replies or worker `error` events. Everything flowing back to it goes
- * through shared memory, polled with `Atomics`:
+ * For the same reason, the interpreter thread can't receive `postMessage` replies. Everything
+ * flowing back to it goes through shared memory, polled with `Atomics`:
  *
  * 1. The interpreter posts a job with a small shared control block and keeps polling it.
  * 2. The helper runs the job, holds the result, and publishes its size (`Ready`).
  * 3. The interpreter allocates a shared buffer of exactly that size and posts it to the helper.
  * 4. The helper copies the result into it (`Delivered`).
  *
- * Helper liveness is tracked the same way: it sets a boot flag and bumps a heartbeat counter, so
- * a helper that never starts, or stops responding, fails its jobs over to the synchronous path.
+ * Helper liveness is a heartbeat counter in shared memory: while it doesn't move (the helper hasn't
+ * booted, is stuck on a huge decode, or is gone), jobs run on the synchronous path instead.
  */
-import { BrsDevice } from "./BrsDevice";
 import { isTypeOf } from "../common";
 import { decodeImage, toBytes } from "./ImageDecoder";
 /// #if !BROWSER
-import fs from "node:fs";
-import path from "node:path";
-import { Worker as NodeWorker } from "node:worker_threads";
 import { XMLHttpRequest } from "../polyfill/XMLHttpRequest";
 /// #endif
 
@@ -68,11 +67,13 @@ export type BackgroundJobParams =
     /** Decode `image`, or download it first from `http` (a GET that must return 200). */
     | { kind: "image"; image?: Uint8Array; http?: HttpJobParams };
 
-/** A settled job's result. `payload` is a view on shared memory: copy it before keeping it. */
-export interface BackgroundJobResult<T = any> {
-    meta: T;
-    payload: Uint8Array;
-}
+/**
+ * A settled job's result: its metadata and payload (a view on shared memory: copy it before keeping
+ * it), or a `failure` when the thread couldn't receive the result (e.g. too large to allocate).
+ */
+export type BackgroundJobResult<T = any> =
+    | { meta: T; payload: Uint8Array; failure?: undefined }
+    | { failure: string; meta?: undefined; payload?: undefined };
 
 enum JobState {
     Running = 0,
@@ -85,13 +86,8 @@ enum JobState {
 const StateIdx = 0;
 const LengthIdx = 1;
 const ControlInts = 2;
-const AliveInts = 2;
-const BootedIdx = 0;
-const BeatIdx = 1;
 const HeartbeatMs = 250;
-/** Time for a new helper to load the engine bundle and boot. */
-const BootTimeoutMs = 15000;
-/** Heartbeat silence after which the helper counts as dead (a decode runs on its event loop). */
+/** Heartbeat silence after which jobs run synchronously: the helper hasn't booted, is busy or is gone. */
 const StallTimeoutMs = 15000;
 /** Liveness is checked at most this often, not once per pending job on every poll. */
 const AliveCheckMs = 100;
@@ -102,31 +98,30 @@ const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 const Empty: Uint8Array = new Uint8Array(0);
 
-// Interpreter side ------------------------------------------------------------------------------
-
-interface HelperWorker {
-    postMessage(message: BackgroundMessage, transfer?: any): void;
-    terminate(): unknown;
+/** The `MessagePort` surface shared by the browser and Node `worker_threads`. */
+interface Port {
+    postMessage(message: BackgroundMessage, transfer?: any[]): void;
+    close(): void;
+    onmessage: ((event: MessageEvent) => void) | null;
 }
 
-let helper: HelperWorker | undefined;
-let helperUnavailable = false;
-let alive: Int32Array | undefined;
-let spawnTime = 0;
-let lastBeat = -1;
+// Interpreter side ------------------------------------------------------------------------------
+
+let helper: Port | undefined;
+/** The helper's heartbeat counter: 0 until it boots, then bumped every `HeartbeatMs`. */
+let heartbeat: Int32Array | undefined;
+let lastBeat = 0;
 let lastBeatTime = 0;
 let lastAliveCheck = 0;
-/** Heartbeat value when the helper stalled; it's used again once the heartbeat moves on. */
-let stalledBeat: number | undefined;
+let stalled = false;
 let nextJobId = 1;
-let workerEntry: string | undefined;
 const activeJobs = new Map<number, BackgroundJob>();
 
 /** A job running on the background worker. */
 export class BackgroundJob<T = any> {
     private buffer?: SharedArrayBuffer;
     private settled = false;
-    /** The job's result, once settled; `undefined` if the helper was lost (run it synchronously). */
+    /** The job's result, once settled; `undefined` if it has to run synchronously instead. */
     result?: BackgroundJobResult<T>;
 
     constructor(readonly id: number, private readonly control: Int32Array) {}
@@ -142,7 +137,7 @@ export class BackgroundJob<T = any> {
         } else if (state === JobState.Ready && !this.buffer) {
             this.sendBuffer();
         } else {
-            checkHelperAlive();
+            helperResponsive();
         }
         return this.settled;
     }
@@ -163,7 +158,7 @@ export class BackgroundJob<T = any> {
         return true;
     }
 
-    /** Stops the job and releases its result on the helper. */
+    /** Stops the job and releases its result on the helper; the caller runs it synchronously if needed. */
     cancel() {
         if (!this.settled) {
             this.settle();
@@ -171,8 +166,7 @@ export class BackgroundJob<T = any> {
         }
     }
 
-    /** Settles the job; without a result, the caller runs it synchronously. */
-    settle(result?: BackgroundJobResult<T>) {
+    private settle(result?: BackgroundJobResult<T>) {
         this.result = result;
         this.settled = true;
         activeJobs.delete(this.id);
@@ -187,30 +181,11 @@ export class BackgroundJob<T = any> {
             this.buffer = new SharedArrayBuffer(length);
         } catch (err: any) {
             helper?.postMessage({ bg: "cancel", id: this.id });
-            this.settle({ meta: { error: err.message } as T, payload: Empty });
+            this.settle({ failure: err.message });
             return;
         }
         helper?.postMessage({ bg: "buffer", id: this.id, buffer: this.buffer });
     }
-}
-
-/**
- * Connects this interpreter thread to the helper the page started (browser): a browser doesn't
- * start a nested worker while its parent busy-spins, so the thread can't spawn its own.
- */
-function connectBackgroundPort(port: MessagePort, aliveBuffer: SharedArrayBuffer) {
-    helper = {
-        postMessage: (message: BackgroundMessage, transfer?: any) => port.postMessage(message, transfer ?? []),
-        terminate: () => {
-            port.postMessage({ bg: "close" });
-            port.close();
-        },
-    };
-    helperUnavailable = false;
-    stalledBeat = undefined;
-    alive = new Int32Array(aliveBuffer);
-    spawnTime = performance.now();
-    lastBeat = -1;
 }
 
 /**
@@ -221,131 +196,58 @@ export function backgroundJobsPending(): boolean {
     return activeJobs.size > 0;
 }
 
-/** Sets the engine bundle the Node helper worker runs (the host's configurable worker entry). */
-export function setBackgroundWorkerEntry(entry: string | undefined) {
-    workerEntry = entry;
-}
-
-/** Whether jobs can run in the background on this thread, spawning the helper on first call. */
+/** Whether jobs can run in the background: the host connected this thread and the helper responds. */
 export function backgroundAvailable(): boolean {
-    if (!helper && !helperUnavailable) {
-        helper = spawnHelper();
-        helperUnavailable = !helper;
-    }
-    if (helper && alive && stalledBeat !== undefined) {
-        const beat = Atomics.load(alive, BeatIdx);
-        if (beat === stalledBeat) {
-            return false;
-        }
-        stalledBeat = undefined;
-        lastBeat = beat;
-        lastBeatTime = performance.now();
-    }
-    return !!helper;
+    return helperResponsive();
 }
 
 /** Starts a job, or returns `undefined` if it has to run synchronously instead. */
 export function startBackgroundJob<T = any>(params: BackgroundJobParams): BackgroundJob<T> | undefined {
-    if (!backgroundAvailable() || !helper) {
+    if (!helper || !helperResponsive()) {
         return undefined;
     }
     const control = new SharedArrayBuffer(ControlInts * Int32Array.BYTES_PER_ELEMENT);
     const job = new BackgroundJob<T>(nextJobId++, new Int32Array(control));
     activeJobs.set(job.id, job);
     const input = params.kind === "http" ? params.http.body : params.image;
-    const transfer = input instanceof Uint8Array ? [input.buffer as ArrayBuffer] : [];
+    const transfer = input instanceof Uint8Array ? [input.buffer] : [];
     helper.postMessage({ bg: "job", id: job.id, control, params }, transfer);
     return job;
 }
 
-function spawnHelper(): HelperWorker | undefined {
-    if (typeof SharedArrayBuffer !== "function" || (globalThis as any).crossOriginIsolated === false) {
-        return undefined;
-    }
-    const aliveBuffer = new SharedArrayBuffer(AliveInts * Int32Array.BYTES_PER_ELEMENT);
-    try {
-        const worker = createHelperWorker();
-        if (!worker) {
-            return undefined;
-        }
-        alive = new Int32Array(aliveBuffer);
-        spawnTime = performance.now();
-        lastBeat = -1;
-        worker.postMessage({ bg: "init", alive: aliveBuffer });
-        return worker;
-    } catch (err: any) {
-        if (BrsDevice.isDevMode) {
-            BrsDevice.stderr.write(`warning,[core] Unable to start the background worker: ${err.message}`);
-        }
-        return undefined;
-    }
-}
-
-function createHelperWorker(): HelperWorker | undefined {
-    /// #if BROWSER
-    // The page starts the helper and connects it (`connectBackgroundPort`); without that, run synchronously
-    return undefined;
-    /// #else
-    const entry = workerEntry ?? path.join(__dirname, "brs.node.js");
-    if (!BrsDevice.isWorkerThread || !fs.existsSync(entry)) {
-        return undefined; // NOSONAR - ifdef-selected branch, not truly unreachable
-    }
-    const nodeWorker = new NodeWorker(entry, { stdout: true, stderr: true });
-    nodeWorker.stdout.resume();
-    nodeWorker.stderr.resume();
-    // Only seen once the interpreter thread turns its event loop; the heartbeat covers the rest.
-    nodeWorker.on("error", () => loseHelper(false));
-    nodeWorker.on("exit", () => {
-        if (helper === nodeWorker) {
-            loseHelper(false);
-        }
-    });
-    nodeWorker.unref();
-    return nodeWorker;
-    /// #endif
-}
-
-/** Fails over all running jobs if the helper never booted or stopped responding. */
-function checkHelperAlive() {
-    const now = performance.now();
-    if (!alive || now - lastAliveCheck < AliveCheckMs) {
-        return;
-    }
-    lastAliveCheck = now;
-    if (!Atomics.load(alive, BootedIdx)) {
-        if (now - spawnTime > BootTimeoutMs) {
-            loseHelper(true);
-        }
-        return;
-    }
-    const beat = Atomics.load(alive, BeatIdx);
-    if (beat !== lastBeat) {
-        lastBeat = beat;
-        lastBeatTime = now;
-    } else if (now - lastBeatTime > StallTimeoutMs && stalledBeat === undefined) {
-        // Busy (e.g. a huge decode) or hung: run what's in flight synchronously, and send new
-        // jobs again once the heartbeat moves (`backgroundAvailable`)
-        stalledBeat = beat;
-        for (const job of activeJobs.values()) {
-            job.cancel();
-        }
-    }
+/** Connects this interpreter thread to the helper the host started (see the module docs). */
+function connectHelper(port: Port, heartbeatBuffer: SharedArrayBuffer) {
+    helper = port;
+    heartbeat = new Int32Array(heartbeatBuffer);
+    lastBeat = Atomics.load(heartbeat, 0);
+    lastBeatTime = performance.now();
+    stalled = false;
 }
 
 /**
- * Drops the helper and settles its running jobs without a result. A helper that never booted
- * (e.g. its script can't load) is not respawned; one that crashed is, on next use (Node).
+ * Whether the helper is connected and its heartbeat moved recently. When it stops, the jobs in
+ * flight run synchronously (they're cancelled), and new ones start again once it moves.
  */
-function loseHelper(permanent: boolean) {
-    const worker = helper;
-    helper = undefined;
-    alive = undefined;
-    stalledBeat = undefined;
-    helperUnavailable ||= permanent;
-    for (const job of activeJobs.values()) {
-        job.settle();
+function helperResponsive(): boolean {
+    if (!heartbeat) {
+        return false;
     }
-    worker?.terminate();
+    const now = performance.now();
+    if (now - lastAliveCheck >= AliveCheckMs) {
+        lastAliveCheck = now;
+        const beat = Atomics.load(heartbeat, 0);
+        if (beat !== lastBeat) {
+            lastBeat = beat;
+            lastBeatTime = now;
+            stalled = false;
+        } else if (!stalled && now - lastBeatTime > StallTimeoutMs) {
+            stalled = true;
+            for (const job of activeJobs.values()) {
+                job.cancel();
+            }
+        }
+    }
+    return !stalled;
 }
 
 function decodeResult<T>(buffer: SharedArrayBuffer): BackgroundJobResult<T> {
@@ -358,59 +260,65 @@ function decodeResult<T>(buffer: SharedArrayBuffer): BackgroundJobResult<T> {
 // Helper worker side ----------------------------------------------------------------------------
 
 type BackgroundMessage =
-    | { bg: "init"; alive: SharedArrayBuffer }
-    /** To the helper: a port connecting it to one more interpreter thread (browser). */
-    | { bg: "port"; port: MessagePort }
-    /** To an interpreter thread: its port to the helper the page started (browser). */
-    | { bg: "connect"; port: MessagePort; alive: SharedArrayBuffer }
+    /** From the host to the helper: start the heartbeat. */
+    | { bg: "init"; heartbeat: SharedArrayBuffer }
+    /** From the host to the helper: the port of one more interpreter thread. */
+    | { bg: "port"; thread: number; port: Port }
+    /** From the host to the helper: an interpreter thread ended, drop its jobs. */
+    | { bg: "release"; thread: number }
+    /** From the host to an interpreter thread: its port to the helper. */
+    | { bg: "connect"; port: Port; heartbeat: SharedArrayBuffer }
     | { bg: "job"; id: number; control: SharedArrayBuffer; params: BackgroundJobParams }
     | { bg: "buffer"; id: number; buffer: SharedArrayBuffer }
-    | { bg: "cancel"; id: number }
-    /** To the helper over a thread's port: the thread is done with it (browser). */
-    | { bg: "close" };
+    | { bg: "cancel"; id: number };
 
 interface HeldJob {
     control: Int32Array;
-    meta?: Uint8Array;
-    payload?: Uint8Array;
+    /** Set once the job finished: its encoded metadata and payload. */
+    result?: { meta: Uint8Array; payload: Uint8Array };
     xhr?: XMLHttpRequest;
 }
 
 /** Jobs of one interpreter thread, keyed by their id (unique per thread). */
 type HeldJobs = Map<number, HeldJob>;
 
-const heldJobs: HeldJobs = new Map();
+/** The interpreter threads connected to this helper, by the host's thread id. */
+const threads = new Map<number, { port: Port; jobs: HeldJobs }>();
 
 export function isBackgroundMessage(value: any): value is BackgroundMessage {
     return value !== null && typeof value === "object" && typeof value.bg === "string";
 }
 
-/** Runs on the helper worker: handles a message from its interpreter thread. */
-export function handleBackgroundMessage(message: BackgroundMessage, jobs: HeldJobs = heldJobs) {
-    if (message.bg === "init" && isTypeOf(message.alive, "SharedArrayBuffer")) {
-        const aliveView = new Int32Array(message.alive);
-        Atomics.store(aliveView, BootedIdx, 1);
-        setInterval(() => Atomics.add(aliveView, BeatIdx, 1), HeartbeatMs);
+/** Handles a background message on the helper (from the host) or an interpreter thread (`connect`). */
+export function handleBackgroundMessage(message: BackgroundMessage) {
+    if (message.bg === "init" && isTypeOf(message.heartbeat, "SharedArrayBuffer")) {
+        const beat = new Int32Array(message.heartbeat);
+        Atomics.add(beat, 0, 1);
+        setInterval(() => Atomics.add(beat, 0, 1), HeartbeatMs);
     } else if (message.bg === "port") {
-        const port = message.port;
-        const portJobs: HeldJobs = new Map();
-        port.onmessage = (event: MessageEvent) => {
-            if (!isBackgroundMessage(event.data)) {
-                return;
-            }
-            if (event.data.bg === "close") {
-                for (const held of portJobs.values()) {
-                    held.xhr?.abort();
-                }
-                portJobs.clear();
-                port.close();
-            } else {
-                handleBackgroundMessage(event.data, portJobs);
+        const jobs: HeldJobs = new Map();
+        threads.set(message.thread, { port: message.port, jobs });
+        message.port.onmessage = (event: MessageEvent) => {
+            if (isBackgroundMessage(event.data)) {
+                handleThreadMessage(event.data, jobs);
             }
         };
+    } else if (message.bg === "release") {
+        const thread = threads.get(message.thread);
+        threads.delete(message.thread);
+        for (const held of thread?.jobs.values() ?? []) {
+            held.xhr?.abort();
+        }
+        thread?.jobs.clear();
+        thread?.port.close();
     } else if (message.bg === "connect") {
-        connectBackgroundPort(message.port, message.alive);
-    } else if (message.bg === "job") {
+        connectHelper(message.port, message.heartbeat);
+    }
+}
+
+/** Runs on the helper: handles a message from one interpreter thread. */
+function handleThreadMessage(message: BackgroundMessage, jobs: HeldJobs) {
+    if (message.bg === "job") {
         runJob(jobs, message.id, new Int32Array(message.control), message.params);
     } else if (message.bg === "buffer") {
         deliverJob(jobs, message.id, message.buffer);
@@ -438,10 +346,10 @@ async function runJob(jobs: HeldJobs, id: number, control: Int32Array, params: B
     if (jobs.get(id) !== held) {
         return; // cancelled
     }
-    held.meta = textEncoder.encode(JSON.stringify(meta));
-    held.payload = payload;
+    const encoded = textEncoder.encode(JSON.stringify(meta));
+    held.result = { meta: encoded, payload };
     held.xhr = undefined;
-    control[LengthIdx] = 4 + held.meta.length + payload.length;
+    control[LengthIdx] = 4 + encoded.length + payload.length;
     Atomics.store(control, StateIdx, JobState.Ready);
     Atomics.notify(control, StateIdx);
 }
@@ -500,7 +408,7 @@ async function httpRequest(
         });
         try {
             xhr.open(params.method, params.url, true, params.user, params.password);
-            xhr.responseType = params.responseType;
+            xhr.responseType = helperResponseType(params.responseType);
             for (const [key, value] of params.headers) {
                 xhr.setRequestHeader(key, value);
             }
@@ -521,6 +429,19 @@ async function httpRequest(
     });
 }
 
+/**
+ * The response type the helper requests. Node's polyfill keeps the raw body for any type, so it
+ * asks for binary and skips decoding text the receiver decodes anyway; a browser decodes text by
+ * the response's charset, which raw bytes would lose.
+ */
+function helperResponseType(type: "text" | "arraybuffer"): "text" | "arraybuffer" {
+    /// #if BROWSER
+    return type;
+    /// #else
+    return "arraybuffer"; // NOSONAR - ifdef-selected branch, not truly unreachable
+    /// #endif
+}
+
 /** Status a network failure reports, matching each platform's synchronous transfer. */
 function networkErrorStatus() {
     /// #if BROWSER
@@ -532,14 +453,15 @@ function networkErrorStatus() {
 
 function deliverJob(jobs: HeldJobs, id: number, buffer: SharedArrayBuffer) {
     const held = jobs.get(id);
-    if (!held?.meta || !held.payload) {
+    if (!held?.result) {
         return;
     }
     jobs.delete(id);
+    const { meta, payload } = held.result;
     const bytes = new Uint8Array(buffer);
-    new DataView(buffer).setUint32(0, held.meta.length);
-    bytes.set(held.meta, 4);
-    bytes.set(held.payload, 4 + held.meta.length);
+    new DataView(buffer).setUint32(0, meta.length);
+    bytes.set(meta, 4);
+    bytes.set(payload, 4 + meta.length);
     Atomics.store(held.control, StateIdx, JobState.Delivered);
     Atomics.notify(held.control, StateIdx);
 }

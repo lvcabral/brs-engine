@@ -22,7 +22,7 @@ import {
 import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
-import { connectBackground } from "./backgroundHost";
+import { connectBackground, releaseBackground } from "./backgroundHost";
 import { handleBridgeCommand, disposeBridgesForRealm } from "./bridgeHost";
 
 /**
@@ -35,6 +35,8 @@ const MAX_TASKS = 30;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
+/** Each task thread's connection to the background worker (`backgroundHost.ts`). */
+const backgroundThreads: Map<number, number | undefined> = new Map();
 /**
  * Launches deferred because `MAX_TASKS` was reached, oldest first, started as slots free.
  *
@@ -170,7 +172,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     };
     notifyAll("debug", `[task:api] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
-    connectBackground(taskWorker);
+    backgroundThreads.set(taskData.id, connectBackground(taskWorker, brsWrkLib));
     taskWorker.postMessage(taskPayload);
 }
 
@@ -189,6 +191,8 @@ function endTask(taskId: number) {
         taskWorker.removeEventListener("message", taskCallback);
         taskWorker.terminate();
         tasks.delete(taskId);
+        releaseBackground(backgroundThreads.get(taskId));
+        backgroundThreads.delete(taskId);
         // Cancel any pending queued writes so an in-flight wait that resolves after the worker is
         // gone can't surface a stale "dropped update" error against the next app to run.
         threadSyncToTask.get(taskId)?.dispose();
@@ -220,6 +224,10 @@ export function resetTasks() {
         worker?.removeEventListener("message", taskCallback);
         worker?.terminate();
     }
+    for (const thread of backgroundThreads.values()) {
+        releaseBackground(thread);
+    }
+    backgroundThreads.clear();
     for (const shared of threadSyncToTask.values()) {
         shared.dispose();
     }

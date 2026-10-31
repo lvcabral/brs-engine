@@ -38,7 +38,7 @@ import * as path from "path";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { XmlDocument } from "xmldoc";
-import { handleBackgroundMessage, isBackgroundMessage, setBackgroundWorkerEntry } from "./device/BackgroundWorker";
+import { handleBackgroundMessage, isBackgroundMessage } from "./device/BackgroundWorker";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync, zipSync } from "fflate";
 
@@ -109,7 +109,7 @@ if (typeof onmessage !== "undefined") {
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
         } else if (isBackgroundMessage(event.data)) {
-            // This worker is an interpreter thread's background worker (see `BackgroundWorker.ts`)
+            // The background worker's setup, on the helper or an interpreter thread (see `BackgroundWorker.ts`)
             handleBackgroundMessage(event.data);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             // Setup Control Shared Array
@@ -240,7 +240,7 @@ function mergeModuleExports(target: Record<string, any>, source: ModuleNamespace
     return target;
 }
 /// #else
-import { isMainThread, parentPort, workerData } from "node:worker_threads";
+import { isMainThread, parentPort } from "node:worker_threads";
 import { ImageData as NodeImageData } from "canvas";
 export { executeApp, subscribeHost, unsubscribeHost, terminateApp } from "../node/host";
 export type { ExecuteAppOptions } from "../node/host";
@@ -284,8 +284,6 @@ if (!isMainThread && parentPort) {
     // engine messages to the host thread and dispatch the payloads it sends.
     const hostPort = parentPort;
     BrsDevice.isWorkerThread = true;
-    // The host's worker entry, so this thread's background worker runs the same bundle
-    setBackgroundWorkerEntry(workerData?.workerEntry);
     globalThis.postMessage = (message: any) => {
         if (message instanceof NodeImageData) {
             // node-canvas ImageData width/height are prototype getters, lost in the structured
@@ -307,7 +305,7 @@ if (!isMainThread && parentPort) {
             loadNodeExtensions(data);
             executeTask(data);
         } else if (isBackgroundMessage(data)) {
-            // This worker is an interpreter thread's background worker (see `BackgroundWorker.ts`)
+            // The background worker's setup, on the helper or an interpreter thread (see `BackgroundWorker.ts`)
             handleBackgroundMessage(data);
         } else if (isTypeOf(data, "SharedArrayBuffer")) {
             // Setup Control Shared Array (realm-safe check: the buffer may come from a VM sandbox)

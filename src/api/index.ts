@@ -6,7 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getWorkerLibUrl, saveDataBuffer } from "./util";
-import { connectBackground, startBackgroundHost, stopBackgroundHost } from "./backgroundHost";
+import { connectBackground, releaseBackground } from "./backgroundHost";
 import {
     AppExitReason,
     AppPayload,
@@ -159,6 +159,8 @@ let httpConnectLog: boolean = false;
 
 // App Workers and Shared Buffers
 let brsWorker: Worker;
+/** The app thread's connection to the background worker (`backgroundHost.ts`). */
+let appBackgroundThread: number | undefined;
 const registryBuffer = new SharedObject(RegistryInitialSize, RegistryMaxSize);
 const channelCredBuffer = new SharedObject(ChannelCredInitialSize, ChannelCredMaxSize);
 /** localStorage entry holding the channel credential store, as JSON [key, value] pairs. */
@@ -683,7 +685,8 @@ function resetWorker() {
     brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
     resetTasks();
-    stopBackgroundHost();
+    releaseBackground(appBackgroundThread);
+    appBackgroundThread = undefined;
     resetArray();
     resetSounds(deviceData.assets);
     resetVideo();
@@ -758,8 +761,7 @@ function runApp(payload: AppPayload) {
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);
-        startBackgroundHost(brsWrkLib);
-        connectBackground(brsWorker);
+        appBackgroundThread = connectBackground(brsWorker, brsWrkLib);
         brsWorker.postMessage(payload);
         currentPayload = payload;
         enableSendKeys(true);

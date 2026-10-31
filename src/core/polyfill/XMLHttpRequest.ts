@@ -477,7 +477,7 @@ export class XMLHttpRequest {
                 this._response.on("data", (chunk: any) => {
                     // Make sure there's some data
                     if (chunk) {
-                        chunks.push(Buffer.from(chunk));
+                        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
                     }
                     // Don't emit state changes if the connection has been aborted.
                     if (this._sendFlag) {

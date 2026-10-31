@@ -6,44 +6,39 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 /**
- * Hosts the background worker (`src/core/device/BackgroundWorker.ts`) on the page's main thread.
- * A browser only starts a nested worker when its parent turns its event loop, which an interpreter
- * thread never does while an app runs, so the page starts one helper per app run and connects every
- * interpreter thread (the app and each Task) to it through its own `MessageChannel` port, sent
- * before the thread's payload.
+ * Hosts the background worker (`src/core/device/BackgroundWorker.ts`) on the page's main thread:
+ * one helper for the page, started on first use, with every interpreter thread (the app and each
+ * Task) connected to it through its own `MessageChannel` port, sent before the thread's payload.
+ * Mirrored for Node by `src/node/backgroundHost.ts`.
  */
 
 let helper: Worker | undefined;
-let alive: SharedArrayBuffer | undefined;
+let heartbeat: SharedArrayBuffer | undefined;
+let nextThread = 1;
 
-/** Starts the app run's background worker; without `SharedArrayBuffer` threads work synchronously. */
-export function startBackgroundHost(workerUrl: string) {
-    stopBackgroundHost();
+/**
+ * Connects an interpreter thread to the background worker; call before posting its payload.
+ * Returns the id to release it with when the thread ends, or `undefined` if it'll run synchronously.
+ */
+export function connectBackground(worker: Worker, workerUrl: string): number | undefined {
     if (typeof SharedArrayBuffer !== "function" || globalThis.crossOriginIsolated === false) {
-        return;
+        return undefined;
     }
-    try {
+    if (!helper || !heartbeat) {
+        heartbeat = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
         helper = new Worker(workerUrl);
-        alive = new SharedArrayBuffer(2 * Int32Array.BYTES_PER_ELEMENT);
-        helper.postMessage({ bg: "init", alive });
-    } catch {
-        stopBackgroundHost();
+        helper.postMessage({ bg: "init", heartbeat });
     }
-}
-
-/** Connects an interpreter thread to the background worker; call before posting its payload. */
-export function connectBackground(worker: Worker) {
-    if (!helper || !alive) {
-        return;
-    }
+    const thread = nextThread++;
     const channel = new MessageChannel();
-    helper.postMessage({ bg: "port", port: channel.port1 }, [channel.port1]);
-    worker.postMessage({ bg: "connect", port: channel.port2, alive }, [channel.port2]);
+    helper.postMessage({ bg: "port", thread, port: channel.port1 }, [channel.port1]);
+    worker.postMessage({ bg: "connect", port: channel.port2, heartbeat }, [channel.port2]);
+    return thread;
 }
 
-/** Stops the background worker when the app run ends. */
-export function stopBackgroundHost() {
-    helper?.terminate();
-    helper = undefined;
-    alive = undefined;
+/** Drops an ended interpreter thread's jobs on the background worker. */
+export function releaseBackground(thread: number | undefined) {
+    if (thread !== undefined) {
+        helper?.postMessage({ bg: "release", thread });
+    }
 }
