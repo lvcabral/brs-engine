@@ -138,12 +138,13 @@ export class BrsDevice {
             this.extVolVersion = this.extVolume.getVersion();
             this.extVolMounted = uev === 1;
         }
-        // The host keeps cachefs: across app launches (cleared only on "reboot"), as on a device.
-        const hostCache = payload.device.cacheFSBuffer;
-        if (hostCache?.byteLength === payload.device.cacheFSVolSize) {
-            this.cacheFS = hostCache;
-        } else if (hostCache) {
-            this.stderr.write("warning,[BrsDevice] Host cachefs: buffer size mismatch, using an empty volume.");
+        // The host keeps cachefs: across app launches (until the page or process restarts), as on a device.
+        if (payload.device.cacheFSBuffer) {
+            this.cacheFS = payload.device.cacheFSBuffer;
+        }
+        if (!payload.taskData) {
+            // App launch: no other thread has the volume mounted yet.
+            this.fileSystem.compactCacheFS(this.getCacheFS());
         }
         try {
             this.fileSystem.setup(
@@ -153,8 +154,7 @@ export class BrsDevice {
                 payload.pkgZip,
                 this.extVolMounted ? this.extVolume.loadData() : undefined,
                 payload.root,
-                payload.ext,
-                payload.taskData === undefined
+                payload.ext
             );
         } catch (err: any) {
             this.stderr.write(`error,[BrsDevice] Error setting up file system: ${err.message}`);

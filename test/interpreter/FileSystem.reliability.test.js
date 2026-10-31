@@ -423,18 +423,10 @@ describe("FileSystem Reliability Tests - cachefs: volume", () => {
     const volumeSize = 1024 * 1024;
     const fileSystem = BrsDevice.fileSystem;
 
-    // Mounts the volumes as an app launch does (cachefs: compacted, no other thread using it).
+    // Mounts the volumes as an app launch does (cachefs: compacted first, no other thread using it).
     function launch(cacheBuffer) {
-        fileSystem.setup(
-            commonZip,
-            new SharedArrayBuffer(volumeSize),
-            cacheBuffer,
-            undefined,
-            undefined,
-            undefined,
-            undefined,
-            true
-        );
+        fileSystem.compactCacheFS(cacheBuffer);
+        fileSystem.setup(commonZip, new SharedArrayBuffer(volumeSize), cacheBuffer);
     }
 
     afterAll(() => {
