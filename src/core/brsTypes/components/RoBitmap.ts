@@ -80,89 +80,17 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
      */
     constructor(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name?: string) {
         super("roBitmap");
-        this.alphaEnable = false;
         this.rgbaLast = 0;
         this.rgbaRedraw = true;
-        this.valid = true;
-        this.width = 1;
-        this.height = 1;
-        this.name = name ?? "";
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
-        let image;
-        let decoded: DecodedImage | undefined;
-        if (isDecodedImage(param)) {
-            decoded = param;
-        } else if (param instanceof ArrayBuffer || param instanceof Buffer || param instanceof Uint8Array) {
-            image = param;
-        } else if (isStringComp(param)) {
-            try {
-                image = BrsDevice.fileSystem?.readFileSync(param.getValue());
-                this.alphaEnable = false;
-                this.name = param.getValue();
-            } catch (err: any) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`error,Error loading bitmap:${param.getValue()} - ${err.message}`);
-                }
-                this.valid = false;
-            }
-        } else if (param instanceof RoAssociativeArray) {
-            let paramWidth = param.get(new BrsString("width"));
-            if (paramWidth instanceof Int32 || paramWidth instanceof Float || paramWidth instanceof Double) {
-                this.width = Math.trunc(paramWidth.getValue());
-            }
-            let paramHeight = param.get(new BrsString("height"));
-            if (paramHeight instanceof Int32 || paramHeight instanceof Float || paramHeight instanceof Double) {
-                this.height = Math.trunc(paramHeight.getValue());
-            }
-            let paramName = param.get(new BrsString("name"));
-            if (paramName instanceof BrsString) {
-                this.name = paramName.value;
-            }
-            let alphaEnable = param.get(new BrsString("alphaEnable"));
-            if (alphaEnable instanceof BrsBoolean) {
-                this.alphaEnable = alphaEnable.toBoolean();
-            }
-        } else {
-            if (BrsDevice.isDevMode) {
-                BrsDevice.stderr.write(`warning,Invalid roBitmap param:${typeof param}`);
-            }
-            this.valid = false;
-        }
+        const source = bitmapSource(param, name ?? "");
+        this.width = source.width;
+        this.height = source.height;
+        this.name = source.name;
+        this.alphaEnable = source.alphaEnable;
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
-        if (image) {
-            try {
-                const bytes = image instanceof Uint8Array ? image : new Uint8Array(image);
-                decoded = decodeImage(bytes);
-                if (!decoded) {
-                    if (BrsDevice.isDevMode) {
-                        BrsDevice.stderr.write(`warning,Invalid image format: ${imageMimeType(bytes)}`);
-                    }
-                    this.valid = false;
-                }
-            } catch (err: any) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
-                }
-                this.valid = false;
-            }
-        }
-        if (decoded) {
-            try {
-                this.width = decoded.width;
-                this.height = decoded.height;
-                const imageData = this.context.createImageData(this.width, this.height);
-                this.canvas.width = this.width;
-                this.canvas.height = this.height;
-                imageData.data.set(decoded.data);
-                putImageAtPos(imageData, this.context, 0, 0);
-            } catch (err: any) {
-                if (BrsDevice.isDevMode) {
-                    BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
-                }
-                this.valid = false;
-            }
-        }
+        this.valid = source.valid && (!source.pixels || drawPixels(this.context, source.pixels));
         if (this.valid && this.name.toLowerCase().endsWith(".9.png")) {
             const sizes = this.parsePatchSizes();
             if (sizes) {
@@ -480,4 +408,93 @@ function isDecodedImage(value: any): value is DecodedImage {
         typeof value.height === "number" &&
         value.data instanceof Uint8Array
     );
+}
+
+/** What a bitmap's constructor parameter describes: its size and options, and pixels to draw. */
+interface BitmapSource {
+    width: number;
+    height: number;
+    name: string;
+    alphaEnable: boolean;
+    valid: boolean;
+    pixels?: DecodedImage;
+}
+
+/** Resolves an roBitmap constructor parameter (see the constructor) to the bitmap it describes. */
+function bitmapSource(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name: string): BitmapSource {
+    const source: BitmapSource = { width: 1, height: 1, name, alphaEnable: false, valid: true };
+    if (isDecodedImage(param)) {
+        return withPixels(source, param);
+    } else if (param instanceof ArrayBuffer || param instanceof Uint8Array) {
+        return withPixels(source, decodeBitmapBytes(param));
+    } else if (isStringComp(param)) {
+        source.name = param.getValue();
+        try {
+            return withPixels(source, decodeBitmapBytes(BrsDevice.fileSystem.readFileSync(source.name)));
+        } catch (err: any) {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`error,Error loading bitmap:${source.name} - ${err.message}`);
+            }
+            return { ...source, valid: false };
+        }
+    } else if (param instanceof RoAssociativeArray) {
+        const width = param.get(new BrsString("width"));
+        if (width instanceof Int32 || width instanceof Float || width instanceof Double) {
+            source.width = Math.trunc(width.getValue());
+        }
+        const height = param.get(new BrsString("height"));
+        if (height instanceof Int32 || height instanceof Float || height instanceof Double) {
+            source.height = Math.trunc(height.getValue());
+        }
+        const paramName = param.get(new BrsString("name"));
+        if (paramName instanceof BrsString) {
+            source.name = paramName.value;
+        }
+        const alphaEnable = param.get(new BrsString("alphaEnable"));
+        if (alphaEnable instanceof BrsBoolean) {
+            source.alphaEnable = alphaEnable.toBoolean();
+        }
+        return source;
+    }
+    if (BrsDevice.isDevMode) {
+        BrsDevice.stderr.write(`warning,Invalid roBitmap param:${typeof param}`);
+    }
+    return { ...source, valid: false };
+}
+
+/** A source sized to its pixels, or an invalid one if there are none (they didn't decode). */
+function withPixels(source: BitmapSource, pixels: DecodedImage | undefined): BitmapSource {
+    return pixels ? { ...source, width: pixels.width, height: pixels.height, pixels } : { ...source, valid: false };
+}
+
+/** Decodes encoded image bytes, logging why in developer mode if they don't decode. */
+function decodeBitmapBytes(image: ArrayBuffer | Uint8Array): DecodedImage | undefined {
+    const bytes = image instanceof Uint8Array ? image : new Uint8Array(image);
+    try {
+        const decoded = decodeImage(bytes);
+        if (!decoded && BrsDevice.isDevMode) {
+            BrsDevice.stderr.write(`warning,Invalid image format: ${imageMimeType(bytes)}`);
+        }
+        return decoded;
+    } catch (err: any) {
+        if (BrsDevice.isDevMode) {
+            BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+        }
+        return undefined;
+    }
+}
+
+/** Draws decoded pixels on a bitmap's canvas (created at their size); returns `false` if that failed. */
+function drawPixels(context: BrsCanvasContext2D, pixels: DecodedImage): boolean {
+    try {
+        const imageData = context.createImageData(pixels.width, pixels.height);
+        imageData.data.set(pixels.data);
+        putImageAtPos(imageData, context, 0, 0);
+        return true;
+    } catch (err: any) {
+        if (BrsDevice.isDevMode) {
+            BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+        }
+        return false;
+    }
 }

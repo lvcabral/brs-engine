@@ -41,7 +41,8 @@ export interface HttpJobParams {
     headers: [string, string][];
     withCredentials: boolean;
     responseType: "text" | "arraybuffer";
-    body?: string | Uint8Array;
+    /** A binary body is an exact copy (it's transferred), so it's backed by a plain `ArrayBuffer`. */
+    body?: string | Uint8Array<ArrayBuffer>;
 }
 
 /** Result metadata of an `http` job; the payload is the response body. */
@@ -413,12 +414,9 @@ async function httpRequest(
                 xhr.setRequestHeader(key, value);
             }
             xhr.withCredentials = params.withCredentials;
-            // Bodies are posted as exact copies, so a binary one is always backed by a plain ArrayBuffer
             const body = params.body;
             const data =
-                typeof body === "string" || !body
-                    ? body
-                    : Buffer.from(body.buffer as ArrayBuffer, body.byteOffset, body.byteLength);
+                typeof body === "string" || !body ? body : Buffer.from(body.buffer, body.byteOffset, body.byteLength);
             xhr.send(data);
         } catch (err: any) {
             resolve({
