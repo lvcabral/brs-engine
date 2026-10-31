@@ -13,6 +13,7 @@ import {
     DataType,
     DebugCommand,
     DeviceInfo,
+    getCacheVolume,
     NDKStart,
     RemoteType,
     TaskState,
@@ -182,6 +183,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
             "firmwareVersion",
             "registry",
             "registryBuffer",
+            "cacheFSBuffer",
             "channelCredentials",
             "channelCredBuffer",
             "models",
@@ -750,6 +752,7 @@ function runApp(payload: AppPayload) {
         currentApp.running = true;
         updateAppList();
         updateMemoryInfo();
+        payload.device.cacheFSBuffer = getCacheVolume(payload.device);
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);

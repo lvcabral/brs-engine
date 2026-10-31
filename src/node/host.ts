@@ -15,6 +15,7 @@ import {
     DataBufferSize,
     DataType,
     DebugCommand,
+    getCacheVolume,
     isAppData,
     isExtensionInfo,
     isFrameData,
@@ -124,6 +125,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
     const device = payload.device;
     device.registryBuffer ??= sharedMapBuffer(device.registry, RegistryInitialSize, RegistryMaxSize);
     device.channelCredBuffer ??= sharedMapBuffer(device.channelCredentials, ChannelCredInitialSize, ChannelCredMaxSize);
+    device.cacheFSBuffer = getCacheVolume(device);
     initTaskModule(sharedBuffer, workerEntry, taskNotify);
     currentPayload = payload;
     return new Promise<AppResult>((resolve) => {

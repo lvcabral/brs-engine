@@ -51,6 +51,7 @@ export interface DeviceInfo {
     logLevel: LogLevel;
     registry?: Map<string, string>;
     registryBuffer?: SharedArrayBuffer;
+    cacheFSBuffer?: SharedArrayBuffer;
     channelCredentials?: Map<string, string>;
     channelCredBuffer?: SharedArrayBuffer;
     models?: Map<string, string[]>;
@@ -249,6 +250,22 @@ export type ExtensionInfo = {
     library: string;
     version: string;
 };
+
+/** cachefs: volume a host keeps across app launches until the page or process restarts (the "reboot"). */
+let cacheVolume: SharedArrayBuffer | undefined;
+
+/**
+ * Returns the cachefs: volume buffer shared by every app the host runs, replaced with an empty one
+ * when the configured volume size changes. Unlike a device, it is not segregated by developer ID.
+ * @param device Device configuration with the volume size
+ * @returns SharedArrayBuffer backing the cachefs: volume
+ */
+export function getCacheVolume(device: DeviceInfo) {
+    if (cacheVolume?.byteLength !== device.cacheFSVolSize) {
+        cacheVolume = new SharedArrayBuffer(device.cacheFSVolSize);
+    }
+    return cacheVolume;
+}
 
 /** Type guard to check if a value is an ExtensionInfo object.
  * @param value the value to check

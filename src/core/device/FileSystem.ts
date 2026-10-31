@@ -25,7 +25,6 @@ type VolumeInfo = {
 
 /** Proxy Object to make File System volumes case insensitive, same as Roku devices */
 export class FileSystem {
-    private readonly paths: Map<string, string>;
     private readonly callbacks: Map<string, Function>;
     private readonly volumes: Map<string, VolumeInfo>;
     private readonly mfs: typeof zenFS.fs; // common:
@@ -58,7 +57,6 @@ export class FileSystem {
      * Creates a new FileSystem instance.
      */
     constructor() {
-        this.paths = new Map<string, string>();
         this.callbacks = new Map<string, Function>();
         this.volumes = new Map<string, VolumeInfo>();
         const defaultInfo = { blocks: 0, blocksize: 0, freeblocks: 0, usedblocks: 0 };
@@ -101,14 +99,15 @@ export class FileSystem {
     ) {
         this.overlay.clear();
         this.protectedSource.clear();
-        const fsConfig = { mounts: {}, caseFold: "lower" as const };
-        // Basic mounts: common:, tmp:, cachefs:, pkg:
+        const fsConfig = { mounts: {} };
+        // Basic mounts: common:, tmp:, pkg: (cachefs: is mounted after them). The memory volumes
+        // (tmp:, cachefs:) keep file name case themselves, so only the others fold it.
+        const caseFold = "lower" as const;
         if (zenFS.mounts.has("/common:")) zenFS.umount("common:");
-        Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip } });
+        Object.assign(fsConfig.mounts, { "common:": { backend: Zip, data: commonZip, caseFold } });
         if (zenFS.mounts.has("/tmp:")) zenFS.umount("tmp:");
-        Object.assign(fsConfig.mounts, { "tmp:": { backend: zenFS.SingleBuffer, buffer: tmp } });
+        Object.assign(fsConfig.mounts, { "tmp:": { backend: MemoryVolume, buffer: tmp } });
         if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
-        Object.assign(fsConfig.mounts, { "cachefs:": { backend: zenFS.SingleBuffer, buffer: cacheFS } });
         if (root && pkgZip === undefined) {
             this._root = root;
             this.pfs = nodeFS;
@@ -116,18 +115,122 @@ export class FileSystem {
             if (zenFS.mounts.has("/pkg:")) zenFS.umount("pkg:");
             this.pfs = zenFS.fs;
             if (pkgZip) {
-                Object.assign(fsConfig.mounts, { "pkg:": { backend: Zip, data: pkgZip } });
+                Object.assign(fsConfig.mounts, { "pkg:": { backend: Zip, data: pkgZip, caseFold } });
             } else if (!root) {
-                Object.assign(fsConfig.mounts, { "pkg:": { backend: zenFS.InMemory } });
+                Object.assign(fsConfig.mounts, { "pkg:": { backend: zenFS.InMemory, caseFold } });
             }
         }
         // Apply basic configuration
         zenFS.configureSync(fsConfig);
+        zenFS.mount("cachefs:", memoryFSMount(cacheFS));
         // ext1: volume
         if (ext?.length) {
             this.setExt(ext);
         } else if (extZip) {
             this.mountExt(extZip);
+        }
+    }
+
+    /**
+     * Prepares the cachefs: volume the host keeps across app launches, before it is mounted. Clears a
+     * write lock left by a worker terminated mid-write, and rebuilds the volume with only its live files
+     * when rewritten or deleted data wastes a quarter of it (the buffer allocates by bumping) or when it
+     * is over 75% full; then the oldest files are evicted down to half of it, as a device frees cache
+     * space. Unreadable files are dropped, and an unreadable buffer starts empty. Only safe while no
+     * other thread has the volume mounted.
+     * @param buffer ArrayBufferLike with the cacheFS volume buffer.
+     */
+    compactCacheFS(buffer: ArrayBufferLike) {
+        if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
+        let entries: CacheEntry[] = [];
+        let usedBytes = buffer.byteLength;
+        try {
+            if (new DataView(buffer).getUint32(4, true) !== SingleBufferMagic) {
+                return; // Fresh volume, formatted on mount
+            }
+            const superBlock = new zenFS.SuperBlock(buffer, 0);
+            usedBytes = Number(superBlock.used_bytes);
+            let liveBytes = 0;
+            let blocks = 0;
+            let firstBlockOffset = 0; // the first metadata block sits right after the superblock
+            for (let block: zenFS.MetadataBlock | undefined = superBlock.metadata; block; block = block.previous) {
+                block.locked = 0;
+                blocks++;
+                firstBlockOffset = block.byteOffset;
+                for (const entry of block.items) {
+                    liveBytes += entry.offset ? entry.size : 0;
+                }
+            }
+            const overhead = firstBlockOffset + blocks * superBlock.metadata_block_size;
+            const wasted = usedBytes - liveBytes - overhead;
+            const full = liveBytes > buffer.byteLength * 0.75;
+            if (wasted < buffer.byteLength / 4 && !full) {
+                return;
+            }
+            zenFS.mount("cachefs:", memoryFSMount(buffer));
+            this.collectCacheEntries("cachefs:/", entries);
+            if (full) {
+                entries = evictOldestFiles(entries, buffer.byteLength / 2);
+            }
+            entries = entries.filter((entry) => {
+                try {
+                    if (!entry.isDir) {
+                        entry.data = this.cfs.readFileSync(entry.path);
+                    }
+                    return true;
+                } catch {
+                    return false; // Unreadable file: dropped
+                }
+            });
+        } catch {
+            entries.length = 0;
+        }
+        if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
+        new Uint8Array(buffer, 0, Math.min(usedBytes, buffer.byteLength)).fill(0);
+        zenFS.mount("cachefs:", memoryFSMount(buffer));
+        for (const entry of entries) {
+            try {
+                if (entry.isDir) {
+                    this.cfs.mkdirSync(entry.path);
+                } else {
+                    this.cfs.writeFileSync(entry.path, entry.data!);
+                    this.cfs.utimesSync(entry.path, entry.mtime, entry.mtime);
+                }
+            } catch {
+                removeQuietly(this.cfs, entry.path); // Doesn't fit: evicted
+            }
+        }
+        // Directory times last, as restoring their contents updates them.
+        for (const entry of entries) {
+            try {
+                if (entry.isDir) {
+                    this.cfs.utimesSync(entry.path, entry.mtime, entry.mtime);
+                }
+            } catch {
+                // Not restored
+            }
+        }
+        zenFS.umount("cachefs:");
+    }
+
+    /**
+     * Lists the cachefs: tree, parents before children, skipping entries that can't be read.
+     * @param dir Directory path to read
+     * @param entries Collected entries (file data is read later, only for the files kept)
+     */
+    private collectCacheEntries(dir: string, entries: CacheEntry[]) {
+        for (const dirent of this.cfs.readdirSync(dir, { withFileTypes: true })) {
+            const entryPath = `${dir}${dirent.name}`;
+            try {
+                const stats = this.cfs.statSync(entryPath);
+                const isDir = stats.isDirectory();
+                entries.push({ path: entryPath, isDir: isDir, size: stats.size, mtime: stats.mtime });
+                if (isDir) {
+                    this.collectCacheEntries(`${entryPath}/`, entries);
+                }
+            } catch {
+                // Unreadable entry: dropped
+            }
         }
     }
 
@@ -236,32 +339,6 @@ export class FileSystem {
     }
 
     /**
-     * Saves the original case-preserved path mapping.
-     * @param uri File URI to save
-     */
-    private savePath(uri: string) {
-        this.paths.set(uri.toLowerCase().replaceAll(/\/+/g, "/").trim(), uri.replaceAll(/\/+/g, "/").trim());
-    }
-
-    /**
-     * Deletes a path from the case-preserved mapping.
-     * @param uri File URI to delete
-     * @returns True if path was deleted, false if not found
-     */
-    private deletePath(uri: string) {
-        return this.paths.delete(uri.toLowerCase().replaceAll(/\/+/g, "/").trim());
-    }
-
-    /**
-     * Gets the original case-preserved path.
-     * @param uri File URI (case-insensitive)
-     * @returns Original path with preserved case or undefined if not found
-     */
-    private getOriginalPath(uri: string) {
-        return this.paths.get(uri.toLowerCase().replaceAll(/\/+/g, "/").trim());
-    }
-
-    /**
      * Sets the root path for pkg: volume.
      * Switches to Node.js file system for pkg: access.
      * @param root Root directory path
@@ -322,20 +399,10 @@ export class FileSystem {
         }
         zenFS.umount("tmp:");
         this.notifyAll("tmp:");
-        const tmp = zenFS.resolveMountConfigSync({
-            backend: zenFS.SingleBuffer,
-            buffer: tmpBuffer,
-            caseFold: "lower" as const,
-        });
-        zenFS.mount("tmp:", tmp);
+        zenFS.mount("tmp:", memoryFSMount(tmpBuffer));
         zenFS.umount("cachefs:");
         this.notifyAll("cachefs:");
-        const cachefs = zenFS.resolveMountConfigSync({
-            backend: zenFS.SingleBuffer,
-            buffer: cacheFSBuffer,
-            caseFold: "lower" as const,
-        });
-        zenFS.mount("cachefs:", cachefs);
+        zenFS.mount("cachefs:", memoryFSMount(cacheFSBuffer));
     }
 
     /**
@@ -447,14 +514,20 @@ export class FileSystem {
      * @returns Resolved file system path
      */
     getPath(uri: string) {
-        if (this._root && uri.trim().toLowerCase().startsWith("pkg:")) {
-            uri = this._root + "/" + uri.trim().slice(4);
-        } else if (this._ext && uri.trim().toLowerCase().startsWith("ext1:")) {
-            uri = this._ext + "/" + uri.trim().slice(5);
+        uri = uri.trim();
+        const lowerUri = uri.toLowerCase();
+        if (this._root && lowerUri.startsWith("pkg:")) {
+            uri = this._root + "/" + uri.slice(4);
+        } else if (this._ext && lowerUri.startsWith("ext1:")) {
+            uri = this._ext + "/" + uri.slice(5);
+        } else if (writeUri(uri)) {
+            // Memory volumes keep the file name case: only the volume name is folded.
+            const volume = getVolume(uri);
+            uri = volume + uri.slice(volume.length);
         } else if (!this._root) {
-            uri = uri.toLowerCase();
+            uri = lowerUri;
         }
-        return uri.replaceAll(/\/+/g, "/").trim();
+        return uri.replaceAll(/\/+/g, "/");
     }
 
     /**
@@ -511,32 +584,19 @@ export class FileSystem {
 
     /**
      * Reads directory contents synchronously.
-     * Preserves original case for writeable volumes.
      * @param uri Directory URI
      * @returns Array of file/directory names
      */
     readdirSync(uri: string) {
-        const files = this.getFS(uri).readdirSync(this.getPath(uri));
-        if (writeUri(uri) && files.length > 0) {
-            for (const [index, file] of files.entries()) {
-                const fullPath = path.posix.join(uri.toLowerCase(), file);
-                const originalPath = this.getOriginalPath(fullPath);
-                if (originalPath) {
-                    files[index] = path.posix.basename(originalPath);
-                }
-            }
-        }
-        return files;
+        return this.getFS(uri).readdirSync(this.getPath(uri));
     }
 
     /**
      * Creates a directory synchronously.
-     * Saves path mapping for case preservation.
      * @param uri Directory URI to create
      */
     mkdirSync(uri: string) {
         this.getFS(uri).mkdirSync(this.getPath(uri));
-        this.savePath(uri);
     }
 
     /**
@@ -552,7 +612,6 @@ export class FileSystem {
             }
         }
         this.getFS(uri).rmdirSync(this.getPath(uri));
-        this.deletePath(uri);
     }
 
     /**
@@ -561,15 +620,19 @@ export class FileSystem {
      */
     unlinkSync(uri: string) {
         this.getFS(uri).unlinkSync(this.getPath(uri));
-        this.deletePath(uri);
     }
 
     /**
-     * Renames a file by copying and deleting.
+     * Renames a file: in place within a volume (so a case-only rename keeps the file), otherwise
+     * by copying and deleting.
      * @param oldName Current file URI
      * @param newName New file URI
      */
     renameSync(oldName: string, newName: string) {
+        if (getVolume(oldName.trim()) === getVolume(newName.trim())) {
+            this.getFS(oldName).renameSync(this.getPath(oldName), this.getPath(newName));
+            return;
+        }
         const content = this.readFileSync(oldName);
         this.writeFileSync(newName, content);
         this.unlinkSync(oldName);
@@ -577,14 +640,22 @@ export class FileSystem {
 
     /**
      * Writes a file synchronously.
-     * Saves path mapping for case preservation.
      * @param uri File URI to write
      * @param content File content (string or Buffer)
      * @param encoding Optional encoding
      */
     writeFileSync(uri: string, content: string | Buffer, encoding?: any) {
-        this.getFS(uri).writeFileSync(this.getPath(uri), content, encoding);
-        this.savePath(uri);
+        const fsys = this.getFS(uri);
+        const fsPath = this.getPath(uri);
+        try {
+            fsys.writeFileSync(fsPath, content, encoding);
+        } catch (err: any) {
+            if (err?.code === "ENOSPC") {
+                // The file may have been created before its data was rejected.
+                removeQuietly(fsys, fsPath);
+            }
+            throw err;
+        }
     }
 
     /**
@@ -649,6 +720,169 @@ export class FileSystem {
         return results;
     }
 }
+
+/** A cachefs: file or directory collected while compacting the volume; `data` is read for kept files. */
+type CacheEntry = { path: string; isDir: boolean; size: number; mtime: Date; data?: Uint8Array };
+
+/**
+ * Drops the least recently modified files until the remaining ones fit in the given size.
+ * @param entries Collected cachefs: entries
+ * @param maxBytes Size the remaining file data must fit in
+ * @returns The entries to keep, in their original order
+ */
+function evictOldestFiles(entries: CacheEntry[], maxBytes: number) {
+    const byAge = entries.filter((entry) => !entry.isDir).sort((a, b) => a.mtime.getTime() - b.mtime.getTime());
+    let total = byAge.reduce((sum, entry) => sum + entry.size, 0);
+    const evicted = new Set<CacheEntry>();
+    for (const entry of byAge) {
+        if (total <= maxBytes) {
+            break;
+        }
+        total -= entry.size;
+        evicted.add(entry);
+    }
+    return entries.filter((entry) => !evicted.has(entry));
+}
+
+/**
+ * Removes a file, ignoring any error.
+ * @param fsys File system holding the file
+ * @param fsPath Path of the file to remove
+ */
+function removeQuietly(fsys: typeof zenFS.fs | typeof nodeFS, fsPath: string) {
+    try {
+        fsys.unlinkSync(fsPath);
+    } catch {
+        // Already gone or not removable
+    }
+}
+
+/** Signature of a formatted zenFS SingleBuffer volume (superblock `magic`, after its checksum). */
+const SingleBufferMagic = 0x62732e7a;
+
+/**
+ * Resolves the zenFS mount for a memory volume (tmp: or cachefs:) buffer.
+ * @param buffer ArrayBufferLike with the volume buffer.
+ * @returns The file system to mount
+ */
+function memoryFSMount(buffer: ArrayBufferLike) {
+    return zenFS.resolveMountConfigSync({ backend: MemoryVolume, buffer: buffer });
+}
+
+/**
+ * zenFS SingleBuffer store that rejects an allocation that doesn't fit before making it: the store
+ * reserves the space before copying the data, so an oversized write would leave the volume unable
+ * to take any further write.
+ */
+class MemoryVolumeStore extends zenFS.SingleBufferStore {
+    set(id: number, data: Uint8Array) {
+        if (data.length > this.usage().freeSpace && (this.get(id)?.length ?? -1) < data.length) {
+            throw new zenFS.ErrnoError(28, "No space left on device"); // ENOSPC
+        }
+        super.set(id, data);
+    }
+}
+
+/**
+ * File system of a memory volume: keeps file names as written while matching them regardless of
+ * case, as on a device. Paths are resolved to the stored names before reaching the store, so the
+ * case is shared by all threads mounting the volume and survives app launches. Only the sync API,
+ * the one the engine uses, is resolved.
+ */
+class MemoryVolumeFS extends zenFS.StoreFS<MemoryVolumeStore> {
+    /**
+     * Resolves a path to the case of its stored entries; segments not found keep the given case.
+     * @param fsPath Path in the volume
+     * @returns The path as stored
+     */
+    private stored(fsPath: string): string {
+        try {
+            super.statSync(fsPath);
+            return fsPath;
+        } catch {
+            // Not stored with this case
+        }
+        if (fsPath === "/") {
+            return fsPath;
+        }
+        const parent = this.stored(path.posix.dirname(fsPath));
+        const base = path.posix.basename(fsPath);
+        const lower = base.toLowerCase();
+        let match = base;
+        try {
+            match = super.readdirSync(parent).find((name) => name.toLowerCase() === lower) ?? base;
+        } catch {
+            // Parent missing or not a directory: the operation reports it
+        }
+        return path.posix.join(parent, match);
+    }
+
+    /**
+     * Runs an operation on an existing entry, retrying with its stored case if not found as given.
+     * @param fsPath Path in the volume
+     * @param operation Operation on the path
+     * @returns The operation result
+     */
+    private onStored<T>(fsPath: string, operation: (fsPath: string) => T): T {
+        try {
+            return operation(fsPath);
+        } catch (err: any) {
+            const stored = err?.code === "ENOENT" ? this.stored(fsPath) : fsPath;
+            if (stored === fsPath) {
+                throw err;
+            }
+            return operation(stored);
+        }
+    }
+
+    renameSync(oldPath: string, newPath: string) {
+        const from = this.stored(oldPath);
+        // A case-only rename keeps the new case
+        const to = from.toLowerCase() === newPath.toLowerCase() ? newPath : this.stored(newPath);
+        super.renameSync(from, to);
+    }
+    statSync(fsPath: string) {
+        return this.onStored(fsPath, (p) => super.statSync(p));
+    }
+    touchSync(fsPath: string, metadata: Parameters<zenFS.StoreFS["touchSync"]>[1]) {
+        this.onStored(fsPath, (p) => super.touchSync(p, metadata));
+    }
+    createFileSync(fsPath: string, options: Parameters<zenFS.StoreFS["createFileSync"]>[1]) {
+        return super.createFileSync(this.stored(fsPath), options);
+    }
+    unlinkSync(fsPath: string) {
+        this.onStored(fsPath, (p) => super.unlinkSync(p));
+    }
+    rmdirSync(fsPath: string) {
+        this.onStored(fsPath, (p) => super.rmdirSync(p));
+    }
+    mkdirSync(fsPath: string, options: Parameters<zenFS.StoreFS["mkdirSync"]>[1]) {
+        return super.mkdirSync(this.stored(fsPath), options);
+    }
+    readdirSync(fsPath: string) {
+        return this.onStored(fsPath, (p) => super.readdirSync(p));
+    }
+    linkSync(target: string, link: string) {
+        super.linkSync(this.stored(target), this.stored(link));
+    }
+    readSync(fsPath: string, buffer: Uint8Array, offset: number, end: number) {
+        this.onStored(fsPath, (p) => super.readSync(p, buffer, offset, end));
+    }
+    writeSync(fsPath: string, data: Uint8Array, offset: number) {
+        this.onStored(fsPath, (p) => super.writeSync(p, data, offset));
+    }
+}
+
+/** Backend for the memory volumes (tmp: and cachefs:): a case-preserving SingleBuffer guarded against running out of space. */
+const MemoryVolume = {
+    ...zenFS.SingleBuffer,
+    name: "MemoryVolume",
+    create(options: { buffer: ArrayBufferLike }) {
+        const fs = new MemoryVolumeFS(new MemoryVolumeStore(options.buffer));
+        fs.checkRootSync();
+        return fs;
+    },
+} as const;
 
 /**
  * Extracts the volume prefix from a file URI.

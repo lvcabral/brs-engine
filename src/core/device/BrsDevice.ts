@@ -138,6 +138,14 @@ export class BrsDevice {
             this.extVolVersion = this.extVolume.getVersion();
             this.extVolMounted = uev === 1;
         }
+        // The host keeps cachefs: across app launches (until the page or process restarts), as on a device.
+        if (payload.device.cacheFSBuffer) {
+            this.cacheFS = payload.device.cacheFSBuffer;
+        }
+        if (!payload.taskData) {
+            // App launch: no other thread has the volume mounted yet.
+            this.fileSystem.compactCacheFS(this.getCacheFS());
+        }
         try {
             this.fileSystem.setup(
                 payload.device.assets,
@@ -381,7 +389,12 @@ export class BrsDevice {
      */
     static setDeviceInfo(deviceInfo: DeviceInfo) {
         for (const key of Object.keys(deviceInfo) as (keyof DeviceInfo)[]) {
-            if (key.startsWith("registry") || key.startsWith("channelCred") || key === "assets") {
+            if (
+                key.startsWith("registry") ||
+                key.startsWith("channelCred") ||
+                key === "assets" ||
+                key === "cacheFSBuffer"
+            ) {
                 continue;
             }
             const newValue = this.normalizeDeviceInfoValue(key, deviceInfo[key]);

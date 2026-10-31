@@ -50,4 +50,26 @@ describe("worker host (executeApp)", { timeout: 30000 }, () => {
         const result = await running;
         expect(typeof result.exitReason).toEqual("string");
     });
+
+    it("keeps cachefs: across app runs, for any developer ID, while tmp: starts empty on each launch", async () => {
+        const file = path.join(__dirname, "resources", "cachefs-relaunch.brs");
+        const messages = [];
+        brs.subscribeHost("test", (event, data) => {
+            if (event === "message" && typeof data === "string" && data.startsWith("print,")) {
+                messages.push(data.slice(6).trimEnd());
+            }
+        });
+        try {
+            for (let run = 0; run < 2; run++) {
+                // The second app runs under another developer ID and still shares the volume.
+                const developerId = run === 0 ? deviceData.developerId : "another-developer-id";
+                const payload = await brs.createPayloadFromFiles([file], { ...deviceData, developerId });
+                const result = await brs.executeApp(payload);
+                expect(result.exitReason).toEqual("EXIT_USER_NAV");
+            }
+            expect(messages).toEqual(["cachefs:false", "tmp:false", "cachefs:true", "tmp:false"]);
+        } finally {
+            brs.unsubscribeHost("test");
+        }
+    });
 });
