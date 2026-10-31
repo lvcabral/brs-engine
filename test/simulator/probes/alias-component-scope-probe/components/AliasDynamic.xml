@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasDynamic" extends="Group">
+  <interface>
+    <function name="report" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+function report(p) as object
+    c = CreateObject("roSGNode", "Child")
+    c.id = "dyn"
+    m.top.appendChild(c)
+    out("dynamic.findChild", [show(m.top.findNode("child"))])
+    out("dynamic.findInnerOnly", [show(m.top.findNode("innerOnly"))])
+    lbl = CreateObject("roSGNode", "Label")
+    lbl.id = "appendedLbl"
+    c.appendChild(lbl)
+    out("dynamic.findAppendedLbl", [show(m.top.findNode("appendedLbl"))])
+    return invalid
+end function
+  ]]></script>
+</component>

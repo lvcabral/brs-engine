@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasParentChildren" extends="Group">
+  <interface>
+    <field id="outerText" type="string" alias="outerLbl.text" />
+    <function name="report" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+function report(p) as object
+    out("parentChildren.aliasField", [fieldOf(m.top, "outerText")])
+    out("parentChildren.findOuterLbl", [show(m.top.findNode("outerLbl"))])
+    out("parentChildren.wrapChildCount", [m.top.findNode("wrap").getChildCount().toStr()])
+    return invalid
+end function
+  ]]></script>
+  <children>
+    <Child id="wrap">
+      <Label id="outerLbl" text="outer" />
+    </Child>
+  </children>
+</component>

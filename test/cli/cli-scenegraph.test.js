@@ -154,6 +154,46 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Resolves aliases and findNode to the scope's own node before another component's internals", async () => {
+        // Device-confirmed (test/simulator/probes/alias-component-scope-probe): a same-id node inside a
+        // sibling component's XML children never shadows the scope's own node, at any depth, but an id
+        // that exists only inside those internals is still found.
+        let command = ["node", brsCliPath, "-r alias-component-scope-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout, stderr } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stderr).toEqual("");
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "PROBE|issue.aliasField|5",
+            "PROBE|issue.findChild|Child#child:maxHeight=42",
+            "PROBE|issue.findOther|Child#other:maxHeight=10",
+            "PROBE|issue.findInnerOnly|Label#innerOnly:text=inner",
+            "PROBE|issue.other.findChild|Poster#child",
+            "PROBE|issue.other.getChild0|Poster#child",
+            "PROBE|issue.other.childCount|2",
+            "PROBE|deeper.aliasField|5",
+            "PROBE|deeper.findChild|Child#child:maxHeight=42",
+            "PROBE|deeper.real|Child#child:maxHeight=42",
+            "PROBE|internalOnly.aliasField|inner",
+            "PROBE|internalOnly.findInnerOnly|Label#innerOnly:text=inner",
+            "PROBE|internalOnly.findChild|Poster#child",
+            "PROBE|parentChildren.aliasField|outer",
+            "PROBE|parentChildren.findOuterLbl|Label#outerLbl:text=outer",
+            "PROBE|parentChildren.wrapChildCount|3",
+            "PROBE|dynamic.findChild|Poster#child",
+            "PROBE|dynamic.findInnerOnly|Label#innerOnly:text=inner",
+            "PROBE|dynamic.findAppendedLbl|Label#appendedLbl:text=",
+            "PROBE|clone.childCount|2",
+            "PROBE|clone.findChild|Child#child:maxHeight=5",
+            "PROBE|clone.findInnerOnly|Label#innerOnly:text=inner",
+            "PROBE|done",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Keeps a component usable when interface field aliases have unresolvable targets", async () => {
         // Regression: a failed alias target (missing node or missing field) used to abort addFields,
         // dropping every <interface> field declared after it. A device only warns: the remaining

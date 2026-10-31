@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasClone" extends="Group">
+  <interface>
+    <function name="report" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+function report(p) as object
+    c = CreateObject("roSGNode", "Child")
+    c.id = "src"
+    copy = c.clone(true)
+    m.top.insertChild(copy, 0)
+    out("clone.childCount", [copy.getChildCount().toStr()])
+    out("clone.findChild", [show(m.top.findNode("child"))])
+    out("clone.findInnerOnly", [show(m.top.findNode("innerOnly"))])
+    return invalid
+end function
+  ]]></script>
+  <children>
+    <Group><Group><Child id="child" maxHeight="5" /></Group></Group>
+  </children>
+</component>

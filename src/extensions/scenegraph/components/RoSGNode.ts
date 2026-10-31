@@ -1836,7 +1836,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     /**
      * Returns the node that is a descendant of the nearest component ancestor of the subject node whose id field matches the given name,
      * otherwise return invalid.
-     * Implemented as a DFS from the top of parent hierarchy to match the observed behavior as opposed to the BFS mentioned in the docs.
+     * The search is breadth-first, with other components' internal children searched last (see `Node.findNodeById`).
      */
     protected get findNode(): Callable {
         return new Callable("findNode", {
