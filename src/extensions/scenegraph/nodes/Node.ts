@@ -134,6 +134,8 @@ export class Node extends RoSGNode implements BrsValue {
     protected readonly componentDef?: ComponentDefinition;
     /** Set of function names defined on this component for quick lookup. */
     protected readonly funcNames: Set<string> = new Set();
+    /** Custom component whose XML `<children>` created this node, if any (see `findNodeById`). */
+    componentOwner?: Node;
     /** Ordered list of child nodes retained as BrightScript values. */
     protected readonly children: (Node | BrsInvalid)[];
     /** Guards initial focus hand-off so it only runs once. */
@@ -620,6 +622,11 @@ export class Node extends RoSGNode implements BrsValue {
             return BrsInvalid.Instance;
         }
         visitedNodes.set(this, clonedNode);
+        if (this.componentOwner && clonedNode instanceof Node) {
+            // Owners are cloned before their internals, so a deep-cloned component keeps owning its copies.
+            const owner = visitedNodes.get(this.componentOwner);
+            clonedNode.componentOwner = owner instanceof Node ? owner : this.componentOwner;
+        }
         // Clone fields
         for (const [key, field] of this.fields) {
             // Before the alias check: a bare clone drops this key entirely, so an aliased field must
@@ -1560,12 +1567,11 @@ export class Node extends RoSGNode implements BrsValue {
      * Searches the subtree rooted at the provided node for a matching `id`.
      *
      * Per Roku's ifSGNodeDict spec, findNode is a BREADTH-FIRST search: every node at one depth
-     * is tested before any deeper node. This matters when ids collide across depths — a
-     * depth-first walk would descend into an earlier sibling's subtree (including a custom
-     * component's internal children) and return a deep node whose id shadows a shallower
-     * sibling's (e.g. a list container whose first child component internally names a node
-     * "rowList" while the container's own sibling grid is "RowList" — breadth-first, matching a
-     * device, resolves to the sibling).
+     * is tested before any deeper node. Matching a device, it also searches in two passes: the
+     * search scope's own nodes come first, at any depth, and only then the internal (XML
+     * `<children>`) nodes of the other custom components inside it. A shallow internal node of a
+     * sibling component therefore never shadows a deeper node of the scope's own, while an id that
+     * exists only inside a component's internals is still found.
      * @param node Root to inspect.
      * @param id Identifier to seek (case-insensitive).
      * @param ignoreRoot Whether to ignore the root node in the search.
@@ -1579,17 +1585,36 @@ export class Node extends RoSGNode implements BrsValue {
         visited: WeakSet<Node> = new WeakSet()
     ): Node | BrsInvalid {
         const target = id.toLowerCase();
+        // The scope is the component the root belongs to: itself when it is a custom component,
+        // otherwise the component whose XML created it (none for a node built at runtime).
+        const scope = node.componentDef ? node : node.componentOwner;
         const queue: Node[] = [];
+        // Subtrees created by another component's XML, searched in the second pass.
+        const deferred: Node[] = [];
         if (ignoreRoot) {
             visited.add(node);
-            for (const child of node.children) {
-                if (child instanceof Node) {
-                    queue.push(child);
-                }
-            }
+            Node.enqueueChildren(node, scope, queue, deferred);
         } else {
             queue.push(node);
         }
+        return (
+            Node.scanForId(queue, target, scope, visited, deferred) ??
+            Node.scanForId(deferred, target, scope, visited) ??
+            BrsInvalid.Instance
+        );
+    }
+
+    /**
+     * Breadth-first scan of `queue` (extended in place) for a node whose id matches `target`.
+     * Children another component's XML created go to `deferred` when given, or are scanned too.
+     */
+    private static scanForId(
+        queue: Node[],
+        target: string,
+        scope: Node | undefined,
+        visited: WeakSet<Node>,
+        deferred?: Node[]
+    ): Node | undefined {
         let head = 0;
         while (head < queue.length) {
             const current = queue[head];
@@ -1602,14 +1627,27 @@ export class Node extends RoSGNode implements BrsValue {
             if (myId?.toString().toLowerCase() === target) {
                 return current;
             }
-            for (const child of current.children) {
-                if (child instanceof Node) {
-                    queue.push(child);
-                }
+            Node.enqueueChildren(current, scope, queue, deferred);
+        }
+        return undefined;
+    }
+
+    /**
+     * Queues a node's children for `findNodeById`, diverting those another component's XML created
+     * into `deferred` (when given) instead of `queue`.
+     */
+    private static enqueueChildren(parent: Node, scope: Node | undefined, queue: Node[], deferred?: Node[]) {
+        for (const child of parent.children) {
+            if (!(child instanceof Node)) {
+                continue;
+            }
+            const owner = child.componentOwner;
+            if (deferred && owner !== undefined && owner !== scope) {
+                deferred.push(child);
+            } else {
+                queue.push(child);
             }
         }
-        // name was not found anywhere in tree
-        return BrsInvalid.Instance;
     }
 
     /**

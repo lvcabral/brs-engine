@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasDeeper" extends="Group">
+  <interface>
+    <field id="childMaxHeight" type="float" alias="child.maxHeight" />
+    <function name="report" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+function report(p) as object
+    out("deeper.aliasField", [fieldOf(m.top, "childMaxHeight")])
+    m.top.childMaxHeight = 42
+    out("deeper.findChild", [show(m.top.findNode("child"))])
+    out("deeper.real", [show(m.real)])
+    return invalid
+end function
+sub init()
+    m.real = m.top.getChild(1).getChild(0).getChild(0)
+end sub
+  ]]></script>
+  <children>
+    <Child id="other" />
+    <Group><Group><Child id="child" maxHeight="5" /></Group></Group>
+  </children>
+</component>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+  <interface>
+    <field id="childMaxHeight" type="float" alias="child.maxHeight" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+sub init()
+    out("issue.aliasField", [fieldOf(m.top, "childMaxHeight")])
+    m.top.childMaxHeight = 42
+    out("issue.findChild", [show(m.top.findNode("child"))])
+    out("issue.findOther", [show(m.top.findNode("other"))])
+    out("issue.findInnerOnly", [show(m.top.findNode("innerOnly"))])
+    other = m.top.findNode("other")
+    out("issue.other.findChild", [show(other.findNode("child"))])
+    out("issue.other.getChild0", [show(other.getChild(0))])
+    out("issue.other.childCount", [other.getChildCount().toStr()])
+
+    for each name in ["AliasDeeper", "AliasInternalOnly", "AliasParentChildren", "AliasDynamic", "AliasClone"]
+        n = CreateObject("roSGNode", name)
+        n.callFunc("report", {})
+    end for
+end sub
+  ]]></script>
+  <children>
+    <Child id="other" />
+    <Group>
+      <Child id="child" maxHeight="5" />
+    </Group>
+  </children>
+</component>

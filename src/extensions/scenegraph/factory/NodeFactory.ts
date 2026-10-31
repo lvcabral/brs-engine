@@ -983,8 +983,14 @@ function addAliases(fieldName: string, fieldAlias: string, node: Node, typeDef: 
  * @param interpreter Interpreter instance for child node creation
  * @param node Parent node to add children to
  * @param typeDef Component definition or component node containing children specifications
+ * @param owner Custom component whose XML declares these children, recorded on each new node
  */
-function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDefinition | ComponentNode) {
+function addChildren(
+    interpreter: Interpreter,
+    node: Node,
+    typeDef: ComponentDefinition | ComponentNode,
+    owner: Node = node
+) {
     const children = typeDef.children;
     const appendChild = node.getMethod("appendchild");
 
@@ -992,6 +998,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
         const newChild = createNode(child.name, interpreter);
         if (newChild instanceof Node) {
             newChild.location = interpreter.formatLocation();
+            newChild.componentOwner = owner;
             for (let [key, value] of Object.entries(child.fields)) {
                 // resolveField materializes a hidden metadata default (e.g. a ContentNode child
                 // declared with title="…" in XML) so its value is applied like any other field.
@@ -1013,7 +1020,7 @@ function addChildren(interpreter: Interpreter, node: Node, typeDef: ComponentDef
             appendChild?.call(interpreter, newChild);
             if (child.children.length > 0) {
                 // we need to add the child's own children
-                addChildren(interpreter, newChild, child);
+                addChildren(interpreter, newChild, child, owner);
             }
         }
     }

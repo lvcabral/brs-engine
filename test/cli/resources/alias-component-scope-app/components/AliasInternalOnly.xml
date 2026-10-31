@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="AliasInternalOnly" extends="Group">
+  <interface>
+    <field id="innerText" type="string" alias="innerOnly.text" />
+    <function name="report" />
+  </interface>
+  <script type="text/brightscript" uri="ProbeUtil.brs" />
+  <script type="text/brightscript"><![CDATA[
+function report(p) as object
+    out("internalOnly.aliasField", [fieldOf(m.top, "innerText")])
+    out("internalOnly.findInnerOnly", [show(m.top.findNode("innerOnly"))])
+    out("internalOnly.findChild", [show(m.top.findNode("child"))])
+    return invalid
+end function
+  ]]></script>
+  <children>
+    <Child id="c1" />
+  </children>
+</component>

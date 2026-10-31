@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="Child" extends="Group">
+  <interface>
+    <field id="maxHeight" type="float" value="10" />
+  </interface>
+  <children>
+    <Poster id="child" />
+    <Label id="innerOnly" text="inner" />
+  </children>
+</component>
