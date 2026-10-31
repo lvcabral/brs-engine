@@ -137,7 +137,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
         // console output from inside the worker (engine diagnostics, third-party libraries)
         // must reach the host as an event, never the terminal directly — in frame-rendering
         // modes a stray write lands inside the frame region and flickers the screen.
-        appWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+        appWorker = new Worker(workerEntry, { stdout: true, stderr: true, workerData: { workerEntry } });
         appWorker.stdout.on("data", (chunk: Buffer) => notifyAll("stdout", chunk.toString()));
         appWorker.stderr.on("data", (chunk: Buffer) => notifyAll("stderr", chunk.toString()));
         appWorker.on("message", mainCallback);

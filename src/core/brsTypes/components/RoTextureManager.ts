@@ -16,7 +16,7 @@ import {
 } from "..";
 import { BrsComponent } from "./BrsComponent";
 import { Interpreter } from "../../interpreter";
-import { validUri } from "../../device/FileSystem";
+import { getVolume, validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
 import { RoTextureRequestEvent } from "../events/RoTextureRequestEvent";
 import { drawBitmapOnBitmap } from "../interfaces/IfDraw2D";
@@ -24,6 +24,17 @@ import { BrsHttpAgent, IfHttpAgent } from "../interfaces/IfHttpAgent";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 import { DefaultCertificatesFile } from "../../common";
+import {
+    BackgroundJob,
+    HttpJobParams,
+    ImageJobResult,
+    backgroundAvailable,
+    startBackgroundJob,
+} from "../../device/BackgroundWorker";
+
+/** How long a synchronous load waits for the same image already loading in the background. */
+const SyncWaitMs = 30000;
+const NoEvents: readonly RoTextureRequestEvent[] = Object.freeze([]);
 
 // Singleton instance of RoTextureManager
 let textureManager: RoTextureManager;
@@ -34,6 +45,8 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     private readonly failedLocalUris: Set<string>;
     private readonly brsFS = BrsDevice.fileSystem;
     readonly requests: Map<number, RoTextureRequest>;
+    /** Images loading in the background, each shared by every request for its URI. */
+    private readonly jobs: Map<string, BackgroundJob<ImageJobResult>>;
     private port?: RoMessagePort;
     // ifHttpAgent Interface
     readonly customHeaders: Map<string, string>;
@@ -46,6 +59,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         this.certificatesFile = DefaultCertificatesFile;
         this.requests = new Map<number, RoTextureRequest>();
         this.textures = new Map<string, RoBitmap>();
+        this.jobs = new Map<string, BackgroundJob<ImageJobResult>>();
         this.failedLocalUris = new Set<string>();
         this.customHeaders = new Map<string, string>();
         const ifHttpAgent = new IfHttpAgent(this);
@@ -84,20 +98,102 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
 
     dispose() {
         this.textures.clear();
+        for (const job of this.jobs.values()) {
+            job.cancel();
+        }
+        this.jobs.clear();
         this.port?.removeReference();
     }
 
-    private getNewEvents() {
+    /**
+     * Called on every message port poll. Asynchronous requests whose image is still loading in the
+     * background stay queued, so the app keeps running meanwhile, like on a device; the rest are
+     * delivered in request order.
+     */
+    private getNewEvents(): readonly RoTextureRequestEvent[] {
+        if (this.requests.size === 0) {
+            return NoEvents;
+        }
+        let failed: Set<string> | undefined;
+        for (const [uri, job] of this.jobs) {
+            if (job.poll()) {
+                this.jobs.delete(uri);
+                if (this.applyJobResult(uri, job) === null) {
+                    failed ??= new Set<string>();
+                    failed.add(uri);
+                }
+            }
+        }
         const events: RoTextureRequestEvent[] = [];
-        for (let request of this.requests.values()) {
-            events.push(this.createEvent(request));
+        for (const request of this.requests.values()) {
+            if (this.jobs.has(request.uri)) {
+                continue;
+            }
+            events.push(this.createEvent(request, failed?.has(request.uri) ? null : undefined));
             this.requests.delete(request.identity);
         }
         return events;
     }
 
-    private createEvent(request: RoTextureRequest) {
-        let bitmap = this.loadTexture(request.uri);
+    /**
+     * Caches a settled job's bitmap and returns it. Returns `null` if the download or decode
+     * failed, and `undefined` if the job was lost with its worker (load the image synchronously).
+     */
+    private applyJobResult(uri: string, job: BackgroundJob<ImageJobResult>): RoBitmap | null | undefined {
+        const result = job.result;
+        if (!result) {
+            return undefined;
+        }
+        const { width, height, error } = result.meta;
+        if (error) {
+            if (BrsDevice.isDevMode) {
+                BrsDevice.stderr.write(`warning,[roTextureManager] Error requesting texture ${uri}: ${error}`);
+            }
+            return null;
+        }
+        return this.cacheTexture(uri, new RoBitmap({ width, height, data: result.payload }, uri));
+    }
+
+    /**
+     * Starts loading an asynchronous request's image in the background: downloading it (remote
+     * URIs) and decoding it. Does nothing if it's cached or already loading; if it can't run in the
+     * background, the image is loaded synchronously when the request is delivered.
+     */
+    private startJob(request: RoTextureRequest) {
+        const uri = request.uri;
+        if (this.textures.has(uri) || this.jobs.has(uri) || !backgroundAvailable()) {
+            return;
+        }
+        let job: BackgroundJob<ImageJobResult> | undefined;
+        if (uri.startsWith("http")) {
+            job = startBackgroundJob({ kind: "image", http: this.downloadParams(uri) });
+        } else {
+            const data = this.loadLocalFile(uri);
+            if (data) {
+                // A copy owned by the job (it's transferred), never the file system's cached buffer
+                job = startBackgroundJob({ kind: "image", image: new Uint8Array(data) });
+            }
+        }
+        if (job) {
+            this.jobs.set(uri, job);
+        }
+    }
+
+    private downloadParams(uri: string): HttpJobParams {
+        return {
+            method: "GET",
+            url: BrsDevice.getCORSProxy(uri),
+            headers: [...this.customHeaders],
+            withCredentials: this.cookiesEnabled,
+            responseType: "arraybuffer",
+        };
+    }
+
+    /** Builds a request's event; `bitmap` is `null` if its image already failed to load. */
+    private createEvent(
+        request: RoTextureRequest,
+        bitmap: RoBitmap | null | undefined = this.loadTexture(request.uri)
+    ) {
         if (bitmap?.isValid()) {
             const needsResize =
                 !!request.size &&
@@ -123,16 +219,12 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
     }
 
     private volumeUnmounted(volume: string) {
-        for (const uri of this.textures.keys()) {
-            const uriVolume = `${uri.split(":/")[0]}:`;
-            if (uriVolume === volume) {
+        for (const uri of [...this.textures.keys(), ...this.failedLocalUris, ...this.jobs.keys()]) {
+            if (getVolume(uri) === volume) {
                 this.textures.delete(uri);
-            }
-        }
-        for (const uri of this.failedLocalUris) {
-            const uriVolume = `${uri.split(":/")[0]}:`;
-            if (uriVolume === volume) {
                 this.failedLocalUris.delete(uri);
+                this.jobs.get(uri)?.cancel();
+                this.jobs.delete(uri);
             }
         }
     }
@@ -142,28 +234,62 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
         if (bitmap) {
             return bitmap;
         }
-        let data: Buffer | undefined;
+        const job = this.jobs.get(uri);
+        if (job) {
+            // Already loading in the background: wait for it rather than loading the image twice.
+            this.jobs.delete(uri);
+            if (job.wait(SyncWaitMs)) {
+                const loaded = this.applyJobResult(uri, job);
+                if (loaded !== undefined) {
+                    return loaded ?? undefined;
+                }
+            } else {
+                job.cancel();
+            }
+        }
+        const data = this.loadData(uri, headers);
+        if (data) {
+            const bitmap = new RoBitmap(data, uri);
+            if (bitmap.isValid()) {
+                return this.cacheTexture(uri, bitmap);
+            }
+        }
+        return undefined;
+    }
+
+    /** Stops loading an image in the background once no request is waiting for it. */
+    private cancelUnusedJob(uri: string) {
+        const job = this.jobs.get(uri);
+        if (!job) {
+            return;
+        }
+        for (const request of this.requests.values()) {
+            if (request.uri === uri) {
+                return;
+            }
+        }
+        job.cancel();
+        this.jobs.delete(uri);
+    }
+
+    private cacheTexture(uri: string, bitmap: RoBitmap) {
+        // Cached/shared bitmaps are never drawable — a drawable request always gets its own
+        // unique copy, made in `createEvent()`.
+        bitmap.drawable = false;
+        this.textures.set(uri, bitmap);
+        return bitmap;
+    }
+
+    private loadData(uri: string, headers?: Map<string, string>): Buffer | undefined {
         if (uri.startsWith("http")) {
-            data = download(
+            return download(
                 BrsDevice.getCORSProxy(uri),
                 "arraybuffer",
                 headers ?? this.customHeaders,
                 this.cookiesEnabled
             );
-        } else {
-            data = this.loadLocalFile(uri);
         }
-        if (data) {
-            const bitmap = new RoBitmap(data, uri);
-            if (bitmap instanceof RoBitmap && bitmap.isValid()) {
-                // Cached/shared bitmaps are never drawable — a drawable request always gets its own
-                // unique copy, made in `createEvent()`.
-                bitmap.drawable = false;
-                this.textures.set(uri, bitmap);
-                return bitmap;
-            }
-        }
-        return undefined;
+        return this.loadLocalFile(uri);
     }
 
     resizeTexture(bitmap: RoBitmap, width: number, height: number) {
@@ -219,6 +345,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
                 this.port?.pushMessage(new RoTextureRequestEvent(req, BrsInvalid.Instance));
             } else if (req.async) {
                 this.requests.set(req.identity, req);
+                this.startJob(req);
             } else if (this.port) {
                 this.port.pushMessage(this.createEvent(req));
             }
@@ -236,6 +363,7 @@ export class RoTextureManager extends BrsComponent implements BrsValue, BrsHttpA
             if (req instanceof RoTextureRequest && this.requests.has(req.identity)) {
                 req.state = RequestState.Cancelled;
                 this.requests.delete(req.identity);
+                this.cancelUnusedJob(req.uri);
             }
             return Uninitialized.Instance;
         },

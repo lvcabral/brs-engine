@@ -471,12 +471,13 @@ export class XMLHttpRequest {
 
                 this.setState(this.HEADERS_RECEIVED);
                 this.status = this._response.statusCode;
+                // `_response` keeps the IncomingMessage (headers); the body goes to `response`
+                const chunks: Buffer[] = [];
 
                 this._response.on("data", (chunk: any) => {
                     // Make sure there's some data
                     if (chunk) {
-                        const data = Buffer.from(chunk);
-                        this._response = Buffer.concat([this.response, data]);
+                        chunks.push(Buffer.from(chunk));
                     }
                     // Don't emit state changes if the connection has been aborted.
                     if (this._sendFlag) {
@@ -489,10 +490,12 @@ export class XMLHttpRequest {
                         // The sendFlag needs to be set before setState is called.  Otherwise if we are chaining callbacks
                         // there can be a timing issue (the callback is called and a new call is made before the flag is reset).
                         this._sendFlag = false;
+                        this.response = Buffer.concat(chunks);
+                        if (this.responseType !== "arraybuffer") {
+                            this.responseText = this.response.toString("utf8");
+                        }
                         // Discard the 'end' event if the connection has been aborted
                         this.setState(this.DONE);
-                        // Construct responseText from response
-                        this.responseText = this._response.toString("utf8");
                     }
                 });
 

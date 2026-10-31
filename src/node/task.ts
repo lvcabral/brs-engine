@@ -128,7 +128,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     }
     // Pipe stdout/stderr so console output from inside the task worker becomes a host
     // event instead of writing straight to the terminal (see the app worker in host.ts).
-    const taskWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+    const taskWorker = new Worker(workerEntry, { stdout: true, stderr: true, workerData: { workerEntry } });
     taskWorker.stdout.on("data", (chunk: Buffer) => notifyHost("stdout", chunk.toString()));
     taskWorker.stderr.on("data", (chunk: Buffer) => notifyHost("stderr", chunk.toString()));
     // A leaked task worker must never keep the host process alive after the app ends.

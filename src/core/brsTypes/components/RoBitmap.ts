@@ -19,13 +19,8 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
-import { parseGIF, decompressFrames } from "gifuct-js";
-import fileType from "file-type";
-import UPNG from "@lvcabral/upng";
-import * as JPEG from "jpeg-js";
-import BMP from "decode-bmp";
-import { WebPRiffParser, WebPDecoder } from "@lvcabral/libwebp";
 import { BrsDevice } from "../../device/BrsDevice";
+import { DecodedImage, decodeImage, imageMimeType } from "../../device/ImageDecoder";
 import { nextAddress, registerTexture, unregisterTexture } from "../../device/Graphics";
 
 /** Parsed 9-patch (`.9.png`) layout, in source-pixel units (excluding the 1px marker border). */
@@ -79,7 +74,11 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     /** Whether Clear()/the draw functions may modify this bitmap (see `roTextureRequest.SetDrawable`). */
     drawable: boolean = true;
 
-    constructor(param: BrsType | ArrayBuffer | Buffer, name?: string) {
+    /**
+     * @param param a file path, an `{width, height, alphaEnable, name}` AA, the encoded image bytes, or
+     * already decoded RGBA pixels (from the off-thread decoder)
+     */
+    constructor(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name?: string) {
         super("roBitmap");
         this.alphaEnable = false;
         this.rgbaLast = 0;
@@ -90,7 +89,10 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.name = name ?? "";
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         let image;
-        if (param instanceof ArrayBuffer || param instanceof Buffer || param instanceof Uint8Array) {
+        let decoded: DecodedImage | undefined;
+        if (isDecodedImage(param)) {
+            decoded = param;
+        } else if (param instanceof ArrayBuffer || param instanceof Buffer || param instanceof Uint8Array) {
             image = param;
         } else if (isStringComp(param)) {
             try {
@@ -130,68 +132,30 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
         if (image) {
             try {
-                let data;
-                const type = fileType(image);
-                if (type?.mime === "image/png") {
-                    const png = UPNG.decode(image);
-                    const dataArray = UPNG.toRGBA8(png);
-                    if (dataArray.length) {
-                        data = dataArray[0];
-                        this.width = png.width;
-                        this.height = png.height;
-                    }
-                } else if (type?.mime === "image/jpeg") {
-                    let jpg = JPEG.decode(image);
-                    data = jpg.data;
-                    this.width = jpg.width;
-                    this.height = jpg.height;
-                } else if (type?.mime === "image/webp") {
-                    const webpDecoder = new WebPDecoder();
-                    const imgBuffer = Buffer.from(image);
-                    const imgArray = WebPRiffParser(imgBuffer, 0);
-                    if (imgArray?.frames?.length) {
-                        let aHeight = [0];
-                        let aWidth = [0];
-                        // Get only the first frame (animations not supported)
-                        let frame = imgArray.frames[0];
-                        data = webpDecoder.WebPDecodeRGBA(
-                            imgBuffer,
-                            frame["src_off"],
-                            frame["src_size"],
-                            aWidth,
-                            aHeight
-                        );
-                        if (data) {
-                            this.height = aHeight[0];
-                            this.width = aWidth[0];
-                        }
-                    }
-                } else if (type?.mime === "image/gif") {
-                    const gif = parseGIF(image);
-                    const frames = decompressFrames(gif, true);
-                    if (frames.length) {
-                        data = frames[0].patch;
-                        this.width = frames[0].dims.width;
-                        this.height = frames[0].dims.height;
-                    }
-                } else if (type?.mime === "image/bmp") {
-                    let bmp = BMP(image);
-                    data = bmp.data;
-                    this.width = bmp.width;
-                    this.height = bmp.height;
-                }
-                if (data) {
-                    let imageData = this.context.createImageData(this.width, this.height);
-                    this.canvas.width = this.width;
-                    this.canvas.height = this.height;
-                    imageData.data.set(new Uint8Array(data));
-                    putImageAtPos(imageData, this.context, 0, 0);
-                } else {
+                const bytes = image instanceof Uint8Array ? image : new Uint8Array(image);
+                decoded = decodeImage(bytes);
+                if (!decoded) {
                     if (BrsDevice.isDevMode) {
-                        BrsDevice.stderr.write(`warning,Invalid image format: ${type?.mime}`);
+                        BrsDevice.stderr.write(`warning,Invalid image format: ${imageMimeType(bytes)}`);
                     }
                     this.valid = false;
                 }
+            } catch (err: any) {
+                if (BrsDevice.isDevMode) {
+                    BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
+                }
+                this.valid = false;
+            }
+        }
+        if (decoded) {
+            try {
+                this.width = decoded.width;
+                this.height = decoded.height;
+                const imageData = this.context.createImageData(this.width, this.height);
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+                imageData.data.set(decoded.data);
+                putImageAtPos(imageData, this.context, 0, 0);
             } catch (err: any) {
                 if (BrsDevice.isDevMode) {
                     BrsDevice.stderr.write(`error,Error drawing image on canvas: ${err.message}`);
@@ -506,4 +470,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 export function createBitmap(param: BrsType) {
     const bmp = new RoBitmap(param);
     return bmp.isValid() ? bmp : BrsInvalid.Instance;
+}
+
+function isDecodedImage(value: any): value is DecodedImage {
+    return (
+        value !== null &&
+        typeof value === "object" &&
+        typeof value.width === "number" &&
+        typeof value.height === "number" &&
+        value.data instanceof Uint8Array
+    );
 }
