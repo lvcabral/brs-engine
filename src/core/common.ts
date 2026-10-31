@@ -252,20 +252,19 @@ export type ExtensionInfo = {
 };
 
 /** cachefs: volume a host keeps across app launches until the page or process restarts (the "reboot"). */
-let cacheVolume: { developerId: string; buffer: SharedArrayBuffer } | undefined;
+let cacheVolume: SharedArrayBuffer | undefined;
 
 /**
- * Returns the cachefs: volume buffer for the device's developer ID. Only one is kept, as a device
- * evicts another developer's cache when it needs the space; it is replaced when the developer ID or
- * the configured volume size changes.
- * @param device Device configuration with the developer ID and volume size
+ * Returns the cachefs: volume buffer shared by every app the host runs, replaced with an empty one
+ * when the configured volume size changes. Unlike a device, it is not segregated by developer ID.
+ * @param device Device configuration with the volume size
  * @returns SharedArrayBuffer backing the cachefs: volume
  */
 export function getCacheVolume(device: DeviceInfo) {
-    if (cacheVolume?.developerId !== device.developerId || cacheVolume.buffer.byteLength !== device.cacheFSVolSize) {
-        cacheVolume = { developerId: device.developerId, buffer: new SharedArrayBuffer(device.cacheFSVolSize) };
+    if (cacheVolume?.byteLength !== device.cacheFSVolSize) {
+        cacheVolume = new SharedArrayBuffer(device.cacheFSVolSize);
     }
-    return cacheVolume.buffer;
+    return cacheVolume;
 }
 
 /** Type guard to check if a value is an ExtensionInfo object.
