@@ -133,14 +133,15 @@ export class FileSystem {
 
     /**
      * Prepares the cachefs: volume the host keeps across app launches, before it is mounted. Clears a
-     * write lock left by a worker terminated mid-write and, as the buffer allocates by bumping, rebuilds
-     * it with only its live files once rewritten or deleted data wastes a quarter of it. An unreadable
-     * buffer starts empty, like a device eviction. Only safe while no other thread has the volume mounted.
+     * write lock left by a worker terminated mid-write, and rebuilds the volume with only its live files
+     * when rewritten or deleted data wastes a quarter of it (the buffer allocates by bumping) or when it
+     * is over 75% full, evicting the oldest files down to half of it, as a device frees cache space.
+     * An unreadable buffer starts empty. Only safe while no other thread has the volume mounted.
      * @param buffer ArrayBufferLike with the cacheFS volume buffer.
      */
     compactCacheFS(buffer: ArrayBufferLike) {
         if (zenFS.mounts.has("/cachefs:")) zenFS.umount("cachefs:");
-        const entries: [string, Uint8Array | undefined][] = [];
+        let entries: CacheEntry[] = [];
         let usedBytes = buffer.byteLength;
         try {
             if (new DataView(buffer).getUint32(4, true) !== SingleBufferMagic) {
@@ -155,11 +156,12 @@ export class FileSystem {
                     liveBytes += entry.offset ? entry.size : 0;
                 }
             }
-            if (usedBytes - liveBytes < buffer.byteLength / 4) {
+            if (usedBytes - liveBytes < buffer.byteLength / 4 && liveBytes <= buffer.byteLength * 0.75) {
                 return;
             }
             zenFS.mount("cachefs:", memoryFSMount(buffer));
             this.collectCacheEntries("cachefs:/", entries);
+            entries = evictOldestFiles(entries, buffer.byteLength / 2);
         } catch {
             entries.length = 0;
         }
@@ -167,9 +169,10 @@ export class FileSystem {
         new Uint8Array(buffer, 0, Math.min(usedBytes, buffer.byteLength)).fill(0);
         zenFS.mount("cachefs:", memoryFSMount(buffer));
         try {
-            for (const [entryPath, data] of entries) {
+            for (const { path: entryPath, data, mtime } of entries) {
                 if (data) {
                     this.cfs.writeFileSync(entryPath, data);
+                    this.cfs.utimesSync(entryPath, mtime, mtime);
                 } else {
                     this.cfs.mkdirSync(entryPath);
                 }
@@ -181,18 +184,19 @@ export class FileSystem {
     }
 
     /**
-     * Reads the cachefs: tree, parents before children: `undefined` data marks a directory.
+     * Reads the cachefs: tree, parents before children; directories have no `data`.
      * @param dir Directory path to read
-     * @param entries Collected `[path, data]` pairs
+     * @param entries Collected entries
      */
-    private collectCacheEntries(dir: string, entries: [string, Uint8Array | undefined][]) {
+    private collectCacheEntries(dir: string, entries: CacheEntry[]) {
         for (const dirent of this.cfs.readdirSync(dir, { withFileTypes: true })) {
             const entryPath = `${dir}${dirent.name}`;
             if (dirent.isDirectory()) {
-                entries.push([entryPath, undefined]);
+                entries.push({ path: entryPath, mtime: 0 });
                 this.collectCacheEntries(`${entryPath}/`, entries);
             } else {
-                entries.push([entryPath, this.cfs.readFileSync(entryPath)]);
+                const mtime = this.cfs.statSync(entryPath).mtime;
+                entries.push({ path: entryPath, data: this.cfs.readFileSync(entryPath), mtime: mtime });
             }
         }
     }
@@ -639,7 +643,22 @@ export class FileSystem {
      * @param encoding Optional encoding
      */
     writeFileSync(uri: string, content: string | Buffer, encoding?: any) {
-        this.getFS(uri).writeFileSync(this.getPath(uri), content, encoding);
+        const fsys = this.getFS(uri);
+        const fsPath = this.getPath(uri);
+        try {
+            fsys.writeFileSync(fsPath, content, encoding);
+        } catch (err: any) {
+            // A memory volume records the file size before storing its data, so a write that ran out
+            // of space leaves an unreadable file: remove it.
+            if (writeUri(uri)) {
+                try {
+                    fsys.unlinkSync(fsPath);
+                } catch {
+                    // Nothing was created
+                }
+            }
+            throw err;
+        }
         this.savePath(uri);
     }
 
@@ -704,6 +723,32 @@ export class FileSystem {
         }
         return results;
     }
+}
+
+/** A cachefs: file (with its data) or directory collected while compacting the volume. */
+type CacheEntry = { path: string; data?: Uint8Array; mtime: Date | number };
+
+/**
+ * Drops the least recently modified files until the remaining ones fit in the given size.
+ * @param entries Collected cachefs: entries
+ * @param maxBytes Size the remaining file data must fit in
+ * @returns The entries to keep, in their original order
+ */
+function evictOldestFiles(entries: CacheEntry[], maxBytes: number) {
+    let total = 0;
+    for (const entry of entries) {
+        total += entry.data?.byteLength ?? 0;
+    }
+    const evicted = new Set<CacheEntry>();
+    const byAge = entries.filter((entry) => entry.data).sort((a, b) => Number(a.mtime) - Number(b.mtime));
+    for (const entry of byAge) {
+        if (total <= maxBytes) {
+            break;
+        }
+        total -= entry.data!.byteLength;
+        evicted.add(entry);
+    }
+    return entries.filter((entry) => !evicted.has(entry));
 }
 
 /** Signature of a formatted zenFS SingleBuffer volume (superblock `magic`, after its checksum). */

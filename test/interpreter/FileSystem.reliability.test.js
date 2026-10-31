@@ -465,6 +465,28 @@ describe("FileSystem Reliability Tests - cachefs: volume", () => {
         expect(fileSystem.readFileSync("cachefs:/probe.txt", "utf8")).toBe("cached");
     });
 
+    test("evicts the oldest files on launch once the volume is over 75% full", async () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        const data = generateTestData(180 * 1024);
+        launch(cacheBuffer);
+        for (let i = 1; i <= 5; i++) {
+            fileSystem.writeFileSync(`cachefs:/f${i}.bin`, data);
+            await new Promise((resolve) => setTimeout(resolve, 5)); // distinct modification times
+        }
+        launch(cacheBuffer);
+        expect(fileSystem.readdirSync("cachefs:/").sort()).toEqual(["f4.bin", "f5.bin"]);
+        expect(fileSystem.readFileSync("cachefs:/f5.bin", "utf8")).toBe(data);
+        launch(cacheBuffer); // the kept files keep their age, so nothing more is evicted
+        expect(fileSystem.readdirSync("cachefs:/").sort()).toEqual(["f4.bin", "f5.bin"]);
+    });
+
+    test("leaves no file behind when a write runs out of space", () => {
+        const cacheBuffer = new SharedArrayBuffer(volumeSize);
+        launch(cacheBuffer);
+        expect(() => fileSystem.writeFileSync("cachefs:/huge.bin", generateTestData(volumeSize))).toThrow();
+        expect(fileSystem.existsSync("cachefs:/huge.bin")).toBe(false);
+    });
+
     test("reclaims the space of rewritten files on each launch", () => {
         const cacheBuffer = new SharedArrayBuffer(volumeSize);
         const data = generateTestData(400 * 1024);
