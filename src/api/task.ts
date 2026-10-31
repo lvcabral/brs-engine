@@ -22,6 +22,7 @@ import {
 import SharedObject from "../core/SharedObject";
 import { setAppCaptionStyle, setCaptionMode, setDisplayState } from "./display";
 import { SubscribeCallback } from "./util";
+import { connectBackground } from "./backgroundHost";
 import { handleBridgeCommand, disposeBridgesForRealm } from "./bridgeHost";
 
 /**
@@ -169,6 +170,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     };
     notifyAll("debug", `[task:api] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
+    connectBackground(taskWorker);
     taskWorker.postMessage(taskPayload);
 }
 

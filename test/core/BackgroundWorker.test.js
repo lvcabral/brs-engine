@@ -107,6 +107,36 @@ describe("BackgroundWorker", () => {
         expect(Atomics.load(alive, 1)).toBeGreaterThan(beat);
     });
 
+    it("runs jobs from a connected interpreter thread's port, with ids scoped to that port", async () => {
+        // Browser setup: the page connects each interpreter thread to the helper with a MessageChannel.
+        const threads = [new MessageChannel(), new MessageChannel()];
+        for (const channel of threads) {
+            handleBackgroundMessage({ bg: "port", port: channel.port1 });
+        }
+        const sizes = [];
+        for (const [index, channel] of threads.entries()) {
+            // Both threads use the same job id
+            const control = new Int32Array(new SharedArrayBuffer(8));
+            channel.port2.postMessage({
+                bg: "job",
+                id: 1,
+                control: control.buffer,
+                params: { kind: "image", image: new Uint8Array(png(index + 1, 1)) },
+            });
+            await waitForState(control, Ready);
+            const buffer = new SharedArrayBuffer(control[1]);
+            channel.port2.postMessage({ bg: "buffer", id: 1, buffer });
+            await waitForState(control, Delivered);
+            const metaLength = new DataView(buffer).getUint32(0);
+            sizes.push(JSON.parse(new TextDecoder().decode(new Uint8Array(buffer, 4, metaLength).slice())).width);
+        }
+        expect(sizes).toEqual([1, 2]);
+        for (const channel of threads) {
+            channel.port1.close();
+            channel.port2.close();
+        }
+    });
+
     describe("image jobs", () => {
         it("decodes image bytes into RGBA8 pixels", async () => {
             const { meta, payload } = await runJob({ kind: "image", image: new Uint8Array(image) });

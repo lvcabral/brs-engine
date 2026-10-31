@@ -192,6 +192,21 @@ export class BackgroundJob<T = any> {
     }
 }
 
+/**
+ * Connects this interpreter thread to the helper the page started (browser): a browser doesn't
+ * start a nested worker while its parent busy-spins, so the thread can't spawn its own.
+ */
+function connectBackgroundPort(port: MessagePort, aliveBuffer: SharedArrayBuffer) {
+    helper = {
+        postMessage: (message: BackgroundMessage, transfer?: any) => port.postMessage(message, transfer ?? []),
+        terminate: () => port.close(),
+    };
+    helperUnavailable = false;
+    alive = new Int32Array(aliveBuffer);
+    spawnTime = performance.now();
+    lastBeat = -1;
+}
+
 /** Sets the engine bundle the Node helper worker runs (the host's configurable worker entry). */
 export function setBackgroundWorkerEntry(entry: string | undefined) {
     workerEntry = entry;
@@ -245,15 +260,8 @@ function spawnHelper(): HelperWorker | undefined {
 
 function createHelperWorker(): HelperWorker | undefined {
     /// #if BROWSER
-    if (typeof importScripts !== "function" || typeof Worker === "undefined") {
-        return undefined;
-    }
-    const webWorker = new Worker(globalThis.location.href);
-    webWorker.onerror = (event) => {
-        event.preventDefault();
-        loseHelper(true);
-    };
-    return webWorker;
+    // The page starts the helper and connects it (`connectBackgroundPort`); without that, run synchronously
+    return undefined;
     /// #else
     const entry = workerEntry ?? path.join(__dirname, "brs.node.js");
     if (!BrsDevice.isWorkerThread || !fs.existsSync(entry)) {
@@ -322,6 +330,10 @@ function decodeResult<T>(buffer: SharedArrayBuffer): BackgroundJobResult<T> {
 
 type BackgroundMessage =
     | { bg: "init"; alive: SharedArrayBuffer }
+    /** To the helper: a port connecting it to one more interpreter thread (browser). */
+    | { bg: "port"; port: MessagePort }
+    /** To an interpreter thread: its port to the helper the page started (browser). */
+    | { bg: "connect"; port: MessagePort; alive: SharedArrayBuffer }
     | { bg: "job"; id: number; control: SharedArrayBuffer; params: BackgroundJobParams }
     | { bg: "buffer"; id: number; buffer: SharedArrayBuffer }
     | { bg: "cancel"; id: number };
@@ -333,31 +345,43 @@ interface HeldJob {
     xhr?: XMLHttpRequest;
 }
 
-const heldJobs = new Map<number, HeldJob>();
+/** Jobs of one interpreter thread, keyed by their id (unique per thread). */
+type HeldJobs = Map<number, HeldJob>;
+
+const heldJobs: HeldJobs = new Map();
 
 export function isBackgroundMessage(value: any): value is BackgroundMessage {
     return value !== null && typeof value === "object" && typeof value.bg === "string";
 }
 
 /** Runs on the helper worker: handles a message from its interpreter thread. */
-export function handleBackgroundMessage(message: BackgroundMessage) {
+export function handleBackgroundMessage(message: BackgroundMessage, jobs: HeldJobs = heldJobs) {
     if (message.bg === "init" && isTypeOf(message.alive, "SharedArrayBuffer")) {
         const aliveView = new Int32Array(message.alive);
         Atomics.store(aliveView, BootedIdx, 1);
         setInterval(() => Atomics.add(aliveView, BeatIdx, 1), HeartbeatMs);
+    } else if (message.bg === "port") {
+        const portJobs: HeldJobs = new Map();
+        message.port.onmessage = (event: MessageEvent) => {
+            if (isBackgroundMessage(event.data)) {
+                handleBackgroundMessage(event.data, portJobs);
+            }
+        };
+    } else if (message.bg === "connect") {
+        connectBackgroundPort(message.port, message.alive);
     } else if (message.bg === "job") {
-        runJob(message.id, new Int32Array(message.control), message.params);
+        runJob(jobs, message.id, new Int32Array(message.control), message.params);
     } else if (message.bg === "buffer") {
-        deliverJob(message.id, message.buffer);
+        deliverJob(jobs, message.id, message.buffer);
     } else if (message.bg === "cancel") {
-        heldJobs.get(message.id)?.xhr?.abort();
-        heldJobs.delete(message.id);
+        jobs.get(message.id)?.xhr?.abort();
+        jobs.delete(message.id);
     }
 }
 
-async function runJob(id: number, control: Int32Array, params: BackgroundJobParams) {
+async function runJob(jobs: HeldJobs, id: number, control: Int32Array, params: BackgroundJobParams) {
     const held: HeldJob = { control };
-    heldJobs.set(id, held);
+    jobs.set(id, held);
     let meta: HttpJobResult | ImageJobResult;
     let payload = Empty;
     try {
@@ -370,7 +394,7 @@ async function runJob(id: number, control: Int32Array, params: BackgroundJobPara
     } catch (err: any) {
         ({ meta, payload } = imageFailure(err?.message ?? String(err)));
     }
-    if (heldJobs.get(id) !== held) {
+    if (jobs.get(id) !== held) {
         return; // cancelled
     }
     held.meta = textEncoder.encode(JSON.stringify(meta));
@@ -465,12 +489,12 @@ function networkErrorStatus() {
     /// #endif
 }
 
-function deliverJob(id: number, buffer: SharedArrayBuffer) {
-    const held = heldJobs.get(id);
+function deliverJob(jobs: HeldJobs, id: number, buffer: SharedArrayBuffer) {
+    const held = jobs.get(id);
     if (!held?.meta || !held.payload) {
         return;
     }
-    heldJobs.delete(id);
+    jobs.delete(id);
     const bytes = new Uint8Array(buffer);
     new DataView(buffer).setUint32(0, held.meta.length);
     bytes.set(held.meta, 4);

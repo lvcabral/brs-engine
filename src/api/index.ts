@@ -6,6 +6,7 @@
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
 import { SubscribeCallback, getWorkerLibUrl, saveDataBuffer } from "./util";
+import { connectBackground, startBackgroundHost, stopBackgroundHost } from "./backgroundHost";
 import {
     AppExitReason,
     AppPayload,
@@ -682,6 +683,7 @@ function resetWorker() {
     brsWorker.removeEventListener("message", mainCallback);
     brsWorker.terminate();
     resetTasks();
+    stopBackgroundHost();
     resetArray();
     resetSounds(deviceData.assets);
     resetVideo();
@@ -756,6 +758,8 @@ function runApp(payload: AppPayload) {
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);
+        startBackgroundHost(brsWrkLib);
+        connectBackground(brsWorker);
         brsWorker.postMessage(payload);
         currentPayload = payload;
         enableSendKeys(true);
