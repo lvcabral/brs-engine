@@ -29,7 +29,7 @@ const deviceInfo = {
     minVideoBufferMs: 700, // Simulated minimum buffering floor (ms) before video playback starts
     maxFps: 60, // Maximum frames per second for rendering
     tmpVolSize: 32 * 1024 * 1024, // Allocated size for `tmp:/` volume (32 MB)
-    cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB)
+    cacheFSVolSize: 32 * 1024 * 1024, // Allocated size for `cachefs:/` volume (32 MB); changing it starts a new, empty volume
     logLevel: LogLevel.Warning, // Log level for the engine (Debug, Warning, Error)
     corsProxy: "https://your-cors-proxy-instance.yourdomain.com/", // (optional) Add your CORS-Anywhere URL here
 };

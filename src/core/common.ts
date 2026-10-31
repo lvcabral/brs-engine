@@ -51,6 +51,7 @@ export interface DeviceInfo {
     logLevel: LogLevel;
     registry?: Map<string, string>;
     registryBuffer?: SharedArrayBuffer;
+    cacheFSBuffer?: SharedArrayBuffer;
     channelCredentials?: Map<string, string>;
     channelCredBuffer?: SharedArrayBuffer;
     models?: Map<string, string[]>;

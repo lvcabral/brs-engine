@@ -1,3 +1,22 @@
+describe("FileSystem Reliability Tests - cachefs: volume", () => {
+    test("mounts an unreadable cachefs: buffer empty without breaking the other volumes", () => {
+        const commonZip = new Uint8Array(
+            nodeFS.readFileSync(path.join(__dirname, "../../packages/node/assets/common.zip"))
+        ).buffer;
+        const cacheBuffer = new SharedArrayBuffer(1024 * 1024);
+        const header = new DataView(cacheBuffer);
+        header.setUint32(0, 0xdeadbeef, true); // bad checksum
+        header.setUint32(4, 0x62732e7a, true); // valid SingleBuffer magic
+        const fileSystem = BrsDevice.fileSystem;
+        fileSystem.setup(commonZip, new SharedArrayBuffer(1024 * 1024), cacheBuffer);
+
+        expect(fileSystem.existsSync("common:/certs/ca-bundle.crt")).toBe(true);
+        expect(fileSystem.readdirSync("cachefs:/")).toEqual([]);
+        fileSystem.writeFileSync("cachefs:/probe.txt", "cached");
+        expect(fileSystem.readFileSync("cachefs:/probe.txt", "utf8")).toBe("cached");
+    });
+});
+
 /**
  * FileSystem Reliability Tests - tmp: volume
  *
@@ -7,6 +26,8 @@
 
 const brs = require("../../packages/node/bin/brs.node");
 const { Interpreter, BrsDevice } = brs;
+const nodeFS = require("fs");
+const path = require("path");
 
 let interpreter;
 let fs;

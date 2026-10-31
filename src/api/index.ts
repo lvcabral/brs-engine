@@ -159,6 +159,8 @@ let httpConnectLog: boolean = false;
 let brsWorker: Worker;
 const registryBuffer = new SharedObject(RegistryInitialSize, RegistryMaxSize);
 const channelCredBuffer = new SharedObject(ChannelCredInitialSize, ChannelCredMaxSize);
+/** cachefs: volumes, keyed by developer ID, kept across app launches until the page reloads. */
+const cacheVolumes = new Map<string, SharedArrayBuffer>();
 /** localStorage entry holding the channel credential store, as JSON [key, value] pairs. */
 const channelCredStorageKey = "brs-engine:channel-credentials";
 let sharedBuffer: ArrayBufferLike;
@@ -182,6 +184,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
             "firmwareVersion",
             "registry",
             "registryBuffer",
+            "cacheFSBuffer",
             "channelCredentials",
             "channelCredBuffer",
             "models",
@@ -750,6 +753,7 @@ function runApp(payload: AppPayload) {
         currentApp.running = true;
         updateAppList();
         updateMemoryInfo();
+        payload.device.cacheFSBuffer = getCacheVolume(payload.device);
         brsWorker = new Worker(brsWrkLib);
         brsWorker.addEventListener("message", mainCallback);
         brsWorker.postMessage(sharedBuffer);
@@ -759,6 +763,21 @@ function runApp(payload: AppPayload) {
     } catch (err: any) {
         apiException("error", `[api] Error running ${currentApp.title}: ${err.message}`);
     }
+}
+
+/**
+ * Returns the cachefs: volume buffer for the device's developer ID, allocating one when missing
+ * or when the configured volume size changed.
+ * @param device Device configuration with the developer ID and volume size
+ * @returns SharedArrayBuffer backing the cachefs: volume
+ */
+function getCacheVolume(device: DeviceInfo) {
+    let buffer = cacheVolumes.get(device.developerId);
+    if (buffer?.byteLength !== device.cacheFSVolSize) {
+        buffer = new SharedArrayBuffer(device.cacheFSVolSize);
+        cacheVolumes.set(device.developerId, buffer);
+    }
+    return buffer;
 }
 
 /**

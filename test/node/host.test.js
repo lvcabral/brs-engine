@@ -50,4 +50,24 @@ describe("worker host (executeApp)", { timeout: 30000 }, () => {
         const result = await running;
         expect(typeof result.exitReason).toEqual("string");
     });
+
+    it("keeps cachefs: across app runs while tmp: starts empty on each launch", async () => {
+        const file = path.join(__dirname, "resources", "cachefs-relaunch.brs");
+        const messages = [];
+        brs.subscribeHost("test", (event, data) => {
+            if (event === "message" && typeof data === "string" && data.startsWith("print,")) {
+                messages.push(data.slice(6).trimEnd());
+            }
+        });
+        try {
+            for (let run = 0; run < 2; run++) {
+                const payload = await brs.createPayloadFromFiles([file], deviceData);
+                const result = await brs.executeApp(payload);
+                expect(result.exitReason).toEqual("EXIT_USER_NAV");
+            }
+            expect(messages).toEqual(["cachefs:false", "tmp:false", "cachefs:true", "tmp:false"]);
+        } finally {
+            brs.unsubscribeHost("test");
+        }
+    });
 });
