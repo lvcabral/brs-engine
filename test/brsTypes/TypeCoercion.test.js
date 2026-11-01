@@ -97,6 +97,10 @@ describe("type coercion", () => {
                 ["float", new Float(3.14159), new Int32(3)],
                 ["double", new Double(2.71828), new Int32(2)],
                 ["longinteger", new Int64(2147483647119), new Int32(-881)],
+                ["negative float", new Float(-1.9), new Int32(-1)],
+                ["negative fraction", new Double(-0.5), new Int32(0)],
+                ["NaN float", new Float(Number.NaN), new Int32(0)],
+                ["NaN double", new Double(Number.NaN), new Int32(0)],
             ])("returns integer for %s target", (_type, input, output) => {
                 expect(tryCoerce(input, ValueKind.Int32)).toEqual(output);
                 expect(tryCoerce(input.box(), ValueKind.Int32)).toEqual(output);
