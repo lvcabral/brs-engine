@@ -1,6 +1,6 @@
-' roRegex with PCRE-only patterns that JavaScript rejects, and invalid patterns (CreateObject prints an
-' error and returns invalid). Expected output is the device trace in
-' test/simulator/probes/regex-pcre-probe/device-trace.txt, for the cases the engine supports.
+' roRegex with PCRE-only patterns that JavaScript rejects or reads differently, and invalid patterns
+' (CreateObject prints an error and returns invalid). Expected output is the device trace in
+' test/simulator/probes/regex-pcre-probe/device-trace.txt.
 sub main()
     out("start", [])
     ' [name, pattern, flags, subjects...]
@@ -8,8 +8,24 @@ sub main()
         ["issue1255", "^(?:(?-))?(\d+)$", "", "123", "abc"]
         ["emptyMinus", "(?-)abc", "", "abc"]
         ["emptyGroup", "(?)abc", "", "abc"]
+        ["inlineIStart", "(?i)abc", "", "ABC", "abd"]
+        ["inlineIMid", "a(?i)bc", "", "aBC", "ABC"]
+        ["inlineIScoped", "(?i:b)c", "", "Bc", "BC"]
+        ["inlineMinusI", "(?-i)abc", "i", "ABC", "abc"]
+        ["inlineS", "(?s)a.b", "", "a" + Chr(10) + "b"]
+        ["inlineM", "(?m)^b", "", "a" + Chr(10) + "b"]
+        ["inlineX", "(?x) a b ", "", "ab"]
+        ["possessive", "a++b", "", "aab"]
+        ["atomic", "(?>a+)b", "", "aab"]
+        ["anchorsAz", "\Aabc\z", "", "abc", "xabc"]
+        ["comment", "(?#note)abc", "", "abc"]
+        ["namedP", "(?P<n>a)(?P=n)", "", "aa", "ab"]
         ["namedK", "(?<n>a)\k<n>", "", "aa", "ab"]
+        ["posixClass", "^[[:digit:]]+$", "", "123", "12a"]
+        ["unicodeProp", "^\p{Lu}$", "", "A", "a"]
         ["lookbehind", "(?<=a)b", "", "ab", "cb"]
+        ["quoteQE", "a\Qx.y\E", "", "ax.y", "axzy"]
+        ["hexBrace", "^\x{41}$", "", "A"]
         ["classLiteral", "[(?-]+", "", "(?-", "x"]
         ["escapedGroup", "\(?-\)", "", "(-)", "-)"]
         ["invalidOpen", "(", "", "("]

@@ -2,30 +2,37 @@ PROBE|start
 PROBE|issue1255|roRegex|true|false
 PROBE|emptyMinus|roRegex|true
 PROBE|emptyGroup|roRegex|true
-PROBE|inlineIStart|Invalid
-PROBE|inlineIMid|Invalid
-PROBE|inlineIScoped|Invalid
-PROBE|inlineMinusI|Invalid
-PROBE|inlineS|Invalid
-PROBE|inlineM|Invalid
-PROBE|inlineX|Invalid
-PROBE|possessive|Invalid
-PROBE|atomic|Invalid
-PROBE|anchorsAz|roRegex|false|false
-PROBE|comment|Invalid
-PROBE|namedP|Invalid
+PROBE|inlineIStart|roRegex|true|false
+PROBE|inlineIMid|roRegex|true|false
+PROBE|inlineIScoped|roRegex|true|false
+PROBE|inlineMinusI|roRegex|false|true
+PROBE|inlineS|roRegex|true
+PROBE|inlineM|roRegex|true
+PROBE|inlineX|roRegex|true
+PROBE|possessive|roRegex|true
+PROBE|atomic|roRegex|true
+PROBE|anchorsAz|roRegex|true|false
+PROBE|comment|roRegex|true
+PROBE|namedP|roRegex|true|false
 PROBE|namedK|roRegex|true|false
-PROBE|posixClass|roRegex|false|false
-PROBE|unicodeProp|roRegex|false|false
+PROBE|posixClass|roRegex|true|false
+PROBE|unicodeProp|roRegex|true|false
 PROBE|lookbehind|roRegex|true|false
-PROBE|quoteQE|roRegex|false|false
-PROBE|hexBrace|roRegex|false
+PROBE|quoteQE|roRegex|true|false
+PROBE|hexBrace|roRegex|true
 PROBE|classLiteral|roRegex|true|false
 PROBE|escapedGroup|roRegex|true|true
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(49)
 PROBE|invalidOpen|Invalid
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(49)
 PROBE|invalidClass|Invalid
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(49)
 PROBE|invalidStar|Invalid
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(49)
 PROBE|invalidRange|Invalid
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(49)
 PROBE|invalidInline|Invalid
+BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/main.brs(42)
 PROBE|untried|Invalid
 PROBE|done
+
