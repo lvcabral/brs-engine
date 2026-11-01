@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <children>
+        <Video id="player" width="1920" height="1080" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        bar = m.top.findNode("player").trickPlayBar
+        print "childCount: "; bar.getChildCount()
+        ' jellyfin-roku reads the ticker as child 3 and the position Label as child 8.
+        print "child3: "; bar.getChild(3).subtype()
+        positionText = bar.getChild(8)
+        print "child8: "; positionText.subtype(); " "; positionText.text
+        positionText.text = "1:10"
+        print "child8 after: "; bar.getChild(8).text
+        print "child9: "; bar.getChild(9).subtype(); " "; bar.getChild(9).text
+    end sub
+    ]]></script>
+</component>

@@ -680,6 +680,22 @@ program, both only reachable once a placeholder-backed channel is actually FOCUS
 Regression: "focusing a still-loading (placeholder) row does not scroll the view to the far future" and
 "real data replacing the FOCUSED channel's placeholder re-snaps focus" in `TimeGrid.test.js`.
 
+## Undocumented internal children are public surface — keep the device's order
+
+Roku builds composite nodes from child nodes it never documents (`Video.trickPlayBar` has 12 children,
+the ProgressBars 4, `Video` itself a `VideoBackground` + `Group`), and apps discover them by indexing
+(`trickPlayBar.getChild(8)` is the position Label in jellyfin-roku). So for any node that builds children
+internally, **child order, subtypes and the fields apps write to them** must match a device, even though no
+spec lists them. Dump the real tree first with a probe (`test/simulator/probes/trickplaybar-children-probe`
+is the template: recursive `subtype`/`translation`/`text`/`clippingRect` dump + a `getFields()` name list) and
+pin the order with a node-level test (`test/extensions/scenegraph/TrickPlayBar.test.js`).
+
+`TrickPlayBar` (see the child table in that probe's README) also shows the device idiom of driving a bar:
+a **full-width Poster shown through `clippingRect`** (not a width change), and `hashMarkPositions`
+reusing/removing/appending real Poster children. Nodes whose children are private references must keep
+`serializesChildren()` false. Still unreplicated: the `Video` internal `Group` tree, and the
+`bufferingBar`/`retrievingBar` ProgressBar children — see the README's "Other trees" section.
+
 ## Per-node memory: lazy fields and lazy methods (large content trees)
 
 A large EPG (e.g. the SGDEX **TimeGridView** sample) creates thousands of `ContentNode`s. Two
