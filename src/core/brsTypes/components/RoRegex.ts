@@ -12,7 +12,7 @@ export class RoRegex extends BrsComponent implements BrsValue {
     // JS RegExp has no native equivalent to the "x" (extended/free-spacing) flag, so it's handled
     // by translatePcre() rather than being forwarded to new RegExp().
     private jsRegex: RegExp;
-    private translation: PcreTranslation;
+    private readonly translation: PcreTranslation;
     private readonly valid: boolean;
 
     constructor(expression: BrsType, flags: BrsType = new BrsString("")) {

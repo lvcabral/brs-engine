@@ -49,7 +49,7 @@ const posixClasses: Record<string, string> = {
     lower: "a-z",
     space: String.raw`\s`,
     blank: String.raw` \t`,
-    punct: String.raw`!-\/:-@\[-` + "`" + String.raw`{-~`,
+    punct: String.raw`!-\/:-@\[-` + "`" + "{-~",
     print: String.raw`\x20-\x7e`,
     graph: String.raw`\x21-\x7e`,
     cntrl: String.raw`\x00-\x1f\x7f`,
@@ -64,6 +64,7 @@ const negatedPosixClasses: Record<string, string> = {
     word: String.raw`\W`,
 };
 
+const backslash = "\\";
 const syntaxChars = new Set(String.raw`^$\.*+?()[]{}|/`);
 const quantifierBraces = /\{\d+(?:,\d*)?\}/y;
 const flagGroup = /\(\?([imsxJX]*)(?:-([imsxJX]*))?([:)])/y;
@@ -302,7 +303,7 @@ class Scanner {
         const back = pythonBackReference.exec(p);
         if (back !== null) {
             this.startAtom();
-            this.out += `\\k<${back[1]}>`;
+            this.out += String.raw`\k<${back[1]}>`;
             this.pos += back[0].length;
             return;
         }
@@ -431,7 +432,7 @@ class Scanner {
                 const found = namedReference.exec(p);
                 if (found !== null) {
                     this.startAtom();
-                    this.out += `\\k<${found[1] ?? found[2]}>`;
+                    this.out += String.raw`\k<${found[1] ?? found[2]}>`;
                     this.pos += found[0].length;
                     return;
                 }
@@ -493,10 +494,10 @@ class Scanner {
             return raw;
         }
         if (value <= 0xffff) {
-            return `\\u${value.toString(16).padStart(4, "0")}`;
+            return `${backslash}u${value.toString(16).padStart(4, "0")}`;
         }
         this.needUnicode = true;
-        return `\\u{${value.toString(16)}}`;
+        return `${backslash}u{${value.toString(16)}}`;
     }
 
     /** Compiles `\p{..}`, `\P{..}`, `\p{^..}` and the one-letter `\pL`; the cursor is on the backslash. */
