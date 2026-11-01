@@ -132,7 +132,7 @@ describe("SimpleLabel node", () => {
     /**
      * Regression: `scale` used to be a no-op on SimpleLabel (only Label ever wired the draw-time
      * and bounding-rect scale bracket), so `scale=[0,0]` never visually collapsed it. Fixed by the
-     * same Group.withScale/applyScale mechanism Label uses. SimpleLabel's own renderLabel mutates
+     * same Group.withScale/updateBoundingRects mechanism Label uses. SimpleLabel's own renderLabel mutates
      * rect.x/y in place for horizOrigin/vertOrigin alignment BEFORE drawing, so the scale pivot must
      * be captured up front — otherwise a centered/right/bottom-anchored label would scale around its
      * post-alignment position instead of its own translation.

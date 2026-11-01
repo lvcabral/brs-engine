@@ -125,6 +125,8 @@ export class MarkupList extends ArrayGrid {
         const displayRows = Math.min(Math.ceil(this.content.length), this.numRows);
 
         const rowWidth = itemSize[0];
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getRenderRowIndex(r);
             if (rowIndex < 0) {
@@ -153,7 +155,7 @@ export class MarkupList extends ArrayGrid {
             // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
             // which differs as soon as the list is scrolled (rowHeights above already does this).
             itemRect.y += itemRect.height + (rowSpacings[rowIndex] ?? spacing[1]);
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(screen, itemRect)) {
                 break;
             }
         }

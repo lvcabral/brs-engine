@@ -100,7 +100,7 @@ describe("ScrollingLabel node vertAlign", () => {
  * its own marquee draw path, bypassing Group.drawText's scale bracket entirely), so
  * `scale=[0,0]` never visually collapsed it. Fixed via the same Group.withScale mechanism, pushed
  * around the existing pushClip/popClip bracket. The bounding-rect fix comes for free: ScrollingLabel
- * doesn't override Label.renderNodeContent, which already applies Group.applyScale.
+ * doesn't override Label.renderNodeContent, whose bounding rects already take the scale.
  */
 describe("ScrollingLabel node scale", () => {
     afterEach(() => {

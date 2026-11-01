@@ -332,6 +332,8 @@ export class ZoomRowList extends ArrayGrid {
         let lastRenderedRow = -1;
         const rowItemsRendered: Int32[] = [];
 
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
         for (let displayIndex = 0; displayIndex < totalRows; displayIndex++) {
             let rowIndex = canWrap ? this.normalizeRowIndex(startRow + displayIndex) : startRow + displayIndex;
 
@@ -374,7 +376,7 @@ export class ZoomRowList extends ArrayGrid {
             lastRenderedRow = rowIndex;
 
             currentY = rowTop + metrics.rowHeight + metrics.spacingY;
-            if (this.sceneRect.height > 0 && currentY > this.sceneRect.y + this.sceneRect.height) {
+            if (screen.height > 0 && currentY > screen.y + screen.height) {
                 break;
             }
         }

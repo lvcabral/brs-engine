@@ -167,8 +167,8 @@ export class ScrollableText extends Group {
             this.renderContent(draw2D, rect, rotation, opacity, scale);
         }
 
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 
