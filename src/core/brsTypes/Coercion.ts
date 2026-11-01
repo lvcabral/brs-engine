@@ -53,11 +53,12 @@ export function tryCoerce(value: BrsType, target: ValueKind): BrsType | undefine
         return tryCoerce(value.unbox(), target);
     }
 
-    // numeric types can be cast between each other
+    // numeric types can be cast between each other; `Integer` follows `toArrayIndex` (the device rule shared with
+    // `toIntegerArg`): `Float`/`Double` are truncated with NaN as 0, a `LongInteger` keeps its low 32 bits
     if (isNumberKind(target) && isBrsNumber(value)) {
         switch (target) {
             case ValueKind.Int32:
-                return new Int32(value.getValue());
+                return new Int32(toArrayIndex(value) ?? 0);
             case ValueKind.Int64:
                 return new Int64(value.getValue());
             case ValueKind.Float:
