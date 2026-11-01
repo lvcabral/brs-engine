@@ -7,6 +7,7 @@ const {
     RoRegion,
     RoAssociativeArray,
     BrsString,
+    BrsInvalid,
     Int32,
     Float,
     BrsBoolean,
@@ -327,6 +328,14 @@ describe("IfDraw2D", () => {
                 .call(interpreter, new Int32(0), new Int32(0), new Int32(2), new Int32(2));
             expect(Array.from(byteArray.elements.slice(0, 4))).toEqual([170, 187, 204, 255]);
             expect(byteArray.elements.length).toBe(2 * 2 * 4);
+        });
+
+        it("getByteArray returns Invalid on a live RoScreen, matching hardware", () => {
+            const screen = new RoScreen(BrsBoolean.False, new Int32(4), new Int32(4));
+            const result = screen
+                .getMethod("getByteArray")
+                .call(interpreter, new Int32(0), new Int32(0), new Int32(1), new Int32(1));
+            expect(result).toBe(BrsInvalid.Instance);
         });
 
         it("getPng round-trips a solid opaque color through the PNG codec", () => {

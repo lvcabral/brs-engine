@@ -1,7 +1,7 @@
 import { BrsValue, ValueKind, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
 import { BrsEvent, BrsType, isAnyNumber, isBrsBoolean, jsValueOf, RoUniversalControlEvent } from "..";
-import { Callable } from "../Callable";
+import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { RoMessagePort } from "./RoMessagePort";
@@ -104,7 +104,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 ifDraw2D.finish,
                 ifDraw2D.getAlphaEnable,
                 ifDraw2D.setAlphaEnable,
-                ifDraw2D.getByteArray,
+                this.getByteArray,
                 ifDraw2D.getPng,
                 ifDraw2D.getWidth,
                 ifDraw2D.getHeight,
@@ -216,6 +216,20 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     // ifScreen ------------------------------------------------------------------------------------
+
+    /** Real devices return Invalid for a live roScreen (only roBitmap/roRegion return pixel data). */
+    private readonly getByteArray = new Callable("getByteArray", {
+        signature: {
+            args: [
+                new StdlibArgument("x", ValueKind.Int32),
+                new StdlibArgument("y", ValueKind.Int32),
+                new StdlibArgument("width", ValueKind.Int32),
+                new StdlibArgument("height", ValueKind.Int32),
+            ],
+            returns: ValueKind.Dynamic,
+        },
+        impl: (_: Interpreter, _x: Int32, _y: Int32, _width: Int32, _height: Int32) => BrsInvalid.Instance,
+    });
 
     /** If the screen is double buffered, SwapBuffers swaps the back buffer with the front buffer */
     private readonly swapBuffers = new Callable("swapBuffers", {
