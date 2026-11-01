@@ -486,6 +486,10 @@ function decodeBitmapBytes(image: ArrayBuffer | Uint8Array): DecodedImage | unde
 
 /** Draws decoded pixels on a bitmap's canvas (created at their size); returns `false` if that failed. */
 function drawPixels(context: BrsCanvasContext2D, pixels: DecodedImage): boolean {
+    // Never ask node-canvas for empty image data: on Linux it aborts the whole process
+    if (!(pixels.width > 0 && pixels.height > 0)) {
+        return false;
+    }
     try {
         const imageData = context.createImageData(pixels.width, pixels.height);
         imageData.data.set(pixels.data);

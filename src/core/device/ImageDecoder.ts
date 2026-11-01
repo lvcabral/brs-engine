@@ -21,10 +21,16 @@ export interface DecodedImage {
 }
 
 /**
- * Decodes PNG, JPEG, WebP (first frame), GIF (first frame) or BMP into RGBA8 pixels.
- * Returns `undefined` for an unsupported format; throws if the data is corrupt.
+ * Decodes PNG, JPEG, WebP (first frame), GIF (first frame) or BMP into RGBA8 pixels. Returns
+ * `undefined` for an unsupported format or an image without pixels (e.g. a 0x0 GIF frame: node-canvas
+ * aborts the whole process on Linux when asked for empty image data); throws if the data is corrupt.
  */
 export function decodeImage(image: Uint8Array): DecodedImage | undefined {
+    const decoded = decodeFormat(image);
+    return decoded && decoded.width > 0 && decoded.height > 0 ? decoded : undefined;
+}
+
+function decodeFormat(image: Uint8Array): DecodedImage | undefined {
     const mime = fileType(image)?.mime;
     // UPNG and gifuct type their input as ArrayBuffer, but both just wrap it in a new Uint8Array.
     const input = image as unknown as ArrayBuffer;
