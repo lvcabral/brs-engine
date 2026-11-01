@@ -125,7 +125,7 @@ export class BrightScriptExtension implements BrsExtension {
      * @param components Map of the app's parsed component definitions
      */
     private loadComponentLibraries(components: Map<string, ComponentDefinition>) {
-        const declarations = new Map<string, { id: string; uri: string }>(); // lowercase id -> declaration
+        const declarations = new Map<string, string | undefined>(); // uri -> id
         const collect = (nodes: ComponentNode[]) => {
             for (const node of nodes) {
                 if (node.name.toLowerCase() === "componentlibrary") {
@@ -133,9 +133,9 @@ export class BrightScriptExtension implements BrsExtension {
                     const uri = node.fields?.uri?.trim();
                     // Only pre-load libraries that declare a static uri in XML; libraries whose
                     // uri is assigned at runtime are loaded lazily by the ComponentLibrary node.
-                    if (id && uri && !declarations.has(id.toLowerCase())) {
-                        declarations.set(id.toLowerCase(), { id, uri });
-                        sgRoot.setLibraryStatus(id, "none");
+                    if (uri && !declarations.has(uri)) {
+                        declarations.set(uri, id);
+                        sgRoot.setLibraryStatus(uri, "none");
                     }
                 }
                 if (node.children.length > 0) {
@@ -149,14 +149,12 @@ export class BrightScriptExtension implements BrsExtension {
         if (declarations.size > 0) {
             BrsDevice.stdout.write(
                 `debug,[sg] Found ${declarations.size} ComponentLibrary declaration(s): ${Array.from(
-                    declarations.values()
-                )
-                    .map((d) => `${d.id}=${d.uri}`)
-                    .join(", ")}`
+                    declarations.keys()
+                ).join(", ")}`
             );
         }
-        for (const { id, uri } of declarations.values()) {
-            loadComponentLibrary(id, uri);
+        for (const [uri, id] of declarations) {
+            loadComponentLibrary(uri, id);
         }
     }
 

@@ -35,7 +35,7 @@ export class SGRoot {
     private _interpreter: Interpreter | undefined;
     private _mGlobal: Global | undefined;
     private _nodeDefMap: Map<string, ComponentDefinition>;
-    /** Tracks the load status of component libraries, keyed by lowercase library id. */
+    /** Tracks the load status of component libraries, keyed by library uri. */
     private _componentLibraries: Map<string, string>;
     /** Deferred ComponentLibrary loadStatus notifications, flushed on the next render frame. */
     private readonly _pendingLibraryNotifications: (() => void)[] = [];
@@ -365,20 +365,20 @@ export class SGRoot {
 
     /**
      * Records the load status of a component library.
-     * @param id Library id (the ComponentLibrary node's `id` field, used as namespace prefix)
+     * @param uri Library uri (the ComponentLibrary node's `uri` field)
      * @param status Load status ("none" | "loading" | "ready" | "failed")
      */
-    setLibraryStatus(id: string, status: string) {
-        this._componentLibraries.set(id.toLowerCase(), status);
+    setLibraryStatus(uri: string, status: string) {
+        this._componentLibraries.set(uri, status);
     }
 
     /**
      * Gets the load status of a previously loaded component library.
-     * @param id Library id to look up
+     * @param uri Library uri to look up
      * @returns The recorded load status, or undefined if the library was never loaded
      */
-    getLibraryStatus(id: string): string | undefined {
-        return this._componentLibraries.get(id.toLowerCase());
+    getLibraryStatus(uri: string): string | undefined {
+        return this._componentLibraries.get(uri);
     }
 
     /**
