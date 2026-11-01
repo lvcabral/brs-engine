@@ -7,27 +7,33 @@
  *--------------------------------------------------------------------------------------------*/
 /**
  * Hosts the background worker (`src/core/device/BackgroundWorker.ts`) on the Node host thread: one
- * helper for the host, started on first use, with every interpreter thread (the app and each Task)
+ * helper per app run, started on first use, with every interpreter thread (the app and each Task)
  * connected to it through its own `MessageChannel` port, sent before the thread's payload. Node port
  * of `src/api/backgroundHost.ts`.
+ *
+ * Like the app and Task workers, the helper's output is piped and surfaced as host events, and it's
+ * terminated when the app ends: a piped stream that has been written to (e.g. a Node deprecation
+ * warning) keeps the host process alive until the worker is gone.
  */
 import { MessageChannel, Worker } from "node:worker_threads";
+
+/** Receives the helper's console output, like the host's other workers' `stdout`/`stderr` events. */
+export type BackgroundOutput = (stream: "stdout" | "stderr", text: string) => void;
 
 let helper: Worker | undefined;
 let heartbeat: SharedArrayBuffer | undefined;
 let nextThread = 1;
 
 /**
- * Connects an interpreter thread to the background worker; call before posting its payload.
- * Returns the id to release it with when the thread ends.
+ * Connects an interpreter thread to the background worker, starting it on first use; call before
+ * posting the thread's payload. Returns the id to release the thread with when it ends.
  */
-export function connectBackground(worker: Worker, workerEntry: string): number {
+export function connectBackground(worker: Worker, workerEntry: string, output?: BackgroundOutput): number {
     if (!helper || !heartbeat) {
         heartbeat = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
-        // Piped like every worker so it never writes to the terminal (threading-and-rendezvous.md),
-        // but never read: a consumed stream keeps the host process alive despite `unref()`. The
-        // helper doesn't print.
         const started = new Worker(workerEntry, { stdout: true, stderr: true });
+        started.stdout.on("data", (chunk: Buffer) => output?.("stdout", chunk.toString()));
+        started.stderr.on("data", (chunk: Buffer) => output?.("stderr", chunk.toString()));
         started.on("error", () => {});
         // A helper that exits is replaced on the next connect; threads connected to it go synchronous
         started.on("exit", () => {
@@ -51,4 +57,12 @@ export function releaseBackground(thread: number | undefined) {
     if (thread !== undefined) {
         helper?.postMessage({ bg: "release", thread });
     }
+}
+
+/** Terminates the background worker when the app run ends. */
+export async function stopBackground() {
+    const stopping = helper;
+    helper = undefined;
+    heartbeat = undefined;
+    await stopping?.terminate().catch(() => {});
 }
