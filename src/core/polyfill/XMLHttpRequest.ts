@@ -18,7 +18,6 @@
  */
 
 import * as fs from "node:fs";
-import * as Url from "node:url";
 import * as http from "node:http";
 import * as https from "node:https";
 import * as crypto from "node:crypto";
@@ -293,26 +292,24 @@ export class XMLHttpRequest {
 
         let ssl = false,
             local = false;
-        const url = Url.parse(this._settings.url);
+        // WHATWG URL (`url.parse()` is deprecated); a relative URL goes to localhost, as it always did
+        const url = new URL(this._settings.url, "http://localhost");
+        // An IPv6 hostname keeps its brackets in a URL, but `http.request()` takes it without them
+        const hostname = url.hostname.replace(/^\[(.*)\]$/, "$1");
         let host;
         // Determine the server
         switch (url.protocol) {
             case "https:":
                 ssl = true;
-                host = url.hostname;
+                host = hostname;
                 break;
 
             case "http:":
-                host = url.hostname;
+                host = hostname;
                 break;
 
             case "file:":
                 local = true;
-                break;
-
-            case undefined:
-            case "":
-                host = "localhost";
                 break;
 
             default:

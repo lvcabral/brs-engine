@@ -24,7 +24,6 @@ import xmlbuilder from "xmlbuilder";
 import os from "node:os";
 import fs from "node:fs";
 import path from "node:path";
-import url from "node:url";
 import restana from "restana";
 import WebSocket, { WebSocketServer, RawData } from "ws";
 import packageInfo from "../../packages/node/package.json";
@@ -203,7 +202,7 @@ function enableECP() {
                 });
             });
             server.on("upgrade", function upgrade(request, socket, head) {
-                const pathname = url.parse(request.url ?? "").pathname;
+                const pathname = new URL(request.url ?? "", "http://localhost").pathname;
                 if (pathname === "/ecp-session") {
                     if (DEBUG) {
                         console.debug("ecp-2 websocket session started!");
