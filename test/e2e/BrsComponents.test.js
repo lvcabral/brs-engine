@@ -958,8 +958,24 @@ describe("end to end brightscript functions", () => {
             "PROBE|issue1255|roRegex|true|false",
             "PROBE|emptyMinus|roRegex|true",
             "PROBE|emptyGroup|roRegex|true",
+            "PROBE|inlineIStart|roRegex|true|false",
+            "PROBE|inlineIMid|roRegex|true|false",
+            "PROBE|inlineIScoped|roRegex|true|false",
+            "PROBE|inlineMinusI|roRegex|false|true",
+            "PROBE|inlineS|roRegex|true",
+            "PROBE|inlineM|roRegex|true",
+            "PROBE|inlineX|roRegex|true",
+            "PROBE|possessive|roRegex|true",
+            "PROBE|atomic|roRegex|true",
+            "PROBE|anchorsAz|roRegex|true|false",
+            "PROBE|comment|roRegex|true",
+            "PROBE|namedP|roRegex|true|false",
             "PROBE|namedK|roRegex|true|false",
+            "PROBE|posixClass|roRegex|true|false",
+            "PROBE|unicodeProp|roRegex|true|false",
             "PROBE|lookbehind|roRegex|true|false",
+            "PROBE|quoteQE|roRegex|true|false",
+            "PROBE|hexBrace|roRegex|true",
             "PROBE|classLiteral|roRegex|true|false",
             "PROBE|escapedGroup|roRegex|true|true",
             "PROBE|invalidOpen|Invalid",
@@ -975,8 +991,26 @@ describe("end to end brightscript functions", () => {
                 .filter((arg) => arg.includes("roRegex"))
                 .map((arg) => arg.trimEnd())
         ).toEqual([
-            ...Array(5).fill("BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(32)"),
-            "BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(25)",
+            ...Array(5).fill("BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(48)"),
+            "BRIGHTSCRIPT: ERROR: roRegex: Invalid pattern: pkg:/source/regex-pcre.brs(41)",
+        ]);
+    });
+
+    test("roRegex keeps capture groups and replacements intact for possessive and atomic rewrites", async () => {
+        await execute([resourceFile("components", "regex-pcre-groups.brs")], outputStreams);
+
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "match: aaac|a|c|3",
+            "matchAll: 2",
+            "replace: [c][a]",
+            "replace1: [c][a]",
+            "backref: true false",
+            "split: a|b|c|3",
+            "splitGroup: a|,|b|3",
+            "range: true false true",
+            "unicodeDash: true",
+            "unknownPosix: Invalid",
+            "replaceAll: baba",
         ]);
     });
 

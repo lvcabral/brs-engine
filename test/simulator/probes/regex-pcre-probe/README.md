@@ -43,12 +43,7 @@ Before PR #1274, brs-engine stopped at the first case with an uncaught `SyntaxEr
 (`EXIT_BRIGHTSCRIPT_CRASH`). The first version of the PR threw runtime error 8 for every pattern JavaScript
 rejects, so `untried` still ended the app.
 
-`engine-trace.txt` is from PR #1274 as merged. The empty option groups, `namedK`, `lookbehind`, the literal `(?-`
-cases, the invalid patterns (with the same error line) and `untried` match the device. Still different:
+`engine-trace.txt` is the engine output after issue #1277 (`PcreTranslator.ts`): every `PROBE|` line equals the device
+trace. The invalid patterns print the same `Invalid pattern` error as the device, with the `CreateObject` line.
 
-- The `inline*` cases, `possessive`, `atomic`, `comment` and `namedP` are PCRE that JavaScript rejects, so the
-  engine prints the invalid-pattern error and returns `invalid` where the device compiles them.
-- `anchorsAz`, `posixClass`, `unicodeProp`, `quoteQE` and `hexBrace` compile but never match, because JavaScript
-  reads `\A`, `[[:digit:]]`, `\p{Lu}` (without the `u` flag), `\Q`/`\E` and `\x{41}` as other things.
-
-`test/e2e/resources/components/regex-pcre.brs` pins the device output for the cases that match.
+`test/e2e/resources/components/regex-pcre.brs` runs all these cases and pins the device output.
