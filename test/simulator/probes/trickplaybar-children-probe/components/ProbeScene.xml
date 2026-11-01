@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Video id="player" width="1920" height="1080" />
+        <Timer id="settleTimer" duration="1.5" repeat="false" />
+        <Timer id="pollTimer" duration="1" repeat="true" />
+        <Timer id="seekTimer" duration="5" repeat="false" />
+        <Timer id="barTimer" duration="3" repeat="false" />
+        <Timer id="bar2Timer" duration="3" repeat="false" />
+        <Timer id="hashTimer" duration="1" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Fields read from every node when it exists (hasField-guarded, so one list serves all subtypes).
+    function probeKeys() as object
+        return [
+            "translation", "width", "height", "visible", "opacity", "color", "textColor", "text", "uri",
+            "blendColor", "horizAlign", "vertAlign", "wrap", "loadDisplayMode", "loadWidth", "loadHeight",
+            "scale", "rotation", "inheritParentTransform", "inheritParentOpacity", "focusable", "clippingRect",
+            "value", "maxLines", "numLines", "lineSpacing", "font", "padding", "infoText",
+            "trackBlendColor", "trackImageUri", "filledBarBlendColor", "filledBarImageUri", "thumbBlendColor",
+            "currentTimeMarkerBlendColor", "liveFilledBarBlendColor", "hashMarkBlendColor", "hashMarkPositions", "backgroundBarColor", "backgroundBarImageUri",
+            "percentage", "barPosition"
+        ]
+    end function
+
+    sub init()
+        m.seq = 0
+        m.polls = 0
+        m.player = m.top.findNode("player")
+        m.dumped = {}
+        m.posReports = 0
+        m.top.findNode("settleTimer").observeField("fire", "onSettle")
+        m.top.findNode("settleTimer").control = "start"
+        m.top.findNode("pollTimer").observeField("fire", "onPoll")
+    end sub
+
+    sub rec(phase as string, case as string, body as string)
+        m.seq = m.seq + 1
+        s = StrI(m.seq)
+        s = s.trim()
+        while len(s) < 3
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + phase + "|" + case + "|" + body
+    end sub
+
+    function hex(n as integer) as string
+        u& = n
+        if u& < 0 then u& = u& + 4294967296&
+        digits = "0123456789abcdef"
+        out = ""
+        for i = 1 to 8
+            d = u& mod 16
+            out = mid(digits, d + 1, 1) + out
+            u& = u& \ 16
+        end for
+        return "0x" + out
+    end function
+
+    function fmt(v as dynamic) as string
+        t = type(v)
+        if t = "roString" or t = "String" then return chr(34) + v + chr(34)
+        if t = "roInt" or t = "Integer" or t = "roInteger" then return StrI(v).trim()
+        if t = "roFloat" or t = "Float" or t = "Double" or t = "roDouble" then return Str(v).trim()
+        if t = "roBoolean" or t = "Boolean" then
+            if v then return "true"
+            return "false"
+        end if
+        if t = "roArray" then
+            out = []
+            for each e in v
+                out.push(fmt(e))
+            end for
+            return "[" + out.join(",") + "]"
+        end if
+        if t = "roAssociativeArray" then
+            return "{x=" + Str(Int(v.x)).trim() + " y=" + Str(Int(v.y)).trim() + " w=" + Str(Int(v.width)).trim() + " h=" + Str(Int(v.height)).trim() + "}"
+        end if
+        if t = "roSGNode" then return "node:" + v.subtype()
+        if v = invalid then return "invalid"
+        return "<" + t + ">"
+    end function
+
+    sub dumpNode(phase as string, case as string, node as object, path as string, depth as integer)
+        body = "path=" + path + " subtype=" + node.subtype() + " id=" + chr(34) + node.id + chr(34) + " children=" + StrI(node.getChildCount()).trim()
+        keys = probeKeys()
+        for each k in keys
+            if node.hasField(k)
+                v = node.getField(k)
+                if k = "font" and type(v) = "roSGNode"
+                    body = body + " font.size=" + fmt(v.size) + " font.uri=" + fmt(v.uri)
+                else if (k = "color" or k = "textColor" or k = "blendColor" or k = "trackBlendColor" or k = "filledBarBlendColor" or k = "thumbBlendColor" or k = "currentTimeMarkerBlendColor" or k = "liveFilledBarBlendColor" or k = "backgroundBarColor") and type(v) = "roInt"
+                    body = body + " " + k + "=" + hex(v)
+                else
+                    body = body + " " + k + "=" + fmt(v)
+                end if
+            end if
+        end for
+        body = body + " bounds=" + fmt(node.boundingRect()) + " sceneBounds=" + fmt(node.sceneBoundingRect())
+        rec(phase, case, body)
+
+        ' Field name list, once per subtype and phase.
+        sig = phase + "/" + node.subtype()
+        if not m.dumped.doesExist(sig)
+            m.dumped[sig] = true
+            names = []
+            for each kv in node.getFields().keys()
+                names.push(kv)
+            end for
+            names.sort()
+            rec(phase, case + ".fields", "subtype=" + node.subtype() + " count=" + StrI(names.count()).trim() + " names=" + names.join(","))
+        end if
+
+        if depth > 0
+            for i = 0 to node.getChildCount() - 1
+                dumpNode(phase, case, node.getChild(i), path + "/" + StrI(i).trim(), depth - 1)
+            end for
+        end if
+    end sub
+
+    function chain(node as object) as string
+        out = ""
+        p = node.getParent()
+        while p <> invalid
+            out = out + "<" + p.subtype()
+            p = p.getParent()
+        end while
+        return out
+    end function
+
+    ' Where the Video keeps its bars: is each one a direct child of the Video, and at which index?
+    sub dumpVideoShape(phase as string)
+        v = m.player
+        body = "videoChildren=" + StrI(v.getChildCount()).trim()
+        for i = 0 to v.getChildCount() - 1
+            c = v.getChild(i)
+            body = body + " [" + StrI(i).trim() + "]=" + c.subtype()
+            if c.isSameNode(v.trickPlayBar) then body = body + "(trickPlayBar)"
+            if c.isSameNode(v.bufferingBar) then body = body + "(bufferingBar)"
+            if c.isSameNode(v.retrievingBar) then body = body + "(retrievingBar)"
+        end for
+        rec(phase, "video-shape", body)
+        for each name in ["trickPlayBar", "bufferingBar", "retrievingBar"]
+            n = v.getField(name)
+            rec(phase, "video-shape." + name, "type=" + type(n) + " parentIsVideo=" + fmt(n.getParent() <> invalid and n.getParent().isSameNode(v)) + " chain=" + chain(n))
+        end for
+    end sub
+
+    sub dumpAll(phase as string)
+        dumpVideoShape(phase)
+        dumpNode(phase, "trickPlayBar", m.player.trickPlayBar, "tpb", 6)
+        dumpNode(phase, "bufferingBar", m.player.bufferingBar, "buf", 4)
+        dumpNode(phase, "retrievingBar", m.player.retrievingBar, "ret", 4)
+        labels(phase)
+        dumpNode(phase, "video-tree", m.player, "vid", 4)
+    end sub
+
+    ' The jellyfin-roku access pattern: getChild(3) / getChild(8) straight off the bar.
+    sub labels(phase as string)
+        bar = m.player.trickPlayBar
+        c3 = bar.getChild(3)
+        c8 = bar.getChild(8)
+        rec(phase, "jellyfin-access", "child3=" + fmt(c3) + " child8=" + fmt(c8))
+        if c8 <> invalid
+            rec(phase, "jellyfin-access", "child8.text=" + fmt(c8.getField("text")) + " child8.hasText=" + fmt(c8.hasField("text")))
+        end if
+        body = ""
+        for i = 0 to bar.getChildCount() - 1
+            c = bar.getChild(i)
+            if c.subtype() = "Label" then body = body + " [" + StrI(i).trim() + "].text=" + fmt(c.text)
+        end for
+        rec(phase, "label-texts", body.trim())
+    end sub
+
+    sub onSettle()
+        ' Phase A: no content, nothing played yet.
+        dumpAll("idle")
+
+        ' A standalone TrickPlayBar, no Video involved.
+        tpb = CreateObject("roSGNode", "TrickPlayBar")
+        if tpb <> invalid
+            m.top.appendChild(tpb)
+            dumpNode("standalone", "TrickPlayBar", tpb, "tpb", 6)
+            m.top.removeChild(tpb)
+        else
+            rec("standalone", "TrickPlayBar", "created=false")
+        end if
+
+        ' Phase B: play a stream and dump once it is playing (time-boxed).
+        c = CreateObject("roSGNode", "ContentNode")
+        c.url = "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8"
+        c.streamFormat = "hls"
+        c.title = "probe"
+        m.player.observeField("state", "onState")
+        m.player.observeField("position", "onPosition")
+        m.player.content = c
+        m.player.control = "play"
+        m.top.findNode("pollTimer").control = "start"
+    end sub
+
+    sub onState()
+        rec("play", "state", "state=" + fmt(m.player.state) + " position=" + fmt(m.player.position) + " duration=" + fmt(m.player.duration))
+    end sub
+
+    sub onPosition()
+        m.posReports = m.posReports + 1
+        if m.posReports <= 3
+            rec("play", "position", "position=" + fmt(m.player.position))
+            labels("play")
+        end if
+    end sub
+
+    sub onPoll()
+        m.polls = m.polls + 1
+        if m.player.state = "playing" and m.player.position > 3
+            finish("playing")
+        else if m.polls >= 25
+            finish("timeout:" + m.player.state)
+        end if
+    end sub
+
+    sub finish(reason as string)
+        m.top.findNode("pollTimer").control = "stop"
+        rec("play", "result", "reason=" + reason + " state=" + fmt(m.player.state) + " position=" + fmt(m.player.position))
+        dumpAll("play")
+        ' Seek to mid-stream first so the bar can be sampled at a known non-zero position.
+        m.player.setFocus(true)
+        m.player.seek = 900
+        m.top.findNode("seekTimer").observeField("fire", "onSeeked")
+        m.top.findNode("seekTimer").control = "start"
+    end sub
+
+    sub onSeeked()
+        ' The host script sends an ECP Play key press on this line so the real player pauses and shows the bar.
+        rec("wait", "ready", "focus=" + fmt(m.player.hasFocus()) + " state=" + fmt(m.player.state) + " position=" + fmt(m.player.position))
+        m.top.findNode("barTimer").observeField("fire", "onBar")
+        m.top.findNode("barTimer").control = "start"
+    end sub
+
+    sub dumpBar(phase as string)
+        rec(phase, "result", "state=" + fmt(m.player.state) + " position=" + fmt(m.player.position) + " duration=" + fmt(m.player.duration) + " barVisible=" + fmt(m.player.trickPlayBar.visible))
+        dumpNode(phase, "trickPlayBar", m.player.trickPlayBar, "tpb", 6)
+        labels(phase)
+    end sub
+
+    sub onBar()
+        dumpBar("bar")
+        ' Second sample close to the end of the stream (ticker travel limit).
+        m.player.seek = 1795
+        m.top.findNode("bar2Timer").observeField("fire", "onBar2")
+        m.top.findNode("bar2Timer").control = "start"
+    end sub
+
+    sub onBar2()
+        dumpBar("bar2")
+        ' What does hashMarkPositions do to the three hash mark Posters (children 4..6)?
+        m.player.trickPlayBar.hashMarkPositions = [0.1, 0.5, 0.9]
+        m.hashStep = 0
+        m.top.findNode("hashTimer").observeField("fire", "onHash")
+        m.top.findNode("hashTimer").control = "start"
+    end sub
+
+    sub onHash()
+        if m.hashStep = 1
+            dumpBar("hash1")
+            m.hashStep = 2
+            m.player.trickPlayBar.hashMarkPositions = [0.1, 0.2, 0.3, 0.4, 0.5]
+            m.top.findNode("hashTimer").control = "start"
+            return
+        else if m.hashStep = 2
+            dumpBar("hash5")
+            m.hashStep = 3
+            m.player.trickPlayBar.hashMarkPositions = []
+            m.top.findNode("hashTimer").control = "start"
+            return
+        else if m.hashStep = 3
+            dumpBar("hash0")
+            rec("done", "done", "")
+            m.top.probeExit = true
+            return
+        end if
+        dumpBar("hash")
+        ' Fewer positions than marks, then more positions than marks.
+        m.hashStep = 1
+        m.player.trickPlayBar.hashMarkPositions = [0.2]
+        m.top.findNode("hashTimer").control = "start"
+    end sub
+
+    ]]>
+    </script>
+</component>

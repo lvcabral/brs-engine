@@ -1380,6 +1380,26 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Exposes the device child layout of Video.trickPlayBar", async () => {
+        let command = ["node", brsCliPath, "-r trickplaybar-children-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // jellyfin-roku indexes into the bar (getChild(8) is the position Label), so the internal
+        // child order is observable surface. A device builds 12 children (#1294).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "childCount:  12",
+            "child3: Poster",
+            "child8: Label 0:00",
+            "child8 after: 1:10",
+            "child9: Label 0:00",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Delivers a burst of writes to a field a Task port-observes, once each and promptly", async () => {
         let command = ["node", brsCliPath, "-r task-port-burst-app", "source/main.brs", "-c 0"].join(" ");
 
