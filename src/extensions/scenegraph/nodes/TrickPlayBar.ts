@@ -61,7 +61,7 @@ export class TrickPlayBar extends Group {
     private readonly position: Label;
     private readonly remaining: Label;
     private readonly liveLabel: Label;
-    private built = false;
+    private readonly built: boolean = false;
     private lastClipWidth = 0;
     private readonly bmpIcons: Map<string, RoBitmap>;
     private stateIcon: RoBitmap | undefined;
