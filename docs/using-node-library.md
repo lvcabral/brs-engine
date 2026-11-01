@@ -81,6 +81,7 @@ The package ships four bundles under `bin/` (Node.js v22+ required):
 | Runs on | the calling thread | a dedicated worker thread |
 | SceneGraph UI (`roSGScreen`, nodes) | ✅ supported | ✅ supported |
 | SceneGraph `Task` nodes | ❌ never spawn (no free host thread to broker them) | ✅ one worker thread per running Task |
+| Async transfers and textures (`roUrlTransfer` `Async*`, `roTextureManager`) | run synchronously, on the next message port read | ✅ run on a background worker thread while the app keeps running |
 | Output delivery | `registerCallback` (synchronous calls) | `subscribeHost` events (asynchronous) |
 | Control input | shared buffer via `registerCallback` | shared buffer via `options.sharedBuffer` |
 | Packaging (`.bpk` generation) | ✅ returns `cipherText` | ❌ not supported |

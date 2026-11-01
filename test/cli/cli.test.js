@@ -245,6 +245,184 @@ describe.concurrent("cli", () => {
         }
     }, 30000);
 
+    it("decodes async texture requests off the BrightScript thread", async () => {
+        const { createCanvas } = require("canvas");
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-texture-async-"));
+        const canvas = createCanvas(1024, 512);
+        const ctx = canvas.getContext("2d");
+        const pixels = ctx.createImageData(1024, 512);
+        for (let i = 0; i < pixels.data.length; i++) {
+            pixels.data[i] = (i * 7919) % 256;
+        }
+        ctx.putImageData(pixels, 0, 0);
+        fs.writeFileSync(path.join(tmpDir, "big.png"), canvas.toBuffer("image/png"));
+        fs.writeFileSync(path.join(tmpDir, "small.jpg"), createCanvas(32, 16).toBuffer("image/jpeg"));
+        fs.writeFileSync(
+            path.join(tmpDir, "asyncTexture.brs"),
+            [
+                "sub Main()",
+                '    port = CreateObject("roMessagePort")',
+                '    mgr = CreateObject("roTextureManager")',
+                "    mgr.SetMessagePort(port)",
+                '    first = CreateObject("roTextureRequest", "pkg:/big.png")',
+                '    second = CreateObject("roTextureRequest", "pkg:/big.png")',
+                '    cancelled = CreateObject("roTextureRequest", "pkg:/small.jpg")',
+                "    mgr.RequestTexture(first)",
+                "    mgr.RequestTexture(second)",
+                "    mgr.RequestTexture(cancelled)",
+                "    mgr.CancelRequest(cancelled)",
+                '    print "first poll: "; type(port.GetMessage()); " state:"; first.GetState()',
+                "    polls = 0",
+                "    for i = 1 to 2",
+                "        msg = invalid",
+                "        while msg = invalid",
+                "            msg = port.GetMessage()",
+                "            polls = polls + 1",
+                "        end while",
+                "        bmp = msg.GetBitmap()",
+                '        print "event:"; msg.GetId() - first.GetId(); " state:"; msg.GetState(); " size:"; bmp.GetWidth(); "x"; bmp.GetHeight()',
+                "    end for",
+                '    print "polled while decoding: "; polls > 2',
+                '    cached = CreateObject("roTextureRequest", "pkg:/big.png")',
+                "    mgr.RequestTexture(cached)",
+                '    print "cached: "; type(port.GetMessage())',
+                '    sync = CreateObject("roTextureRequest", "pkg:/small.jpg")',
+                "    sync.SetAsync(false)",
+                "    mgr.RequestTexture(sync)",
+                "    msg = port.GetMessage()",
+                '    print "sync: "; msg.GetState(); " size:"; msg.GetBitmap().GetWidth()',
+                '    print "pending: "; type(port.GetMessage())',
+                "end sub",
+                "",
+            ].join("\n")
+        );
+        try {
+            const command = ["node", brsCliPath, "asyncTexture.brs", "--root", tmpDir, "-c 0"].join(" ");
+            const { stdout } = await exec(command, { cwd: tmpDir });
+            expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+                "first poll: Invalid state: 0",
+                "event: 0 state: 3 size: 1024x 512",
+                "event: 1 state: 3 size: 1024x 512",
+                "polled while decoding: true",
+                "cached: roTextureRequestEvent",
+                "sync:  3 size: 32",
+                "pending: Invalid",
+                "------ Finished 'asyncTexture.brs' execution [EXIT_USER_NAV] ------",
+                "",
+                "",
+            ]);
+        } finally {
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 30000);
+
+    it("runs roUrlTransfer async transfers and texture downloads off the BrightScript thread", async () => {
+        const http = require("http");
+        const { createCanvas } = require("canvas");
+        const png = createCanvas(20, 10).toBuffer("image/png");
+        // Every response is delayed, so a transfer that blocked the app would show no polls meanwhile.
+        const server = http.createServer((req, res) => {
+            let body = "";
+            req.on("data", (chunk) => (body += chunk));
+            req.on("end", () => {
+                setTimeout(() => {
+                    if (req.url === "/image.png") {
+                        res.writeHead(200, { "Content-Type": "image/png" });
+                        res.end(png);
+                    } else if (req.url === "/echo") {
+                        res.writeHead(200, { "Content-Type": "text/plain", "X-Probe": "yes" });
+                        res.end(req.method === "HEAD" ? undefined : `${req.method}:${body}`);
+                    } else {
+                        res.writeHead(404);
+                        res.end("missing");
+                    }
+                }, 300);
+            });
+        });
+        await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const base = `http://127.0.0.1:${server.address().port}`;
+        const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "brs-async-transfer-"));
+        fs.writeFileSync(
+            path.join(tmpDir, "asyncTransfer.brs"),
+            [
+                "function waitEvent(port, eventType) as object",
+                "    polls = 0",
+                "    while true",
+                "        msg = port.GetMessage()",
+                "        if type(msg) = eventType then exit while",
+                "        polls = polls + 1",
+                "    end while",
+                '    print "  polled while transferring: "; polls > 10',
+                "    return msg",
+                "end function",
+                "",
+                "sub Main()",
+                '    port = CreateObject("roMessagePort")',
+                '    xfer = CreateObject("roUrlTransfer")',
+                "    xfer.SetMessagePort(port)",
+                `    xfer.SetUrl("${base}/echo")`,
+                "    xfer.AsyncGetToString()",
+                '    print "get first poll: "; type(port.GetMessage())',
+                '    msg = waitEvent(port, "roUrlEvent")',
+                '    print "  code:"; msg.GetResponseCode(); " body: "; msg.GetString(); " probe: "; msg.GetResponseHeaders()["x-probe"]',
+                '    xfer.AsyncPostFromString("hello")',
+                '    msg = waitEvent(port, "roUrlEvent")',
+                '    print "post body: "; msg.GetString()',
+                "    xfer.AsyncHead()",
+                '    msg = waitEvent(port, "roUrlEvent")',
+                '    print "head code:"; msg.GetResponseCode()',
+                '    xfer.AsyncGetToFile("tmp:/echo.txt")',
+                '    msg = waitEvent(port, "roUrlEvent")',
+                '    print "file: "; ReadAsciiFile("tmp:/echo.txt")',
+                `    xfer.SetUrl("${base}/missing")`,
+                "    xfer.AsyncGetToString()",
+                '    msg = waitEvent(port, "roUrlEvent")',
+                '    print "missing code:"; msg.GetResponseCode()',
+                `    xfer.SetUrl("${base}/echo")`,
+                "    xfer.AsyncGetToString()",
+                "    xfer.AsyncCancel()",
+                '    print "cancelled: "; type(port.WaitMessage(800))',
+                '    mgr = CreateObject("roTextureManager")',
+                "    mgr.SetMessagePort(port)",
+                `    req = CreateObject("roTextureRequest", "${base}/image.png")`,
+                "    mgr.RequestTexture(req)",
+                '    print "texture first poll: "; type(port.GetMessage())',
+                '    msg = waitEvent(port, "roTextureRequestEvent")',
+                '    print "  state:"; msg.GetState(); " width:"; msg.GetBitmap().GetWidth()',
+                "end sub",
+                "",
+            ].join("\n")
+        );
+        try {
+            const command = ["node", brsCliPath, "asyncTransfer.brs", "-c 0"].join(" ");
+            const { stdout } = await exec(command, { cwd: tmpDir });
+            expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+                "get first poll: Invalid",
+                "  polled while transferring: true",
+                "  code: 200 body: GET: probe: yes",
+                "  polled while transferring: true",
+                "post body: POST:hello",
+                "  polled while transferring: true",
+                "head code: 200",
+                "  polled while transferring: true",
+                "file: GET:",
+                "  polled while transferring: true",
+                "missing code: 404",
+                "cancelled: Invalid",
+                "texture first poll: Invalid",
+                "  polled while transferring: true",
+                "  state: 3 width: 20",
+                "------ Finished 'asyncTransfer.brs' execution [EXIT_USER_NAV] ------",
+                "",
+                "",
+            ]);
+        } finally {
+            server.closeAllConnections();
+            await new Promise((resolve) => server.close(resolve));
+            fs.rmSync(tmpDir, { recursive: true, force: true });
+        }
+    }, 30000);
+
     it("Draws and measures empty strings without crashing", async () => {
         // Regression: node-canvas v4-rc1 aborts the process (SIGTRAP) when its text APIs
         // (measureText/fillText) receive an empty string — the engine must guard them.

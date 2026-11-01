@@ -17,6 +17,7 @@ import { getHost } from "../../interpreter/Network";
 import { generateUniqueId } from "../interfaces/IfSocket";
 import fileType from "file-type";
 import { ServerSentEvent, SseParser } from "../../device/SseParser";
+import { BackgroundJob, HttpJobResult, backgroundAvailable, startBackgroundJob } from "../../device/BackgroundWorker";
 import { SseEventPayload, SseTransport } from "../../device/SseTransport";
 /// #if BROWSER
 import { SseBridge } from "../../device/SseBridge";
@@ -31,16 +32,49 @@ function encodeUriComponentStrict(text: string): string {
     return encodeURIComponent(text).replaceAll(/[!'()*]/g, (c) => "%" + c.codePointAt(0)!.toString(16).toUpperCase());
 }
 
+/** What a transfer sends and how it reports, shared by its synchronous and asynchronous forms. */
 interface RequestOptions {
     method: string;
-    responseType: XMLHttpRequestResponseType;
+    responseType: "text" | "arraybuffer";
     scope: string;
-    body?: any;
+    /** Verb of the dev-mode error message, e.g. "getting" in "Error getting <url>". */
+    action: string;
+    body?: string | Buffer;
     bodyFilePath?: string;
-    onSuccess?: (xhr: XMLHttpRequest) => void;
-    errorMessage?: (error: any) => string;
+    /** File that a 200 response's body is saved to. */
+    outFile?: string;
     logToStdout?: boolean;
 }
+
+const Transfers = {
+    getToString: { method: "GET", responseType: "text", scope: "getToStringEvent", action: "getting" },
+    getToFile: { method: "GET", responseType: "arraybuffer", scope: "getToFileEvent", action: "getting" },
+    postFromString: {
+        method: "POST",
+        responseType: "text",
+        scope: "postFromStringEvent",
+        action: "posting to",
+        logToStdout: true,
+    },
+    postFromFileToFile: {
+        method: "POST",
+        responseType: "arraybuffer",
+        scope: "postFromFileToFileEvent",
+        action: "posting to",
+    },
+    head: { method: "HEAD", responseType: "text", scope: "requestHead", action: "requesting from" },
+} satisfies Record<string, RequestOptions>;
+
+/** An asynchronous transfer running on the background worker. */
+interface AsyncTransfer {
+    job: BackgroundJob<HttpJobResult>;
+    options: RequestOptions;
+    url: string;
+    host: string;
+}
+
+const textDecoder = new TextDecoder();
+const NoEvents: readonly BrsEvent[] = Object.freeze([]);
 
 /** State of the current `AsyncGetSSEvents()` transfer. */
 interface SseTransfer {
@@ -56,7 +90,6 @@ interface SseTransfer {
 export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgent {
     readonly kind = ValueKind.Object;
     private readonly identity: number;
-    private readonly inFile: string[];
     private readonly fs: FileSystem;
     private url: string;
     private host: string;
@@ -65,11 +98,10 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     private xhr: XMLHttpRequest;
     private freshConnection: boolean;
     private port?: RoMessagePort;
-    private outFile: string[];
-    private postBody: string[];
     private user?: string;
     private password?: string;
     private readonly callbackKey: string;
+    private readonly asyncTransfers: AsyncTransfer[] = [];
     private sseTransport?: SseTransport;
     private sseTransfer?: SseTransfer;
     private lastSseEventId: string;
@@ -95,11 +127,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.cookiesEnabled = false;
         this.customHeaders = new Map<string, string>();
         this.certificatesFile = DefaultCertificatesFile;
-        this.inFile = new Array<string>();
-        this.outFile = new Array<string>();
-        this.postBody = new Array<string>();
         const ifHttpAgent = new IfHttpAgent(this);
-        const setPortIface = new IfSetMessagePort(this, this.getSseEvents.bind(this), this.callbackKey);
+        const setPortIface = new IfSetMessagePort(this, this.getPortEvents.bind(this), this.callbackKey);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifUrlTransfer: [
@@ -156,15 +185,15 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     private executeRequest(options: RequestOptions): RoURLEvent {
-        const { method, responseType, scope, body, bodyFilePath, onSuccess, errorMessage, logToStdout } = options;
+        const { responseType, body, bodyFilePath, outFile } = options;
         let status = -1;
         let headers = "";
         let responseText = "";
         let xhr: XMLHttpRequest | undefined;
 
         try {
-            xhr = this.getConnection(method, responseType);
-            let requestBody = body;
+            xhr = this.getConnection(options.method, responseType);
+            let requestBody: any = body;
             if (bodyFilePath) {
                 if (!this.fs.existsSync(bodyFilePath)) {
                     throw new HttpError(-26, `Invalid path: ${bodyFilePath}`);
@@ -181,7 +210,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
             headers = typeof headerValue === "string" ? headerValue : headers;
             this.failureReason = xhr.statusText ?? "";
             responseText = responseType === "text" ? xhr.responseText : "";
-            onSuccess?.(xhr);
+            if (outFile && xhr.status === 200) {
+                this.saveDownloadedFile(outFile, xhr.response);
+            }
         } catch (error: any) {
             if (error instanceof HttpError) {
                 status = error.status;
@@ -189,26 +220,42 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 status = xhr.status;
             }
             this.failureReason = error?.message ?? "Unknown error";
-            if (BrsDevice.isDevMode) {
-                const logger = logToStdout ? BrsDevice.stdout : BrsDevice.stderr;
-                const message = errorMessage
-                    ? errorMessage(error)
-                    : `Error transferring ${this.url}: ${this.failureReason}`;
-                logger.write(`warning,[${scope}] ${message}`);
-            }
+            this.logTransferError(options, this.url, error?.message ?? error);
         }
         return this.newUrlEvent(responseText, status, this.failureReason, headers);
+    }
+
+    private logTransferError(options: RequestOptions, url: string, message: string) {
+        if (BrsDevice.isDevMode) {
+            const logger = options.logToStdout ? BrsDevice.stdout : BrsDevice.stderr;
+            logger.write(`warning,[${options.scope}] Error ${options.action} ${url}: ${message}`);
+        }
+    }
+
+    /** Whether the URL is https but the certificates file doesn't exist (transfer fails with -77). */
+    private missingCertificates() {
+        return this.url.toLowerCase().startsWith("https:") && !this.fs.existsSync(this.certificatesFile);
+    }
+
+    /** The method to send: the one set with `SetRequest()`, or else the transfer's own. */
+    private requestMethod(method: string) {
+        return this.reqMethod === "" ? method : this.reqMethod;
     }
 
     getConnection(methodParam: string, typeParam: XMLHttpRequestResponseType) {
         if (this.freshConnection) {
             this.xhr = new XMLHttpRequest();
         }
-        if (this.url.toLowerCase().startsWith("https:") && !this.fs.existsSync(this.certificatesFile)) {
+        if (this.missingCertificates()) {
             throw new HttpError(-77, `error setting certificate file: ${this.certificatesFile}`);
         }
-        const method = this.reqMethod === "" ? methodParam : this.reqMethod;
-        this.xhr.open(method, BrsDevice.getCORSProxy(this.url), false, this.user, this.password);
+        this.xhr.open(
+            this.requestMethod(methodParam),
+            BrsDevice.getCORSProxy(this.url),
+            false,
+            this.user,
+            this.password
+        );
         this.xhr.responseType = typeParam;
         for (const [key, value] of this.customHeaders) {
             this.xhr.setRequestHeader(key, value);
@@ -218,85 +265,19 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     getToStringEvent(): RoURLEvent {
-        const event = this.executeRequest({
-            method: "GET",
-            responseType: "text",
-            scope: "getToStringEvent",
-            errorMessage: (error) => `Error getting ${this.url}: ${error?.message ?? error}`,
-        });
-        return event;
+        return this.executeRequest(Transfers.getToString);
     }
 
     getToFileEvent(filePath: string): RoURLEvent {
-        const event = this.executeRequest({
-            method: "GET",
-            responseType: "arraybuffer",
-            scope: "getToFileEvent",
-            onSuccess: (xhr) => {
-                if (xhr.status === 200) {
-                    this.saveDownloadedFile(filePath, xhr.response);
-                }
-            },
-            errorMessage: (error) => `Error getting ${this.url}: ${error?.message ?? error}`,
-        });
-        return event;
+        return this.executeRequest({ ...Transfers.getToFile, outFile: filePath });
     }
 
-    getToFileAsync(): BrsType {
-        const filePath = this.outFile.shift();
-        if (!filePath) {
-            return BrsInvalid.Instance;
-        }
-        return this.getToFileEvent(filePath);
-    }
-
-    postFromStringEvent(body: string): RoURLEvent {
-        const event = this.executeRequest({
-            method: "POST",
-            responseType: "text",
-            scope: "postFromStringEvent",
-            body,
-            logToStdout: true,
-            errorMessage: (error) => `Error posting to ${this.url}: ${error?.message ?? error}`,
-        });
-        return event;
-    }
-
-    postFromStringAsync(): BrsType {
-        const request = this.postBody.shift();
-        // An empty string is a valid POST body (e.g. token requests that carry auth in headers
-        // only), so guard on an empty queue (undefined) rather than falsiness — otherwise the
-        // async request is silently dropped, no roUrlEvent is posted, and the caller's
-        // waitMessage() blocks until timeout.
-        if (request === undefined) {
-            return BrsInvalid.Instance;
-        }
-        return this.postFromStringEvent(request);
+    postFromStringEvent(body: string | Buffer): RoURLEvent {
+        return this.executeRequest({ ...Transfers.postFromString, body });
     }
 
     postFromFileToFileEvent(inputPath: string, outputPath: string): RoURLEvent {
-        const event = this.executeRequest({
-            method: "POST",
-            responseType: "arraybuffer",
-            scope: "postFromFileToFileEvent",
-            bodyFilePath: inputPath,
-            onSuccess: (xhr) => {
-                if (xhr.status === 200) {
-                    this.saveDownloadedFile(outputPath, xhr.response);
-                }
-            },
-            errorMessage: (error) => `Error posting to ${this.url}: ${error?.message ?? error}`,
-        });
-        return event;
-    }
-
-    postFromFileToFileAsync(): BrsType {
-        const inPath = this.inFile.shift();
-        const outPath = this.outFile.shift();
-        if (!inPath || !outPath) {
-            return BrsInvalid.Instance;
-        }
-        return this.postFromFileToFileEvent(inPath, outPath);
+        return this.executeRequest({ ...Transfers.postFromFileToFile, bodyFilePath: inputPath, outFile: outputPath });
     }
 
     saveDownloadedFile(filePath: string, data: any) {
@@ -320,14 +301,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         }
     }
 
-    requestHead(): BrsType {
-        const event = this.executeRequest({
-            method: "HEAD",
-            responseType: "text",
-            scope: "requestHead",
-            errorMessage: (error) => `Error requesting from ${this.url}: ${error?.message ?? error}`,
-        });
-        return event;
+    requestHead(): RoURLEvent {
+        return this.executeRequest(Transfers.head);
     }
 
     toString(parent?: BrsType): string {
@@ -339,6 +314,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
     }
 
     dispose() {
+        this.cancelAsyncTransfers();
         this.port?.unregisterCallback(this.getComponentName(), this.callbackKey);
         this.sseTransport?.dispose();
         this.port?.removeReference();
@@ -379,7 +355,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         this.stopSse();
         this.failureReason = "";
         this.lastSseRetry = 0;
-        if (this.url.toLowerCase().startsWith("https:") && !this.fs.existsSync(this.certificatesFile)) {
+        if (this.missingCertificates()) {
             this.failureReason = `error setting certificate file: ${this.certificatesFile}`;
             const event = this.newUrlEvent("", -77, this.failureReason, "", UrlEventType.Completed);
             port.pushCallback(() => event);
@@ -418,12 +394,118 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         }
     }
 
-    /** Polled on every message port iteration; drains the active SSE transfer, if any. */
-    private getSseEvents(): BrsEvent[] {
-        const events: BrsEvent[] = [];
-        if (!this.sseTransfer || !this.sseTransport) {
-            return events;
+    /** Polled on every message port iteration: delivers settled asynchronous transfers and SSE events. */
+    private getPortEvents(): readonly BrsEvent[] {
+        if (this.asyncTransfers.length === 0) {
+            return this.getSseEvents();
         }
+        let events: BrsEvent[] | undefined;
+        for (let index = 0; index < this.asyncTransfers.length; ) {
+            const transfer = this.asyncTransfers[index];
+            if (transfer.job.poll()) {
+                this.asyncTransfers.splice(index, 1);
+                events ??= [];
+                events.push(this.asyncTransferEvent(transfer));
+            } else {
+                index++;
+            }
+        }
+        const sse = this.getSseEvents();
+        if (!events) {
+            return sse;
+        }
+        events.push(...sse);
+        return events;
+    }
+
+    /**
+     * Starts an asynchronous transfer: on the background worker, so it runs while the app keeps
+     * going like on a device, or else queued to run synchronously on the next message port poll.
+     */
+    private queueTransfer(port: RoMessagePort, options: RequestOptions) {
+        this.failureReason = "";
+        if (!this.startAsyncTransfer(options)) {
+            port.pushCallback(() => this.executeRequest(options));
+        }
+    }
+
+    /**
+     * Runs a transfer on the background worker. Returns `false` if it can't run there, including
+     * when it would fail before reaching the network: the synchronous path reports those.
+     */
+    private startAsyncTransfer(options: RequestOptions): boolean {
+        const bodyFilePath = options.bodyFilePath;
+        if (
+            !backgroundAvailable() ||
+            this.missingCertificates() ||
+            (bodyFilePath && !this.fs.existsSync(bodyFilePath))
+        ) {
+            return false;
+        }
+        const body = bodyFilePath ? this.fs.readFileSync(bodyFilePath) : options.body;
+        const job = startBackgroundJob<HttpJobResult>({
+            kind: "http",
+            http: {
+                method: this.requestMethod(options.method),
+                url: BrsDevice.getCORSProxy(this.url),
+                user: this.user,
+                password: this.password,
+                headers: [...this.customHeaders],
+                withCredentials: this.cookiesEnabled,
+                responseType: options.responseType,
+                // A copy owned by the job (it's transferred), never the file system's cached buffer
+                body: typeof body === "string" || !body ? body : new Uint8Array(body),
+            },
+        });
+        if (!job) {
+            return false;
+        }
+        this.asyncTransfers.push({ job, options, url: this.url, host: this.host });
+        return true;
+    }
+
+    /** Builds the event of a settled asynchronous transfer, saving its response to a file if requested. */
+    private asyncTransferEvent(transfer: AsyncTransfer): RoURLEvent {
+        const { job, options } = transfer;
+        if (!job.result) {
+            // The background worker was lost: run the transfer synchronously instead
+            return this.executeRequest(options);
+        }
+        if (job.result.failure !== undefined) {
+            // The thread couldn't receive the result (e.g. too large)
+            this.failureReason = job.result.failure;
+            this.logTransferError(options, transfer.url, this.failureReason);
+            return new RoURLEvent(this.identity, transfer.host, "", -1, this.failureReason, "");
+        }
+        const { meta, payload } = job.result;
+        const status = meta.status;
+        this.failureReason = meta.statusText;
+        if (meta.error) {
+            this.logTransferError(options, transfer.url, meta.error);
+        }
+        // Copied out of shared memory only when used: TextDecoder rejects shared views, and a
+        // saved file must outlive the buffer (`Buffer.from` then wraps the copy without another)
+        if (options.outFile && status === 200) {
+            this.saveDownloadedFile(options.outFile, payload.slice().buffer);
+        }
+        const text = options.responseType === "text" ? textDecoder.decode(payload.slice()) : "";
+        return new RoURLEvent(this.identity, transfer.host, text, status, this.failureReason, meta.headers);
+    }
+
+    /** Stops every running asynchronous transfer. */
+    private cancelAsyncTransfers() {
+        for (const transfer of this.asyncTransfers) {
+            transfer.job.cancel();
+        }
+        this.asyncTransfers.length = 0;
+    }
+
+    /** Polled on every message port iteration; drains the active SSE transfer, if any. */
+    private getSseEvents(): readonly BrsEvent[] {
+        if (!this.sseTransfer || !this.sseTransport) {
+            return NoEvents;
+        }
+        const events: BrsEvent[] = [];
         for (const payload of this.sseTransport.poll()) {
             const transfer = this.sseTransfer;
             if (!transfer) {
@@ -596,8 +678,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                this.failureReason = "";
-                this.port.pushCallback(this.getToStringEvent.bind(this));
+                this.queueTransfer(this.port, Transfers.getToString);
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
@@ -615,9 +696,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter, filePath: BrsString) => {
             if (this.port) {
-                this.failureReason = "";
-                this.outFile.push(filePath.value);
-                this.port.pushCallback(this.getToFileAsync.bind(this));
+                this.queueTransfer(this.port, { ...Transfers.getToFile, outFile: filePath.value });
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
@@ -633,10 +712,9 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter) => {
             this.stopSse();
+            this.cancelAsyncTransfers();
             if (this.port) {
                 this.failureReason = "";
-                this.outFile = [];
-                this.postBody = [];
                 this.port.asyncCancel();
             }
             return BrsBoolean.True;
@@ -662,8 +740,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter) => {
             if (this.port) {
-                this.failureReason = "";
-                this.port.pushCallback(this.requestHead.bind(this));
+                this.queueTransfer(this.port, Transfers.head);
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
@@ -692,9 +769,7 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
         },
         impl: (_: Interpreter, request: BrsString) => {
             if (this.port) {
-                this.failureReason = "";
-                this.postBody.push(request.value);
-                this.port.pushCallback(this.postFromStringAsync.bind(this));
+                this.queueTransfer(this.port, { ...Transfers.postFromString, body: request.value });
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
@@ -732,9 +807,8 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 return BrsBoolean.False;
             }
             if (this.port) {
-                this.failureReason = "";
-                this.postBody.push(this.fs.readFileSync(filePath.value, "utf8"));
-                this.port.pushCallback(this.postFromStringAsync.bind(this));
+                const body: string = this.fs.readFileSync(filePath.value, "utf8");
+                this.queueTransfer(this.port, { ...Transfers.postFromString, body });
             } else if (BrsDevice.isDevMode) {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }
@@ -753,10 +827,12 @@ export class RoURLTransfer extends BrsComponent implements BrsValue, BrsHttpAgen
                 return BrsBoolean.False;
             }
             if (this.port) {
-                this.failureReason = "";
-                this.inFile.push(fromFile.value);
-                this.outFile.push(toFile.value);
-                this.port.pushCallback(this.postFromFileToFileAsync.bind(this));
+                const options = {
+                    ...Transfers.postFromFileToFile,
+                    bodyFilePath: fromFile.value,
+                    outFile: toFile.value,
+                };
+                this.queueTransfer(this.port, options);
             } else {
                 BrsDevice.stderr.write("warning,No message port assigned to this roUrlTransfer instance!");
             }

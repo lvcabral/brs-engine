@@ -1831,4 +1831,80 @@ describe.concurrent("cli scenegraph", () => {
             "",
         ]);
     }, 30000);
+
+    it("delivers a Task's async transfer on a port that also observes the Task's own fields", async () => {
+        // Regression: the Task's port callback blocked in wait(0) until a field update arrived, so a
+        // background transfer on the same port (rokanban's uriHandler pattern) never settled.
+        const http = require("http");
+        const fs = require("fs");
+        const os = require("os");
+        const server = http.createServer((req, res) => {
+            res.writeHead(200, { "Content-Type": "application/json" });
+            res.end('{"ok":true}');
+        });
+        await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
+        const url = `http://127.0.0.1:${server.address().port}/api`;
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), "brs-task-transfer-"));
+        const write = (file, lines) => {
+            fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
+            fs.writeFileSync(path.join(root, file), lines.join("\n"));
+        };
+        write("manifest", ["title=Task Transfer", "major_version=1", "minor_version=0", "build_version=1"]);
+        write("source/main.brs", [
+            "sub Main()",
+            '    screen = CreateObject("roSGScreen")',
+            '    port = CreateObject("roMessagePort")',
+            "    screen.SetMessagePort(port)",
+            '    scene = screen.CreateScene("Scene")',
+            "    screen.Show()",
+            '    task = CreateObject("roSGNode", "ApiTask")',
+            '    task.ObserveField("result", port)',
+            '    task.control = "run"',
+            "    while true",
+            "        msg = wait(5000, port)",
+            '        if type(msg) = "roSGNodeEvent"',
+            '            print "result: "; msg.GetData()',
+            "            return",
+            "        else if msg = invalid",
+            '            print "timed out"',
+            "            return",
+            "        end if",
+            "    end while",
+            "end sub",
+        ]);
+        write("components/ApiTask.xml", [
+            '<?xml version="1.0" encoding="utf-8" ?>',
+            '<component name="ApiTask" extends="Task">',
+            '  <interface><field id="result" type="string" /><field id="request" type="string" /></interface>',
+            '  <script type="text/brightscript"><![CDATA[',
+            '    sub init() : m.top.functionName = "fetchData" : end sub',
+            "    sub fetchData()",
+            '        port = CreateObject("roMessagePort")',
+            '        m.top.ObserveField("request", port)',
+            '        xfer = CreateObject("roUrlTransfer")',
+            "        xfer.SetPort(port)",
+            `        xfer.SetUrl("${url}")`,
+            "        xfer.AsyncGetToString()",
+            "        while true",
+            "            msg = wait(0, port)",
+            '            if type(msg) = "roUrlEvent"',
+            '                m.top.result = msg.GetResponseCode().ToStr() + " " + msg.GetString()',
+            "                exit while",
+            "            end if",
+            "        end while",
+            "    end sub",
+            "  ]]></script>",
+            "</component>",
+        ]);
+        try {
+            const command = ["node", brsCliPath, "-r", root, "source/main.brs", "-c 0"].join(" ");
+            const { stdout } = await exec(command, { cwd: root });
+            expect(stdout).toContain('result: 200 {"ok":true}');
+            expect(stdout).not.toContain("timed out");
+        } finally {
+            server.closeAllConnections();
+            await new Promise((resolve) => server.close(resolve));
+            fs.rmSync(root, { recursive: true, force: true });
+        }
+    }, 30000);
 });

@@ -38,6 +38,7 @@ import * as path from "path";
 import * as crypto from "crypto";
 import * as fs from "fs";
 import { XmlDocument } from "xmldoc";
+import { handleBackgroundMessage, isBackgroundMessage } from "./device/BackgroundWorker";
 import { encode, decode } from "@msgpack/msgpack";
 import { zlibSync, unzlibSync, zipSync } from "fflate";
 
@@ -54,6 +55,7 @@ export * from "./device/FileSystem";
 export * from "./packageEncryption";
 export { default as SharedObject } from "./SharedObject";
 export { SharedEventQueue } from "./SharedEventQueue";
+export { backgroundJobsPending } from "./device/BackgroundWorker";
 export type { ISGNode } from "./extensions";
 export { registerExtension, clearExtensions, instantiateExtensions, isSceneGraphNode } from "./extensions";
 export { Lexer, Lexeme, Token, ReservedWords, isToken } from "./lexer";
@@ -86,6 +88,7 @@ import * as TypeMismatchExports from "./error/TypeMismatch";
 import * as ExtensionsExports from "./extensions";
 import * as RoFontRegistryExports from "./brsTypes/components/RoFontRegistry";
 import * as FileSystemExports from "./device/FileSystem";
+import * as BackgroundWorkerExports from "./device/BackgroundWorker";
 import * as stdlibModule from "./stdlib";
 import * as netlibModule from "./interpreter/Network";
 import { Preprocessor } from "./preprocessor/Preprocessor";
@@ -105,6 +108,9 @@ if (typeof onmessage !== "undefined") {
             executeTask(event.data);
         } else if (typeof event.data === "string" && event.data === "getVersion") {
             postMessage(`version,${packageInfo.version}`);
+        } else if (isBackgroundMessage(event.data)) {
+            // The background worker's setup, on the helper or an interpreter thread (see `BackgroundWorker.ts`)
+            handleBackgroundMessage(event.data);
         } else if (event.data instanceof ArrayBuffer || event.data instanceof SharedArrayBuffer) {
             // Setup Control Shared Array
             BrsDevice.setSharedArray(new Int32Array(event.data));
@@ -194,6 +200,7 @@ function createWorkerExports() {
         BrsDeviceExports,
         RoFontRegistryExports,
         FileSystemExports,
+        BackgroundWorkerExports,
         ExtensionsExports,
         LexerExports,
         ParserExports,
@@ -297,6 +304,9 @@ if (!isMainThread && parentPort) {
             BrsDevice.stdout.write(`debug,[core] Task payload received: ${data.taskData.id}:${data.taskData.name}`);
             loadNodeExtensions(data);
             executeTask(data);
+        } else if (isBackgroundMessage(data)) {
+            // The background worker's setup, on the helper or an interpreter thread (see `BackgroundWorker.ts`)
+            handleBackgroundMessage(data);
         } else if (isTypeOf(data, "SharedArrayBuffer")) {
             // Setup Control Shared Array (realm-safe check: the buffer may come from a VM sandbox)
             BrsDevice.setSharedArray(new Int32Array(data));

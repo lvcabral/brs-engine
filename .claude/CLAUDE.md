@@ -12,7 +12,7 @@ like harmless simplifications.
 | Read this | Before changing |
 | --- | --- |
 | [`.claude/docs/scenegraph-invariants.md`](docs/scenegraph-invariants.md) | Node rendering / `renderNode`, visibility vs. measurement, `Field` observer dispatch & deferral, `getBoundingRect`, focus chain, `ArrayGrid` focus/`scrollingStatus` emission order, `NodeFactory`/`addFields`, `Serializer.ts`, lazy fields/methods |
-| [`.claude/docs/threading-and-rendezvous.md`](docs/threading-and-rendezvous.md) | `src/node/{host,task}.ts`, worker messaging, termination, `nodes/Task.ts` rendezvous, shared control array, debugger multi-thread halt |
+| [`.claude/docs/threading-and-rendezvous.md`](docs/threading-and-rendezvous.md) | `src/node/{host,task}.ts`, worker messaging, termination, `nodes/Task.ts` rendezvous, shared control array, debugger multi-thread halt, background worker (`BackgroundWorker.ts`, `backgroundHost.ts`, async `roUrlTransfer`/`roTextureManager`) |
 | [`.claude/docs/packaging-encryption.md`](docs/packaging-encryption.md) | `--pack`/`.bpk`, `packageEncryption.ts`, `src/{cli,api}/package.ts`, FileSystem source overlay |
 | [`.claude/docs/cli-terminal-rendering.md`](docs/cli-terminal-rendering.md) | `src/cli/display.ts`, terminal frame output (`-a`/`-u`/`-i`), `--log`, anything printing mid-run |
 

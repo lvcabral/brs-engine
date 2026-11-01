@@ -22,6 +22,7 @@ import {
     ThreadUpdate,
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
+import { connectBackground, releaseBackground } from "./backgroundHost";
 
 // NOTE: Keep in sync with `src/api/task.ts` (the browser task broker). Both implement the same
 // task-spawn protocol and thread-update relay; only the Worker API and event routing differ.
@@ -36,6 +37,8 @@ const MAX_TASKS = 30;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
+/** Each task thread's connection to the background worker (`backgroundHost.ts`). */
+const backgroundThreads: Map<number, number> = new Map();
 /** Task workers that have started running (see `drainWorkerOutput`). */
 const onlineWorkers: WeakSet<Worker> = new WeakSet();
 /**
@@ -162,6 +165,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     };
     notifyHost("debug", `[task:host] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
+    backgroundThreads.set(taskData.id, connectBackground(taskWorker, workerEntry));
     taskWorker.postMessage(taskPayload);
 }
 
@@ -236,6 +240,8 @@ async function endTask(taskId: number) {
         taskWorker.removeAllListeners("message");
         taskWorker.terminate().catch(() => {});
         tasks.delete(taskId);
+        releaseBackground(backgroundThreads.get(taskId));
+        backgroundThreads.delete(taskId);
         // Cancel any pending queued writes so an in-flight wait that resolves after the worker is
         // gone can't surface a stale "dropped update" error against the next app to run.
         threadSyncToTask.get(taskId)?.dispose();
@@ -269,6 +275,10 @@ export async function resetTasks() {
         worker.removeAllListeners("message");
         worker.terminate().catch(() => {});
     }
+    for (const thread of backgroundThreads.values()) {
+        releaseBackground(thread);
+    }
+    backgroundThreads.clear();
     for (const shared of threadSyncToTask.values()) {
         shared.dispose();
     }

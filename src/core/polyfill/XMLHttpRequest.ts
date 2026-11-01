@@ -18,7 +18,6 @@
  */
 
 import * as fs from "node:fs";
-import * as Url from "node:url";
 import * as http from "node:http";
 import * as https from "node:https";
 import * as crypto from "node:crypto";
@@ -293,26 +292,24 @@ export class XMLHttpRequest {
 
         let ssl = false,
             local = false;
-        const url = Url.parse(this._settings.url);
+        // WHATWG URL (`url.parse()` is deprecated); a relative URL goes to localhost, as it always did
+        const url = new URL(this._settings.url, "http://localhost");
+        // An IPv6 hostname keeps its brackets in a URL, but `http.request()` takes it without them
+        const hostname = url.hostname.replace(/^\[(.*)\]$/, "$1");
         let host;
         // Determine the server
         switch (url.protocol) {
             case "https:":
                 ssl = true;
-                host = url.hostname;
+                host = hostname;
                 break;
 
             case "http:":
-                host = url.hostname;
+                host = hostname;
                 break;
 
             case "file:":
                 local = true;
-                break;
-
-            case undefined:
-            case "":
-                host = "localhost";
                 break;
 
             default:
@@ -471,12 +468,13 @@ export class XMLHttpRequest {
 
                 this.setState(this.HEADERS_RECEIVED);
                 this.status = this._response.statusCode;
+                // `_response` keeps the IncomingMessage (headers); the body goes to `response`
+                const chunks: Buffer[] = [];
 
                 this._response.on("data", (chunk: any) => {
                     // Make sure there's some data
                     if (chunk) {
-                        const data = Buffer.from(chunk);
-                        this._response = Buffer.concat([this.response, data]);
+                        chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
                     }
                     // Don't emit state changes if the connection has been aborted.
                     if (this._sendFlag) {
@@ -489,10 +487,12 @@ export class XMLHttpRequest {
                         // The sendFlag needs to be set before setState is called.  Otherwise if we are chaining callbacks
                         // there can be a timing issue (the callback is called and a new call is made before the flag is reset).
                         this._sendFlag = false;
+                        this.response = Buffer.concat(chunks);
+                        if (this.responseType !== "arraybuffer") {
+                            this.responseText = this.response.toString("utf8");
+                        }
                         // Discard the 'end' event if the connection has been aborted
                         this.setState(this.DONE);
-                        // Construct responseText from response
-                        this.responseText = this._response.toString("utf8");
                     }
                 });
 

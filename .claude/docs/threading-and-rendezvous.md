@@ -1,8 +1,9 @@
-# Threading: node host, rendezvous, debugger halt
+# Threading: node host, rendezvous, debugger halt, background worker
 
 Deep detail on the multi-threaded model. Read this **before** changing `src/node/{host,task}.ts`,
-`src/extensions/scenegraph/nodes/Task.ts`, worker message plumbing, termination, or anything touching the
-shared control array. Companion: [scenegraph-invariants.md](scenegraph-invariants.md) and
+`src/extensions/scenegraph/nodes/Task.ts`, worker message plumbing, termination, anything touching the
+shared control array, or the background worker (`src/core/device/BackgroundWorker.ts`,
+`src/{api,node}/backgroundHost.ts`, async paths in `RoURLTransfer`/`RoTextureManager`). Companion: [scenegraph-invariants.md](scenegraph-invariants.md) and
 `docs/scenegraph-rendezvous.md` (design + performance/reliability/memory/fidelity analysis).
 
 ## Node host mirrors the browser two-thread split
@@ -348,3 +349,34 @@ _before_ the timeout break and **reset the deadline** on pause (debug time mustn
 **must not re-send** the request; `EXIT` calls `notifyDebugEnded()` (not only `CONT`) so `DBT` is never
 left set (deadlock). Normal latency is unaffected — a stored response wakes the waiter immediately via
 `notify`. Gap: `debugThreads` still lists only the current thread.
+
+## Background worker: async transfers and textures off the interpreter thread
+
+`roUrlTransfer`'s `Async*` methods and `roTextureManager`'s async requests (download + decode) run on a
+**background worker** (`src/core/device/BackgroundWorker.ts`) running the same engine bundle; each
+interpreter thread polls its `BackgroundJob`s from its port callback. Invariants:
+
+-   **The host starts the worker, never an interpreter thread**: Chrome only boots a nested worker once
+    its parent turns its event loop, which a spinning interpreter thread never does.
+    `src/{api,node}/backgroundHost.ts` start it, send each app/Task thread its own `MessageChannel` port
+    (`{bg:"connect"}`) **before its payload**, and `releaseBackground(thread)` when that worker ends.
+    Browser: one worker per page; Node: one per app run. Unconnected (non-isolated page, `executeFile`,
+    REPL, vitest) = synchronous fallback.
+-   **Nothing returns by `postMessage`**: results use shared memory in two phases (worker announces the
+    size, the thread allocates an exact `SharedArrayBuffer`, worker fills it); liveness is a shared
+    heartbeat counter (0 until boot), not worker events. A heartbeat stalled 15 s cancels jobs in flight
+    into the synchronous path; new jobs resume when it moves.
+-   **A waiting Task keeps polling its jobs**: `Task.getNewEvents` waits in 10 ms slices while
+    `backgroundJobsPending()`, since jobs settle in the port's other callbacks, which only run after it
+    returns. Regression: "delivers a Task's async transfer on a port that also observes the Task's own
+    fields" (`test/cli/cli-scenegraph.test.js`).
+-   **Node: forward the worker's output and terminate it in `cleanupApp`**: its stdio is piped (workers
+    never write to the terminal), and a piped worker stream that was written to (or is being read)
+    keeps the host process alive. Regression: `test/node/backgroundHost.test.js`.
+-   **Job inputs are transferred**: pass copies (`new Uint8Array(buffer)`), never the file system's
+    cached buffer, which a transfer would detach.
+-   **Never give node-canvas empty image data**: on Linux `createImageData(0, 0)` aborts the process;
+    `decodeImage` rejects 0x0 results and `RoBitmap` refuses empty pixels. Regression: "doesn't cache a
+    decoded result that makes no valid bitmap" (`test/core/BackgroundJobs.test.js`).
+
+The browser path has no automated test: check an app with Task network calls in a real browser.

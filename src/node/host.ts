@@ -33,6 +33,7 @@ import {
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks } from "./task";
+import { connectBackground, stopBackground } from "./backgroundHost";
 
 /**
  * Node worker host: runs a BrightScript app on a dedicated `worker_threads` thread (the render
@@ -146,6 +147,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
             finishApp?.({ exitReason: AppExitReason.Crashed });
         });
         appWorker.postMessage(sharedBuffer);
+        connectBackground(appWorker, workerEntry, (stream, text) => notifyAll(stream, text));
         appWorker.postMessage(payload);
     });
 }
@@ -210,6 +212,7 @@ function sharedMapBuffer(map: Map<string, string> | undefined, initialSize: numb
  */
 async function cleanupApp() {
     await resetTasks();
+    await stopBackground();
     const worker = appWorker;
     appWorker = undefined;
     currentPayload = undefined;

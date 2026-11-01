@@ -42,13 +42,21 @@ The **BrightScript Engine** implements the BrightScript language specification u
   * To make a **web app** access urls from domains other than the one it is hosted, the Cross-Origin Resource Sharing (CORS) browser policy requires the server called to respond with the header `Access-Control-Allow-Origin`, [read more](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS).
     * A simple way to overcome this limitation is to use a CORS proxy like the [cors-anywhere](https://github.com/Rob--W/cors-anywhere), see [customization documentation](./customization.md) to learn how to configure `brs-engine` to use it.
     * If you are using a Chromium based browser (Chrome, Edge, Brave, etc) you can install this [extension](https://chrome.google.com/webstore/detail/allow-cors-access-control/lhobafahddgcelffkeicbaginigeejlf) to bypass CORS.
-  * The _async_ methods (except `AsyncGetSSEvents()`) are actually synchronous and evaluated when `WaitMessage` or `GetMessage` are called.
+  * The _async_ methods (`AsyncGetToString()`, `AsyncGetToFile()`, `AsyncHead()`, `AsyncPostFromString()`, `AsyncPostFromFile()`, `AsyncPostFromFileToFile()`) run on a background worker thread while the app keeps running, and their `roUrlEvent` arrives on the message port when the transfer completes, as on a device. They fall back to running **synchronously** (on the next `Wait()`/`GetMessage()`) in three cases:
+    * The background worker is unavailable: on the browser package, the page is not cross-origin isolated (no `SharedArrayBuffer`); on the Node.js library, the app runs with the synchronous `executeFile()` instead of `executeApp()`.
+    * The background worker stops responding for 15 seconds, for example while busy decoding a huge image. New transfers go back to it once it responds again.
+    * The transfer would fail before reaching the network: an `https` URL with a missing certificates file, or a missing body file for `AsyncPostFromFileToFile()`. The synchronous path reports these errors.
   * Custom/Self-Signed SSL certificates are not supported, the engine will use default browser client certificate database.
   * As custom certificates are not supported these methods are just mocked and do nothing: `EnablePeerVerification`, `EnableHostVerification`, `SetCertificatesDepth`.
   * Cookies are only partially supported, if `EnableCookies` is called and `EnableFreshConnection` is set to `false`, then Cookies from previous calls will be preserved.
   * The other Cookies related methods are just mocked and do nothing: `GetCookies`, `AddCookies`, `ClearCookies`.
   * The following methods are also only mocked but do nothing: `EnableResume`, `SetHttpVersion` and `SetMinimumTransferRate`.
   * **Server-Sent Events (SSE)** (Roku OS 16.0) are supported via `AsyncGetSSEvents()`, delivering real streaming `roSSEvent`s on **both** packages: on Node.js/CLI the request runs in a small per-transfer helper process, and on the browser package the `fetch()` runs on the main thread, bridged to the worker via shared memory (so the CORS limitation above applies too). On the browser package, request headers that browsers forbid script to set (see `AddHeader()`) are silently dropped.
+* The component `roTextureManager` decodes and downloads asynchronous texture requests on a background worker thread, so the app keeps running while images load, as on a device. Requests for the same URI share one load. Limitations:
+  * Like asynchronous `roUrlTransfer` transfers, requests load **synchronously** (when the message port is read) when the background worker is unavailable or not responding (see above). Requests made before `SetMessagePort()` also load synchronously.
+  * Requests with `SetAsync(false)` load synchronously, as documented.
+  * Delivering a loaded image still copies its pixels on the BrightScript thread, about 2 ms for a 2048×1024 image.
+  * The SceneGraph `Poster` node and other nodes that load images from a `uri` field still download and decode them **synchronously**, stalling the frame that loads them.
 * The `roStreamSocket` (TCP) component performs real network I/O, on the Node.js/CLI package only.
   * Supports listening, connecting, accepting connections, and sending/receiving stream data, including `roSocketEvent` delivery via `NotifyReadable()`/`Wait()`, backed by a small helper process per listener/connection.
   * `Connect()` uses a blocking request with an 8-second timeout rather than modeling Roku's async-per-message-port connect semantics.

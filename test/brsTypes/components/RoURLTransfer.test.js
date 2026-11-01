@@ -67,8 +67,8 @@ describe("RoURLTransfer", () => {
 
             // Stub the network layer so no real request is made; capture the body it receives.
             const sentBodies = [];
-            transfer.postFromStringEvent = (body) => {
-                sentBodies.push(body);
+            transfer.executeRequest = (options) => {
+                sentBodies.push(options.body);
                 return new RoURLEvent(1, "", "ok", 200, "", "");
             };
 
@@ -87,8 +87,8 @@ describe("RoURLTransfer", () => {
             transfer.getMethod("setMessagePort").call(interpreter, port);
 
             const sentBodies = [];
-            transfer.postFromStringEvent = (body) => {
-                sentBodies.push(body);
+            transfer.executeRequest = (options) => {
+                sentBodies.push(options.body);
                 return new RoURLEvent(1, "", "ok", 200, "", "");
             };
 
@@ -98,15 +98,6 @@ describe("RoURLTransfer", () => {
             const event = port.getMethod("getMessage").call(interpreter);
             expect(event).toBeInstanceOf(RoURLEvent);
             expect(sentBodies).toEqual(['{"refreshToken":"abc"}']);
-        });
-
-        it("yields invalid when the callback fires with an empty queue", () => {
-            const transfer = new RoURLTransfer();
-            // No body queued: draining must be a no-op (invalid), not a spurious request.
-            transfer.postFromStringEvent = () => {
-                throw new Error("should not be called with an empty queue");
-            };
-            expect(transfer.postFromStringAsync()).toBe(BrsInvalid.Instance);
         });
     });
 
@@ -122,7 +113,7 @@ describe("RoURLTransfer", () => {
             transfer.getMethod("setMessagePort").call(interpreter, port);
 
             let callCount = 0;
-            transfer.getToStringEvent = () => {
+            transfer.executeRequest = () => {
                 callCount++;
                 return new RoURLEvent(1, "", "ok", 200, "", "");
             };
