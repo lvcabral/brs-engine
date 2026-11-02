@@ -89,6 +89,24 @@ describe("clippingRect limits child rendering", () => {
         expect(draw2D.getMaxDepth()).toBe(1);
     });
 
+    test("a clippingRect rotated 90° about its centre clips to its axis-aligned bounding box", () => {
+        // A 100x40 clip at translation [200, 100] rotated 90° around its centre [50, 20] (scene
+        // pivot [250, 120]) covers a 40x100 box centred on the pivot: { x: 230, y: 70 }.
+        const { group } = buildClippedGroup([0, 0, 100, 40], [200, 100]);
+        group.setValue("scaleRotateCenter", vector([50, 20]));
+        group.setValue("rotation", new Float(Math.PI / 2));
+        const draw2D = recordingDraw2D();
+
+        group.renderNode(interpreter, [0, 0], 0, 1, draw2D);
+
+        expect(draw2D.clips).toHaveLength(1);
+        expect(draw2D.clips[0].x).toBeCloseTo(230, 2);
+        expect(draw2D.clips[0].y).toBeCloseTo(70, 2);
+        expect(draw2D.clips[0].width).toBeCloseTo(40, 2);
+        expect(draw2D.clips[0].height).toBeCloseTo(100, 2);
+        expect(draw2D.getDepth()).toBe(0);
+    });
+
     test("an empty clippingRect (default) pushes no clip", () => {
         const { group } = buildClippedGroup(null, [40, 20]);
         const draw2D = recordingDraw2D();

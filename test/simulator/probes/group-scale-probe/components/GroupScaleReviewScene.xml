@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Group Scale Probe, page 2 (PR #1291 review findings). Launch with `scene=review`.
+
+    R1 label-pivot      F1: under a rotated parent, does a node's own scaleRotateCenter move it when the
+                        node has no rotation and no scale of its own? Label vs. Rectangle vs. Group.
+                        Plus a Label and a Rectangle with their OWN rotation around [100,20].
+    R2 poster-pivot     F2: Poster scaled 0.5 and rotated around [100,100] vs. the same Rectangle.
+                        With an Effect (borderRadius) when the firmware has the Effect node.
+    R3 local-units      F3: localBoundingRect of a renderable with its own scale, with and without a
+                        child that covers it (Rectangle, Poster, Label).
+    R4 own-scale-fwd    F4: own scale on node types that place their children themselves:
+                        TargetGroup, PanelSet, LabelList.
+-->
+<component name="GroupScaleReviewScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="bg" width="1920" height="1080" color="0x202020FF" />
+
+        <!-- R1: everything rotated 90deg about the Group's [0,0]; each child is 200x40 with pivot [100,20] -->
+        <Label text="R1" translation="[60,60]" />
+        <Group id="g1a" translation="[200,350]" rotation="1.5707963">
+            <Label id="l1a" width="200" height="40" text="Pivot Label" scaleRotateCenter="[100,20]" color="0xFFFFFFFF" />
+        </Group>
+        <Group id="g1b" translation="[400,350]" rotation="1.5707963">
+            <Rectangle id="r1b" width="200" height="40" scaleRotateCenter="[100,20]" color="0x40A0E0FF" />
+        </Group>
+        <Group id="g1c" translation="[600,350]" rotation="1.5707963">
+            <Group id="gg1c" scaleRotateCenter="[100,20]">
+                <Rectangle id="r1c" width="200" height="40" color="0xE0E040FF" />
+            </Group>
+        </Group>
+        <!-- own rotation 0.5 around [100,20], unrotated parent -->
+        <Rectangle id="r1d" translation="[900,200]" width="200" height="40" rotation="0.5" scaleRotateCenter="[100,20]" color="0x40E04080" />
+        <Label id="l1d" translation="[900,200]" width="200" height="40" rotation="0.5" scaleRotateCenter="[100,20]" text="Own Rotation" color="0xFFFFFFFF" />
+        <!-- own rotation 0.5 around [100,20], parent rotated 90deg -->
+        <Group id="g1e" translation="[1400,350]" rotation="1.5707963">
+            <Rectangle id="r1e" width="200" height="40" rotation="0.5" scaleRotateCenter="[100,20]" color="0x40E04080" />
+            <Label id="l1e" width="200" height="40" rotation="0.5" scaleRotateCenter="[100,20]" text="Both Rotated" color="0xFFFFFFFF" />
+        </Group>
+
+        <!-- R2: scale 0.5 + rotation 0.5 around [100,100] -->
+        <Label text="R2" translation="[60,440]" />
+        <Poster id="p2" translation="[100,500]" uri="pkg:/images/tile.png" width="200" height="200" scale="[0.5,0.5]" rotation="0.5" scaleRotateCenter="[100,100]" />
+        <Rectangle id="r2" translation="[350,500]" width="200" height="200" scale="[0.5,0.5]" rotation="0.5" scaleRotateCenter="[100,100]" color="0xE04040FF" />
+        <Poster id="p2e" translation="[600,500]" uri="pkg:/images/tile.png" width="200" height="200" scale="[0.5,0.5]" rotation="0.5" scaleRotateCenter="[100,100]" />
+
+        <!-- R3: own scale 0.5 -->
+        <Label text="R3" translation="[860,440]" />
+        <Rectangle id="r3a" translation="[900,500]" width="200" height="200" scale="[0.5,0.5]" color="0x40A0E0FF">
+            <Rectangle id="c3a" width="200" height="200" color="0xE0E04080" />
+        </Rectangle>
+        <Rectangle id="r3b" translation="[1150,500]" width="200" height="200" scale="[0.5,0.5]" color="0x40A0E0FF" />
+        <Poster id="p3c" translation="[1400,500]" uri="pkg:/images/tile.png" width="200" height="200" scale="[0.5,0.5]">
+            <Rectangle id="c3c" width="50" height="50" color="0xE04040FF" />
+        </Poster>
+        <Label id="l3d" translation="[1650,500]" text="Scaled" scale="[0.5,0.5]" color="0xFFFFFFFF" />
+
+        <!-- R4: own scale 0.5 on self-placing containers -->
+        <Label text="R4" translation="[60,760]" />
+        <TargetGroup id="tg4" translation="[100,820]" scale="[0.5,0.5]" itemComponentName="ProbeTargetItem" />
+        <LabelList id="ll4" translation="[500,820]" scale="[0.5,0.5]" itemSize="[300,50]" />
+        <PanelSet id="ps4" translation="[900,780]" scale="[0.25,0.25]" />
+
+        <Timer id="settleTimer" duration="1.5" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            eff = CreateObject("roSGNode", "Effect")
+            if eff <> invalid
+                eff.borderRadius = [30, 30, 30, 30]
+                m.top.findNode("p2e").effect = eff
+                m.effect = "yes"
+            else
+                m.effect = "no"
+            end if
+
+            tg = m.top.findNode("tg4")
+            ts = CreateObject("roSGNode", "TargetSet")
+            ts.targetRects = [{x: 0, y: 0, width: 200, height: 200}, {x: 240, y: 0, width: 200, height: 200}]
+            tg.targetSet = ts
+            tc = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to 1
+                item = tc.createChild("ContentNode")
+                item.title = "T" + itos(i)
+            end for
+            tg.content = tc
+
+            ll = m.top.findNode("ll4")
+            lc = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to 2
+                item = lc.createChild("ContentNode")
+                item.title = "List item " + itos(i)
+            end for
+            ll.content = lc
+
+            ps = m.top.findNode("ps4")
+            panel = ps.createChild("Panel")
+            panel.id = "pn4"
+            panel.panelSize = "medium"
+            m.panel = panel
+            fill = panel.createChild("Rectangle")
+            fill.id = "bx4"
+            fill.width = 300
+            fill.height = 300
+            fill.color = "0x40E040FF"
+
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        sub onSettled()
+            p("R2", "effect", "supported=" + m.effect)
+            rects("R1", ["g1a", "l1a", "g1b", "r1b", "g1c", "gg1c", "r1c", "r1d", "l1d", "g1e", "r1e", "l1e"])
+            rects("R2", ["p2", "r2", "p2e"])
+            rects("R3", ["r3a", "c3a", "r3b", "p3c", "c3c", "l3d"])
+            rects("R4", ["tg4", "ll4", "ps4"])
+            if m.panel <> invalid
+                p("R4", "pn4", "local=" + r(m.panel.localBoundingRect()) + " parent=" + r(m.panel.boundingRect()) + " scene=" + r(m.panel.sceneBoundingRect()))
+                bx = m.panel.findNode("bx4")
+                if bx <> invalid then p("R4", "bx4", "local=" + r(bx.localBoundingRect()) + " parent=" + r(bx.boundingRect()) + " scene=" + r(bx.sceneBoundingRect()))
+            end if
+            ll = m.top.findNode("ll4")
+            for i = 0 to 2
+                key = "item" + itos(i)
+                p("R4", "ll4", key + " scene=" + r(ll.sceneSubBoundingRect(key)))
+            end for
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        sub rects(caseId as string, ids as object)
+            for each id in ids
+                node = m.top.findNode(id)
+                if node = invalid
+                    p(caseId, id, "<not found>")
+                else
+                    p(caseId, id, "local=" + r(node.localBoundingRect()) + " parent=" + r(node.boundingRect()) + " scene=" + r(node.sceneBoundingRect()))
+                end if
+            end for
+        end sub
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(caseId as string, nodeId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + caseId + "|" + nodeId + "|" + detail
+        end sub
+    ]]></script>
+</component>

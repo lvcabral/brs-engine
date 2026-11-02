@@ -140,6 +140,21 @@ describe("pruned layout refresh", () => {
         expect(rightInner.rectToScene.y).toBe(20);
     });
 
+    test("an ancestor scale change invalidates settled children via the context check", () => {
+        const { scene, right, rightInner } = buildTwoSubtrees();
+        scene.getBoundingRect("toParent", interpreter);
+        const passes = rightInner.layoutPassCount;
+
+        // Scale the right container: its children are NOT stale and lay out in its local units, so
+        // their incoming origin, angle and opacity are unchanged. Only the ancestors' scale in the
+        // context check forces them to re-lay-out at the new scene size.
+        right.setValue("scale", vector([0.5, 0.5]));
+        scene.getBoundingRect("toParent", interpreter);
+
+        expect(rightInner.layoutPassCount).toBeGreaterThan(passes);
+        expect(rightInner.rectToScene).toEqual({ x: 500, y: 0, width: 40, height: 20 });
+    });
+
     test("content mutation reaches the consuming grid through the field boundary", () => {
         // A ContentNode tree hangs off a FIELD, not the render tree — writing into it must
         // still stale-mark the consuming node (and its ancestors) so a pruned refresh

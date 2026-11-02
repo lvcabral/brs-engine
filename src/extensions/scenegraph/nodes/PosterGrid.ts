@@ -21,6 +21,7 @@ import { Poster } from "./Poster";
 import { Label } from "./Label";
 import { ScrollingLabel } from "./ScrollingLabel";
 import { sgRoot } from "../SGRoot";
+import { rotateTranslation } from "../SGUtil";
 
 type PosterGridMetadata = ArrayGrid.Metadata & {
     caption1Lines?: number;
@@ -259,7 +260,8 @@ export class PosterGrid extends ArrayGrid {
         const placement = this.getCaptionPlacement();
         const captionsExtendLayout = this.requiresCaptionZone(placement);
         const hasSections = this.metadata.length > 0;
-        const sceneBottom = (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0);
+        const screen = this.visibleSceneRect();
+        const sceneBottom = screen.y + screen.height;
         let lastRowIndex = -1;
         let lastRowNumber = -1;
         let renderedRows = 0;
@@ -397,6 +399,9 @@ export class PosterGrid extends ArrayGrid {
         // wrap/section dividers, which also advance itemRect.y, are counted.
         const startY = itemRect.y;
         let renderedRows = 0;
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
+        const screenBottom = screen.y + screen.height;
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getRenderRowIndex(r);
             if (rowIndex < 0 || rowIndex >= contentLength) {
@@ -469,7 +474,7 @@ export class PosterGrid extends ArrayGrid {
             // extent, so breaking on the scene edge must not silently drop it.
             const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
             itemRect.y += rowHeightWithCaptions + rowGap;
-            if (itemRect.y > (this.sceneRect?.y ?? 0) + (this.sceneRect?.height ?? 0)) {
+            if (itemRect.y > screenBottom) {
                 break;
             }
         }
@@ -1131,7 +1136,8 @@ class PosterGridItem extends Group {
             return;
         }
         this.syncChildNodes();
-        const drawTrans = this.getDrawTranslation(origin, angle);
+        const scale = this.getValueJS("scale") as number[];
+        const drawTrans = this.getDrawTranslation(origin, angle, scale);
         const offsetY = this.layout.offsetY ?? 0;
         const rect = {
             x: drawTrans[0],
@@ -1141,10 +1147,25 @@ class PosterGridItem extends Group {
         };
         const rotation = angle + this.getRotation();
         const combinedOpacity = opacity * this.getOpacity();
-        this.updateBoundingRects(rect, origin, rotation);
-        const childOrigin = [drawTrans[0], drawTrans[1] + offsetY];
-        this.renderChildren(interpreter, childOrigin, rotation, combinedOpacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, combinedOpacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, combinedOpacity, draw2D);
+    }
+
+    /** The children sit below the caption zone: `offsetY` local units down, inside the scale frame. */
+    protected renderChildNodes(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const offsetY = this.layout?.offsetY ?? 0;
+        if (offsetY !== 0) {
+            const offset = angle === 0 ? [0, offsetY] : rotateTranslation([0, offsetY], angle);
+            origin = [origin[0] + offset[0], origin[1] + offset[1]];
+        }
+        super.renderChildNodes(interpreter, origin, angle, opacity, draw2D);
     }
 
     private syncChildNodes() {

@@ -13,6 +13,7 @@ import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { Group } from "./Group";
 import { brsValueOf } from "../factory/Serializer";
+import { invertSceneMap } from "../SGUtil";
 
 export class MaskGroup extends Group {
     readonly defaultFields: FieldModel[] = [
@@ -63,17 +64,31 @@ export class MaskGroup extends Group {
             brsValueOf({ width: this.sceneRect.width, height: this.sceneRect.height, alphaEnable: true })
         );
         const offDraw = new IfDraw2D(offscreen);
+        // The offscreen bitmap is in screen pixels, while the children draw in this node's parent
+        // units: give it the ancestors' scale the main canvas already carries.
+        const map = this.sceneMap;
+        offscreen.getContext().setTransform(map.sx, 0, 0, map.sy, map.bx, map.by);
         // Group.renderNode handles transforms, child rendering, bounding rects, and render tracking.
         super.renderNodeContent(interpreter, origin, angle, opacity, offDraw);
+        offscreen.getContext().setTransform(1, 0, 0, 1, 0, 0);
 
         // The mask coordinate system origin is the group origin in scene space (translation applied).
         // Note: any rotation on the MaskGroup itself rotates the children (handled above) but the mask
         // is applied in axis-aligned scene space, which is an accepted limitation of the simulation.
+        // DEVICE-OBSERVED (Roku OS 16, probe `test/simulator/probes/group-scale-probe` S8): an
+        // ancestor's scale moves the mask with the content but leaves `maskSize` unscaled, so a
+        // 200x200 round mask over content scaled to 100x100 shows a quarter circle.
         const nodeTrans = this.getTranslation();
-        this.applyMask(offscreen, maskBitmap, origin[0] + nodeTrans[0], origin[1] + nodeTrans[1]);
+        const maskX = (origin[0] + nodeTrans[0]) * map.sx + map.bx;
+        const maskY = (origin[1] + nodeTrans[1]) * map.sy + map.by;
+        this.applyMask(offscreen, maskBitmap, maskX, maskY);
 
-        // Children were already drawn at the group opacity, so composite the masked result as-is.
-        draw2D.doDrawScaledObject(0, 0, 1, 1, offscreen);
+        // Children were already drawn at the group opacity, so composite the masked result as-is,
+        // undoing the ancestors' scale on the main canvas so offscreen pixels land 1:1 on screen.
+        const inverse = invertSceneMap(map);
+        if (inverse) {
+            draw2D.doDrawScaledObject(inverse.bx, inverse.by, inverse.sx, inverse.sy, offscreen);
+        }
         releaseCanvas(offscreen.getCanvas());
     }
 

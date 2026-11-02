@@ -19,6 +19,7 @@ import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
 import { sgClock } from "./SGClock";
+import { IDENTITY_SCENE_MAP, SceneMap } from "./SGUtil";
 import type { SoundEffect } from "./nodes/SoundEffect";
 import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
@@ -285,6 +286,13 @@ export class SGRoot {
      * `Node.isLayoutPass(draw2D)`, never directly.
      */
     paintSuppressed: boolean = false;
+
+    /**
+     * Map from the coordinates the node being rendered draws in to scene coordinates: the scale of
+     * every ancestor Group, which `Group.renderChildren` applies once as a canvas transform. Identity
+     * outside a scaled subtree; reset by `Node.layoutNode`/`paintNode` for each traversal.
+     */
+    sceneMap: SceneMap = IDENTITY_SCENE_MAP;
 
     private audioFlags: number = -1;
     private audioIndex: number = -1;

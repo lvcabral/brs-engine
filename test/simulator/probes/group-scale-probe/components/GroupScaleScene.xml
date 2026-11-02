@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Group Scale Probe (PR #1257 review findings).
+
+    S1 scaled-rects      F1: does boundingRect()/localBoundingRect() of a child include the ANCESTOR's scale?
+    S2 layoutgroup       F1: LayoutGroup under a scaled Group - spacing in local units or double-scaled?
+    S3 pivot-poster      F2: Poster with own scaleRotateCenter under a scaled Group - pivot shift?
+    S4 postergrid        F3: PosterGrid items under a scaled Group (sub rects + screenshot)
+    S5 labels            F4: Label vs MultiStyleLabel vs MonospaceLabel under a scaled Group
+    S6 rotation          F5: own rotation + pivot inside a rotated Group - content vs. children
+    S7 inherit-false     F7: inheritParentTransform=false under a scaled + translated Group
+    S8 maskgroup         F6: MaskGroup under a scaled Group (screenshot only)
+    S9 pr-cases          the PR's own group-scale-app numbers, for a device baseline
+-->
+<component name="GroupScaleScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="bg" width="1920" height="1080" color="0x202020FF" />
+
+        <!-- S1 -->
+        <Label text="S1" translation="[60,60]" />
+        <Group id="g1" translation="[100,100]" scale="[0.5,0.5]">
+            <Rectangle id="c1" translation="[20,10]" width="64" height="64" color="0xE04040FF" />
+        </Group>
+
+        <!-- S2: scaled vs. unscaled LayoutGroup with identical content -->
+        <Label text="S2" translation="[360,60]" />
+        <Group id="g2" translation="[400,100]" scale="[0.5,0.5]">
+            <LayoutGroup id="lg2" layoutDirection="vert" itemSpacings="[10]">
+                <Rectangle id="a2" width="50" height="50" color="0x40E040FF" />
+                <Rectangle id="b2" width="50" height="50" color="0x40A0E0FF" />
+                <Rectangle id="c2" width="50" height="50" color="0xE0E040FF" />
+            </LayoutGroup>
+        </Group>
+        <LayoutGroup id="lg2u" translation="[500,100]" layoutDirection="vert" itemSpacings="[10]">
+            <Rectangle id="a2u" width="50" height="50" color="0x40E040FF" />
+            <Rectangle id="b2u" width="50" height="50" color="0x40A0E0FF" />
+            <Rectangle id="c2u" width="50" height="50" color="0xE0E040FF" />
+        </LayoutGroup>
+
+        <!-- S3: own scale 1, own pivot [50,50], ancestor scale 0.5 -->
+        <Label text="S3" translation="[660,60]" />
+        <Group id="g3" translation="[700,100]" scale="[0.5,0.5]">
+            <Poster id="p3" uri="pkg:/images/tile.png" width="100" height="100" scaleRotateCenter="[50,50]">
+                <Rectangle id="k3" width="20" height="20" color="0xFF00FFFF" />
+            </Poster>
+        </Group>
+
+        <!-- S6: rotated parent (90deg about [0,0]) with a child rotated 45deg about its own [50,50] -->
+        <Label text="S6" translation="[1260,60]" />
+        <Group id="g6" translation="[1400,100]" rotation="1.5707963">
+            <Rectangle id="r6" width="100" height="100" rotation="0.7853982" scaleRotateCenter="[50,50]" color="0x40E0E0FF">
+                <Rectangle id="gc6" width="20" height="20" color="0xE04040FF" />
+            </Rectangle>
+        </Group>
+
+        <!-- S4: scaled vs. unscaled PosterGrid -->
+        <Label text="S4" translation="[60,380]" />
+        <Group id="g4" translation="[100,420]" scale="[0.5,0.5]">
+            <PosterGrid id="pg4" basePosterSize="[100,100]" numColumns="3" numRows="1" itemSpacing="[20,0]" />
+        </Group>
+        <PosterGrid id="pg4u" translation="[100,560]" basePosterSize="[100,100]" numColumns="3" numRows="1" itemSpacing="[20,0]" />
+
+        <!-- S5: scaled vs. unscaled labels -->
+        <Label text="S5" translation="[660,380]" />
+        <Group id="g5" translation="[700,420]" scale="[0.5,0.5]">
+            <Label id="l5" text="Scaled Label" />
+            <MultiStyleLabel id="ms5" translation="[0,60]" text="Scaled MultiStyle" />
+            <MonospaceLabel id="mo5" translation="[0,120]" text="Scaled Mono" />
+        </Group>
+        <Group id="g5u" translation="[1000,420]">
+            <Label id="l5u" text="Scaled Label" />
+            <MultiStyleLabel id="ms5u" translation="[0,60]" text="Scaled MultiStyle" />
+            <MonospaceLabel id="mo5u" translation="[0,120]" text="Scaled Mono" />
+        </Group>
+
+        <!-- S7: inheritParentTransform=false vs. default sibling -->
+        <Label text="S7" translation="[1360,380]" />
+        <Group id="g7" translation="[1400,420]" scale="[0.5,0.5]">
+            <Rectangle id="r7" translation="[40,40]" width="64" height="64" color="0xE08040FF" inheritParentTransform="false" />
+            <Rectangle id="r7b" translation="[200,40]" width="64" height="64" color="0x8040E0FF" />
+        </Group>
+
+        <!-- S8: MaskGroup inside a scaled Group, round mask over a 200x200 tile -->
+        <Label text="S8" translation="[60,740]" />
+        <Group id="g8" translation="[100,780]" scale="[0.5,0.5]">
+            <MaskGroup id="mg8" translation="[200,0]" maskUri="pkg:/images/mask.png" maskSize="[200,200]">
+                <Poster id="p8" uri="pkg:/images/tile.png" width="200" height="200" />
+            </MaskGroup>
+        </Group>
+        <MaskGroup id="mg8u" translation="[400,780]" maskUri="pkg:/images/mask.png" maskSize="[200,200]">
+            <Poster id="p8u" uri="pkg:/images/tile.png" width="200" height="200" />
+        </MaskGroup>
+
+        <!-- S9: the PR's own repro (group-scale-app), shifted on screen -->
+        <Label text="S9" translation="[960,740]" />
+        <Group id="ball" translation="[1000,800]" scaleRotateCenter="[32,32]" scale="[0.5,0.5]">
+            <Rectangle id="shade" width="64" height="64" color="0x40E040FF" />
+            <Group id="nested" scale="[0.5,0.5]">
+                <Rectangle id="dot" width="64" height="64" color="0xE04040FF" />
+            </Group>
+        </Group>
+        <Group id="spun" translation="[1300,800]" scaleRotateCenter="[32,32]" rotation="3.14159265">
+            <Rectangle id="chip" width="32" height="32" color="0x40A0E0FF" />
+        </Group>
+
+        <Timer id="settleTimer" duration="1.0" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            for each id in ["pg4", "pg4u"]
+                root = CreateObject("roSGNode", "ContentNode")
+                for i = 0 to 2
+                    item = root.createChild("ContentNode")
+                    item.hdGridPosterUrl = "pkg:/images/tile.png"
+                end for
+                m.top.findNode(id).content = root
+            end for
+
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        sub onSettled()
+            rects("S1", ["g1", "c1"])
+            rects("S2", ["g2", "lg2", "a2", "b2", "c2", "lg2u", "a2u", "b2u", "c2u"])
+            trans("S2", ["a2", "b2", "c2", "a2u", "b2u", "c2u"])
+            rects("S3", ["g3", "p3", "k3"])
+            rects("S4", ["g4", "pg4", "pg4u"])
+            for each id in ["pg4", "pg4u"]
+                node = m.top.findNode(id)
+                for c = 0 to 2
+                    key = "item0_" + itos(c)
+                    p("S4", id, key + " sub=" + r(node.subBoundingRect(key)) + " scene=" + r(node.sceneSubBoundingRect(key)))
+                end for
+            end for
+            rects("S5", ["g5", "l5", "ms5", "mo5", "l5u", "ms5u", "mo5u"])
+            rects("S6", ["g6", "r6", "gc6"])
+            rects("S7", ["g7", "r7", "r7b"])
+            rects("S8", ["g8", "mg8", "p8", "mg8u", "p8u"])
+            rects("S9", ["shade", "ball", "dot", "nested", "chip", "spun"])
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        sub rects(caseId as string, ids as object)
+            for each id in ids
+                node = m.top.findNode(id)
+                if node = invalid
+                    p(caseId, id, "<not found>")
+                else
+                    p(caseId, id, "local=" + r(node.localBoundingRect()) + " parent=" + r(node.boundingRect()) + " scene=" + r(node.sceneBoundingRect()))
+                end if
+            end for
+        end sub
+
+        sub trans(caseId as string, ids as object)
+            for each id in ids
+                t = m.top.findNode(id).translation
+                p(caseId, id, "translation=[" + n(t[0]) + "," + n(t[1]) + "]")
+            end for
+        end sub
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(caseId as string, nodeId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + caseId + "|" + nodeId + "|" + detail
+        end sub
+    ]]></script>
+</component>

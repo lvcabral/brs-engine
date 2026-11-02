@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { Node, Group, MarkupGrid, RowList, ZoomRowList, ContentNode, sgRoot } = scenegraph;
-const { BrsDevice, Interpreter, BrsString } = core;
+const { BrsDevice, Interpreter, BrsString, Float, RoArray } = core;
 
 describe("ifSGNodeBoundingRect sub-part methods", () => {
     beforeAll(() => {
@@ -69,6 +69,29 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         });
         // An item that was never rendered (no component yet) falls back to the grid's rect.
         expect(grid.getSubBoundingRect("toParent", "item7")).toEqual(grid.rectToParent);
+    });
+
+    // DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe` S4): under a scaled ancestor the
+    // parent and local sub part rects stay in those spaces' units (a 100x100 PosterGrid item under
+    // a Group scaled 0.5 reports subBoundingRect 100x100 and sceneSubBoundingRect 50x50).
+    test("re-expresses an itemX scene rect in parent and local units under ancestor and own scale", () => {
+        const grid = new MarkupGrid();
+        grid.setValue("scale", new RoArray([new Float(0.5), new Float(0.5)]));
+        // Ancestors scale by 0.5 and the grid by another 0.5: one parent unit is 0.5 scene units,
+        // one local unit 0.25.
+        grid.sceneMap = { sx: 0.5, sy: 0.5, bx: 50, by: 100 };
+        grid.rectToParent = { x: 10, y: 20, width: 220, height: 400 };
+        grid.rectLocal = { x: 0, y: 0, width: 440, height: 800 };
+        grid.rectToScene = { x: 55, y: 110, width: 110, height: 200 };
+
+        const item1 = new Group([], "Group");
+        item1.rectToScene = { x: 55, y: 131, width: 110, height: 18 };
+        grid.itemComps[1] = item1;
+        grid.content.push(new ContentNode(), new ContentNode());
+
+        expect(grid.getSubBoundingRect("toParent", "item1")).toEqual({ x: 10, y: 62, width: 220, height: 36 });
+        expect(grid.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 84, width: 440, height: 72 });
+        expect(grid.getSubBoundingRect("toScene", "item1")).toEqual(item1.rectToScene);
     });
 
     // RowList (and ZoomRowList) hold a 2-D grid of item components in rowItemComps[row][col], not the

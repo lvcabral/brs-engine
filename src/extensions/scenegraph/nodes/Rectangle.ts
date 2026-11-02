@@ -42,7 +42,7 @@ export class Rectangle extends Group {
         const rect = { x: drawTrans[0], y: drawTrans[1], width: size.width, height: size.height };
         applyNodeEffect(
             this,
-            rect,
+            this.getPivotDrawRect(rect, angle, scale, center),
             draw2D,
             opacity,
             (rect, rotation, scale) => {
@@ -50,10 +50,10 @@ export class Rectangle extends Group {
             },
             rotation,
             center,
-            [scale[0], scale[1]]
+            scale as [number, number]
         );
-        this.updateBoundingRects(this.applyScale(rect, scale), origin, rotation, scale);
-        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
+        this.updateBoundingRects(rect, origin, rotation, scale);
+        this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D, scale);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
     }
 }

@@ -120,6 +120,8 @@ export class LabelList extends ArrayGrid {
         const rowSpacingDefault = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
         const itemRect = { ...rect, width: itemSize[0], height: itemSize[1] };
         let sectionIndex = displayRows + 1;
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
         for (let r = 0; r < displayRows; r++) {
             const index = this.getRenderRowIndex(r);
             if (index < 0) {
@@ -140,7 +142,7 @@ export class LabelList extends ArrayGrid {
             this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             itemRect.y += itemRect.height + (rowSpacings[index] ?? rowSpacingDefault);
             lastIndex = index;
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(screen, itemRect)) {
                 break;
             }
         }

@@ -209,6 +209,8 @@ export class MarkupGrid extends ArrayGrid {
         const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
         let sectionIndex = 0;
         const rowWidth = this.numCols * itemSize[0] + (this.numCols - 1) * spacing[0];
+        // Culling bound for the loop below; the scene map does not change inside it.
+        const screen = this.visibleSceneRect();
         for (let r = 0; r < displayRows; r++) {
             const rowIndex = this.getRenderRowIndex(r);
             if (rowIndex < 0) {
@@ -241,13 +243,13 @@ export class MarkupGrid extends ArrayGrid {
                 this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 lastIndex = index;
-                if (!RectRect(this.sceneRect, itemRect)) {
+                if (!RectRect(screen, itemRect)) {
                     break;
                 }
             }
             itemRect.x = rect.x;
             itemRect.y += itemRect.height + (rowSpacings[absoluteRow] ?? spacing[1]);
-            if (!RectRect(this.sceneRect, itemRect)) {
+            if (!RectRect(screen, itemRect)) {
                 break;
             }
         }

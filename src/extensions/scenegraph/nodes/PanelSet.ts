@@ -226,7 +226,14 @@ export class PanelSet extends Group {
         return added;
     }
 
-    renderChildren(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+    /** Overrides `renderChildNodes`, not `renderChildren`, so the PanelSet's own scale still applies. */
+    protected renderChildNodes(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         const visiblePanels: Panel[] = this.panels.slice(-2);
         const leftPanelIndex = this.getValueJS("leftPanelIndex") as number;
         let showLeftArrow = leftPanelIndex > 0;
