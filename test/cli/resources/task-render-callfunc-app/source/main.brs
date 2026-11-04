@@ -6,7 +6,7 @@ sub Main()
     scene = screen.CreateScene("MainScene")
     screen.show()
     called = false
-    for i = 0 to 250
+    for i = 0 to 1000
         msg = wait(20, port)
         if not called and scene.taskReady
             ' callFunc onto the Task from this thread's own loop, outside any observer nesting --

@@ -5,7 +5,7 @@ sub Main()
     screen.setMessagePort(port)
     scene = screen.CreateScene("MainScene")
     screen.show()
-    for i = 0 to 250
+    for i = 0 to 1000
         msg = wait(20, port)
         if scene.finished then exit for
     end for
