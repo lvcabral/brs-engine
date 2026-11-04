@@ -8,7 +8,7 @@ sub Main()
     scene = screen.CreateScene("MainScene")
     screen.show()
     ' Pump the message loop until the Task observer fires (the scene sets `done`).
-    for i = 0 to 250
+    for i = 0 to 1000
         msg = wait(20, port)
         if scene.done then exit for
     end for
