@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="UriOnlyScene" extends="Scene">
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            ' Mimics apps (e.g. Playlet) that never set the id field and walk a list of
+            ' fallback uris, advancing on "failed" until one reports "ready".
+            m.uris = ["pkg:/missing-library.zip", "pkg:/library.zip"]
+            m.index = 0
+            loadLibrary()
+        end sub
+
+        sub loadLibrary()
+            if m.lib <> invalid
+                m.lib.unobserveField("loadStatus")
+                m.top.removeChild(m.lib)
+            end if
+            m.lib = m.top.createChild("ComponentLibrary")
+            m.lib.observeField("loadStatus", "onLoadStatusChanged")
+            m.lib.uri = m.uris[m.index]
+            print "after set uri: " + m.lib.loadStatus
+        end sub
+
+        sub onLoadStatusChanged()
+            print "uri-only loadStatus changed: " + m.lib.loadStatus
+            if m.lib.loadStatus = "ready"
+                bar = createObject("roSGNode", "MyComponentLib:Bar")
+                print "uri-only bar subtype: " + bar.subtype()
+            else if m.lib.loadStatus = "failed"
+                m.index++
+                loadLibrary()
+            end if
+        end sub
+        ]]>
+    </script>
+</component>

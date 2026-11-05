@@ -46,12 +46,29 @@ describe("ComponentLibrary", () => {
             .filter((arg) => arg !== "" && !arg.startsWith("[sg]"));
 
         expect(output).toEqual([
-            // ComponentLibrary created via CreateObject; loading triggers once both id and uri are set.
+            // ComponentLibrary created via CreateObject; loading triggers once the uri is set.
             "after set id: none",
             "after set uri: loading",
             "runtime loadStatus changed: ready",
             "[Bar::init]",
             "runtime bar subtype: MyComponentLib:Bar",
+        ]);
+    });
+    test("loads a library configured with only a uri and advances a fallback chain", async () => {
+        await execute([resourceFile("component-library", "source", "urionly.brs")], outputStreams);
+
+        const output = allArgs(outputStreams.stdout.write)
+            .map((arg) => arg.trimEnd())
+            .filter((arg) => arg !== "" && !arg.startsWith("[sg]"));
+
+        expect(output).toEqual([
+            // No id is set: the uri alone starts the load, and "failed" lets the app try the next uri.
+            "after set uri: loading",
+            "uri-only loadStatus changed: failed",
+            "after set uri: loading",
+            "uri-only loadStatus changed: ready",
+            "[Bar::init]",
+            "uri-only bar subtype: MyComponentLib:Bar",
         ]);
     });
 });

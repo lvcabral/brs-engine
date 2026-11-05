@@ -39,7 +39,7 @@ export class ComponentLibrary extends Node {
     }
 
     /**
-     * Triggers library loading once both `uri` and `id` are set.
+     * Triggers library loading once `uri` is set.
      * @param index Field name being set
      * @param value New BrightScript value
      * @param alwaysNotify Observer notification override for new fields
@@ -49,13 +49,13 @@ export class ComponentLibrary extends Node {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync: boolean = true) {
         super.setValue(index, value, alwaysNotify, kind, sync);
         const field = index.toLowerCase();
-        if (field === "id" || field === "uri") {
+        if (field === "uri") {
             this.maybeLoadLibrary();
         }
     }
 
     /**
-     * Loads the library once its `uri` and `id` are both known. The library is fetched and
+     * Loads the library once its `uri` is known (`id` is optional, as on a device). The library is fetched and
      * compiled synchronously (the BrightScript event loop never yields, so an async load would
      * never complete mid-execution), but the final "ready"/"failed" transition of `loadStatus`
      * is deferred to the next render frame. This way an `observeField("loadStatus", ...)`
@@ -66,18 +66,17 @@ export class ComponentLibrary extends Node {
         if (this.loadTriggered) {
             return;
         }
-        const id = this.getValueJS("id") as string | undefined;
-        const uri = this.getValueJS("uri") as string | undefined;
-        if (!id || !uri) {
+        const uri = (this.getValueJS("uri") as string | undefined)?.trim();
+        if (!uri) {
             return;
         }
         this.loadTriggered = true;
         // Show the in-progress state now; emit the final status on the next frame.
         this.setValueSilent("loadStatus", new BrsString("loading"));
         // Synchronously load (no-op if already loaded, e.g. pre-loaded at startup or shared).
-        loadComponentLibrary(id, uri);
+        loadComponentLibrary(uri, this.getValueJS("id") as string | undefined);
         sgRoot.addPendingLibraryNotification(() => {
-            this.setValue("loadStatus", new BrsString(sgRoot.getLibraryStatus(id) ?? "failed"));
+            this.setValue("loadStatus", new BrsString(sgRoot.getLibraryStatus(uri) ?? "failed"));
         });
     }
 }

@@ -15,12 +15,17 @@ export type LibraryLoadStatus = "none" | "loading" | "ready" | "failed";
 
 /**
  * Builds the reserved volume name used to mount a component library's package.
- * @param id The component library id (the `id` field of the ComponentLibrary node)
- * @returns A valid, unique volume name such as "complib_foo:"
+ * @param uri The component library uri (the `uri` field of the ComponentLibrary node)
+ * @returns A valid, unique volume name such as "complib_1a2b3c4d:"
  */
-export function libraryVolumeName(id: string): string {
-    const sanitized = id.toLowerCase().replaceAll(/[^a-z0-9]+/g, "_");
-    return `complib_${sanitized}:`;
+export function libraryVolumeName(uri: string): string {
+    // FNV-1a hash keeps the name short and stable for any uri.
+    let hash = 0x811c9dc5;
+    for (let i = 0; i < uri.length; i++) {
+        hash ^= uri.codePointAt(i) ?? 0;
+        hash = Math.imul(hash, 0x01000193) >>> 0;
+    }
+    return `complib_${hash.toString(16).padStart(8, "0")}:`;
 }
 
 /**
@@ -86,47 +91,56 @@ function fetchLibraryBytes(uri: string): ArrayBufferLike | undefined {
 
 /**
  * Loads a component library, registering its components into the shared node
- * definition map with the library `id` as a namespace prefix (`id:ComponentName`).
+ * definition map under the namespace the library provides (`Namespace:ComponentName`).
  *
  * The library package is mounted on its own zenFS volume and its `components/` are
  * parsed and wired into the running interpreter, mirroring how the app's own
  * components are set up in the extension's `onBeforeExecute` hook.
  *
- * @param id The library id used as the component namespace prefix
- * @param uri The library package URI (http(s):// or a local volume path)
+ * @param uri The library package URI (http(s):// or a local volume path), also the library key
+ * @param id Optional library id, the namespace fallback when the manifest declares none
  * @returns The resulting load status ("ready" on success, "failed" otherwise)
  */
-export function loadComponentLibrary(id: string, uri: string): LibraryLoadStatus {
+export function loadComponentLibrary(uri: string, id?: string): LibraryLoadStatus {
     const interpreter = sgRoot.interpreter;
-    if (!id.trim() || !uri.trim() || !interpreter) {
+    uri = uri.trim();
+    if (!uri || !interpreter) {
         return "failed";
     }
-    const currentStatus = sgRoot.getLibraryStatus(id);
+    const currentStatus = sgRoot.getLibraryStatus(uri);
     if (currentStatus === "ready" || currentStatus === "failed") {
         // Already resolved (e.g. shared by multiple components or pre-loaded at startup).
         return currentStatus;
     }
-    sgRoot.setLibraryStatus(id, "loading");
-    BrsDevice.stdout.write(`debug,[sg] Loading component library "${id}" from ${uri}`);
+    const label = id?.trim() || uri;
+    sgRoot.setLibraryStatus(uri, "loading");
+    BrsDevice.stdout.write(`debug,[sg] Loading component library "${label}" from ${uri}`);
     try {
         const bytes = fetchLibraryBytes(uri);
         if (!bytes) {
-            sgRoot.setLibraryStatus(id, "failed");
+            sgRoot.setLibraryStatus(uri, "failed");
             return "failed";
         }
-        const volume = libraryVolumeName(id);
+        const volume = libraryVolumeName(uri);
         BrsDevice.fileSystem.mountLibrary(volume, bytes);
         // The component namespace comes from the library manifest's `sg_component_libs_provided`
         // (per Roku); fall back to the node `id` when the manifest does not declare it.
-        const namespace = readLibraryNamespace(volume) ?? id;
+        const namespace = readLibraryNamespace(volume) ?? id?.trim();
+        if (!namespace) {
+            BrsDevice.stderr.write(
+                `warning,[sg] Component library manifest has no sg_component_libs_provided and no id is set: ${uri}`
+            );
+            sgRoot.setLibraryStatus(uri, "failed");
+            return "failed";
+        }
         BrsDevice.stdout.write(
-            `debug,[sg] Mounted component library "${id}" as "${namespace}" (${bytes.byteLength} bytes) at volume ${volume}`
+            `debug,[sg] Mounted component library "${label}" as "${namespace}" (${bytes.byteLength} bytes) at volume ${volume}`
         );
 
         const libMap = getComponentDefinitionMap(BrsDevice.fileSystem, [], namespace, volume);
         if (libMap.size === 0) {
-            BrsDevice.stderr.write(`warning,[sg] Component library "${id}" has no components: ${uri}`);
-            sgRoot.setLibraryStatus(id, "failed");
+            BrsDevice.stderr.write(`warning,[sg] Component library "${label}" has no components: ${uri}`);
+            sgRoot.setLibraryStatus(uri, "failed");
             return "failed";
         }
 
@@ -142,11 +156,11 @@ export function loadComponentLibrary(id: string, uri: string): LibraryLoadStatus
         BrsDevice.stdout.write(
             `debug,[sg] Loaded component library "${namespace}" (${libMap.size} components) from ${uri}`
         );
-        sgRoot.setLibraryStatus(id, "ready");
+        sgRoot.setLibraryStatus(uri, "ready");
         return "ready";
     } catch (err: any) {
-        BrsDevice.stderr.write(`error,[sg] Failed to load component library "${id}" from ${uri}: ${err.message}`);
-        sgRoot.setLibraryStatus(id, "failed");
+        BrsDevice.stderr.write(`error,[sg] Failed to load component library "${label}" from ${uri}: ${err.message}`);
+        sgRoot.setLibraryStatus(uri, "failed");
         return "failed";
     }
 }
