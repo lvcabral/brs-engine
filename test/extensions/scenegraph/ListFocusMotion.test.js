@@ -142,8 +142,9 @@ describe("List focus motion", () => {
 
         advance(99, 1);
         const fraction = row(list);
-        expect(items[0].getValueJS("focusPercent")).toBeCloseTo(1 - fraction, 5);
-        expect(items[1].getValueJS("focusPercent")).toBeCloseTo(fraction, 5);
+        // Published to 3 decimals.
+        expect(items[0].getValueJS("focusPercent")).toBeCloseTo(1 - fraction, 3);
+        expect(items[1].getValueJS("focusPercent")).toBeCloseTo(fraction, 3);
         expect(items[2].getValueJS("focusPercent")).toBe(0);
 
         advance(200);

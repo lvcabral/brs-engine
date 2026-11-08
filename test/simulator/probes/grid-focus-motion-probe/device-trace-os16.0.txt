@@ -1,0 +1,3637 @@
+PROBE|000|0|boot|start
+PROBE|000|0|boot|device model=Roku Express 4K+ os=16.0
+PROBE|0001|8|info|fields GF skipFocusAnimations=false vertFocusAnimationStyle=floatingfocus horizFocusAnimationStyle=floatingfocus numRows=2 numColumns=3 focusRow=[0,] focusColumn=[0,] vertFocusDirection=none horizFocusDirection=none wrapDividerHeight=36 
+PROBE|0002|8|info|fields GW skipFocusAnimations=false vertFocusAnimationStyle=fixedfocuswrap horizFocusAnimationStyle=floatingfocus numRows=2 numColumns=3 focusRow=[0,] focusColumn=[0,] vertFocusDirection=none horizFocusDirection=none wrapDividerHeight=36 
+PROBE|0003|9|info|fields PF skipFocusAnimations=false vertFocusAnimationStyle=floatingfocus horizFocusAnimationStyle=floatingfocus numRows=2 numColumns=3 focusRow=[0,] focusColumn=[0,] vertFocusDirection=none horizFocusDirection=none wrapDividerHeight=36 
+PROBE|0004|9|info|fields PW skipFocusAnimations=false vertFocusAnimationStyle=fixedfocuswrap horizFocusAnimationStyle=floatingfocus numRows=2 numColumns=3 focusRow=[0,] focusColumn=[0,] vertFocusDirection=none horizFocusDirection=none wrapDividerHeight=36 
+PROBE|0005|10|lf|GF.currFocusRow=0
+PROBE|0006|10|lf|GF.currFocusColumn=0
+PROBE|0007|11|lf|GW.currFocusRow=0
+PROBE|0008|11|lf|GW.currFocusColumn=0
+PROBE|0009|12|lf|PF.currFocusRow=0
+PROBE|0010|12|lf|PF.currFocusColumn=0
+PROBE|0011|13|lf|PW.currFocusRow=0
+PROBE|0012|13|lf|PW.currFocusColumn=0
+PROBE|0013|2010|step|0 list:GF
+PROBE|0014|2011|lf|GF.itemFocused=0
+PROBE|0015|2012|act|focus GF itemFocused=0 currFocusRow=0 
+PROBE|0016|2016|item|?.itemHasFocus=true
+PROBE|0017|2018|item|I0.focusPercent=1
+PROBE|0018|2041|frame|fr=0 fc=0 ss=false fp 0@1
+PROBE|0019|4012|step|1 key:Right
+PROBE|await|Right
+PROBE|0020|4194|lf|GF.scrollingStatus=true
+PROBE|0021|4195|item|I0.itemHasFocus=false
+PROBE|0022|4195|lf|GF.itemUnfocused=0
+PROBE|0023|4195|lf|GF.horizFocusDirection=right
+PROBE|0024|4203|frame|fr=0 fc=0 ss=true fp 0@1
+PROBE|0025|4204|lf|GF.currFocusColumn=0.04
+PROBE|0026|4205|item|I0.focusPercent=0.958
+PROBE|0027|4209|frame|fr=0 fc=0.04 ss=true fp 0@0.96
+PROBE|0028|4210|lf|GF.currFocusColumn=0.11
+PROBE|0029|4212|item|I0.focusPercent=0.889
+PROBE|0030|4212|item|I1.focusPercent=0.111
+PROBE|0031|4214|frame|fr=0 fc=0.11 ss=true fp 0@0.89 1@0.11
+PROBE|0032|4215|lf|GF.currFocusColumn=0.16
+PROBE|0033|4217|item|I0.focusPercent=0.842
+PROBE|0034|4218|item|I1.focusPercent=0.158
+PROBE|0035|4230|frame|fr=0 fc=0.16 ss=true fp 0@0.84 1@0.16
+PROBE|0036|4233|lf|GF.currFocusColumn=0.28
+PROBE|0037|4235|item|I0.focusPercent=0.721
+PROBE|0038|4235|item|I1.focusPercent=0.279
+PROBE|0039|4247|frame|fr=0 fc=0.28 ss=true fp 0@0.72 1@0.28
+PROBE|0040|4248|lf|GF.currFocusColumn=0.39
+PROBE|0041|4249|item|I0.focusPercent=0.605
+PROBE|0042|4250|item|I1.focusPercent=0.395
+PROBE|0043|4264|frame|fr=0 fc=0.39 ss=true fp 0@0.61 1@0.39
+PROBE|0044|4264|lf|GF.currFocusColumn=0.5
+PROBE|0045|4266|item|I0.focusPercent=0.5
+PROBE|0046|4267|item|I1.focusPercent=0.5
+PROBE|0047|4280|frame|fr=0 fc=0.5 ss=true fp 0@0.5 1@0.5
+PROBE|0048|4281|lf|GF.currFocusColumn=0.58
+PROBE|0049|4283|item|I0.focusPercent=0.416
+PROBE|0050|4283|item|I1.focusPercent=0.584
+PROBE|0051|4297|frame|fr=0 fc=0.58 ss=true fp 0@0.42 1@0.58
+PROBE|0052|4298|lf|GF.currFocusColumn=0.66
+PROBE|0053|4299|item|I0.focusPercent=0.337
+PROBE|0054|4300|item|I1.focusPercent=0.663
+PROBE|0055|4314|frame|fr=0 fc=0.66 ss=true fp 0@0.34 1@0.66
+PROBE|0056|4315|lf|GF.currFocusColumn=0.73
+PROBE|0057|4317|item|I0.focusPercent=0.268
+PROBE|0058|4317|item|I1.focusPercent=0.732
+PROBE|0059|4331|frame|fr=0 fc=0.73 ss=true fp 0@0.27 1@0.73
+PROBE|0060|4331|lf|GF.currFocusColumn=0.79
+PROBE|0061|4333|item|I0.focusPercent=0.211
+PROBE|0062|4334|item|I1.focusPercent=0.789
+PROBE|0063|4347|frame|fr=0 fc=0.79 ss=true fp 0@0.21 1@0.79
+PROBE|0064|4348|lf|GF.currFocusColumn=0.84
+PROBE|0065|4350|item|I0.focusPercent=0.163
+PROBE|0066|4351|item|I1.focusPercent=0.837
+PROBE|0067|4364|frame|fr=0 fc=0.84 ss=true fp 0@0.16 1@0.84
+PROBE|0068|4365|lf|GF.currFocusColumn=0.88
+PROBE|0069|4367|item|I0.focusPercent=0.121
+PROBE|0070|4367|item|I1.focusPercent=0.879
+PROBE|0071|4381|frame|fr=0 fc=0.88 ss=true fp 0@0.12 1@0.88
+PROBE|0072|4382|lf|GF.currFocusColumn=0.91
+PROBE|0073|4384|item|I0.focusPercent=0.089
+PROBE|0074|4385|item|I1.focusPercent=0.911
+PROBE|0075|4398|frame|fr=0 fc=0.91 ss=true fp 0@0.09 1@0.91
+PROBE|0076|4398|lf|GF.currFocusColumn=0.94
+PROBE|0077|4401|item|I0.focusPercent=0.063
+PROBE|0078|4402|item|I1.focusPercent=0.937
+PROBE|0079|4414|frame|fr=0 fc=0.94 ss=true fp 0@0.06 1@0.94
+PROBE|0080|4415|lf|GF.currFocusColumn=0.96
+PROBE|0081|4417|item|I0.focusPercent=0
+PROBE|0082|4418|item|I1.focusPercent=0.958
+PROBE|0083|4431|frame|fr=0 fc=0.96 ss=true fp 1@0.96
+PROBE|0084|4432|lf|GF.currFocusColumn=0.97
+PROBE|0085|4434|item|I1.focusPercent=0.974
+PROBE|0086|4448|frame|fr=0 fc=0.97 ss=true fp 1@0.97
+PROBE|0087|4448|lf|GF.currFocusColumn=0.98
+PROBE|0088|4451|item|I1.focusPercent=0.984
+PROBE|0089|4464|frame|fr=0 fc=0.98 ss=true fp 1@0.98
+PROBE|0090|4465|lf|GF.currFocusColumn=0.99
+PROBE|0091|4468|item|I1.focusPercent=0.989
+PROBE|0092|4481|frame|fr=0 fc=0.99 ss=true fp 1@0.99
+PROBE|0093|4482|lf|GF.currFocusColumn=0.99
+PROBE|0094|4484|item|I1.focusPercent=0.995
+PROBE|0095|4531|lf|GF.currFocusColumn=1
+PROBE|0096|4534|item|I1.focusPercent=1
+PROBE|0097|4545|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|0098|4549|item|I1.itemHasFocus=true
+PROBE|0099|4549|lf|GF.itemFocused=1
+PROBE|0100|4550|lf|GF.scrollingStatus=false
+PROBE|0101|4551|lf|GF.horizFocusDirection=none
+PROBE|0102|4551|frame|fr=0 fc=1 ss=false fp 1@1
+PROBE|0103|6014|step|2 key:Right
+PROBE|await|Right
+PROBE|0104|6057|lf|GF.scrollingStatus=true
+PROBE|0105|6058|item|I1.itemHasFocus=false
+PROBE|0106|6058|lf|GF.itemUnfocused=1
+PROBE|0107|6058|lf|GF.horizFocusDirection=right
+PROBE|0108|6065|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|0109|6066|lf|GF.currFocusColumn=1.04
+PROBE|0110|6068|item|I1.focusPercent=0.958
+PROBE|0111|6070|frame|fr=0 fc=1.04 ss=true fp 1@0.96
+PROBE|0112|6071|lf|GF.currFocusColumn=1.1
+PROBE|0113|6073|item|I1.focusPercent=0.9
+PROBE|0114|6074|item|I2.focusPercent=0.1
+PROBE|0115|6076|frame|fr=0 fc=1.1 ss=true fp 1@0.9 2@0.1
+PROBE|0116|6077|lf|GF.currFocusColumn=1.15
+PROBE|0117|6079|item|I1.focusPercent=0.847
+PROBE|0118|6080|item|I2.focusPercent=0.153
+PROBE|0119|6083|frame|fr=0 fc=1.15 ss=true fp 1@0.85 2@0.15
+PROBE|0120|6084|lf|GF.currFocusColumn=1.21
+PROBE|0121|6086|item|I1.focusPercent=0.795
+PROBE|0122|6087|item|I2.focusPercent=0.205
+PROBE|0123|6099|frame|fr=0 fc=1.21 ss=true fp 1@0.79 2@0.21
+PROBE|0124|6102|lf|GF.currFocusColumn=1.32
+PROBE|0125|6104|item|I1.focusPercent=0.679
+PROBE|0126|6105|item|I2.focusPercent=0.321
+PROBE|0127|6116|frame|fr=0 fc=1.32 ss=true fp 1@0.68 2@0.32
+PROBE|0128|6117|lf|GF.currFocusColumn=1.43
+PROBE|0129|6119|item|I1.focusPercent=0.568
+PROBE|0130|6120|item|I2.focusPercent=0.432
+PROBE|0131|6133|frame|fr=0 fc=1.43 ss=true fp 1@0.57 2@0.43
+PROBE|0132|6133|lf|GF.currFocusColumn=1.53
+PROBE|0133|6135|item|I1.focusPercent=0.468
+PROBE|0134|6136|item|I2.focusPercent=0.532
+PROBE|0135|6149|frame|fr=0 fc=1.53 ss=true fp 1@0.47 2@0.53
+PROBE|0136|6150|lf|GF.currFocusColumn=1.62
+PROBE|0137|6152|item|I1.focusPercent=0.384
+PROBE|0138|6153|item|I2.focusPercent=0.616
+PROBE|0139|6166|frame|fr=0 fc=1.62 ss=true fp 1@0.38 2@0.62
+PROBE|0140|6167|lf|GF.currFocusColumn=1.69
+PROBE|0141|6169|item|I1.focusPercent=0.311
+PROBE|0142|6169|item|I2.focusPercent=0.689
+PROBE|0143|6183|frame|fr=0 fc=1.69 ss=true fp 1@0.31 2@0.69
+PROBE|0144|6183|lf|GF.currFocusColumn=1.75
+PROBE|0145|6185|item|I1.focusPercent=0.247
+PROBE|0146|6186|item|I2.focusPercent=0.753
+PROBE|0147|6199|frame|fr=0 fc=1.75 ss=true fp 1@0.25 2@0.75
+PROBE|0148|6200|lf|GF.currFocusColumn=1.81
+PROBE|0149|6202|item|I1.focusPercent=0.195
+PROBE|0150|6203|item|I2.focusPercent=0.805
+PROBE|0151|6216|frame|fr=0 fc=1.81 ss=true fp 1@0.19 2@0.81
+PROBE|0152|6217|lf|GF.currFocusColumn=1.85
+PROBE|0153|6219|item|I1.focusPercent=0.147
+PROBE|0154|6220|item|I2.focusPercent=0.853
+PROBE|0155|6233|frame|fr=0 fc=1.85 ss=true fp 1@0.15 2@0.85
+PROBE|0156|6233|lf|GF.currFocusColumn=1.89
+PROBE|0157|6236|item|I1.focusPercent=0.111
+PROBE|0158|6236|item|I2.focusPercent=0.889
+PROBE|0159|6249|frame|fr=0 fc=1.89 ss=true fp 1@0.11 2@0.89
+PROBE|0160|6250|lf|GF.currFocusColumn=1.92
+PROBE|0161|6252|item|I1.focusPercent=0.079
+PROBE|0162|6253|item|I2.focusPercent=0.921
+PROBE|0163|6266|frame|fr=0 fc=1.92 ss=true fp 1@0.08 2@0.92
+PROBE|0164|6267|lf|GF.currFocusColumn=1.94
+PROBE|0165|6269|item|I1.focusPercent=0.058
+PROBE|0166|6270|item|I2.focusPercent=0.942
+PROBE|0167|6283|frame|fr=0 fc=1.94 ss=true fp 1@0.06 2@0.94
+PROBE|0168|6284|lf|GF.currFocusColumn=1.96
+PROBE|0169|6286|item|I1.focusPercent=0
+PROBE|0170|6287|item|I2.focusPercent=0.963
+PROBE|0171|6299|frame|fr=0 fc=1.96 ss=true fp 2@0.96
+PROBE|0172|6300|lf|GF.currFocusColumn=1.98
+PROBE|0173|6303|item|I2.focusPercent=0.979
+PROBE|0174|6316|frame|fr=0 fc=1.98 ss=true fp 2@0.98
+PROBE|0175|6317|lf|GF.currFocusColumn=1.98
+PROBE|0176|6319|item|I2.focusPercent=0.984
+PROBE|0177|6333|lf|GF.currFocusColumn=1.99
+PROBE|0178|6336|item|I2.focusPercent=0.989
+PROBE|0179|6350|frame|fr=0 fc=1.99 ss=true fp 2@0.99
+PROBE|0180|6350|lf|GF.currFocusColumn=1.99
+PROBE|0181|6353|item|I2.focusPercent=0.995
+PROBE|0182|6400|lf|GF.currFocusColumn=2
+PROBE|0183|6402|item|I2.focusPercent=1
+PROBE|0184|6417|item|I2.itemHasFocus=true
+PROBE|0185|6417|lf|GF.itemFocused=2
+PROBE|0186|6418|lf|GF.scrollingStatus=false
+PROBE|0187|6418|lf|GF.horizFocusDirection=none
+PROBE|0188|6419|frame|fr=0 fc=2 ss=false fp 2@1
+PROBE|0189|8015|step|3 key:Right
+PROBE|await|Right
+PROBE|0190|10016|step|4 key:Left
+PROBE|await|Left
+PROBE|0191|10062|lf|GF.scrollingStatus=true
+PROBE|0192|10062|item|I2.itemHasFocus=false
+PROBE|0193|10063|lf|GF.itemUnfocused=2
+PROBE|0194|10063|lf|GF.horizFocusDirection=left
+PROBE|0195|10070|frame|fr=0 fc=2 ss=true fp 2@1
+PROBE|0196|10071|lf|GF.currFocusColumn=1.94
+PROBE|0197|10073|item|I1.focusPercent=0.058
+PROBE|0198|10074|item|I2.focusPercent=0.942
+PROBE|0199|10076|frame|fr=0 fc=1.94 ss=true fp 1@0.06 2@0.94
+PROBE|0200|10076|lf|GF.currFocusColumn=1.88
+PROBE|0201|10078|item|I1.focusPercent=0.121
+PROBE|0202|10079|item|I2.focusPercent=0.879
+PROBE|0203|10081|frame|fr=0 fc=1.88 ss=true fp 1@0.12 2@0.88
+PROBE|0204|10082|lf|GF.currFocusColumn=1.84
+PROBE|0205|10084|item|I1.focusPercent=0.163
+PROBE|0206|10085|item|I2.focusPercent=0.837
+PROBE|0207|10087|frame|fr=0 fc=1.84 ss=true fp 1@0.16 2@0.84
+PROBE|0208|10091|lf|GF.currFocusColumn=1.79
+PROBE|0209|10093|item|I1.focusPercent=0.211
+PROBE|0210|10093|item|I2.focusPercent=0.789
+PROBE|0211|10103|frame|fr=0 fc=1.79 ss=true fp 1@0.21 2@0.79
+PROBE|0212|10104|lf|GF.currFocusColumn=1.67
+PROBE|0213|10106|item|I1.focusPercent=0.326
+PROBE|0214|10107|item|I2.focusPercent=0.674
+PROBE|0215|10120|frame|fr=0 fc=1.67 ss=true fp 1@0.33 2@0.67
+PROBE|0216|10121|lf|GF.currFocusColumn=1.56
+PROBE|0217|10123|item|I1.focusPercent=0.437
+PROBE|0218|10124|item|I2.focusPercent=0.563
+PROBE|0219|10137|frame|fr=0 fc=1.56 ss=true fp 1@0.44 2@0.56
+PROBE|0220|10138|lf|GF.currFocusColumn=1.46
+PROBE|0221|10140|item|I1.focusPercent=0.537
+PROBE|0222|10141|item|I2.focusPercent=0.463
+PROBE|0223|10153|frame|fr=0 fc=1.46 ss=true fp 1@0.54 2@0.46
+PROBE|0224|10154|lf|GF.currFocusColumn=1.38
+PROBE|0225|10157|item|I1.focusPercent=0.621
+PROBE|0226|10158|item|I2.focusPercent=0.379
+PROBE|0227|10170|frame|fr=0 fc=1.38 ss=true fp 1@0.62 2@0.38
+PROBE|0228|10171|lf|GF.currFocusColumn=1.31
+PROBE|0229|10173|item|I1.focusPercent=0.695
+PROBE|0230|10174|item|I2.focusPercent=0.305
+PROBE|0231|10187|frame|fr=0 fc=1.31 ss=true fp 1@0.69 2@0.31
+PROBE|0232|10188|lf|GF.currFocusColumn=1.24
+PROBE|0233|10190|item|I1.focusPercent=0.758
+PROBE|0234|10190|item|I2.focusPercent=0.242
+PROBE|0235|10203|frame|fr=0 fc=1.24 ss=true fp 1@0.76 2@0.24
+PROBE|0236|10204|lf|GF.currFocusColumn=1.19
+PROBE|0237|10206|item|I1.focusPercent=0.811
+PROBE|0238|10207|item|I2.focusPercent=0.189
+PROBE|0239|10220|frame|fr=0 fc=1.19 ss=true fp 1@0.81 2@0.19
+PROBE|0240|10221|lf|GF.currFocusColumn=1.14
+PROBE|0241|10223|item|I1.focusPercent=0.858
+PROBE|0242|10224|item|I2.focusPercent=0.142
+PROBE|0243|10237|frame|fr=0 fc=1.14 ss=true fp 1@0.86 2@0.14
+PROBE|0244|10238|lf|GF.currFocusColumn=1.11
+PROBE|0245|10240|item|I1.focusPercent=0.895
+PROBE|0246|10240|item|I2.focusPercent=0.105
+PROBE|0247|10253|frame|fr=0 fc=1.11 ss=true fp 1@0.89 2@0.11
+PROBE|0248|10254|lf|GF.currFocusColumn=1.07
+PROBE|0249|10256|item|I1.focusPercent=0.926
+PROBE|0250|10257|item|I2.focusPercent=0.074
+PROBE|0251|10270|frame|fr=0 fc=1.07 ss=true fp 1@0.93 2@0.07
+PROBE|0252|10271|lf|GF.currFocusColumn=1.05
+PROBE|0253|10273|item|I1.focusPercent=0.947
+PROBE|0254|10274|item|I2.focusPercent=0.053
+PROBE|0255|10287|frame|fr=0 fc=1.05 ss=true fp 1@0.95 2@0.05
+PROBE|0256|10287|lf|GF.currFocusColumn=1.03
+PROBE|0257|10289|item|I1.focusPercent=0.968
+PROBE|0258|10290|item|I2.focusPercent=0
+PROBE|0259|10303|frame|fr=0 fc=1.03 ss=true fp 1@0.97
+PROBE|0260|10304|lf|GF.currFocusColumn=1.02
+PROBE|0261|10306|item|I1.focusPercent=0.979
+PROBE|0262|10320|frame|fr=0 fc=1.02 ss=true fp 1@0.98
+PROBE|0263|10321|lf|GF.currFocusColumn=1.01
+PROBE|0264|10323|item|I1.focusPercent=0.989
+PROBE|0265|10337|frame|fr=0 fc=1.01 ss=true fp 1@0.99
+PROBE|0266|10337|lf|GF.currFocusColumn=1.01
+PROBE|0267|10340|item|I1.focusPercent=0.995
+PROBE|0268|10354|lf|GF.currFocusColumn=1
+PROBE|0269|10357|item|I1.focusPercent=1
+PROBE|0270|10370|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|0271|10421|item|I1.itemHasFocus=true
+PROBE|0272|10421|lf|GF.itemFocused=1
+PROBE|0273|10422|lf|GF.scrollingStatus=false
+PROBE|0274|10422|lf|GF.horizFocusDirection=none
+PROBE|0275|10424|frame|fr=0 fc=1 ss=false fp 1@1
+PROBE|0276|12016|step|5 key:Down
+PROBE|await|Down
+PROBE|0277|12053|lf|GF.scrollingStatus=true
+PROBE|0278|12053|item|I1.itemHasFocus=false
+PROBE|0279|12054|lf|GF.itemUnfocused=1
+PROBE|0280|12054|lf|GF.vertFocusDirection=down
+PROBE|0281|12058|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|0282|12059|lf|GF.currFocusRow=0.04
+PROBE|0283|12062|item|I1.focusPercent=0.964
+PROBE|0284|12063|frame|fr=0.04 fc=1 ss=true fp 1@0.96
+PROBE|0285|12065|lf|GF.currFocusRow=0.1
+PROBE|0286|12068|item|I1.focusPercent=0.9
+PROBE|0287|12069|item|I4.focusPercent=0.1
+PROBE|0288|12073|frame|fr=0.1 fc=1 ss=true fp 1@0.9 4@0.1
+PROBE|0289|12073|lf|GF.currFocusRow=0.15
+PROBE|0290|12076|item|I1.focusPercent=0.855
+PROBE|0291|12076|item|I4.focusPercent=0.145
+PROBE|0292|12079|frame|fr=0.15 fc=1 ss=true fp 1@0.85 4@0.15
+PROBE|0293|12079|lf|GF.currFocusRow=0.2
+PROBE|0294|12082|item|I1.focusPercent=0.8
+PROBE|0295|12082|item|I4.focusPercent=0.2
+PROBE|0296|12089|frame|fr=0.2 fc=1 ss=true fp 1@0.8 4@0.2
+PROBE|0297|12091|lf|GF.currFocusRow=0.28
+PROBE|0298|12094|item|I1.focusPercent=0.718
+PROBE|0299|12094|item|I4.focusPercent=0.282
+PROBE|0300|12105|frame|fr=0.28 fc=1 ss=true fp 1@0.72 4@0.28
+PROBE|0301|12106|lf|GF.currFocusRow=0.39
+PROBE|0302|12108|item|I1.focusPercent=0.609
+PROBE|0303|12109|item|I4.focusPercent=0.391
+PROBE|0304|12122|frame|fr=0.39 fc=1 ss=true fp 1@0.61 4@0.39
+PROBE|0305|12123|lf|GF.currFocusRow=0.5
+PROBE|0306|12125|item|I1.focusPercent=0.5
+PROBE|0307|12126|item|I4.focusPercent=0.5
+PROBE|0308|12139|frame|fr=0.5 fc=1 ss=true fp 1@0.5 4@0.5
+PROBE|0309|12140|lf|GF.currFocusRow=0.59
+PROBE|0310|12141|item|I1.focusPercent=0.409
+PROBE|0311|12142|item|I4.focusPercent=0.591
+PROBE|0312|12155|frame|fr=0.59 fc=1 ss=true fp 1@0.41 4@0.59
+PROBE|0313|12156|lf|GF.currFocusRow=0.66
+PROBE|0314|12158|item|I1.focusPercent=0.336
+PROBE|0315|12159|item|I4.focusPercent=0.664
+PROBE|0316|12172|frame|fr=0.66 fc=1 ss=true fp 1@0.34 4@0.66
+PROBE|0317|12173|lf|GF.currFocusRow=0.73
+PROBE|0318|12175|item|I1.focusPercent=0.273
+PROBE|0319|12175|item|I4.focusPercent=0.727
+PROBE|0320|12189|frame|fr=0.73 fc=1 ss=true fp 1@0.27 4@0.73
+PROBE|0321|12190|lf|GF.currFocusRow=0.79
+PROBE|0322|12192|item|I1.focusPercent=0.209
+PROBE|0323|12193|item|I4.focusPercent=0.791
+PROBE|0324|12205|frame|fr=0.79 fc=1 ss=true fp 1@0.21 4@0.79
+PROBE|0325|12206|lf|GF.currFocusRow=0.84
+PROBE|0326|12208|item|I1.focusPercent=0.164
+PROBE|0327|12209|item|I4.focusPercent=0.836
+PROBE|0328|12222|frame|fr=0.84 fc=1 ss=true fp 1@0.16 4@0.84
+PROBE|0329|12223|lf|GF.currFocusRow=0.87
+PROBE|0330|12225|item|I1.focusPercent=0.127
+PROBE|0331|12226|item|I4.focusPercent=0.873
+PROBE|0332|12239|frame|fr=0.87 fc=1 ss=true fp 1@0.13 4@0.87
+PROBE|0333|12239|lf|GF.currFocusRow=0.91
+PROBE|0334|12241|item|I1.focusPercent=0.091
+PROBE|0335|12242|item|I4.focusPercent=0.909
+PROBE|0336|12255|frame|fr=0.91 fc=1 ss=true fp 1@0.09 4@0.91
+PROBE|0337|12256|lf|GF.currFocusRow=0.94
+PROBE|0338|12258|item|I1.focusPercent=0
+PROBE|0339|12259|item|I4.focusPercent=0.936
+PROBE|0340|12272|frame|fr=0.94 fc=1 ss=true fp 4@0.94
+PROBE|0341|12273|lf|GF.currFocusRow=0.95
+PROBE|0342|12275|item|I4.focusPercent=0.955
+PROBE|0343|12289|frame|fr=0.95 fc=1 ss=true fp 4@0.95
+PROBE|0344|12290|lf|GF.currFocusRow=0.97
+PROBE|0345|12292|item|I4.focusPercent=0.973
+PROBE|0346|12305|frame|fr=0.97 fc=1 ss=true fp 4@0.97
+PROBE|0347|12306|lf|GF.currFocusRow=0.98
+PROBE|0348|12309|item|I4.focusPercent=0.982
+PROBE|0349|12322|frame|fr=0.98 fc=1 ss=true fp 4@0.98
+PROBE|0350|12323|lf|GF.currFocusRow=0.99
+PROBE|0351|12325|item|I4.focusPercent=0.991
+PROBE|0352|12339|frame|fr=0.99 fc=1 ss=true fp 4@0.99
+PROBE|0353|12389|lf|GF.currFocusRow=1
+PROBE|0354|12392|item|I4.focusPercent=1
+PROBE|0355|12406|item|I4.itemHasFocus=true
+PROBE|0356|12407|lf|GF.itemFocused=4
+PROBE|0357|12407|lf|GF.scrollingStatus=false
+PROBE|0358|12408|lf|GF.vertFocusDirection=none
+PROBE|0359|12408|frame|fr=1 fc=1 ss=false fp 4@1
+PROBE|0360|14016|step|6 key:Down
+PROBE|await|Down
+PROBE|0361|14064|lf|GF.scrollingStatus=true
+PROBE|0362|14065|item|I4.itemHasFocus=false
+PROBE|0363|14065|lf|GF.itemUnfocused=4
+PROBE|0364|14065|lf|GF.vertFocusDirection=down
+PROBE|0365|14069|frame|fr=1 fc=1 ss=true fp 4@1
+PROBE|0366|14071|lf|GF.currFocusRow=1.05
+PROBE|0367|14072|item|I4.focusPercent=0.955
+PROBE|0368|14075|frame|fr=1.05 fc=1 ss=true fp 4@0.95
+PROBE|0369|14076|lf|GF.currFocusRow=1.09
+PROBE|0370|14077|item|I4.focusPercent=0.909
+PROBE|0371|14078|item|I7.focusPercent=0.091
+PROBE|0372|14160|frame|fr=1.09 fc=1 ss=true fp 4@0.91 7@0.09
+PROBE|0373|14162|lf|GF.currFocusRow=1.63
+PROBE|0374|14162|item|I4.focusPercent=0.373
+PROBE|0375|14162|item|I7.focusPercent=0.627
+PROBE|0376|14163|frame|fr=1.63 fc=1 ss=true fp 4@0.37 7@0.63
+PROBE|0377|14164|lf|GF.currFocusRow=1.65
+PROBE|0378|14164|item|I4.focusPercent=0.355
+PROBE|0379|14164|item|I7.focusPercent=0.645
+PROBE|0380|14173|frame|fr=1.65 fc=1 ss=true fp 4@0.35 7@0.65
+PROBE|0381|14173|lf|GF.currFocusRow=1.69
+PROBE|0382|14174|item|I4.focusPercent=0.309
+PROBE|0383|14174|item|I7.focusPercent=0.691
+PROBE|0384|14190|frame|fr=1.69 fc=1 ss=true fp 4@0.31 7@0.69
+PROBE|0385|14190|lf|GF.currFocusRow=1.75
+PROBE|0386|14190|item|I4.focusPercent=0.245
+PROBE|0387|14191|item|I7.focusPercent=0.755
+PROBE|0388|14206|frame|fr=1.75 fc=1 ss=true fp 4@0.25 7@0.75
+PROBE|0389|14207|lf|GF.currFocusRow=1.81
+PROBE|0390|14207|item|I4.focusPercent=0.191
+PROBE|0391|14207|item|I7.focusPercent=0.809
+PROBE|0392|14223|frame|fr=1.81 fc=1 ss=true fp 4@0.19 7@0.81
+PROBE|0393|14223|lf|GF.currFocusRow=1.85
+PROBE|0394|14224|item|I4.focusPercent=0.145
+PROBE|0395|14224|item|I7.focusPercent=0.855
+PROBE|0396|14240|frame|fr=1.85 fc=1 ss=true fp 4@0.15 7@0.85
+PROBE|0397|14240|lf|GF.currFocusRow=1.89
+PROBE|0398|14241|item|I4.focusPercent=0.109
+PROBE|0399|14241|item|I7.focusPercent=0.891
+PROBE|0400|14258|frame|fr=1.89 fc=1 ss=true fp 4@0.11 7@0.89
+PROBE|0401|14258|lf|GF.currFocusRow=1.92
+PROBE|0402|14259|item|I4.focusPercent=0
+PROBE|0403|14260|item|I7.focusPercent=0.918
+PROBE|0404|14274|frame|fr=1.92 fc=1 ss=true fp 7@0.92
+PROBE|0405|14275|lf|GF.currFocusRow=1.95
+PROBE|0406|14276|item|I7.focusPercent=0.945
+PROBE|0407|14291|frame|fr=1.95 fc=1 ss=true fp 7@0.95
+PROBE|0408|14292|lf|GF.currFocusRow=1.96
+PROBE|0409|14292|item|I7.focusPercent=0.964
+PROBE|0410|14307|frame|fr=1.96 fc=1 ss=true fp 7@0.96
+PROBE|0411|14308|lf|GF.currFocusRow=1.97
+PROBE|0412|14309|item|I7.focusPercent=0.973
+PROBE|0413|14324|frame|fr=1.97 fc=1 ss=true fp 7@0.97
+PROBE|0414|14325|lf|GF.currFocusRow=1.98
+PROBE|0415|14326|item|I7.focusPercent=0.982
+PROBE|0416|14341|frame|fr=1.98 fc=1 ss=true fp 7@0.98
+PROBE|0417|14342|lf|GF.currFocusRow=1.99
+PROBE|0418|14342|item|I7.focusPercent=0.991
+PROBE|0419|14358|frame|fr=1.99 fc=1 ss=true fp 7@0.99
+PROBE|0420|14408|lf|GF.currFocusRow=2
+PROBE|0421|14409|item|I7.focusPercent=1
+PROBE|0422|14425|item|I7.itemHasFocus=true
+PROBE|0423|14426|lf|GF.itemFocused=7
+PROBE|0424|14426|lf|GF.scrollingStatus=false
+PROBE|0425|14427|lf|GF.vertFocusDirection=none
+PROBE|0426|14428|frame|fr=2 fc=1 ss=false fp 7@1
+PROBE|0427|16017|step|7 key:Down
+PROBE|await|Down
+PROBE|0428|16055|lf|GF.scrollingStatus=true
+PROBE|0429|16056|item|I7.itemHasFocus=false
+PROBE|0430|16056|lf|GF.itemUnfocused=7
+PROBE|0431|16056|lf|GF.vertFocusDirection=down
+PROBE|0432|16063|frame|fr=2 fc=1 ss=true fp 7@1
+PROBE|0433|16064|lf|GF.currFocusRow=2.03
+PROBE|0434|16064|item|I7.focusPercent=0.973
+PROBE|0435|16069|frame|fr=2.03 fc=1 ss=true fp 7@0.97
+PROBE|0436|16070|lf|GF.currFocusRow=2.09
+PROBE|0437|16071|item|I7.focusPercent=0.909
+PROBE|0438|16073|frame|fr=2.09 fc=1 ss=true fp 7@0.91
+PROBE|0439|16110|lf|GF.currFocusRow=2.39
+PROBE|0440|16110|item|I7.focusPercent=0.609
+PROBE|0441|16111|item|I10.focusPercent=0.391
+PROBE|0442|16112|frame|fr=2.39 fc=1 ss=true fp 7@0.61 10@0.39
+PROBE|0443|16113|lf|GF.currFocusRow=2.43
+PROBE|0444|16114|item|I7.focusPercent=0.573
+PROBE|0445|16114|item|I10.focusPercent=0.427
+PROBE|0446|16126|frame|fr=2.43 fc=1 ss=true fp 7@0.57 10@0.43
+PROBE|0447|16127|lf|GF.currFocusRow=2.5
+PROBE|0448|16127|item|I7.focusPercent=0.5
+PROBE|0449|16128|item|I10.focusPercent=0.5
+PROBE|0450|16143|frame|fr=2.5 fc=1 ss=true fp 7@0.5 10@0.5
+PROBE|0451|16143|lf|GF.currFocusRow=2.59
+PROBE|0452|16144|item|I7.focusPercent=0.409
+PROBE|0453|16145|item|I10.focusPercent=0.591
+PROBE|0454|16159|frame|fr=2.59 fc=1 ss=true fp 7@0.41 10@0.59
+PROBE|0455|16160|lf|GF.currFocusRow=2.66
+PROBE|0456|16161|item|I7.focusPercent=0.336
+PROBE|0457|16161|item|I10.focusPercent=0.664
+PROBE|0458|16176|frame|fr=2.66 fc=1 ss=true fp 7@0.34 10@0.66
+PROBE|0459|16176|lf|GF.currFocusRow=2.74
+PROBE|0460|16177|item|I7.focusPercent=0.264
+PROBE|0461|16178|item|I10.focusPercent=0.736
+PROBE|0462|16193|frame|fr=2.74 fc=1 ss=true fp 7@0.26 10@0.74
+PROBE|0463|16193|lf|GF.currFocusRow=2.79
+PROBE|0464|16194|item|I7.focusPercent=0.209
+PROBE|0465|16195|item|I10.focusPercent=0.791
+PROBE|0466|16209|frame|fr=2.79 fc=1 ss=true fp 7@0.21 10@0.79
+PROBE|0467|16210|lf|GF.currFocusRow=2.84
+PROBE|0468|16211|item|I7.focusPercent=0.164
+PROBE|0469|16211|item|I10.focusPercent=0.836
+PROBE|0470|16226|frame|fr=2.84 fc=1 ss=true fp 7@0.16 10@0.84
+PROBE|0471|16227|lf|GF.currFocusRow=2.88
+PROBE|0472|16227|item|I7.focusPercent=0.118
+PROBE|0473|16228|item|I10.focusPercent=0.882
+PROBE|0474|16243|frame|fr=2.88 fc=1 ss=true fp 7@0.12 10@0.88
+PROBE|0475|16243|lf|GF.currFocusRow=2.91
+PROBE|0476|16244|item|I7.focusPercent=0.091
+PROBE|0477|16244|item|I10.focusPercent=0.909
+PROBE|0478|16259|frame|fr=2.91 fc=1 ss=true fp 7@0.09 10@0.91
+PROBE|0479|16260|lf|GF.currFocusRow=2.94
+PROBE|0480|16260|item|I7.focusPercent=0
+PROBE|0481|16261|item|I10.focusPercent=0.936
+PROBE|0482|16276|frame|fr=2.94 fc=1 ss=true fp 10@0.94
+PROBE|0483|16277|lf|GF.currFocusRow=2.95
+PROBE|0484|16278|item|I10.focusPercent=0.955
+PROBE|0485|16293|frame|fr=2.95 fc=1 ss=true fp 10@0.95
+PROBE|0486|16294|lf|GF.currFocusRow=2.97
+PROBE|0487|16294|item|I10.focusPercent=0.973
+PROBE|0488|16310|frame|fr=2.97 fc=1 ss=true fp 10@0.97
+PROBE|0489|16310|lf|GF.currFocusRow=2.98
+PROBE|0490|16311|item|I10.focusPercent=0.982
+PROBE|0491|16326|frame|fr=2.98 fc=1 ss=true fp 10@0.98
+PROBE|0492|16327|lf|GF.currFocusRow=2.99
+PROBE|0493|16328|item|I10.focusPercent=0.991
+PROBE|0494|16343|frame|fr=2.99 fc=1 ss=true fp 10@0.99
+PROBE|0495|16393|lf|GF.currFocusRow=3
+PROBE|0496|16394|item|I10.focusPercent=1
+PROBE|0497|16410|item|I10.itemHasFocus=true
+PROBE|0498|16411|lf|GF.itemFocused=10
+PROBE|0499|16411|lf|GF.scrollingStatus=false
+PROBE|0500|16412|lf|GF.vertFocusDirection=none
+PROBE|0501|16413|frame|fr=3 fc=1 ss=false fp 10@1
+PROBE|0502|18018|step|8 key:Down_Down
+PROBE|await|Down_Down
+PROBE|0503|18061|lf|GF.scrollingStatus=true
+PROBE|0504|18061|item|I10.itemHasFocus=false
+PROBE|0505|18062|lf|GF.itemUnfocused=10
+PROBE|0506|18062|lf|GF.vertFocusDirection=down
+PROBE|0507|18067|frame|fr=3 fc=1 ss=true fp 10@1
+PROBE|0508|18067|lf|GF.currFocusRow=3.05
+PROBE|0509|18069|item|I10.focusPercent=0.955
+PROBE|0510|18073|frame|fr=3.05 fc=1 ss=true fp 10@0.95
+PROBE|0511|18074|lf|GF.currFocusRow=3.11
+PROBE|0512|18076|item|I10.focusPercent=0.891
+PROBE|0513|18077|item|I13.focusPercent=0.109
+PROBE|0514|18078|frame|fr=3.11 fc=1 ss=true fp 10@0.89 13@0.11
+PROBE|0515|18080|lf|GF.currFocusRow=3.15
+PROBE|0516|18081|item|I10.focusPercent=0.845
+PROBE|0517|18082|item|I13.focusPercent=0.155
+PROBE|0518|18095|frame|fr=3.15 fc=1 ss=true fp 10@0.85 13@0.15
+PROBE|0519|18097|lf|GF.currFocusRow=3.27
+PROBE|0520|18098|item|I10.focusPercent=0.727
+PROBE|0521|18099|item|I13.focusPercent=0.273
+PROBE|0522|18112|frame|fr=3.27 fc=1 ss=true fp 10@0.73 13@0.27
+PROBE|0523|18112|lf|GF.currFocusRow=3.38
+PROBE|0524|18113|item|I10.focusPercent=0.618
+PROBE|0525|18114|item|I13.focusPercent=0.382
+PROBE|0526|18128|frame|fr=3.38 fc=1 ss=true fp 10@0.62 13@0.38
+PROBE|0527|18129|lf|GF.currFocusRow=3.48
+PROBE|0528|18130|item|I10.focusPercent=0.518
+PROBE|0529|18131|item|I13.focusPercent=0.482
+PROBE|0530|18145|frame|fr=3.48 fc=1 ss=true fp 10@0.52 13@0.48
+PROBE|0531|18146|lf|GF.currFocusRow=3.58
+PROBE|0532|18146|item|I10.focusPercent=0.418
+PROBE|0533|18147|item|I13.focusPercent=0.582
+PROBE|0534|18161|frame|fr=3.58 fc=1 ss=true fp 10@0.42 13@0.58
+PROBE|0535|18162|lf|GF.currFocusRow=3.65
+PROBE|0536|18163|item|I10.focusPercent=0.345
+PROBE|0537|18164|item|I13.focusPercent=0.655
+PROBE|0538|18178|frame|fr=3.65 fc=1 ss=true fp 10@0.35 13@0.65
+PROBE|0539|18179|lf|GF.currFocusRow=3.72
+PROBE|0540|18180|item|I10.focusPercent=0.282
+PROBE|0541|18181|item|I13.focusPercent=0.718
+PROBE|0542|18195|frame|fr=3.72 fc=1 ss=true fp 10@0.28 13@0.72
+PROBE|0543|18196|lf|GF.currFocusRow=3.78
+PROBE|0544|18196|item|I10.focusPercent=0.218
+PROBE|0545|18197|item|I13.focusPercent=0.782
+PROBE|0546|18211|frame|fr=3.78 fc=1 ss=true fp 10@0.22 13@0.78
+PROBE|0547|18212|lf|GF.currFocusRow=3.83
+PROBE|0548|18213|item|I10.focusPercent=0.173
+PROBE|0549|18214|item|I13.focusPercent=0.827
+PROBE|0550|18228|frame|fr=3.83 fc=1 ss=true fp 10@0.17 13@0.83
+PROBE|0551|18229|lf|GF.currFocusRow=3.87
+PROBE|0552|18230|item|I10.focusPercent=0.127
+PROBE|0553|18230|item|I13.focusPercent=0.873
+PROBE|0554|18245|frame|fr=3.87 fc=1 ss=true fp 10@0.13 13@0.87
+PROBE|0555|18245|lf|GF.currFocusRow=3.91
+PROBE|0556|18246|item|I10.focusPercent=0.091
+PROBE|0557|18247|item|I13.focusPercent=0.909
+PROBE|0558|18262|frame|fr=3.91 fc=1 ss=true fp 10@0.09 13@0.91
+PROBE|0559|18263|lf|GF.currFocusRow=3.94
+PROBE|0560|18263|item|I10.focusPercent=0
+PROBE|0561|18264|item|I13.focusPercent=0.936
+PROBE|0562|18278|frame|fr=3.94 fc=1 ss=true fp 13@0.94
+PROBE|0563|18281|lf|GF.currFocusRow=3.95
+PROBE|0564|18282|item|I13.focusPercent=0.955
+PROBE|0565|18295|frame|fr=3.95 fc=1 ss=true fp 13@0.95
+PROBE|0566|18296|lf|GF.currFocusRow=3.97
+PROBE|0567|18296|item|I13.focusPercent=0.973
+PROBE|0568|18311|frame|fr=3.97 fc=1 ss=true fp 13@0.97
+PROBE|0569|18313|lf|GF.currFocusRow=3.98
+PROBE|0570|18314|item|I13.focusPercent=0.982
+PROBE|0571|18328|frame|fr=3.98 fc=1 ss=true fp 13@0.98
+PROBE|0572|18329|lf|GF.currFocusRow=3.99
+PROBE|0573|18330|item|I13.focusPercent=0.991
+PROBE|0574|18345|frame|fr=3.99 fc=1 ss=true fp 13@0.99
+PROBE|0575|18395|lf|GF.currFocusRow=4
+PROBE|0576|18396|item|I13.focusPercent=1
+PROBE|0577|18413|item|I13.itemHasFocus=true
+PROBE|0578|18413|lf|GF.itemFocused=13
+PROBE|0579|18414|lf|GF.scrollingStatus=false
+PROBE|0580|18414|lf|GF.vertFocusDirection=none
+PROBE|0581|18415|frame|fr=4 fc=1 ss=false fp 13@1
+PROBE|0582|20019|step|9 hold:Down
+PROBE|await|HoldDown
+PROBE|0583|23520|step|10 act:jump0
+PROBE|0584|23521|item|I13.itemHasFocus=false
+PROBE|0585|23521|lf|GF.itemUnfocused=13
+PROBE|0586|23522|lf|GF.currFocusRow=0
+PROBE|0587|23522|lf|GF.currFocusColumn=0
+PROBE|0588|23525|item|I0.itemHasFocus=true
+PROBE|0589|23525|lf|GF.itemFocused=0
+PROBE|0590|23526|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0591|23528|item|I0.focusPercent=1
+PROBE|0592|23530|frame|fr=0 fc=0 ss=false fp 0@1 13@1
+PROBE|0593|25528|step|11 key:Up
+PROBE|await|Up
+PROBE|0594|27529|step|12 hold:Right
+PROBE|await|HoldRight
+PROBE|0595|27580|lf|GF.scrollingStatus=true
+PROBE|0596|27580|item|I0.itemHasFocus=false
+PROBE|0597|27581|lf|GF.itemUnfocused=0
+PROBE|0598|27581|lf|GF.horizFocusDirection=right
+PROBE|0599|27586|frame|fr=0 fc=0 ss=true fp 0@1 13@1
+PROBE|0600|27587|lf|GF.currFocusColumn=0.05
+PROBE|0601|27589|item|I0.focusPercent=0.947
+PROBE|0602|27590|item|I1.focusPercent=0.053
+PROBE|0603|27593|frame|fr=0 fc=0.05 ss=true fp 0@0.95 1@0.05 13@1
+PROBE|0604|27594|lf|GF.currFocusColumn=0.11
+PROBE|0605|27596|item|I0.focusPercent=0.889
+PROBE|0606|27596|item|I1.focusPercent=0.111
+PROBE|0607|27598|frame|fr=0 fc=0.11 ss=true fp 0@0.89 1@0.11 13@1
+PROBE|0608|27599|lf|GF.currFocusColumn=0.16
+PROBE|0609|27601|item|I0.focusPercent=0.842
+PROBE|0610|27601|item|I1.focusPercent=0.158
+PROBE|0611|27604|frame|fr=0 fc=0.16 ss=true fp 0@0.84 1@0.16 13@1
+PROBE|0612|27605|lf|GF.currFocusColumn=0.2
+PROBE|0613|27608|item|I0.focusPercent=0.8
+PROBE|0614|27608|item|I1.focusPercent=0.2
+PROBE|0615|27621|frame|fr=0 fc=0.2 ss=true fp 0@0.8 1@0.2 13@1
+PROBE|0616|27622|lf|GF.currFocusColumn=0.32
+PROBE|0617|27623|item|I0.focusPercent=0.679
+PROBE|0618|27624|item|I1.focusPercent=0.321
+PROBE|0619|27638|frame|fr=0 fc=0.32 ss=true fp 0@0.68 1@0.32 13@1
+PROBE|0620|27638|lf|GF.currFocusColumn=0.43
+PROBE|0621|27641|item|I0.focusPercent=0.574
+PROBE|0622|27642|item|I1.focusPercent=0.426
+PROBE|0623|27654|frame|fr=0 fc=0.43 ss=true fp 0@0.57 1@0.43 13@1
+PROBE|0624|27655|lf|GF.currFocusColumn=0.53
+PROBE|0625|27657|item|I0.focusPercent=0.474
+PROBE|0626|27658|item|I1.focusPercent=0.526
+PROBE|0627|27671|frame|fr=0 fc=0.53 ss=true fp 0@0.47 1@0.53 13@1
+PROBE|0628|27672|lf|GF.currFocusColumn=0.62
+PROBE|0629|27674|item|I0.focusPercent=0.384
+PROBE|0630|27675|item|I1.focusPercent=0.616
+PROBE|0631|27688|frame|fr=0 fc=0.62 ss=true fp 0@0.38 1@0.62 13@1
+PROBE|0632|27688|lf|GF.currFocusColumn=0.69
+PROBE|0633|27691|item|I0.focusPercent=0.311
+PROBE|0634|27692|item|I1.focusPercent=0.689
+PROBE|0635|27704|frame|fr=0 fc=0.69 ss=true fp 0@0.31 1@0.69 13@1
+PROBE|0636|27705|lf|GF.currFocusColumn=0.75
+PROBE|0637|27707|item|I0.focusPercent=0.247
+PROBE|0638|27708|item|I1.focusPercent=0.753
+PROBE|0639|27721|frame|fr=0 fc=0.75 ss=true fp 0@0.25 1@0.75 13@1
+PROBE|0640|27722|lf|GF.currFocusColumn=0.81
+PROBE|0641|27723|item|I0.focusPercent=0.195
+PROBE|0642|27724|item|I1.focusPercent=0.805
+PROBE|0643|27737|frame|fr=0 fc=0.81 ss=true fp 0@0.19 1@0.81 13@1
+PROBE|0644|27738|lf|GF.currFocusColumn=0.85
+PROBE|0645|27740|item|I0.focusPercent=0.153
+PROBE|0646|27741|item|I1.focusPercent=0.847
+PROBE|0647|27754|frame|fr=0 fc=0.85 ss=true fp 0@0.15 1@0.85 13@1
+PROBE|0648|27755|lf|GF.currFocusColumn=0.89
+PROBE|0649|27757|item|I0.focusPercent=0.111
+PROBE|0650|27757|item|I1.focusPercent=0.889
+PROBE|0651|27771|frame|fr=0 fc=0.89 ss=true fp 0@0.11 1@0.89 13@1
+PROBE|0652|27772|lf|GF.currFocusColumn=0.92
+PROBE|0653|27773|item|I0.focusPercent=0.079
+PROBE|0654|27774|item|I1.focusPercent=0.921
+PROBE|0655|27788|frame|fr=0 fc=0.92 ss=true fp 0@0.08 1@0.92 13@1
+PROBE|0656|27789|lf|GF.currFocusColumn=0.94
+PROBE|0657|27791|item|I0.focusPercent=0.058
+PROBE|0658|27792|item|I1.focusPercent=0.942
+PROBE|0659|27804|frame|fr=0 fc=0.94 ss=true fp 0@0.06 1@0.94 13@1
+PROBE|0660|27805|lf|GF.currFocusColumn=0.96
+PROBE|0661|27807|item|I0.focusPercent=0
+PROBE|0662|27808|item|I1.focusPercent=0.963
+PROBE|0663|27821|frame|fr=0 fc=0.96 ss=true fp 1@0.96 13@1
+PROBE|0664|27822|lf|GF.currFocusColumn=0.97
+PROBE|0665|27824|item|I1.focusPercent=0.974
+PROBE|0666|27838|frame|fr=0 fc=0.97 ss=true fp 1@0.97 13@1
+PROBE|0667|27838|lf|GF.currFocusColumn=0.98
+PROBE|0668|27840|item|I1.focusPercent=0.984
+PROBE|0669|27854|frame|fr=0 fc=0.98 ss=true fp 1@0.98 13@1
+PROBE|0670|27855|lf|GF.currFocusColumn=0.99
+PROBE|0671|27857|item|I1.focusPercent=0.989
+PROBE|0672|27871|frame|fr=0 fc=0.99 ss=true fp 1@0.99 13@1
+PROBE|0673|27872|lf|GF.currFocusColumn=0.99
+PROBE|0674|27874|item|I1.focusPercent=0.995
+PROBE|0675|27922|lf|GF.currFocusColumn=1
+PROBE|0676|27923|item|I1.focusPercent=1
+PROBE|0677|27938|frame|fr=0 fc=1 ss=true fp 1@1 13@1
+PROBE|0678|28122|lf|GF.currFocusColumn=1.02
+PROBE|0679|28124|item|I1.focusPercent=0.984
+PROBE|0680|28138|frame|fr=0 fc=1.02 ss=true fp 1@0.98 13@1
+PROBE|0681|28140|lf|GF.currFocusColumn=1.04
+PROBE|0682|28142|item|I1.focusPercent=0.958
+PROBE|0683|28155|frame|fr=0 fc=1.04 ss=true fp 1@0.96 13@1
+PROBE|0684|28155|lf|GF.currFocusColumn=1.07
+PROBE|0685|28158|item|I1.focusPercent=0.926
+PROBE|0686|28171|frame|fr=0 fc=1.07 ss=true fp 1@0.93 13@1
+PROBE|0687|28172|lf|GF.currFocusColumn=1.12
+PROBE|0688|28174|item|I1.focusPercent=0.879
+PROBE|0689|28188|frame|fr=0 fc=1.12 ss=true fp 1@0.88 13@1
+PROBE|0690|28189|lf|GF.currFocusColumn=1.17
+PROBE|0691|28191|item|I1.focusPercent=0.826
+PROBE|0692|28205|frame|fr=0 fc=1.17 ss=true fp 1@0.83 13@1
+PROBE|0693|28205|lf|GF.currFocusColumn=1.24
+PROBE|0694|28208|item|I1.focusPercent=0.758
+PROBE|0695|28221|frame|fr=0 fc=1.24 ss=true fp 1@0.76 13@1
+PROBE|0696|28222|lf|GF.currFocusColumn=1.31
+PROBE|0697|28225|item|I1.focusPercent=0.689
+PROBE|0698|28238|frame|fr=0 fc=1.31 ss=true fp 1@0.69 13@1
+PROBE|0699|28239|lf|GF.currFocusColumn=1.4
+PROBE|0700|28241|item|I1.focusPercent=0.6
+PROBE|0701|28255|frame|fr=0 fc=1.4 ss=true fp 1@0.6 13@1
+PROBE|0702|28256|lf|GF.currFocusColumn=1.49
+PROBE|0703|28258|item|I1.focusPercent=0.505
+PROBE|0704|28272|frame|fr=0 fc=1.49 ss=true fp 1@0.51 13@1
+PROBE|0705|28272|lf|GF.currFocusColumn=1.59
+PROBE|0706|28275|item|I1.focusPercent=0.411
+PROBE|0707|28288|frame|fr=0 fc=1.59 ss=true fp 1@0.41 13@1
+PROBE|0708|28289|lf|GF.currFocusColumn=1.67
+PROBE|0709|28291|item|I1.focusPercent=0.326
+PROBE|0710|28305|frame|fr=0 fc=1.67 ss=true fp 1@0.33 13@1
+PROBE|0711|28306|lf|GF.currFocusColumn=1.75
+PROBE|0712|28308|item|I1.focusPercent=0.247
+PROBE|0713|28322|frame|fr=0 fc=1.75 ss=true fp 1@0.25 13@1
+PROBE|0714|28322|lf|GF.currFocusColumn=1.82
+PROBE|0715|28325|item|I1.focusPercent=0.184
+PROBE|0716|28338|frame|fr=0 fc=1.82 ss=true fp 1@0.18 13@1
+PROBE|0717|28339|lf|GF.currFocusColumn=1.87
+PROBE|0718|28341|item|I1.focusPercent=0.132
+PROBE|0719|28355|frame|fr=0 fc=1.87 ss=true fp 1@0.13 13@1
+PROBE|0720|28356|lf|GF.currFocusColumn=1.92
+PROBE|0721|28358|item|I1.focusPercent=0.084
+PROBE|0722|28372|frame|fr=0 fc=1.92 ss=true fp 1@0.08 13@1
+PROBE|0723|28372|lf|GF.currFocusColumn=1.95
+PROBE|0724|28374|item|I1.focusPercent=0
+PROBE|0725|28388|frame|fr=0 fc=1.95 ss=true fp 13@1
+PROBE|0726|28389|lf|GF.currFocusColumn=1.98
+PROBE|0727|28405|frame|fr=0 fc=1.98 ss=true fp 13@1
+PROBE|0728|28405|lf|GF.currFocusColumn=1.99
+PROBE|0729|28422|frame|fr=0 fc=1.99 ss=true fp 13@1
+PROBE|0730|28422|lf|GF.currFocusColumn=2
+PROBE|0731|28438|frame|fr=0 fc=2 ss=true fp 13@1
+PROBE|0732|28439|item|I2.focusPercent=1
+PROBE|0733|28455|frame|fr=0 fc=2 ss=true fp 2@1 13@1
+PROBE|0734|28819|item|I2.itemHasFocus=true
+PROBE|0735|28819|lf|GF.itemFocused=2
+PROBE|0736|28820|lf|GF.scrollingStatus=false
+PROBE|0737|28820|lf|GF.horizFocusDirection=none
+PROBE|0738|28824|frame|fr=0 fc=2 ss=false fp 2@1 13@1
+PROBE|0739|31029|step|13 act:animate7
+PROBE|0740|31030|lf|GF.scrollingStatus=true
+PROBE|0741|31030|item|I2.itemHasFocus=false
+PROBE|0742|31030|lf|GF.itemUnfocused=2
+PROBE|0743|31031|lf|GF.horizFocusDirection=left
+PROBE|0744|31031|lf|GF.vertFocusDirection=down
+PROBE|0745|31031|act|animate7 itemFocused=2 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0746|31036|frame|fr=0 fc=2 ss=true fp 2@1 13@1
+PROBE|0747|31037|lf|GF.currFocusRow=0.01
+PROBE|0748|31037|lf|GF.currFocusColumn=1.98
+PROBE|0749|31040|item|I2.focusPercent=0.979
+PROBE|0750|31043|frame|fr=0.01 fc=1.98 ss=true fp 2@0.98 13@1
+PROBE|0751|31043|lf|GF.currFocusRow=0.08
+PROBE|0752|31044|lf|GF.currFocusColumn=1.91
+PROBE|0753|31046|item|I2.focusPercent=0.911
+PROBE|0754|31048|frame|fr=0.08 fc=1.91 ss=true fp 2@0.91 13@1
+PROBE|0755|31049|lf|GF.currFocusRow=0.14
+PROBE|0756|31049|lf|GF.currFocusColumn=1.86
+PROBE|0757|31050|item|I2.focusPercent=0.858
+PROBE|0758|31057|frame|fr=0.14 fc=1.86 ss=true fp 2@0.86 13@1
+PROBE|0759|31058|lf|GF.currFocusRow=0.21
+PROBE|0760|31058|lf|GF.currFocusColumn=1.79
+PROBE|0761|31060|item|I2.focusPercent=0.789
+PROBE|0762|31074|frame|fr=0.21 fc=1.79 ss=true fp 2@0.79 13@1
+PROBE|0763|31074|lf|GF.currFocusRow=0.35
+PROBE|0764|31075|lf|GF.currFocusColumn=1.66
+PROBE|0765|31077|item|I2.focusPercent=0.645
+PROBE|0766|31091|frame|fr=0.35 fc=1.66 ss=true fp 2@0.65 13@1
+PROBE|0767|31091|lf|GF.currFocusRow=0.48
+PROBE|0768|31092|lf|GF.currFocusColumn=1.55
+PROBE|0769|31094|item|I2.focusPercent=0.518
+PROBE|0770|31106|frame|fr=0.48 fc=1.55 ss=true fp 2@0.52 13@1
+PROBE|0771|31108|lf|GF.currFocusRow=0.61
+PROBE|0772|31108|lf|GF.currFocusColumn=1.46
+PROBE|0773|31110|item|I2.focusPercent=0.391
+PROBE|0774|31124|frame|fr=0.61 fc=1.46 ss=true fp 2@0.39 13@1
+PROBE|0775|31125|lf|GF.currFocusRow=0.72
+PROBE|0776|31125|lf|GF.currFocusColumn=1.38
+PROBE|0777|31127|item|I2.focusPercent=0.282
+PROBE|0778|31141|frame|fr=0.72 fc=1.38 ss=true fp 2@0.28 13@1
+PROBE|0779|31142|lf|GF.currFocusRow=0.83
+PROBE|0780|31142|lf|GF.currFocusColumn=1.3
+PROBE|0781|31145|item|I2.focusPercent=0.173
+PROBE|0782|31158|frame|fr=0.83 fc=1.3 ss=true fp 2@0.17 13@1
+PROBE|0783|31158|lf|GF.currFocusRow=0.93
+PROBE|0784|31159|lf|GF.currFocusColumn=1.24
+PROBE|0785|31161|item|I2.focusPercent=0
+PROBE|0786|31174|frame|fr=0.93 fc=1.24 ss=true fp 13@1
+PROBE|0787|31175|lf|GF.currFocusRow=1.02
+PROBE|0788|31175|lf|GF.currFocusColumn=1.18
+PROBE|0789|31191|frame|fr=1.02 fc=1.18 ss=true fp 13@1
+PROBE|0790|31192|lf|GF.currFocusRow=1.11
+PROBE|0791|31192|lf|GF.currFocusColumn=1.14
+PROBE|0792|31195|item|I7.focusPercent=0.109
+PROBE|0793|31208|frame|fr=1.11 fc=1.14 ss=true fp 7@0.11 13@1
+PROBE|0794|31209|lf|GF.currFocusRow=1.2
+PROBE|0795|31209|lf|GF.currFocusColumn=1.1
+PROBE|0796|31211|item|I7.focusPercent=0.2
+PROBE|0797|31225|frame|fr=1.2 fc=1.1 ss=true fp 7@0.2 13@1
+PROBE|0798|31225|lf|GF.currFocusRow=1.28
+PROBE|0799|31226|lf|GF.currFocusColumn=1.07
+PROBE|0800|31229|item|I7.focusPercent=0.282
+PROBE|0801|31241|frame|fr=1.28 fc=1.07 ss=true fp 7@0.28 13@1
+PROBE|0802|31242|lf|GF.currFocusRow=1.35
+PROBE|0803|31242|lf|GF.currFocusColumn=1.05
+PROBE|0804|31245|item|I7.focusPercent=0.345
+PROBE|0805|31257|frame|fr=1.35 fc=1.05 ss=true fp 7@0.35 13@1
+PROBE|0806|31258|lf|GF.currFocusRow=1.42
+PROBE|0807|31258|lf|GF.currFocusColumn=1.03
+PROBE|0808|31261|item|I7.focusPercent=0.418
+PROBE|0809|31274|frame|fr=1.42 fc=1.03 ss=true fp 7@0.42 13@1
+PROBE|0810|31275|lf|GF.currFocusRow=1.48
+PROBE|0811|31275|lf|GF.currFocusColumn=1.02
+PROBE|0812|31278|item|I7.focusPercent=0.482
+PROBE|0813|31291|frame|fr=1.48 fc=1.02 ss=true fp 7@0.48 13@1
+PROBE|0814|31292|lf|GF.currFocusRow=1.54
+PROBE|0815|31292|lf|GF.currFocusColumn=1.01
+PROBE|0816|31294|item|I7.focusPercent=0.536
+PROBE|0817|31308|frame|fr=1.54 fc=1.01 ss=true fp 7@0.54 13@1
+PROBE|0818|31308|lf|GF.currFocusRow=1.59
+PROBE|0819|31309|lf|GF.currFocusColumn=1
+PROBE|0820|31311|item|I7.focusPercent=0.591
+PROBE|0821|31324|frame|fr=1.59 fc=1 ss=true fp 7@0.59 13@1
+PROBE|0822|31325|lf|GF.currFocusRow=1.65
+PROBE|0823|31327|item|I7.focusPercent=0.645
+PROBE|0824|31341|frame|fr=1.65 fc=1 ss=true fp 7@0.65 13@1
+PROBE|0825|31342|lf|GF.currFocusRow=1.69
+PROBE|0826|31345|item|I7.focusPercent=0.691
+PROBE|0827|31358|frame|fr=1.69 fc=1 ss=true fp 7@0.69 13@1
+PROBE|0828|31359|lf|GF.currFocusRow=1.73
+PROBE|0829|31361|item|I7.focusPercent=0.727
+PROBE|0830|31375|frame|fr=1.73 fc=1 ss=true fp 7@0.73 13@1
+PROBE|0831|31375|lf|GF.currFocusRow=1.76
+PROBE|0832|31378|item|I7.focusPercent=0.764
+PROBE|0833|31391|lf|GF.horizFocusDirection=none
+PROBE|0834|31392|frame|fr=1.76 fc=1 ss=true fp 7@0.76 13@1
+PROBE|0835|31393|lf|GF.currFocusRow=1.8
+PROBE|0836|31393|item|I7.focusPercent=0.8
+PROBE|0837|31408|frame|fr=1.8 fc=1 ss=true fp 7@0.8 13@1
+PROBE|0838|31409|lf|GF.currFocusRow=1.83
+PROBE|0839|31410|item|I7.focusPercent=0.827
+PROBE|0840|31425|frame|fr=1.83 fc=1 ss=true fp 7@0.83 13@1
+PROBE|0841|31426|lf|GF.currFocusRow=1.85
+PROBE|0842|31427|item|I7.focusPercent=0.855
+PROBE|0843|31442|frame|fr=1.85 fc=1 ss=true fp 7@0.85 13@1
+PROBE|0844|31442|lf|GF.currFocusRow=1.88
+PROBE|0845|31443|item|I7.focusPercent=0.882
+PROBE|0846|31458|frame|fr=1.88 fc=1 ss=true fp 7@0.88 13@1
+PROBE|0847|31459|lf|GF.currFocusRow=1.9
+PROBE|0848|31460|item|I7.focusPercent=0.9
+PROBE|0849|31475|frame|fr=1.9 fc=1 ss=true fp 7@0.9 13@1
+PROBE|0850|31476|lf|GF.currFocusRow=1.92
+PROBE|0851|31476|item|I7.focusPercent=0.918
+PROBE|0852|31492|frame|fr=1.92 fc=1 ss=true fp 7@0.92 13@1
+PROBE|0853|31492|lf|GF.currFocusRow=1.94
+PROBE|0854|31493|item|I7.focusPercent=0.936
+PROBE|0855|31508|frame|fr=1.94 fc=1 ss=true fp 7@0.94 13@1
+PROBE|0856|31509|lf|GF.currFocusRow=1.95
+PROBE|0857|31510|item|I7.focusPercent=0.945
+PROBE|0858|31525|frame|fr=1.95 fc=1 ss=true fp 7@0.95 13@1
+PROBE|0859|31525|lf|GF.currFocusRow=1.96
+PROBE|0860|31526|item|I7.focusPercent=0.964
+PROBE|0861|31542|frame|fr=1.96 fc=1 ss=true fp 7@0.96 13@1
+PROBE|0862|31542|lf|GF.currFocusRow=1.97
+PROBE|0863|31543|item|I7.focusPercent=0.973
+PROBE|0864|31558|frame|fr=1.97 fc=1 ss=true fp 7@0.97 13@1
+PROBE|0865|31575|lf|GF.currFocusRow=1.98
+PROBE|0866|31576|item|I7.focusPercent=0.982
+PROBE|0867|31591|frame|fr=1.98 fc=1 ss=true fp 7@0.98 13@1
+PROBE|0868|31592|lf|GF.currFocusRow=1.99
+PROBE|0869|31593|item|I7.focusPercent=0.991
+PROBE|0870|31608|frame|fr=1.99 fc=1 ss=true fp 7@0.99 13@1
+PROBE|0871|31709|lf|GF.currFocusRow=2
+PROBE|0872|31709|item|I7.focusPercent=1
+PROBE|0873|31726|item|I7.itemHasFocus=true
+PROBE|0874|31726|lf|GF.itemFocused=7
+PROBE|0875|31727|lf|GF.scrollingStatus=false
+PROBE|0876|31727|lf|GF.vertFocusDirection=none
+PROBE|0877|31728|frame|fr=2 fc=1 ss=false fp 7@1 13@1
+PROBE|0878|33031|step|14 act:jump1
+PROBE|0879|33032|item|I7.itemHasFocus=false
+PROBE|0880|33032|lf|GF.itemUnfocused=7
+PROBE|0881|33032|lf|GF.currFocusRow=0
+PROBE|0882|33034|item|I1.itemHasFocus=true
+PROBE|0883|33035|lf|GF.itemFocused=1
+PROBE|0884|33035|act|jump1 itemFocused=1 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0885|33037|item|I1.focusPercent=1
+PROBE|0886|33039|frame|fr=0 fc=1 ss=false fp 1@1 7@1 13@1
+PROBE|0887|35036|step|15 act:skip
+PROBE|0888|35037|act|skip itemFocused=1 currFocusRow=0 skipFocusAnimations=true 
+PROBE|0889|37038|step|16 key:Down
+PROBE|await|Down
+PROBE|0890|37075|lf|GF.scrollingStatus=true
+PROBE|0891|37075|item|I1.itemHasFocus=false
+PROBE|0892|37075|lf|GF.itemUnfocused=1
+PROBE|0893|37076|lf|GF.currFocusRow=1
+PROBE|0894|37078|item|I4.itemHasFocus=true
+PROBE|0895|37078|lf|GF.itemFocused=4
+PROBE|0896|37079|lf|GF.scrollingStatus=false
+PROBE|0897|37079|lf|GF.vertFocusDirection=down
+PROBE|0898|37083|item|I1.focusPercent=0
+PROBE|0899|37084|item|I4.focusPercent=1
+PROBE|0900|37088|frame|fr=1 fc=1 ss=false fp 4@1 7@1 13@1
+PROBE|0901|37099|lf|GF.vertFocusDirection=none
+PROBE|0902|39038|step|17 act:noskip
+PROBE|0903|39039|act|noskip itemFocused=4 currFocusRow=1 skipFocusAnimations=false 
+PROBE|0904|41039|step|18 list:GW
+PROBE|0905|41040|item|I4.itemHasFocus=false
+PROBE|0906|41041|lf|GW.itemFocused=0
+PROBE|0907|41041|act|focus GW itemFocused=0 currFocusRow=0 
+PROBE|0908|41045|item|?.itemHasFocus=true
+PROBE|0909|41047|item|I0.focusPercent=1
+PROBE|0910|41060|frame|fr=0 fc=0 ss=false fp 0@1
+PROBE|0911|43042|step|19 key:Right
+PROBE|await|Right
+PROBE|0912|43086|lf|GW.scrollingStatus=true
+PROBE|0913|43086|item|I0.itemHasFocus=false
+PROBE|0914|43087|lf|GW.itemUnfocused=0
+PROBE|0915|43087|lf|GW.horizFocusDirection=right
+PROBE|0916|43096|frame|fr=0 fc=0 ss=true fp 0@1
+PROBE|0917|43097|lf|GW.currFocusColumn=0.06
+PROBE|0918|43098|item|I0.focusPercent=0.942
+PROBE|0919|43099|item|I1.focusPercent=0.058
+PROBE|0920|43102|frame|fr=0 fc=0.06 ss=true fp 0@0.94 1@0.06
+PROBE|0921|43103|lf|GW.currFocusColumn=0.13
+PROBE|0922|43105|item|I0.focusPercent=0.874
+PROBE|0923|43106|item|I1.focusPercent=0.126
+PROBE|0924|43108|frame|fr=0 fc=0.13 ss=true fp 0@0.87 1@0.13
+PROBE|0925|43108|lf|GW.currFocusColumn=0.18
+PROBE|0926|43110|item|I0.focusPercent=0.816
+PROBE|0927|43111|item|I1.focusPercent=0.184
+PROBE|0928|43120|frame|fr=0 fc=0.18 ss=true fp 0@0.82 1@0.18
+PROBE|0929|43123|lf|GW.currFocusColumn=0.27
+PROBE|0930|43125|item|I0.focusPercent=0.726
+PROBE|0931|43125|item|I1.focusPercent=0.274
+PROBE|0932|43127|frame|fr=0 fc=0.27 ss=true fp 0@0.73 1@0.27
+PROBE|0933|43137|lf|GW.currFocusColumn=0.39
+PROBE|0934|43139|item|I0.focusPercent=0.611
+PROBE|0935|43140|item|I1.focusPercent=0.389
+PROBE|0936|43153|frame|fr=0 fc=0.39 ss=true fp 0@0.61 1@0.39
+PROBE|0937|43154|lf|GW.currFocusColumn=0.49
+PROBE|0938|43156|item|I0.focusPercent=0.511
+PROBE|0939|43157|item|I1.focusPercent=0.489
+PROBE|0940|43170|frame|fr=0 fc=0.49 ss=true fp 0@0.51 1@0.49
+PROBE|0941|43171|lf|GW.currFocusColumn=0.58
+PROBE|0942|43173|item|I0.focusPercent=0.421
+PROBE|0943|43173|item|I1.focusPercent=0.579
+PROBE|0944|43187|frame|fr=0 fc=0.58 ss=true fp 0@0.42 1@0.58
+PROBE|0945|43187|lf|GW.currFocusColumn=0.66
+PROBE|0946|43189|item|I0.focusPercent=0.342
+PROBE|0947|43190|item|I1.focusPercent=0.658
+PROBE|0948|43203|frame|fr=0 fc=0.66 ss=true fp 0@0.34 1@0.66
+PROBE|0949|43204|lf|GW.currFocusColumn=0.73
+PROBE|0950|43206|item|I0.focusPercent=0.274
+PROBE|0951|43207|item|I1.focusPercent=0.726
+PROBE|0952|43220|frame|fr=0 fc=0.73 ss=true fp 0@0.27 1@0.73
+PROBE|0953|43221|lf|GW.currFocusColumn=0.78
+PROBE|0954|43223|item|I0.focusPercent=0.216
+PROBE|0955|43224|item|I1.focusPercent=0.784
+PROBE|0956|43237|frame|fr=0 fc=0.78 ss=true fp 0@0.22 1@0.78
+PROBE|0957|43238|lf|GW.currFocusColumn=0.83
+PROBE|0958|43240|item|I0.focusPercent=0.168
+PROBE|0959|43241|item|I1.focusPercent=0.832
+PROBE|0960|43253|frame|fr=0 fc=0.83 ss=true fp 0@0.17 1@0.83
+PROBE|0961|43254|lf|GW.currFocusColumn=0.87
+PROBE|0962|43256|item|I0.focusPercent=0.126
+PROBE|0963|43257|item|I1.focusPercent=0.874
+PROBE|0964|43270|frame|fr=0 fc=0.87 ss=true fp 0@0.13 1@0.87
+PROBE|0965|43271|lf|GW.currFocusColumn=0.91
+PROBE|0966|43273|item|I0.focusPercent=0.095
+PROBE|0967|43274|item|I1.focusPercent=0.905
+PROBE|0968|43287|frame|fr=0 fc=0.91 ss=true fp 0@0.09 1@0.91
+PROBE|0969|43288|lf|GW.currFocusColumn=0.94
+PROBE|0970|43290|item|I0.focusPercent=0.063
+PROBE|0971|43290|item|I1.focusPercent=0.937
+PROBE|0972|43303|frame|fr=0 fc=0.94 ss=true fp 0@0.06 1@0.94
+PROBE|0973|43304|lf|GW.currFocusColumn=0.95
+PROBE|0974|43306|item|I0.focusPercent=0
+PROBE|0975|43307|item|I1.focusPercent=0.953
+PROBE|0976|43320|frame|fr=0 fc=0.95 ss=true fp 1@0.95
+PROBE|0977|43321|lf|GW.currFocusColumn=0.97
+PROBE|0978|43323|item|I1.focusPercent=0.974
+PROBE|0979|43337|frame|fr=0 fc=0.97 ss=true fp 1@0.97
+PROBE|0980|43338|lf|GW.currFocusColumn=0.98
+PROBE|0981|43340|item|I1.focusPercent=0.984
+PROBE|0982|43353|frame|fr=0 fc=0.98 ss=true fp 1@0.98
+PROBE|0983|43354|lf|GW.currFocusColumn=0.99
+PROBE|0984|43356|item|I1.focusPercent=0.989
+PROBE|0985|43370|frame|fr=0 fc=0.99 ss=true fp 1@0.99
+PROBE|0986|43371|lf|GW.currFocusColumn=0.99
+PROBE|0987|43373|item|I1.focusPercent=0.995
+PROBE|0988|43421|lf|GW.currFocusColumn=1
+PROBE|0989|43423|item|I1.focusPercent=1
+PROBE|0990|43438|item|I1.itemHasFocus=true
+PROBE|0991|43438|lf|GW.itemFocused=1
+PROBE|0992|43439|lf|GW.scrollingStatus=false
+PROBE|0993|43440|lf|GW.horizFocusDirection=none
+PROBE|0994|43440|frame|fr=0 fc=1 ss=false fp 1@1
+PROBE|0995|45043|step|20 key:Right
+PROBE|await|Right
+PROBE|0996|45123|lf|GW.scrollingStatus=true
+PROBE|0997|45123|item|I1.itemHasFocus=false
+PROBE|0998|45124|lf|GW.itemUnfocused=1
+PROBE|0999|45124|lf|GW.horizFocusDirection=right
+PROBE|1000|45129|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|1001|45130|lf|GW.currFocusColumn=1.04
+PROBE|1002|45132|item|I1.focusPercent=0.958
+PROBE|1003|45134|frame|fr=0 fc=1.04 ss=true fp 1@0.96
+PROBE|1004|45135|lf|GW.currFocusColumn=1.09
+PROBE|1005|45137|item|I1.focusPercent=0.905
+PROBE|1006|45137|item|I2.focusPercent=0.095
+PROBE|1007|45139|frame|fr=0 fc=1.09 ss=true fp 1@0.91 2@0.09
+PROBE|1008|45140|lf|GW.currFocusColumn=1.13
+PROBE|1009|45142|item|I1.focusPercent=0.874
+PROBE|1010|45142|item|I2.focusPercent=0.126
+PROBE|1011|45155|frame|fr=0 fc=1.13 ss=true fp 1@0.87 2@0.13
+PROBE|1012|45158|lf|GW.currFocusColumn=1.25
+PROBE|1013|45160|item|I1.focusPercent=0.747
+PROBE|1014|45161|item|I2.focusPercent=0.253
+PROBE|1015|45172|frame|fr=0 fc=1.25 ss=true fp 1@0.75 2@0.25
+PROBE|1016|45173|lf|GW.currFocusColumn=1.37
+PROBE|1017|45175|item|I1.focusPercent=0.632
+PROBE|1018|45176|item|I2.focusPercent=0.368
+PROBE|1019|45189|frame|fr=0 fc=1.37 ss=true fp 1@0.63 2@0.37
+PROBE|1020|45190|lf|GW.currFocusColumn=1.47
+PROBE|1021|45192|item|I1.focusPercent=0.526
+PROBE|1022|45193|item|I2.focusPercent=0.474
+PROBE|1023|45205|frame|fr=0 fc=1.47 ss=true fp 1@0.53 2@0.47
+PROBE|1024|45206|lf|GW.currFocusColumn=1.56
+PROBE|1025|45209|item|I1.focusPercent=0.437
+PROBE|1026|45210|item|I2.focusPercent=0.563
+PROBE|1027|45222|frame|fr=0 fc=1.56 ss=true fp 1@0.44 2@0.56
+PROBE|1028|45223|lf|GW.currFocusColumn=1.65
+PROBE|1029|45225|item|I1.focusPercent=0.353
+PROBE|1030|45226|item|I2.focusPercent=0.647
+PROBE|1031|45239|frame|fr=0 fc=1.65 ss=true fp 1@0.35 2@0.65
+PROBE|1032|45239|lf|GW.currFocusColumn=1.72
+PROBE|1033|45242|item|I1.focusPercent=0.284
+PROBE|1034|45242|item|I2.focusPercent=0.716
+PROBE|1035|45255|frame|fr=0 fc=1.72 ss=true fp 1@0.28 2@0.72
+PROBE|1036|45256|lf|GW.currFocusColumn=1.77
+PROBE|1037|45258|item|I1.focusPercent=0.226
+PROBE|1038|45259|item|I2.focusPercent=0.774
+PROBE|1039|45272|frame|fr=0 fc=1.77 ss=true fp 1@0.23 2@0.77
+PROBE|1040|45273|lf|GW.currFocusColumn=1.83
+PROBE|1041|45275|item|I1.focusPercent=0.174
+PROBE|1042|45276|item|I2.focusPercent=0.826
+PROBE|1043|45289|frame|fr=0 fc=1.83 ss=true fp 1@0.17 2@0.83
+PROBE|1044|45290|lf|GW.currFocusColumn=1.87
+PROBE|1045|45292|item|I1.focusPercent=0.132
+PROBE|1046|45293|item|I2.focusPercent=0.868
+PROBE|1047|45306|frame|fr=0 fc=1.87 ss=true fp 1@0.13 2@0.87
+PROBE|1048|45306|lf|GW.currFocusColumn=1.9
+PROBE|1049|45308|item|I1.focusPercent=0.1
+PROBE|1050|45309|item|I2.focusPercent=0.9
+PROBE|1051|45322|frame|fr=0 fc=1.9 ss=true fp 1@0.1 2@0.9
+PROBE|1052|45323|lf|GW.currFocusColumn=1.93
+PROBE|1053|45325|item|I1.focusPercent=0.068
+PROBE|1054|45326|item|I2.focusPercent=0.932
+PROBE|1055|45339|frame|fr=0 fc=1.93 ss=true fp 1@0.07 2@0.93
+PROBE|1056|45339|lf|GW.currFocusColumn=1.95
+PROBE|1057|45341|item|I1.focusPercent=0
+PROBE|1058|45342|item|I2.focusPercent=0.953
+PROBE|1059|45355|frame|fr=0 fc=1.95 ss=true fp 2@0.95
+PROBE|1060|45356|lf|GW.currFocusColumn=1.97
+PROBE|1061|45359|item|I2.focusPercent=0.968
+PROBE|1062|45372|frame|fr=0 fc=1.97 ss=true fp 2@0.97
+PROBE|1063|45373|lf|GW.currFocusColumn=1.98
+PROBE|1064|45375|item|I2.focusPercent=0.979
+PROBE|1065|45389|frame|fr=0 fc=1.98 ss=true fp 2@0.98
+PROBE|1066|45389|lf|GW.currFocusColumn=1.99
+PROBE|1067|45392|item|I2.focusPercent=0.989
+PROBE|1068|45405|frame|fr=0 fc=1.99 ss=true fp 2@0.99
+PROBE|1069|45406|lf|GW.currFocusColumn=1.99
+PROBE|1070|45408|item|I2.focusPercent=0.995
+PROBE|1071|45473|lf|GW.currFocusColumn=2
+PROBE|1072|45475|item|I2.focusPercent=1
+PROBE|1073|45490|item|I2.itemHasFocus=true
+PROBE|1074|45490|lf|GW.itemFocused=2
+PROBE|1075|45491|lf|GW.scrollingStatus=false
+PROBE|1076|45492|lf|GW.horizFocusDirection=none
+PROBE|1077|45493|frame|fr=0 fc=2 ss=false fp 2@1
+PROBE|1078|47043|step|21 key:Right
+PROBE|await|Right
+PROBE|1079|49045|step|22 key:Left
+PROBE|await|Left
+PROBE|1080|49094|lf|GW.scrollingStatus=true
+PROBE|1081|49094|item|I2.itemHasFocus=false
+PROBE|1082|49095|lf|GW.itemUnfocused=2
+PROBE|1083|49095|lf|GW.horizFocusDirection=left
+PROBE|1084|49100|frame|fr=0 fc=2 ss=true fp 2@1
+PROBE|1085|49101|lf|GW.currFocusColumn=1.94
+PROBE|1086|49104|item|I1.focusPercent=0.058
+PROBE|1087|49105|item|I2.focusPercent=0.942
+PROBE|1088|49107|frame|fr=0 fc=1.94 ss=true fp 1@0.06 2@0.94
+PROBE|1089|49108|lf|GW.currFocusColumn=1.88
+PROBE|1090|49111|item|I1.focusPercent=0.116
+PROBE|1091|49111|item|I2.focusPercent=0.884
+PROBE|1092|49114|frame|fr=0 fc=1.88 ss=true fp 1@0.12 2@0.88
+PROBE|1093|49114|lf|GW.currFocusColumn=1.83
+PROBE|1094|49116|item|I1.focusPercent=0.174
+PROBE|1095|49117|item|I2.focusPercent=0.826
+PROBE|1096|49126|frame|fr=0 fc=1.83 ss=true fp 1@0.17 2@0.83
+PROBE|1097|49129|lf|GW.currFocusColumn=1.74
+PROBE|1098|49131|item|I1.focusPercent=0.263
+PROBE|1099|49132|item|I2.focusPercent=0.737
+PROBE|1100|49142|frame|fr=0 fc=1.74 ss=true fp 1@0.26 2@0.74
+PROBE|1101|49143|lf|GW.currFocusColumn=1.62
+PROBE|1102|49145|item|I1.focusPercent=0.384
+PROBE|1103|49145|item|I2.focusPercent=0.616
+PROBE|1104|49159|frame|fr=0 fc=1.62 ss=true fp 1@0.38 2@0.62
+PROBE|1105|49160|lf|GW.currFocusColumn=1.52
+PROBE|1106|49162|item|I1.focusPercent=0.479
+PROBE|1107|49163|item|I2.focusPercent=0.521
+PROBE|1108|49176|frame|fr=0 fc=1.52 ss=true fp 1@0.48 2@0.52
+PROBE|1109|49177|lf|GW.currFocusColumn=1.43
+PROBE|1110|49179|item|I1.focusPercent=0.574
+PROBE|1111|49180|item|I2.focusPercent=0.426
+PROBE|1112|49193|frame|fr=0 fc=1.43 ss=true fp 1@0.57 2@0.43
+PROBE|1113|49193|lf|GW.currFocusColumn=1.34
+PROBE|1114|49196|item|I1.focusPercent=0.658
+PROBE|1115|49196|item|I2.focusPercent=0.342
+PROBE|1116|49209|frame|fr=0 fc=1.34 ss=true fp 1@0.66 2@0.34
+PROBE|1117|49210|lf|GW.currFocusColumn=1.28
+PROBE|1118|49212|item|I1.focusPercent=0.721
+PROBE|1119|49213|item|I2.focusPercent=0.279
+PROBE|1120|49226|frame|fr=0 fc=1.28 ss=true fp 1@0.72 2@0.28
+PROBE|1121|49227|lf|GW.currFocusColumn=1.22
+PROBE|1122|49229|item|I1.focusPercent=0.784
+PROBE|1123|49230|item|I2.focusPercent=0.216
+PROBE|1124|49243|frame|fr=0 fc=1.22 ss=true fp 1@0.78 2@0.22
+PROBE|1125|49243|lf|GW.currFocusColumn=1.17
+PROBE|1126|49245|item|I1.focusPercent=0.832
+PROBE|1127|49246|item|I2.focusPercent=0.168
+PROBE|1128|49259|frame|fr=0 fc=1.17 ss=true fp 1@0.83 2@0.17
+PROBE|1129|49260|lf|GW.currFocusColumn=1.13
+PROBE|1130|49262|item|I1.focusPercent=0.874
+PROBE|1131|49263|item|I2.focusPercent=0.126
+PROBE|1132|49276|frame|fr=0 fc=1.13 ss=true fp 1@0.87 2@0.13
+PROBE|1133|49277|lf|GW.currFocusColumn=1.09
+PROBE|1134|49279|item|I1.focusPercent=0.911
+PROBE|1135|49280|item|I2.focusPercent=0.089
+PROBE|1136|49293|frame|fr=0 fc=1.09 ss=true fp 1@0.91 2@0.09
+PROBE|1137|49294|lf|GW.currFocusColumn=1.06
+PROBE|1138|49296|item|I1.focusPercent=0.937
+PROBE|1139|49296|item|I2.focusPercent=0.063
+PROBE|1140|49310|frame|fr=0 fc=1.06 ss=true fp 1@0.94 2@0.06
+PROBE|1141|49310|lf|GW.currFocusColumn=1.04
+PROBE|1142|49313|item|I1.focusPercent=0.958
+PROBE|1143|49313|item|I2.focusPercent=0
+PROBE|1144|49326|frame|fr=0 fc=1.04 ss=true fp 1@0.96
+PROBE|1145|49327|lf|GW.currFocusColumn=1.03
+PROBE|1146|49329|item|I1.focusPercent=0.974
+PROBE|1147|49343|frame|fr=0 fc=1.03 ss=true fp 1@0.97
+PROBE|1148|49343|lf|GW.currFocusColumn=1.02
+PROBE|1149|49345|item|I1.focusPercent=0.984
+PROBE|1150|49359|frame|fr=0 fc=1.02 ss=true fp 1@0.98
+PROBE|1151|49360|lf|GW.currFocusColumn=1.01
+PROBE|1152|49362|item|I1.focusPercent=0.995
+PROBE|1153|49376|frame|fr=0 fc=1.01 ss=true fp 1@0.99
+PROBE|1154|49377|lf|GW.currFocusColumn=1
+PROBE|1155|49379|item|I1.focusPercent=1
+PROBE|1156|49393|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|1157|49444|item|I1.itemHasFocus=true
+PROBE|1158|49444|lf|GW.itemFocused=1
+PROBE|1159|49445|lf|GW.scrollingStatus=false
+PROBE|1160|49445|lf|GW.horizFocusDirection=none
+PROBE|1161|49446|frame|fr=0 fc=1 ss=false fp 1@1
+PROBE|1162|51046|step|23 key:Down
+PROBE|await|Down
+PROBE|1163|51089|lf|GW.scrollingStatus=true
+PROBE|1164|51090|item|I1.itemHasFocus=false
+PROBE|1165|51090|lf|GW.itemUnfocused=1
+PROBE|1166|51090|lf|GW.vertFocusDirection=down
+PROBE|1167|51095|frame|fr=0 fc=1 ss=true fp 1@1
+PROBE|1168|51096|lf|GW.currFocusRow=0.05
+PROBE|1169|51096|item|I1.focusPercent=0.955
+PROBE|1170|51101|frame|fr=0.05 fc=1 ss=true fp 1@0.95
+PROBE|1171|51101|lf|GW.currFocusRow=0.09
+PROBE|1172|51102|item|I1.focusPercent=0.909
+PROBE|1173|51103|item|I4.focusPercent=0.091
+PROBE|1174|51106|frame|fr=0.09 fc=1 ss=true fp 1@0.91 4@0.09
+PROBE|1175|51106|lf|GW.currFocusRow=0.14
+PROBE|1176|51107|item|I1.focusPercent=0.864
+PROBE|1177|51107|item|I4.focusPercent=0.136
+PROBE|1178|51128|frame|fr=0.14 fc=1 ss=true fp 1@0.86 4@0.14
+PROBE|1179|51131|lf|GW.currFocusRow=0.32
+PROBE|1180|51132|item|I1.focusPercent=0.682
+PROBE|1181|51132|item|I4.focusPercent=0.318
+PROBE|1182|51145|frame|fr=0.32 fc=1 ss=true fp 1@0.68 4@0.32
+PROBE|1183|51145|lf|GW.currFocusRow=0.44
+PROBE|1184|51146|item|I1.focusPercent=0.564
+PROBE|1185|51147|item|I4.focusPercent=0.436
+PROBE|1186|51148|frame|fr=0.44 fc=1 ss=true fp 1@0.56 4@0.44
+PROBE|1187|51162|lf|GW.currFocusRow=0.54
+PROBE|1188|51163|item|I1.focusPercent=0.464
+PROBE|1189|51163|item|I4.focusPercent=0.536
+PROBE|1190|51178|frame|fr=0.54 fc=1 ss=true fp 1@0.46 4@0.54
+PROBE|1191|51179|lf|GW.currFocusRow=0.63
+PROBE|1192|51179|item|I1.focusPercent=0.373
+PROBE|1193|51180|item|I4.focusPercent=0.627
+PROBE|1194|51195|frame|fr=0.63 fc=1 ss=true fp 1@0.37 4@0.63
+PROBE|1195|51195|lf|GW.currFocusRow=0.7
+PROBE|1196|51196|item|I1.focusPercent=0.3
+PROBE|1197|51197|item|I4.focusPercent=0.7
+PROBE|1198|51211|frame|fr=0.7 fc=1 ss=true fp 1@0.3 4@0.7
+PROBE|1199|51212|lf|GW.currFocusRow=0.76
+PROBE|1200|51213|item|I1.focusPercent=0.236
+PROBE|1201|51213|item|I4.focusPercent=0.764
+PROBE|1202|51228|frame|fr=0.76 fc=1 ss=true fp 1@0.24 4@0.76
+PROBE|1203|51229|lf|GW.currFocusRow=0.82
+PROBE|1204|51230|item|I1.focusPercent=0.182
+PROBE|1205|51231|item|I4.focusPercent=0.818
+PROBE|1206|51245|frame|fr=0.82 fc=1 ss=true fp 1@0.18 4@0.82
+PROBE|1207|51246|lf|GW.currFocusRow=0.86
+PROBE|1208|51246|item|I1.focusPercent=0.136
+PROBE|1209|51248|item|I4.focusPercent=0.864
+PROBE|1210|51262|frame|fr=0.86 fc=1 ss=true fp 1@0.14 4@0.86
+PROBE|1211|51262|lf|GW.currFocusRow=0.91
+PROBE|1212|51263|item|I4.focusPercent=0.909
+PROBE|1213|51278|frame|fr=0.91 fc=1 ss=true fp 1@0.14 4@0.91
+PROBE|1214|51279|lf|GW.currFocusRow=0.94
+PROBE|1215|51280|item|I4.focusPercent=0.936
+PROBE|1216|51295|frame|fr=0.94 fc=1 ss=true fp 1@0.14 4@0.94
+PROBE|1217|51296|lf|GW.currFocusRow=0.95
+PROBE|1218|51296|item|I4.focusPercent=0.955
+PROBE|1219|51312|frame|fr=0.95 fc=1 ss=true fp 1@0.14 4@0.95
+PROBE|1220|51312|lf|GW.currFocusRow=0.97
+PROBE|1221|51313|item|I4.focusPercent=0.973
+PROBE|1222|51328|frame|fr=0.97 fc=1 ss=true fp 1@0.14 4@0.97
+PROBE|1223|51329|lf|GW.currFocusRow=0.98
+PROBE|1224|51330|item|I4.focusPercent=0.982
+PROBE|1225|51345|frame|fr=0.98 fc=1 ss=true fp 1@0.14 4@0.98
+PROBE|1226|51346|lf|GW.currFocusRow=0.99
+PROBE|1227|51346|item|I4.focusPercent=0.991
+PROBE|1228|51362|frame|fr=0.99 fc=1 ss=true fp 1@0.14 4@0.99
+PROBE|1229|51410|lf|GW.currFocusRow=1
+PROBE|1230|51411|item|I4.focusPercent=1
+PROBE|1231|51427|item|I4.itemHasFocus=true
+PROBE|1232|51428|lf|GW.itemFocused=4
+PROBE|1233|51428|lf|GW.scrollingStatus=false
+PROBE|1234|51428|lf|GW.vertFocusDirection=none
+PROBE|1235|51429|frame|fr=1 fc=1 ss=false fp 1@0.14 4@1
+PROBE|1236|53047|step|24 key:Down
+PROBE|await|Down
+PROBE|1237|53148|lf|GW.scrollingStatus=true
+PROBE|1238|53149|item|I4.itemHasFocus=false
+PROBE|1239|53149|lf|GW.itemUnfocused=4
+PROBE|1240|53149|lf|GW.vertFocusDirection=down
+PROBE|1241|53157|frame|fr=1 fc=1 ss=true fp 1@0.14 4@1
+PROBE|1242|53158|lf|GW.currFocusRow=1.08
+PROBE|1243|53159|item|I4.focusPercent=0.918
+PROBE|1244|53163|frame|fr=1.08 fc=1 ss=true fp 1@0.14 4@0.92
+PROBE|1245|53164|lf|GW.currFocusRow=1.11
+PROBE|1246|53165|item|I4.focusPercent=0.891
+PROBE|1247|53165|item|I7.focusPercent=0.109
+PROBE|1248|53167|frame|fr=1.11 fc=1 ss=true fp 1@0.14 4@0.89 7@0.11
+PROBE|1249|53168|lf|GW.currFocusRow=1.15
+PROBE|1250|53168|item|I4.focusPercent=0.845
+PROBE|1251|53169|item|I7.focusPercent=0.155
+PROBE|1252|53180|frame|fr=1.15 fc=1 ss=true fp 1@0.14 4@0.85 7@0.15
+PROBE|1253|53183|lf|GW.currFocusRow=1.26
+PROBE|1254|53184|item|I4.focusPercent=0.736
+PROBE|1255|53185|item|I7.focusPercent=0.264
+PROBE|1256|53197|frame|fr=1.26 fc=1 ss=true fp 1@0.14 4@0.74 7@0.26
+PROBE|1257|53197|lf|GW.currFocusRow=1.38
+PROBE|1258|53198|item|I4.focusPercent=0.618
+PROBE|1259|53199|item|I7.focusPercent=0.382
+PROBE|1260|53213|frame|fr=1.38 fc=1 ss=true fp 1@0.14 4@0.62 7@0.38
+PROBE|1261|53214|lf|GW.currFocusRow=1.49
+PROBE|1262|53215|item|I4.focusPercent=0.509
+PROBE|1263|53215|item|I7.focusPercent=0.491
+PROBE|1264|53230|frame|fr=1.49 fc=1 ss=true fp 1@0.14 4@0.51 7@0.49
+PROBE|1265|53231|lf|GW.currFocusRow=1.59
+PROBE|1266|53231|item|I4.focusPercent=0.409
+PROBE|1267|53232|item|I7.focusPercent=0.591
+PROBE|1268|53247|frame|fr=1.59 fc=1 ss=true fp 1@0.14 4@0.41 7@0.59
+PROBE|1269|53247|lf|GW.currFocusRow=1.67
+PROBE|1270|53248|item|I4.focusPercent=0.327
+PROBE|1271|53249|item|I7.focusPercent=0.673
+PROBE|1272|53263|frame|fr=1.67 fc=1 ss=true fp 1@0.14 4@0.33 7@0.67
+PROBE|1273|53264|lf|GW.currFocusRow=1.74
+PROBE|1274|53265|item|I4.focusPercent=0.264
+PROBE|1275|53265|item|I7.focusPercent=0.736
+PROBE|1276|53280|frame|fr=1.74 fc=1 ss=true fp 1@0.14 4@0.26 7@0.74
+PROBE|1277|53281|lf|GW.currFocusRow=1.8
+PROBE|1278|53281|item|I4.focusPercent=0.2
+PROBE|1279|53282|item|I7.focusPercent=0.8
+PROBE|1280|53297|frame|fr=1.8 fc=1 ss=true fp 1@0.14 4@0.2 7@0.8
+PROBE|1281|53298|lf|GW.currFocusRow=1.85
+PROBE|1282|53298|item|I4.focusPercent=0.145
+PROBE|1283|53299|item|I7.focusPercent=0.855
+PROBE|1284|53314|frame|fr=1.85 fc=1 ss=true fp 1@0.14 4@0.15 7@0.85
+PROBE|1285|53314|lf|GW.currFocusRow=1.89
+PROBE|1286|53315|item|I4.focusPercent=0.109
+PROBE|1287|53316|item|I7.focusPercent=0.891
+PROBE|1288|53330|frame|fr=1.89 fc=1 ss=true fp 1@0.14 4@0.11 7@0.89
+PROBE|1289|53331|lf|GW.currFocusRow=1.92
+PROBE|1290|53332|item|I7.focusPercent=0.918
+PROBE|1291|53347|frame|fr=1.92 fc=1 ss=true fp 1@0.14 4@0.11 7@0.92
+PROBE|1292|53348|lf|GW.currFocusRow=1.95
+PROBE|1293|53348|item|I7.focusPercent=0.945
+PROBE|1294|53364|frame|fr=1.95 fc=1 ss=true fp 1@0.14 4@0.11 7@0.95
+PROBE|1295|53364|lf|GW.currFocusRow=1.96
+PROBE|1296|53365|item|I7.focusPercent=0.964
+PROBE|1297|53380|frame|fr=1.96 fc=1 ss=true fp 1@0.14 4@0.11 7@0.96
+PROBE|1298|53381|lf|GW.currFocusRow=1.98
+PROBE|1299|53382|item|I7.focusPercent=0.982
+PROBE|1300|53397|frame|fr=1.98 fc=1 ss=true fp 1@0.14 4@0.11 7@0.98
+PROBE|1301|53398|lf|GW.currFocusRow=1.99
+PROBE|1302|53398|item|I7.focusPercent=0.991
+PROBE|1303|53414|frame|fr=1.99 fc=1 ss=true fp 1@0.14 4@0.11 7@0.99
+PROBE|1304|53464|lf|GW.currFocusRow=2
+PROBE|1305|53465|item|I7.focusPercent=1
+PROBE|1306|53481|item|I7.itemHasFocus=true
+PROBE|1307|53482|lf|GW.itemFocused=7
+PROBE|1308|53483|lf|GW.scrollingStatus=false
+PROBE|1309|53483|lf|GW.vertFocusDirection=none
+PROBE|1310|53484|frame|fr=2 fc=1 ss=false fp 1@0.14 4@0.11 7@1
+PROBE|1311|55049|step|25 key:Down
+PROBE|await|Down
+PROBE|1312|55103|lf|GW.scrollingStatus=true
+PROBE|1313|55103|item|I7.itemHasFocus=false
+PROBE|1314|55104|lf|GW.itemUnfocused=7
+PROBE|1315|55104|lf|GW.vertFocusDirection=down
+PROBE|1316|55111|frame|fr=2 fc=1 ss=true fp 1@0.14 4@0.11 7@1
+PROBE|1317|55112|lf|GW.currFocusRow=2.04
+PROBE|1318|55113|item|I7.focusPercent=0.964
+PROBE|1319|55117|frame|fr=2.04 fc=1 ss=true fp 1@0.14 4@0.11 7@0.96
+PROBE|1320|55118|lf|GW.currFocusRow=2.1
+PROBE|1321|55119|item|I7.focusPercent=0.9
+PROBE|1322|55120|item|I10.focusPercent=0.1
+PROBE|1323|55121|frame|fr=2.1 fc=1 ss=true fp 1@0.14 4@0.11 7@0.9 10@0.1
+PROBE|1324|55122|lf|GW.currFocusRow=2.15
+PROBE|1325|55123|item|I7.focusPercent=0.845
+PROBE|1326|55123|item|I10.focusPercent=0.155
+PROBE|1327|55132|frame|fr=2.15 fc=1 ss=true fp 1@0.14 4@0.11 7@0.85 10@0.15
+PROBE|1328|55135|lf|GW.currFocusRow=2.25
+PROBE|1329|55136|item|I7.focusPercent=0.755
+PROBE|1330|55137|item|I10.focusPercent=0.245
+PROBE|1331|55149|frame|fr=2.25 fc=1 ss=true fp 1@0.14 4@0.11 7@0.75 10@0.25
+PROBE|1332|55150|lf|GW.currFocusRow=2.37
+PROBE|1333|55150|item|I7.focusPercent=0.627
+PROBE|1334|55151|item|I10.focusPercent=0.373
+PROBE|1335|55160|frame|fr=2.37 fc=1 ss=true fp 1@0.14 4@0.11 7@0.63 10@0.37
+PROBE|1336|55166|lf|GW.currFocusRow=2.47
+PROBE|1337|55167|item|I7.focusPercent=0.527
+PROBE|1338|55167|item|I10.focusPercent=0.473
+PROBE|1339|55182|frame|fr=2.47 fc=1 ss=true fp 1@0.14 4@0.11 7@0.53 10@0.47
+PROBE|1340|55183|lf|GW.currFocusRow=2.57
+PROBE|1341|55184|item|I7.focusPercent=0.427
+PROBE|1342|55184|item|I10.focusPercent=0.573
+PROBE|1343|55199|frame|fr=2.57 fc=1 ss=true fp 1@0.14 4@0.11 7@0.43 10@0.57
+PROBE|1344|55200|lf|GW.currFocusRow=2.65
+PROBE|1345|55200|item|I7.focusPercent=0.345
+PROBE|1346|55201|item|I10.focusPercent=0.655
+PROBE|1347|55215|frame|fr=2.65 fc=1 ss=true fp 1@0.14 4@0.11 7@0.35 10@0.65
+PROBE|1348|55216|lf|GW.currFocusRow=2.73
+PROBE|1349|55217|item|I7.focusPercent=0.273
+PROBE|1350|55217|item|I10.focusPercent=0.727
+PROBE|1351|55232|frame|fr=2.73 fc=1 ss=true fp 1@0.14 4@0.11 7@0.27 10@0.73
+PROBE|1352|55233|lf|GW.currFocusRow=2.79
+PROBE|1353|55233|item|I7.focusPercent=0.209
+PROBE|1354|55234|item|I10.focusPercent=0.791
+PROBE|1355|55249|frame|fr=2.79 fc=1 ss=true fp 1@0.14 4@0.11 7@0.21 10@0.79
+PROBE|1356|55250|lf|GW.currFocusRow=2.85
+PROBE|1357|55250|item|I7.focusPercent=0.155
+PROBE|1358|55251|item|I10.focusPercent=0.845
+PROBE|1359|55265|frame|fr=2.85 fc=1 ss=true fp 1@0.14 4@0.11 7@0.15 10@0.85
+PROBE|1360|55266|lf|GW.currFocusRow=2.88
+PROBE|1361|55267|item|I7.focusPercent=0.118
+PROBE|1362|55267|item|I10.focusPercent=0.882
+PROBE|1363|55282|frame|fr=2.88 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.88
+PROBE|1364|55283|lf|GW.currFocusRow=2.92
+PROBE|1365|55284|item|I10.focusPercent=0.918
+PROBE|1366|55299|frame|fr=2.92 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.92
+PROBE|1367|55300|lf|GW.currFocusRow=2.95
+PROBE|1368|55300|item|I10.focusPercent=0.945
+PROBE|1369|55316|frame|fr=2.95 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.95
+PROBE|1370|55316|lf|GW.currFocusRow=2.96
+PROBE|1371|55317|item|I10.focusPercent=0.964
+PROBE|1372|55332|frame|fr=2.96 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.96
+PROBE|1373|55333|lf|GW.currFocusRow=2.97
+PROBE|1374|55334|item|I10.focusPercent=0.973
+PROBE|1375|55349|frame|fr=2.97 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.97
+PROBE|1376|55350|lf|GW.currFocusRow=2.98
+PROBE|1377|55350|item|I10.focusPercent=0.982
+PROBE|1378|55365|frame|fr=2.98 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.98
+PROBE|1379|55366|lf|GW.currFocusRow=2.99
+PROBE|1380|55367|item|I10.focusPercent=0.991
+PROBE|1381|55382|frame|fr=2.99 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@0.99
+PROBE|1382|55432|lf|GW.currFocusRow=3
+PROBE|1383|55433|item|I10.focusPercent=1
+PROBE|1384|55449|item|I10.itemHasFocus=true
+PROBE|1385|55450|lf|GW.itemFocused=10
+PROBE|1386|55450|lf|GW.scrollingStatus=false
+PROBE|1387|55451|lf|GW.vertFocusDirection=none
+PROBE|1388|55452|frame|fr=3 fc=1 ss=false fp 1@0.14 4@0.11 7@0.12 10@1
+PROBE|1389|57050|step|26 key:Down_Down
+PROBE|await|Down_Down
+PROBE|1390|57106|lf|GW.scrollingStatus=true
+PROBE|1391|57106|item|I10.itemHasFocus=false
+PROBE|1392|57107|lf|GW.itemUnfocused=10
+PROBE|1393|57107|lf|GW.vertFocusDirection=down
+PROBE|1394|57111|frame|fr=3 fc=1 ss=true fp 1@0.14 4@0.11 7@0.12 10@1
+PROBE|1395|57112|lf|GW.currFocusRow=3.05
+PROBE|1396|57112|item|I10.focusPercent=0.955
+PROBE|1397|57113|item|I1.focusPercent=0
+PROBE|1398|57115|frame|fr=3.05 fc=1 ss=true fp 4@0.11 7@0.12 10@0.95
+PROBE|1399|57116|lf|GW.currFocusRow=3.08
+PROBE|1400|57117|item|I10.focusPercent=0.918
+PROBE|1401|57119|frame|fr=3.08 fc=1 ss=true fp 4@0.11 7@0.12 10@0.92
+PROBE|1402|57120|lf|GW.currFocusRow=3.12
+PROBE|1403|57121|item|I10.focusPercent=0.882
+PROBE|1404|57121|item|I13.focusPercent=0.118
+PROBE|1405|57134|frame|fr=3.12 fc=1 ss=true fp 4@0.11 7@0.12 10@0.88 13@0.12
+PROBE|1406|57137|lf|GW.currFocusRow=3.25
+PROBE|1407|57138|item|I10.focusPercent=0.755
+PROBE|1408|57139|item|I13.focusPercent=0.245
+PROBE|1409|57151|frame|fr=3.25 fc=1 ss=true fp 4@0.11 7@0.12 10@0.75 13@0.25
+PROBE|1410|57152|lf|GW.currFocusRow=3.37
+PROBE|1411|57152|item|I10.focusPercent=0.627
+PROBE|1412|57153|item|I13.focusPercent=0.373
+PROBE|1413|57165|frame|fr=3.37 fc=1 ss=true fp 4@0.11 7@0.12 10@0.63 13@0.37
+PROBE|1414|57168|lf|GW.currFocusRow=3.47
+PROBE|1415|57169|item|I10.focusPercent=0.527
+PROBE|1416|57169|item|I13.focusPercent=0.473
+PROBE|1417|57184|frame|fr=3.47 fc=1 ss=true fp 4@0.11 7@0.12 10@0.53 13@0.47
+PROBE|1418|57185|lf|GW.currFocusRow=3.57
+PROBE|1419|57185|item|I10.focusPercent=0.427
+PROBE|1420|57186|item|I13.focusPercent=0.573
+PROBE|1421|57201|frame|fr=3.57 fc=1 ss=true fp 4@0.11 7@0.12 10@0.43 13@0.57
+PROBE|1422|57202|lf|GW.currFocusRow=3.65
+PROBE|1423|57202|item|I10.focusPercent=0.345
+PROBE|1424|57203|item|I13.focusPercent=0.655
+PROBE|1425|57217|frame|fr=3.65 fc=1 ss=true fp 4@0.11 7@0.12 10@0.35 13@0.65
+PROBE|1426|57218|lf|GW.currFocusRow=3.73
+PROBE|1427|57219|item|I10.focusPercent=0.273
+PROBE|1428|57220|item|I13.focusPercent=0.727
+PROBE|1429|57234|frame|fr=3.73 fc=1 ss=true fp 4@0.11 7@0.12 10@0.27 13@0.73
+PROBE|1430|57235|lf|GW.currFocusRow=3.79
+PROBE|1431|57235|item|I10.focusPercent=0.209
+PROBE|1432|57236|item|I13.focusPercent=0.791
+PROBE|1433|57251|frame|fr=3.79 fc=1 ss=true fp 4@0.11 7@0.12 10@0.21 13@0.79
+PROBE|1434|57251|lf|GW.currFocusRow=3.85
+PROBE|1435|57252|item|I10.focusPercent=0.155
+PROBE|1436|57253|item|I13.focusPercent=0.845
+PROBE|1437|57267|frame|fr=3.85 fc=1 ss=true fp 4@0.11 7@0.12 10@0.15 13@0.85
+PROBE|1438|57268|lf|GW.currFocusRow=3.88
+PROBE|1439|57269|item|I10.focusPercent=0.118
+PROBE|1440|57270|item|I13.focusPercent=0.882
+PROBE|1441|57284|frame|fr=3.88 fc=1 ss=true fp 4@0.11 7@0.12 10@0.12 13@0.88
+PROBE|1442|57285|lf|GW.currFocusRow=3.92
+PROBE|1443|57285|item|I13.focusPercent=0.918
+PROBE|1444|57301|frame|fr=3.92 fc=1 ss=true fp 4@0.11 7@0.12 10@0.12 13@0.92
+PROBE|1445|57302|lf|GW.currFocusRow=3.95
+PROBE|1446|57302|item|I13.focusPercent=0.945
+PROBE|1447|57317|frame|fr=3.95 fc=1 ss=true fp 4@0.11 7@0.12 10@0.12 13@0.95
+PROBE|1448|57318|lf|GW.currFocusRow=3.96
+PROBE|1449|57319|item|I13.focusPercent=0.964
+PROBE|1450|57334|frame|fr=3.96 fc=1 ss=true fp 4@0.11 7@0.12 10@0.12 13@0.96
+PROBE|1451|57337|lf|GW.currFocusRow=3.97
+PROBE|1452|57338|item|I13.focusPercent=0.973
+PROBE|1453|57351|frame|fr=3.97 fc=1 ss=true fp 4@0.11 7@0.12 10@0.12 13@0.97
+PROBE|1454|57354|lf|GW.currFocusRow=4.12
+PROBE|1455|57355|item|I13.focusPercent=0.877
+PROBE|1456|57356|item|I4.focusPercent=0
+PROBE|1457|57367|frame|fr=4.12 fc=1 ss=true fp 7@0.12 10@0.12 13@0.88
+PROBE|1458|57368|lf|GW.currFocusRow=4.25
+PROBE|1459|57369|item|I13.focusPercent=0.753
+PROBE|1460|57384|frame|fr=4.25 fc=1 ss=true fp 7@0.12 10@0.12 13@0.75
+PROBE|1461|57385|lf|GW.currFocusRow=4.37
+PROBE|1462|57386|item|I13.focusPercent=0.63
+PROBE|1463|57386|item|I1.focusPercent=0.37
+PROBE|1464|57401|frame|fr=4.37 fc=1 ss=true fp 1@0.37 7@0.12 10@0.12 13@0.63
+PROBE|1465|57402|lf|GW.currFocusRow=4.47
+PROBE|1466|57402|item|I13.focusPercent=0.527
+PROBE|1467|57403|item|I1.focusPercent=0.473
+PROBE|1468|57418|frame|fr=4.47 fc=1 ss=true fp 1@0.47 7@0.12 10@0.12 13@0.53
+PROBE|1469|57418|lf|GW.currFocusRow=4.56
+PROBE|1470|57419|item|I13.focusPercent=0.438
+PROBE|1471|57420|item|I1.focusPercent=0.562
+PROBE|1472|57434|frame|fr=4.56 fc=1 ss=true fp 1@0.56 7@0.12 10@0.12 13@0.44
+PROBE|1473|57435|lf|GW.currFocusRow=4.64
+PROBE|1474|57436|item|I13.focusPercent=0.356
+PROBE|1475|57436|item|I1.focusPercent=0.644
+PROBE|1476|57451|frame|fr=4.64 fc=1 ss=true fp 1@0.64 7@0.12 10@0.12 13@0.36
+PROBE|1477|57452|lf|GW.currFocusRow=4.72
+PROBE|1478|57452|item|I1.focusPercent=0.719
+PROBE|1479|57468|frame|fr=4.72 fc=1 ss=true fp 1@0.72 7@0.12 10@0.12 13@0.36
+PROBE|1480|57468|lf|GW.currFocusRow=4.77
+PROBE|1481|57469|item|I1.focusPercent=0.774
+PROBE|1482|57470|item|I7.focusPercent=0
+PROBE|1483|57484|frame|fr=4.77 fc=1 ss=true fp 1@0.77 10@0.12 13@0.36
+PROBE|1484|57485|lf|GW.currFocusRow=4.83
+PROBE|1485|57485|item|I1.focusPercent=0.829
+PROBE|1486|57501|frame|fr=4.83 fc=1 ss=true fp 1@0.83 10@0.12 13@0.36
+PROBE|1487|57502|lf|GW.currFocusRow=4.87
+PROBE|1488|57502|item|I1.focusPercent=0.87
+PROBE|1489|57518|frame|fr=4.87 fc=1 ss=true fp 1@0.87 10@0.12 13@0.36
+PROBE|1490|57518|lf|GW.currFocusRow=4.9
+PROBE|1491|57519|item|I1.focusPercent=0.904
+PROBE|1492|57534|frame|fr=4.9 fc=1 ss=true fp 1@0.9 10@0.12 13@0.36
+PROBE|1493|57535|lf|GW.currFocusRow=4.93
+PROBE|1494|57536|item|I1.focusPercent=0.932
+PROBE|1495|57551|frame|fr=4.93 fc=1 ss=true fp 1@0.93 10@0.12 13@0.36
+PROBE|1496|57552|lf|GW.currFocusRow=4.95
+PROBE|1497|57553|item|I1.focusPercent=0.952
+PROBE|1498|57568|frame|fr=4.95 fc=1 ss=true fp 1@0.95 10@0.12 13@0.36
+PROBE|1499|57568|lf|GW.currFocusRow=4.97
+PROBE|1500|57569|item|I1.focusPercent=0.966
+PROBE|1501|57584|frame|fr=4.97 fc=1 ss=true fp 1@0.97 10@0.12 13@0.36
+PROBE|1502|57585|lf|GW.currFocusRow=4.98
+PROBE|1503|57586|item|I1.focusPercent=0.979
+PROBE|1504|57601|frame|fr=4.98 fc=1 ss=true fp 1@0.98 10@0.12 13@0.36
+PROBE|1505|57602|lf|GW.currFocusRow=4.99
+PROBE|1506|57602|item|I1.focusPercent=0.986
+PROBE|1507|57618|frame|fr=4.99 fc=1 ss=true fp 1@0.99 10@0.12 13@0.36
+PROBE|1508|57619|lf|GW.currFocusRow=4.99
+PROBE|1509|57619|item|I1.focusPercent=0.993
+PROBE|1510|57668|lf|GW.currFocusRow=0
+PROBE|1511|57669|item|I1.focusPercent=1
+PROBE|1512|57685|item|I1.itemHasFocus=true
+PROBE|1513|57686|lf|GW.itemFocused=1
+PROBE|1514|57686|lf|GW.scrollingStatus=false
+PROBE|1515|57687|lf|GW.vertFocusDirection=none
+PROBE|1516|57688|frame|fr=0 fc=1 ss=false fp 1@1 10@0.12 13@0.36
+PROBE|1517|59051|step|27 hold:Down
+PROBE|await|HoldDown
+PROBE|1518|59094|lf|GW.scrollingStatus=true
+PROBE|1519|59094|item|I1.itemHasFocus=false
+PROBE|1520|59095|lf|GW.itemUnfocused=1
+PROBE|1521|59095|lf|GW.vertFocusDirection=down
+PROBE|1522|59099|frame|fr=0 fc=1 ss=true fp 1@1 10@0.12 13@0.36
+PROBE|1523|59100|lf|GW.currFocusRow=0.05
+PROBE|1524|59100|item|I1.focusPercent=0.955
+PROBE|1525|59104|frame|fr=0.05 fc=1 ss=true fp 1@0.95 10@0.12 13@0.36
+PROBE|1526|59105|lf|GW.currFocusRow=0.09
+PROBE|1527|59106|item|I1.focusPercent=0.909
+PROBE|1528|59107|item|I4.focusPercent=0.091
+PROBE|1529|59109|frame|fr=0.09 fc=1 ss=true fp 1@0.91 4@0.09 10@0.12 13@0.36
+PROBE|1530|59110|lf|GW.currFocusRow=0.14
+PROBE|1531|59110|item|I1.focusPercent=0.864
+PROBE|1532|59111|item|I4.focusPercent=0.136
+PROBE|1533|59119|frame|fr=0.14 fc=1 ss=true fp 1@0.86 4@0.14 10@0.12 13@0.36
+PROBE|1534|59120|lf|GW.currFocusRow=0.22
+PROBE|1535|59121|item|I1.focusPercent=0.782
+PROBE|1536|59122|item|I4.focusPercent=0.218
+PROBE|1537|59136|frame|fr=0.22 fc=1 ss=true fp 1@0.78 4@0.22 10@0.12 13@0.36
+PROBE|1538|59137|lf|GW.currFocusRow=0.35
+PROBE|1539|59137|item|I1.focusPercent=0.655
+PROBE|1540|59139|item|I4.focusPercent=0.345
+PROBE|1541|59153|frame|fr=0.35 fc=1 ss=true fp 1@0.65 4@0.35 10@0.12 13@0.36
+PROBE|1542|59154|lf|GW.currFocusRow=0.46
+PROBE|1543|59154|item|I1.focusPercent=0.536
+PROBE|1544|59155|item|I4.focusPercent=0.464
+PROBE|1545|59170|frame|fr=0.46 fc=1 ss=true fp 1@0.54 4@0.46 10@0.12 13@0.36
+PROBE|1546|59170|lf|GW.currFocusRow=0.55
+PROBE|1547|59171|item|I1.focusPercent=0.445
+PROBE|1548|59172|item|I4.focusPercent=0.555
+PROBE|1549|59173|frame|fr=0.55 fc=1 ss=true fp 1@0.45 4@0.55 10@0.12 13@0.36
+PROBE|1550|59187|lf|GW.currFocusRow=0.65
+PROBE|1551|59188|item|I1.focusPercent=0.355
+PROBE|1552|59189|item|I4.focusPercent=0.645
+PROBE|1553|59203|frame|fr=0.65 fc=1 ss=true fp 1@0.35 4@0.65 10@0.12 13@0.36
+PROBE|1554|59204|lf|GW.currFocusRow=0.72
+PROBE|1555|59204|item|I1.focusPercent=0.282
+PROBE|1556|59205|item|I4.focusPercent=0.718
+PROBE|1557|59206|item|I10.focusPercent=0
+PROBE|1558|59219|frame|fr=0.72 fc=1 ss=true fp 1@0.28 4@0.72 13@0.36
+PROBE|1559|59220|lf|GW.currFocusRow=0.78
+PROBE|1560|59221|item|I1.focusPercent=0.218
+PROBE|1561|59222|item|I4.focusPercent=0.782
+PROBE|1562|59236|frame|fr=0.78 fc=1 ss=true fp 1@0.22 4@0.78 13@0.36
+PROBE|1563|59237|lf|GW.currFocusRow=0.84
+PROBE|1564|59238|item|I1.focusPercent=0.164
+PROBE|1565|59239|item|I4.focusPercent=0.836
+PROBE|1566|59253|frame|fr=0.84 fc=1 ss=true fp 1@0.16 4@0.84 13@0.36
+PROBE|1567|59254|lf|GW.currFocusRow=0.88
+PROBE|1568|59254|item|I1.focusPercent=0.118
+PROBE|1569|59256|item|I4.focusPercent=0.882
+PROBE|1570|59270|frame|fr=0.88 fc=1 ss=true fp 1@0.12 4@0.88 13@0.36
+PROBE|1571|59270|lf|GW.currFocusRow=0.91
+PROBE|1572|59271|item|I4.focusPercent=0.909
+PROBE|1573|59287|frame|fr=0.91 fc=1 ss=true fp 1@0.12 4@0.91 13@0.36
+PROBE|1574|59287|lf|GW.currFocusRow=0.94
+PROBE|1575|59288|item|I4.focusPercent=0.936
+PROBE|1576|59303|frame|fr=0.94 fc=1 ss=true fp 1@0.12 4@0.94 13@0.36
+PROBE|1577|59304|lf|GW.currFocusRow=0.96
+PROBE|1578|59304|item|I4.focusPercent=0.964
+PROBE|1579|59320|frame|fr=0.96 fc=1 ss=true fp 1@0.12 4@0.96 13@0.36
+PROBE|1580|59320|lf|GW.currFocusRow=0.97
+PROBE|1581|59321|item|I4.focusPercent=0.973
+PROBE|1582|59336|frame|fr=0.97 fc=1 ss=true fp 1@0.12 4@0.97 13@0.36
+PROBE|1583|59337|lf|GW.currFocusRow=0.98
+PROBE|1584|59338|item|I4.focusPercent=0.982
+PROBE|1585|59353|frame|fr=0.98 fc=1 ss=true fp 1@0.12 4@0.98 13@0.36
+PROBE|1586|59354|lf|GW.currFocusRow=0.99
+PROBE|1587|59354|item|I4.focusPercent=0.991
+PROBE|1588|59370|frame|fr=0.99 fc=1 ss=true fp 1@0.12 4@0.99 13@0.36
+PROBE|1589|59420|lf|GW.currFocusRow=1
+PROBE|1590|59421|item|I4.focusPercent=1
+PROBE|1591|59436|frame|fr=1 fc=1 ss=true fp 1@0.12 4@1 13@0.36
+PROBE|1592|59620|lf|GW.currFocusRow=1.01
+PROBE|1593|59621|item|I4.focusPercent=0.991
+PROBE|1594|59637|frame|fr=1.01 fc=1 ss=true fp 1@0.12 4@0.99 13@0.36
+PROBE|1595|59637|lf|GW.currFocusRow=1.02
+PROBE|1596|59638|item|I4.focusPercent=0.982
+PROBE|1597|59653|frame|fr=1.02 fc=1 ss=true fp 1@0.12 4@0.98 13@0.36
+PROBE|1598|59655|lf|GW.currFocusRow=1.04
+PROBE|1599|59656|item|I4.focusPercent=0.964
+PROBE|1600|59670|frame|fr=1.04 fc=1 ss=true fp 1@0.12 4@0.96 13@0.36
+PROBE|1601|59670|lf|GW.currFocusRow=1.06
+PROBE|1602|59671|item|I4.focusPercent=0.936
+PROBE|1603|59675|frame|fr=1.06 fc=1 ss=true fp 1@0.12 4@0.94 13@0.36
+PROBE|1604|59687|lf|GW.currFocusRow=1.09
+PROBE|1605|59687|item|I4.focusPercent=0.909
+PROBE|1606|59703|frame|fr=1.09 fc=1 ss=true fp 1@0.12 4@0.91 13@0.36
+PROBE|1607|59704|lf|GW.currFocusRow=1.13
+PROBE|1608|59704|item|I4.focusPercent=0.873
+PROBE|1609|59720|frame|fr=1.13 fc=1 ss=true fp 1@0.12 4@0.87 13@0.36
+PROBE|1610|59720|lf|GW.currFocusRow=1.16
+PROBE|1611|59721|item|I4.focusPercent=0.836
+PROBE|1612|59736|frame|fr=1.16 fc=1 ss=true fp 1@0.12 4@0.84 13@0.36
+PROBE|1613|59737|lf|GW.currFocusRow=1.21
+PROBE|1614|59738|item|I4.focusPercent=0.791
+PROBE|1615|59753|frame|fr=1.21 fc=1 ss=true fp 1@0.12 4@0.79 13@0.36
+PROBE|1616|59754|lf|GW.currFocusRow=1.26
+PROBE|1617|59754|item|I4.focusPercent=0.736
+PROBE|1618|59770|frame|fr=1.26 fc=1 ss=true fp 1@0.12 4@0.74 13@0.36
+PROBE|1619|59770|lf|GW.currFocusRow=1.32
+PROBE|1620|59771|item|I4.focusPercent=0.682
+PROBE|1621|59786|frame|fr=1.32 fc=1 ss=true fp 1@0.12 4@0.68 13@0.36
+PROBE|1622|59787|lf|GW.currFocusRow=1.36
+PROBE|1623|59788|item|I4.focusPercent=0.636
+PROBE|1624|59803|frame|fr=1.36 fc=1 ss=true fp 1@0.12 4@0.64 13@0.36
+PROBE|1625|59804|lf|GW.currFocusRow=1.42
+PROBE|1626|59805|item|I4.focusPercent=0.582
+PROBE|1627|59820|frame|fr=1.42 fc=1 ss=true fp 1@0.12 4@0.58 13@0.36
+PROBE|1628|59820|lf|GW.currFocusRow=1.47
+PROBE|1629|59821|item|I4.focusPercent=0.527
+PROBE|1630|59836|frame|fr=1.47 fc=1 ss=true fp 1@0.12 4@0.53 13@0.36
+PROBE|1631|59837|lf|GW.currFocusRow=1.53
+PROBE|1632|59838|item|I4.focusPercent=0.473
+PROBE|1633|59853|frame|fr=1.53 fc=1 ss=true fp 1@0.12 4@0.47 13@0.36
+PROBE|1634|59854|lf|GW.currFocusRow=1.58
+PROBE|1635|59854|item|I4.focusPercent=0.418
+PROBE|1636|59870|frame|fr=1.58 fc=1 ss=true fp 1@0.12 4@0.42 13@0.36
+PROBE|1637|59870|lf|GW.currFocusRow=1.64
+PROBE|1638|59871|item|I4.focusPercent=0.364
+PROBE|1639|59886|frame|fr=1.64 fc=1 ss=true fp 1@0.12 4@0.36 13@0.36
+PROBE|1640|59887|lf|GW.currFocusRow=1.68
+PROBE|1641|59888|item|I4.focusPercent=0.318
+PROBE|1642|59889|item|I13.focusPercent=0
+PROBE|1643|59903|frame|fr=1.68 fc=1 ss=true fp 1@0.12 4@0.32
+PROBE|1644|59904|lf|GW.currFocusRow=1.74
+PROBE|1645|59905|item|I4.focusPercent=0.264
+PROBE|1646|59920|frame|fr=1.74 fc=1 ss=true fp 1@0.12 4@0.26
+PROBE|1647|59921|lf|GW.currFocusRow=1.79
+PROBE|1648|59922|item|I4.focusPercent=0.209
+PROBE|1649|59937|frame|fr=1.79 fc=1 ss=true fp 1@0.12 4@0.21
+PROBE|1650|59938|lf|GW.currFocusRow=1.85
+PROBE|1651|59938|item|I4.focusPercent=0.155
+PROBE|1652|59954|frame|fr=1.85 fc=1 ss=true fp 1@0.12 4@0.15
+PROBE|1653|59954|lf|GW.currFocusRow=1.9
+PROBE|1654|59955|item|I4.focusPercent=0.1
+PROBE|1655|59970|frame|fr=1.9 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1656|59971|lf|GW.currFocusRow=1.95
+PROBE|1657|59987|frame|fr=1.95 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1658|59988|lf|GW.currFocusRow=2.01
+PROBE|1659|60004|frame|fr=2.01 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1660|60004|lf|GW.currFocusRow=2.06
+PROBE|1661|60020|frame|fr=2.06 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1662|60021|lf|GW.currFocusRow=2.12
+PROBE|1663|60037|frame|fr=2.12 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1664|60038|lf|GW.currFocusRow=2.17
+PROBE|1665|60054|frame|fr=2.17 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1666|60054|lf|GW.currFocusRow=2.23
+PROBE|1667|60070|frame|fr=2.23 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1668|60071|lf|GW.currFocusRow=2.27
+PROBE|1669|60087|frame|fr=2.27 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1670|60088|lf|GW.currFocusRow=2.33
+PROBE|1671|60104|frame|fr=2.33 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1672|60105|lf|GW.currFocusRow=2.38
+PROBE|1673|60120|frame|fr=2.38 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1674|60121|lf|GW.currFocusRow=2.44
+PROBE|1675|60137|frame|fr=2.44 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1676|60138|lf|GW.currFocusRow=2.49
+PROBE|1677|60154|frame|fr=2.49 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1678|60154|lf|GW.currFocusRow=2.54
+PROBE|1679|60170|frame|fr=2.54 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1680|60171|lf|GW.currFocusRow=2.59
+PROBE|1681|60176|frame|fr=2.59 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1682|60187|lf|GW.currFocusRow=2.65
+PROBE|1683|60204|frame|fr=2.65 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1684|60204|lf|GW.currFocusRow=2.7
+PROBE|1685|60220|frame|fr=2.7 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1686|60221|lf|GW.currFocusRow=2.75
+PROBE|1687|60237|frame|fr=2.75 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1688|60238|lf|GW.currFocusRow=2.81
+PROBE|1689|60254|frame|fr=2.81 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1690|60255|lf|GW.currFocusRow=2.86
+PROBE|1691|60270|frame|fr=2.86 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1692|60271|lf|GW.currFocusRow=2.92
+PROBE|1693|60287|frame|fr=2.92 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1694|60288|lf|GW.currFocusRow=2.97
+PROBE|1695|60304|frame|fr=2.97 fc=1 ss=true fp 1@0.12 4@0.1
+PROBE|1696|60304|lf|GW.currFocusRow=3.03
+PROBE|1697|60305|item|I1.focusPercent=0
+PROBE|1698|60320|frame|fr=3.03 fc=1 ss=true fp 4@0.1
+PROBE|1699|60321|lf|GW.currFocusRow=3.07
+PROBE|1700|60337|frame|fr=3.07 fc=1 ss=true fp 4@0.1
+PROBE|1701|60340|lf|GW.currFocusRow=3.13
+PROBE|1702|60341|item|I13.focusPercent=0.127
+PROBE|1703|60354|frame|fr=3.13 fc=1 ss=true fp 4@0.1 13@0.13
+PROBE|1704|60355|lf|GW.currFocusRow=3.23
+PROBE|1705|60355|item|I13.focusPercent=0.227
+PROBE|1706|60370|frame|fr=3.23 fc=1 ss=true fp 4@0.1 13@0.23
+PROBE|1707|60371|lf|GW.currFocusRow=3.32
+PROBE|1708|60372|item|I13.focusPercent=0.318
+PROBE|1709|60387|frame|fr=3.32 fc=1 ss=true fp 4@0.1 13@0.32
+PROBE|1710|60388|lf|GW.currFocusRow=3.42
+PROBE|1711|60389|item|I13.focusPercent=0.418
+PROBE|1712|60404|frame|fr=3.42 fc=1 ss=true fp 4@0.1 13@0.42
+PROBE|1713|60405|lf|GW.currFocusRow=3.5
+PROBE|1714|60405|item|I13.focusPercent=0.5
+PROBE|1715|60421|frame|fr=3.5 fc=1 ss=true fp 4@0.1 13@0.5
+PROBE|1716|60421|lf|GW.currFocusRow=3.58
+PROBE|1717|60422|item|I13.focusPercent=0.582
+PROBE|1718|60437|frame|fr=3.58 fc=1 ss=true fp 4@0.1 13@0.58
+PROBE|1719|60438|lf|GW.currFocusRow=3.65
+PROBE|1720|60439|item|I13.focusPercent=0.645
+PROBE|1721|60454|frame|fr=3.65 fc=1 ss=true fp 4@0.1 13@0.65
+PROBE|1722|60455|lf|GW.currFocusRow=3.71
+PROBE|1723|60455|item|I13.focusPercent=0.709
+PROBE|1724|60471|frame|fr=3.71 fc=1 ss=true fp 4@0.1 13@0.71
+PROBE|1725|60471|lf|GW.currFocusRow=3.77
+PROBE|1726|60472|item|I13.focusPercent=0.773
+PROBE|1727|60487|frame|fr=3.77 fc=1 ss=true fp 4@0.1 13@0.77
+PROBE|1728|60488|lf|GW.currFocusRow=3.82
+PROBE|1729|60489|item|I13.focusPercent=0.818
+PROBE|1730|60504|frame|fr=3.82 fc=1 ss=true fp 4@0.1 13@0.82
+PROBE|1731|60505|lf|GW.currFocusRow=3.86
+PROBE|1732|60506|item|I13.focusPercent=0.864
+PROBE|1733|60521|frame|fr=3.86 fc=1 ss=true fp 4@0.1 13@0.86
+PROBE|1734|60521|lf|GW.currFocusRow=3.91
+PROBE|1735|60522|item|I13.focusPercent=0.909
+PROBE|1736|60537|frame|fr=3.91 fc=1 ss=true fp 4@0.1 13@0.91
+PROBE|1737|60538|lf|GW.currFocusRow=3.94
+PROBE|1738|60539|item|I13.focusPercent=0.936
+PROBE|1739|60554|frame|fr=3.94 fc=1 ss=true fp 4@0.1 13@0.94
+PROBE|1740|60555|lf|GW.currFocusRow=3.96
+PROBE|1741|60556|item|I13.focusPercent=0.964
+PROBE|1742|60571|frame|fr=3.96 fc=1 ss=true fp 4@0.1 13@0.96
+PROBE|1743|60571|lf|GW.currFocusRow=3.98
+PROBE|1744|60572|item|I13.focusPercent=0.982
+PROBE|1745|60587|frame|fr=3.98 fc=1 ss=true fp 4@0.1 13@0.98
+PROBE|1746|60588|lf|GW.currFocusRow=3.99
+PROBE|1747|60589|item|I13.focusPercent=0.991
+PROBE|1748|60604|frame|fr=3.99 fc=1 ss=true fp 4@0.1 13@0.99
+PROBE|1749|60621|lf|GW.currFocusRow=4
+PROBE|1750|60622|item|I13.focusPercent=1
+PROBE|1751|60638|item|I13.itemHasFocus=true
+PROBE|1752|60638|lf|GW.itemFocused=13
+PROBE|1753|60639|lf|GW.scrollingStatus=false
+PROBE|1754|60639|lf|GW.vertFocusDirection=none
+PROBE|1755|60641|frame|fr=4 fc=1 ss=false fp 4@0.1 13@1
+PROBE|1756|62551|step|28 act:jump0
+PROBE|1757|62552|item|I13.itemHasFocus=false
+PROBE|1758|62552|lf|GW.itemUnfocused=13
+PROBE|1759|62552|lf|GW.currFocusRow=0
+PROBE|1760|62553|lf|GW.currFocusColumn=0
+PROBE|1761|62554|item|I0.itemHasFocus=true
+PROBE|1762|62555|lf|GW.itemFocused=0
+PROBE|1763|62555|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|1764|62557|item|I0.focusPercent=1
+PROBE|1765|62558|item|I4.focusPercent=0
+PROBE|1766|62560|frame|fr=0 fc=0 ss=false fp 0@1 13@1
+PROBE|1767|64556|step|29 key:Up
+PROBE|await|Up
+PROBE|1768|64598|lf|GW.scrollingStatus=true
+PROBE|1769|64599|item|I0.itemHasFocus=false
+PROBE|1770|64599|lf|GW.itemUnfocused=0
+PROBE|1771|64599|lf|GW.vertFocusDirection=up
+PROBE|1772|64604|frame|fr=0 fc=0 ss=true fp 0@1 13@1
+PROBE|1773|64604|lf|GW.currFocusRow=4.96
+PROBE|1774|64605|item|I0.focusPercent=0.959
+PROBE|1775|64608|frame|fr=4.96 fc=0 ss=true fp 0@0.96 13@1
+PROBE|1776|64609|lf|GW.currFocusRow=4.92
+PROBE|1777|64609|item|I0.focusPercent=0.925
+PROBE|1778|64612|frame|fr=4.92 fc=0 ss=true fp 0@0.92 13@1
+PROBE|1779|64613|lf|GW.currFocusRow=4.89
+PROBE|1780|64614|item|I0.focusPercent=0.89
+PROBE|1781|64625|frame|fr=4.89 fc=0 ss=true fp 0@0.89 13@1
+PROBE|1782|64628|lf|GW.currFocusRow=4.79
+PROBE|1783|64628|item|I0.focusPercent=0.788
+PROBE|1784|64641|frame|fr=4.79 fc=0 ss=true fp 0@0.79 13@1
+PROBE|1785|64642|lf|GW.currFocusRow=4.67
+PROBE|1786|64643|item|I12.focusPercent=0.329
+PROBE|1787|64644|item|I13.focusPercent=0
+PROBE|1788|64645|item|I0.focusPercent=0.671
+PROBE|1789|64658|frame|fr=4.67 fc=0 ss=true fp 0@0.67 12@0.33
+PROBE|1790|64659|lf|GW.currFocusRow=4.56
+PROBE|1791|64659|item|I12.focusPercent=0.438
+PROBE|1792|64660|item|I0.focusPercent=0.562
+PROBE|1793|64675|frame|fr=4.56 fc=0 ss=true fp 0@0.56 12@0.44
+PROBE|1794|64676|lf|GW.currFocusRow=4.47
+PROBE|1795|64676|item|I12.focusPercent=0.534
+PROBE|1796|64677|item|I0.focusPercent=0.466
+PROBE|1797|64685|frame|fr=4.47 fc=0 ss=true fp 0@0.47 12@0.53
+PROBE|1798|64692|lf|GW.currFocusRow=4.38
+PROBE|1799|64693|item|I12.focusPercent=0.623
+PROBE|1800|64694|item|I0.focusPercent=0.377
+PROBE|1801|64708|frame|fr=4.38 fc=0 ss=true fp 0@0.38 12@0.62
+PROBE|1802|64709|lf|GW.currFocusRow=4.31
+PROBE|1803|64710|item|I12.focusPercent=0.692
+PROBE|1804|64710|item|I0.focusPercent=0
+PROBE|1805|64725|frame|fr=4.31 fc=0 ss=true fp 12@0.69
+PROBE|1806|64725|lf|GW.currFocusRow=4.25
+PROBE|1807|64726|item|I12.focusPercent=0.753
+PROBE|1808|64741|frame|fr=4.25 fc=0 ss=true fp 12@0.75
+PROBE|1809|64742|lf|GW.currFocusRow=4.19
+PROBE|1810|64743|item|I12.focusPercent=0.808
+PROBE|1811|64758|frame|fr=4.19 fc=0 ss=true fp 12@0.81
+PROBE|1812|64759|lf|GW.currFocusRow=4.14
+PROBE|1813|64759|item|I12.focusPercent=0.856
+PROBE|1814|64775|frame|fr=4.14 fc=0 ss=true fp 12@0.86
+PROBE|1815|64776|lf|GW.currFocusRow=4.11
+PROBE|1816|64776|item|I12.focusPercent=0.89
+PROBE|1817|64791|frame|fr=4.11 fc=0 ss=true fp 12@0.89
+PROBE|1818|64792|lf|GW.currFocusRow=4.08
+PROBE|1819|64793|item|I12.focusPercent=0.918
+PROBE|1820|64808|frame|fr=4.08 fc=0 ss=true fp 12@0.92
+PROBE|1821|64809|lf|GW.currFocusRow=4.05
+PROBE|1822|64809|item|I12.focusPercent=0.945
+PROBE|1823|64825|frame|fr=4.05 fc=0 ss=true fp 12@0.95
+PROBE|1824|64826|lf|GW.currFocusRow=4.03
+PROBE|1825|64826|item|I12.focusPercent=0.966
+PROBE|1826|64841|frame|fr=4.03 fc=0 ss=true fp 12@0.97
+PROBE|1827|64842|lf|GW.currFocusRow=4.02
+PROBE|1828|64843|item|I12.focusPercent=0.979
+PROBE|1829|64858|frame|fr=4.02 fc=0 ss=true fp 12@0.98
+PROBE|1830|64859|lf|GW.currFocusRow=4.01
+PROBE|1831|64859|item|I12.focusPercent=0.986
+PROBE|1832|64875|frame|fr=4.01 fc=0 ss=true fp 12@0.99
+PROBE|1833|64876|lf|GW.currFocusRow=4.01
+PROBE|1834|64876|item|I12.focusPercent=0.993
+PROBE|1835|64942|lf|GW.currFocusRow=4
+PROBE|1836|64943|item|I12.focusPercent=1
+PROBE|1837|64959|item|I12.itemHasFocus=true
+PROBE|1838|64960|lf|GW.itemFocused=12
+PROBE|1839|64960|lf|GW.scrollingStatus=false
+PROBE|1840|64961|lf|GW.vertFocusDirection=none
+PROBE|1841|64962|frame|fr=4 fc=0 ss=false fp 12@1
+PROBE|1842|66557|step|30 hold:Right
+PROBE|await|HoldRight
+PROBE|1843|66599|lf|GW.scrollingStatus=true
+PROBE|1844|66599|item|I12.itemHasFocus=false
+PROBE|1845|66600|lf|GW.itemUnfocused=12
+PROBE|1846|66600|lf|GW.horizFocusDirection=right
+PROBE|1847|66605|frame|fr=4 fc=0 ss=true fp 12@1
+PROBE|1848|66606|lf|GW.currFocusColumn=0.05
+PROBE|1849|66608|item|I12.focusPercent=0.947
+PROBE|1850|66609|item|I13.focusPercent=0.053
+PROBE|1851|66614|frame|fr=4 fc=0.05 ss=true fp 12@0.95 13@0.05
+PROBE|1852|66615|lf|GW.currFocusColumn=0.1
+PROBE|1853|66617|item|I12.focusPercent=0.9
+PROBE|1854|66617|item|I13.focusPercent=0.1
+PROBE|1855|66619|frame|fr=4 fc=0.1 ss=true fp 12@0.9 13@0.1
+PROBE|1856|66620|lf|GW.currFocusColumn=0.17
+PROBE|1857|66622|item|I12.focusPercent=0.832
+PROBE|1858|66623|item|I13.focusPercent=0.168
+PROBE|1859|66627|frame|fr=4 fc=0.17 ss=true fp 12@0.83 13@0.17
+PROBE|1860|66627|lf|GW.currFocusColumn=0.23
+PROBE|1861|66629|item|I12.focusPercent=0.768
+PROBE|1862|66630|item|I13.focusPercent=0.232
+PROBE|1863|66643|frame|fr=4 fc=0.23 ss=true fp 12@0.77 13@0.23
+PROBE|1864|66644|lf|GW.currFocusColumn=0.34
+PROBE|1865|66646|item|I12.focusPercent=0.658
+PROBE|1866|66647|item|I13.focusPercent=0.342
+PROBE|1867|66660|frame|fr=4 fc=0.34 ss=true fp 12@0.66 13@0.34
+PROBE|1868|66661|lf|GW.currFocusColumn=0.45
+PROBE|1869|66663|item|I12.focusPercent=0.547
+PROBE|1870|66664|item|I13.focusPercent=0.453
+PROBE|1871|66677|frame|fr=4 fc=0.45 ss=true fp 12@0.55 13@0.45
+PROBE|1872|66677|lf|GW.currFocusColumn=0.55
+PROBE|1873|66679|item|I12.focusPercent=0.453
+PROBE|1874|66680|item|I13.focusPercent=0.547
+PROBE|1875|66689|frame|fr=4 fc=0.55 ss=true fp 12@0.45 13@0.55
+PROBE|1876|66694|lf|GW.currFocusColumn=0.63
+PROBE|1877|66696|item|I12.focusPercent=0.374
+PROBE|1878|66697|item|I13.focusPercent=0.626
+PROBE|1879|66710|frame|fr=4 fc=0.63 ss=true fp 12@0.37 13@0.63
+PROBE|1880|66711|lf|GW.currFocusColumn=0.7
+PROBE|1881|66713|item|I12.focusPercent=0.3
+PROBE|1882|66714|item|I13.focusPercent=0.7
+PROBE|1883|66727|frame|fr=4 fc=0.7 ss=true fp 12@0.3 13@0.7
+PROBE|1884|66728|lf|GW.currFocusColumn=0.76
+PROBE|1885|66730|item|I12.focusPercent=0.237
+PROBE|1886|66731|item|I13.focusPercent=0.763
+PROBE|1887|66743|frame|fr=4 fc=0.76 ss=true fp 12@0.24 13@0.76
+PROBE|1888|66744|lf|GW.currFocusColumn=0.82
+PROBE|1889|66746|item|I12.focusPercent=0.184
+PROBE|1890|66747|item|I13.focusPercent=0.816
+PROBE|1891|66760|frame|fr=4 fc=0.82 ss=true fp 12@0.18 13@0.82
+PROBE|1892|66761|lf|GW.currFocusColumn=0.86
+PROBE|1893|66763|item|I12.focusPercent=0.142
+PROBE|1894|66764|item|I13.focusPercent=0.858
+PROBE|1895|66777|frame|fr=4 fc=0.86 ss=true fp 12@0.14 13@0.86
+PROBE|1896|66777|lf|GW.currFocusColumn=0.89
+PROBE|1897|66779|item|I12.focusPercent=0.105
+PROBE|1898|66780|item|I13.focusPercent=0.895
+PROBE|1899|66793|frame|fr=4 fc=0.89 ss=true fp 12@0.11 13@0.89
+PROBE|1900|66794|lf|GW.currFocusColumn=0.93
+PROBE|1901|66796|item|I12.focusPercent=0.074
+PROBE|1902|66797|item|I13.focusPercent=0.926
+PROBE|1903|66810|frame|fr=4 fc=0.93 ss=true fp 12@0.07 13@0.93
+PROBE|1904|66811|lf|GW.currFocusColumn=0.95
+PROBE|1905|66813|item|I12.focusPercent=0
+PROBE|1906|66814|item|I13.focusPercent=0.947
+PROBE|1907|66827|frame|fr=4 fc=0.95 ss=true fp 13@0.95
+PROBE|1908|66828|lf|GW.currFocusColumn=0.97
+PROBE|1909|66830|item|I13.focusPercent=0.968
+PROBE|1910|66843|frame|fr=4 fc=0.97 ss=true fp 13@0.97
+PROBE|1911|66844|lf|GW.currFocusColumn=0.98
+PROBE|1912|66846|item|I13.focusPercent=0.979
+PROBE|1913|66860|frame|fr=4 fc=0.98 ss=true fp 13@0.98
+PROBE|1914|66861|lf|GW.currFocusColumn=0.99
+PROBE|1915|66863|item|I13.focusPercent=0.989
+PROBE|1916|66877|frame|fr=4 fc=0.99 ss=true fp 13@0.99
+PROBE|1917|66878|lf|GW.currFocusColumn=0.99
+PROBE|1918|66880|item|I13.focusPercent=0.995
+PROBE|1919|66944|lf|GW.currFocusColumn=1
+PROBE|1920|66947|item|I13.focusPercent=1
+PROBE|1921|66960|frame|fr=4 fc=1 ss=true fp 13@1
+PROBE|1922|67144|lf|GW.currFocusColumn=1.02
+PROBE|1923|67146|item|I13.focusPercent=0.984
+PROBE|1924|67160|frame|fr=4 fc=1.02 ss=true fp 13@0.98
+PROBE|1925|67162|lf|GW.currFocusColumn=1.04
+PROBE|1926|67164|item|I13.focusPercent=0.963
+PROBE|1927|67177|frame|fr=4 fc=1.04 ss=true fp 13@0.96
+PROBE|1928|67178|lf|GW.currFocusColumn=1.07
+PROBE|1929|67180|item|I13.focusPercent=0.926
+PROBE|1930|67192|frame|fr=4 fc=1.07 ss=true fp 13@0.93
+PROBE|1931|67194|lf|GW.currFocusColumn=1.12
+PROBE|1932|67196|item|I13.focusPercent=0.879
+PROBE|1933|67210|frame|fr=4 fc=1.12 ss=true fp 13@0.88
+PROBE|1934|67211|lf|GW.currFocusColumn=1.17
+PROBE|1935|67213|item|I13.focusPercent=0.832
+PROBE|1936|67227|frame|fr=4 fc=1.17 ss=true fp 13@0.83
+PROBE|1937|67228|lf|GW.currFocusColumn=1.24
+PROBE|1938|67230|item|I13.focusPercent=0.763
+PROBE|1939|67244|frame|fr=4 fc=1.24 ss=true fp 13@0.76
+PROBE|1940|67245|lf|GW.currFocusColumn=1.31
+PROBE|1941|67247|item|I13.focusPercent=0.689
+PROBE|1942|67261|frame|fr=4 fc=1.31 ss=true fp 13@0.69
+PROBE|1943|67261|lf|GW.currFocusColumn=1.4
+PROBE|1944|67263|item|I13.focusPercent=0.6
+PROBE|1945|67277|frame|fr=4 fc=1.4 ss=true fp 13@0.6
+PROBE|1946|67278|lf|GW.currFocusColumn=1.49
+PROBE|1947|67280|item|I13.focusPercent=0.511
+PROBE|1948|67294|frame|fr=4 fc=1.49 ss=true fp 13@0.51
+PROBE|1949|67295|lf|GW.currFocusColumn=1.58
+PROBE|1950|67297|item|I13.focusPercent=0.416
+PROBE|1951|67311|frame|fr=4 fc=1.58 ss=true fp 13@0.42
+PROBE|1952|67311|lf|GW.currFocusColumn=1.67
+PROBE|1953|67313|item|I13.focusPercent=0.326
+PROBE|1954|67327|frame|fr=4 fc=1.67 ss=true fp 13@0.33
+PROBE|1955|67328|lf|GW.currFocusColumn=1.75
+PROBE|1956|67330|item|I13.focusPercent=0.253
+PROBE|1957|67344|frame|fr=4 fc=1.75 ss=true fp 13@0.25
+PROBE|1958|67345|lf|GW.currFocusColumn=1.82
+PROBE|1959|67347|item|I13.focusPercent=0.184
+PROBE|1960|67360|frame|fr=4 fc=1.82 ss=true fp 13@0.18
+PROBE|1961|67361|lf|GW.currFocusColumn=1.87
+PROBE|1962|67364|item|I13.focusPercent=0.132
+PROBE|1963|67377|frame|fr=4 fc=1.87 ss=true fp 13@0.13
+PROBE|1964|67378|lf|GW.currFocusColumn=1.92
+PROBE|1965|67381|item|I13.focusPercent=0.084
+PROBE|1966|67394|frame|fr=4 fc=1.92 ss=true fp 13@0.08
+PROBE|1967|67395|lf|GW.currFocusColumn=1.95
+PROBE|1968|67397|item|I13.focusPercent=0
+PROBE|1969|67411|frame|fr=4 fc=1.95 ss=true fp
+PROBE|1970|67411|lf|GW.currFocusColumn=1.98
+PROBE|1971|67427|frame|fr=4 fc=1.98 ss=true fp
+PROBE|1972|67428|lf|GW.currFocusColumn=1.99
+PROBE|1973|67444|frame|fr=4 fc=1.99 ss=true fp
+PROBE|1974|67445|lf|GW.currFocusColumn=1.99
+PROBE|1975|67461|lf|GW.currFocusColumn=2
+PROBE|1976|67478|frame|fr=4 fc=2 ss=true fp
+PROBE|1977|67479|item|I14.focusPercent=1
+PROBE|1978|67494|frame|fr=4 fc=2 ss=true fp 14@1
+PROBE|1979|67838|item|I14.itemHasFocus=true
+PROBE|1980|67838|lf|GW.itemFocused=14
+PROBE|1981|67839|lf|GW.scrollingStatus=false
+PROBE|1982|67839|lf|GW.horizFocusDirection=none
+PROBE|1983|67843|frame|fr=4 fc=2 ss=false fp 14@1
+PROBE|1984|70058|step|31 act:animate7
+PROBE|1985|70058|lf|GW.scrollingStatus=true
+PROBE|1986|70059|item|I14.itemHasFocus=false
+PROBE|1987|70059|lf|GW.itemUnfocused=14
+PROBE|1988|70059|lf|GW.horizFocusDirection=left
+PROBE|1989|70060|lf|GW.vertFocusDirection=down
+PROBE|1990|70060|act|animate7 itemFocused=14 currFocusRow=4 skipFocusAnimations=false 
+PROBE|1991|70062|frame|fr=4 fc=2 ss=true fp 14@1
+PROBE|1992|70063|lf|GW.currFocusRow=4.01
+PROBE|1993|70063|lf|GW.currFocusColumn=1.98
+PROBE|1994|70067|item|I14.focusPercent=0.979
+PROBE|1995|70069|frame|fr=4.01 fc=1.98 ss=true fp 14@0.98
+PROBE|1996|70070|lf|GW.currFocusRow=4.06
+PROBE|1997|70070|lf|GW.currFocusColumn=1.92
+PROBE|1998|70072|item|I14.focusPercent=0.921
+PROBE|1999|70074|frame|fr=4.06 fc=1.92 ss=true fp 14@0.92
+PROBE|2000|70075|lf|GW.currFocusRow=4.1
+PROBE|2001|70075|lf|GW.currFocusColumn=1.88
+PROBE|2002|70078|item|I14.focusPercent=0.879
+PROBE|2003|70080|frame|fr=4.1 fc=1.88 ss=true fp 14@0.88
+PROBE|2004|70081|lf|GW.currFocusRow=4.14
+PROBE|2005|70081|lf|GW.currFocusColumn=1.83
+PROBE|2006|70084|item|I14.focusPercent=0.826
+PROBE|2007|70097|frame|fr=4.14 fc=1.83 ss=true fp 14@0.83
+PROBE|2008|70098|lf|GW.currFocusRow=4.25
+PROBE|2009|70098|lf|GW.currFocusColumn=1.7
+PROBE|2010|70100|item|I14.focusPercent=0.7
+PROBE|2011|70114|frame|fr=4.25 fc=1.7 ss=true fp 14@0.7
+PROBE|2012|70115|lf|GW.currFocusRow=4.36
+PROBE|2013|70115|lf|GW.currFocusColumn=1.59
+PROBE|2014|70118|item|I14.focusPercent=0.589
+PROBE|2015|70130|frame|fr=4.36 fc=1.59 ss=true fp 14@0.59
+PROBE|2016|70131|lf|GW.currFocusRow=4.47
+PROBE|2017|70131|lf|GW.currFocusColumn=1.49
+PROBE|2018|70134|item|I14.focusPercent=0.489
+PROBE|2019|70147|frame|fr=4.47 fc=1.49 ss=true fp 14@0.49
+PROBE|2020|70148|lf|GW.currFocusRow=4.58
+PROBE|2021|70148|lf|GW.currFocusColumn=1.4
+PROBE|2022|70150|item|I14.focusPercent=0.4
+PROBE|2023|70163|frame|fr=4.58 fc=1.4 ss=true fp 14@0.4
+PROBE|2024|70164|lf|GW.currFocusRow=4.68
+PROBE|2025|70165|lf|GW.currFocusColumn=1.32
+PROBE|2026|70167|item|I14.focusPercent=0.321
+PROBE|2027|70180|frame|fr=4.68 fc=1.32 ss=true fp 14@0.32
+PROBE|2028|70181|lf|GW.currFocusRow=4.77
+PROBE|2029|70182|lf|GW.currFocusColumn=1.26
+PROBE|2030|70197|frame|fr=4.77 fc=1.26 ss=true fp 14@0.32
+PROBE|2031|70198|lf|GW.currFocusRow=4.86
+PROBE|2032|70198|lf|GW.currFocusColumn=1.2
+PROBE|2033|70202|frame|fr=4.86 fc=1.2 ss=true fp 14@0.32
+PROBE|2034|70214|lf|GW.currFocusRow=4.96
+PROBE|2035|70215|lf|GW.currFocusColumn=1.15
+PROBE|2036|70230|frame|fr=4.96 fc=1.15 ss=true fp 14@0.32
+PROBE|2037|70231|lf|GW.currFocusRow=0.05
+PROBE|2038|70231|lf|GW.currFocusColumn=1.12
+PROBE|2039|70247|frame|fr=0.05 fc=1.12 ss=true fp 14@0.32
+PROBE|2040|70248|lf|GW.currFocusRow=0.15
+PROBE|2041|70248|lf|GW.currFocusColumn=1.08
+PROBE|2042|70264|frame|fr=0.15 fc=1.08 ss=true fp 14@0.32
+PROBE|2043|70264|lf|GW.currFocusRow=0.26
+PROBE|2044|70265|lf|GW.currFocusColumn=1.06
+PROBE|2045|70280|frame|fr=0.26 fc=1.06 ss=true fp 14@0.32
+PROBE|2046|70281|lf|GW.currFocusRow=0.36
+PROBE|2047|70282|lf|GW.currFocusColumn=1.04
+PROBE|2048|70297|frame|fr=0.36 fc=1.04 ss=true fp 14@0.32
+PROBE|2049|70298|lf|GW.currFocusRow=0.46
+PROBE|2050|70298|lf|GW.currFocusColumn=1.02
+PROBE|2051|70314|frame|fr=0.46 fc=1.02 ss=true fp 14@0.32
+PROBE|2052|70315|lf|GW.currFocusRow=0.55
+PROBE|2053|70315|lf|GW.currFocusColumn=1.01
+PROBE|2054|70330|frame|fr=0.55 fc=1.01 ss=true fp 14@0.32
+PROBE|2055|70331|lf|GW.currFocusRow=0.65
+PROBE|2056|70332|lf|GW.currFocusColumn=1.01
+PROBE|2057|70347|frame|fr=0.65 fc=1.01 ss=true fp 14@0.32
+PROBE|2058|70348|lf|GW.currFocusRow=0.73
+PROBE|2059|70348|lf|GW.currFocusColumn=1
+PROBE|2060|70364|frame|fr=0.73 fc=1 ss=true fp 14@0.32
+PROBE|2061|70364|lf|GW.currFocusRow=0.81
+PROBE|2062|70381|frame|fr=0.81 fc=1 ss=true fp 14@0.32
+PROBE|2063|70382|lf|GW.currFocusRow=0.89
+PROBE|2064|70397|frame|fr=0.89 fc=1 ss=true fp 14@0.32
+PROBE|2065|70398|lf|GW.currFocusRow=0.96
+PROBE|2066|70413|lf|GW.horizFocusDirection=none
+PROBE|2067|70414|frame|fr=0.96 fc=1 ss=true fp 14@0.32
+PROBE|2068|70415|lf|GW.currFocusRow=1.04
+PROBE|2069|70430|frame|fr=1.04 fc=1 ss=true fp 14@0.32
+PROBE|2070|70431|lf|GW.currFocusRow=1.1
+PROBE|2071|70432|item|I7.focusPercent=0.1
+PROBE|2072|70447|frame|fr=1.1 fc=1 ss=true fp 7@0.1 14@0.32
+PROBE|2073|70448|lf|GW.currFocusRow=1.17
+PROBE|2074|70448|item|I7.focusPercent=0.173
+PROBE|2075|70464|frame|fr=1.17 fc=1 ss=true fp 7@0.17 14@0.32
+PROBE|2076|70464|lf|GW.currFocusRow=1.24
+PROBE|2077|70465|item|I7.focusPercent=0.236
+PROBE|2078|70480|frame|fr=1.24 fc=1 ss=true fp 7@0.24 14@0.32
+PROBE|2079|70481|lf|GW.currFocusRow=1.29
+PROBE|2080|70482|item|I7.focusPercent=0.291
+PROBE|2081|70497|frame|fr=1.29 fc=1 ss=true fp 7@0.29 14@0.32
+PROBE|2082|70498|lf|GW.currFocusRow=1.35
+PROBE|2083|70498|item|I7.focusPercent=0.345
+PROBE|2084|70514|frame|fr=1.35 fc=1 ss=true fp 7@0.35 14@0.32
+PROBE|2085|70514|lf|GW.currFocusRow=1.4
+PROBE|2086|70515|item|I7.focusPercent=0.4
+PROBE|2087|70530|frame|fr=1.4 fc=1 ss=true fp 7@0.4 14@0.32
+PROBE|2088|70531|lf|GW.currFocusRow=1.45
+PROBE|2089|70532|item|I7.focusPercent=0.445
+PROBE|2090|70547|frame|fr=1.45 fc=1 ss=true fp 7@0.45 14@0.32
+PROBE|2091|70548|lf|GW.currFocusRow=1.49
+PROBE|2092|70549|item|I7.focusPercent=0.491
+PROBE|2093|70564|frame|fr=1.49 fc=1 ss=true fp 7@0.49 14@0.32
+PROBE|2094|70565|lf|GW.currFocusRow=1.54
+PROBE|2095|70565|item|I7.focusPercent=0.536
+PROBE|2096|70580|frame|fr=1.54 fc=1 ss=true fp 7@0.54 14@0.32
+PROBE|2097|70581|lf|GW.currFocusRow=1.58
+PROBE|2098|70582|item|I7.focusPercent=0.582
+PROBE|2099|70597|frame|fr=1.58 fc=1 ss=true fp 7@0.58 14@0.32
+PROBE|2100|70598|lf|GW.currFocusRow=1.62
+PROBE|2101|70599|item|I7.focusPercent=0.618
+PROBE|2102|70614|frame|fr=1.62 fc=1 ss=true fp 7@0.62 14@0.32
+PROBE|2103|70614|lf|GW.currFocusRow=1.65
+PROBE|2104|70615|item|I7.focusPercent=0.655
+PROBE|2105|70631|frame|fr=1.65 fc=1 ss=true fp 7@0.65 14@0.32
+PROBE|2106|70632|lf|GW.currFocusRow=1.69
+PROBE|2107|70632|item|I7.focusPercent=0.691
+PROBE|2108|70634|item|I14.focusPercent=0
+PROBE|2109|70647|frame|fr=1.69 fc=1 ss=true fp 7@0.69
+PROBE|2110|70648|lf|GW.currFocusRow=1.72
+PROBE|2111|70649|item|I7.focusPercent=0.718
+PROBE|2112|70664|frame|fr=1.72 fc=1 ss=true fp 7@0.72
+PROBE|2113|70665|lf|GW.currFocusRow=1.75
+PROBE|2114|70666|item|I7.focusPercent=0.745
+PROBE|2115|70681|frame|fr=1.75 fc=1 ss=true fp 7@0.75
+PROBE|2116|70682|lf|GW.currFocusRow=1.77
+PROBE|2117|70683|item|I7.focusPercent=0.773
+PROBE|2118|70698|frame|fr=1.77 fc=1 ss=true fp 7@0.77
+PROBE|2119|70698|lf|GW.currFocusRow=1.8
+PROBE|2120|70699|item|I7.focusPercent=0.8
+PROBE|2121|70703|frame|fr=1.8 fc=1 ss=true fp 7@0.8
+PROBE|2122|70715|lf|GW.currFocusRow=1.83
+PROBE|2123|70716|item|I7.focusPercent=0.827
+PROBE|2124|70731|frame|fr=1.83 fc=1 ss=true fp 7@0.83
+PROBE|2125|70732|lf|GW.currFocusRow=1.85
+PROBE|2126|70733|item|I7.focusPercent=0.845
+PROBE|2127|70748|frame|fr=1.85 fc=1 ss=true fp 7@0.85
+PROBE|2128|70749|lf|GW.currFocusRow=1.86
+PROBE|2129|70749|item|I7.focusPercent=0.864
+PROBE|2130|70764|frame|fr=1.86 fc=1 ss=true fp 7@0.86
+PROBE|2131|70765|lf|GW.currFocusRow=1.88
+PROBE|2132|70766|item|I7.focusPercent=0.882
+PROBE|2133|70781|frame|fr=1.88 fc=1 ss=true fp 7@0.88
+PROBE|2134|70782|lf|GW.currFocusRow=1.9
+PROBE|2135|70783|item|I7.focusPercent=0.9
+PROBE|2136|70798|frame|fr=1.9 fc=1 ss=true fp 7@0.9
+PROBE|2137|70799|lf|GW.currFocusRow=1.92
+PROBE|2138|70799|item|I7.focusPercent=0.918
+PROBE|2139|70814|frame|fr=1.92 fc=1 ss=true fp 7@0.92
+PROBE|2140|70815|lf|GW.currFocusRow=1.93
+PROBE|2141|70816|item|I7.focusPercent=0.927
+PROBE|2142|70831|frame|fr=1.93 fc=1 ss=true fp 7@0.93
+PROBE|2143|70832|lf|GW.currFocusRow=1.94
+PROBE|2144|70833|item|I7.focusPercent=0.936
+PROBE|2145|70847|frame|fr=1.94 fc=1 ss=true fp 7@0.94
+PROBE|2146|70848|lf|GW.currFocusRow=1.95
+PROBE|2147|70849|item|I7.focusPercent=0.945
+PROBE|2148|70864|frame|fr=1.95 fc=1 ss=true fp 7@0.95
+PROBE|2149|70865|lf|GW.currFocusRow=1.95
+PROBE|2150|70866|item|I7.focusPercent=0.955
+PROBE|2151|70881|lf|GW.currFocusRow=1.96
+PROBE|2152|70882|item|I7.focusPercent=0.964
+PROBE|2153|70897|frame|fr=1.96 fc=1 ss=true fp 7@0.96
+PROBE|2154|70898|lf|GW.currFocusRow=1.97
+PROBE|2155|70899|item|I7.focusPercent=0.973
+PROBE|2156|70914|frame|fr=1.97 fc=1 ss=true fp 7@0.97
+PROBE|2157|70931|lf|GW.currFocusRow=1.98
+PROBE|2158|70932|item|I7.focusPercent=0.982
+PROBE|2159|70948|frame|fr=1.98 fc=1 ss=true fp 7@0.98
+PROBE|2160|70965|lf|GW.currFocusRow=1.99
+PROBE|2161|70966|item|I7.focusPercent=0.991
+PROBE|2162|70981|frame|fr=1.99 fc=1 ss=true fp 7@0.99
+PROBE|2163|71098|lf|GW.currFocusRow=2
+PROBE|2164|71099|item|I7.focusPercent=1
+PROBE|2165|71115|item|I7.itemHasFocus=true
+PROBE|2166|71116|lf|GW.itemFocused=7
+PROBE|2167|71116|lf|GW.scrollingStatus=false
+PROBE|2168|71117|lf|GW.vertFocusDirection=none
+PROBE|2169|71117|frame|fr=2 fc=1 ss=false fp 7@1
+PROBE|2170|72060|step|32 act:jump1
+PROBE|2171|72060|item|I7.itemHasFocus=false
+PROBE|2172|72061|lf|GW.itemUnfocused=7
+PROBE|2173|72061|lf|GW.currFocusRow=0
+PROBE|2174|72063|item|I1.itemHasFocus=true
+PROBE|2175|72063|lf|GW.itemFocused=1
+PROBE|2176|72064|act|jump1 itemFocused=1 currFocusRow=0 skipFocusAnimations=false 
+PROBE|2177|72065|item|I1.focusPercent=1
+PROBE|2178|72065|item|I7.focusPercent=0
+PROBE|2179|72070|frame|fr=0 fc=1 ss=false fp 1@1
+PROBE|2180|74065|step|33 act:skip
+PROBE|2181|74065|act|skip itemFocused=1 currFocusRow=0 skipFocusAnimations=true 
+PROBE|2182|76065|step|34 key:Down
+PROBE|await|Down
+PROBE|2183|76114|lf|GW.scrollingStatus=true
+PROBE|2184|76114|item|I1.itemHasFocus=false
+PROBE|2185|76115|lf|GW.itemUnfocused=1
+PROBE|2186|76115|lf|GW.currFocusRow=1
+PROBE|2187|76117|item|I4.itemHasFocus=true
+PROBE|2188|76117|lf|GW.itemFocused=4
+PROBE|2189|76118|lf|GW.scrollingStatus=false
+PROBE|2190|76118|lf|GW.vertFocusDirection=down
+PROBE|2191|76121|item|I4.focusPercent=1
+PROBE|2192|76123|frame|fr=1 fc=1 ss=false fp 1@1 4@1
+PROBE|2193|76139|lf|GW.vertFocusDirection=none
+PROBE|2194|78066|step|35 act:noskip
+PROBE|2195|78067|act|noskip itemFocused=4 currFocusRow=1 skipFocusAnimations=false 
+PROBE|2196|80067|step|36 list:PF
+PROBE|2197|80069|item|I4.itemHasFocus=false
+PROBE|2198|80069|lf|PF.itemFocused=0
+PROBE|2199|80070|act|focus PF itemFocused=0 currFocusRow=0 
+PROBE|2200|80082|frame|fr=0 fc=0 ss=false
+PROBE|2201|82069|step|37 key:Right
+PROBE|await|Right
+PROBE|2202|82113|lf|PF.scrollingStatus=true
+PROBE|2203|82113|lf|PF.itemUnfocused=0
+PROBE|2204|82114|lf|PF.horizFocusDirection=right
+PROBE|2205|82121|frame|fr=0 fc=0 ss=true
+PROBE|2206|82122|lf|PF.currFocusColumn=0.05
+PROBE|2207|82126|frame|fr=0 fc=0.05 ss=true
+PROBE|2208|82128|lf|PF.currFocusColumn=0.1
+PROBE|2209|82130|frame|fr=0 fc=0.1 ss=true
+PROBE|2210|82131|lf|PF.currFocusColumn=0.15
+PROBE|2211|82141|frame|fr=0 fc=0.15 ss=true
+PROBE|2212|82145|lf|PF.currFocusColumn=0.23
+PROBE|2213|82158|frame|fr=0 fc=0.23 ss=true
+PROBE|2214|82158|lf|PF.currFocusColumn=0.35
+PROBE|2215|82174|frame|fr=0 fc=0.35 ss=true
+PROBE|2216|82176|lf|PF.currFocusColumn=0.46
+PROBE|2217|82191|frame|fr=0 fc=0.46 ss=true
+PROBE|2218|82192|lf|PF.currFocusColumn=0.55
+PROBE|2219|82208|frame|fr=0 fc=0.55 ss=true
+PROBE|2220|82209|lf|PF.currFocusColumn=0.63
+PROBE|2221|82221|frame|fr=0 fc=0.63 ss=true
+PROBE|2222|82225|lf|PF.currFocusColumn=0.71
+PROBE|2223|82241|frame|fr=0 fc=0.71 ss=true
+PROBE|2224|82242|lf|PF.currFocusColumn=0.76
+PROBE|2225|82258|frame|fr=0 fc=0.76 ss=true
+PROBE|2226|82259|lf|PF.currFocusColumn=0.82
+PROBE|2227|82275|frame|fr=0 fc=0.82 ss=true
+PROBE|2228|82276|lf|PF.currFocusColumn=0.86
+PROBE|2229|82291|frame|fr=0 fc=0.86 ss=true
+PROBE|2230|82292|lf|PF.currFocusColumn=0.9
+PROBE|2231|82308|frame|fr=0 fc=0.9 ss=true
+PROBE|2232|82309|lf|PF.currFocusColumn=0.93
+PROBE|2233|82325|frame|fr=0 fc=0.93 ss=true
+PROBE|2234|82325|lf|PF.currFocusColumn=0.95
+PROBE|2235|82341|frame|fr=0 fc=0.95 ss=true
+PROBE|2236|82342|lf|PF.currFocusColumn=0.97
+PROBE|2237|82358|frame|fr=0 fc=0.97 ss=true
+PROBE|2238|82358|lf|PF.currFocusColumn=0.98
+PROBE|2239|82375|frame|fr=0 fc=0.98 ss=true
+PROBE|2240|82376|lf|PF.currFocusColumn=0.99
+PROBE|2241|82391|frame|fr=0 fc=0.99 ss=true
+PROBE|2242|82392|lf|PF.currFocusColumn=0.99
+PROBE|2243|82458|lf|PF.currFocusColumn=1
+PROBE|2244|82477|lf|PF.itemFocused=1
+PROBE|2245|82477|lf|PF.scrollingStatus=false
+PROBE|2246|82478|lf|PF.horizFocusDirection=none
+PROBE|2247|82479|frame|fr=0 fc=1 ss=false
+PROBE|2248|84069|step|38 key:Right
+PROBE|await|Right
+PROBE|2249|84110|lf|PF.scrollingStatus=true
+PROBE|2250|84111|lf|PF.itemUnfocused=1
+PROBE|2251|84111|lf|PF.horizFocusDirection=right
+PROBE|2252|84115|frame|fr=0 fc=1 ss=true
+PROBE|2253|84118|lf|PF.currFocusColumn=1.04
+PROBE|2254|84121|frame|fr=0 fc=1.04 ss=true
+PROBE|2255|84122|lf|PF.currFocusColumn=1.09
+PROBE|2256|84127|frame|fr=0 fc=1.09 ss=true
+PROBE|2257|84128|lf|PF.currFocusColumn=1.13
+PROBE|2258|84131|frame|fr=0 fc=1.13 ss=true
+PROBE|2259|84132|lf|PF.currFocusColumn=1.17
+PROBE|2260|84143|frame|fr=0 fc=1.17 ss=true
+PROBE|2261|84146|lf|PF.currFocusColumn=1.26
+PROBE|2262|84160|frame|fr=0 fc=1.26 ss=true
+PROBE|2263|84160|lf|PF.currFocusColumn=1.38
+PROBE|2264|84176|frame|fr=0 fc=1.38 ss=true
+PROBE|2265|84178|lf|PF.currFocusColumn=1.48
+PROBE|2266|84193|frame|fr=0 fc=1.48 ss=true
+PROBE|2267|84194|lf|PF.currFocusColumn=1.57
+PROBE|2268|84210|frame|fr=0 fc=1.57 ss=true
+PROBE|2269|84211|lf|PF.currFocusColumn=1.65
+PROBE|2270|84223|frame|fr=0 fc=1.65 ss=true
+PROBE|2271|84227|lf|PF.currFocusColumn=1.72
+PROBE|2272|84243|frame|fr=0 fc=1.72 ss=true
+PROBE|2273|84244|lf|PF.currFocusColumn=1.78
+PROBE|2274|84260|frame|fr=0 fc=1.78 ss=true
+PROBE|2275|84261|lf|PF.currFocusColumn=1.83
+PROBE|2276|84276|frame|fr=0 fc=1.83 ss=true
+PROBE|2277|84278|lf|PF.currFocusColumn=1.87
+PROBE|2278|84293|frame|fr=0 fc=1.87 ss=true
+PROBE|2279|84294|lf|PF.currFocusColumn=1.91
+PROBE|2280|84310|frame|fr=0 fc=1.91 ss=true
+PROBE|2281|84311|lf|PF.currFocusColumn=1.93
+PROBE|2282|84326|frame|fr=0 fc=1.93 ss=true
+PROBE|2283|84327|lf|PF.currFocusColumn=1.95
+PROBE|2284|84343|frame|fr=0 fc=1.95 ss=true
+PROBE|2285|84344|lf|PF.currFocusColumn=1.97
+PROBE|2286|84360|frame|fr=0 fc=1.97 ss=true
+PROBE|2287|84361|lf|PF.currFocusColumn=1.98
+PROBE|2288|84376|frame|fr=0 fc=1.98 ss=true
+PROBE|2289|84378|lf|PF.currFocusColumn=1.99
+PROBE|2290|84393|frame|fr=0 fc=1.99 ss=true
+PROBE|2291|84394|lf|PF.currFocusColumn=1.99
+PROBE|2292|84444|lf|PF.currFocusColumn=2
+PROBE|2293|84462|lf|PF.itemFocused=2
+PROBE|2294|84462|lf|PF.scrollingStatus=false
+PROBE|2295|84463|lf|PF.horizFocusDirection=none
+PROBE|2296|84463|frame|fr=0 fc=2 ss=false
+PROBE|2297|86069|step|39 key:Right
+PROBE|await|Right
+PROBE|2298|88069|step|40 key:Left
+PROBE|await|Left
+PROBE|2299|88108|lf|PF.scrollingStatus=true
+PROBE|2300|88108|lf|PF.itemUnfocused=2
+PROBE|2301|88108|lf|PF.horizFocusDirection=left
+PROBE|2302|88114|frame|fr=0 fc=2 ss=true
+PROBE|2303|88114|lf|PF.currFocusColumn=1.94
+PROBE|2304|88119|frame|fr=0 fc=1.94 ss=true
+PROBE|2305|88122|lf|PF.currFocusColumn=1.89
+PROBE|2306|88125|frame|fr=0 fc=1.89 ss=true
+PROBE|2307|88125|lf|PF.currFocusColumn=1.85
+PROBE|2308|88130|frame|fr=0 fc=1.85 ss=true
+PROBE|2309|88132|lf|PF.currFocusColumn=1.81
+PROBE|2310|88147|frame|fr=0 fc=1.81 ss=true
+PROBE|2311|88150|lf|PF.currFocusColumn=1.68
+PROBE|2312|88164|frame|fr=0 fc=1.68 ss=true
+PROBE|2313|88165|lf|PF.currFocusColumn=1.57
+PROBE|2314|88180|frame|fr=0 fc=1.57 ss=true
+PROBE|2315|88181|lf|PF.currFocusColumn=1.47
+PROBE|2316|88197|frame|fr=0 fc=1.47 ss=true
+PROBE|2317|88198|lf|PF.currFocusColumn=1.38
+PROBE|2318|88214|frame|fr=0 fc=1.38 ss=true
+PROBE|2319|88215|lf|PF.currFocusColumn=1.32
+PROBE|2320|88228|frame|fr=0 fc=1.32 ss=true
+PROBE|2321|88232|lf|PF.currFocusColumn=1.25
+PROBE|2322|88247|frame|fr=0 fc=1.25 ss=true
+PROBE|2323|88248|lf|PF.currFocusColumn=1.19
+PROBE|2324|88264|frame|fr=0 fc=1.19 ss=true
+PROBE|2325|88265|lf|PF.currFocusColumn=1.15
+PROBE|2326|88281|frame|fr=0 fc=1.15 ss=true
+PROBE|2327|88281|lf|PF.currFocusColumn=1.11
+PROBE|2328|88297|frame|fr=0 fc=1.11 ss=true
+PROBE|2329|88298|lf|PF.currFocusColumn=1.08
+PROBE|2330|88314|frame|fr=0 fc=1.08 ss=true
+PROBE|2331|88315|lf|PF.currFocusColumn=1.05
+PROBE|2332|88331|frame|fr=0 fc=1.05 ss=true
+PROBE|2333|88332|lf|PF.currFocusColumn=1.03
+PROBE|2334|88347|frame|fr=0 fc=1.03 ss=true
+PROBE|2335|88348|lf|PF.currFocusColumn=1.02
+PROBE|2336|88364|frame|fr=0 fc=1.02 ss=true
+PROBE|2337|88365|lf|PF.currFocusColumn=1.01
+PROBE|2338|88381|frame|fr=0 fc=1.01 ss=true
+PROBE|2339|88381|lf|PF.currFocusColumn=1.01
+PROBE|2340|88398|lf|PF.currFocusColumn=1
+PROBE|2341|88414|frame|fr=0 fc=1 ss=true
+PROBE|2342|88466|lf|PF.itemFocused=1
+PROBE|2343|88466|lf|PF.scrollingStatus=false
+PROBE|2344|88467|lf|PF.horizFocusDirection=none
+PROBE|2345|88468|frame|fr=0 fc=1 ss=false
+PROBE|2346|90070|step|41 key:Down
+PROBE|await|Down
+PROBE|2347|90110|lf|PF.scrollingStatus=true
+PROBE|2348|90111|lf|PF.itemUnfocused=1
+PROBE|2349|90111|lf|PF.vertFocusDirection=down
+PROBE|2350|90115|frame|fr=0 fc=1 ss=true
+PROBE|2351|90117|lf|PF.currFocusRow=0.03
+PROBE|2352|90120|frame|fr=0.03 fc=1 ss=true
+PROBE|2353|90121|lf|PF.currFocusRow=0.07
+PROBE|2354|90124|frame|fr=0.07 fc=1 ss=true
+PROBE|2355|90126|lf|PF.currFocusRow=0.12
+PROBE|2356|90132|frame|fr=0.12 fc=1 ss=true
+PROBE|2357|90133|lf|PF.currFocusRow=0.18
+PROBE|2358|90149|frame|fr=0.18 fc=1 ss=true
+PROBE|2359|90152|lf|PF.currFocusRow=0.31
+PROBE|2360|90166|frame|fr=0.31 fc=1 ss=true
+PROBE|2361|90166|lf|PF.currFocusRow=0.41
+PROBE|2362|90182|frame|fr=0.41 fc=1 ss=true
+PROBE|2363|90183|lf|PF.currFocusRow=0.52
+PROBE|2364|90199|frame|fr=0.52 fc=1 ss=true
+PROBE|2365|90200|lf|PF.currFocusRow=0.6
+PROBE|2366|90216|frame|fr=0.6 fc=1 ss=true
+PROBE|2367|90217|lf|PF.currFocusRow=0.67
+PROBE|2368|90231|frame|fr=0.67 fc=1 ss=true
+PROBE|2369|90233|lf|PF.currFocusRow=0.75
+PROBE|2370|90249|frame|fr=0.75 fc=1 ss=true
+PROBE|2371|90250|lf|PF.currFocusRow=0.79
+PROBE|2372|90266|frame|fr=0.79 fc=1 ss=true
+PROBE|2373|90267|lf|PF.currFocusRow=0.85
+PROBE|2374|90282|frame|fr=0.85 fc=1 ss=true
+PROBE|2375|90284|lf|PF.currFocusRow=0.88
+PROBE|2376|90299|frame|fr=0.88 fc=1 ss=true
+PROBE|2377|90300|lf|PF.currFocusRow=0.91
+PROBE|2378|90316|frame|fr=0.91 fc=1 ss=true
+PROBE|2379|90317|lf|PF.currFocusRow=0.94
+PROBE|2380|90333|frame|fr=0.94 fc=1 ss=true
+PROBE|2381|90333|lf|PF.currFocusRow=0.95
+PROBE|2382|90349|frame|fr=0.95 fc=1 ss=true
+PROBE|2383|90350|lf|PF.currFocusRow=0.97
+PROBE|2384|90366|frame|fr=0.97 fc=1 ss=true
+PROBE|2385|90367|lf|PF.currFocusRow=0.98
+PROBE|2386|90382|frame|fr=0.98 fc=1 ss=true
+PROBE|2387|90384|lf|PF.currFocusRow=0.99
+PROBE|2388|90399|frame|fr=0.99 fc=1 ss=true
+PROBE|2389|90450|lf|PF.currFocusRow=1
+PROBE|2390|90468|lf|PF.itemFocused=4
+PROBE|2391|90469|lf|PF.scrollingStatus=false
+PROBE|2392|90470|lf|PF.vertFocusDirection=none
+PROBE|2393|90470|frame|fr=1 fc=1 ss=false
+PROBE|2394|92070|step|42 key:Down
+PROBE|await|Down
+PROBE|2395|92111|lf|PF.scrollingStatus=true
+PROBE|2396|92112|lf|PF.itemUnfocused=4
+PROBE|2397|92112|lf|PF.vertFocusDirection=down
+PROBE|2398|92116|frame|fr=1 fc=1 ss=true
+PROBE|2399|92117|lf|PF.currFocusRow=1.04
+PROBE|2400|92120|frame|fr=1.04 fc=1 ss=true
+PROBE|2401|92122|lf|PF.currFocusRow=1.07
+PROBE|2402|92124|frame|fr=1.07 fc=1 ss=true
+PROBE|2403|92124|lf|PF.currFocusRow=1.1
+PROBE|2404|92134|frame|fr=1.1 fc=1 ss=true
+PROBE|2405|92136|lf|PF.currFocusRow=1.19
+PROBE|2406|92151|frame|fr=1.19 fc=1 ss=true
+PROBE|2407|92154|lf|PF.currFocusRow=1.31
+PROBE|2408|92168|frame|fr=1.31 fc=1 ss=true
+PROBE|2409|92169|lf|PF.currFocusRow=1.42
+PROBE|2410|92184|frame|fr=1.42 fc=1 ss=true
+PROBE|2411|92185|lf|PF.currFocusRow=1.52
+PROBE|2412|92201|frame|fr=1.52 fc=1 ss=true
+PROBE|2413|92202|lf|PF.currFocusRow=1.6
+PROBE|2414|92218|frame|fr=1.6 fc=1 ss=true
+PROBE|2415|92218|lf|PF.currFocusRow=1.68
+PROBE|2416|92233|frame|fr=1.68 fc=1 ss=true
+PROBE|2417|92236|lf|PF.currFocusRow=1.75
+PROBE|2418|92251|frame|fr=1.75 fc=1 ss=true
+PROBE|2419|92252|lf|PF.currFocusRow=1.8
+PROBE|2420|92268|frame|fr=1.8 fc=1 ss=true
+PROBE|2421|92269|lf|PF.currFocusRow=1.85
+PROBE|2422|92284|frame|fr=1.85 fc=1 ss=true
+PROBE|2423|92285|lf|PF.currFocusRow=1.88
+PROBE|2424|92301|frame|fr=1.88 fc=1 ss=true
+PROBE|2425|92302|lf|PF.currFocusRow=1.92
+PROBE|2426|92318|frame|fr=1.92 fc=1 ss=true
+PROBE|2427|92319|lf|PF.currFocusRow=1.94
+PROBE|2428|92335|frame|fr=1.94 fc=1 ss=true
+PROBE|2429|92336|lf|PF.currFocusRow=1.96
+PROBE|2430|92351|frame|fr=1.96 fc=1 ss=true
+PROBE|2431|92352|lf|PF.currFocusRow=1.97
+PROBE|2432|92368|frame|fr=1.97 fc=1 ss=true
+PROBE|2433|92369|lf|PF.currFocusRow=1.98
+PROBE|2434|92384|frame|fr=1.98 fc=1 ss=true
+PROBE|2435|92385|lf|PF.currFocusRow=1.99
+PROBE|2436|92401|frame|fr=1.99 fc=1 ss=true
+PROBE|2437|92452|lf|PF.currFocusRow=2
+PROBE|2438|92470|lf|PF.itemFocused=7
+PROBE|2439|92471|lf|PF.scrollingStatus=false
+PROBE|2440|92472|lf|PF.vertFocusDirection=none
+PROBE|2441|92472|frame|fr=2 fc=1 ss=false
+PROBE|2442|94072|step|43 key:Down
+PROBE|await|Down
+PROBE|2443|94111|lf|PF.scrollingStatus=true
+PROBE|2444|94111|lf|PF.itemUnfocused=7
+PROBE|2445|94111|lf|PF.vertFocusDirection=down
+PROBE|2446|94115|frame|fr=2 fc=1 ss=true
+PROBE|2447|94117|lf|PF.currFocusRow=2.03
+PROBE|2448|94119|frame|fr=2.03 fc=1 ss=true
+PROBE|2449|94120|lf|PF.currFocusRow=2.07
+PROBE|2450|94122|frame|fr=2.07 fc=1 ss=true
+PROBE|2451|94123|lf|PF.currFocusRow=2.09
+PROBE|2452|94137|frame|fr=2.09 fc=1 ss=true
+PROBE|2453|94140|lf|PF.currFocusRow=2.21
+PROBE|2454|94153|frame|fr=2.21 fc=1 ss=true
+PROBE|2455|94154|lf|PF.currFocusRow=2.34
+PROBE|2456|94169|frame|fr=2.34 fc=1 ss=true
+PROBE|2457|94170|lf|PF.currFocusRow=2.44
+PROBE|2458|94186|frame|fr=2.44 fc=1 ss=true
+PROBE|2459|94188|lf|PF.currFocusRow=2.54
+PROBE|2460|94203|frame|fr=2.54 fc=1 ss=true
+PROBE|2461|94204|lf|PF.currFocusRow=2.62
+PROBE|2462|94220|frame|fr=2.62 fc=1 ss=true
+PROBE|2463|94221|lf|PF.currFocusRow=2.69
+PROBE|2464|94236|frame|fr=2.69 fc=1 ss=true
+PROBE|2465|94238|lf|PF.currFocusRow=2.75
+PROBE|2466|94253|frame|fr=2.75 fc=1 ss=true
+PROBE|2467|94254|lf|PF.currFocusRow=2.81
+PROBE|2468|94270|frame|fr=2.81 fc=1 ss=true
+PROBE|2469|94270|lf|PF.currFocusRow=2.85
+PROBE|2470|94286|frame|fr=2.85 fc=1 ss=true
+PROBE|2471|94288|lf|PF.currFocusRow=2.89
+PROBE|2472|94303|frame|fr=2.89 fc=1 ss=true
+PROBE|2473|94304|lf|PF.currFocusRow=2.92
+PROBE|2474|94320|frame|fr=2.92 fc=1 ss=true
+PROBE|2475|94321|lf|PF.currFocusRow=2.95
+PROBE|2476|94336|frame|fr=2.95 fc=1 ss=true
+PROBE|2477|94337|lf|PF.currFocusRow=2.96
+PROBE|2478|94353|frame|fr=2.96 fc=1 ss=true
+PROBE|2479|94354|lf|PF.currFocusRow=2.97
+PROBE|2480|94370|frame|fr=2.97 fc=1 ss=true
+PROBE|2481|94371|lf|PF.currFocusRow=2.98
+PROBE|2482|94386|frame|fr=2.98 fc=1 ss=true
+PROBE|2483|94388|lf|PF.currFocusRow=2.99
+PROBE|2484|94403|frame|fr=2.99 fc=1 ss=true
+PROBE|2485|94454|lf|PF.currFocusRow=3
+PROBE|2486|94472|lf|PF.itemFocused=10
+PROBE|2487|94472|lf|PF.scrollingStatus=false
+PROBE|2488|94473|lf|PF.vertFocusDirection=none
+PROBE|2489|94474|frame|fr=3 fc=1 ss=false
+PROBE|2490|96072|step|44 key:Down_Down
+PROBE|await|Down_Down
+PROBE|2491|96114|lf|PF.scrollingStatus=true
+PROBE|2492|96114|lf|PF.itemUnfocused=10
+PROBE|2493|96114|lf|PF.vertFocusDirection=down
+PROBE|2494|96118|frame|fr=3 fc=1 ss=true
+PROBE|2495|96119|lf|PF.currFocusRow=3.04
+PROBE|2496|96122|frame|fr=3.04 fc=1 ss=true
+PROBE|2497|96124|lf|PF.currFocusRow=3.06
+PROBE|2498|96126|frame|fr=3.06 fc=1 ss=true
+PROBE|2499|96127|lf|PF.currFocusRow=3.1
+PROBE|2500|96139|frame|fr=3.1 fc=1 ss=true
+PROBE|2501|96143|lf|PF.currFocusRow=3.2
+PROBE|2502|96155|frame|fr=3.2 fc=1 ss=true
+PROBE|2503|96156|lf|PF.currFocusRow=3.32
+PROBE|2504|96172|frame|fr=3.32 fc=1 ss=true
+PROBE|2505|96173|lf|PF.currFocusRow=3.44
+PROBE|2506|96188|frame|fr=3.44 fc=1 ss=true
+PROBE|2507|96189|lf|PF.currFocusRow=3.53
+PROBE|2508|96205|frame|fr=3.53 fc=1 ss=true
+PROBE|2509|96206|lf|PF.currFocusRow=3.62
+PROBE|2510|96222|frame|fr=3.62 fc=1 ss=true
+PROBE|2511|96223|lf|PF.currFocusRow=3.69
+PROBE|2512|96238|frame|fr=3.69 fc=1 ss=true
+PROBE|2513|96240|lf|PF.currFocusRow=3.75
+PROBE|2514|96255|frame|fr=3.75 fc=1 ss=true
+PROBE|2515|96256|lf|PF.currFocusRow=3.81
+PROBE|2516|96272|frame|fr=3.81 fc=1 ss=true
+PROBE|2517|96273|lf|PF.currFocusRow=3.85
+PROBE|2518|96288|frame|fr=3.85 fc=1 ss=true
+PROBE|2519|96289|lf|PF.currFocusRow=3.89
+PROBE|2520|96305|frame|fr=3.89 fc=1 ss=true
+PROBE|2521|96306|lf|PF.currFocusRow=3.92
+PROBE|2522|96322|frame|fr=3.92 fc=1 ss=true
+PROBE|2523|96323|lf|PF.currFocusRow=3.95
+PROBE|2524|96338|frame|fr=3.95 fc=1 ss=true
+PROBE|2525|96342|lf|PF.currFocusRow=3.96
+PROBE|2526|96355|frame|fr=3.96 fc=1 ss=true
+PROBE|2527|96357|lf|PF.currFocusRow=3.97
+PROBE|2528|96372|frame|fr=3.97 fc=1 ss=true
+PROBE|2529|96373|lf|PF.currFocusRow=3.98
+PROBE|2530|96389|frame|fr=3.98 fc=1 ss=true
+PROBE|2531|96389|lf|PF.currFocusRow=3.99
+PROBE|2532|96405|frame|fr=3.99 fc=1 ss=true
+PROBE|2533|96456|lf|PF.currFocusRow=4
+PROBE|2534|96474|lf|PF.itemFocused=13
+PROBE|2535|96475|lf|PF.scrollingStatus=false
+PROBE|2536|96475|lf|PF.vertFocusDirection=none
+PROBE|2537|96476|frame|fr=4 fc=1 ss=false
+PROBE|2538|98074|step|45 hold:Down
+PROBE|await|HoldDown
+PROBE|2539|101574|step|46 act:jump0
+PROBE|2540|101575|lf|PF.itemUnfocused=13
+PROBE|2541|101575|lf|PF.currFocusRow=0
+PROBE|2542|101575|lf|PF.currFocusColumn=0
+PROBE|2543|101579|lf|PF.itemFocused=0
+PROBE|2544|101579|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|2545|101583|frame|fr=0 fc=0 ss=false
+PROBE|2546|103579|step|47 key:Up
+PROBE|await|Up
+PROBE|2547|105580|step|48 hold:Right
+PROBE|await|HoldRight
+PROBE|2548|105621|lf|PF.scrollingStatus=true
+PROBE|2549|105622|lf|PF.itemUnfocused=0
+PROBE|2550|105622|lf|PF.horizFocusDirection=right
+PROBE|2551|105627|frame|fr=0 fc=0 ss=true
+PROBE|2552|105630|lf|PF.currFocusColumn=0.05
+PROBE|2553|105636|frame|fr=0 fc=0.05 ss=true
+PROBE|2554|105636|lf|PF.currFocusColumn=0.1
+PROBE|2555|105639|frame|fr=0 fc=0.1 ss=true
+PROBE|2556|105641|lf|PF.currFocusColumn=0.15
+PROBE|2557|105648|frame|fr=0 fc=0.15 ss=true
+PROBE|2558|105648|lf|PF.currFocusColumn=0.22
+PROBE|2559|105664|frame|fr=0 fc=0.22 ss=true
+PROBE|2560|105666|lf|PF.currFocusColumn=0.34
+PROBE|2561|105681|frame|fr=0 fc=0.34 ss=true
+PROBE|2562|105682|lf|PF.currFocusColumn=0.45
+PROBE|2563|105698|frame|fr=0 fc=0.45 ss=true
+PROBE|2564|105699|lf|PF.currFocusColumn=0.54
+PROBE|2565|105715|frame|fr=0 fc=0.54 ss=true
+PROBE|2566|105715|lf|PF.currFocusColumn=0.62
+PROBE|2567|105731|frame|fr=0 fc=0.62 ss=true
+PROBE|2568|105733|lf|PF.currFocusColumn=0.69
+PROBE|2569|105748|frame|fr=0 fc=0.69 ss=true
+PROBE|2570|105749|lf|PF.currFocusColumn=0.76
+PROBE|2571|105751|frame|fr=0 fc=0.76 ss=true
+PROBE|2572|105766|lf|PF.currFocusColumn=0.81
+PROBE|2573|105781|frame|fr=0 fc=0.81 ss=true
+PROBE|2574|105782|lf|PF.currFocusColumn=0.86
+PROBE|2575|105798|frame|fr=0 fc=0.86 ss=true
+PROBE|2576|105799|lf|PF.currFocusColumn=0.89
+PROBE|2577|105814|frame|fr=0 fc=0.89 ss=true
+PROBE|2578|105815|lf|PF.currFocusColumn=0.92
+PROBE|2579|105831|frame|fr=0 fc=0.92 ss=true
+PROBE|2580|105833|lf|PF.currFocusColumn=0.95
+PROBE|2581|105848|frame|fr=0 fc=0.95 ss=true
+PROBE|2582|105849|lf|PF.currFocusColumn=0.96
+PROBE|2583|105865|frame|fr=0 fc=0.96 ss=true
+PROBE|2584|105866|lf|PF.currFocusColumn=0.98
+PROBE|2585|105882|frame|fr=0 fc=0.98 ss=true
+PROBE|2586|105882|lf|PF.currFocusColumn=0.98
+PROBE|2587|105899|lf|PF.currFocusColumn=0.99
+PROBE|2588|105915|frame|fr=0 fc=0.99 ss=true
+PROBE|2589|105966|lf|PF.currFocusColumn=1
+PROBE|2590|105982|frame|fr=0 fc=1 ss=true
+PROBE|2591|106165|lf|PF.currFocusColumn=1.02
+PROBE|2592|106182|frame|fr=0 fc=1.02 ss=true
+PROBE|2593|106184|lf|PF.currFocusColumn=1.04
+PROBE|2594|106198|frame|fr=0 fc=1.04 ss=true
+PROBE|2595|106199|lf|PF.currFocusColumn=1.07
+PROBE|2596|106215|frame|fr=0 fc=1.07 ss=true
+PROBE|2597|106216|lf|PF.currFocusColumn=1.12
+PROBE|2598|106232|frame|fr=0 fc=1.12 ss=true
+PROBE|2599|106232|lf|PF.currFocusColumn=1.17
+PROBE|2600|106248|frame|fr=0 fc=1.17 ss=true
+PROBE|2601|106250|lf|PF.currFocusColumn=1.24
+PROBE|2602|106252|frame|fr=0 fc=1.24 ss=true
+PROBE|2603|106266|lf|PF.currFocusColumn=1.31
+PROBE|2604|106282|frame|fr=0 fc=1.31 ss=true
+PROBE|2605|106283|lf|PF.currFocusColumn=1.39
+PROBE|2606|106298|frame|fr=0 fc=1.39 ss=true
+PROBE|2607|106299|lf|PF.currFocusColumn=1.49
+PROBE|2608|106315|frame|fr=0 fc=1.49 ss=true
+PROBE|2609|106317|lf|PF.currFocusColumn=1.58
+PROBE|2610|106332|frame|fr=0 fc=1.58 ss=true
+PROBE|2611|106332|lf|PF.currFocusColumn=1.67
+PROBE|2612|106348|frame|fr=0 fc=1.67 ss=true
+PROBE|2613|106350|lf|PF.currFocusColumn=1.75
+PROBE|2614|106365|frame|fr=0 fc=1.75 ss=true
+PROBE|2615|106366|lf|PF.currFocusColumn=1.82
+PROBE|2616|106382|frame|fr=0 fc=1.82 ss=true
+PROBE|2617|106383|lf|PF.currFocusColumn=1.87
+PROBE|2618|106398|frame|fr=0 fc=1.87 ss=true
+PROBE|2619|106399|lf|PF.currFocusColumn=1.92
+PROBE|2620|106415|frame|fr=0 fc=1.92 ss=true
+PROBE|2621|106416|lf|PF.currFocusColumn=1.95
+PROBE|2622|106432|frame|fr=0 fc=1.95 ss=true
+PROBE|2623|106432|lf|PF.currFocusColumn=1.97
+PROBE|2624|106449|frame|fr=0 fc=1.97 ss=true
+PROBE|2625|106450|lf|PF.currFocusColumn=1.99
+PROBE|2626|106465|frame|fr=0 fc=1.99 ss=true
+PROBE|2627|106466|lf|PF.currFocusColumn=1.99
+PROBE|2628|106483|lf|PF.currFocusColumn=2
+PROBE|2629|106499|frame|fr=0 fc=2 ss=true
+PROBE|2630|106859|lf|PF.itemFocused=2
+PROBE|2631|106859|lf|PF.scrollingStatus=false
+PROBE|2632|106860|lf|PF.horizFocusDirection=none
+PROBE|2633|106865|frame|fr=0 fc=2 ss=false
+PROBE|2634|109081|step|49 act:animate7
+PROBE|2635|109082|lf|PF.scrollingStatus=true
+PROBE|2636|109082|lf|PF.itemUnfocused=2
+PROBE|2637|109082|lf|PF.horizFocusDirection=left
+PROBE|2638|109083|lf|PF.vertFocusDirection=down
+PROBE|2639|109083|act|animate7 itemFocused=2 currFocusRow=0 skipFocusAnimations=false 
+PROBE|2640|109085|frame|fr=0 fc=2 ss=true
+PROBE|2641|109086|lf|PF.currFocusRow=0.01
+PROBE|2642|109087|lf|PF.currFocusColumn=1.97
+PROBE|2643|109090|frame|fr=0.01 fc=1.97 ss=true
+PROBE|2644|109091|lf|PF.currFocusRow=0.05
+PROBE|2645|109091|lf|PF.currFocusColumn=1.93
+PROBE|2646|109094|frame|fr=0.05 fc=1.93 ss=true
+PROBE|2647|109096|lf|PF.currFocusRow=0.09
+PROBE|2648|109096|lf|PF.currFocusColumn=1.89
+PROBE|2649|109101|frame|fr=0.09 fc=1.89 ss=true
+PROBE|2650|109102|lf|PF.currFocusRow=0.15
+PROBE|2651|109102|lf|PF.currFocusColumn=1.84
+PROBE|2652|109118|frame|fr=0.15 fc=1.84 ss=true
+PROBE|2653|109119|lf|PF.currFocusRow=0.29
+PROBE|2654|109119|lf|PF.currFocusColumn=1.72
+PROBE|2655|109134|frame|fr=0.29 fc=1.72 ss=true
+PROBE|2656|109135|lf|PF.currFocusRow=0.42
+PROBE|2657|109136|lf|PF.currFocusColumn=1.6
+PROBE|2658|109151|frame|fr=0.42 fc=1.6 ss=true
+PROBE|2659|109153|lf|PF.currFocusRow=0.55
+PROBE|2660|109153|lf|PF.currFocusColumn=1.49
+PROBE|2661|109168|frame|fr=0.55 fc=1.49 ss=true
+PROBE|2662|109169|lf|PF.currFocusRow=0.66
+PROBE|2663|109169|lf|PF.currFocusColumn=1.41
+PROBE|2664|109185|frame|fr=0.66 fc=1.41 ss=true
+PROBE|2665|109186|lf|PF.currFocusRow=0.77
+PROBE|2666|109186|lf|PF.currFocusColumn=1.33
+PROBE|2667|109201|frame|fr=0.77 fc=1.33 ss=true
+PROBE|2668|109202|lf|PF.currFocusRow=0.88
+PROBE|2669|109203|lf|PF.currFocusColumn=1.26
+PROBE|2670|109218|frame|fr=0.88 fc=1.26 ss=true
+PROBE|2671|109219|lf|PF.currFocusRow=0.97
+PROBE|2672|109220|lf|PF.currFocusColumn=1.21
+PROBE|2673|109235|frame|fr=0.97 fc=1.21 ss=true
+PROBE|2674|109235|lf|PF.currFocusRow=1.07
+PROBE|2675|109236|lf|PF.currFocusColumn=1.16
+PROBE|2676|109251|frame|fr=1.07 fc=1.16 ss=true
+PROBE|2677|109253|lf|PF.currFocusRow=1.16
+PROBE|2678|109254|lf|PF.currFocusColumn=1.12
+PROBE|2679|109256|frame|fr=1.16 fc=1.12 ss=true
+PROBE|2680|109269|lf|PF.currFocusRow=1.25
+PROBE|2681|109269|lf|PF.currFocusColumn=1.08
+PROBE|2682|109285|frame|fr=1.25 fc=1.08 ss=true
+PROBE|2683|109286|lf|PF.currFocusRow=1.32
+PROBE|2684|109286|lf|PF.currFocusColumn=1.06
+PROBE|2685|109301|frame|fr=1.32 fc=1.06 ss=true
+PROBE|2686|109302|lf|PF.currFocusRow=1.39
+PROBE|2687|109302|lf|PF.currFocusColumn=1.04
+PROBE|2688|109318|frame|fr=1.39 fc=1.04 ss=true
+PROBE|2689|109319|lf|PF.currFocusRow=1.45
+PROBE|2690|109320|lf|PF.currFocusColumn=1.02
+PROBE|2691|109335|frame|fr=1.45 fc=1.02 ss=true
+PROBE|2692|109336|lf|PF.currFocusRow=1.51
+PROBE|2693|109336|lf|PF.currFocusColumn=1.01
+PROBE|2694|109352|frame|fr=1.51 fc=1.01 ss=true
+PROBE|2695|109353|lf|PF.currFocusRow=1.57
+PROBE|2696|109353|lf|PF.currFocusColumn=1.01
+PROBE|2697|109368|frame|fr=1.57 fc=1.01 ss=true
+PROBE|2698|109369|lf|PF.currFocusRow=1.62
+PROBE|2699|109369|lf|PF.currFocusColumn=1
+PROBE|2700|109385|frame|fr=1.62 fc=1 ss=true
+PROBE|2701|109386|lf|PF.currFocusRow=1.67
+PROBE|2702|109401|frame|fr=1.67 fc=1 ss=true
+PROBE|2703|109402|lf|PF.currFocusRow=1.71
+PROBE|2704|109418|frame|fr=1.71 fc=1 ss=true
+PROBE|2705|109420|lf|PF.currFocusRow=1.75
+PROBE|2706|109435|lf|PF.horizFocusDirection=none
+PROBE|2707|109435|frame|fr=1.75 fc=1 ss=true
+PROBE|2708|109436|lf|PF.currFocusRow=1.78
+PROBE|2709|109451|frame|fr=1.78 fc=1 ss=true
+PROBE|2710|109453|lf|PF.currFocusRow=1.82
+PROBE|2711|109468|frame|fr=1.82 fc=1 ss=true
+PROBE|2712|109469|lf|PF.currFocusRow=1.85
+PROBE|2713|109485|frame|fr=1.85 fc=1 ss=true
+PROBE|2714|109486|lf|PF.currFocusRow=1.87
+PROBE|2715|109502|frame|fr=1.87 fc=1 ss=true
+PROBE|2716|109502|lf|PF.currFocusRow=1.89
+PROBE|2717|109518|frame|fr=1.89 fc=1 ss=true
+PROBE|2718|109520|lf|PF.currFocusRow=1.91
+PROBE|2719|109535|frame|fr=1.91 fc=1 ss=true
+PROBE|2720|109536|lf|PF.currFocusRow=1.93
+PROBE|2721|109552|frame|fr=1.93 fc=1 ss=true
+PROBE|2722|109553|lf|PF.currFocusRow=1.95
+PROBE|2723|109568|frame|fr=1.95 fc=1 ss=true
+PROBE|2724|109569|lf|PF.currFocusRow=1.95
+PROBE|2725|109586|lf|PF.currFocusRow=1.96
+PROBE|2726|109602|frame|fr=1.96 fc=1 ss=true
+PROBE|2727|109602|lf|PF.currFocusRow=1.97
+PROBE|2728|109618|frame|fr=1.97 fc=1 ss=true
+PROBE|2729|109620|lf|PF.currFocusRow=1.98
+PROBE|2730|109635|frame|fr=1.98 fc=1 ss=true
+PROBE|2731|109653|lf|PF.currFocusRow=1.99
+PROBE|2732|109668|frame|fr=1.99 fc=1 ss=true
+PROBE|2733|109753|lf|PF.currFocusRow=2
+PROBE|2734|109758|frame|fr=2 fc=1 ss=true
+PROBE|2735|109771|lf|PF.itemFocused=7
+PROBE|2736|109771|lf|PF.scrollingStatus=false
+PROBE|2737|109771|lf|PF.vertFocusDirection=none
+PROBE|2738|109772|frame|fr=2 fc=1 ss=false
+PROBE|2739|111083|step|50 act:jump1
+PROBE|2740|111084|lf|PF.itemUnfocused=7
+PROBE|2741|111084|lf|PF.currFocusRow=0
+PROBE|2742|111087|lf|PF.itemFocused=1
+PROBE|2743|111087|act|jump1 itemFocused=1 currFocusRow=0 skipFocusAnimations=false 
+PROBE|2744|111093|frame|fr=0 fc=1 ss=false
+PROBE|2745|113087|step|51 act:skip
+PROBE|2746|113088|act|skip itemFocused=1 currFocusRow=0 skipFocusAnimations=true 
+PROBE|2747|115089|step|52 key:Down
+PROBE|await|Down
+PROBE|2748|115133|lf|PF.scrollingStatus=true
+PROBE|2749|115133|lf|PF.itemUnfocused=1
+PROBE|2750|115134|lf|PF.currFocusRow=1
+PROBE|2751|115137|lf|PF.itemFocused=4
+PROBE|2752|115137|lf|PF.scrollingStatus=false
+PROBE|2753|115138|lf|PF.vertFocusDirection=down
+PROBE|2754|115145|frame|fr=1 fc=1 ss=false
+PROBE|2755|115158|lf|PF.vertFocusDirection=none
+PROBE|2756|117090|step|53 act:noskip
+PROBE|2757|117090|act|noskip itemFocused=4 currFocusRow=1 skipFocusAnimations=false 
+PROBE|2758|119090|step|54 list:PW
+PROBE|2759|119091|lf|PW.itemFocused=0
+PROBE|2760|119092|act|focus PW itemFocused=0 currFocusRow=0 
+PROBE|2761|119108|frame|fr=0 fc=0 ss=false
+PROBE|2762|121092|step|55 key:Right
+PROBE|await|Right
+PROBE|2763|121136|lf|PW.scrollingStatus=true
+PROBE|2764|121136|lf|PW.itemUnfocused=0
+PROBE|2765|121137|lf|PW.horizFocusDirection=right
+PROBE|2766|121142|frame|fr=0 fc=0 ss=true
+PROBE|2767|121143|lf|PW.currFocusColumn=0.04
+PROBE|2768|121146|frame|fr=0 fc=0.04 ss=true
+PROBE|2769|121147|lf|PW.currFocusColumn=0.08
+PROBE|2770|121151|frame|fr=0 fc=0.08 ss=true
+PROBE|2771|121152|lf|PW.currFocusColumn=0.12
+PROBE|2772|121164|frame|fr=0 fc=0.12 ss=true
+PROBE|2773|121167|lf|PW.currFocusColumn=0.22
+PROBE|2774|121180|frame|fr=0 fc=0.22 ss=true
+PROBE|2775|121181|lf|PW.currFocusColumn=0.34
+PROBE|2776|121197|frame|fr=0 fc=0.34 ss=true
+PROBE|2777|121198|lf|PW.currFocusColumn=0.45
+PROBE|2778|121214|frame|fr=0 fc=0.45 ss=true
+PROBE|2779|121215|lf|PW.currFocusColumn=0.54
+PROBE|2780|121230|frame|fr=0 fc=0.54 ss=true
+PROBE|2781|121231|lf|PW.currFocusColumn=0.63
+PROBE|2782|121247|frame|fr=0 fc=0.63 ss=true
+PROBE|2783|121249|lf|PW.currFocusColumn=0.7
+PROBE|2784|121263|frame|fr=0 fc=0.7 ss=true
+PROBE|2785|121264|lf|PW.currFocusColumn=0.76
+PROBE|2786|121270|frame|fr=0 fc=0.76 ss=true
+PROBE|2787|121281|lf|PW.currFocusColumn=0.82
+PROBE|2788|121297|frame|fr=0 fc=0.82 ss=true
+PROBE|2789|121298|lf|PW.currFocusColumn=0.86
+PROBE|2790|121314|frame|fr=0 fc=0.86 ss=true
+PROBE|2791|121315|lf|PW.currFocusColumn=0.89
+PROBE|2792|121330|frame|fr=0 fc=0.89 ss=true
+PROBE|2793|121331|lf|PW.currFocusColumn=0.93
+PROBE|2794|121347|frame|fr=0 fc=0.93 ss=true
+PROBE|2795|121349|lf|PW.currFocusColumn=0.95
+PROBE|2796|121364|frame|fr=0 fc=0.95 ss=true
+PROBE|2797|121364|lf|PW.currFocusColumn=0.96
+PROBE|2798|121380|frame|fr=0 fc=0.96 ss=true
+PROBE|2799|121382|lf|PW.currFocusColumn=0.98
+PROBE|2800|121397|frame|fr=0 fc=0.98 ss=true
+PROBE|2801|121398|lf|PW.currFocusColumn=0.98
+PROBE|2802|121415|lf|PW.currFocusColumn=0.99
+PROBE|2803|121430|frame|fr=0 fc=0.99 ss=true
+PROBE|2804|121482|lf|PW.currFocusColumn=1
+PROBE|2805|121499|lf|PW.itemFocused=1
+PROBE|2806|121500|lf|PW.scrollingStatus=false
+PROBE|2807|121501|lf|PW.horizFocusDirection=none
+PROBE|2808|121501|frame|fr=0 fc=1 ss=false
+PROBE|2809|123094|step|56 key:Right
+PROBE|await|Right
+PROBE|2810|123136|lf|PW.scrollingStatus=true
+PROBE|2811|123136|lf|PW.itemUnfocused=1
+PROBE|2812|123136|lf|PW.horizFocusDirection=right
+PROBE|2813|123141|frame|fr=0 fc=1 ss=true
+PROBE|2814|123142|lf|PW.currFocusColumn=1.04
+PROBE|2815|123146|frame|fr=0 fc=1.04 ss=true
+PROBE|2816|123149|lf|PW.currFocusColumn=1.09
+PROBE|2817|123152|frame|fr=0 fc=1.09 ss=true
+PROBE|2818|123152|lf|PW.currFocusColumn=1.14
+PROBE|2819|123166|frame|fr=0 fc=1.14 ss=true
+PROBE|2820|123169|lf|PW.currFocusColumn=1.24
+PROBE|2821|123182|frame|fr=0 fc=1.24 ss=true
+PROBE|2822|123183|lf|PW.currFocusColumn=1.36
+PROBE|2823|123199|frame|fr=0 fc=1.36 ss=true
+PROBE|2824|123200|lf|PW.currFocusColumn=1.46
+PROBE|2825|123216|frame|fr=0 fc=1.46 ss=true
+PROBE|2826|123216|lf|PW.currFocusColumn=1.56
+PROBE|2827|123232|frame|fr=0 fc=1.56 ss=true
+PROBE|2828|123234|lf|PW.currFocusColumn=1.64
+PROBE|2829|123249|frame|fr=0 fc=1.64 ss=true
+PROBE|2830|123250|lf|PW.currFocusColumn=1.71
+PROBE|2831|123265|frame|fr=0 fc=1.71 ss=true
+PROBE|2832|123267|lf|PW.currFocusColumn=1.77
+PROBE|2833|123273|frame|fr=0 fc=1.77 ss=true
+PROBE|2834|123283|lf|PW.currFocusColumn=1.82
+PROBE|2835|123299|frame|fr=0 fc=1.82 ss=true
+PROBE|2836|123300|lf|PW.currFocusColumn=1.87
+PROBE|2837|123316|frame|fr=0 fc=1.87 ss=true
+PROBE|2838|123316|lf|PW.currFocusColumn=1.9
+PROBE|2839|123332|frame|fr=0 fc=1.9 ss=true
+PROBE|2840|123334|lf|PW.currFocusColumn=1.93
+PROBE|2841|123349|frame|fr=0 fc=1.93 ss=true
+PROBE|2842|123350|lf|PW.currFocusColumn=1.95
+PROBE|2843|123366|frame|fr=0 fc=1.95 ss=true
+PROBE|2844|123367|lf|PW.currFocusColumn=1.97
+PROBE|2845|123382|frame|fr=0 fc=1.97 ss=true
+PROBE|2846|123383|lf|PW.currFocusColumn=1.98
+PROBE|2847|123399|frame|fr=0 fc=1.98 ss=true
+PROBE|2848|123400|lf|PW.currFocusColumn=1.99
+PROBE|2849|123416|frame|fr=0 fc=1.99 ss=true
+PROBE|2850|123417|lf|PW.currFocusColumn=1.99
+PROBE|2851|123483|lf|PW.currFocusColumn=2
+PROBE|2852|123501|lf|PW.itemFocused=2
+PROBE|2853|123502|lf|PW.scrollingStatus=false
+PROBE|2854|123503|lf|PW.horizFocusDirection=none
+PROBE|2855|123503|frame|fr=0 fc=2 ss=false
+PROBE|2856|125094|step|57 key:Right
+PROBE|await|Right
+PROBE|2857|127094|step|58 key:Left
+PROBE|await|Left
+PROBE|2858|127136|lf|PW.scrollingStatus=true
+PROBE|2859|127136|lf|PW.itemUnfocused=2
+PROBE|2860|127136|lf|PW.horizFocusDirection=left
+PROBE|2861|127141|frame|fr=0 fc=2 ss=true
+PROBE|2862|127144|lf|PW.currFocusColumn=1.94
+PROBE|2863|127149|frame|fr=0 fc=1.94 ss=true
+PROBE|2864|127150|lf|PW.currFocusColumn=1.89
+PROBE|2865|127153|frame|fr=0 fc=1.89 ss=true
+PROBE|2866|127154|lf|PW.currFocusColumn=1.84
+PROBE|2867|127170|frame|fr=0 fc=1.84 ss=true
+PROBE|2868|127172|lf|PW.currFocusColumn=1.72
+PROBE|2869|127186|frame|fr=0 fc=1.72 ss=true
+PROBE|2870|127188|lf|PW.currFocusColumn=1.61
+PROBE|2871|127203|frame|fr=0 fc=1.61 ss=true
+PROBE|2872|127204|lf|PW.currFocusColumn=1.51
+PROBE|2873|127219|frame|fr=0 fc=1.51 ss=true
+PROBE|2874|127221|lf|PW.currFocusColumn=1.42
+PROBE|2875|127236|frame|fr=0 fc=1.42 ss=true
+PROBE|2876|127237|lf|PW.currFocusColumn=1.34
+PROBE|2877|127253|frame|fr=0 fc=1.34 ss=true
+PROBE|2878|127254|lf|PW.currFocusColumn=1.27
+PROBE|2879|127270|frame|fr=0 fc=1.27 ss=true
+PROBE|2880|127271|lf|PW.currFocusColumn=1.21
+PROBE|2881|127278|frame|fr=0 fc=1.21 ss=true
+PROBE|2882|127287|lf|PW.currFocusColumn=1.16
+PROBE|2883|127303|frame|fr=0 fc=1.16 ss=true
+PROBE|2884|127304|lf|PW.currFocusColumn=1.12
+PROBE|2885|127320|frame|fr=0 fc=1.12 ss=true
+PROBE|2886|127321|lf|PW.currFocusColumn=1.09
+PROBE|2887|127336|frame|fr=0 fc=1.09 ss=true
+PROBE|2888|127337|lf|PW.currFocusColumn=1.06
+PROBE|2889|127353|frame|fr=0 fc=1.06 ss=true
+PROBE|2890|127354|lf|PW.currFocusColumn=1.04
+PROBE|2891|127370|frame|fr=0 fc=1.04 ss=true
+PROBE|2892|127370|lf|PW.currFocusColumn=1.02
+PROBE|2893|127386|frame|fr=0 fc=1.02 ss=true
+PROBE|2894|127388|lf|PW.currFocusColumn=1.01
+PROBE|2895|127403|frame|fr=0 fc=1.01 ss=true
+PROBE|2896|127404|lf|PW.currFocusColumn=1.01
+PROBE|2897|127421|lf|PW.currFocusColumn=1
+PROBE|2898|127436|frame|fr=0 fc=1 ss=true
+PROBE|2899|127488|lf|PW.itemFocused=1
+PROBE|2900|127489|lf|PW.scrollingStatus=false
+PROBE|2901|127489|lf|PW.horizFocusDirection=none
+PROBE|2902|127490|frame|fr=0 fc=1 ss=false
+PROBE|2903|129094|step|59 key:Down
+PROBE|await|Down
+PROBE|2904|129148|lf|PW.scrollingStatus=true
+PROBE|2905|129148|lf|PW.itemUnfocused=1
+PROBE|2906|129149|lf|PW.vertFocusDirection=down
+PROBE|2907|129153|frame|fr=0 fc=1 ss=true
+PROBE|2908|129156|lf|PW.currFocusRow=0.04
+PROBE|2909|129159|frame|fr=0.04 fc=1 ss=true
+PROBE|2910|129160|lf|PW.currFocusRow=0.08
+PROBE|2911|129162|frame|fr=0.08 fc=1 ss=true
+PROBE|2912|129163|lf|PW.currFocusRow=0.12
+PROBE|2913|129171|frame|fr=0.12 fc=1 ss=true
+PROBE|2914|129172|lf|PW.currFocusRow=0.2
+PROBE|2915|129188|frame|fr=0.2 fc=1 ss=true
+PROBE|2916|129191|lf|PW.currFocusRow=0.34
+PROBE|2917|129205|frame|fr=0.34 fc=1 ss=true
+PROBE|2918|129206|lf|PW.currFocusRow=0.45
+PROBE|2919|129222|frame|fr=0.45 fc=1 ss=true
+PROBE|2920|129223|lf|PW.currFocusRow=0.55
+PROBE|2921|129238|frame|fr=0.55 fc=1 ss=true
+PROBE|2922|129239|lf|PW.currFocusRow=0.64
+PROBE|2923|129255|frame|fr=0.64 fc=1 ss=true
+PROBE|2924|129256|lf|PW.currFocusRow=0.71
+PROBE|2925|129272|frame|fr=0.71 fc=1 ss=true
+PROBE|2926|129272|lf|PW.currFocusRow=0.77
+PROBE|2927|129281|frame|fr=0.77 fc=1 ss=true
+PROBE|2928|129289|lf|PW.currFocusRow=0.83
+PROBE|2929|129305|frame|fr=0.83 fc=1 ss=true
+PROBE|2930|129306|lf|PW.currFocusRow=0.87
+PROBE|2931|129322|frame|fr=0.87 fc=1 ss=true
+PROBE|2932|129323|lf|PW.currFocusRow=0.91
+PROBE|2933|129338|frame|fr=0.91 fc=1 ss=true
+PROBE|2934|129339|lf|PW.currFocusRow=0.94
+PROBE|2935|129355|frame|fr=0.94 fc=1 ss=true
+PROBE|2936|129356|lf|PW.currFocusRow=0.95
+PROBE|2937|129372|frame|fr=0.95 fc=1 ss=true
+PROBE|2938|129372|lf|PW.currFocusRow=0.97
+PROBE|2939|129388|frame|fr=0.97 fc=1 ss=true
+PROBE|2940|129390|lf|PW.currFocusRow=0.98
+PROBE|2941|129405|frame|fr=0.98 fc=1 ss=true
+PROBE|2942|129406|lf|PW.currFocusRow=0.99
+PROBE|2943|129422|frame|fr=0.99 fc=1 ss=true
+PROBE|2944|129472|lf|PW.currFocusRow=1
+PROBE|2945|129491|lf|PW.itemFocused=4
+PROBE|2946|129491|lf|PW.scrollingStatus=false
+PROBE|2947|129491|lf|PW.vertFocusDirection=none
+PROBE|2948|129492|frame|fr=1 fc=1 ss=false
+PROBE|2949|131095|step|60 key:Down
+PROBE|await|Down
+PROBE|2950|131136|lf|PW.scrollingStatus=true
+PROBE|2951|131136|lf|PW.itemUnfocused=4
+PROBE|2952|131136|lf|PW.vertFocusDirection=down
+PROBE|2953|131140|frame|fr=1 fc=1 ss=true
+PROBE|2954|131143|lf|PW.currFocusRow=1.04
+PROBE|2955|131146|frame|fr=1.04 fc=1 ss=true
+PROBE|2956|131146|lf|PW.currFocusRow=1.09
+PROBE|2957|131148|frame|fr=1.09 fc=1 ss=true
+PROBE|2958|131149|lf|PW.currFocusRow=1.11
+PROBE|2959|131156|frame|fr=1.11 fc=1 ss=true
+PROBE|2960|131157|lf|PW.currFocusRow=1.18
+PROBE|2961|131173|frame|fr=1.18 fc=1 ss=true
+PROBE|2962|131177|lf|PW.currFocusRow=1.32
+PROBE|2963|131190|frame|fr=1.32 fc=1 ss=true
+PROBE|2964|131191|lf|PW.currFocusRow=1.43
+PROBE|2965|131207|frame|fr=1.43 fc=1 ss=true
+PROBE|2966|131208|lf|PW.currFocusRow=1.54
+PROBE|2967|131224|frame|fr=1.54 fc=1 ss=true
+PROBE|2968|131224|lf|PW.currFocusRow=1.63
+PROBE|2969|131240|frame|fr=1.63 fc=1 ss=true
+PROBE|2970|131241|lf|PW.currFocusRow=1.7
+PROBE|2971|131257|frame|fr=1.7 fc=1 ss=true
+PROBE|2972|131258|lf|PW.currFocusRow=1.76
+PROBE|2973|131274|frame|fr=1.76 fc=1 ss=true
+PROBE|2974|131275|lf|PW.currFocusRow=1.82
+PROBE|2975|131283|frame|fr=1.82 fc=1 ss=true
+PROBE|2976|131291|lf|PW.currFocusRow=1.86
+PROBE|2977|131307|frame|fr=1.86 fc=1 ss=true
+PROBE|2978|131309|lf|PW.currFocusRow=1.91
+PROBE|2979|131324|frame|fr=1.91 fc=1 ss=true
+PROBE|2980|131325|lf|PW.currFocusRow=1.94
+PROBE|2981|131340|frame|fr=1.94 fc=1 ss=true
+PROBE|2982|131342|lf|PW.currFocusRow=1.95
+PROBE|2983|131357|frame|fr=1.95 fc=1 ss=true
+PROBE|2984|131358|lf|PW.currFocusRow=1.97
+PROBE|2985|131374|frame|fr=1.97 fc=1 ss=true
+PROBE|2986|131375|lf|PW.currFocusRow=1.98
+PROBE|2987|131390|frame|fr=1.98 fc=1 ss=true
+PROBE|2988|131391|lf|PW.currFocusRow=1.99
+PROBE|2989|131407|frame|fr=1.99 fc=1 ss=true
+PROBE|2990|131457|lf|PW.currFocusRow=2
+PROBE|2991|131476|lf|PW.itemFocused=7
+PROBE|2992|131476|lf|PW.scrollingStatus=false
+PROBE|2993|131477|lf|PW.vertFocusDirection=none
+PROBE|2994|131477|frame|fr=2 fc=1 ss=false
+PROBE|2995|133095|step|61 key:Down
+PROBE|await|Down
+PROBE|2996|133134|lf|PW.scrollingStatus=true
+PROBE|2997|133134|lf|PW.itemUnfocused=7
+PROBE|2998|133134|lf|PW.vertFocusDirection=down
+PROBE|2999|133140|frame|fr=2 fc=1 ss=true
+PROBE|3000|133142|lf|PW.currFocusRow=2.04
+PROBE|3001|133143|frame|fr=2.04 fc=1 ss=true
+PROBE|3002|133144|lf|PW.currFocusRow=2.09
+PROBE|3003|133146|frame|fr=2.09 fc=1 ss=true
+PROBE|3004|133147|lf|PW.currFocusRow=2.11
+PROBE|3005|133159|frame|fr=2.11 fc=1 ss=true
+PROBE|3006|133160|lf|PW.currFocusRow=2.22
+PROBE|3007|133175|frame|fr=2.22 fc=1 ss=true
+PROBE|3008|133180|lf|PW.currFocusRow=2.35
+PROBE|3009|133192|frame|fr=2.35 fc=1 ss=true
+PROBE|3010|133193|lf|PW.currFocusRow=2.46
+PROBE|3011|133209|frame|fr=2.46 fc=1 ss=true
+PROBE|3012|133210|lf|PW.currFocusRow=2.55
+PROBE|3013|133226|frame|fr=2.55 fc=1 ss=true
+PROBE|3014|133226|lf|PW.currFocusRow=2.65
+PROBE|3015|133242|frame|fr=2.65 fc=1 ss=true
+PROBE|3016|133244|lf|PW.currFocusRow=2.72
+PROBE|3017|133259|frame|fr=2.72 fc=1 ss=true
+PROBE|3018|133260|lf|PW.currFocusRow=2.78
+PROBE|3019|133276|frame|fr=2.78 fc=1 ss=true
+PROBE|3020|133277|lf|PW.currFocusRow=2.84
+PROBE|3021|133286|frame|fr=2.84 fc=1 ss=true
+PROBE|3022|133293|lf|PW.currFocusRow=2.88
+PROBE|3023|133309|frame|fr=2.88 fc=1 ss=true
+PROBE|3024|133310|lf|PW.currFocusRow=2.91
+PROBE|3025|133326|frame|fr=2.91 fc=1 ss=true
+PROBE|3026|133327|lf|PW.currFocusRow=2.94
+PROBE|3027|133343|frame|fr=2.94 fc=1 ss=true
+PROBE|3028|133344|lf|PW.currFocusRow=2.96
+PROBE|3029|133359|frame|fr=2.96 fc=1 ss=true
+PROBE|3030|133360|lf|PW.currFocusRow=2.97
+PROBE|3031|133376|frame|fr=2.97 fc=1 ss=true
+PROBE|3032|133377|lf|PW.currFocusRow=2.98
+PROBE|3033|133392|frame|fr=2.98 fc=1 ss=true
+PROBE|3034|133393|lf|PW.currFocusRow=2.99
+PROBE|3035|133409|frame|fr=2.99 fc=1 ss=true
+PROBE|3036|133459|lf|PW.currFocusRow=3
+PROBE|3037|133478|lf|PW.itemFocused=10
+PROBE|3038|133479|lf|PW.scrollingStatus=false
+PROBE|3039|133479|lf|PW.vertFocusDirection=none
+PROBE|3040|133479|frame|fr=3 fc=1 ss=false
+PROBE|3041|135095|step|62 key:Down_Down
+PROBE|await|Down_Down
+PROBE|3042|135132|lf|PW.scrollingStatus=true
+PROBE|3043|135132|lf|PW.itemUnfocused=10
+PROBE|3044|135132|lf|PW.vertFocusDirection=down
+PROBE|3045|135137|frame|fr=3 fc=1 ss=true
+PROBE|3046|135139|lf|PW.currFocusRow=3.04
+PROBE|3047|135143|frame|fr=3.04 fc=1 ss=true
+PROBE|3048|135144|lf|PW.currFocusRow=3.08
+PROBE|3049|135145|frame|fr=3.08 fc=1 ss=true
+PROBE|3050|135146|lf|PW.currFocusRow=3.13
+PROBE|3051|135161|frame|fr=3.13 fc=1 ss=true
+PROBE|3052|135165|lf|PW.currFocusRow=3.25
+PROBE|3053|135178|frame|fr=3.25 fc=1 ss=true
+PROBE|3054|135179|lf|PW.currFocusRow=3.37
+PROBE|3055|135194|frame|fr=3.37 fc=1 ss=true
+PROBE|3056|135195|lf|PW.currFocusRow=3.49
+PROBE|3057|135211|frame|fr=3.49 fc=1 ss=true
+PROBE|3058|135212|lf|PW.currFocusRow=3.58
+PROBE|3059|135227|frame|fr=3.58 fc=1 ss=true
+PROBE|3060|135228|lf|PW.currFocusRow=3.66
+PROBE|3061|135244|frame|fr=3.66 fc=1 ss=true
+PROBE|3062|135245|lf|PW.currFocusRow=3.74
+PROBE|3063|135261|frame|fr=3.74 fc=1 ss=true
+PROBE|3064|135262|lf|PW.currFocusRow=3.79
+PROBE|3065|135277|frame|fr=3.79 fc=1 ss=true
+PROBE|3066|135279|lf|PW.currFocusRow=3.85
+PROBE|3067|135288|frame|fr=3.85 fc=1 ss=true
+PROBE|3068|135295|lf|PW.currFocusRow=3.89
+PROBE|3069|135311|frame|fr=3.89 fc=1 ss=true
+PROBE|3070|135312|lf|PW.currFocusRow=3.92
+PROBE|3071|135328|frame|fr=3.92 fc=1 ss=true
+PROBE|3072|135329|lf|PW.currFocusRow=3.95
+PROBE|3073|135345|frame|fr=3.95 fc=1 ss=true
+PROBE|3074|135346|lf|PW.currFocusRow=3.96
+PROBE|3075|135361|frame|fr=3.96 fc=1 ss=true
+PROBE|3076|135364|lf|PW.currFocusRow=3.98
+PROBE|3077|135378|frame|fr=3.98 fc=1 ss=true
+PROBE|3078|135381|lf|PW.currFocusRow=4.12
+PROBE|3079|135394|frame|fr=4.12 fc=1 ss=true
+PROBE|3080|135395|lf|PW.currFocusRow=4.25
+PROBE|3081|135411|frame|fr=4.25 fc=1 ss=true
+PROBE|3082|135413|lf|PW.currFocusRow=4.37
+PROBE|3083|135428|frame|fr=4.37 fc=1 ss=true
+PROBE|3084|135428|lf|PW.currFocusRow=4.47
+PROBE|3085|135445|frame|fr=4.47 fc=1 ss=true
+PROBE|3086|135446|lf|PW.currFocusRow=4.57
+PROBE|3087|135461|frame|fr=4.57 fc=1 ss=true
+PROBE|3088|135462|lf|PW.currFocusRow=4.64
+PROBE|3089|135478|frame|fr=4.64 fc=1 ss=true
+PROBE|3090|135479|lf|PW.currFocusRow=4.72
+PROBE|3091|135494|frame|fr=4.72 fc=1 ss=true
+PROBE|3092|135495|lf|PW.currFocusRow=4.77
+PROBE|3093|135511|frame|fr=4.77 fc=1 ss=true
+PROBE|3094|135513|lf|PW.currFocusRow=4.83
+PROBE|3095|135528|frame|fr=4.83 fc=1 ss=true
+PROBE|3096|135529|lf|PW.currFocusRow=4.87
+PROBE|3097|135544|frame|fr=4.87 fc=1 ss=true
+PROBE|3098|135546|lf|PW.currFocusRow=4.9
+PROBE|3099|135561|frame|fr=4.9 fc=1 ss=true
+PROBE|3100|135562|lf|PW.currFocusRow=4.93
+PROBE|3101|135578|frame|fr=4.93 fc=1 ss=true
+PROBE|3102|135579|lf|PW.currFocusRow=4.95
+PROBE|3103|135594|frame|fr=4.95 fc=1 ss=true
+PROBE|3104|135595|lf|PW.currFocusRow=4.97
+PROBE|3105|135611|frame|fr=4.97 fc=1 ss=true
+PROBE|3106|135613|lf|PW.currFocusRow=4.98
+PROBE|3107|135628|frame|fr=4.98 fc=1 ss=true
+PROBE|3108|135629|lf|PW.currFocusRow=4.99
+PROBE|3109|135644|frame|fr=4.99 fc=1 ss=true
+PROBE|3110|135646|lf|PW.currFocusRow=4.99
+PROBE|3111|135695|lf|PW.currFocusRow=0
+PROBE|3112|135714|lf|PW.itemFocused=1
+PROBE|3113|135714|lf|PW.scrollingStatus=false
+PROBE|3114|135714|lf|PW.vertFocusDirection=none
+PROBE|3115|135715|frame|fr=0 fc=1 ss=false
+PROBE|3116|137096|step|63 hold:Down
+PROBE|await|HoldDown
+PROBE|3117|137137|lf|PW.scrollingStatus=true
+PROBE|3118|137138|lf|PW.itemUnfocused=1
+PROBE|3119|137138|lf|PW.vertFocusDirection=down
+PROBE|3120|137144|frame|fr=0 fc=1 ss=true
+PROBE|3121|137146|lf|PW.currFocusRow=0.05
+PROBE|3122|137151|frame|fr=0.05 fc=1 ss=true
+PROBE|3123|137152|lf|PW.currFocusRow=0.09
+PROBE|3124|137154|frame|fr=0.09 fc=1 ss=true
+PROBE|3125|137155|lf|PW.currFocusRow=0.15
+PROBE|3126|137163|frame|fr=0.15 fc=1 ss=true
+PROBE|3127|137163|lf|PW.currFocusRow=0.22
+PROBE|3128|137179|frame|fr=0.22 fc=1 ss=true
+PROBE|3129|137181|lf|PW.currFocusRow=0.35
+PROBE|3130|137196|frame|fr=0.35 fc=1 ss=true
+PROBE|3131|137197|lf|PW.currFocusRow=0.46
+PROBE|3132|137213|frame|fr=0.46 fc=1 ss=true
+PROBE|3133|137214|lf|PW.currFocusRow=0.55
+PROBE|3134|137230|frame|fr=0.55 fc=1 ss=true
+PROBE|3135|137230|lf|PW.currFocusRow=0.65
+PROBE|3136|137246|frame|fr=0.65 fc=1 ss=true
+PROBE|3137|137247|lf|PW.currFocusRow=0.72
+PROBE|3138|137263|frame|fr=0.72 fc=1 ss=true
+PROBE|3139|137264|lf|PW.currFocusRow=0.78
+PROBE|3140|137280|frame|fr=0.78 fc=1 ss=true
+PROBE|3141|137281|lf|PW.currFocusRow=0.84
+PROBE|3142|137291|frame|fr=0.84 fc=1 ss=true
+PROBE|3143|137297|lf|PW.currFocusRow=0.88
+PROBE|3144|137313|frame|fr=0.88 fc=1 ss=true
+PROBE|3145|137314|lf|PW.currFocusRow=0.91
+PROBE|3146|137329|frame|fr=0.91 fc=1 ss=true
+PROBE|3147|137330|lf|PW.currFocusRow=0.94
+PROBE|3148|137346|frame|fr=0.94 fc=1 ss=true
+PROBE|3149|137348|lf|PW.currFocusRow=0.96
+PROBE|3150|137363|frame|fr=0.96 fc=1 ss=true
+PROBE|3151|137364|lf|PW.currFocusRow=0.97
+PROBE|3152|137380|frame|fr=0.97 fc=1 ss=true
+PROBE|3153|137381|lf|PW.currFocusRow=0.98
+PROBE|3154|137396|frame|fr=0.98 fc=1 ss=true
+PROBE|3155|137397|lf|PW.currFocusRow=0.99
+PROBE|3156|137413|frame|fr=0.99 fc=1 ss=true
+PROBE|3157|137463|lf|PW.currFocusRow=1
+PROBE|3158|137480|frame|fr=1 fc=1 ss=true
+PROBE|3159|137664|lf|PW.currFocusRow=1.01
+PROBE|3160|137680|frame|fr=1.01 fc=1 ss=true
+PROBE|3161|137681|lf|PW.currFocusRow=1.02
+PROBE|3162|137697|frame|fr=1.02 fc=1 ss=true
+PROBE|3163|137699|lf|PW.currFocusRow=1.04
+PROBE|3164|137713|frame|fr=1.04 fc=1 ss=true
+PROBE|3165|137714|lf|PW.currFocusRow=1.06
+PROBE|3166|137730|frame|fr=1.06 fc=1 ss=true
+PROBE|3167|137731|lf|PW.currFocusRow=1.09
+PROBE|3168|137746|frame|fr=1.09 fc=1 ss=true
+PROBE|3169|137747|lf|PW.currFocusRow=1.13
+PROBE|3170|137763|frame|fr=1.13 fc=1 ss=true
+PROBE|3171|137765|lf|PW.currFocusRow=1.16
+PROBE|3172|137780|frame|fr=1.16 fc=1 ss=true
+PROBE|3173|137781|lf|PW.currFocusRow=1.21
+PROBE|3174|137792|frame|fr=1.21 fc=1 ss=true
+PROBE|3175|137798|lf|PW.currFocusRow=1.26
+PROBE|3176|137813|frame|fr=1.26 fc=1 ss=true
+PROBE|3177|137814|lf|PW.currFocusRow=1.32
+PROBE|3178|137830|frame|fr=1.32 fc=1 ss=true
+PROBE|3179|137831|lf|PW.currFocusRow=1.36
+PROBE|3180|137847|frame|fr=1.36 fc=1 ss=true
+PROBE|3181|137847|lf|PW.currFocusRow=1.42
+PROBE|3182|137863|frame|fr=1.42 fc=1 ss=true
+PROBE|3183|137865|lf|PW.currFocusRow=1.47
+PROBE|3184|137880|frame|fr=1.47 fc=1 ss=true
+PROBE|3185|137881|lf|PW.currFocusRow=1.53
+PROBE|3186|137896|frame|fr=1.53 fc=1 ss=true
+PROBE|3187|137898|lf|PW.currFocusRow=1.58
+PROBE|3188|137913|frame|fr=1.58 fc=1 ss=true
+PROBE|3189|137914|lf|PW.currFocusRow=1.64
+PROBE|3190|137930|frame|fr=1.64 fc=1 ss=true
+PROBE|3191|137931|lf|PW.currFocusRow=1.69
+PROBE|3192|137947|frame|fr=1.69 fc=1 ss=true
+PROBE|3193|137947|lf|PW.currFocusRow=1.74
+PROBE|3194|137964|frame|fr=1.74 fc=1 ss=true
+PROBE|3195|137965|lf|PW.currFocusRow=1.79
+PROBE|3196|137980|frame|fr=1.79 fc=1 ss=true
+PROBE|3197|137981|lf|PW.currFocusRow=1.85
+PROBE|3198|137997|frame|fr=1.85 fc=1 ss=true
+PROBE|3199|137998|lf|PW.currFocusRow=1.9
+PROBE|3200|138014|frame|fr=1.9 fc=1 ss=true
+PROBE|3201|138014|lf|PW.currFocusRow=1.95
+PROBE|3202|138030|frame|fr=1.95 fc=1 ss=true
+PROBE|3203|138032|lf|PW.currFocusRow=2.01
+PROBE|3204|138047|frame|fr=2.01 fc=1 ss=true
+PROBE|3205|138048|lf|PW.currFocusRow=2.06
+PROBE|3206|138064|frame|fr=2.06 fc=1 ss=true
+PROBE|3207|138065|lf|PW.currFocusRow=2.12
+PROBE|3208|138081|frame|fr=2.12 fc=1 ss=true
+PROBE|3209|138081|lf|PW.currFocusRow=2.17
+PROBE|3210|138097|frame|fr=2.17 fc=1 ss=true
+PROBE|3211|138099|lf|PW.currFocusRow=2.23
+PROBE|3212|138114|frame|fr=2.23 fc=1 ss=true
+PROBE|3213|138115|lf|PW.currFocusRow=2.27
+PROBE|3214|138131|frame|fr=2.27 fc=1 ss=true
+PROBE|3215|138133|lf|PW.currFocusRow=2.33
+PROBE|3216|138147|frame|fr=2.33 fc=1 ss=true
+PROBE|3217|138148|lf|PW.currFocusRow=2.38
+PROBE|3218|138164|frame|fr=2.38 fc=1 ss=true
+PROBE|3219|138165|lf|PW.currFocusRow=2.44
+PROBE|3220|138180|frame|fr=2.44 fc=1 ss=true
+PROBE|3221|138181|lf|PW.currFocusRow=2.49
+PROBE|3222|138197|frame|fr=2.49 fc=1 ss=true
+PROBE|3223|138198|lf|PW.currFocusRow=2.54
+PROBE|3224|138214|frame|fr=2.54 fc=1 ss=true
+PROBE|3225|138215|lf|PW.currFocusRow=2.59
+PROBE|3226|138230|frame|fr=2.59 fc=1 ss=true
+PROBE|3227|138232|lf|PW.currFocusRow=2.65
+PROBE|3228|138247|frame|fr=2.65 fc=1 ss=true
+PROBE|3229|138248|lf|PW.currFocusRow=2.7
+PROBE|3230|138264|frame|fr=2.7 fc=1 ss=true
+PROBE|3231|138265|lf|PW.currFocusRow=2.75
+PROBE|3232|138281|frame|fr=2.75 fc=1 ss=true
+PROBE|3233|138281|lf|PW.currFocusRow=2.81
+PROBE|3234|138293|frame|fr=2.81 fc=1 ss=true
+PROBE|3235|138299|lf|PW.currFocusRow=2.86
+PROBE|3236|138314|frame|fr=2.86 fc=1 ss=true
+PROBE|3237|138315|lf|PW.currFocusRow=2.92
+PROBE|3238|138331|frame|fr=2.92 fc=1 ss=true
+PROBE|3239|138332|lf|PW.currFocusRow=2.97
+PROBE|3240|138347|frame|fr=2.97 fc=1 ss=true
+PROBE|3241|138348|lf|PW.currFocusRow=3.03
+PROBE|3242|138364|frame|fr=3.03 fc=1 ss=true
+PROBE|3243|138365|lf|PW.currFocusRow=3.07
+PROBE|3244|138381|frame|fr=3.07 fc=1 ss=true
+PROBE|3245|138385|lf|PW.currFocusRow=3.13
+PROBE|3246|138397|frame|fr=3.13 fc=1 ss=true
+PROBE|3247|138399|lf|PW.currFocusRow=3.23
+PROBE|3248|138414|frame|fr=3.23 fc=1 ss=true
+PROBE|3249|138415|lf|PW.currFocusRow=3.32
+PROBE|3250|138431|frame|fr=3.32 fc=1 ss=true
+PROBE|3251|138432|lf|PW.currFocusRow=3.42
+PROBE|3252|138447|frame|fr=3.42 fc=1 ss=true
+PROBE|3253|138448|lf|PW.currFocusRow=3.5
+PROBE|3254|138464|frame|fr=3.5 fc=1 ss=true
+PROBE|3255|138465|lf|PW.currFocusRow=3.57
+PROBE|3256|138481|frame|fr=3.57 fc=1 ss=true
+PROBE|3257|138481|lf|PW.currFocusRow=3.65
+PROBE|3258|138497|frame|fr=3.65 fc=1 ss=true
+PROBE|3259|138499|lf|PW.currFocusRow=3.71
+PROBE|3260|138514|frame|fr=3.71 fc=1 ss=true
+PROBE|3261|138515|lf|PW.currFocusRow=3.77
+PROBE|3262|138531|frame|fr=3.77 fc=1 ss=true
+PROBE|3263|138532|lf|PW.currFocusRow=3.82
+PROBE|3264|138547|frame|fr=3.82 fc=1 ss=true
+PROBE|3265|138548|lf|PW.currFocusRow=3.86
+PROBE|3266|138564|frame|fr=3.86 fc=1 ss=true
+PROBE|3267|138565|lf|PW.currFocusRow=3.9
+PROBE|3268|138581|frame|fr=3.9 fc=1 ss=true
+PROBE|3269|138582|lf|PW.currFocusRow=3.94
+PROBE|3270|138597|frame|fr=3.94 fc=1 ss=true
+PROBE|3271|138599|lf|PW.currFocusRow=3.96
+PROBE|3272|138614|frame|fr=3.96 fc=1 ss=true
+PROBE|3273|138615|lf|PW.currFocusRow=3.98
+PROBE|3274|138631|frame|fr=3.98 fc=1 ss=true
+PROBE|3275|138632|lf|PW.currFocusRow=3.99
+PROBE|3276|138648|frame|fr=3.99 fc=1 ss=true
+PROBE|3277|138665|lf|PW.currFocusRow=4
+PROBE|3278|138683|lf|PW.itemFocused=13
+PROBE|3279|138684|lf|PW.scrollingStatus=false
+PROBE|3280|138685|lf|PW.vertFocusDirection=none
+PROBE|3281|138685|frame|fr=4 fc=1 ss=false
+PROBE|3282|140597|step|64 act:jump0
+PROBE|3283|140597|lf|PW.itemUnfocused=13
+PROBE|3284|140597|lf|PW.currFocusRow=0
+PROBE|3285|140598|lf|PW.currFocusColumn=0
+PROBE|3286|140600|lf|PW.itemFocused=0
+PROBE|3287|140601|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|3288|140605|frame|fr=0 fc=0 ss=false
+PROBE|3289|142602|step|65 key:Up
+PROBE|await|Up
+PROBE|3290|142636|lf|PW.scrollingStatus=true
+PROBE|3291|142636|lf|PW.itemUnfocused=0
+PROBE|3292|142636|lf|PW.vertFocusDirection=up
+PROBE|3293|142643|frame|fr=0 fc=0 ss=true
+PROBE|3294|142644|lf|PW.currFocusRow=4.95
+PROBE|3295|142648|frame|fr=4.95 fc=0 ss=true
+PROBE|3296|142649|lf|PW.currFocusRow=4.92
+PROBE|3297|142651|frame|fr=4.92 fc=0 ss=true
+PROBE|3298|142652|lf|PW.currFocusRow=4.88
+PROBE|3299|142668|frame|fr=4.88 fc=0 ss=true
+PROBE|3300|142671|lf|PW.currFocusRow=4.73
+PROBE|3301|142685|frame|fr=4.73 fc=0 ss=true
+PROBE|3302|142686|lf|PW.currFocusRow=4.62
+PROBE|3303|142702|frame|fr=4.62 fc=0 ss=true
+PROBE|3304|142703|lf|PW.currFocusRow=4.52
+PROBE|3305|142718|frame|fr=4.52 fc=0 ss=true
+PROBE|3306|142719|lf|PW.currFocusRow=4.42
+PROBE|3307|142735|frame|fr=4.42 fc=0 ss=true
+PROBE|3308|142736|lf|PW.currFocusRow=4.35
+PROBE|3309|142752|frame|fr=4.35 fc=0 ss=true
+PROBE|3310|142752|lf|PW.currFocusRow=4.28
+PROBE|3311|142768|frame|fr=4.28 fc=0 ss=true
+PROBE|3312|142770|lf|PW.currFocusRow=4.22
+PROBE|3313|142785|frame|fr=4.22 fc=0 ss=true
+PROBE|3314|142786|lf|PW.currFocusRow=4.17
+PROBE|3315|142798|frame|fr=4.17 fc=0 ss=true
+PROBE|3316|142803|lf|PW.currFocusRow=4.13
+PROBE|3317|142818|frame|fr=4.13 fc=0 ss=true
+PROBE|3318|142819|lf|PW.currFocusRow=4.1
+PROBE|3319|142835|frame|fr=4.1 fc=0 ss=true
+PROBE|3320|142836|lf|PW.currFocusRow=4.07
+PROBE|3321|142852|frame|fr=4.07 fc=0 ss=true
+PROBE|3322|142853|lf|PW.currFocusRow=4.05
+PROBE|3323|142869|frame|fr=4.05 fc=0 ss=true
+PROBE|3324|142870|lf|PW.currFocusRow=4.03
+PROBE|3325|142885|frame|fr=4.03 fc=0 ss=true
+PROBE|3326|142886|lf|PW.currFocusRow=4.02
+PROBE|3327|142902|frame|fr=4.02 fc=0 ss=true
+PROBE|3328|142903|lf|PW.currFocusRow=4.01
+PROBE|3329|142919|frame|fr=4.01 fc=0 ss=true
+PROBE|3330|142919|lf|PW.currFocusRow=4.01
+PROBE|3331|142970|lf|PW.currFocusRow=4
+PROBE|3332|142987|lf|PW.itemFocused=12
+PROBE|3333|142988|lf|PW.scrollingStatus=false
+PROBE|3334|142989|lf|PW.vertFocusDirection=none
+PROBE|3335|142989|frame|fr=4 fc=0 ss=false
+PROBE|3336|144603|step|66 hold:Right
+PROBE|await|HoldRight
+PROBE|3337|144644|lf|PW.scrollingStatus=true
+PROBE|3338|144644|lf|PW.itemUnfocused=12
+PROBE|3339|144644|lf|PW.horizFocusDirection=right
+PROBE|3340|144649|frame|fr=4 fc=0 ss=true
+PROBE|3341|144650|lf|PW.currFocusColumn=0.05
+PROBE|3342|144654|frame|fr=4 fc=0.05 ss=true
+PROBE|3343|144657|lf|PW.currFocusColumn=0.08
+PROBE|3344|144660|frame|fr=4 fc=0.08 ss=true
+PROBE|3345|144660|lf|PW.currFocusColumn=0.14
+PROBE|3346|144670|frame|fr=4 fc=0.14 ss=true
+PROBE|3347|144672|lf|PW.currFocusColumn=0.22
+PROBE|3348|144687|frame|fr=4 fc=0.22 ss=true
+PROBE|3349|144688|lf|PW.currFocusColumn=0.34
+PROBE|3350|144704|frame|fr=4 fc=0.34 ss=true
+PROBE|3351|144705|lf|PW.currFocusColumn=0.45
+PROBE|3352|144720|frame|fr=4 fc=0.45 ss=true
+PROBE|3353|144721|lf|PW.currFocusColumn=0.54
+PROBE|3354|144737|frame|fr=4 fc=0.54 ss=true
+PROBE|3355|144738|lf|PW.currFocusColumn=0.62
+PROBE|3356|144754|frame|fr=4 fc=0.62 ss=true
+PROBE|3357|144755|lf|PW.currFocusColumn=0.69
+PROBE|3358|144770|frame|fr=4 fc=0.69 ss=true
+PROBE|3359|144772|lf|PW.currFocusColumn=0.76
+PROBE|3360|144787|frame|fr=4 fc=0.76 ss=true
+PROBE|3361|144788|lf|PW.currFocusColumn=0.81
+PROBE|3362|144801|frame|fr=4 fc=0.81 ss=true
+PROBE|3363|144805|lf|PW.currFocusColumn=0.86
+PROBE|3364|144821|frame|fr=4 fc=0.86 ss=true
+PROBE|3365|144821|lf|PW.currFocusColumn=0.89
+PROBE|3366|144837|frame|fr=4 fc=0.89 ss=true
+PROBE|3367|144838|lf|PW.currFocusColumn=0.93
+PROBE|3368|144854|frame|fr=4 fc=0.93 ss=true
+PROBE|3369|144855|lf|PW.currFocusColumn=0.95
+PROBE|3370|144870|frame|fr=4 fc=0.95 ss=true
+PROBE|3371|144872|lf|PW.currFocusColumn=0.96
+PROBE|3372|144887|frame|fr=4 fc=0.96 ss=true
+PROBE|3373|144888|lf|PW.currFocusColumn=0.98
+PROBE|3374|144904|frame|fr=4 fc=0.98 ss=true
+PROBE|3375|144905|lf|PW.currFocusColumn=0.98
+PROBE|3376|144921|lf|PW.currFocusColumn=0.99
+PROBE|3377|144937|frame|fr=4 fc=0.99 ss=true
+PROBE|3378|144988|lf|PW.currFocusColumn=1
+PROBE|3379|145004|frame|fr=4 fc=1 ss=true
+PROBE|3380|145188|lf|PW.currFocusColumn=1.02
+PROBE|3381|145204|frame|fr=4 fc=1.02 ss=true
+PROBE|3382|145206|lf|PW.currFocusColumn=1.04
+PROBE|3383|145221|frame|fr=4 fc=1.04 ss=true
+PROBE|3384|145222|lf|PW.currFocusColumn=1.07
+PROBE|3385|145238|frame|fr=4 fc=1.07 ss=true
+PROBE|3386|145238|lf|PW.currFocusColumn=1.12
+PROBE|3387|145254|frame|fr=4 fc=1.12 ss=true
+PROBE|3388|145255|lf|PW.currFocusColumn=1.17
+PROBE|3389|145271|frame|fr=4 fc=1.17 ss=true
+PROBE|3390|145272|lf|PW.currFocusColumn=1.24
+PROBE|3391|145288|frame|fr=4 fc=1.24 ss=true
+PROBE|3392|145289|lf|PW.currFocusColumn=1.31
+PROBE|3393|145302|frame|fr=4 fc=1.31 ss=true
+PROBE|3394|145305|lf|PW.currFocusColumn=1.4
+PROBE|3395|145321|frame|fr=4 fc=1.4 ss=true
+PROBE|3396|145322|lf|PW.currFocusColumn=1.49
+PROBE|3397|145337|frame|fr=4 fc=1.49 ss=true
+PROBE|3398|145338|lf|PW.currFocusColumn=1.58
+PROBE|3399|145354|frame|fr=4 fc=1.58 ss=true
+PROBE|3400|145356|lf|PW.currFocusColumn=1.67
+PROBE|3401|145371|frame|fr=4 fc=1.67 ss=true
+PROBE|3402|145372|lf|PW.currFocusColumn=1.75
+PROBE|3403|145388|frame|fr=4 fc=1.75 ss=true
+PROBE|3404|145389|lf|PW.currFocusColumn=1.82
+PROBE|3405|145404|frame|fr=4 fc=1.82 ss=true
+PROBE|3406|145405|lf|PW.currFocusColumn=1.87
+PROBE|3407|145421|frame|fr=4 fc=1.87 ss=true
+PROBE|3408|145422|lf|PW.currFocusColumn=1.92
+PROBE|3409|145438|frame|fr=4 fc=1.92 ss=true
+PROBE|3410|145438|lf|PW.currFocusColumn=1.95
+PROBE|3411|145454|frame|fr=4 fc=1.95 ss=true
+PROBE|3412|145456|lf|PW.currFocusColumn=1.98
+PROBE|3413|145471|frame|fr=4 fc=1.98 ss=true
+PROBE|3414|145472|lf|PW.currFocusColumn=1.99
+PROBE|3415|145488|frame|fr=4 fc=1.99 ss=true
+PROBE|3416|145489|lf|PW.currFocusColumn=1.99
+PROBE|3417|145505|lf|PW.currFocusColumn=2
+PROBE|3418|145521|frame|fr=4 fc=2 ss=true
+PROBE|3419|145881|lf|PW.itemFocused=14
+PROBE|3420|145881|lf|PW.scrollingStatus=false
+PROBE|3421|145881|lf|PW.horizFocusDirection=none
+PROBE|3422|145885|frame|fr=4 fc=2 ss=false
+PROBE|3423|148104|step|67 act:animate7
+PROBE|3424|148104|lf|PW.scrollingStatus=true
+PROBE|3425|148105|lf|PW.itemUnfocused=14
+PROBE|3426|148105|lf|PW.horizFocusDirection=left
+PROBE|3427|148105|lf|PW.vertFocusDirection=down
+PROBE|3428|148106|act|animate7 itemFocused=14 currFocusRow=4 skipFocusAnimations=false 
+PROBE|3429|148109|frame|fr=4 fc=2 ss=true
+PROBE|3430|148109|lf|PW.currFocusRow=4.03
+PROBE|3431|148110|lf|PW.currFocusColumn=1.97
+PROBE|3432|148114|frame|fr=4.03 fc=1.97 ss=true
+PROBE|3433|148115|lf|PW.currFocusRow=4.06
+PROBE|3434|148116|lf|PW.currFocusColumn=1.93
+PROBE|3435|148119|frame|fr=4.06 fc=1.93 ss=true
+PROBE|3436|148119|lf|PW.currFocusRow=4.1
+PROBE|3437|148120|lf|PW.currFocusColumn=1.88
+PROBE|3438|148124|frame|fr=4.1 fc=1.88 ss=true
+PROBE|3439|148125|lf|PW.currFocusRow=4.13
+PROBE|3440|148126|lf|PW.currFocusColumn=1.84
+PROBE|3441|148140|frame|fr=4.13 fc=1.84 ss=true
+PROBE|3442|148141|lf|PW.currFocusRow=4.25
+PROBE|3443|148142|lf|PW.currFocusColumn=1.72
+PROBE|3444|148157|frame|fr=4.25 fc=1.72 ss=true
+PROBE|3445|148158|lf|PW.currFocusRow=4.36
+PROBE|3446|148159|lf|PW.currFocusColumn=1.61
+PROBE|3447|148174|frame|fr=4.36 fc=1.61 ss=true
+PROBE|3448|148175|lf|PW.currFocusRow=4.47
+PROBE|3449|148175|lf|PW.currFocusColumn=1.49
+PROBE|3450|148190|frame|fr=4.47 fc=1.49 ss=true
+PROBE|3451|148192|lf|PW.currFocusRow=4.57
+PROBE|3452|148192|lf|PW.currFocusColumn=1.41
+PROBE|3453|148207|frame|fr=4.57 fc=1.41 ss=true
+PROBE|3454|148208|lf|PW.currFocusRow=4.66
+PROBE|3455|148208|lf|PW.currFocusColumn=1.34
+PROBE|3456|148224|frame|fr=4.66 fc=1.34 ss=true
+PROBE|3457|148225|lf|PW.currFocusRow=4.77
+PROBE|3458|148226|lf|PW.currFocusColumn=1.27
+PROBE|3459|148240|frame|fr=4.77 fc=1.27 ss=true
+PROBE|3460|148241|lf|PW.currFocusRow=4.86
+PROBE|3461|148242|lf|PW.currFocusColumn=1.21
+PROBE|3462|148257|frame|fr=4.86 fc=1.21 ss=true
+PROBE|3463|148259|lf|PW.currFocusRow=4.95
+PROBE|3464|148259|lf|PW.currFocusColumn=1.16
+PROBE|3465|148274|frame|fr=4.95 fc=1.16 ss=true
+PROBE|3466|148275|lf|PW.currFocusRow=0.04
+PROBE|3467|148275|lf|PW.currFocusColumn=1.12
+PROBE|3468|148291|frame|fr=0.04 fc=1.12 ss=true
+PROBE|3469|148292|lf|PW.currFocusRow=0.15
+PROBE|3470|148292|lf|PW.currFocusColumn=1.08
+PROBE|3471|148306|frame|fr=0.15 fc=1.08 ss=true
+PROBE|3472|148308|lf|PW.currFocusRow=0.25
+PROBE|3473|148308|lf|PW.currFocusColumn=1.06
+PROBE|3474|148324|frame|fr=0.25 fc=1.06 ss=true
+PROBE|3475|148325|lf|PW.currFocusRow=0.35
+PROBE|3476|148326|lf|PW.currFocusColumn=1.04
+PROBE|3477|148341|frame|fr=0.35 fc=1.04 ss=true
+PROBE|3478|148341|lf|PW.currFocusRow=0.45
+PROBE|3479|148342|lf|PW.currFocusColumn=1.02
+PROBE|3480|148357|frame|fr=0.45 fc=1.02 ss=true
+PROBE|3481|148359|lf|PW.currFocusRow=0.55
+PROBE|3482|148359|lf|PW.currFocusColumn=1.01
+PROBE|3483|148374|frame|fr=0.55 fc=1.01 ss=true
+PROBE|3484|148375|lf|PW.currFocusRow=0.64
+PROBE|3485|148375|lf|PW.currFocusColumn=1.01
+PROBE|3486|148391|frame|fr=0.64 fc=1.01 ss=true
+PROBE|3487|148392|lf|PW.currFocusRow=0.73
+PROBE|3488|148392|lf|PW.currFocusColumn=1
+PROBE|3489|148407|frame|fr=0.73 fc=1 ss=true
+PROBE|3490|148408|lf|PW.currFocusRow=0.81
+PROBE|3491|148424|frame|fr=0.81 fc=1 ss=true
+PROBE|3492|148425|lf|PW.currFocusRow=0.88
+PROBE|3493|148441|frame|fr=0.88 fc=1 ss=true
+PROBE|3494|148442|lf|PW.currFocusRow=0.96
+PROBE|3495|148457|lf|PW.horizFocusDirection=none
+PROBE|3496|148458|frame|fr=0.96 fc=1 ss=true
+PROBE|3497|148459|lf|PW.currFocusRow=1.04
+PROBE|3498|148474|frame|fr=1.04 fc=1 ss=true
+PROBE|3499|148475|lf|PW.currFocusRow=1.1
+PROBE|3500|148491|frame|fr=1.1 fc=1 ss=true
+PROBE|3501|148492|lf|PW.currFocusRow=1.16
+PROBE|3502|148507|frame|fr=1.16 fc=1 ss=true
+PROBE|3503|148508|lf|PW.currFocusRow=1.23
+PROBE|3504|148524|frame|fr=1.23 fc=1 ss=true
+PROBE|3505|148525|lf|PW.currFocusRow=1.28
+PROBE|3506|148541|frame|fr=1.28 fc=1 ss=true
+PROBE|3507|148541|lf|PW.currFocusRow=1.35
+PROBE|3508|148557|frame|fr=1.35 fc=1 ss=true
+PROBE|3509|148558|lf|PW.currFocusRow=1.39
+PROBE|3510|148574|frame|fr=1.39 fc=1 ss=true
+PROBE|3511|148575|lf|PW.currFocusRow=1.45
+PROBE|3512|148591|frame|fr=1.45 fc=1 ss=true
+PROBE|3513|148592|lf|PW.currFocusRow=1.49
+PROBE|3514|148607|frame|fr=1.49 fc=1 ss=true
+PROBE|3515|148608|lf|PW.currFocusRow=1.54
+PROBE|3516|148624|frame|fr=1.54 fc=1 ss=true
+PROBE|3517|148625|lf|PW.currFocusRow=1.57
+PROBE|3518|148641|frame|fr=1.57 fc=1 ss=true
+PROBE|3519|148641|lf|PW.currFocusRow=1.62
+PROBE|3520|148657|frame|fr=1.62 fc=1 ss=true
+PROBE|3521|148659|lf|PW.currFocusRow=1.65
+PROBE|3522|148674|frame|fr=1.65 fc=1 ss=true
+PROBE|3523|148675|lf|PW.currFocusRow=1.68
+PROBE|3524|148691|frame|fr=1.68 fc=1 ss=true
+PROBE|3525|148692|lf|PW.currFocusRow=1.72
+PROBE|3526|148708|frame|fr=1.72 fc=1 ss=true
+PROBE|3527|148708|lf|PW.currFocusRow=1.75
+PROBE|3528|148724|frame|fr=1.75 fc=1 ss=true
+PROBE|3529|148726|lf|PW.currFocusRow=1.77
+PROBE|3530|148741|frame|fr=1.77 fc=1 ss=true
+PROBE|3531|148742|lf|PW.currFocusRow=1.8
+PROBE|3532|148758|frame|fr=1.8 fc=1 ss=true
+PROBE|3533|148759|lf|PW.currFocusRow=1.83
+PROBE|3534|148774|frame|fr=1.83 fc=1 ss=true
+PROBE|3535|148775|lf|PW.currFocusRow=1.85
+PROBE|3536|148791|frame|fr=1.85 fc=1 ss=true
+PROBE|3537|148793|lf|PW.currFocusRow=1.86
+PROBE|3538|148807|frame|fr=1.86 fc=1 ss=true
+PROBE|3539|148809|lf|PW.currFocusRow=1.88
+PROBE|3540|148824|frame|fr=1.88 fc=1 ss=true
+PROBE|3541|148826|lf|PW.currFocusRow=1.9
+PROBE|3542|148841|frame|fr=1.9 fc=1 ss=true
+PROBE|3543|148842|lf|PW.currFocusRow=1.91
+PROBE|3544|148858|frame|fr=1.91 fc=1 ss=true
+PROBE|3545|148859|lf|PW.currFocusRow=1.93
+PROBE|3546|148875|frame|fr=1.93 fc=1 ss=true
+PROBE|3547|148875|lf|PW.currFocusRow=1.94
+PROBE|3548|148891|frame|fr=1.94 fc=1 ss=true
+PROBE|3549|148893|lf|PW.currFocusRow=1.95
+PROBE|3550|148908|frame|fr=1.95 fc=1 ss=true
+PROBE|3551|148909|lf|PW.currFocusRow=1.95
+PROBE|3552|148926|lf|PW.currFocusRow=1.96
+PROBE|3553|148941|frame|fr=1.96 fc=1 ss=true
+PROBE|3554|148942|lf|PW.currFocusRow=1.97
+PROBE|3555|148958|frame|fr=1.97 fc=1 ss=true
+PROBE|3556|148975|lf|PW.currFocusRow=1.98
+PROBE|3557|148991|frame|fr=1.98 fc=1 ss=true
+PROBE|3558|149008|lf|PW.currFocusRow=1.99
+PROBE|3559|149025|frame|fr=1.99 fc=1 ss=true
+PROBE|3560|149142|lf|PW.currFocusRow=2
+PROBE|3561|149160|lf|PW.itemFocused=7
+PROBE|3562|149161|lf|PW.scrollingStatus=false
+PROBE|3563|149161|lf|PW.vertFocusDirection=none
+PROBE|3564|149162|frame|fr=2 fc=1 ss=false
+PROBE|3565|150106|step|68 act:jump1
+PROBE|3566|150107|lf|PW.itemUnfocused=7
+PROBE|3567|150107|lf|PW.currFocusRow=0
+PROBE|3568|150110|lf|PW.itemFocused=1
+PROBE|3569|150110|act|jump1 itemFocused=1 currFocusRow=0 skipFocusAnimations=false 
+PROBE|3570|150114|frame|fr=0 fc=1 ss=false
+PROBE|3571|152110|step|69 act:skip
+PROBE|3572|152110|act|skip itemFocused=1 currFocusRow=0 skipFocusAnimations=true 
+PROBE|3573|154111|step|70 key:Down
+PROBE|await|Down
+PROBE|3574|154161|lf|PW.scrollingStatus=true
+PROBE|3575|154162|lf|PW.itemUnfocused=1
+PROBE|3576|154162|lf|PW.currFocusRow=1
+PROBE|3577|154166|lf|PW.itemFocused=4
+PROBE|3578|154166|lf|PW.scrollingStatus=false
+PROBE|3579|154166|lf|PW.vertFocusDirection=down
+PROBE|3580|154171|frame|fr=1 fc=1 ss=false
+PROBE|3581|154186|lf|PW.vertFocusDirection=none
+PROBE|3582|156111|step|71 act:noskip
+PROBE|3583|156112|act|noskip itemFocused=4 currFocusRow=1 skipFocusAnimations=false 
+PROBE|3584|158112|step|72 done
+PROBE|3585|158112|info|samples=94336
+PROBE|done
+PROBE|999|0|boot|end

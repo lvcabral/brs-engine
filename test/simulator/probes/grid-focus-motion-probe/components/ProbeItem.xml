@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+        <field id="focusPercent" type="float" onChange="onFocusPercent" />
+        <field id="itemHasFocus" type="boolean" onChange="onHasFocus" />
+        <field id="gridHasFocus" type="boolean" />
+    </interface>
+    <children>
+        <Label id="title" width="180" height="40" vertAlign="center" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.label = m.top.findNode("title")
+        m.name = "?"
+    end sub
+
+    sub onContent()
+        m.name = m.top.itemContent.title
+        m.label.text = m.name
+        m.top.getScene().callFunc("registerItem", {name: m.name, node: m.top})
+    end sub
+
+    sub onFocusPercent()
+        m.top.getScene().callFunc("itemLog", m.name + ".focusPercent=" + Str(Int(m.top.focusPercent * 1000 + 0.5) / 1000).trim())
+    end sub
+
+    sub onHasFocus()
+        v = "false"
+        if m.top.itemHasFocus then v = "true"
+        m.top.getScene().callFunc("itemLog", m.name + ".itemHasFocus=" + v)
+    end sub
+    ]]>
+    </script>
+</component>

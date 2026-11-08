@@ -73,30 +73,42 @@ export declare namespace ArrayGrid {
 const noopInterpreter = {} as Interpreter;
 
 /**
- * List focus motion, DEVICE-MEASURED (Roku OS 16.0, `test/simulator/probes/list-focus-motion-probe`): each
- * row of travel is a cubic ease-out of ~200 ms; a held key, after one row and a ~400 ms pause, scrolls on
- * linearly at one row per ~200 ms until it is released.
+ * Focus motion, DEVICE-MEASURED (Roku OS 16.0; `test/simulator/probes/list-focus-motion-probe` and
+ * `grid-focus-motion-probe`). Every step is a cubic ease-out: ~200 ms per row on a list, ~330 ms per row or
+ * column on a grid (~315 ms per row when a grid's rows wrap). A held key, after one step and a pause
+ * (~400 ms list, ~530 ms grid), keeps stepping at that pace, accelerating from rest on the first repeat; on
+ * release the step in flight eases out to its cell.
  */
-const ListRowMotionMs = 200;
+const ListStepMs = 200;
 const ListHoldDelayMs = 400;
-const ListSettleEpsilon = 0.01;
+export const GridStepMs = 330;
+export const GridWrapRowStepMs = 315;
+export const GridHoldDelayMs = 530;
+/** Fraction of the first held-key repeat spent accelerating from rest to the steady pace. */
+const HoldRampFraction = 0.3;
+/** A cell's in-transit `focusPercent` below this reads 0 (DEVICE-MEASURED: 0.063 is followed by 0). */
+const FocusPercentFloor = 0.05;
 
-/** A list's in-flight focus motion. Positions are in rows, unwrapped (a wrap continues past the end). */
-type ListMotion = {
-    /** Segment start and end positions, and timing. */
-    from: number;
-    to: number;
-    start: number;
-    duration: number;
-    linear: boolean;
-    /** One key press received mid-segment: the next segment's target. */
-    queued?: number;
-    /** The final row was reached; the settle goes out on a later frame. */
+type MotionAxis = "row" | "col";
+type MotionCurve = "out" | "linear" | "rampIn";
+/** One axis of a focus motion: rows are unwrapped (a wrap continues past the end), columns never wrap. */
+type MotionSegment = { from: number; to: number; start: number; duration: number; curve: MotionCurve };
+
+/** A list's or grid's in-flight focus motion. */
+type FocusMotion = {
+    row: MotionSegment;
+    col: MotionSegment;
+    /** One key press received mid-step: the next step's target. */
+    queued?: { row: number; col: number };
+    /** Both axes reached their target; the settle goes out on a later frame. */
     arrived: boolean;
     /** Floating focus: the visual top row when the motion began. */
     topFrom: number;
     /** Data-model index published as `itemFocused` when the motion settles. */
     contentIndex: number;
+    /** Axes whose direction field still reads a direction (reset to "none" as each one finishes). */
+    vertOpen: boolean;
+    horizOpen: boolean;
 };
 
 export class ArrayGrid extends Group implements UITransition {
@@ -154,6 +166,9 @@ export class ArrayGrid extends Group implements UITransition {
         // apps observe it to track scroll direction (e.g. to position an in-transit overlay toward the
         // incoming row). Emitted as up/down on a vertical nav then reset to "none".
         { name: "vertFocusDirection", type: "string", value: "none" },
+        // Read-only on device: the direction ("left"/"right"/"none") of the focus move in progress along
+        // a grid row (DEVICE-MEASURED, grid-focus-motion-probe). Undocumented, like vertFocusDirection.
+        { name: "horizFocusDirection", type: "string", value: "none" },
         { name: "skipFocusAnimations", type: "boolean", value: "false" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
@@ -195,20 +210,25 @@ export class ArrayGrid extends Group implements UITransition {
     protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     protected horizFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     public itemFocusCallback?: (index: number) => void;
-    /** List focus motion (see `focusMotionEnabled`). */
-    protected motion?: ListMotion;
-    /** The visual focus position in rows: unwrapped while moving, the focused row when idle. */
+    /** Focus motion (see `focusMotionEnabled`). */
+    protected motion?: FocusMotion;
+    /** The visual focus row: unwrapped while moving, the focused row when idle. */
     protected motionPos = 0;
+    /** The visual focus column. */
+    protected motionCol = 0;
     /** Items holding a fractional `focusPercent` from the last motion frame. */
     private readonly motionPercentItems = new Set<number>();
     /** Set while `animateToItem` (app write or key navigation) is being applied. */
     private animateRequested = false;
-    /** Direction of the navigation key being handled (+1 down, -1 up), 0 for programmatic moves. */
+    /** Direction (+1 down/right, -1 up/left) and axis of the navigation key being handled; 0/"" otherwise. */
     private navDirection = 0;
+    private navAxis: MotionAxis | "" = "";
     /** The navigation key still held down, and when it was pressed. */
     private heldKey = "";
     private heldSince = 0;
     private holdRepeating = false;
+    /** Repeats of the held key so far (the first one accelerates from rest). */
+    private holdRepeats = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
@@ -412,8 +432,16 @@ export class ArrayGrid extends Group implements UITransition {
             this.focusLayoutDirty = true;
             this.updateHorizScroll(newFocus);
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
+            // A key-driven move publishes its direction right after itemUnfocused and resets it after the
+            // settle (DEVICE-MEASURED order, list/grid-focus-motion-probe).
+            const directionField = this.navAxis === "col" ? "horizFocusDirection" : "vertFocusDirection";
+            const direction =
+                this.navDirection === 0 || !this.navAxis ? "" : this.directionName(this.navAxis, this.navDirection);
             if (inFocusChain) {
                 super.setValue("itemUnfocused", new Int32(focusedIndex));
+                if (direction) {
+                    super.setValue(directionField, new BrsString(direction));
+                }
                 // currFocusRow/currFocusColumn must already reflect the new position before
                 // itemFocused fires: apps commonly read them synchronously from an itemFocused
                 // observer (see RowList.setFocusedItem for the same ordering requirement).
@@ -422,6 +450,9 @@ export class ArrayGrid extends Group implements UITransition {
                 super.setValue("currFocusColumn", new Float(newFocus % numCols));
                 super.setValue("itemFocused", new Int32(index));
                 this.closeScrollPulse();
+                if (direction) {
+                    super.setValue(directionField, new BrsString("none"));
+                }
             } else {
                 // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
                 // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
@@ -435,55 +466,78 @@ export class ArrayGrid extends Group implements UITransition {
         }
     }
 
-    // ---- List focus motion ----
+    // ---- Focus motion ----
 
     /**
-     * Whether this node animates its focus moves (`animateToItem` and key navigation). Lists opt in;
-     * grids and row lists keep moving instantly until their motion is measured.
+     * Whether this node animates its focus moves (`animateToItem` and key navigation). Lists and grids opt
+     * in; row lists keep moving instantly until their motion is measured.
      */
     protected focusMotionEnabled(): boolean {
         return false;
     }
 
+    /** Duration of one step along `axis` (DEVICE-MEASURED): lists 200 ms; grids override. */
+    protected motionStepMs(_axis: MotionAxis): number {
+        return ListStepMs;
+    }
+
+    /** How long a key must be held before it starts repeating (DEVICE-MEASURED): lists 400 ms. */
+    protected motionHoldDelayMs(): number {
+        return ListHoldDelayMs;
+    }
+
+    private motionColumns(): number {
+        return Math.max(1, this.numCols || 1);
+    }
+
+    private motionRows(): number {
+        return Math.max(1, Math.ceil(this.content.length / this.motionColumns()));
+    }
+
     /**
      * Starts or extends the focus motion toward `newFocus`. DEVICE-MEASURED field timing: the motion
-     * opens with `scrollingStatus` true, the old item's `itemHasFocus` false, `itemUnfocused` and
-     * `vertFocusDirection`; `currFocusRow` and the two items' `focusPercent` then follow the motion frame
-     * by frame, and `itemFocused` only goes out when it settles (see `settleMotion`). The focus cursor
-     * itself moves now, so further keys navigate from the target.
+     * opens with `scrollingStatus` true, the old item's `itemHasFocus` false, `itemUnfocused` and the
+     * direction fields; `currFocusRow`/`currFocusColumn` and the neighboring items' `focusPercent` then
+     * follow the motion frame by frame, and `itemFocused` only goes out when it settles (see
+     * `settleMotion`). The focus cursor itself moves now, so further keys navigate from the target.
      */
     protected moveFocusAnimated(index: number, newFocus: number) {
-        const count = this.content.length;
+        const numCols = this.motionColumns();
+        const rows = this.motionRows();
         const motion = this.motion;
-        const base = motion ? motion.queued ?? motion.to : this.focusIndex;
-        const baseRow = ((Math.round(base) % count) + count) % count;
-        let delta = newFocus - baseRow;
+        const baseRow = motion ? motion.queued?.row ?? motion.row.to : Math.floor(this.focusIndex / numCols);
+        const baseCol = motion ? motion.queued?.col ?? motion.col.to : this.focusIndex % numCols;
+        const baseRowIndex = ((Math.round(baseRow) % rows) + rows) % rows;
+        let deltaRow = Math.floor(newFocus / numCols) - baseRowIndex;
         if (this.wrap) {
-            // A wrapping list scrolls the way the key points; a programmatic move always scrolls down.
-            const forward = ((delta % count) + count) % count;
-            delta = forward !== 0 && this.navDirection < 0 ? forward - count : forward;
+            // Wrapping rows scroll the way the key points; a programmatic move always scrolls down.
+            const forward = ((deltaRow % rows) + rows) % rows;
+            const backward = this.navAxis === "row" && this.navDirection < 0;
+            deltaRow = forward !== 0 && backward ? forward - rows : forward;
         }
-        if (delta === 0) {
+        const deltaCol = (newFocus % numCols) - Math.round(baseCol);
+        if (deltaRow === 0 && deltaCol === 0) {
             return;
         }
-        const target = base + delta;
+        const target = { row: baseRow + deltaRow, col: Math.round(baseCol) + deltaCol };
         const now = sgClock.perfNow();
         this.scrollPulseArmed = false;
         if (motion) {
             if (!motion.arrived && this.navDirection !== 0 && !this.holdRepeating) {
                 motion.queued = target;
             } else {
-                this.startMotionSegment(motion, this.motionPos, target, now);
+                this.startMotionSegments(motion, target, now);
             }
             motion.contentIndex = index;
         } else {
-            this.beginMotion(index, base, target, now, delta > 0 ? "down" : "up");
+            this.beginMotion(index, baseRow, baseCol, target, now);
         }
         this.focusIndex = newFocus;
         this.focusLayoutDirty = true;
         this.updateHorizScroll(newFocus);
         if (this.getValueJS("skipFocusAnimations") === true) {
-            this.motionPos = target;
+            this.motionPos = target.row;
+            this.motionCol = target.col;
             this.emitMotionFrame();
             this.settleMotion();
             return;
@@ -491,67 +545,176 @@ export class ArrayGrid extends Group implements UITransition {
         sgRoot.addTransition(this);
     }
 
-    private beginMotion(index: number, base: number, target: number, now: number, direction: string) {
+    private beginMotion(
+        index: number,
+        baseRow: number,
+        baseCol: number,
+        target: { row: number; col: number },
+        now: number
+    ) {
         const oldFocus = this.focusIndex;
         const nodeFocus = sgRoot.focused === this;
         super.setValue("scrollingStatus", BrsBoolean.True);
-        const motion: ListMotion = {
-            from: base,
-            to: target,
-            start: now,
-            duration: 0,
-            linear: false,
+        const idle = (at: number): MotionSegment => ({ from: at, to: at, start: now, duration: 0, curve: "out" });
+        this.motion = {
+            row: idle(baseRow),
+            col: idle(baseCol),
             arrived: false,
-            topFrom: this.topRow,
+            topFrom: Math.floor(oldFocus / this.motionColumns()) - this.currRow,
             contentIndex: index,
+            vertOpen: false,
+            horizOpen: false,
         };
-        this.startMotionSegment(motion, base, target, now);
-        this.motion = motion;
-        this.motionPos = base;
+        this.motionPos = baseRow;
+        this.motionCol = baseCol;
         this.motionPercentItems.clear();
         this.motionPercentItems.add(oldFocus);
         this.updateItemFocus(oldFocus, false, nodeFocus);
         super.setValue("itemUnfocused", new Int32(this.getValueJS("itemFocused") as number));
-        super.setValue("vertFocusDirection", new BrsString(direction));
+        this.startMotionSegments(this.motion, target, now);
     }
 
-    /** A key-driven segment eases over ~200 ms per row; a held key's repeat segments run linearly. */
-    private startMotionSegment(motion: ListMotion, from: number, to: number, now: number) {
-        motion.from = from;
-        motion.to = to;
-        motion.start = now;
-        motion.duration = Math.abs(to - from) * ListRowMotionMs;
-        motion.linear = this.holdRepeating;
+    /**
+     * Starts the next step on both axes from where the focus is now. A key step eases out over the
+     * measured step time per cell; a held key's repeats run at that same pace, the first one
+     * accelerating from rest. An axis that starts moving publishes its direction (horizontal first).
+     */
+    private startMotionSegments(motion: FocusMotion, target: { row: number; col: number }, now: number) {
+        let curve: MotionCurve = "out";
+        if (this.holdRepeating && this.canStepPast(target)) {
+            curve = this.holdRepeats <= 1 ? "rampIn" : "linear";
+        }
+        const stretch = curve === "rampIn" ? 1 / (1 - HoldRampFraction / 2) : 1;
+        const axes: [MotionAxis, MotionSegment, number, number][] = [
+            ["col", motion.col, this.motionCol, target.col],
+            ["row", motion.row, this.motionPos, target.row],
+        ];
+        for (const [axis, segment, from, to] of axes) {
+            segment.from = from;
+            segment.to = to;
+            segment.start = now;
+            segment.duration = Math.abs(to - from) * this.motionStepMs(axis) * stretch;
+            segment.curve = curve;
+            if (to === from) {
+                continue;
+            }
+            if (axis === "col" && !motion.horizOpen) {
+                motion.horizOpen = true;
+                super.setValue("horizFocusDirection", new BrsString(this.directionName("col", to - from)));
+            } else if (axis === "row" && !motion.vertOpen) {
+                motion.vertOpen = true;
+                super.setValue("vertFocusDirection", new BrsString(this.directionName("row", to - from)));
+            }
+        }
         motion.arrived = false;
     }
 
-    /** One press already waits behind the segment in flight. */
+    /**
+     * Whether the held key could move on past `target`. A repeat that can't — the last cell of a
+     * non-wrapping row or column — eases out from rest like a single step (DEVICE-MEASURED).
+     */
+    private canStepPast(target: { row: number; col: number }): boolean {
+        const numCols = this.motionColumns();
+        const rows = this.motionRows();
+        const row = ((Math.round(target.row) % rows) + rows) % rows;
+        if (this.navAxis === "col") {
+            const col = target.col + this.navDirection;
+            return col >= 0 && col < numCols && row * numCols + col < this.content.length;
+        }
+        if (this.wrap) {
+            return true;
+        }
+        const next = row + this.navDirection;
+        return next >= 0 && next < rows && next * numCols < this.content.length;
+    }
+
+    /** The axis position at `now` along its curve. */
+    private segmentValue(segment: MotionSegment, now: number): number {
+        if (segment.duration <= 0) {
+            return segment.to;
+        }
+        const u = Math.min(Math.max((now - segment.start) / segment.duration, 0), 1);
+        let fraction: number;
+        if (segment.curve === "linear") {
+            fraction = u;
+        } else if (segment.curve === "rampIn") {
+            // Constant acceleration over the first HoldRampFraction of the step, then the steady pace.
+            const r = HoldRampFraction;
+            fraction = u < r ? (u * u) / (2 * r * (1 - r / 2)) : (u - r / 2) / (1 - r / 2);
+        } else {
+            fraction = easeOutCubic(u);
+        }
+        return segment.from + (segment.to - segment.from) * fraction;
+    }
+
+    private segmentDone(segment: MotionSegment, now: number): boolean {
+        return now >= segment.start + segment.duration;
+    }
+
+    private directionName(axis: MotionAxis, direction: number): string {
+        if (axis === "col") {
+            return direction > 0 ? "right" : "left";
+        }
+        return direction > 0 ? "down" : "up";
+    }
+
+    /** One press already waits behind the step in flight. */
     private motionQueueFull(): boolean {
         return this.motion !== undefined && !this.motion.arrived && this.motion.queued !== undefined;
     }
 
-    /** `focusPercent` while moving: the item the motion leaves holds `1 - fraction`, the next one `fraction`. */
+    /**
+     * `focusPercent` while moving: along each axis the cell being left holds `1 - fraction` and the next
+     * one `fraction`; on a grid the two axes multiply. (Approximation: a device moving diagonally — only
+     * `animateToItem` does — appears to follow the row axis alone.)
+     */
     protected motionFocusPercent(index: number): number {
-        const count = this.content.length;
-        if (count === 0) {
+        const numCols = this.motionColumns();
+        const rows = this.motionRows();
+        if (this.content.length === 0) {
             return 0;
         }
-        const row = ((this.motionPos % count) + count) % count;
-        const lower = Math.floor(row);
-        const fraction = row - lower;
-        if (index === lower) {
-            return 1 - fraction;
+        const row = ((this.motionPos % rows) + rows) % rows;
+        const row0 = Math.floor(row);
+        const rowFraction = row - row0;
+        const col0 = Math.floor(this.motionCol);
+        const colFraction = this.motionCol - col0;
+        const itemRow = Math.floor(index / numCols);
+        const itemCol = index % numCols;
+        let rowWeight = 0;
+        if (itemRow === row0) {
+            rowWeight = 1 - rowFraction;
+        } else if (rowFraction > 0 && itemRow === (row0 + 1) % rows) {
+            rowWeight = rowFraction;
         }
-        return fraction > 0 && index === (lower + 1) % count ? fraction : 0;
+        let colWeight = 0;
+        if (itemCol === col0) {
+            colWeight = 1 - colFraction;
+        } else if (colFraction > 0 && itemCol === col0 + 1) {
+            colWeight = colFraction;
+        }
+        const percent = rowWeight * colWeight;
+        return percent < FocusPercentFloor ? 0 : Math.round(percent * 1000) / 1000;
     }
 
-    /** Publishes the in-transit fields: `currFocusRow` (wrapping with the list) and both items' `focusPercent`. */
+    /** Publishes the in-transit fields: `currFocusRow` (wrapping), `currFocusColumn`, and the cells' `focusPercent`. */
     private emitMotionFrame() {
-        const count = this.content.length;
-        const row = ((this.motionPos % count) + count) % count;
+        const numCols = this.motionColumns();
+        const rows = this.motionRows();
+        const row = ((this.motionPos % rows) + rows) % rows;
         super.setValue("currFocusRow", new Float(row));
-        const lower = Math.floor(row);
-        const touched = new Set([...this.motionPercentItems, lower, (lower + 1) % count]);
+        super.setValue("currFocusColumn", new Float(this.motionCol));
+        const row0 = Math.floor(row);
+        const row1 = (row0 + 1) % rows;
+        const col0 = Math.floor(this.motionCol);
+        const touched = new Set(this.motionPercentItems);
+        for (const r of [row0, row1]) {
+            for (const c of [col0, col0 + 1]) {
+                if (c < numCols && r * numCols + c < this.content.length) {
+                    touched.add(r * numCols + c);
+                }
+            }
+        }
         this.motionPercentItems.clear();
         for (const item of touched) {
             const percent = this.motionFocusPercent(item);
@@ -573,10 +736,10 @@ export class ArrayGrid extends Group implements UITransition {
             return false;
         }
         if (motion.arrived) {
-            // DEVICE-MEASURED: a held key keeps scrolling after a ~400 ms pause, and the motion only
-            // settles once the key is released (even when the list has reached its end).
+            // DEVICE-MEASURED: a held key keeps stepping after a pause, and the motion only settles once
+            // the key is released (even when the focus has reached the end).
             if (this.heldKey) {
-                if (now - this.heldSince >= ListHoldDelayMs) {
+                if (now - this.heldSince >= this.motionHoldDelayMs()) {
                     this.repeatHeldKey();
                 }
                 return true;
@@ -584,42 +747,79 @@ export class ArrayGrid extends Group implements UITransition {
             this.settleMotion();
             return false;
         }
-        const u = motion.duration > 0 ? (now - motion.start) / motion.duration : 1;
-        const eased = motion.linear ? Math.min(Math.max(u, 0), 1) : easeOutCubic(u);
-        this.motionPos = motion.from + (motion.to - motion.from) * eased;
-        // DEVICE-MEASURED: the focus snaps to the row once within ~0.01 of it (0.98 is followed by 1).
-        if (u >= 1 || Math.abs(motion.to - this.motionPos) < ListSettleEpsilon) {
-            this.motionPos = motion.to;
+        this.motionPos = this.segmentValue(motion.row, now);
+        this.motionCol = this.segmentValue(motion.col, now);
+        const rowDone = this.segmentDone(motion.row, now);
+        const colDone = this.segmentDone(motion.col, now);
+        this.emitMotionFrame();
+        // An axis that lands while the other still moves resets its direction now (DEVICE-MEASURED);
+        // the last one resets with the settle.
+        if (colDone && !rowDone && motion.horizOpen) {
+            motion.horizOpen = false;
+            super.setValue("horizFocusDirection", new BrsString("none"));
+        } else if (rowDone && !colDone && motion.vertOpen) {
+            motion.vertOpen = false;
+            super.setValue("vertFocusDirection", new BrsString("none"));
+        }
+        if (rowDone && colDone) {
             motion.arrived = true;
-            if (motion.queued !== undefined) {
+            if (motion.queued) {
                 const queued = motion.queued;
                 motion.queued = undefined;
-                this.startMotionSegment(motion, motion.to, queued, now);
-            } else if (this.heldKey && now - this.heldSince >= ListHoldDelayMs) {
+                this.startMotionSegments(motion, queued, now);
+            } else if (this.heldKey && now - this.heldSince >= this.motionHoldDelayMs()) {
                 this.repeatHeldKey();
             }
         }
-        this.emitMotionFrame();
         this.makeDirty();
         return true;
     }
 
-    /** Moves one more row in the held key's direction; false at the end of a non-wrapping list. */
+    /** Steps once more in the held key's direction; false at the end of a non-wrapping row or column. */
     private repeatHeldKey(): boolean {
+        const key = this.heldKey;
         this.holdRepeating = true;
-        this.navDirection = this.heldKey === "up" ? -1 : 1;
+        this.holdRepeats++;
+        this.navDirection = key === "up" || key === "left" ? -1 : 1;
+        this.navAxis = key === "left" || key === "right" ? "col" : "row";
         try {
-            return this.handleUpDown(this.heldKey);
+            return key === "left" || key === "right" ? this.handleLeftRight(key) : this.handleUpDown(key);
         } finally {
             this.holdRepeating = false;
             this.navDirection = 0;
+            this.navAxis = "";
+        }
+    }
+
+    /** On release, the held key's step in flight eases out to its cell (DEVICE-MEASURED). */
+    private releaseHeldKey() {
+        this.heldKey = "";
+        this.holdRepeats = 0;
+        const motion = this.motion;
+        if (!motion || motion.arrived) {
+            return;
+        }
+        const now = sgClock.perfNow();
+        const axes: [MotionAxis, MotionSegment][] = [
+            ["row", motion.row],
+            ["col", motion.col],
+        ];
+        for (const [axis, segment] of axes) {
+            if (segment.curve === "out" || this.segmentDone(segment, now)) {
+                continue;
+            }
+            const from = this.segmentValue(segment, now);
+            segment.from = from;
+            segment.start = now;
+            segment.duration = Math.abs(segment.to - from) * this.motionStepMs(axis);
+            segment.curve = "out";
         }
     }
 
     /**
      * Lands the focus. DEVICE-MEASURED order: the new item's `itemHasFocus`, `itemFocused`, then
-     * `scrollingStatus` false and `vertFocusDirection` "none" — the same order the instant path uses
-     * (see `armScrollPulse`).
+     * `scrollingStatus` false and the direction fields back to "none" — the same order the instant path
+     * uses (see `armScrollPulse`).
      */
     protected settleMotion() {
         const motion = this.motion;
@@ -628,9 +828,11 @@ export class ArrayGrid extends Group implements UITransition {
         }
         this.motion = undefined;
         this.heldKey = "";
+        this.holdRepeats = 0;
         sgRoot.removeTransition(this);
-        const numCols = Math.max(1, this.numCols || 1);
-        this.motionPos = this.focusIndex;
+        const numCols = this.motionColumns();
+        this.motionPos = Math.floor(this.focusIndex / numCols);
+        this.motionCol = this.focusIndex % numCols;
         const nodeFocus = sgRoot.focused === this;
         const inFocusChain = nodeFocus || this.isChildrenFocused();
         for (const item of this.motionPercentItems) {
@@ -639,7 +841,8 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         this.motionPercentItems.clear();
-        super.setValue("currFocusRow", new Float(Math.floor(this.focusIndex / numCols)));
+        super.setValue("currFocusRow", new Float(this.motionPos));
+        super.setValue("currFocusColumn", new Float(this.motionCol));
         Field.enterInternalUpdate();
         try {
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
@@ -655,83 +858,134 @@ export class ArrayGrid extends Group implements UITransition {
             Field.exitInternalUpdate();
         }
         super.setValue("scrollingStatus", BrsBoolean.False);
-        super.setValue("vertFocusDirection", new BrsString("none"));
+        this.closeMotionDirections(motion);
         this.makeDirty();
+    }
+
+    private closeMotionDirections(motion: FocusMotion) {
+        if (motion.horizOpen) {
+            super.setValue("horizFocusDirection", new BrsString("none"));
+        }
+        if (motion.vertOpen) {
+            super.setValue("vertFocusDirection", new BrsString("none"));
+        }
     }
 
     /** Drops a motion whose content went away, without publishing a settle. */
     private abortMotion() {
-        if (!this.motion) {
+        const motion = this.motion;
+        if (!motion) {
             return;
         }
         this.motion = undefined;
         this.heldKey = "";
+        this.holdRepeats = 0;
         this.motionPercentItems.clear();
         sgRoot.removeTransition(this);
         super.setValue("scrollingStatus", BrsBoolean.False);
-        super.setValue("vertFocusDirection", new BrsString("none"));
+        this.closeMotionDirections(motion);
     }
 
     /**
-     * Where a list draws while its focus moves, relative to the settled layout `renderContent` just
-     * computed (`topRow`/`currRow` for the target): every item is drawn `shift` rows further down than its
-     * settled row, and the focus indicator sits at row `focusSlot` of the viewport. Fixed-focus styles keep
-     * the indicator still and scroll the items; floating focus glides the indicator and scrolls the items
-     * only when the focus would leave the window. Paint-time only: bounding rects keep the settled layout,
-     * as a device reports them.
+     * Where a list or grid draws while its focus moves, relative to the settled layout `renderContent`
+     * just computed (`currRow` for the target): every row is drawn `shift` rows further down than its
+     * settled row, and the focus indicator sits at viewport row `focusSlot` and (absolute) column
+     * `focusCol`. Fixed-focus styles keep the indicator's row still and scroll the rows; floating focus
+     * glides the indicator and scrolls only when the focus would leave the window. Paint-time only:
+     * bounding rects keep the settled layout, as a device reports them.
      */
     protected listMotionFrame(
         displayRows: number
-    ): { shift: number; focusSlot: number; visualIndex: number } | undefined {
+    ): { shift: number; focusSlot: number; focusCol: number; visualIndex: number } | undefined {
         const motion = this.motion;
-        const count = this.content.length;
-        if (!motion || count === 0) {
+        if (!motion || this.content.length === 0) {
             return undefined;
         }
-        const target = motion.queued ?? motion.to;
+        const numCols = this.motionColumns();
+        const rows = this.motionRows();
+        const target = motion.queued?.row ?? motion.row.to;
+        const targetTop = target - this.currRow;
         let visualTop: number;
-        let targetTop: number;
         if (this.isFixedFocusMode()) {
             visualTop = this.motionPos - this.currRow;
-            targetTop = target - this.currRow;
         } else {
-            const maxTop = Math.max(0, count - displayRows);
+            const maxTop = Math.max(0, rows - displayRows);
             const kept = Math.min(Math.max(motion.topFrom, this.motionPos - (displayRows - 1)), this.motionPos);
             visualTop = Math.min(Math.max(kept, 0), maxTop);
-            targetTop = this.topRow;
         }
-        const visualIndex = ((Math.round(this.motionPos) % count) + count) % count;
-        return { shift: targetTop - visualTop, focusSlot: this.motionPos - visualTop, visualIndex };
+        const nearestRow = ((Math.round(this.motionPos) % rows) + rows) % rows;
+        const nearestCol = Math.min(Math.max(Math.round(this.motionCol), 0), numCols - 1);
+        const visualIndex = Math.min(nearestRow * numCols + nearestCol, this.content.length - 1);
+        return {
+            shift: targetTop - visualTop,
+            focusSlot: this.motionPos - visualTop,
+            focusCol: this.motionCol,
+            visualIndex,
+        };
     }
 
-    /** The item drawn at viewport row `r` (which may be outside the window while scrolling), or -1. */
+    /** First data index of the row drawn at viewport row `r` (which may be outside the window while scrolling), or -1. */
     protected motionRowIndex(r: number): number {
         if (this.isFixedFocusMode()) {
             return this.getRenderRowIndex(r);
         }
-        const numCols = Math.max(1, this.numCols || 1);
-        const row = this.topRow + r;
-        const rows = Math.ceil(this.content.length / numCols);
-        return row >= 0 && row < rows ? row * numCols : -1;
+        const numCols = this.motionColumns();
+        const row = Math.floor(this.focusIndex / numCols) - this.currRow + r;
+        return row >= 0 && row < this.motionRows() ? row * numCols : -1;
     }
 
-    /** Draws the focus indicator at its in-transit slot (per-item focus frames are suppressed while moving). */
-    protected renderMotionFocus(
-        rect: Rect,
-        itemSize: number[],
-        pitch: number,
-        focusSlot: number,
-        opacity: number,
-        draw2D?: IfDraw2D
-    ) {
+    /**
+     * Draws the focus indicator at its in-transit rect (per-item focus frames are suppressed while moving).
+     * DEVICE-MEASURED layering (screenshots, `grid-focus-layer-probe`): a grid draws the moving indicator
+     * over every cell, whatever `drawFocusFeedbackOnTop` says; a list draws it under every item unless
+     * `drawFocusFeedbackOnTop` is set — so grids call this after their cells, lists before.
+     */
+    protected renderMotionFocus(focusRect: Rect, index: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.getValueJS("drawFocusFeedback")) {
             return;
         }
-        const focusRect = { x: rect.x, y: rect.y + focusSlot * pitch, width: itemSize[0], height: itemSize[1] };
-        this.renderFocus(focusRect, opacity, sgRoot.focused === this, draw2D);
+        this.renderFocus(focusRect, opacity, sgRoot.focused === this, draw2D, index);
     }
 
-    /** Clips scrolling items to the list's viewport rows (horizontally unbounded). */
+    /**
+     * The in-transit indicator rect of a grid: at viewport y `slotY`, interpolated between the columns
+     * either side of `focusCol` (absolute column), laid out from `firstCol` with each column's width and
+     * the gap after it.
+     */
+    protected gridMotionFocusRect(
+        rect: Rect,
+        slotY: number,
+        height: number,
+        focusCol: number,
+        firstCol: number,
+        widthOf: (col: number) => number,
+        gapAfter: (col: number) => number
+    ): Rect {
+        const xOf = (col: number) => {
+            let x = rect.x;
+            for (let c = firstCol; c < col; c++) {
+                x += widthOf(c) + gapAfter(c);
+            }
+            return x;
+        };
+        const col0 = Math.floor(focusCol);
+        const fraction = focusCol - col0;
+        const x0 = xOf(col0);
+        const width0 = widthOf(col0);
+        if (fraction === 0) {
+            return { x: x0, y: slotY, width: width0, height };
+        }
+        const x1 = xOf(col0 + 1);
+        const width1 = widthOf(col0 + 1);
+        return { x: x0 + (x1 - x0) * fraction, y: slotY, width: width0 + (width1 - width0) * fraction, height };
+    }
+
+    /** A list's in-transit indicator rect: one item tall, at viewport row `focusSlot`. */
+    protected listMotionFocusRect(rect: Rect, motion: { focusSlot: number }, itemSize: number[], pitch: number): Rect {
+        return { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] };
+    }
+
+    /** Clips scrolling rows to the viewport (horizontally unbounded). */
     protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D) {
         draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: viewportHeight });
     }
@@ -864,9 +1118,9 @@ export class ArrayGrid extends Group implements UITransition {
 
     handleKey(key: string, press: boolean): boolean {
         if (!press && key === this.heldKey) {
-            this.heldKey = "";
+            this.releaseHeldKey();
         }
-        if (press && this.motionQueueFull() && ["up", "down", "rewind", "fastforward"].includes(key)) {
+        if (press && this.motionQueueFull() && ["up", "down", "left", "right", "rewind", "fastforward"].includes(key)) {
             // A device takes one press ahead of the motion in flight; further ones are dropped.
             this.lastPressHandled = key;
             return true;
@@ -883,7 +1137,8 @@ export class ArrayGrid extends Group implements UITransition {
                 // Arm inside the try so an exception from either edge's observers still unwinds
                 // through the finally below and cannot strand the field at true.
                 this.armScrollPulse();
-                this.navDirection = key === "up" || key === "rewind" ? -1 : 1;
+                this.navDirection = key === "up" || key === "left" || key === "rewind" ? -1 : 1;
+                this.navAxis = key === "left" || key === "right" ? "col" : "row";
                 if (key === "up" || key === "down") {
                     handled = this.handleUpDown(key);
                 } else if (key === "left" || key === "right") {
@@ -893,12 +1148,14 @@ export class ArrayGrid extends Group implements UITransition {
                 }
             } finally {
                 this.navDirection = 0;
+                this.navAxis = "";
                 // Disarm: a key that scrolled nothing emits no pulse at all (see armScrollPulse).
                 this.endScrollPulse();
             }
-            if (handled && this.motion && (key === "up" || key === "down")) {
+            if (handled && this.motion && ["up", "down", "left", "right"].includes(key)) {
                 this.heldKey = key;
                 this.heldSince = sgClock.perfNow();
+                this.holdRepeats = 0;
             }
         }
         this.lastPressHandled = handled && key !== "OK" ? key : "";

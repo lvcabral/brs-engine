@@ -14,7 +14,7 @@ import {
 } from "brs-engine";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
-import { ArrayGrid, FocusStyle } from "./ArrayGrid";
+import { ArrayGrid, FocusStyle, GridHoldDelayMs, GridStepMs, GridWrapRowStepMs } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { Group } from "./Group";
 import { Poster } from "./Poster";
@@ -374,7 +374,11 @@ export class PosterGrid extends ArrayGrid {
         if (!baseSize || baseSize.length < 2 || baseSize[0] <= 0 || baseSize[1] <= 0) {
             return;
         }
-        this.layoutByIndex.clear();
+        // Keep the per-cell layouts while the focus moves: the in-transit indicator is drawn before the
+        // cells and frames the poster from them (see focusFrameRect).
+        if (!this.motion) {
+            this.layoutByIndex.clear();
+        }
         this.fontHeightCache = new WeakMap();
         const {
             rowSpacing: baseRowSpacing,
@@ -397,86 +401,140 @@ export class PosterGrid extends ArrayGrid {
         // caption zone, which updateRect cannot re-derive from rowHeights alone — measuring from
         // rowHeights there would silently drop every caption. `startY` is captured before the loop so
         // wrap/section dividers, which also advance itemRect.y, are counted.
-        const startY = itemRect.y;
+        let windowHeight = 0;
         let renderedRows = 0;
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
         const screenBottom = screen.y + screen.height;
-        for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.getRenderRowIndex(r);
-            if (rowIndex < 0 || rowIndex >= contentLength) {
-                break;
-            }
-            const rowNumber = Math.floor(rowIndex / this.numCols);
-            // resolveTrackValue, not resolveNumber: a row past the end of `rowHeights` falls back
-            // to basePosterSize.y rather than repeating the array's last entry, matching the rule the
-            // spacing arrays follow. (resolveNumber still repeats and is left alone — ZoomRowList
-            // depends on it and its behavior is unmeasured.)
-            const posterHeight = this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
-            const rowCaptionHeight = captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
-            // Content-only width: the trailing gap belongs to the REPORTED extent (device-measured),
-            // not to the drawn section/wrap divider, which would otherwise extend past the last poster.
-            const rowWidth = this.computeRowWidth(columnWidths, columnSpacings, false);
-            const rowHeightWithCaptions = posterHeight + rowCaptionHeight;
-            itemRect.height = rowHeightWithCaptions;
-            if (!hasSections && this.wrap && rowIndex < lastRowIndex && r > 0) {
-                const dividerRect = { ...itemRect, x: rect.x, width: rowWidth };
-                const gapAfterPreviousRow =
-                    lastRowNumber >= 0
-                        ? this.resolveSpacingValue(rowSpacingValues, lastRowNumber, baseRowSpacing)
-                        : baseRowSpacing;
-                itemRect.y += this.renderWrapDivider(dividerRect, opacity, draw2D) + gapAfterPreviousRow;
-            } else if (hasSections && this.wrap && this.getPosterMetadata(rowIndex)?.divider && r > 0) {
-                const dividerRect = { ...itemRect, x: rect.x, width: rowWidth };
-                const divText = this.getPosterMetadata(rowIndex)?.sectionTitle ?? "";
-                const gapAfterPreviousRow =
-                    lastRowNumber >= 0
-                        ? this.resolveSpacingValue(rowSpacingValues, lastRowNumber, baseRowSpacing)
-                        : baseRowSpacing;
-                itemRect.y +=
-                    this.renderSectionDivider(divText, dividerRect, opacity, sectionIndex, draw2D) +
-                    gapAfterPreviousRow;
-                sectionIndex++;
-            }
-            itemRect.x = rect.x;
-            for (let c = 0; c < this.numCols; c++) {
-                const index = rowIndex + c;
-                if (index >= contentLength) {
+        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
+        // The pitch and cell height come from the target window's top row.
+        const motion = this.listMotionFrame(displayRows);
+        let firstRow = 0;
+        let lastRow = displayRows;
+        let pitch = 0;
+        let motionFocus: Rect | undefined;
+        if (motion) {
+            const topIndex = Math.max(0, this.getRenderRowIndex(0));
+            const topRowNumber = Math.floor(topIndex / this.numCols);
+            const topCell =
+                this.resolveTrackValue(rowHeights, topRowNumber, baseSize[1]) +
+                (captionsExtendLayout ? this.computeRowCaptionHeight(topIndex, placement) : 0);
+            pitch = topCell + this.resolveSpacingValue(rowSpacingValues, topRowNumber, baseRowSpacing);
+            firstRow = -Math.ceil(Math.max(0, motion.shift));
+            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
+            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            motionFocus = this.gridMotionFocusRect(
+                rect,
+                rect.y + motion.focusSlot * pitch,
+                topCell,
+                motion.focusCol,
+                0,
+                (c) => columnWidths[c] ?? columnWidths[0],
+                (c) => columnSpacings[c] ?? defaultColumnSpacing
+            );
+            this.pushMotionClip(rect, displayRows * pitch - baseRowSpacing, draw2D);
+        }
+        try {
+            for (let r = firstRow; r < lastRow; r++) {
+                const rowIndex = motion ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
+                if (rowIndex < 0 || rowIndex >= contentLength) {
+                    if (motion) {
+                        itemRect.y += pitch;
+                        continue;
+                    }
                     break;
                 }
-                itemRect.width = columnWidths[c];
-                const captionMetrics = this.computeCaptionMetrics(index);
-                const captionHeight = captionsExtendLayout ? captionMetrics.totalHeight : 0;
-                const offsetY =
-                    captionsExtendLayout && placement === "above" ? Math.max(0, rowCaptionHeight - captionHeight) : 0;
-                const layout = this.buildItemLayout(
-                    columnWidths[c],
-                    posterHeight,
-                    captionHeight,
-                    placement,
-                    captionMetrics
-                );
-                if (offsetY !== 0) {
-                    layout.offsetY = offsetY;
+                let rowStartY = itemRect.y;
+                const rowNumber = Math.floor(rowIndex / this.numCols);
+                // resolveTrackValue, not resolveNumber: a row past the end of `rowHeights` falls back
+                // to basePosterSize.y rather than repeating the array's last entry, matching the rule the
+                // spacing arrays follow. (resolveNumber still repeats and is left alone — ZoomRowList
+                // depends on it and its behavior is unmeasured.)
+                const posterHeight = this.resolveTrackValue(rowHeights, rowNumber, baseSize[1]);
+                const rowCaptionHeight = captionsExtendLayout ? this.computeRowCaptionHeight(rowIndex, placement) : 0;
+                // Content-only width: the trailing gap belongs to the REPORTED extent (device-measured),
+                // not to the drawn section/wrap divider, which would otherwise extend past the last poster.
+                const rowWidth = this.computeRowWidth(columnWidths, columnSpacings, false);
+                const rowHeightWithCaptions = posterHeight + rowCaptionHeight;
+                itemRect.height = rowHeightWithCaptions;
+                if (!hasSections && this.wrap && rowIndex < lastRowIndex && r > firstRow) {
+                    const dividerRect = { ...itemRect, x: rect.x, width: rowWidth };
+                    const gapAfterPreviousRow =
+                        lastRowNumber >= 0
+                            ? this.resolveSpacingValue(rowSpacingValues, lastRowNumber, baseRowSpacing)
+                            : baseRowSpacing;
+                    itemRect.y += this.renderWrapDivider(dividerRect, opacity, draw2D) + gapAfterPreviousRow;
+                } else if (hasSections && this.wrap && this.getPosterMetadata(rowIndex)?.divider && r > firstRow) {
+                    const dividerRect = { ...itemRect, x: rect.x, width: rowWidth };
+                    const divText = this.getPosterMetadata(rowIndex)?.sectionTitle ?? "";
+                    const gapAfterPreviousRow =
+                        lastRowNumber >= 0
+                            ? this.resolveSpacingValue(rowSpacingValues, lastRowNumber, baseRowSpacing)
+                            : baseRowSpacing;
+                    itemRect.y +=
+                        this.renderSectionDivider(divText, dividerRect, opacity, sectionIndex, draw2D) +
+                        gapAfterPreviousRow;
+                    sectionIndex++;
                 }
-                this.layoutByIndex.set(index, layout);
-                this.pendingIndex = index;
-                this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
-                this.pendingIndex = -1;
-                const columnGap = columnSpacings[c] ?? defaultColumnSpacing;
-                itemRect.x += columnWidths[c] + columnGap;
+                if (r === 0) {
+                    // A divider ahead of the window's first row is not part of the reported extent.
+                    rowStartY = itemRect.y;
+                }
+                itemRect.x = rect.x;
+                for (let c = 0; c < this.numCols; c++) {
+                    const index = rowIndex + c;
+                    if (index >= contentLength) {
+                        break;
+                    }
+                    itemRect.width = columnWidths[c];
+                    const captionMetrics = this.computeCaptionMetrics(index);
+                    const captionHeight = captionsExtendLayout ? captionMetrics.totalHeight : 0;
+                    const offsetY =
+                        captionsExtendLayout && placement === "above"
+                            ? Math.max(0, rowCaptionHeight - captionHeight)
+                            : 0;
+                    const layout = this.buildItemLayout(
+                        columnWidths[c],
+                        posterHeight,
+                        captionHeight,
+                        placement,
+                        captionMetrics
+                    );
+                    if (offsetY !== 0) {
+                        layout.offsetY = offsetY;
+                    }
+                    this.layoutByIndex.set(index, layout);
+                    this.pendingIndex = index;
+                    this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
+                    this.pendingIndex = -1;
+                    const columnGap = columnSpacings[c] ?? defaultColumnSpacing;
+                    itemRect.x += columnWidths[c] + columnGap;
+                }
+                maxCellHeight = Math.max(maxCellHeight, rowHeightWithCaptions);
+                lastRowIndex = rowIndex;
+                lastRowNumber = rowNumber;
+                // Advance identically on both exits: the gap after the LAST row counts toward the
+                // extent, so breaking on the scene edge must not silently drop it.
+                const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
+                itemRect.y += rowHeightWithCaptions + rowGap;
+                // Only the settled window's rows make up the reported extent (rows scrolling in or out
+                // during a focus motion are drawn but not measured).
+                if (r >= 0 && r < displayRows) {
+                    windowHeight += itemRect.y - rowStartY;
+                    renderedRows++;
+                }
+                if (!motion && itemRect.y > screenBottom) {
+                    break;
+                }
             }
-            maxCellHeight = Math.max(maxCellHeight, rowHeightWithCaptions);
-            lastRowIndex = rowIndex;
-            lastRowNumber = rowNumber;
-            renderedRows++;
-            // Advance identically on both exits: the gap after the LAST row counts toward the
-            // extent, so breaking on the scene edge must not silently drop it.
-            const rowGap = this.resolveSpacingValue(rowSpacingValues, rowNumber, baseRowSpacing);
-            itemRect.y += rowHeightWithCaptions + rowGap;
-            if (itemRect.y > screenBottom) {
-                break;
+        } finally {
+            if (motion) {
+                draw2D?.popClip();
             }
+        }
+        if (motionFocus && motion) {
+            // A grid's moving indicator goes over every cell (see renderMotionFocus).
+            this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
         }
         // Explicit extents, both including the focus outset the arithmetic path would otherwise add
         // per track (these values are the whole reported rect, not just the content).
@@ -491,11 +549,23 @@ export class PosterGrid extends ArrayGrid {
         // count `itemRect.y` accumulated over. The requested count would disagree with the extent
         // whenever the scene edge cut the loop short.
         const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : itemRect.y - startY + margin.y + this.rectMarginBottom(renderedRows);
+        const height = renderedRows === 0 ? 0 : windowHeight + margin.y + this.rectMarginBottom(renderedRows);
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
             width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             height,
         });
+    }
+
+    protected focusMotionEnabled(): boolean {
+        return true;
+    }
+
+    protected motionStepMs(axis: "row" | "col"): number {
+        return axis === "row" && this.wrap ? GridWrapRowStepMs : GridStepMs;
+    }
+
+    protected motionHoldDelayMs(): number {
+        return GridHoldDelayMs;
     }
 
     protected handleUpDown(key: string) {
@@ -601,7 +671,8 @@ export class PosterGrid extends ArrayGrid {
             content.changed = false;
         }
         this.updateItemFocus(index, focused, nodeFocus);
-        const drawFocus = this.getValueJS("drawFocusFeedback");
+        // While the focus moves, the indicator is drawn once at its in-transit rect instead.
+        const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);

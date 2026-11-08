@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+        <function name="itemLog" />
+        <function name="registerItem" />
+    </interface>
+    <children>
+        <MarkupGrid id="GF" translation="[80,100]" itemComponentName="ProbeItem" itemSize="[180,100]" itemSpacing="[10,10]" numColumns="3" numRows="2" vertFocusAnimationStyle="floatingFocus" visible="false" />
+        <MarkupGrid id="GW" translation="[80,100]" itemComponentName="ProbeItem" itemSize="[180,100]" itemSpacing="[10,10]" numColumns="3" numRows="2" visible="false" />
+        <PosterGrid id="PF" translation="[80,100]" basePosterSize="[180,100]" itemSpacing="[10,10]" numColumns="3" numRows="2" vertFocusAnimationStyle="floatingFocus" visible="false" />
+        <PosterGrid id="PW" translation="[80,100]" basePosterSize="[180,100]" itemSpacing="[10,10]" numColumns="3" numRows="2" visible="false" />
+        <Timer id="sampler" duration="0.001" repeat="true" />
+        <Timer id="stepTimer" duration="2" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.clock = CreateObject("roTimespan")
+        m.seq = 0
+        m.samples = 0
+        m.lastState = ""
+        m.items = {}
+        m.list = invalid
+        perList = ["key:Right", "key:Right", "key:Right", "key:Left", "key:Down", "key:Down", "key:Down", "key:Down_Down", "hold:Down", "act:jump0", "key:Up", "hold:Right", "act:animate7", "act:jump1", "act:skip", "key:Down", "act:noskip"]
+        m.steps = []
+        for each id in ["GF", "GW", "PF", "PW"]
+            m.steps.push("list:" + id)
+            m.steps.append(perList)
+        end for
+        m.steps.push("done")
+        m.step = -1
+        for each id in ["GF", "GW", "PF", "PW"]
+            l = m.top.findNode(id)
+            l.content = makeContent()
+            for each f in ["itemFocused", "itemUnfocused", "currFocusRow", "currFocusColumn", "scrollingStatus", "vertFocusDirection", "horizFocusDirection"]
+                if l.hasField(f) then l.observeField(f, "onListField")
+            end for
+        end for
+        for each id in ["GF", "GW", "PF", "PW"]
+            rec("info", "fields " + id + " " + fieldList(m.top.findNode(id), ["skipFocusAnimations", "vertFocusAnimationStyle", "horizFocusAnimationStyle", "numRows", "numColumns", "focusRow", "focusColumn", "vertFocusDirection", "horizFocusDirection", "wrapDividerHeight"]))
+        end for
+        m.top.findNode("sampler").observeField("fire", "onSample")
+        m.top.findNode("stepTimer").observeField("fire", "onStep")
+        m.top.findNode("sampler").control = "start"
+        m.top.findNode("stepTimer").control = "start"
+    end sub
+
+    function makeContent() as object
+        root = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 14
+            c = root.createChild("ContentNode")
+            c.title = "I" + StrI(i).trim()
+            c.shortDescriptionLine1 = "I" + StrI(i).trim()
+        end for
+        return root
+    end function
+
+    function now() as string
+        return StrI(m.clock.TotalMilliseconds()).trim()
+    end function
+
+    sub rec(kind as string, body as string)
+        m.seq = m.seq + 1
+        s = StrI(m.seq).trim()
+        while len(s) < 4
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + now() + "|" + kind + "|" + body
+    end sub
+
+    function num(v as dynamic) as string
+        return Str(Int(v * 100 + 0.5) / 100).trim()
+    end function
+
+    function valStr(v as dynamic) as string
+        t = type(v)
+        if t = "roBoolean" or t = "Boolean"
+            if v then return "true" else return "false"
+        else if t = "roInt" or t = "Integer" or t = "roFloat" or t = "Float" or t = "roDouble" or t = "Double"
+            return num(v)
+        else if t = "roString" or t = "String"
+            return v
+        else if t = "roArray"
+            out = "["
+            for each e in v
+                out = out + valStr(e) + ","
+            end for
+            return out + "]"
+        end if
+        return "<" + t + ">"
+    end function
+
+    function fieldList(node as object, keys as object) as string
+        out = ""
+        for each k in keys
+            if node.hasField(k)
+                out = out + k + "=" + valStr(node.getField(k)) + " "
+            else
+                out = out + k + "=<absent> "
+            end if
+        end for
+        return out
+    end function
+
+    function itemLog(text as string) as boolean
+        rec("item", text)
+        return true
+    end function
+
+    function registerItem(info as object) as boolean
+        m.items[info.name] = info.node
+        return true
+    end function
+
+    sub onListField(ev as object)
+        rec("lf", ev.getRoSGNode().id + "." + ev.getField() + "=" + valStr(ev.getData()))
+    end sub
+
+    sub onSample()
+        m.samples = m.samples + 1
+        if m.list = invalid then return
+        l = m.list
+        state = "fr=" + num(l.currFocusRow) + " fc=" + num(l.currFocusColumn) + " ss=" + valStr(l.scrollingStatus)
+        if l.subtype() = "MarkupGrid"
+            nodes = ""
+            for i = 0 to 14
+                n = m.items["I" + StrI(i).trim()]
+                if n <> invalid and n.focusPercent > 0
+                    nodes = nodes + " " + StrI(i).trim() + "@" + num(n.focusPercent)
+                end if
+            end for
+            state = state + " fp" + nodes
+        end if
+        if state <> m.lastState
+            m.lastState = state
+            rec("frame", state)
+        end if
+    end sub
+
+    sub onStep()
+        m.step = m.step + 1
+        action = m.steps[m.step]
+        rec("step", StrI(m.step).trim() + " " + action)
+        timer = m.top.findNode("stepTimer")
+        timer.duration = 2
+        if action = "done"
+            rec("info", "samples=" + StrI(m.samples).trim())
+            print "PROBE|done"
+            m.top.probeExit = true
+            return
+        end if
+        parts = action.split(":")
+        if parts[0] = "list"
+            if m.list <> invalid then m.list.visible = false
+            m.list = m.top.findNode(parts[1])
+            m.list.visible = true
+            m.items = {}
+            m.lastState = ""
+            m.list.setFocus(true)
+            rec("act", "focus " + parts[1] + " " + fieldList(m.list, ["itemFocused", "currFocusRow"]))
+        else if parts[0] = "key"
+            print "PROBE|await|" + parts[1]
+        else if parts[0] = "hold"
+            print "PROBE|await|Hold" + parts[1]
+            timer.duration = 3.5
+        else if parts[0] = "act"
+            a = parts[1]
+            if a = "jump0"
+                m.list.jumpToItem = 0
+            else if a = "jump1"
+                m.list.jumpToItem = 1
+            else if a = "animate7"
+                m.list.animateToItem = 7
+            else if a = "skip"
+                m.list.skipFocusAnimations = true
+            else if a = "noskip"
+                m.list.skipFocusAnimations = false
+            end if
+            rec("act", a + " " + fieldList(m.list, ["itemFocused", "currFocusRow", "skipFocusAnimations"]))
+        end if
+        timer.control = "start"
+    end sub
+    ]]>
+    </script>
+</component>

@@ -139,8 +139,10 @@ export class MarkupList extends ArrayGrid {
             firstRow = -Math.ceil(Math.max(0, motion.shift));
             lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
             itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            // A list's moving indicator goes under its items unless drawFocusFeedbackOnTop (see renderMotionFocus).
             if (!drawFocusOnTop) {
-                this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+                const focusRect = this.listMotionFocusRect(rect, motion, itemSize, pitch);
+                this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
             }
             this.pushMotionClip(rect, displayRows * pitch - spacing[1], draw2D);
         }
@@ -164,7 +166,8 @@ export class MarkupList extends ArrayGrid {
             }
         }
         if (motion && drawFocusOnTop) {
-            this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+            const focusRect = this.listMotionFocusRect(rect, motion, itemSize, pitch);
+            this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
         }
         this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }

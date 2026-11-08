@@ -138,7 +138,12 @@ export class LabelList extends ArrayGrid {
             lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
             itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
             if (drawFocus && !drawFocusOnTop) {
-                this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+                this.renderMotionFocus(
+                    { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] },
+                    motion.visualIndex,
+                    opacity,
+                    draw2D
+                );
             }
             this.pushMotionClip(rect, displayRows * pitch - rowSpacingDefault, draw2D);
         }
@@ -167,7 +172,12 @@ export class LabelList extends ArrayGrid {
             }
         }
         if (motion && drawFocus && drawFocusOnTop) {
-            this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+            this.renderMotionFocus(
+                { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] },
+                motion.visualIndex,
+                opacity,
+                draw2D
+            );
         }
         this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }

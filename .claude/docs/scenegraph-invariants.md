@@ -874,7 +874,7 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 ## Intrinsic UI transitions (`SGTransition.ts`) — logical state is instant, only presentation is timed
 
-Nodes with built-in motion (today: `PanelSet` slides and `LabelList`/`MarkupList` focus motion; grids and row lists later) implement `UITransition`
+Nodes with built-in motion (today: `PanelSet` slides and list/grid focus motion; row lists later) implement `UITransition`
 and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
 `sgRoot.processTransitions()` next to `processAnimations()`, before painting, and the frame stays dirty
 only while one is active, so an idle scene costs nothing. The rules:
@@ -908,18 +908,40 @@ PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-sli
 - a full-screen panel counts twice in `numPanels`;
 - `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
 
-List focus motion (`LabelList`, `MarkupList`, via `ArrayGrid.focusMotionEnabled()`; device-measured, see
-`test/simulator/probes/list-focus-motion-probe/README.md`):
+List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid`, via
+`ArrayGrid.focusMotionEnabled()`; device-measured, see the `list-focus-motion-probe` and
+`grid-focus-motion-probe` READMEs under `test/simulator/probes/`):
 - `focusIndex` moves at the key, so the next key navigates from the target. The `itemFocused` *field*
   keeps the old value until the settle.
-- Each row is a 200 ms `easeOutCubic` of the unwrapped `motionPos`, which snaps within 0.01.
-  `currFocusRow` is `motionPos` modulo the item count. `focusPercent` is `1 − fraction` on the item being
-  left and `fraction` on the next one. `itemHasFocus` is false on every item while moving.
-- A press mid-row queues one more row (one at most; further presses are consumed). A held key repeats
-  linearly after 400 ms, and the settle waits for the release. `animateToItem` eases `rows × 200 ms`;
-  `jumpToItem` and `skipFocusAnimations` are instant.
-- Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows and places the indicator at
-  `focusSlot`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
+- The motion is two-axis. `motionPos` is the unwrapped row and `motionCol` the column, each with its own
+  segment (`FocusMotion.row`/`.col`). Each step is an `easeOutCubic` taking `motionStepMs(axis)`: lists
+  200 ms; grids 330 ms (315 ms per row when the rows wrap).
+- A step lands when its time is up. Don't snap early: the device lands at u = 1, ~215 ms on a list.
+  `currFocusRow` is `motionPos` modulo the row count, and `currFocusColumn` is `motionCol`.
+- `focusPercent` is the product of the row and column weights (`1 − fraction` on the cell being left,
+  `fraction` on the next). It reads 0 below 0.05 and is rounded to 3 decimals. `itemHasFocus` is false on
+  every item while moving.
+- Directions: `vertFocusDirection` for rows and `horizFocusDirection` (an undocumented grid field) for
+  columns. Each opens when its axis starts moving. An axis that lands first resets its own; the last
+  one resets after the settle.
+- A press mid-step queues one more step (one at most; further presses are consumed).
+- A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
+  later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
+  out from rest. On release the step in flight eases out; the settle waits for the release.
+- `animateToItem` eases each axis over `cells × step`; `jumpToItem` and `skipFocusAnimations` are instant.
+- Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows (the target window's top is
+  `targetRow − currRow`, which also covers MarkupGrid's `updateCurrRow` scrolling), and places the
+  indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
+  `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
+  reported extent from the settled window's rows only.
+- **Indicator layering while moving is per node type** (screenshots in
+  `test/simulator/probes/grid-focus-layer-probe`):
+  - grids (MarkupGrid, PosterGrid) draw the moving indicator **over every cell**, whatever
+    `drawFocusFeedbackOnTop` says;
+  - lists (LabelList, MarkupList) draw it **under** their items unless `drawFocusFeedbackOnTop` is set.
+
+  Don't unify them. Drawing a grid's indicator before its cells (or between them) hides the ring behind
+  the opaque posters it crosses. Regression: the draw-order tests in `GridFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
   (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
 - **Cached focus style must match the field.** The `ArrayGrid` constructor caches
   `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, *before* a subclass registers
