@@ -25,6 +25,7 @@ import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
 import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
+import type { UITransition } from "./SGTransition";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -51,6 +52,8 @@ export class SGRoot {
     private _walkingTimers: boolean = false;
     private _clockMinute: number = Math.floor(sgClock.now() / 60000);
     private readonly _animations: AnimationBase[];
+    private readonly _transitions: Set<UITransition> = new Set();
+    private _uiTransitionsEnabled: boolean = true;
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
@@ -202,6 +205,24 @@ export class SGRoot {
         return this._animations;
     }
 
+    /**
+     * Whether nodes play their intrinsic UI motion (PanelSet slides, list/grid focus scrolling).
+     * When false every such motion settles synchronously, exactly as if it had zero duration.
+     * Off through `DeviceInfo.uiTransitions = false` or the `BRS_UI_TRANSITIONS=0` environment variable.
+     */
+    get uiTransitionsEnabled(): boolean {
+        return this._uiTransitionsEnabled;
+    }
+
+    set uiTransitionsEnabled(value: boolean) {
+        this._uiTransitionsEnabled = value;
+    }
+
+    /** Applies the app's DeviceInfo setting at startup; the environment opt-out always wins. */
+    configureUiTransitions(deviceSetting: boolean) {
+        this._uiTransitionsEnabled = deviceSetting && !this.transitionsEnvDisabled;
+    }
+
     get audio(): Audio | undefined {
         return this._audio;
     }
@@ -279,6 +300,8 @@ export class SGRoot {
 
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
+    /** `BRS_UI_TRANSITIONS=0`: intrinsic UI transitions start disabled and DeviceInfo cannot enable them. */
+    private transitionsEnvDisabled: boolean = false;
 
     /**
      * True while `Group.renderNode` has dropped the draw target of a fully transparent subtree, so its
@@ -322,7 +345,9 @@ export class SGRoot {
         // loads in Web Workers, where `process` does not exist.
         if (typeof process !== "undefined" && process.env) {
             this.pruneDisabled = process.env.BRS_PRUNE_DISABLE === "1";
+            this.transitionsEnvDisabled = process.env.BRS_UI_TRANSITIONS === "0";
         }
+        this._uiTransitionsEnabled = !this.transitionsEnvDisabled;
     }
 
     /**
@@ -749,6 +774,34 @@ export class SGRoot {
             }
         }
         return updated;
+    }
+
+    /** Registers an active intrinsic UI transition so the render loop ticks it every pass. */
+    addTransition(transition: UITransition) {
+        this._transitions.add(transition);
+    }
+
+    /** Drops a transition that settled or was cancelled by its owner. */
+    removeTransition(transition: UITransition) {
+        this._transitions.delete(transition);
+    }
+
+    /**
+     * Advances every active intrinsic UI transition to the current clock.
+     * @returns True while any transition is still moving (the frame must be redrawn)
+     */
+    processTransitions(): boolean {
+        if (this._transitions.size === 0) {
+            return false;
+        }
+        const now = sgClock.perfNow();
+        for (const transition of this._transitions) {
+            if (!transition.tickTransition(now)) {
+                this._transitions.delete(transition);
+            }
+        }
+        // A transition that settled this pass still moved its last step, so this frame is dirty.
+        return true;
     }
 
     /**

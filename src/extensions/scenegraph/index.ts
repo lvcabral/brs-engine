@@ -62,6 +62,7 @@ export class BrightScriptExtension implements BrsExtension {
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;
+        sgRoot.configureUiTransitions(BrsDevice.deviceInfo.uiTransitions !== false);
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(

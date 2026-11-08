@@ -405,3 +405,53 @@ export function resolveRowItemSubpart<T>(
     }
     return rowItemComps[row]?.[col];
 }
+
+/**
+ * Maps a normalized fraction (clamped to 0..1) through a Roku Animation `easeFunction` curve. Unknown
+ * names are linear. `piecewise` depends on per-node percentages, so `Animation` handles it itself.
+ */
+export function applyEase(t: number, ease: string): number {
+    const clamped = Math.min(Math.max(t, 0), 1);
+    switch (ease.toLowerCase()) {
+        case "linear":
+            return clamped;
+        case "inquad":
+            return clamped * clamped;
+        case "outquad":
+            return clamped * (2 - clamped);
+        case "inoutquad":
+            return clamped < 0.5 ? 2 * clamped * clamped : -1 + (4 - 2 * clamped) * clamped;
+        case "incubic":
+            return Math.pow(clamped, 3);
+        case "outcubic":
+            return Math.pow(clamped - 1, 3) + 1;
+        case "inoutcubic":
+            return clamped < 0.5 ? 4 * Math.pow(clamped, 3) : Math.pow(clamped - 1, 3) * 4 + 1;
+        case "inquartic":
+            return Math.pow(clamped, 4);
+        case "outquartic":
+            return 1 - Math.pow(clamped - 1, 4);
+        case "inoutquartic":
+            return clamped < 0.5 ? 8 * Math.pow(clamped, 4) : 1 - 8 * Math.pow(clamped - 1, 4);
+        case "inquintic":
+            return Math.pow(clamped, 5);
+        case "outquintic":
+            return 1 + Math.pow(clamped - 1, 5);
+        case "inoutquintic":
+            return clamped < 0.5 ? 16 * Math.pow(clamped, 5) : 1 + 16 * Math.pow(clamped - 1, 5);
+        case "inexpo":
+            return clamped === 0 ? 0 : Math.pow(2, 10 * (clamped - 1));
+        case "outexpo":
+            return clamped === 1 ? 1 : 1 - Math.pow(2, -10 * clamped);
+        case "inoutexpo":
+            if (clamped === 0 || clamped === 1) {
+                return clamped;
+            }
+            if (clamped < 0.5) {
+                return 0.5 * Math.pow(2, 20 * clamped - 10);
+            }
+            return 1 - 0.5 * Math.pow(2, -20 * clamped + 10);
+        default:
+            return clamped;
+    }
+}

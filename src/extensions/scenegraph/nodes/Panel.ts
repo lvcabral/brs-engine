@@ -8,8 +8,10 @@ export type PanelSizeValue = {
     width: number;
     leftPos: number;
 };
+// DEVICE-MEASURED (Roku OS 16.0, panelset-slide-probe): a narrow panel's leftPosition is 104, not
+// the reference's 105. The other sizes match the reference (medium is not yet measured).
 export const PanelSizeValues: Map<string, PanelSizeValue> = new Map([
-    ["narrow", { width: 388, leftPos: 105 }],
+    ["narrow", { width: 388, leftPos: 104 }],
     ["medium", { width: 520, leftPos: 105 }],
     ["wide", { width: 645, leftPos: 112 }],
     ["full", { width: 940, leftPos: 170 }],

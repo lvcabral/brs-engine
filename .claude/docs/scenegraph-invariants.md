@@ -872,6 +872,52 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    "simplify" to whole-pass tracking like nodes — that drops diamond-shaped shared data. Regression:
    "circular container references" in `test/extensions/scenegraph/NodeSerialization.test.js`.
 
+## Intrinsic UI transitions (`SGTransition.ts`) — logical state is instant, only presentation is timed
+
+Nodes with built-in motion (today: `PanelSet` slides; lists and grids later) implement `UITransition`
+and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
+`sgRoot.processTransitions()` next to `processAnimations()`, before painting, and the frame stays dirty
+only while one is active, so an idle scene costs nothing. The rules:
+
+1. **Navigation state changes synchronously.** The focus index, the panel list, focus moves and every
+   field a device emits at key time (`isGoingBack`, `numPanels`, `leftPanelIndex`) are still set inside the
+   key handler. A transition only moves the presentation toward that state and emits the in-transit fields
+   (per-frame `translation`, `slidingStatus`, `isOffscreenLeft`). Don't defer a logical change "until the
+   slide ends". The one exception is device-measured: a panel sliding off the right stays a child until
+   `slidingStatus` falls, even though it has already left `panels`/`numPanels` (`PanelSet.exiting`).
+2. **Off means identical to before.** `sgRoot.uiTransitionsEnabled === false` (`DeviceInfo.uiTransitions`,
+   CLI `--no-transitions`, env `BRS_UI_TRANSITIONS=0`), or a non-positive duration, settles synchronously
+   on the same code path. vitest sets `BRS_UI_TRANSITIONS=0` (inherited by the spawned CLI suites), so
+   every existing test runs settled. Transition tests opt in with `sgRoot.uiTransitionsEnabled = true` and a
+   fake `sgClock` source, stepping `sgRoot.processTransitions()` themselves.
+3. **Motion advances in the tick, never in render.** `tickTransition` writes positions; `renderNode` only
+   reads them, so layout passes stay pure and bounding rects report the in-transit geometry, as a device
+   does. `PanelSet.renderChildNodes` does call `reconcileLayout`, which detects target changes. That call
+   snaps a non-navigation change (an app resizing a panel) and starts a navigation slide. It doesn't move
+   anything by elapsed time.
+4. **Only a navigation slides.** `requestSlide()` (append/back/forward/replace) arms the next reconcile to
+   animate. Any other layout change snaps. Don't make reconcile animate unconditionally: apps that size
+   panels after attaching them would slide on startup.
+
+PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-slide-probe/README.md`):
+- a per-panel `easeOutQuint` lasting `slideDuration`, which is in **seconds**;
+- fixed role offsets (+5 / +80 / +115 ms) that don't scale with the duration;
+- the slide settles at 0.1 px;
+- a 40 px HD gap;
+- `isGoingBack` is a pulse;
+- a full-screen panel counts twice in `numPanels`;
+- `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
+
+`PanelSet.focusIndex` must follow **where focus actually lands**, not where the PanelSet sent it.
+Going back from a full-screen panel focuses the panel before it, and apps commonly redirect from that
+panel's `focusedChild` observer (SceneGraphTutorial: `if isGoingBack then menuPanel.setFocus(true)`).
+`syncFocusToActual()` runs after every focus move and at the start of each key press. Without it, the
+Overhang title stays on the wrong panel and Right bumps. Regression: "navigation follows focus that an
+app redirects while going back" in `PanelSetFullScreen.test.js`.
+
+Regression: `test/extensions/scenegraph/PanelSetSlide.test.js` (fake clock, notification log, checkpoint
+positions read off the device trace).
+
 ## Animation `control` — containers relay everything, `none` is inert, a pending `delay` reads "stopped"
 
 **Device-measured** (probe channel: `test/simulator/probes/animation-control-probe`, Streaming Stick / Roku OS 15.2; the

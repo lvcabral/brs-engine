@@ -200,6 +200,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                 const timersFired = sgRoot.processTimers();
                 const clockUpdated = sgRoot.processClock();
                 const animUpdated = sgRoot.processAnimations();
+                const transitionsMoved = sgRoot.processTransitions();
                 const tasksUpdated = sgRoot.processTasks();
                 const queuesDrained = sgRoot.processRenderQueues();
                 const audioUpdated = sgRoot.processAudio();
@@ -210,6 +211,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
                     timersFired ||
                     clockUpdated ||
                     animUpdated ||
+                    transitionsMoved ||
                     tasksUpdated ||
                     queuesDrained ||
                     audioUpdated ||

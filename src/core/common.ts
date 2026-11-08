@@ -62,6 +62,8 @@ export interface DeviceInfo {
     entryPoint?: boolean;
     debugOnCrash?: boolean;
     logRendezvous?: boolean;
+    /** Plays SceneGraph nodes' intrinsic UI motion (PanelSet slides, list/grid focus scrolling). Default true. */
+    uiTransitions?: boolean;
     corsProxy?: string;
     extensions?: Map<SupportedExtension, string>;
 }

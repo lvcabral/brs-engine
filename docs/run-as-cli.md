@@ -53,6 +53,7 @@ Options:
   -z, --log-rendezvous      Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).
   -e, --ecp                 Enable the ECP server for control simulation.
   -n, --no-sg               Disable the SceneGraph extension.
+  --no-transitions          Disable SceneGraph intrinsic UI transitions (panel slides, focus scrolling).
   -p, --pack <password>     The password to generate the encrypted package. (default: "")
   -o, --out <directory>     The directory to save the encrypted package file. (default: "./")
   -r, --root <directory>    The root directory from which `pkg:` paths will be resolved.
