@@ -199,9 +199,9 @@ export class ZoomRowList extends ArrayGrid {
         } else {
             colIndex = 0;
         }
-        // Emit the scroll pulse BEFORE the settled focus fields go out — the falling edge precedes
-        // the settle on a device, and apps rely on that order (see ArrayGrid.armScrollPulse).
-        this.emitScrollPulse();
+        // Scroll pulse around the settle, as on RowList (see ArrayGrid.closeScrollPulse): the rising
+        // edge ahead of rowUnfocused, the falling edge after rowFocused and before rowItemFocused.
+        this.openScrollPulse();
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
             super.setValue("rowUnfocused", new Int32(previousRow));
@@ -210,6 +210,7 @@ export class ZoomRowList extends ArrayGrid {
         this.rowFocus[rowIndex] = colIndex;
         this.currRow = rowIndex;
         super.setValue("rowFocused", new Int32(rowIndex));
+        this.closeScrollPulse();
         super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
         super.setValue("currFocusRow", new Float(rowIndex));
     }

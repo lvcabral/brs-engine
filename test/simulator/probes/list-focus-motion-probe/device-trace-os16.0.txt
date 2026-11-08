@@ -1,0 +1,2726 @@
+PROBE|000|0|boot|start
+PROBE|000|0|boot|device model=Roku Express 4K+ os=16.0
+PROBE|0001|4|info|fields LF skipFocusAnimations=false vertFocusAnimationStyle=floatingfocus numRows=4 focusRow=[0,] itemSize=[400,48,] 
+PROBE|0002|5|info|fields MW skipFocusAnimations=false vertFocusAnimationStyle=fixedfocuswrap numRows=4 focusRow=[0,] itemSpacing=[0,4,] 
+PROBE|0003|6|lf|LF.currFocusRow=0
+PROBE|0004|6|lf|LW.currFocusRow=0
+PROBE|0005|7|lf|MF.currFocusRow=0
+PROBE|0006|7|lf|MW.currFocusRow=0
+PROBE|0007|2005|step|0 list:LF
+PROBE|0008|2006|lf|LF.itemFocused=0
+PROBE|0009|2007|act|focus LF itemFocused=0 currFocusRow=0 
+PROBE|0010|2042|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0011|4008|step|1 key:Down
+PROBE|await|Down
+PROBE|0012|4047|lf|LF.scrollingStatus=true
+PROBE|0013|4047|lf|LF.itemUnfocused=0
+PROBE|0014|4048|lf|LF.vertFocusDirection=down
+PROBE|0015|4053|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0016|4055|lf|LF.currFocusRow=0.08
+PROBE|0017|4058|frame|fr=0.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0018|4059|lf|LF.currFocusRow=0.13
+PROBE|0019|4063|frame|fr=0.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0020|4063|lf|LF.currFocusRow=0.21
+PROBE|0021|4078|frame|fr=0.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0022|4080|lf|LF.currFocusRow=0.38
+PROBE|0023|4094|frame|fr=0.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0024|4095|lf|LF.currFocusRow=0.54
+PROBE|0025|4111|frame|fr=0.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0026|4112|lf|LF.currFocusRow=0.67
+PROBE|0027|4160|frame|fr=0.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0028|4161|lf|LF.currFocusRow=0.92
+PROBE|0029|4163|frame|fr=0.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0030|4177|lf|LF.currFocusRow=0.94
+PROBE|0031|4193|frame|fr=0.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0032|4194|lf|LF.currFocusRow=0.98
+PROBE|0033|4210|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0034|4262|lf|LF.currFocusRow=1
+PROBE|0035|4279|lf|LF.itemFocused=1
+PROBE|0036|4279|lf|LF.scrollingStatus=false
+PROBE|0037|4279|lf|LF.vertFocusDirection=none
+PROBE|0038|4281|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0039|6009|step|2 key:Down
+PROBE|await|Down
+PROBE|0040|6043|lf|LF.scrollingStatus=true
+PROBE|0041|6043|lf|LF.itemUnfocused=1
+PROBE|0042|6044|lf|LF.vertFocusDirection=down
+PROBE|0043|6051|frame|fr=1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0044|6052|lf|LF.currFocusRow=1.06
+PROBE|0045|6056|frame|fr=1.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0046|6057|lf|LF.currFocusRow=1.17
+PROBE|0047|6061|frame|fr=1.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0048|6062|lf|LF.currFocusRow=1.23
+PROBE|0049|6066|frame|fr=1.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0050|6066|lf|LF.currFocusRow=1.29
+PROBE|0051|6080|frame|fr=1.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0052|6083|lf|LF.currFocusRow=1.44
+PROBE|0053|6097|frame|fr=1.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0054|6098|lf|LF.currFocusRow=1.58
+PROBE|0055|6114|frame|fr=1.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0056|6114|lf|LF.currFocusRow=1.71
+PROBE|0057|6157|frame|fr=1.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0058|6158|lf|LF.currFocusRow=1.92
+PROBE|0059|6163|frame|fr=1.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0060|6181|lf|LF.currFocusRow=1.96
+PROBE|0061|6197|frame|fr=1.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0062|6197|lf|LF.currFocusRow=1.98
+PROBE|0063|6213|frame|fr=1.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0064|6247|lf|LF.currFocusRow=2
+PROBE|0065|6264|lf|LF.itemFocused=2
+PROBE|0066|6265|lf|LF.scrollingStatus=false
+PROBE|0067|6265|lf|LF.vertFocusDirection=none
+PROBE|0068|6267|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0069|8010|step|3 key:Down
+PROBE|await|Down
+PROBE|0070|8045|lf|LF.scrollingStatus=true
+PROBE|0071|8045|lf|LF.itemUnfocused=2
+PROBE|0072|8045|lf|LF.vertFocusDirection=down
+PROBE|0073|8053|frame|fr=2 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0074|8054|lf|LF.currFocusRow=2.08
+PROBE|0075|8058|frame|fr=2.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0076|8058|lf|LF.currFocusRow=2.17
+PROBE|0077|8062|frame|fr=2.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0078|8063|lf|LF.currFocusRow=2.21
+PROBE|0079|8067|frame|fr=2.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0080|8084|lf|LF.currFocusRow=2.44
+PROBE|0081|8099|frame|fr=2.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0082|8100|lf|LF.currFocusRow=2.58
+PROBE|0083|8116|frame|fr=2.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0084|8116|lf|LF.currFocusRow=2.71
+PROBE|0085|8163|frame|fr=2.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0086|8164|lf|LF.currFocusRow=2.92
+PROBE|0087|8166|frame|fr=2.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0088|8167|lf|LF.currFocusRow=2.94
+PROBE|0089|8181|frame|fr=2.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0090|8181|lf|LF.currFocusRow=2.96
+PROBE|0091|8197|frame|fr=2.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0092|8198|lf|LF.currFocusRow=2.98
+PROBE|0093|8214|frame|fr=2.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0094|8249|lf|LF.currFocusRow=3
+PROBE|0095|8266|lf|LF.itemFocused=3
+PROBE|0096|8266|lf|LF.scrollingStatus=false
+PROBE|0097|8267|lf|LF.vertFocusDirection=none
+PROBE|0098|8268|frame|fr=3 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0099|10012|step|4 key:Down
+PROBE|await|Down
+PROBE|0100|10042|lf|LF.scrollingStatus=true
+PROBE|0101|10042|lf|LF.itemUnfocused=3
+PROBE|0102|10043|lf|LF.vertFocusDirection=down
+PROBE|0103|10047|frame|fr=3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0104|10048|lf|LF.currFocusRow=3.04
+PROBE|0105|10052|frame|fr=3.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0106|10053|lf|LF.currFocusRow=3.13
+PROBE|0107|10068|frame|fr=3.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0108|10069|lf|LF.currFocusRow=3.31
+PROBE|0109|10071|frame|fr=3.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0110|10074|lf|LF.currFocusRow=3.35
+PROBE|0111|10076|frame|fr=3.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0112|10084|lf|LF.currFocusRow=3.48
+PROBE|0113|10101|frame|fr=3.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0114|10102|lf|LF.currFocusRow=3.63
+PROBE|0115|10117|frame|fr=3.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0116|10118|lf|LF.currFocusRow=3.73
+PROBE|0117|10151|frame|fr=3.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0118|10152|lf|LF.currFocusRow=3.9
+PROBE|0119|10154|frame|fr=3.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0120|10168|lf|LF.currFocusRow=3.94
+PROBE|0121|10184|frame|fr=3.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0122|10185|lf|LF.currFocusRow=3.96
+PROBE|0123|10201|frame|fr=3.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0124|10202|lf|LF.currFocusRow=3.98
+PROBE|0125|10217|frame|fr=3.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0126|10251|lf|LF.currFocusRow=4
+PROBE|0127|10268|lf|LF.itemFocused=4
+PROBE|0128|10268|lf|LF.scrollingStatus=false
+PROBE|0129|10269|lf|LF.vertFocusDirection=none
+PROBE|0130|10271|frame|fr=4 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0131|12013|step|5 key:Down_Down
+PROBE|await|Down_Down
+PROBE|0132|12044|lf|LF.scrollingStatus=true
+PROBE|0133|12045|lf|LF.itemUnfocused=4
+PROBE|0134|12045|lf|LF.vertFocusDirection=down
+PROBE|0135|12049|frame|fr=4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0136|12050|lf|LF.currFocusRow=4.04
+PROBE|0137|12054|frame|fr=4.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0138|12054|lf|LF.currFocusRow=4.13
+PROBE|0139|12082|frame|fr=4.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0140|12086|lf|LF.currFocusRow=4.46
+PROBE|0141|12088|frame|fr=4.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0142|12089|lf|LF.currFocusRow=4.5
+PROBE|0143|12103|frame|fr=4.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0144|12104|lf|LF.currFocusRow=4.63
+PROBE|0145|12144|frame|fr=4.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0146|12145|lf|LF.currFocusRow=4.85
+PROBE|0147|12148|frame|fr=4.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0148|12149|lf|LF.currFocusRow=4.88
+PROBE|0149|12170|frame|fr=4.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0150|12170|lf|LF.currFocusRow=4.94
+PROBE|0151|12186|frame|fr=4.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0152|12187|lf|LF.currFocusRow=4.96
+PROBE|0153|12203|frame|fr=4.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0154|12203|lf|LF.currFocusRow=4.98
+PROBE|0155|12219|frame|fr=4.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0156|12254|lf|LF.currFocusRow=5
+PROBE|0157|12270|lf|LF.itemFocused=5
+PROBE|0158|12271|lf|LF.scrollingStatus=false
+PROBE|0159|12271|lf|LF.vertFocusDirection=none
+PROBE|0160|12273|frame|fr=5 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0161|12273|lf|LF.scrollingStatus=true
+PROBE|0162|12274|lf|LF.itemUnfocused=5
+PROBE|0163|12274|lf|LF.vertFocusDirection=down
+PROBE|0164|12286|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0165|12289|lf|LF.currFocusRow=5.17
+PROBE|0166|12303|frame|fr=5.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0167|12304|lf|LF.currFocusRow=5.35
+PROBE|0168|12357|frame|fr=5.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0169|12358|lf|LF.currFocusRow=5.79
+PROBE|0170|12359|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0171|12360|lf|LF.currFocusRow=5.81
+PROBE|0172|12388|frame|fr=5.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0173|12388|lf|LF.currFocusRow=5.92
+PROBE|0174|12390|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0175|12402|lf|LF.currFocusRow=5.94
+PROBE|0176|12418|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0177|12419|lf|LF.currFocusRow=5.98
+PROBE|0178|12435|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0179|12487|lf|LF.currFocusRow=6
+PROBE|0180|12504|lf|LF.itemFocused=6
+PROBE|0181|12504|lf|LF.scrollingStatus=false
+PROBE|0182|12505|lf|LF.vertFocusDirection=none
+PROBE|0183|12506|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0184|14014|step|6 hold:Down
+PROBE|await|HoldDown
+PROBE|0185|14048|lf|LF.scrollingStatus=true
+PROBE|0186|14049|lf|LF.itemUnfocused=6
+PROBE|0187|14049|lf|LF.vertFocusDirection=down
+PROBE|0188|14054|frame|fr=6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0189|14056|lf|LF.currFocusRow=6.04
+PROBE|0190|14059|frame|fr=6.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0191|14059|lf|LF.currFocusRow=6.13
+PROBE|0192|14072|frame|fr=6.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0193|14073|lf|LF.currFocusRow=6.29
+PROBE|0194|14075|frame|fr=6.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0195|14076|lf|LF.currFocusRow=6.33
+PROBE|0196|14088|frame|fr=6.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0197|14089|lf|LF.currFocusRow=6.46
+PROBE|0198|14091|frame|fr=6.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0199|14105|lf|LF.currFocusRow=6.63
+PROBE|0200|14122|frame|fr=6.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0201|14123|lf|LF.currFocusRow=6.73
+PROBE|0202|14155|frame|fr=6.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0203|14155|lf|LF.currFocusRow=6.9
+PROBE|0204|14158|frame|fr=6.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0205|14172|lf|LF.currFocusRow=6.94
+PROBE|0206|14188|frame|fr=6.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0207|14189|lf|LF.currFocusRow=6.96
+PROBE|0208|14205|frame|fr=6.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0209|14205|lf|LF.currFocusRow=6.98
+PROBE|0210|14221|frame|fr=6.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0211|14255|lf|LF.currFocusRow=7
+PROBE|0212|14272|frame|fr=7 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0213|14455|lf|LF.currFocusRow=7.02
+PROBE|0214|14472|frame|fr=7.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0215|14472|lf|LF.currFocusRow=7.06
+PROBE|0216|14528|frame|fr=7.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0217|14528|lf|LF.currFocusRow=7.35
+PROBE|0218|14530|frame|fr=7.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0219|14537|lf|LF.currFocusRow=7.42
+PROBE|0220|14554|frame|fr=7.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0221|14554|lf|LF.currFocusRow=7.52
+PROBE|0222|14570|frame|fr=7.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0223|14571|lf|LF.currFocusRow=7.65
+PROBE|0224|14592|frame|fr=7.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0225|14614|lf|LF.currFocusRow=7.92
+PROBE|0226|14615|frame|fr=7.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0227|14616|lf|LF.currFocusRow=7.94
+PROBE|0228|14620|frame|fr=7.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0229|14621|lf|LF.currFocusRow=7.98
+PROBE|0230|14637|frame|fr=7.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0231|14638|lf|LF.currFocusRow=8.08
+PROBE|0232|14654|frame|fr=8.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0233|14654|lf|LF.currFocusRow=8.19
+PROBE|0234|14691|frame|fr=8.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0235|14691|lf|LF.currFocusRow=8.44
+PROBE|0236|14692|frame|fr=8.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0237|14693|lf|LF.currFocusRow=8.46
+PROBE|0238|14704|frame|fr=8.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0239|14704|lf|LF.currFocusRow=8.52
+PROBE|0240|14721|frame|fr=8.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0241|14721|lf|LF.currFocusRow=8.65
+PROBE|0242|14756|frame|fr=8.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0243|14757|lf|LF.currFocusRow=8.83
+PROBE|0244|14758|frame|fr=8.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0245|14759|lf|LF.currFocusRow=8.85
+PROBE|0246|14771|frame|fr=8.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0247|14771|lf|LF.currFocusRow=8.9
+PROBE|0248|14787|frame|fr=8.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0249|14788|lf|LF.currFocusRow=8.94
+PROBE|0250|14804|frame|fr=8.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0251|14804|lf|LF.currFocusRow=8.98
+PROBE|0252|14821|frame|fr=8.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0253|14838|lf|LF.currFocusRow=9
+PROBE|0254|14855|frame|fr=9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0255|15281|lf|LF.itemFocused=9
+PROBE|0256|15281|lf|LF.scrollingStatus=false
+PROBE|0257|15282|lf|LF.vertFocusDirection=none
+PROBE|0258|15286|frame|fr=9 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0259|17514|step|7 act:jump0
+PROBE|0260|17515|lf|LF.itemUnfocused=9
+PROBE|0261|17515|lf|LF.currFocusRow=0
+PROBE|0262|17518|lf|LF.itemFocused=0
+PROBE|0263|17518|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0264|17522|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0265|19518|step|8 key:Up
+PROBE|await|Up
+PROBE|0266|21519|step|9 act:animate6
+PROBE|0267|21520|lf|LF.scrollingStatus=true
+PROBE|0268|21520|lf|LF.itemUnfocused=0
+PROBE|0269|21520|lf|LF.vertFocusDirection=down
+PROBE|0270|21521|act|animate6 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0271|21524|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0272|21525|lf|LF.currFocusRow=0.02
+PROBE|0273|21531|frame|fr=0.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0274|21532|lf|LF.currFocusRow=0.1
+PROBE|0275|21536|frame|fr=0.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0276|21537|lf|LF.currFocusRow=0.19
+PROBE|0277|21545|frame|fr=0.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0278|21546|lf|LF.currFocusRow=0.33
+PROBE|0279|21562|frame|fr=0.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0280|21563|lf|LF.currFocusRow=0.56
+PROBE|0281|21579|frame|fr=0.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0282|21579|lf|LF.currFocusRow=0.81
+PROBE|0283|21595|frame|fr=0.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0284|21596|lf|LF.currFocusRow=1.02
+PROBE|0285|21612|frame|fr=1.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0286|21613|lf|LF.currFocusRow=1.25
+PROBE|0287|21616|frame|fr=1.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0288|21629|lf|LF.currFocusRow=1.46
+PROBE|0289|21645|frame|fr=1.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0290|21646|lf|LF.currFocusRow=1.67
+PROBE|0291|21662|frame|fr=1.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0292|21663|lf|LF.currFocusRow=1.85
+PROBE|0293|21679|frame|fr=1.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0294|21680|lf|LF.currFocusRow=2.04
+PROBE|0295|21696|frame|fr=2.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0296|21696|lf|LF.currFocusRow=2.23
+PROBE|0297|21712|frame|fr=2.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0298|21713|lf|LF.currFocusRow=2.42
+PROBE|0299|21729|frame|fr=2.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0300|21730|lf|LF.currFocusRow=2.58
+PROBE|0301|21746|frame|fr=2.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0302|21746|lf|LF.currFocusRow=2.77
+PROBE|0303|21762|frame|fr=2.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0304|21763|lf|LF.currFocusRow=2.92
+PROBE|0305|21779|frame|fr=2.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0306|21780|lf|LF.currFocusRow=3.08
+PROBE|0307|21795|frame|fr=3.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0308|21796|lf|LF.currFocusRow=3.23
+PROBE|0309|21812|frame|fr=3.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0310|21813|lf|LF.currFocusRow=3.38
+PROBE|0311|21829|frame|fr=3.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0312|21830|lf|LF.currFocusRow=3.52
+PROBE|0313|21846|frame|fr=3.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0314|21847|lf|LF.currFocusRow=3.65
+PROBE|0315|21862|frame|fr=3.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0316|21863|lf|LF.currFocusRow=3.77
+PROBE|0317|21879|frame|fr=3.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0318|21880|lf|LF.currFocusRow=3.92
+PROBE|0319|21896|frame|fr=3.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0320|21896|lf|LF.currFocusRow=4.04
+PROBE|0321|21912|frame|fr=4.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0322|21913|lf|LF.currFocusRow=4.15
+PROBE|0323|21929|frame|fr=4.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0324|21930|lf|LF.currFocusRow=4.25
+PROBE|0325|21946|frame|fr=4.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0326|21947|lf|LF.currFocusRow=4.38
+PROBE|0327|21962|frame|fr=4.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0328|21963|lf|LF.currFocusRow=4.48
+PROBE|0329|21979|frame|fr=4.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0330|21980|lf|LF.currFocusRow=4.56
+PROBE|0331|21996|frame|fr=4.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0332|21997|lf|LF.currFocusRow=4.67
+PROBE|0333|22012|frame|fr=4.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0334|22013|lf|LF.currFocusRow=4.75
+PROBE|0335|22029|frame|fr=4.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0336|22030|lf|LF.currFocusRow=4.83
+PROBE|0337|22046|frame|fr=4.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0338|22047|lf|LF.currFocusRow=4.92
+PROBE|0339|22063|frame|fr=4.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0340|22064|lf|LF.currFocusRow=5
+PROBE|0341|22079|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0342|22080|lf|LF.currFocusRow=5.06
+PROBE|0343|22096|frame|fr=5.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0344|22097|lf|LF.currFocusRow=5.15
+PROBE|0345|22113|frame|fr=5.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0346|22114|lf|LF.currFocusRow=5.21
+PROBE|0347|22118|frame|fr=5.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0348|22130|lf|LF.currFocusRow=5.27
+PROBE|0349|22146|frame|fr=5.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0350|22147|lf|LF.currFocusRow=5.33
+PROBE|0351|22163|frame|fr=5.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0352|22164|lf|LF.currFocusRow=5.38
+PROBE|0353|22179|frame|fr=5.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0354|22180|lf|LF.currFocusRow=5.44
+PROBE|0355|22196|frame|fr=5.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0356|22197|lf|LF.currFocusRow=5.48
+PROBE|0357|22213|frame|fr=5.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0358|22214|lf|LF.currFocusRow=5.54
+PROBE|0359|22230|frame|fr=5.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0360|22230|lf|LF.currFocusRow=5.58
+PROBE|0361|22246|frame|fr=5.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0362|22247|lf|LF.currFocusRow=5.63
+PROBE|0363|22263|frame|fr=5.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0364|22264|lf|LF.currFocusRow=5.65
+PROBE|0365|22280|frame|fr=5.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0366|22280|lf|LF.currFocusRow=5.69
+PROBE|0367|22296|frame|fr=5.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0368|22297|lf|LF.currFocusRow=5.73
+PROBE|0369|22313|frame|fr=5.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0370|22314|lf|LF.currFocusRow=5.75
+PROBE|0371|22330|frame|fr=5.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0372|22330|lf|LF.currFocusRow=5.77
+PROBE|0373|22347|frame|fr=5.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0374|22347|lf|LF.currFocusRow=5.81
+PROBE|0375|22363|frame|fr=5.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0376|22364|lf|LF.currFocusRow=5.83
+PROBE|0377|22380|frame|fr=5.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0378|22380|lf|LF.currFocusRow=5.85
+PROBE|0379|22396|frame|fr=5.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0380|22397|lf|LF.currFocusRow=5.88
+PROBE|0381|22413|frame|fr=5.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0382|22414|lf|LF.currFocusRow=5.9
+PROBE|0383|22430|frame|fr=5.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0384|22448|lf|LF.currFocusRow=5.92
+PROBE|0385|22463|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0386|22464|lf|LF.currFocusRow=5.94
+PROBE|0387|22480|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0388|22497|lf|LF.currFocusRow=5.96
+PROBE|0389|22513|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0390|22547|lf|LF.currFocusRow=5.98
+PROBE|0391|22563|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0392|22730|lf|LF.currFocusRow=6
+PROBE|0393|22747|lf|LF.itemFocused=6
+PROBE|0394|22748|lf|LF.scrollingStatus=false
+PROBE|0395|22748|lf|LF.vertFocusDirection=none
+PROBE|0396|22750|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0397|23521|step|10 act:jump1
+PROBE|0398|23522|lf|LF.itemUnfocused=6
+PROBE|0399|23522|lf|LF.currFocusRow=1
+PROBE|0400|23524|lf|LF.itemFocused=1
+PROBE|0401|23524|act|jump1 itemFocused=1 currFocusRow=1 skipFocusAnimations=false 
+PROBE|0402|23528|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0403|25524|step|11 act:skip
+PROBE|0404|25524|act|skip itemFocused=1 currFocusRow=1 skipFocusAnimations=true 
+PROBE|0405|27525|step|12 key:Down
+PROBE|await|Down
+PROBE|0406|27562|lf|LF.scrollingStatus=true
+PROBE|0407|27562|lf|LF.itemUnfocused=1
+PROBE|0408|27562|lf|LF.currFocusRow=2
+PROBE|0409|27565|lf|LF.itemFocused=2
+PROBE|0410|27565|lf|LF.scrollingStatus=false
+PROBE|0411|27565|lf|LF.vertFocusDirection=down
+PROBE|0412|27571|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0413|27586|lf|LF.vertFocusDirection=none
+PROBE|0414|29526|step|13 act:noskip
+PROBE|0415|29527|act|noskip itemFocused=2 currFocusRow=2 skipFocusAnimations=false 
+PROBE|0416|31528|step|14 list:LW
+PROBE|0417|31529|lf|LW.itemFocused=0
+PROBE|0418|31529|act|focus LW itemFocused=0 currFocusRow=0 
+PROBE|0419|31548|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0420|33530|step|15 key:Down
+PROBE|await|Down
+PROBE|0421|33565|lf|LW.scrollingStatus=true
+PROBE|0422|33565|lf|LW.itemUnfocused=0
+PROBE|0423|33566|lf|LW.vertFocusDirection=down
+PROBE|0424|33573|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0425|33574|lf|LW.currFocusRow=0.04
+PROBE|0426|33579|frame|fr=0.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0427|33580|lf|LW.currFocusRow=0.15
+PROBE|0428|33582|frame|fr=0.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0429|33583|lf|LW.currFocusRow=0.23
+PROBE|0430|33591|frame|fr=0.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0431|33594|lf|LW.currFocusRow=0.33
+PROBE|0432|33608|frame|fr=0.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0433|33609|lf|LW.currFocusRow=0.52
+PROBE|0434|33625|frame|fr=0.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0435|33625|lf|LW.currFocusRow=0.67
+PROBE|0436|33641|frame|fr=0.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0437|33642|lf|LW.currFocusRow=0.77
+PROBE|0438|33646|frame|fr=0.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0439|33658|lf|LW.currFocusRow=0.85
+PROBE|0440|33675|frame|fr=0.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0441|33676|lf|LW.currFocusRow=0.92
+PROBE|0442|33691|frame|fr=0.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0443|33692|lf|LW.currFocusRow=0.96
+PROBE|0444|33708|frame|fr=0.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0445|33709|lf|LW.currFocusRow=0.98
+PROBE|0446|33725|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0447|33758|lf|LW.currFocusRow=1
+PROBE|0448|33775|lf|LW.itemFocused=1
+PROBE|0449|33776|lf|LW.scrollingStatus=false
+PROBE|0450|33776|lf|LW.vertFocusDirection=none
+PROBE|0451|33778|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0452|35531|step|16 key:Down
+PROBE|await|Down
+PROBE|0453|35564|lf|LW.scrollingStatus=true
+PROBE|0454|35565|lf|LW.itemUnfocused=1
+PROBE|0455|35565|lf|LW.vertFocusDirection=down
+PROBE|0456|35569|frame|fr=1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0457|35570|lf|LW.currFocusRow=1.04
+PROBE|0458|35574|frame|fr=1.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0459|35576|lf|LW.currFocusRow=1.1
+PROBE|0460|35579|frame|fr=1.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0461|35580|lf|LW.currFocusRow=1.19
+PROBE|0462|35593|frame|fr=1.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0463|35596|lf|LW.currFocusRow=1.38
+PROBE|0464|35610|frame|fr=1.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0465|35610|lf|LW.currFocusRow=1.54
+PROBE|0466|35626|frame|fr=1.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0467|35627|lf|LW.currFocusRow=1.67
+PROBE|0468|35643|frame|fr=1.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0469|35644|lf|LW.currFocusRow=1.79
+PROBE|0470|35651|frame|fr=1.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0471|35660|lf|LW.currFocusRow=1.88
+PROBE|0472|35676|frame|fr=1.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0473|35677|lf|LW.currFocusRow=1.92
+PROBE|0474|35693|frame|fr=1.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0475|35694|lf|LW.currFocusRow=1.96
+PROBE|0476|35710|frame|fr=1.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0477|35711|lf|LW.currFocusRow=1.98
+PROBE|0478|35727|frame|fr=1.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0479|35760|lf|LW.currFocusRow=2
+PROBE|0480|35777|lf|LW.itemFocused=2
+PROBE|0481|35778|lf|LW.scrollingStatus=false
+PROBE|0482|35778|lf|LW.vertFocusDirection=none
+PROBE|0483|35779|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0484|37531|step|17 key:Down
+PROBE|await|Down
+PROBE|0485|37562|lf|LW.scrollingStatus=true
+PROBE|0486|37563|lf|LW.itemUnfocused=2
+PROBE|0487|37563|lf|LW.vertFocusDirection=down
+PROBE|0488|37568|frame|fr=2 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0489|37568|lf|LW.currFocusRow=2.06
+PROBE|0490|37572|frame|fr=2.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0491|37573|lf|LW.currFocusRow=2.13
+PROBE|0492|37577|frame|fr=2.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0493|37577|lf|LW.currFocusRow=2.19
+PROBE|0494|37595|frame|fr=2.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0495|37598|lf|LW.currFocusRow=2.42
+PROBE|0496|37612|frame|fr=2.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0497|37613|lf|LW.currFocusRow=2.58
+PROBE|0498|37628|frame|fr=2.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0499|37629|lf|LW.currFocusRow=2.71
+PROBE|0500|37645|frame|fr=2.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0501|37646|lf|LW.currFocusRow=2.81
+PROBE|0502|37656|frame|fr=2.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0503|37662|lf|LW.currFocusRow=2.88
+PROBE|0504|37678|frame|fr=2.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0505|37679|lf|LW.currFocusRow=2.94
+PROBE|0506|37695|frame|fr=2.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0507|37696|lf|LW.currFocusRow=2.96
+PROBE|0508|37712|frame|fr=2.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0509|37712|lf|LW.currFocusRow=2.98
+PROBE|0510|37729|frame|fr=2.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0511|37762|lf|LW.currFocusRow=3
+PROBE|0512|37779|lf|LW.itemFocused=3
+PROBE|0513|37779|lf|LW.scrollingStatus=false
+PROBE|0514|37780|lf|LW.vertFocusDirection=none
+PROBE|0515|37781|frame|fr=3 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0516|39532|step|18 key:Down
+PROBE|await|Down
+PROBE|0517|39565|lf|LW.scrollingStatus=true
+PROBE|0518|39565|lf|LW.itemUnfocused=3
+PROBE|0519|39566|lf|LW.vertFocusDirection=down
+PROBE|0520|39570|frame|fr=3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0521|39571|lf|LW.currFocusRow=3.04
+PROBE|0522|39574|frame|fr=3.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0523|39575|lf|LW.currFocusRow=3.1
+PROBE|0524|39579|frame|fr=3.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0525|39580|lf|LW.currFocusRow=3.17
+PROBE|0526|39597|frame|fr=3.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0527|39600|lf|LW.currFocusRow=3.4
+PROBE|0528|39613|frame|fr=3.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0529|39614|lf|LW.currFocusRow=3.56
+PROBE|0530|39630|frame|fr=3.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0531|39631|lf|LW.currFocusRow=3.71
+PROBE|0532|39647|frame|fr=3.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0533|39648|lf|LW.currFocusRow=3.79
+PROBE|0534|39660|frame|fr=3.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0535|39664|lf|LW.currFocusRow=3.88
+PROBE|0536|39680|frame|fr=3.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0537|39681|lf|LW.currFocusRow=3.92
+PROBE|0538|39697|frame|fr=3.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0539|39698|lf|LW.currFocusRow=3.96
+PROBE|0540|39714|frame|fr=3.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0541|39715|lf|LW.currFocusRow=3.98
+PROBE|0542|39730|frame|fr=3.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0543|39764|lf|LW.currFocusRow=4
+PROBE|0544|39781|lf|LW.itemFocused=4
+PROBE|0545|39782|lf|LW.scrollingStatus=false
+PROBE|0546|39782|lf|LW.vertFocusDirection=none
+PROBE|0547|39783|frame|fr=4 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0548|41533|step|19 key:Down_Down
+PROBE|await|Down_Down
+PROBE|0549|41567|lf|LW.scrollingStatus=true
+PROBE|0550|41567|lf|LW.itemUnfocused=4
+PROBE|0551|41568|lf|LW.vertFocusDirection=down
+PROBE|0552|41574|frame|fr=4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0553|41575|lf|LW.currFocusRow=4.04
+PROBE|0554|41580|frame|fr=4.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0555|41581|lf|LW.currFocusRow=4.15
+PROBE|0556|41583|frame|fr=4.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0557|41584|lf|LW.currFocusRow=4.21
+PROBE|0558|41599|frame|fr=4.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0559|41602|lf|LW.currFocusRow=4.4
+PROBE|0560|41615|frame|fr=4.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0561|41616|lf|LW.currFocusRow=4.56
+PROBE|0562|41632|frame|fr=4.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0563|41633|lf|LW.currFocusRow=4.71
+PROBE|0564|41649|frame|fr=4.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0565|41650|lf|LW.currFocusRow=4.79
+PROBE|0566|41665|frame|fr=4.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0567|41667|lf|LW.currFocusRow=4.88
+PROBE|0568|41683|frame|fr=4.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0569|41684|lf|LW.currFocusRow=4.94
+PROBE|0570|41699|frame|fr=4.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0571|41700|lf|LW.currFocusRow=4.96
+PROBE|0572|41716|frame|fr=4.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0573|41717|lf|LW.currFocusRow=4.98
+PROBE|0574|41733|frame|fr=4.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0575|41767|lf|LW.currFocusRow=5
+PROBE|0576|41783|lf|LW.itemFocused=5
+PROBE|0577|41784|lf|LW.scrollingStatus=false
+PROBE|0578|41784|lf|LW.vertFocusDirection=none
+PROBE|0579|41786|frame|fr=5 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0580|41786|lf|LW.scrollingStatus=true
+PROBE|0581|41787|lf|LW.itemUnfocused=5
+PROBE|0582|41787|lf|LW.vertFocusDirection=down
+PROBE|0583|41799|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0584|41800|lf|LW.currFocusRow=5.17
+PROBE|0585|41816|frame|fr=5.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0586|41819|lf|LW.currFocusRow=5.38
+PROBE|0587|41833|frame|fr=5.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0588|41833|lf|LW.currFocusRow=5.56
+PROBE|0589|41849|frame|fr=5.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0590|41850|lf|LW.currFocusRow=5.69
+PROBE|0591|41866|frame|fr=5.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0592|41867|lf|LW.currFocusRow=5.79
+PROBE|0593|41883|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0594|41883|lf|LW.currFocusRow=5.88
+PROBE|0595|41899|frame|fr=5.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0596|41900|lf|LW.currFocusRow=5.92
+PROBE|0597|41916|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0598|41917|lf|LW.currFocusRow=5.96
+PROBE|0599|41933|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0600|41933|lf|LW.currFocusRow=5.98
+PROBE|0601|41950|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0602|41983|lf|LW.currFocusRow=6
+PROBE|0603|42000|lf|LW.itemFocused=6
+PROBE|0604|42000|lf|LW.scrollingStatus=false
+PROBE|0605|42001|lf|LW.vertFocusDirection=none
+PROBE|0606|42002|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0607|43534|step|20 hold:Down
+PROBE|await|HoldDown
+PROBE|0608|43569|lf|LW.scrollingStatus=true
+PROBE|0609|43569|lf|LW.itemUnfocused=6
+PROBE|0610|43569|lf|LW.vertFocusDirection=down
+PROBE|0611|43576|frame|fr=6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0612|43577|lf|LW.currFocusRow=6.04
+PROBE|0613|43580|frame|fr=6.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0614|43581|lf|LW.currFocusRow=6.15
+PROBE|0615|43585|frame|fr=6.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0616|43586|lf|LW.currFocusRow=6.21
+PROBE|0617|43601|frame|fr=6.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0618|43602|lf|LW.currFocusRow=6.4
+PROBE|0619|43618|frame|fr=6.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0620|43619|lf|LW.currFocusRow=6.56
+PROBE|0621|43635|frame|fr=6.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0622|43635|lf|LW.currFocusRow=6.71
+PROBE|0623|43651|frame|fr=6.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0624|43652|lf|LW.currFocusRow=6.79
+PROBE|0625|43668|frame|fr=6.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0626|43669|lf|LW.currFocusRow=6.88
+PROBE|0627|43672|frame|fr=6.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0628|43685|lf|LW.currFocusRow=6.94
+PROBE|0629|43701|frame|fr=6.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0630|43702|lf|LW.currFocusRow=6.96
+PROBE|0631|43718|frame|fr=6.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0632|43719|lf|LW.currFocusRow=6.98
+PROBE|0633|43735|frame|fr=6.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0634|43768|lf|LW.currFocusRow=7
+PROBE|0635|43785|frame|fr=7 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0636|43968|lf|LW.currFocusRow=7.02
+PROBE|0637|43984|frame|fr=7.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0638|43985|lf|LW.currFocusRow=7.04
+PROBE|0639|44001|frame|fr=7.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0640|44002|lf|LW.currFocusRow=7.1
+PROBE|0641|44018|frame|fr=7.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0642|44019|lf|LW.currFocusRow=7.17
+PROBE|0643|44035|frame|fr=7.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0644|44036|lf|LW.currFocusRow=7.25
+PROBE|0645|44051|frame|fr=7.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0646|44052|lf|LW.currFocusRow=7.33
+PROBE|0647|44068|frame|fr=7.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0648|44069|lf|LW.currFocusRow=7.42
+PROBE|0649|44085|frame|fr=7.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0650|44086|lf|LW.currFocusRow=7.5
+PROBE|0651|44102|frame|fr=7.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0652|44102|lf|LW.currFocusRow=7.6
+PROBE|0653|44118|frame|fr=7.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0654|44119|lf|LW.currFocusRow=7.69
+PROBE|0655|44135|frame|fr=7.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0656|44137|lf|LW.currFocusRow=7.77
+PROBE|0657|44152|frame|fr=7.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0658|44152|lf|LW.currFocusRow=7.85
+PROBE|0659|44168|frame|fr=7.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0660|44169|lf|LW.currFocusRow=7.96
+PROBE|0661|44173|frame|fr=7.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0662|44186|lf|LW.currFocusRow=8.04
+PROBE|0663|44202|frame|fr=8.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0664|44202|lf|LW.currFocusRow=8.13
+PROBE|0665|44218|frame|fr=8.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0666|44219|lf|LW.currFocusRow=8.21
+PROBE|0667|44235|frame|fr=8.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0668|44236|lf|LW.currFocusRow=8.29
+PROBE|0669|44252|frame|fr=8.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0670|44252|lf|LW.currFocusRow=8.4
+PROBE|0671|44268|frame|fr=8.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0672|44269|lf|LW.currFocusRow=8.48
+PROBE|0673|44285|frame|fr=8.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0674|44286|lf|LW.currFocusRow=8.56
+PROBE|0675|44302|frame|fr=8.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0676|44303|lf|LW.currFocusRow=8.65
+PROBE|0677|44318|frame|fr=8.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0678|44319|lf|LW.currFocusRow=8.73
+PROBE|0679|44336|frame|fr=8.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0680|44336|lf|LW.currFocusRow=8.83
+PROBE|0681|44352|frame|fr=8.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0682|44353|lf|LW.currFocusRow=8.92
+PROBE|0683|44369|frame|fr=8.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0684|44370|lf|LW.currFocusRow=9
+PROBE|0685|44385|frame|fr=9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0686|44386|lf|LW.currFocusRow=9.06
+PROBE|0687|44402|frame|fr=9.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0688|44403|lf|LW.currFocusRow=9.11
+PROBE|0689|44419|frame|fr=9.11 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0690|44419|lf|LW.currFocusRow=9.18
+PROBE|0691|44435|frame|fr=9.18 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0692|44436|lf|LW.currFocusRow=9.24
+PROBE|0693|44452|frame|fr=9.24 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0694|44453|lf|LW.currFocusRow=9.29
+PROBE|0695|44469|frame|fr=9.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0696|44469|lf|LW.currFocusRow=9.35
+PROBE|0697|44485|frame|fr=9.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0698|44486|lf|LW.currFocusRow=9.4
+PROBE|0699|44502|frame|fr=9.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0700|44503|lf|LW.currFocusRow=9.47
+PROBE|0701|44519|frame|fr=9.47 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0702|44519|lf|LW.currFocusRow=9.53
+PROBE|0703|44535|frame|fr=9.53 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0704|44536|lf|LW.currFocusRow=9.58
+PROBE|0705|44552|frame|fr=9.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0706|44553|lf|LW.currFocusRow=9.64
+PROBE|0707|44569|frame|fr=9.64 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0708|44570|lf|LW.currFocusRow=9.69
+PROBE|0709|44585|frame|fr=9.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0710|44586|lf|LW.currFocusRow=9.76
+PROBE|0711|44602|frame|fr=9.76 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0712|44603|lf|LW.currFocusRow=9.82
+PROBE|0713|44619|frame|fr=9.82 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0714|44619|lf|LW.currFocusRow=9.88
+PROBE|0715|44636|frame|fr=9.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0716|44636|lf|LW.currFocusRow=9.93
+PROBE|0717|44652|frame|fr=9.93 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0718|44653|lf|LW.currFocusRow=9.99
+PROBE|0719|44669|frame|fr=9.99 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0720|44670|lf|LW.currFocusRow=0.08
+PROBE|0721|44675|frame|fr=0.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0722|44686|lf|LW.currFocusRow=0.17
+PROBE|0723|44702|frame|fr=0.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0724|44703|lf|LW.currFocusRow=0.25
+PROBE|0725|44719|frame|fr=0.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0726|44720|lf|LW.currFocusRow=0.33
+PROBE|0727|44736|frame|fr=0.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0728|44737|lf|LW.currFocusRow=0.44
+PROBE|0729|44752|frame|fr=0.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0730|44753|lf|LW.currFocusRow=0.52
+PROBE|0731|44769|frame|fr=0.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0732|44769|lf|LW.currFocusRow=0.6
+PROBE|0733|44786|frame|fr=0.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0734|44786|lf|LW.currFocusRow=0.69
+PROBE|0735|44803|frame|fr=0.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0736|44804|lf|LW.currFocusRow=0.77
+PROBE|0737|44819|frame|fr=0.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0738|44822|lf|LW.currFocusRow=0.85
+PROBE|0739|44836|frame|fr=0.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0740|44837|lf|LW.currFocusRow=0.98
+PROBE|0741|44852|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0742|44853|lf|LW.currFocusRow=1
+PROBE|0743|44870|lf|LW.itemFocused=1
+PROBE|0744|44870|lf|LW.scrollingStatus=false
+PROBE|0745|44870|lf|LW.vertFocusDirection=none
+PROBE|0746|44872|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0747|47035|step|21 act:jump0
+PROBE|0748|47035|lf|LW.itemUnfocused=1
+PROBE|0749|47036|lf|LW.currFocusRow=0
+PROBE|0750|47038|lf|LW.itemFocused=0
+PROBE|0751|47038|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|0752|47041|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0753|49040|step|22 key:Up
+PROBE|await|Up
+PROBE|0754|49067|lf|LW.scrollingStatus=true
+PROBE|0755|49067|lf|LW.itemUnfocused=0
+PROBE|0756|49067|lf|LW.vertFocusDirection=up
+PROBE|0757|49070|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0758|49071|lf|LW.currFocusRow=9.96
+PROBE|0759|49073|frame|fr=9.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0760|49074|lf|LW.currFocusRow=9.92
+PROBE|0761|49075|frame|fr=9.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0762|49076|lf|LW.currFocusRow=9.89
+PROBE|0763|49090|frame|fr=9.89 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0764|49090|lf|LW.currFocusRow=9.71
+PROBE|0765|49106|frame|fr=9.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0766|49109|lf|LW.currFocusRow=9.54
+PROBE|0767|49123|frame|fr=9.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0768|49124|lf|LW.currFocusRow=9.39
+PROBE|0769|49139|frame|fr=9.39 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0770|49140|lf|LW.currFocusRow=9.26
+PROBE|0771|49156|frame|fr=9.26 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0772|49157|lf|LW.currFocusRow=9.18
+PROBE|0773|49173|frame|fr=9.18 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0774|49174|lf|LW.currFocusRow=9.11
+PROBE|0775|49185|frame|fr=9.11 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0776|49191|lf|LW.currFocusRow=9.07
+PROBE|0777|49207|frame|fr=9.07 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0778|49207|lf|LW.currFocusRow=9.04
+PROBE|0779|49223|frame|fr=9.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0780|49224|lf|LW.currFocusRow=9.01
+PROBE|0781|49240|frame|fr=9.01 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0782|49274|lf|LW.currFocusRow=9
+PROBE|0783|49290|lf|LW.itemFocused=9
+PROBE|0784|49291|lf|LW.scrollingStatus=false
+PROBE|0785|49291|lf|LW.vertFocusDirection=none
+PROBE|0786|49293|frame|fr=9 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0787|51040|step|23 act:animate6
+PROBE|0788|51041|lf|LW.scrollingStatus=true
+PROBE|0789|51041|lf|LW.itemUnfocused=9
+PROBE|0790|51041|lf|LW.vertFocusDirection=down
+PROBE|0791|51042|act|animate6 itemFocused=9 currFocusRow=9 skipFocusAnimations=false 
+PROBE|0792|51047|frame|fr=9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0793|51048|lf|LW.currFocusRow=9.03
+PROBE|0794|51053|frame|fr=9.03 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0795|51054|lf|LW.currFocusRow=9.1
+PROBE|0796|51056|frame|fr=9.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0797|51057|lf|LW.currFocusRow=9.14
+PROBE|0798|51060|frame|fr=9.14 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0799|51061|lf|LW.currFocusRow=9.18
+PROBE|0800|51075|frame|fr=9.18 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0801|51076|lf|LW.currFocusRow=9.33
+PROBE|0802|51092|frame|fr=9.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0803|51093|lf|LW.currFocusRow=9.5
+PROBE|0804|51108|frame|fr=9.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0805|51109|lf|LW.currFocusRow=9.65
+PROBE|0806|51125|frame|fr=9.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0807|51126|lf|LW.currFocusRow=9.82
+PROBE|0808|51142|frame|fr=9.82 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0809|51143|lf|LW.currFocusRow=9.97
+PROBE|0810|51159|frame|fr=9.97 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0811|51159|lf|LW.currFocusRow=0.17
+PROBE|0812|51175|frame|fr=0.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0813|51176|lf|LW.currFocusRow=0.4
+PROBE|0814|51192|frame|fr=0.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0815|51195|lf|LW.currFocusRow=0.63
+PROBE|0816|51209|frame|fr=0.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0817|51210|lf|LW.currFocusRow=0.81
+PROBE|0818|51226|frame|fr=0.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0819|51226|lf|LW.currFocusRow=1.02
+PROBE|0820|51242|frame|fr=1.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0821|51243|lf|LW.currFocusRow=1.21
+PROBE|0822|51259|frame|fr=1.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0823|51259|lf|LW.currFocusRow=1.4
+PROBE|0824|51275|frame|fr=1.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0825|51276|lf|LW.currFocusRow=1.58
+PROBE|0826|51292|frame|fr=1.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0827|51293|lf|LW.currFocusRow=1.77
+PROBE|0828|51309|frame|fr=1.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0829|51309|lf|LW.currFocusRow=1.96
+PROBE|0830|51325|frame|fr=1.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0831|51326|lf|LW.currFocusRow=2.1
+PROBE|0832|51342|frame|fr=2.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0833|51343|lf|LW.currFocusRow=2.29
+PROBE|0834|51359|frame|fr=2.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0835|51360|lf|LW.currFocusRow=2.46
+PROBE|0836|51375|frame|fr=2.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0837|51376|lf|LW.currFocusRow=2.6
+PROBE|0838|51392|frame|fr=2.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0839|51393|lf|LW.currFocusRow=2.75
+PROBE|0840|51409|frame|fr=2.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0841|51409|lf|LW.currFocusRow=2.9
+PROBE|0842|51426|frame|fr=2.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0843|51426|lf|LW.currFocusRow=3.04
+PROBE|0844|51442|frame|fr=3.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0845|51443|lf|LW.currFocusRow=3.19
+PROBE|0846|51459|frame|fr=3.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0847|51460|lf|LW.currFocusRow=3.31
+PROBE|0848|51475|frame|fr=3.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0849|51476|lf|LW.currFocusRow=3.44
+PROBE|0850|51492|frame|fr=3.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0851|51493|lf|LW.currFocusRow=3.56
+PROBE|0852|51509|frame|fr=3.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0853|51509|lf|LW.currFocusRow=3.69
+PROBE|0854|51526|frame|fr=3.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0855|51526|lf|LW.currFocusRow=3.81
+PROBE|0856|51542|frame|fr=3.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0857|51543|lf|LW.currFocusRow=3.92
+PROBE|0858|51559|frame|fr=3.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0859|51560|lf|LW.currFocusRow=4.04
+PROBE|0860|51576|frame|fr=4.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0861|51576|lf|LW.currFocusRow=4.15
+PROBE|0862|51592|frame|fr=4.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0863|51593|lf|LW.currFocusRow=4.25
+PROBE|0864|51609|frame|fr=4.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0865|51610|lf|LW.currFocusRow=4.33
+PROBE|0866|51625|frame|fr=4.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0867|51626|lf|LW.currFocusRow=4.44
+PROBE|0868|51642|frame|fr=4.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0869|51643|lf|LW.currFocusRow=4.52
+PROBE|0870|51659|frame|fr=4.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0871|51660|lf|LW.currFocusRow=4.6
+PROBE|0872|51676|frame|fr=4.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0873|51677|lf|LW.currFocusRow=4.69
+PROBE|0874|51692|frame|fr=4.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0875|51693|lf|LW.currFocusRow=4.77
+PROBE|0876|51696|frame|fr=4.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0877|51710|lf|LW.currFocusRow=4.85
+PROBE|0878|51726|frame|fr=4.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0879|51727|lf|LW.currFocusRow=4.92
+PROBE|0880|51743|frame|fr=4.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0881|51743|lf|LW.currFocusRow=5
+PROBE|0882|51759|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0883|51760|lf|LW.currFocusRow=5.06
+PROBE|0884|51776|frame|fr=5.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0885|51777|lf|LW.currFocusRow=5.13
+PROBE|0886|51792|frame|fr=5.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0887|51793|lf|LW.currFocusRow=5.19
+PROBE|0888|51809|frame|fr=5.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0889|51810|lf|LW.currFocusRow=5.25
+PROBE|0890|51826|frame|fr=5.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0891|51827|lf|LW.currFocusRow=5.29
+PROBE|0892|51842|frame|fr=5.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0893|51843|lf|LW.currFocusRow=5.35
+PROBE|0894|51859|frame|fr=5.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0895|51860|lf|LW.currFocusRow=5.4
+PROBE|0896|51876|frame|fr=5.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0897|51877|lf|LW.currFocusRow=5.44
+PROBE|0898|51893|frame|fr=5.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0899|51893|lf|LW.currFocusRow=5.5
+PROBE|0900|51909|frame|fr=5.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0901|51910|lf|LW.currFocusRow=5.54
+PROBE|0902|51926|frame|fr=5.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0903|51927|lf|LW.currFocusRow=5.56
+PROBE|0904|51943|frame|fr=5.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0905|51944|lf|LW.currFocusRow=5.6
+PROBE|0906|51960|frame|fr=5.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0907|51960|lf|LW.currFocusRow=5.65
+PROBE|0908|51976|frame|fr=5.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0909|51977|lf|LW.currFocusRow=5.69
+PROBE|0910|51993|frame|fr=5.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0911|51994|lf|LW.currFocusRow=5.71
+PROBE|0912|52010|frame|fr=5.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0913|52010|lf|LW.currFocusRow=5.73
+PROBE|0914|52026|frame|fr=5.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0915|52027|lf|LW.currFocusRow=5.77
+PROBE|0916|52043|frame|fr=5.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0917|52044|lf|LW.currFocusRow=5.79
+PROBE|0918|52060|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0919|52061|lf|LW.currFocusRow=5.81
+PROBE|0920|52076|frame|fr=5.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0921|52077|lf|LW.currFocusRow=5.83
+PROBE|0922|52093|frame|fr=5.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0923|52093|lf|LW.currFocusRow=5.85
+PROBE|0924|52109|frame|fr=5.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0925|52110|lf|LW.currFocusRow=5.88
+PROBE|0926|52126|frame|fr=5.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0927|52143|lf|LW.currFocusRow=5.9
+PROBE|0928|52160|frame|fr=5.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0929|52161|lf|LW.currFocusRow=5.92
+PROBE|0930|52176|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0931|52194|lf|LW.currFocusRow=5.94
+PROBE|0932|52197|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0933|52227|lf|LW.currFocusRow=5.96
+PROBE|0934|52243|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0935|52277|lf|LW.currFocusRow=5.98
+PROBE|0936|52293|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0937|52477|lf|LW.currFocusRow=6
+PROBE|0938|52494|lf|LW.itemFocused=6
+PROBE|0939|52495|lf|LW.scrollingStatus=false
+PROBE|0940|52495|lf|LW.vertFocusDirection=none
+PROBE|0941|52496|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0942|53042|step|24 act:jump1
+PROBE|0943|53043|lf|LW.itemUnfocused=6
+PROBE|0944|53043|lf|LW.currFocusRow=1
+PROBE|0945|53045|lf|LW.itemFocused=1
+PROBE|0946|53045|act|jump1 itemFocused=1 currFocusRow=1 skipFocusAnimations=false 
+PROBE|0947|53048|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0948|55047|step|25 act:skip
+PROBE|0949|55048|act|skip itemFocused=1 currFocusRow=1 skipFocusAnimations=true 
+PROBE|0950|57048|step|26 key:Down
+PROBE|await|Down
+PROBE|0951|57079|lf|LW.scrollingStatus=true
+PROBE|0952|57080|lf|LW.itemUnfocused=1
+PROBE|0953|57080|lf|LW.currFocusRow=2
+PROBE|0954|57082|lf|LW.itemFocused=2
+PROBE|0955|57082|lf|LW.scrollingStatus=false
+PROBE|0956|57083|lf|LW.vertFocusDirection=down
+PROBE|0957|57087|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0
+PROBE|0958|57103|lf|LW.vertFocusDirection=none
+PROBE|0959|59050|step|27 act:noskip
+PROBE|0960|59050|act|noskip itemFocused=2 currFocusRow=2 skipFocusAnimations=false 
+PROBE|0961|61052|step|28 list:MF
+PROBE|0962|61053|lf|MF.itemFocused=0
+PROBE|0963|61053|act|focus MF itemFocused=0 currFocusRow=0 
+PROBE|0964|61055|item|?.itemHasFocus=true
+PROBE|0965|61059|item|I0.focusPercent=1
+PROBE|0966|61076|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0
+PROBE|0967|61080|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0
+PROBE|0968|61085|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0
+PROBE|0969|61102|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0
+PROBE|0970|61119|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0
+PROBE|0971|61136|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0972|63054|step|29 key:Down
+PROBE|await|Down
+PROBE|0973|63090|lf|MF.scrollingStatus=true
+PROBE|0974|63090|item|I0.itemHasFocus=false
+PROBE|0975|63091|lf|MF.itemUnfocused=0
+PROBE|0976|63091|lf|MF.vertFocusDirection=down
+PROBE|0977|63098|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0978|63099|lf|MF.currFocusRow=0.06
+PROBE|0979|63101|item|I0.focusPercent=0.942
+PROBE|0980|63107|frame|fr=0.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.94 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0981|63107|lf|MF.currFocusRow=0.17
+PROBE|0982|63110|item|I0.focusPercent=0.827
+PROBE|0983|63113|frame|fr=0.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.83 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0984|63113|lf|MF.currFocusRow=0.27
+PROBE|0985|63115|item|I0.focusPercent=0.731
+PROBE|0986|63116|item|I1.focusPercent=0.269
+PROBE|0987|63122|frame|fr=0.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.73 1:100@0.27 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0988|63125|lf|MF.currFocusRow=0.38
+PROBE|0989|63127|item|I0.focusPercent=0.615
+PROBE|0990|63127|item|I1.focusPercent=0.385
+PROBE|0991|63138|frame|fr=0.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.62 1:100@0.38 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0992|63139|lf|MF.currFocusRow=0.54
+PROBE|0993|63141|item|I0.focusPercent=0.462
+PROBE|0994|63142|item|I1.focusPercent=0.538
+PROBE|0995|63155|frame|fr=0.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.46 1:100@0.54 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|0996|63156|lf|MF.currFocusRow=0.67
+PROBE|0997|63158|item|I0.focusPercent=0.327
+PROBE|0998|63159|item|I1.focusPercent=0.673
+PROBE|0999|63171|frame|fr=0.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.33 1:100@0.67 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1000|63172|lf|MF.currFocusRow=0.77
+PROBE|1001|63174|item|I0.focusPercent=0.231
+PROBE|1002|63175|item|I1.focusPercent=0.769
+PROBE|1003|63188|frame|fr=0.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.23 1:100@0.77 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1004|63189|lf|MF.currFocusRow=0.85
+PROBE|1005|63191|item|I0.focusPercent=0.154
+PROBE|1006|63192|item|I1.focusPercent=0.846
+PROBE|1007|63205|frame|fr=0.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.15 1:100@0.85 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1008|63206|lf|MF.currFocusRow=0.9
+PROBE|1009|63208|item|I0.focusPercent=0.096
+PROBE|1010|63209|item|I1.focusPercent=0.904
+PROBE|1011|63221|frame|fr=0.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.1 1:100@0.9 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1012|63222|lf|MF.currFocusRow=0.94
+PROBE|1013|63224|item|I0.focusPercent=0.058
+PROBE|1014|63225|item|I1.focusPercent=0.942
+PROBE|1015|63227|frame|fr=0.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.06 1:100@0.94 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1016|63239|lf|MF.currFocusRow=0.96
+PROBE|1017|63241|item|I0.focusPercent=0.038
+PROBE|1018|63241|item|I1.focusPercent=0.962
+PROBE|1019|63255|frame|fr=0.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.04 1:100@0.96 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1020|63255|lf|MF.currFocusRow=0.98
+PROBE|1021|63257|item|I0.focusPercent=0.019
+PROBE|1022|63258|item|I1.focusPercent=0.981
+PROBE|1023|63272|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.02 1:100@0.98 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1024|63305|lf|MF.currFocusRow=1
+PROBE|1025|63308|item|I0.focusPercent=0
+PROBE|1026|63309|item|I1.focusPercent=1
+PROBE|1027|63321|item|I1.itemHasFocus=true
+PROBE|1028|63322|lf|MF.itemFocused=1
+PROBE|1029|63322|lf|MF.scrollingStatus=false
+PROBE|1030|63322|lf|MF.vertFocusDirection=none
+PROBE|1031|63325|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1032|65055|step|30 key:Down
+PROBE|await|Down
+PROBE|1033|65088|lf|MF.scrollingStatus=true
+PROBE|1034|65088|item|I1.itemHasFocus=false
+PROBE|1035|65089|lf|MF.itemUnfocused=1
+PROBE|1036|65089|lf|MF.vertFocusDirection=down
+PROBE|1037|65094|frame|fr=1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1038|65095|lf|MF.currFocusRow=1.06
+PROBE|1039|65097|item|I1.focusPercent=0.942
+PROBE|1040|65101|frame|fr=1.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.94 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1041|65102|lf|MF.currFocusRow=1.15
+PROBE|1042|65104|item|I1.focusPercent=0.846
+PROBE|1043|65107|frame|fr=1.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.85 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1044|65108|lf|MF.currFocusRow=1.23
+PROBE|1045|65110|item|I1.focusPercent=0.769
+PROBE|1046|65111|item|I2.focusPercent=0.231
+PROBE|1047|65123|frame|fr=1.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.77 2:100@0.23 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1048|65126|lf|MF.currFocusRow=1.4
+PROBE|1049|65127|item|I1.focusPercent=0.596
+PROBE|1050|65128|item|I2.focusPercent=0.404
+PROBE|1051|65140|frame|fr=1.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.6 2:100@0.4 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1052|65140|lf|MF.currFocusRow=1.58
+PROBE|1053|65142|item|I1.focusPercent=0.423
+PROBE|1054|65143|item|I2.focusPercent=0.577
+PROBE|1055|65156|frame|fr=1.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.42 2:100@0.58 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1056|65157|lf|MF.currFocusRow=1.69
+PROBE|1057|65159|item|I1.focusPercent=0.308
+PROBE|1058|65159|item|I2.focusPercent=0.692
+PROBE|1059|65173|frame|fr=1.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.31 2:100@0.69 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1060|65174|lf|MF.currFocusRow=1.79
+PROBE|1061|65176|item|I1.focusPercent=0.212
+PROBE|1062|65176|item|I2.focusPercent=0.788
+PROBE|1063|65190|frame|fr=1.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.21 2:100@0.79 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1064|65190|lf|MF.currFocusRow=1.87
+PROBE|1065|65193|item|I1.focusPercent=0.135
+PROBE|1066|65193|item|I2.focusPercent=0.865
+PROBE|1067|65207|frame|fr=1.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.87 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1068|65208|lf|MF.currFocusRow=1.92
+PROBE|1069|65210|item|I1.focusPercent=0.077
+PROBE|1070|65211|item|I2.focusPercent=0.923
+PROBE|1071|65224|frame|fr=1.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.08 2:100@0.92 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1072|65224|lf|MF.currFocusRow=1.96
+PROBE|1073|65227|item|I1.focusPercent=0.038
+PROBE|1074|65227|item|I2.focusPercent=0.962
+PROBE|1075|65239|frame|fr=1.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.04 2:100@0.96 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1076|65240|lf|MF.currFocusRow=1.98
+PROBE|1077|65242|item|I1.focusPercent=0.019
+PROBE|1078|65243|item|I2.focusPercent=0.981
+PROBE|1079|65257|frame|fr=1.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.02 2:100@0.98 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1080|65291|lf|MF.currFocusRow=2
+PROBE|1081|65293|item|I1.focusPercent=0
+PROBE|1082|65294|item|I2.focusPercent=1
+PROBE|1083|65306|item|I2.itemHasFocus=true
+PROBE|1084|65307|lf|MF.itemFocused=2
+PROBE|1085|65307|lf|MF.scrollingStatus=false
+PROBE|1086|65308|lf|MF.vertFocusDirection=none
+PROBE|1087|65311|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@1 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1088|67058|step|31 key:Down
+PROBE|await|Down
+PROBE|1089|67090|lf|MF.scrollingStatus=true
+PROBE|1090|67091|item|I2.itemHasFocus=false
+PROBE|1091|67091|lf|MF.itemUnfocused=2
+PROBE|1092|67091|lf|MF.vertFocusDirection=down
+PROBE|1093|67097|frame|fr=2 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@1 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1094|67098|lf|MF.currFocusRow=2.06
+PROBE|1095|67100|item|I2.focusPercent=0.942
+PROBE|1096|67103|frame|fr=2.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.94 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1097|67104|lf|MF.currFocusRow=2.15
+PROBE|1098|67107|item|I2.focusPercent=0.846
+PROBE|1099|67109|frame|fr=2.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.85 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1100|67110|lf|MF.currFocusRow=2.23
+PROBE|1101|67112|item|I2.focusPercent=0.769
+PROBE|1102|67113|item|I3.focusPercent=0.231
+PROBE|1103|67125|frame|fr=2.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.77 3:100@0.23 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1104|67128|lf|MF.currFocusRow=2.4
+PROBE|1105|67130|item|I2.focusPercent=0.596
+PROBE|1106|67131|item|I3.focusPercent=0.404
+PROBE|1107|67142|frame|fr=2.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.6 3:100@0.4 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1108|67143|lf|MF.currFocusRow=2.58
+PROBE|1109|67146|item|I2.focusPercent=0.423
+PROBE|1110|67146|item|I3.focusPercent=0.577
+PROBE|1111|67159|frame|fr=2.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.42 3:100@0.58 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1112|67160|lf|MF.currFocusRow=2.69
+PROBE|1113|67162|item|I2.focusPercent=0.308
+PROBE|1114|67163|item|I3.focusPercent=0.692
+PROBE|1115|67175|frame|fr=2.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.31 3:100@0.69 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1116|67176|lf|MF.currFocusRow=2.79
+PROBE|1117|67179|item|I2.focusPercent=0.212
+PROBE|1118|67180|item|I3.focusPercent=0.788
+PROBE|1119|67192|frame|fr=2.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.21 3:100@0.79 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1120|67193|lf|MF.currFocusRow=2.87
+PROBE|1121|67196|item|I2.focusPercent=0.135
+PROBE|1122|67196|item|I3.focusPercent=0.865
+PROBE|1123|67209|frame|fr=2.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.13 3:100@0.87 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1124|67210|lf|MF.currFocusRow=2.92
+PROBE|1125|67212|item|I2.focusPercent=0.077
+PROBE|1126|67213|item|I3.focusPercent=0.923
+PROBE|1127|67225|frame|fr=2.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.08 3:100@0.92 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1128|67227|lf|MF.currFocusRow=2.96
+PROBE|1129|67229|item|I2.focusPercent=0.038
+PROBE|1130|67230|item|I3.focusPercent=0.962
+PROBE|1131|67242|frame|fr=2.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.04 3:100@0.96 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1132|67243|lf|MF.currFocusRow=2.98
+PROBE|1133|67245|item|I2.focusPercent=0.019
+PROBE|1134|67246|item|I3.focusPercent=0.981
+PROBE|1135|67249|frame|fr=2.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.02 3:100@0.98 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1136|67293|lf|MF.currFocusRow=3
+PROBE|1137|67295|item|I2.focusPercent=0
+PROBE|1138|67296|item|I3.focusPercent=1
+PROBE|1139|67308|item|I3.itemHasFocus=true
+PROBE|1140|67309|lf|MF.itemFocused=3
+PROBE|1141|67309|lf|MF.scrollingStatus=false
+PROBE|1142|67310|lf|MF.vertFocusDirection=none
+PROBE|1143|67312|frame|fr=3 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@1 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1144|69059|step|32 key:Down
+PROBE|await|Down
+PROBE|1145|69096|lf|MF.scrollingStatus=true
+PROBE|1146|69097|item|I3.itemHasFocus=false
+PROBE|1147|69097|lf|MF.itemUnfocused=3
+PROBE|1148|69097|lf|MF.vertFocusDirection=down
+PROBE|1149|69103|frame|fr=3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@1 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1150|69104|lf|MF.currFocusRow=3.06
+PROBE|1151|69105|item|I3.focusPercent=0.942
+PROBE|1152|69108|frame|fr=3.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.94 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1153|69109|lf|MF.currFocusRow=3.13
+PROBE|1154|69110|item|I3.focusPercent=0.865
+PROBE|1155|69113|frame|fr=3.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.87 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1156|69114|lf|MF.currFocusRow=3.19
+PROBE|1157|69115|item|I3.focusPercent=0.808
+PROBE|1158|69115|item|I4.focusPercent=0.192
+PROBE|1159|69127|frame|fr=3.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.81 4:100@0.19 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1160|69130|lf|MF.currFocusRow=3.37
+PROBE|1161|69131|item|I3.focusPercent=0.635
+PROBE|1162|69131|item|I4.focusPercent=0.365
+PROBE|1163|69144|frame|fr=3.37 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.63 4:100@0.37 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1164|69145|lf|MF.currFocusRow=3.54
+PROBE|1165|69146|item|I3.focusPercent=0.462
+PROBE|1166|69146|item|I4.focusPercent=0.538
+PROBE|1167|69161|frame|fr=3.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.46 4:100@0.54 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1168|69161|lf|MF.currFocusRow=3.67
+PROBE|1169|69162|item|I3.focusPercent=0.327
+PROBE|1170|69163|item|I4.focusPercent=0.673
+PROBE|1171|69178|frame|fr=3.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.33 4:100@0.67 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1172|69179|lf|MF.currFocusRow=3.77
+PROBE|1173|69180|item|I3.focusPercent=0.231
+PROBE|1174|69180|item|I4.focusPercent=0.769
+PROBE|1175|69194|frame|fr=3.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.23 4:100@0.77 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1176|69195|lf|MF.currFocusRow=3.85
+PROBE|1177|69196|item|I3.focusPercent=0.154
+PROBE|1178|69196|item|I4.focusPercent=0.846
+PROBE|1179|69211|frame|fr=3.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.15 4:100@0.85 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1180|69211|lf|MF.currFocusRow=3.9
+PROBE|1181|69212|item|I3.focusPercent=0.096
+PROBE|1182|69213|item|I4.focusPercent=0.904
+PROBE|1183|69227|frame|fr=3.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.9 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1184|69228|lf|MF.currFocusRow=3.94
+PROBE|1185|69229|item|I3.focusPercent=0.058
+PROBE|1186|69230|item|I4.focusPercent=0.942
+PROBE|1187|69244|frame|fr=3.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.06 4:100@0.94 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1188|69245|lf|MF.currFocusRow=3.96
+PROBE|1189|69246|item|I3.focusPercent=0.038
+PROBE|1190|69246|item|I4.focusPercent=0.962
+PROBE|1191|69256|frame|fr=3.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.04 4:100@0.96 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1192|69260|lf|MF.currFocusRow=3.98
+PROBE|1193|69261|item|I3.focusPercent=0.019
+PROBE|1194|69261|item|I4.focusPercent=0.981
+PROBE|1195|69278|frame|fr=3.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.02 4:100@0.98 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1196|69311|lf|MF.currFocusRow=4
+PROBE|1197|69313|item|I3.focusPercent=0
+PROBE|1198|69313|item|I4.focusPercent=1
+PROBE|1199|69327|item|I4.itemHasFocus=true
+PROBE|1200|69327|lf|MF.itemFocused=4
+PROBE|1201|69328|lf|MF.scrollingStatus=false
+PROBE|1202|69328|lf|MF.vertFocusDirection=none
+PROBE|1203|69331|frame|fr=4 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@1 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1204|71062|step|33 key:Down_Down
+PROBE|await|Down_Down
+PROBE|1205|71090|lf|MF.scrollingStatus=true
+PROBE|1206|71091|item|I4.itemHasFocus=false
+PROBE|1207|71091|lf|MF.itemUnfocused=4
+PROBE|1208|71091|lf|MF.vertFocusDirection=down
+PROBE|1209|71098|frame|fr=4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@1 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1210|71099|lf|MF.currFocusRow=4.06
+PROBE|1211|71100|item|I4.focusPercent=0.942
+PROBE|1212|71105|frame|fr=4.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.94 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1213|71106|lf|MF.currFocusRow=4.15
+PROBE|1214|71106|item|I4.focusPercent=0.846
+PROBE|1215|71110|frame|fr=4.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.85 5:100@0 6:100@0 7:100@0 8:100@0
+PROBE|1216|71111|lf|MF.currFocusRow=4.23
+PROBE|1217|71112|item|I4.focusPercent=0.769
+PROBE|1218|71113|item|I5.focusPercent=0.231
+PROBE|1219|71115|frame|fr=4.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.77 5:100@0.23 6:100@0 7:100@0 8:100@0
+PROBE|1220|71116|lf|MF.currFocusRow=4.29
+PROBE|1221|71116|item|I4.focusPercent=0.712
+PROBE|1222|71117|item|I5.focusPercent=0.288
+PROBE|1223|71129|frame|fr=4.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.71 5:100@0.29 6:100@0 7:100@0 8:100@0
+PROBE|1224|71132|lf|MF.currFocusRow=4.44
+PROBE|1225|71133|item|I4.focusPercent=0.558
+PROBE|1226|71133|item|I5.focusPercent=0.442
+PROBE|1227|71146|frame|fr=4.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.56 5:100@0.44 6:100@0 7:100@0 8:100@0
+PROBE|1228|71146|lf|MF.currFocusRow=4.6
+PROBE|1229|71147|item|I4.focusPercent=0.404
+PROBE|1230|71148|item|I5.focusPercent=0.596
+PROBE|1231|71162|frame|fr=4.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.4 5:100@0.6 6:100@0 7:100@0 8:100@0
+PROBE|1232|71163|lf|MF.currFocusRow=4.73
+PROBE|1233|71164|item|I4.focusPercent=0.269
+PROBE|1234|71165|item|I5.focusPercent=0.731
+PROBE|1235|71179|frame|fr=4.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.27 5:100@0.73 6:100@0 7:100@0 8:100@0
+PROBE|1236|71180|lf|MF.currFocusRow=4.81
+PROBE|1237|71181|item|I4.focusPercent=0.192
+PROBE|1238|71181|item|I5.focusPercent=0.808
+PROBE|1239|71196|frame|fr=4.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.19 5:100@0.81 6:100@0 7:100@0 8:100@0
+PROBE|1240|71197|lf|MF.currFocusRow=4.88
+PROBE|1241|71198|item|I4.focusPercent=0.115
+PROBE|1242|71199|item|I5.focusPercent=0.885
+PROBE|1243|71213|frame|fr=4.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.88 6:100@0 7:100@0 8:100@0
+PROBE|1244|71214|lf|MF.currFocusRow=4.92
+PROBE|1245|71215|item|I4.focusPercent=0.077
+PROBE|1246|71216|item|I5.focusPercent=0.923
+PROBE|1247|71230|frame|fr=4.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.08 5:100@0.92 6:100@0 7:100@0 8:100@0
+PROBE|1248|71231|lf|MF.currFocusRow=4.96
+PROBE|1249|71232|item|I4.focusPercent=0.038
+PROBE|1250|71232|item|I5.focusPercent=0.962
+PROBE|1251|71246|frame|fr=4.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.04 5:100@0.96 6:100@0 7:100@0 8:100@0
+PROBE|1252|71247|lf|MF.currFocusRow=4.98
+PROBE|1253|71248|item|I4.focusPercent=0.019
+PROBE|1254|71249|item|I5.focusPercent=0.981
+PROBE|1255|71263|frame|fr=4.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.02 5:100@0.98 6:100@0 7:100@0 8:100@0
+PROBE|1256|71299|lf|MF.currFocusRow=5
+PROBE|1257|71300|item|I4.focusPercent=0
+PROBE|1258|71300|item|I5.focusPercent=1
+PROBE|1259|71313|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@1 6:100@0 7:100@0 8:100@0
+PROBE|1260|71314|lf|MF.currFocusRow=5.19
+PROBE|1261|71316|item|I5.focusPercent=0.808
+PROBE|1262|71330|frame|fr=5.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.81 6:100@0 7:100@0 8:100@0
+PROBE|1263|71333|lf|MF.currFocusRow=5.38
+PROBE|1264|71334|item|I5.focusPercent=0.615
+PROBE|1265|71335|item|I6.focusPercent=0.385
+PROBE|1266|71346|frame|fr=5.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.62 6:100@0.38 7:100@0 8:100@0
+PROBE|1267|71347|lf|MF.currFocusRow=5.54
+PROBE|1268|71348|item|I5.focusPercent=0.462
+PROBE|1269|71349|item|I6.focusPercent=0.538
+PROBE|1270|71363|frame|fr=5.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.46 6:100@0.54 7:100@0 8:100@0
+PROBE|1271|71364|lf|MF.currFocusRow=5.67
+PROBE|1272|71365|item|I5.focusPercent=0.327
+PROBE|1273|71365|item|I6.focusPercent=0.673
+PROBE|1274|71379|frame|fr=5.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.33 6:100@0.67 7:100@0 8:100@0
+PROBE|1275|71380|lf|MF.currFocusRow=5.79
+PROBE|1276|71381|item|I5.focusPercent=0.212
+PROBE|1277|71382|item|I6.focusPercent=0.788
+PROBE|1278|71396|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.21 6:100@0.79 7:100@0 8:100@0
+PROBE|1279|71397|lf|MF.currFocusRow=5.85
+PROBE|1280|71398|item|I5.focusPercent=0.154
+PROBE|1281|71398|item|I6.focusPercent=0.846
+PROBE|1282|71413|frame|fr=5.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.15 6:100@0.85 7:100@0 8:100@0
+PROBE|1283|71414|lf|MF.currFocusRow=5.9
+PROBE|1284|71415|item|I5.focusPercent=0.096
+PROBE|1285|71415|item|I6.focusPercent=0.904
+PROBE|1286|71430|frame|fr=5.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.1 6:100@0.9 7:100@0 8:100@0
+PROBE|1287|71430|lf|MF.currFocusRow=5.94
+PROBE|1288|71431|item|I5.focusPercent=0.058
+PROBE|1289|71432|item|I6.focusPercent=0.942
+PROBE|1290|71446|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.06 6:100@0.94 7:100@0 8:100@0
+PROBE|1291|71447|lf|MF.currFocusRow=5.98
+PROBE|1292|71448|item|I5.focusPercent=0.019
+PROBE|1293|71449|item|I6.focusPercent=0.981
+PROBE|1294|71463|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.02 6:100@0.98 7:100@0 8:100@0
+PROBE|1295|71513|lf|MF.currFocusRow=6
+PROBE|1296|71515|item|I5.focusPercent=0
+PROBE|1297|71516|item|I6.focusPercent=1
+PROBE|1298|71529|item|I6.itemHasFocus=true
+PROBE|1299|71529|lf|MF.itemFocused=6
+PROBE|1300|71530|lf|MF.scrollingStatus=false
+PROBE|1301|71530|lf|MF.vertFocusDirection=none
+PROBE|1302|71533|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0
+PROBE|1303|73065|step|34 hold:Down
+PROBE|await|HoldDown
+PROBE|1304|73105|lf|MF.scrollingStatus=true
+PROBE|1305|73105|item|I6.itemHasFocus=false
+PROBE|1306|73105|lf|MF.itemUnfocused=6
+PROBE|1307|73106|lf|MF.vertFocusDirection=down
+PROBE|1308|73110|frame|fr=6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0
+PROBE|1309|73112|lf|MF.currFocusRow=6.04
+PROBE|1310|73112|item|I6.focusPercent=0.962
+PROBE|1311|73115|frame|fr=6.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.96 7:100@0 8:100@0
+PROBE|1312|73117|lf|MF.currFocusRow=6.1
+PROBE|1313|73117|item|I6.focusPercent=0.904
+PROBE|1314|73120|frame|fr=6.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.9 7:100@0 8:100@0
+PROBE|1315|73120|lf|MF.currFocusRow=6.17
+PROBE|1316|73121|item|I6.focusPercent=0.827
+PROBE|1317|73130|frame|fr=6.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.83 7:100@0 8:100@0
+PROBE|1318|73131|lf|MF.currFocusRow=6.31
+PROBE|1319|73132|item|I6.focusPercent=0.692
+PROBE|1320|73132|item|I7.focusPercent=0.308
+PROBE|1321|73147|frame|fr=6.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.69 7:100@0.31 8:100@0
+PROBE|1322|73148|lf|MF.currFocusRow=6.48
+PROBE|1323|73148|item|I6.focusPercent=0.519
+PROBE|1324|73149|item|I7.focusPercent=0.481
+PROBE|1325|73164|frame|fr=6.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.52 7:100@0.48 8:100@0
+PROBE|1326|73164|lf|MF.currFocusRow=6.62
+PROBE|1327|73165|item|I6.focusPercent=0.385
+PROBE|1328|73165|item|I7.focusPercent=0.615
+PROBE|1329|73181|frame|fr=6.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.38 7:100@0.62 8:100@0
+PROBE|1330|73181|lf|MF.currFocusRow=6.73
+PROBE|1331|73182|item|I6.focusPercent=0.269
+PROBE|1332|73182|item|I7.focusPercent=0.731
+PROBE|1333|73197|frame|fr=6.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.27 7:100@0.73 8:100@0
+PROBE|1334|73198|lf|MF.currFocusRow=6.83
+PROBE|1335|73198|item|I6.focusPercent=0.173
+PROBE|1336|73199|item|I7.focusPercent=0.827
+PROBE|1337|73215|frame|fr=6.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.17 7:100@0.83 8:100@0
+PROBE|1338|73216|lf|MF.currFocusRow=6.88
+PROBE|1339|73217|item|I6.focusPercent=0.115
+PROBE|1340|73218|item|I7.focusPercent=0.885
+PROBE|1341|73232|frame|fr=6.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.88 8:100@0
+PROBE|1342|73233|lf|MF.currFocusRow=6.94
+PROBE|1343|73234|item|I6.focusPercent=0.058
+PROBE|1344|73234|item|I7.focusPercent=0.942
+PROBE|1345|73248|frame|fr=6.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.06 7:100@0.94 8:100@0
+PROBE|1346|73250|lf|MF.currFocusRow=6.96
+PROBE|1347|73251|item|I6.focusPercent=0.038
+PROBE|1348|73251|item|I7.focusPercent=0.962
+PROBE|1349|73265|frame|fr=6.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.04 7:100@0.96 8:100@0
+PROBE|1350|73266|lf|MF.currFocusRow=6.98
+PROBE|1351|73267|item|I6.focusPercent=0.019
+PROBE|1352|73267|item|I7.focusPercent=0.981
+PROBE|1353|73275|frame|fr=6.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.02 7:100@0.98 8:100@0
+PROBE|1354|73315|lf|MF.currFocusRow=7
+PROBE|1355|73316|item|I6.focusPercent=0
+PROBE|1356|73317|item|I7.focusPercent=1
+PROBE|1357|73332|frame|fr=7 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@1 8:100@0
+PROBE|1358|73516|lf|MF.currFocusRow=7.02
+PROBE|1359|73517|item|I7.focusPercent=0.981
+PROBE|1360|73532|frame|fr=7.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.98 8:100@0
+PROBE|1361|73533|lf|MF.currFocusRow=7.08
+PROBE|1362|73534|item|I7.focusPercent=0.923
+PROBE|1363|73549|frame|fr=7.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.92 8:100@0
+PROBE|1364|73550|lf|MF.currFocusRow=7.13
+PROBE|1365|73551|item|I7.focusPercent=0.865
+PROBE|1366|73565|frame|fr=7.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.87 8:100@0
+PROBE|1367|73566|lf|MF.currFocusRow=7.21
+PROBE|1368|73567|item|I7.focusPercent=0.788
+PROBE|1369|73568|item|I8.focusPercent=0.212
+PROBE|1370|73582|frame|fr=7.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.79 8:100@0.21
+PROBE|1371|73583|lf|MF.currFocusRow=7.31
+PROBE|1372|73584|item|I7.focusPercent=0.692
+PROBE|1373|73585|item|I8.focusPercent=0.308
+PROBE|1374|73599|frame|fr=7.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.69 8:100@0.31
+PROBE|1375|73600|lf|MF.currFocusRow=7.42
+PROBE|1376|73601|item|I7.focusPercent=0.577
+PROBE|1377|73601|item|I8.focusPercent=0.423
+PROBE|1378|73615|frame|fr=7.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.58 8:100@0.42
+PROBE|1379|73617|lf|MF.currFocusRow=7.54
+PROBE|1380|73617|item|I7.focusPercent=0.462
+PROBE|1381|73618|item|I8.focusPercent=0.538
+PROBE|1382|73632|frame|fr=7.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.46 8:100@0.54
+PROBE|1383|73633|lf|MF.currFocusRow=7.65
+PROBE|1384|73634|item|I7.focusPercent=0.346
+PROBE|1385|73635|item|I8.focusPercent=0.654
+PROBE|1386|73649|frame|fr=7.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.35 8:100@0.65
+PROBE|1387|73650|lf|MF.currFocusRow=7.77
+PROBE|1388|73651|item|I7.focusPercent=0.231
+PROBE|1389|73652|item|I8.focusPercent=0.769
+PROBE|1390|73665|frame|fr=7.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.23 8:100@0.77
+PROBE|1391|73667|lf|MF.currFocusRow=7.87
+PROBE|1392|73668|item|I7.focusPercent=0.135
+PROBE|1393|73669|item|I8.focusPercent=0.865
+PROBE|1394|73682|frame|fr=7.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.13 8:100@0.87
+PROBE|1395|73683|lf|MF.currFocusRow=7.98
+PROBE|1396|73684|item|I7.focusPercent=0.019
+PROBE|1397|73684|item|I8.focusPercent=0.981
+PROBE|1398|73698|frame|fr=7.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.02 8:100@0.98
+PROBE|1399|73699|lf|MF.currFocusRow=8.1
+PROBE|1400|73700|item|I7.focusPercent=0
+PROBE|1401|73701|item|I8.focusPercent=0.904
+PROBE|1402|73715|frame|fr=8.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.9 9:100@0
+PROBE|1403|73717|lf|MF.currFocusRow=8.21
+PROBE|1404|73718|item|I8.focusPercent=0.788
+PROBE|1405|73718|item|I9.focusPercent=0.212
+PROBE|1406|73732|frame|fr=8.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.79 9:100@0.21
+PROBE|1407|73733|lf|MF.currFocusRow=8.31
+PROBE|1408|73734|item|I8.focusPercent=0.692
+PROBE|1409|73735|item|I9.focusPercent=0.308
+PROBE|1410|73749|frame|fr=8.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.69 9:100@0.31
+PROBE|1411|73749|lf|MF.currFocusRow=8.42
+PROBE|1412|73751|item|I8.focusPercent=0.577
+PROBE|1413|73751|item|I9.focusPercent=0.423
+PROBE|1414|73765|frame|fr=8.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.58 9:100@0.42
+PROBE|1415|73766|lf|MF.currFocusRow=8.54
+PROBE|1416|73767|item|I8.focusPercent=0.462
+PROBE|1417|73768|item|I9.focusPercent=0.538
+PROBE|1418|73778|frame|fr=8.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.46 9:100@0.54
+PROBE|1419|73783|lf|MF.currFocusRow=8.65
+PROBE|1420|73784|item|I8.focusPercent=0.346
+PROBE|1421|73785|item|I9.focusPercent=0.654
+PROBE|1422|73799|frame|fr=8.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.35 9:100@0.65
+PROBE|1423|73800|lf|MF.currFocusRow=8.75
+PROBE|1424|73802|item|I8.focusPercent=0.25
+PROBE|1425|73802|item|I9.focusPercent=0.75
+PROBE|1426|73816|frame|fr=8.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.25 9:100@0.75
+PROBE|1427|73817|lf|MF.currFocusRow=8.85
+PROBE|1428|73818|item|I8.focusPercent=0.154
+PROBE|1429|73819|item|I9.focusPercent=0.846
+PROBE|1430|73832|frame|fr=8.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.15 9:100@0.85
+PROBE|1431|73834|lf|MF.currFocusRow=8.9
+PROBE|1432|73834|item|I8.focusPercent=0.096
+PROBE|1433|73835|item|I9.focusPercent=0.904
+PROBE|1434|73849|frame|fr=8.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.9
+PROBE|1435|73850|lf|MF.currFocusRow=8.94
+PROBE|1436|73851|item|I8.focusPercent=0.058
+PROBE|1437|73852|item|I9.focusPercent=0.942
+PROBE|1438|73866|frame|fr=8.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.06 9:100@0.94
+PROBE|1439|73867|lf|MF.currFocusRow=8.98
+PROBE|1440|73868|item|I8.focusPercent=0.019
+PROBE|1441|73869|item|I9.focusPercent=0.981
+PROBE|1442|73882|frame|fr=8.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.02 9:100@0.98
+PROBE|1443|73899|lf|MF.currFocusRow=9
+PROBE|1444|73901|item|I8.focusPercent=0
+PROBE|1445|73901|item|I9.focusPercent=1
+PROBE|1446|73916|frame|fr=9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1447|74335|item|I9.itemHasFocus=true
+PROBE|1448|74335|lf|MF.itemFocused=9
+PROBE|1449|74336|lf|MF.scrollingStatus=false
+PROBE|1450|74336|lf|MF.vertFocusDirection=none
+PROBE|1451|74343|frame|fr=9 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1452|76568|step|35 act:jump0
+PROBE|1453|76568|item|I9.itemHasFocus=false
+PROBE|1454|76568|lf|MF.itemUnfocused=9
+PROBE|1455|76569|lf|MF.currFocusRow=0
+PROBE|1456|76572|item|I0.itemHasFocus=true
+PROBE|1457|76572|lf|MF.itemFocused=0
+PROBE|1458|76572|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|1459|76574|item|I0.focusPercent=1
+PROBE|1460|76577|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1461|78574|step|36 key:Up
+PROBE|await|Up
+PROBE|1462|80576|step|37 act:animate6
+PROBE|1463|80576|lf|MF.scrollingStatus=true
+PROBE|1464|80577|item|I0.itemHasFocus=false
+PROBE|1465|80577|lf|MF.itemUnfocused=0
+PROBE|1466|80577|lf|MF.vertFocusDirection=down
+PROBE|1467|80578|act|animate6 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|1468|80582|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1469|80586|lf|MF.currFocusRow=0.06
+PROBE|1470|80588|item|I0.focusPercent=0.942
+PROBE|1471|80592|frame|fr=0.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.94 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1472|80593|lf|MF.currFocusRow=0.17
+PROBE|1473|80595|item|I0.focusPercent=0.827
+PROBE|1474|80605|frame|fr=0.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.83 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1475|80606|lf|MF.currFocusRow=0.37
+PROBE|1476|80608|item|I0.focusPercent=0.635
+PROBE|1477|80609|item|I1.focusPercent=0.365
+PROBE|1478|80622|frame|fr=0.37 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.63 1:100@0.37 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1479|80623|lf|MF.currFocusRow=0.6
+PROBE|1480|80625|item|I0.focusPercent=0.404
+PROBE|1481|80625|item|I1.focusPercent=0.596
+PROBE|1482|80639|frame|fr=0.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.4 1:100@0.6 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1483|80639|lf|MF.currFocusRow=0.83
+PROBE|1484|80641|item|I0.focusPercent=0.173
+PROBE|1485|80642|item|I1.focusPercent=0.827
+PROBE|1486|80656|frame|fr=0.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.17 1:100@0.83 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1487|80656|lf|MF.currFocusRow=1.06
+PROBE|1488|80658|item|I0.focusPercent=0
+PROBE|1489|80659|item|I1.focusPercent=0.942
+PROBE|1490|80672|frame|fr=1.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.94 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1491|80673|lf|MF.currFocusRow=1.27
+PROBE|1492|80675|item|I1.focusPercent=0.731
+PROBE|1493|80675|item|I2.focusPercent=0.269
+PROBE|1494|80689|frame|fr=1.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.73 2:100@0.27 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1495|80690|lf|MF.currFocusRow=1.48
+PROBE|1496|80692|item|I1.focusPercent=0.519
+PROBE|1497|80692|item|I2.focusPercent=0.481
+PROBE|1498|80705|frame|fr=1.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.52 2:100@0.48 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1499|80706|lf|MF.currFocusRow=1.67
+PROBE|1500|80709|item|I1.focusPercent=0.327
+PROBE|1501|80709|item|I2.focusPercent=0.673
+PROBE|1502|80722|frame|fr=1.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.33 2:100@0.67 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1503|80723|lf|MF.currFocusRow=1.88
+PROBE|1504|80725|item|I1.focusPercent=0.115
+PROBE|1505|80725|item|I2.focusPercent=0.885
+PROBE|1506|80739|frame|fr=1.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.12 2:100@0.88 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1507|80740|lf|MF.currFocusRow=2.08
+PROBE|1508|80742|item|I1.focusPercent=0
+PROBE|1509|80742|item|I2.focusPercent=0.923
+PROBE|1510|80756|frame|fr=2.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.92 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1511|80756|lf|MF.currFocusRow=2.27
+PROBE|1512|80759|item|I2.focusPercent=0.731
+PROBE|1513|80759|item|I3.focusPercent=0.269
+PROBE|1514|80772|frame|fr=2.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.73 3:100@0.27 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1515|80773|lf|MF.currFocusRow=2.44
+PROBE|1516|80775|item|I2.focusPercent=0.558
+PROBE|1517|80776|item|I3.focusPercent=0.442
+PROBE|1518|80789|frame|fr=2.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.56 3:100@0.44 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1519|80790|lf|MF.currFocusRow=2.62
+PROBE|1520|80792|item|I2.focusPercent=0.385
+PROBE|1521|80793|item|I3.focusPercent=0.615
+PROBE|1522|80806|frame|fr=2.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.38 3:100@0.62 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1523|80806|lf|MF.currFocusRow=2.79
+PROBE|1524|80808|item|I2.focusPercent=0.212
+PROBE|1525|80809|item|I3.focusPercent=0.788
+PROBE|1526|80811|frame|fr=2.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.21 3:100@0.79 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1527|80823|lf|MF.currFocusRow=2.94
+PROBE|1528|80825|item|I2.focusPercent=0.058
+PROBE|1529|80825|item|I3.focusPercent=0.942
+PROBE|1530|80839|frame|fr=2.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.06 3:100@0.94 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1531|80840|lf|MF.currFocusRow=3.1
+PROBE|1532|80842|item|I2.focusPercent=0
+PROBE|1533|80842|item|I3.focusPercent=0.904
+PROBE|1534|80856|frame|fr=3.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.9 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1535|80856|lf|MF.currFocusRow=3.25
+PROBE|1536|80857|item|I3.focusPercent=0.75
+PROBE|1537|80858|item|I4.focusPercent=0.25
+PROBE|1538|80873|frame|fr=3.25 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.75 4:100@0.25 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1539|80873|lf|MF.currFocusRow=3.38
+PROBE|1540|80874|item|I3.focusPercent=0.615
+PROBE|1541|80875|item|I4.focusPercent=0.385
+PROBE|1542|80889|frame|fr=3.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.62 4:100@0.38 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1543|80890|lf|MF.currFocusRow=3.54
+PROBE|1544|80891|item|I3.focusPercent=0.462
+PROBE|1545|80891|item|I4.focusPercent=0.538
+PROBE|1546|80906|frame|fr=3.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.46 4:100@0.54 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1547|80907|lf|MF.currFocusRow=3.67
+PROBE|1548|80907|item|I3.focusPercent=0.327
+PROBE|1549|80908|item|I4.focusPercent=0.673
+PROBE|1550|80923|frame|fr=3.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.33 4:100@0.67 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1551|80923|lf|MF.currFocusRow=3.79
+PROBE|1552|80924|item|I3.focusPercent=0.212
+PROBE|1553|80925|item|I4.focusPercent=0.788
+PROBE|1554|80939|frame|fr=3.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.21 4:100@0.79 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1555|80940|lf|MF.currFocusRow=3.92
+PROBE|1556|80941|item|I3.focusPercent=0.077
+PROBE|1557|80941|item|I4.focusPercent=0.923
+PROBE|1558|80956|frame|fr=3.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.08 4:100@0.92 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1559|80957|lf|MF.currFocusRow=4.04
+PROBE|1560|80957|item|I3.focusPercent=0
+PROBE|1561|80958|item|I4.focusPercent=0.962
+PROBE|1562|80973|frame|fr=4.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.96 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1563|80973|lf|MF.currFocusRow=4.17
+PROBE|1564|80974|item|I4.focusPercent=0.827
+PROBE|1565|80989|frame|fr=4.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.83 5:100@0 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1566|80990|lf|MF.currFocusRow=4.27
+PROBE|1567|80991|item|I4.focusPercent=0.731
+PROBE|1568|80992|item|I5.focusPercent=0.269
+PROBE|1569|81006|frame|fr=4.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.73 5:100@0.27 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1570|81007|lf|MF.currFocusRow=4.38
+PROBE|1571|81008|item|I4.focusPercent=0.615
+PROBE|1572|81009|item|I5.focusPercent=0.385
+PROBE|1573|81023|frame|fr=4.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.62 5:100@0.38 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1574|81023|lf|MF.currFocusRow=4.48
+PROBE|1575|81024|item|I4.focusPercent=0.519
+PROBE|1576|81025|item|I5.focusPercent=0.481
+PROBE|1577|81039|frame|fr=4.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.52 5:100@0.48 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1578|81040|lf|MF.currFocusRow=4.58
+PROBE|1579|81041|item|I4.focusPercent=0.423
+PROBE|1580|81042|item|I5.focusPercent=0.577
+PROBE|1581|81056|frame|fr=4.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.42 5:100@0.58 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1582|81057|lf|MF.currFocusRow=4.67
+PROBE|1583|81058|item|I4.focusPercent=0.327
+PROBE|1584|81058|item|I5.focusPercent=0.673
+PROBE|1585|81073|frame|fr=4.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.33 5:100@0.67 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1586|81073|lf|MF.currFocusRow=4.77
+PROBE|1587|81075|item|I4.focusPercent=0.231
+PROBE|1588|81075|item|I5.focusPercent=0.769
+PROBE|1589|81089|frame|fr=4.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.23 5:100@0.77 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1590|81090|lf|MF.currFocusRow=4.85
+PROBE|1591|81091|item|I4.focusPercent=0.154
+PROBE|1592|81092|item|I5.focusPercent=0.846
+PROBE|1593|81106|frame|fr=4.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.15 5:100@0.85 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1594|81107|lf|MF.currFocusRow=4.92
+PROBE|1595|81108|item|I4.focusPercent=0.077
+PROBE|1596|81108|item|I5.focusPercent=0.923
+PROBE|1597|81123|frame|fr=4.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.08 5:100@0.92 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1598|81124|lf|MF.currFocusRow=5
+PROBE|1599|81124|item|I4.focusPercent=0
+PROBE|1600|81125|item|I5.focusPercent=1
+PROBE|1601|81139|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@1 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1602|81140|lf|MF.currFocusRow=5.08
+PROBE|1603|81141|item|I5.focusPercent=0.923
+PROBE|1604|81156|frame|fr=5.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.92 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1605|81157|lf|MF.currFocusRow=5.15
+PROBE|1606|81158|item|I5.focusPercent=0.846
+PROBE|1607|81173|frame|fr=5.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.85 6:100@0 7:100@0 8:100@0 9:100@1
+PROBE|1608|81174|lf|MF.currFocusRow=5.21
+PROBE|1609|81175|item|I5.focusPercent=0.788
+PROBE|1610|81175|item|I6.focusPercent=0.212
+PROBE|1611|81189|frame|fr=5.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.79 6:100@0.21 7:100@0 8:100@0 9:100@1
+PROBE|1612|81190|lf|MF.currFocusRow=5.27
+PROBE|1613|81191|item|I5.focusPercent=0.731
+PROBE|1614|81192|item|I6.focusPercent=0.269
+PROBE|1615|81206|frame|fr=5.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.73 6:100@0.27 7:100@0 8:100@0 9:100@1
+PROBE|1616|81207|lf|MF.currFocusRow=5.33
+PROBE|1617|81208|item|I5.focusPercent=0.673
+PROBE|1618|81208|item|I6.focusPercent=0.327
+PROBE|1619|81223|frame|fr=5.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.67 6:100@0.33 7:100@0 8:100@0 9:100@1
+PROBE|1620|81224|lf|MF.currFocusRow=5.38
+PROBE|1621|81225|item|I5.focusPercent=0.615
+PROBE|1622|81225|item|I6.focusPercent=0.385
+PROBE|1623|81239|frame|fr=5.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.62 6:100@0.38 7:100@0 8:100@0 9:100@1
+PROBE|1624|81240|lf|MF.currFocusRow=5.44
+PROBE|1625|81241|item|I5.focusPercent=0.558
+PROBE|1626|81241|item|I6.focusPercent=0.442
+PROBE|1627|81256|frame|fr=5.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.56 6:100@0.44 7:100@0 8:100@0 9:100@1
+PROBE|1628|81257|lf|MF.currFocusRow=5.5
+PROBE|1629|81258|item|I5.focusPercent=0.5
+PROBE|1630|81258|item|I6.focusPercent=0.5
+PROBE|1631|81273|frame|fr=5.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.5 6:100@0.5 7:100@0 8:100@0 9:100@1
+PROBE|1632|81274|lf|MF.currFocusRow=5.54
+PROBE|1633|81275|item|I5.focusPercent=0.462
+PROBE|1634|81275|item|I6.focusPercent=0.538
+PROBE|1635|81289|frame|fr=5.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.46 6:100@0.54 7:100@0 8:100@0 9:100@1
+PROBE|1636|81290|lf|MF.currFocusRow=5.58
+PROBE|1637|81291|item|I5.focusPercent=0.423
+PROBE|1638|81292|item|I6.focusPercent=0.577
+PROBE|1639|81306|frame|fr=5.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.42 6:100@0.58 7:100@0 8:100@0 9:100@1
+PROBE|1640|81307|lf|MF.currFocusRow=5.62
+PROBE|1641|81308|item|I5.focusPercent=0.385
+PROBE|1642|81308|item|I6.focusPercent=0.615
+PROBE|1643|81314|frame|fr=5.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.38 6:100@0.62 7:100@0 8:100@0 9:100@1
+PROBE|1644|81323|lf|MF.currFocusRow=5.65
+PROBE|1645|81324|item|I5.focusPercent=0.346
+PROBE|1646|81325|item|I6.focusPercent=0.654
+PROBE|1647|81340|frame|fr=5.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.35 6:100@0.65 7:100@0 8:100@0 9:100@1
+PROBE|1648|81340|lf|MF.currFocusRow=5.69
+PROBE|1649|81341|item|I5.focusPercent=0.308
+PROBE|1650|81342|item|I6.focusPercent=0.692
+PROBE|1651|81356|frame|fr=5.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.31 6:100@0.69 7:100@0 8:100@0 9:100@1
+PROBE|1652|81357|lf|MF.currFocusRow=5.73
+PROBE|1653|81358|item|I5.focusPercent=0.269
+PROBE|1654|81358|item|I6.focusPercent=0.731
+PROBE|1655|81374|frame|fr=5.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.27 6:100@0.73 7:100@0 8:100@0 9:100@1
+PROBE|1656|81375|lf|MF.currFocusRow=5.75
+PROBE|1657|81376|item|I5.focusPercent=0.25
+PROBE|1658|81377|item|I6.focusPercent=0.75
+PROBE|1659|81390|frame|fr=5.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.25 6:100@0.75 7:100@0 8:100@0 9:100@1
+PROBE|1660|81390|lf|MF.currFocusRow=5.79
+PROBE|1661|81391|item|I5.focusPercent=0.212
+PROBE|1662|81392|item|I6.focusPercent=0.788
+PROBE|1663|81406|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.21 6:100@0.79 7:100@0 8:100@0 9:100@1
+PROBE|1664|81407|lf|MF.currFocusRow=5.81
+PROBE|1665|81408|item|I5.focusPercent=0.192
+PROBE|1666|81408|item|I6.focusPercent=0.808
+PROBE|1667|81423|frame|fr=5.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.19 6:100@0.81 7:100@0 8:100@0 9:100@1
+PROBE|1668|81424|lf|MF.currFocusRow=5.83
+PROBE|1669|81424|item|I5.focusPercent=0.173
+PROBE|1670|81425|item|I6.focusPercent=0.827
+PROBE|1671|81440|frame|fr=5.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.17 6:100@0.83 7:100@0 8:100@0 9:100@1
+PROBE|1672|81440|lf|MF.currFocusRow=5.85
+PROBE|1673|81441|item|I5.focusPercent=0.154
+PROBE|1674|81442|item|I6.focusPercent=0.846
+PROBE|1675|81456|frame|fr=5.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.15 6:100@0.85 7:100@0 8:100@0 9:100@1
+PROBE|1676|81457|lf|MF.currFocusRow=5.87
+PROBE|1677|81458|item|I5.focusPercent=0.135
+PROBE|1678|81458|item|I6.focusPercent=0.865
+PROBE|1679|81473|frame|fr=5.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.87 7:100@0 8:100@0 9:100@1
+PROBE|1680|81474|lf|MF.currFocusRow=5.88
+PROBE|1681|81474|item|I5.focusPercent=0.115
+PROBE|1682|81475|item|I6.focusPercent=0.885
+PROBE|1683|81490|frame|fr=5.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.12 6:100@0.88 7:100@0 8:100@0 9:100@1
+PROBE|1684|81490|lf|MF.currFocusRow=5.9
+PROBE|1685|81491|item|I5.focusPercent=0.096
+PROBE|1686|81492|item|I6.focusPercent=0.904
+PROBE|1687|81506|frame|fr=5.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.1 6:100@0.9 7:100@0 8:100@0 9:100@1
+PROBE|1688|81507|lf|MF.currFocusRow=5.92
+PROBE|1689|81508|item|I5.focusPercent=0.077
+PROBE|1690|81508|item|I6.focusPercent=0.923
+PROBE|1691|81523|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.08 6:100@0.92 7:100@0 8:100@0 9:100@1
+PROBE|1692|81540|lf|MF.currFocusRow=5.94
+PROBE|1693|81541|item|I5.focusPercent=0.058
+PROBE|1694|81541|item|I6.focusPercent=0.942
+PROBE|1695|81556|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.06 6:100@0.94 7:100@0 8:100@0 9:100@1
+PROBE|1696|81573|lf|MF.currFocusRow=5.96
+PROBE|1697|81574|item|I5.focusPercent=0.038
+PROBE|1698|81575|item|I6.focusPercent=0.962
+PROBE|1699|81590|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.04 6:100@0.96 7:100@0 8:100@0 9:100@1
+PROBE|1700|81607|lf|MF.currFocusRow=5.98
+PROBE|1701|81607|item|I5.focusPercent=0.019
+PROBE|1702|81608|item|I6.focusPercent=0.981
+PROBE|1703|81623|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.02 6:100@0.98 7:100@0 8:100@0 9:100@1
+PROBE|1704|81791|lf|MF.currFocusRow=6
+PROBE|1705|81792|item|I5.focusPercent=0
+PROBE|1706|81793|item|I6.focusPercent=1
+PROBE|1707|81806|item|I6.itemHasFocus=true
+PROBE|1708|81807|lf|MF.itemFocused=6
+PROBE|1709|81807|lf|MF.scrollingStatus=false
+PROBE|1710|81807|lf|MF.vertFocusDirection=none
+PROBE|1711|81810|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0 9:100@1
+PROBE|1712|82578|step|38 act:jump1
+PROBE|1713|82579|item|I6.itemHasFocus=false
+PROBE|1714|82579|lf|MF.itemUnfocused=6
+PROBE|1715|82579|lf|MF.currFocusRow=1
+PROBE|1716|82581|item|I1.itemHasFocus=true
+PROBE|1717|82582|lf|MF.itemFocused=1
+PROBE|1718|82582|act|jump1 itemFocused=1 currFocusRow=1 skipFocusAnimations=false 
+PROBE|1719|82584|item|I1.focusPercent=1
+PROBE|1720|82590|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0 9:100@1
+PROBE|1721|84585|step|39 act:skip
+PROBE|1722|84585|act|skip itemFocused=1 currFocusRow=1 skipFocusAnimations=true 
+PROBE|1723|86587|step|40 key:Down
+PROBE|await|Down
+PROBE|1724|86628|lf|MF.scrollingStatus=true
+PROBE|1725|86628|item|I1.itemHasFocus=false
+PROBE|1726|86629|lf|MF.itemUnfocused=1
+PROBE|1727|86629|lf|MF.currFocusRow=2
+PROBE|1728|86631|item|I2.itemHasFocus=true
+PROBE|1729|86631|lf|MF.itemFocused=2
+PROBE|1730|86632|lf|MF.scrollingStatus=false
+PROBE|1731|86632|lf|MF.vertFocusDirection=down
+PROBE|1732|86636|item|I1.focusPercent=0
+PROBE|1733|86637|item|I2.focusPercent=1
+PROBE|1734|86642|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@1 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0 9:100@1
+PROBE|1735|86652|lf|MF.vertFocusDirection=none
+PROBE|1736|88588|step|41 act:noskip
+PROBE|1737|88589|act|noskip itemFocused=2 currFocusRow=2 skipFocusAnimations=false 
+PROBE|1738|90590|step|42 list:MW
+PROBE|1739|90591|item|I2.itemHasFocus=false
+PROBE|1740|90591|lf|MW.itemFocused=0
+PROBE|1741|90592|act|focus MW itemFocused=0 currFocusRow=0 
+PROBE|1742|90594|item|?.itemHasFocus=true
+PROBE|1743|90597|item|I0.focusPercent=1
+PROBE|1744|90609|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0
+PROBE|1745|90617|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 9:100@0
+PROBE|1746|90623|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 8:100@0 9:100@0
+PROBE|1747|90630|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1748|92593|step|43 key:Down
+PROBE|await|Down
+PROBE|1749|92634|lf|MW.scrollingStatus=true
+PROBE|1750|92634|item|I0.itemHasFocus=false
+PROBE|1751|92635|lf|MW.itemUnfocused=0
+PROBE|1752|92635|lf|MW.vertFocusDirection=down
+PROBE|1753|92640|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1754|92642|lf|MW.currFocusRow=0.06
+PROBE|1755|92643|item|I0.focusPercent=0.942
+PROBE|1756|92647|frame|fr=0.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.94 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1757|92648|lf|MW.currFocusRow=0.13
+PROBE|1758|92649|item|I0.focusPercent=0.865
+PROBE|1759|92652|frame|fr=0.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.87 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1760|92653|lf|MW.currFocusRow=0.23
+PROBE|1761|92653|item|I0.focusPercent=0.769
+PROBE|1762|92654|item|I1.focusPercent=0.231
+PROBE|1763|92668|frame|fr=0.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.77 1:100@0.23 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1764|92671|lf|MW.currFocusRow=0.42
+PROBE|1765|92672|item|I0.focusPercent=0.577
+PROBE|1766|92672|item|I1.focusPercent=0.423
+PROBE|1767|92685|frame|fr=0.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.58 1:100@0.42 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1768|92686|lf|MW.currFocusRow=0.58
+PROBE|1769|92687|item|I0.focusPercent=0.423
+PROBE|1770|92687|item|I1.focusPercent=0.577
+PROBE|1771|92701|frame|fr=0.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.42 1:100@0.58 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1772|92703|lf|MW.currFocusRow=0.71
+PROBE|1773|92704|item|I0.focusPercent=0.288
+PROBE|1774|92704|item|I1.focusPercent=0.712
+PROBE|1775|92718|frame|fr=0.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.29 1:100@0.71 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1776|92719|lf|MW.currFocusRow=0.81
+PROBE|1777|92720|item|I0.focusPercent=0.192
+PROBE|1778|92721|item|I1.focusPercent=0.808
+PROBE|1779|92735|frame|fr=0.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.19 1:100@0.81 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1780|92736|lf|MW.currFocusRow=0.88
+PROBE|1781|92737|item|I0.focusPercent=0.115
+PROBE|1782|92738|item|I1.focusPercent=0.885
+PROBE|1783|92751|frame|fr=0.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.88 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1784|92753|lf|MW.currFocusRow=0.92
+PROBE|1785|92753|item|I1.focusPercent=0.923
+PROBE|1786|92768|frame|fr=0.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.92 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1787|92769|lf|MW.currFocusRow=0.96
+PROBE|1788|92770|item|I1.focusPercent=0.962
+PROBE|1789|92785|frame|fr=0.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.96 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1790|92786|lf|MW.currFocusRow=0.98
+PROBE|1791|92787|item|I1.focusPercent=0.981
+PROBE|1792|92801|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.98 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1793|92835|lf|MW.currFocusRow=1
+PROBE|1794|92836|item|I1.focusPercent=1
+PROBE|1795|92851|item|I1.itemHasFocus=true
+PROBE|1796|92851|lf|MW.itemFocused=1
+PROBE|1797|92852|lf|MW.scrollingStatus=false
+PROBE|1798|92852|lf|MW.vertFocusDirection=none
+PROBE|1799|92855|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1800|94594|step|44 key:Down
+PROBE|await|Down
+PROBE|1801|94636|lf|MW.scrollingStatus=true
+PROBE|1802|94636|item|I1.itemHasFocus=false
+PROBE|1803|94637|lf|MW.itemUnfocused=1
+PROBE|1804|94637|lf|MW.vertFocusDirection=down
+PROBE|1805|94642|frame|fr=1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1806|94644|lf|MW.currFocusRow=1.06
+PROBE|1807|94645|item|I1.focusPercent=0.942
+PROBE|1808|94648|frame|fr=1.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.94 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1809|94650|lf|MW.currFocusRow=1.13
+PROBE|1810|94650|item|I1.focusPercent=0.865
+PROBE|1811|94654|frame|fr=1.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.87 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1812|94654|lf|MW.currFocusRow=1.21
+PROBE|1813|94655|item|I1.focusPercent=0.788
+PROBE|1814|94656|item|I2.focusPercent=0.212
+PROBE|1815|94669|frame|fr=1.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.79 2:100@0.21 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1816|94671|lf|MW.currFocusRow=1.4
+PROBE|1817|94672|item|I1.focusPercent=0.596
+PROBE|1818|94672|item|I2.focusPercent=0.404
+PROBE|1819|94686|frame|fr=1.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.6 2:100@0.4 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1820|94686|lf|MW.currFocusRow=1.58
+PROBE|1821|94687|item|I1.focusPercent=0.423
+PROBE|1822|94688|item|I2.focusPercent=0.577
+PROBE|1823|94702|frame|fr=1.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.42 2:100@0.58 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1824|94703|lf|MW.currFocusRow=1.71
+PROBE|1825|94704|item|I1.focusPercent=0.288
+PROBE|1826|94705|item|I2.focusPercent=0.712
+PROBE|1827|94719|frame|fr=1.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.29 2:100@0.71 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1828|94720|lf|MW.currFocusRow=1.81
+PROBE|1829|94720|item|I1.focusPercent=0.192
+PROBE|1830|94721|item|I2.focusPercent=0.808
+PROBE|1831|94736|frame|fr=1.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.19 2:100@0.81 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1832|94736|lf|MW.currFocusRow=1.87
+PROBE|1833|94737|item|I1.focusPercent=0.135
+PROBE|1834|94738|item|I2.focusPercent=0.865
+PROBE|1835|94753|frame|fr=1.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.87 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1836|94754|lf|MW.currFocusRow=1.92
+PROBE|1837|94755|item|I2.focusPercent=0.923
+PROBE|1838|94770|frame|fr=1.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.92 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1839|94771|lf|MW.currFocusRow=1.96
+PROBE|1840|94772|item|I2.focusPercent=0.962
+PROBE|1841|94787|frame|fr=1.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.96 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1842|94788|lf|MW.currFocusRow=1.98
+PROBE|1843|94789|item|I2.focusPercent=0.981
+PROBE|1844|94803|frame|fr=1.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.98 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1845|94837|lf|MW.currFocusRow=2
+PROBE|1846|94838|item|I2.focusPercent=1
+PROBE|1847|94853|item|I2.itemHasFocus=true
+PROBE|1848|94853|lf|MW.itemFocused=2
+PROBE|1849|94854|lf|MW.scrollingStatus=false
+PROBE|1850|94854|lf|MW.vertFocusDirection=none
+PROBE|1851|94857|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@1 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1852|96596|step|45 key:Down
+PROBE|await|Down
+PROBE|1853|96635|lf|MW.scrollingStatus=true
+PROBE|1854|96635|item|I2.itemHasFocus=false
+PROBE|1855|96636|lf|MW.itemUnfocused=2
+PROBE|1856|96636|lf|MW.vertFocusDirection=down
+PROBE|1857|96641|frame|fr=2 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@1 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1858|96644|lf|MW.currFocusRow=2.06
+PROBE|1859|96644|item|I2.focusPercent=0.942
+PROBE|1860|96647|frame|fr=2.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.94 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1861|96649|lf|MW.currFocusRow=2.13
+PROBE|1862|96650|item|I2.focusPercent=0.865
+PROBE|1863|96654|frame|fr=2.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.87 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1864|96655|lf|MW.currFocusRow=2.23
+PROBE|1865|96655|item|I2.focusPercent=0.769
+PROBE|1866|96656|item|I3.focusPercent=0.231
+PROBE|1867|96660|frame|fr=2.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.77 3:100@0.23 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1868|96661|lf|MW.currFocusRow=2.31
+PROBE|1869|96661|item|I2.focusPercent=0.692
+PROBE|1870|96662|item|I3.focusPercent=0.308
+PROBE|1871|96672|frame|fr=2.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.69 3:100@0.31 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1872|96675|lf|MW.currFocusRow=2.44
+PROBE|1873|96675|item|I2.focusPercent=0.558
+PROBE|1874|96676|item|I3.focusPercent=0.442
+PROBE|1875|96688|frame|fr=2.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.56 3:100@0.44 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1876|96690|lf|MW.currFocusRow=2.6
+PROBE|1877|96691|item|I2.focusPercent=0.404
+PROBE|1878|96691|item|I3.focusPercent=0.596
+PROBE|1879|96705|frame|fr=2.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.4 3:100@0.6 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1880|96706|lf|MW.currFocusRow=2.73
+PROBE|1881|96707|item|I2.focusPercent=0.269
+PROBE|1882|96707|item|I3.focusPercent=0.731
+PROBE|1883|96722|frame|fr=2.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.27 3:100@0.73 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1884|96723|lf|MW.currFocusRow=2.83
+PROBE|1885|96723|item|I2.focusPercent=0.173
+PROBE|1886|96724|item|I3.focusPercent=0.827
+PROBE|1887|96738|frame|fr=2.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.17 3:100@0.83 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1888|96739|lf|MW.currFocusRow=2.88
+PROBE|1889|96740|item|I2.focusPercent=0.115
+PROBE|1890|96741|item|I3.focusPercent=0.885
+PROBE|1891|96755|frame|fr=2.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.88 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1892|96756|lf|MW.currFocusRow=2.94
+PROBE|1893|96757|item|I3.focusPercent=0.942
+PROBE|1894|96772|frame|fr=2.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.94 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1895|96773|lf|MW.currFocusRow=2.96
+PROBE|1896|96773|item|I3.focusPercent=0.962
+PROBE|1897|96788|frame|fr=2.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.96 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1898|96789|lf|MW.currFocusRow=2.98
+PROBE|1899|96790|item|I3.focusPercent=0.981
+PROBE|1900|96805|frame|fr=2.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.98 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1901|96839|lf|MW.currFocusRow=3
+PROBE|1902|96839|item|I3.focusPercent=1
+PROBE|1903|96854|item|I3.itemHasFocus=true
+PROBE|1904|96855|lf|MW.itemFocused=3
+PROBE|1905|96855|lf|MW.scrollingStatus=false
+PROBE|1906|96856|lf|MW.vertFocusDirection=none
+PROBE|1907|96858|frame|fr=3 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@1 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1908|98596|step|46 key:Down
+PROBE|await|Down
+PROBE|1909|98634|lf|MW.scrollingStatus=true
+PROBE|1910|98635|item|I3.itemHasFocus=false
+PROBE|1911|98635|lf|MW.itemUnfocused=3
+PROBE|1912|98636|lf|MW.vertFocusDirection=down
+PROBE|1913|98643|frame|fr=3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@1 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1914|98644|lf|MW.currFocusRow=3.06
+PROBE|1915|98645|item|I3.focusPercent=0.942
+PROBE|1916|98650|frame|fr=3.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.94 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1917|98651|lf|MW.currFocusRow=3.17
+PROBE|1918|98652|item|I3.focusPercent=0.827
+PROBE|1919|98656|frame|fr=3.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.83 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1920|98658|lf|MW.currFocusRow=3.27
+PROBE|1921|98658|item|I3.focusPercent=0.731
+PROBE|1922|98659|item|I4.focusPercent=0.269
+PROBE|1923|98661|frame|fr=3.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.73 4:100@0.27 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1924|98663|lf|MW.currFocusRow=3.35
+PROBE|1925|98663|item|I3.focusPercent=0.654
+PROBE|1926|98663|item|I4.focusPercent=0.346
+PROBE|1927|98672|frame|fr=3.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.65 4:100@0.35 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1928|98672|lf|MW.currFocusRow=3.46
+PROBE|1929|98673|item|I3.focusPercent=0.538
+PROBE|1930|98673|item|I4.focusPercent=0.462
+PROBE|1931|98688|frame|fr=3.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.54 4:100@0.46 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1932|98689|lf|MW.currFocusRow=3.62
+PROBE|1933|98689|item|I3.focusPercent=0.385
+PROBE|1934|98689|item|I4.focusPercent=0.615
+PROBE|1935|98705|frame|fr=3.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.38 4:100@0.62 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1936|98706|lf|MW.currFocusRow=3.73
+PROBE|1937|98706|item|I3.focusPercent=0.269
+PROBE|1938|98706|item|I4.focusPercent=0.731
+PROBE|1939|98722|frame|fr=3.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.27 4:100@0.73 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1940|98722|lf|MW.currFocusRow=3.83
+PROBE|1941|98723|item|I3.focusPercent=0.173
+PROBE|1942|98723|item|I4.focusPercent=0.827
+PROBE|1943|98739|frame|fr=3.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.17 4:100@0.83 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1944|98739|lf|MW.currFocusRow=3.9
+PROBE|1945|98739|item|I3.focusPercent=0.096
+PROBE|1946|98740|item|I4.focusPercent=0.904
+PROBE|1947|98757|frame|fr=3.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.9 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1948|98759|lf|MW.currFocusRow=3.94
+PROBE|1949|98759|item|I4.focusPercent=0.942
+PROBE|1950|98774|frame|fr=3.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.94 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1951|98775|lf|MW.currFocusRow=3.96
+PROBE|1952|98776|item|I4.focusPercent=0.962
+PROBE|1953|98790|frame|fr=3.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.96 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1954|98791|lf|MW.currFocusRow=3.98
+PROBE|1955|98792|item|I4.focusPercent=0.981
+PROBE|1956|98807|frame|fr=3.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.98 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1957|98841|lf|MW.currFocusRow=4
+PROBE|1958|98841|item|I4.focusPercent=1
+PROBE|1959|98856|item|I4.itemHasFocus=true
+PROBE|1960|98857|lf|MW.itemFocused=4
+PROBE|1961|98857|lf|MW.scrollingStatus=false
+PROBE|1962|98858|lf|MW.vertFocusDirection=none
+PROBE|1963|98860|frame|fr=4 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@1 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1964|100598|step|47 key:Down_Down
+PROBE|await|Down_Down
+PROBE|1965|100638|lf|MW.scrollingStatus=true
+PROBE|1966|100639|item|I4.itemHasFocus=false
+PROBE|1967|100639|lf|MW.itemUnfocused=4
+PROBE|1968|100639|lf|MW.vertFocusDirection=down
+PROBE|1969|100648|frame|fr=4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@1 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1970|100649|lf|MW.currFocusRow=4.06
+PROBE|1971|100650|item|I4.focusPercent=0.942
+PROBE|1972|100654|frame|fr=4.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.94 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1973|100655|lf|MW.currFocusRow=4.17
+PROBE|1974|100656|item|I4.focusPercent=0.827
+PROBE|1975|100660|frame|fr=4.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.83 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1976|100661|lf|MW.currFocusRow=4.27
+PROBE|1977|100662|item|I4.focusPercent=0.731
+PROBE|1978|100662|item|I5.focusPercent=0.269
+PROBE|1979|100665|frame|fr=4.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.73 5:100@0.27 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1980|100668|lf|MW.currFocusRow=4.33
+PROBE|1981|100669|item|I4.focusPercent=0.673
+PROBE|1982|100669|item|I5.focusPercent=0.327
+PROBE|1983|100676|frame|fr=4.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.67 5:100@0.33 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1984|100677|lf|MW.currFocusRow=4.46
+PROBE|1985|100678|item|I4.focusPercent=0.538
+PROBE|1986|100678|item|I5.focusPercent=0.462
+PROBE|1987|100692|frame|fr=4.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.54 5:100@0.46 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1988|100693|lf|MW.currFocusRow=4.6
+PROBE|1989|100694|item|I4.focusPercent=0.404
+PROBE|1990|100695|item|I5.focusPercent=0.596
+PROBE|1991|100709|frame|fr=4.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.4 5:100@0.6 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1992|100710|lf|MW.currFocusRow=4.73
+PROBE|1993|100710|item|I4.focusPercent=0.269
+PROBE|1994|100711|item|I5.focusPercent=0.731
+PROBE|1995|100726|frame|fr=4.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.27 5:100@0.73 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|1996|100727|lf|MW.currFocusRow=4.83
+PROBE|1997|100727|item|I4.focusPercent=0.173
+PROBE|1998|100728|item|I5.focusPercent=0.827
+PROBE|1999|100743|frame|fr=4.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.17 5:100@0.83 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2000|100743|lf|MW.currFocusRow=4.88
+PROBE|2001|100744|item|I4.focusPercent=0.115
+PROBE|2002|100745|item|I5.focusPercent=0.885
+PROBE|2003|100759|frame|fr=4.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.88 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2004|100760|lf|MW.currFocusRow=4.94
+PROBE|2005|100761|item|I5.focusPercent=0.942
+PROBE|2006|100776|frame|fr=4.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.94 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2007|100777|lf|MW.currFocusRow=4.96
+PROBE|2008|100778|item|I5.focusPercent=0.962
+PROBE|2009|100793|frame|fr=4.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.96 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2010|100793|lf|MW.currFocusRow=4.98
+PROBE|2011|100794|item|I5.focusPercent=0.981
+PROBE|2012|100809|frame|fr=4.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.98 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2013|100843|lf|MW.currFocusRow=5
+PROBE|2014|100844|item|I5.focusPercent=1
+PROBE|2015|100859|item|I5.itemHasFocus=true
+PROBE|2016|100859|lf|MW.itemFocused=5
+PROBE|2017|100860|lf|MW.scrollingStatus=false
+PROBE|2018|100860|lf|MW.vertFocusDirection=none
+PROBE|2019|100863|frame|fr=5 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@1 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2020|100864|lf|MW.scrollingStatus=true
+PROBE|2021|100864|item|I5.itemHasFocus=false
+PROBE|2022|100864|lf|MW.itemUnfocused=5
+PROBE|2023|100865|lf|MW.vertFocusDirection=down
+PROBE|2024|100876|frame|fr=5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@1 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2025|100878|lf|MW.currFocusRow=5.15
+PROBE|2026|100878|item|I5.focusPercent=0.846
+PROBE|2027|100893|frame|fr=5.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.85 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2028|100896|lf|MW.currFocusRow=5.37
+PROBE|2029|100897|item|I5.focusPercent=0.635
+PROBE|2030|100898|item|I6.focusPercent=0.365
+PROBE|2031|100909|frame|fr=5.37 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.63 6:100@0.37 7:100@0 8:100@0 9:100@0
+PROBE|2032|100910|lf|MW.currFocusRow=5.54
+PROBE|2033|100911|item|I5.focusPercent=0.462
+PROBE|2034|100912|item|I6.focusPercent=0.538
+PROBE|2035|100926|frame|fr=5.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.46 6:100@0.54 7:100@0 8:100@0 9:100@0
+PROBE|2036|100927|lf|MW.currFocusRow=5.67
+PROBE|2037|100928|item|I5.focusPercent=0.327
+PROBE|2038|100928|item|I6.focusPercent=0.673
+PROBE|2039|100943|frame|fr=5.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.33 6:100@0.67 7:100@0 8:100@0 9:100@0
+PROBE|2040|100944|lf|MW.currFocusRow=5.79
+PROBE|2041|100944|item|I5.focusPercent=0.212
+PROBE|2042|100945|item|I6.focusPercent=0.788
+PROBE|2043|100959|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.21 6:100@0.79 7:100@0 8:100@0 9:100@0
+PROBE|2044|100960|lf|MW.currFocusRow=5.87
+PROBE|2045|100961|item|I5.focusPercent=0.135
+PROBE|2046|100962|item|I6.focusPercent=0.865
+PROBE|2047|100976|frame|fr=5.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.87 7:100@0 8:100@0 9:100@0
+PROBE|2048|100977|lf|MW.currFocusRow=5.92
+PROBE|2049|100977|item|I6.focusPercent=0.923
+PROBE|2050|100993|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.92 7:100@0 8:100@0 9:100@0
+PROBE|2051|100994|lf|MW.currFocusRow=5.96
+PROBE|2052|100994|item|I6.focusPercent=0.962
+PROBE|2053|101009|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.96 7:100@0 8:100@0 9:100@0
+PROBE|2054|101010|lf|MW.currFocusRow=5.98
+PROBE|2055|101011|item|I6.focusPercent=0.981
+PROBE|2056|101026|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.98 7:100@0 8:100@0 9:100@0
+PROBE|2057|101060|lf|MW.currFocusRow=6
+PROBE|2058|101061|item|I6.focusPercent=1
+PROBE|2059|101075|item|I6.itemHasFocus=true
+PROBE|2060|101076|lf|MW.itemFocused=6
+PROBE|2061|101076|lf|MW.scrollingStatus=false
+PROBE|2062|101077|lf|MW.vertFocusDirection=none
+PROBE|2063|101080|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@1 7:100@0 8:100@0 9:100@0
+PROBE|2064|102599|step|48 hold:Down
+PROBE|await|HoldDown
+PROBE|2065|102639|lf|MW.scrollingStatus=true
+PROBE|2066|102640|item|I6.itemHasFocus=false
+PROBE|2067|102640|lf|MW.itemUnfocused=6
+PROBE|2068|102641|lf|MW.vertFocusDirection=down
+PROBE|2069|102646|frame|fr=6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.12 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@1 7:100@0 8:100@0 9:100@0
+PROBE|2070|102647|lf|MW.currFocusRow=6.06
+PROBE|2071|102648|item|I6.focusPercent=0.942
+PROBE|2072|102649|item|I0.focusPercent=0
+PROBE|2073|102652|frame|fr=6.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.94 7:100@0 8:100@0 9:100@0
+PROBE|2074|102652|lf|MW.currFocusRow=6.15
+PROBE|2075|102653|item|I6.focusPercent=0.846
+PROBE|2076|102656|frame|fr=6.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.85 7:100@0 8:100@0 9:100@0
+PROBE|2077|102657|lf|MW.currFocusRow=6.21
+PROBE|2078|102657|item|I6.focusPercent=0.788
+PROBE|2079|102658|item|I7.focusPercent=0.212
+PROBE|2080|102660|frame|fr=6.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.79 7:100@0.21 8:100@0 9:100@0
+PROBE|2081|102661|lf|MW.currFocusRow=6.27
+PROBE|2082|102662|item|I6.focusPercent=0.731
+PROBE|2083|102662|item|I7.focusPercent=0.269
+PROBE|2084|102677|frame|fr=6.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.73 7:100@0.27 8:100@0 9:100@0
+PROBE|2085|102678|lf|MW.currFocusRow=6.46
+PROBE|2086|102678|item|I6.focusPercent=0.538
+PROBE|2087|102679|item|I7.focusPercent=0.462
+PROBE|2088|102694|frame|fr=6.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.54 7:100@0.46 8:100@0 9:100@0
+PROBE|2089|102695|lf|MW.currFocusRow=6.62
+PROBE|2090|102695|item|I6.focusPercent=0.385
+PROBE|2091|102696|item|I7.focusPercent=0.615
+PROBE|2092|102710|frame|fr=6.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.38 7:100@0.62 8:100@0 9:100@0
+PROBE|2093|102711|lf|MW.currFocusRow=6.73
+PROBE|2094|102712|item|I6.focusPercent=0.269
+PROBE|2095|102712|item|I7.focusPercent=0.731
+PROBE|2096|102727|frame|fr=6.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.27 7:100@0.73 8:100@0 9:100@0
+PROBE|2097|102728|lf|MW.currFocusRow=6.83
+PROBE|2098|102729|item|I6.focusPercent=0.173
+PROBE|2099|102729|item|I7.focusPercent=0.827
+PROBE|2100|102744|frame|fr=6.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.17 7:100@0.83 8:100@0 9:100@0
+PROBE|2101|102745|lf|MW.currFocusRow=6.88
+PROBE|2102|102746|item|I6.focusPercent=0.115
+PROBE|2103|102746|item|I7.focusPercent=0.885
+PROBE|2104|102761|frame|fr=6.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.88 8:100@0 9:100@0
+PROBE|2105|102762|lf|MW.currFocusRow=6.94
+PROBE|2106|102763|item|I7.focusPercent=0.942
+PROBE|2107|102778|frame|fr=6.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.94 8:100@0 9:100@0
+PROBE|2108|102779|lf|MW.currFocusRow=6.96
+PROBE|2109|102779|item|I7.focusPercent=0.962
+PROBE|2110|102794|frame|fr=6.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.96 8:100@0 9:100@0
+PROBE|2111|102795|lf|MW.currFocusRow=6.98
+PROBE|2112|102796|item|I7.focusPercent=0.981
+PROBE|2113|102811|frame|fr=6.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.98 8:100@0 9:100@0
+PROBE|2114|102845|lf|MW.currFocusRow=7
+PROBE|2115|102846|item|I7.focusPercent=1
+PROBE|2116|102861|frame|fr=7 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0.13 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@1 8:100@0 9:100@0
+PROBE|2117|103045|lf|MW.currFocusRow=7.02
+PROBE|2118|103046|item|I7.focusPercent=0.981
+PROBE|2119|103047|item|I1.focusPercent=0
+PROBE|2120|103061|frame|fr=7.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.98 8:100@0 9:100@0
+PROBE|2121|103062|lf|MW.currFocusRow=7.06
+PROBE|2122|103063|item|I7.focusPercent=0.942
+PROBE|2123|103078|frame|fr=7.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.94 8:100@0 9:100@0
+PROBE|2124|103079|lf|MW.currFocusRow=7.1
+PROBE|2125|103080|item|I7.focusPercent=0.904
+PROBE|2126|103095|frame|fr=7.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.9 8:100@0 9:100@0
+PROBE|2127|103096|lf|MW.currFocusRow=7.15
+PROBE|2128|103096|item|I7.focusPercent=0.846
+PROBE|2129|103111|frame|fr=7.15 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.85 8:100@0 9:100@0
+PROBE|2130|103112|lf|MW.currFocusRow=7.23
+PROBE|2131|103113|item|I7.focusPercent=0.769
+PROBE|2132|103114|item|I8.focusPercent=0.231
+PROBE|2133|103128|frame|fr=7.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.77 8:100@0.23 9:100@0
+PROBE|2134|103129|lf|MW.currFocusRow=7.33
+PROBE|2135|103130|item|I7.focusPercent=0.673
+PROBE|2136|103131|item|I8.focusPercent=0.327
+PROBE|2137|103145|frame|fr=7.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.67 8:100@0.33 9:100@0
+PROBE|2138|103147|lf|MW.currFocusRow=7.42
+PROBE|2139|103147|item|I7.focusPercent=0.577
+PROBE|2140|103148|item|I8.focusPercent=0.423
+PROBE|2141|103162|frame|fr=7.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.58 8:100@0.42 9:100@0
+PROBE|2142|103163|lf|MW.currFocusRow=7.5
+PROBE|2143|103164|item|I7.focusPercent=0.5
+PROBE|2144|103164|item|I8.focusPercent=0.5
+PROBE|2145|103178|frame|fr=7.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.5 8:100@0.5 9:100@0
+PROBE|2146|103180|lf|MW.currFocusRow=7.6
+PROBE|2147|103180|item|I7.focusPercent=0.404
+PROBE|2148|103181|item|I8.focusPercent=0.596
+PROBE|2149|103195|frame|fr=7.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.4 8:100@0.6 9:100@0
+PROBE|2150|103197|lf|MW.currFocusRow=7.67
+PROBE|2151|103198|item|I7.focusPercent=0.327
+PROBE|2152|103199|item|I8.focusPercent=0.673
+PROBE|2153|103212|frame|fr=7.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.33 8:100@0.67 9:100@0
+PROBE|2154|103213|lf|MW.currFocusRow=7.77
+PROBE|2155|103214|item|I7.focusPercent=0.231
+PROBE|2156|103215|item|I8.focusPercent=0.769
+PROBE|2157|103228|frame|fr=7.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.23 8:100@0.77 9:100@0
+PROBE|2158|103230|lf|MW.currFocusRow=7.85
+PROBE|2159|103230|item|I7.focusPercent=0.154
+PROBE|2160|103231|item|I8.focusPercent=0.846
+PROBE|2161|103245|frame|fr=7.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.85 9:100@0
+PROBE|2162|103247|lf|MW.currFocusRow=7.94
+PROBE|2163|103247|item|I8.focusPercent=0.942
+PROBE|2164|103262|frame|fr=7.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0.12 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.94 9:100@0
+PROBE|2165|103263|lf|MW.currFocusRow=8.02
+PROBE|2166|103264|item|I8.focusPercent=0.981
+PROBE|2167|103264|item|I2.focusPercent=0
+PROBE|2168|103278|frame|fr=8.02 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.98 9:100@0
+PROBE|2169|103280|lf|MW.currFocusRow=8.12
+PROBE|2170|103280|item|I8.focusPercent=0.885
+PROBE|2171|103295|frame|fr=8.12 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.88 9:100@0
+PROBE|2172|103297|lf|MW.currFocusRow=8.19
+PROBE|2173|103297|item|I8.focusPercent=0.808
+PROBE|2174|103298|item|I9.focusPercent=0.192
+PROBE|2175|103312|frame|fr=8.19 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.81 9:100@0.19
+PROBE|2176|103313|lf|MW.currFocusRow=8.29
+PROBE|2177|103314|item|I8.focusPercent=0.712
+PROBE|2178|103314|item|I9.focusPercent=0.288
+PROBE|2179|103329|frame|fr=8.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.71 9:100@0.29
+PROBE|2180|103330|lf|MW.currFocusRow=8.38
+PROBE|2181|103331|item|I8.focusPercent=0.615
+PROBE|2182|103332|item|I9.focusPercent=0.385
+PROBE|2183|103345|frame|fr=8.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.62 9:100@0.38
+PROBE|2184|103346|lf|MW.currFocusRow=8.46
+PROBE|2185|103347|item|I8.focusPercent=0.538
+PROBE|2186|103347|item|I9.focusPercent=0.462
+PROBE|2187|103362|frame|fr=8.46 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.54 9:100@0.46
+PROBE|2188|103363|lf|MW.currFocusRow=8.56
+PROBE|2189|103364|item|I8.focusPercent=0.442
+PROBE|2190|103365|item|I9.focusPercent=0.558
+PROBE|2191|103379|frame|fr=8.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.44 9:100@0.56
+PROBE|2192|103380|lf|MW.currFocusRow=8.63
+PROBE|2193|103381|item|I8.focusPercent=0.365
+PROBE|2194|103381|item|I9.focusPercent=0.635
+PROBE|2195|103395|frame|fr=8.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.37 9:100@0.63
+PROBE|2196|103397|lf|MW.currFocusRow=8.73
+PROBE|2197|103397|item|I8.focusPercent=0.269
+PROBE|2198|103398|item|I9.focusPercent=0.731
+PROBE|2199|103403|frame|fr=8.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.27 9:100@0.73
+PROBE|2200|103413|lf|MW.currFocusRow=8.81
+PROBE|2201|103414|item|I8.focusPercent=0.192
+PROBE|2202|103414|item|I9.focusPercent=0.808
+PROBE|2203|103429|frame|fr=8.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.19 9:100@0.81
+PROBE|2204|103430|lf|MW.currFocusRow=8.9
+PROBE|2205|103431|item|I8.focusPercent=0.096
+PROBE|2206|103431|item|I9.focusPercent=0.904
+PROBE|2207|103445|frame|fr=8.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.9
+PROBE|2208|103447|lf|MW.currFocusRow=8.98
+PROBE|2209|103447|item|I9.focusPercent=0.981
+PROBE|2210|103462|frame|fr=8.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0.1 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.98
+PROBE|2211|103463|lf|MW.currFocusRow=9.05
+PROBE|2212|103463|item|I9.focusPercent=0.947
+PROBE|2213|103464|item|I3.focusPercent=0
+PROBE|2214|103478|frame|fr=9.05 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.95
+PROBE|2215|103479|lf|MW.currFocusRow=9.11
+PROBE|2216|103480|item|I9.focusPercent=0.895
+PROBE|2217|103495|frame|fr=9.11 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.89
+PROBE|2218|103496|lf|MW.currFocusRow=9.17
+PROBE|2219|103497|item|I9.focusPercent=0.829
+PROBE|2220|103512|frame|fr=9.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.83
+PROBE|2221|103513|lf|MW.currFocusRow=9.22
+PROBE|2222|103513|item|I9.focusPercent=0.776
+PROBE|2223|103528|frame|fr=9.22 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.78
+PROBE|2224|103529|lf|MW.currFocusRow=9.29
+PROBE|2225|103530|item|I9.focusPercent=0.711
+PROBE|2226|103545|frame|fr=9.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.71
+PROBE|2227|103546|lf|MW.currFocusRow=9.34
+PROBE|2228|103547|item|I9.focusPercent=0.658
+PROBE|2229|103562|frame|fr=9.34 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.66
+PROBE|2230|103563|lf|MW.currFocusRow=9.41
+PROBE|2231|103563|item|I9.focusPercent=0.592
+PROBE|2232|103579|frame|fr=9.41 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.59
+PROBE|2233|103579|lf|MW.currFocusRow=9.47
+PROBE|2234|103580|item|I9.focusPercent=0.526
+PROBE|2235|103581|item|I0.focusPercent=0.474
+PROBE|2236|103595|frame|fr=9.47 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.47 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.53
+PROBE|2237|103596|lf|MW.currFocusRow=9.53
+PROBE|2238|103597|item|I9.focusPercent=0.474
+PROBE|2239|103597|item|I0.focusPercent=0.526
+PROBE|2240|103612|frame|fr=9.53 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.53 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.47
+PROBE|2241|103613|lf|MW.currFocusRow=9.59
+PROBE|2242|103614|item|I9.focusPercent=0.408
+PROBE|2243|103614|item|I0.focusPercent=0.592
+PROBE|2244|103629|frame|fr=9.59 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.59 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2245|103629|lf|MW.currFocusRow=9.64
+PROBE|2246|103630|item|I0.focusPercent=0.645
+PROBE|2247|103645|frame|fr=9.64 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.64 1:100@0 2:100@0 3:100@0 4:100@0.12 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2248|103647|lf|MW.currFocusRow=9.71
+PROBE|2249|103647|item|I0.focusPercent=0.711
+PROBE|2250|103648|item|I4.focusPercent=0
+PROBE|2251|103662|frame|fr=9.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.71 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2252|103663|lf|MW.currFocusRow=9.76
+PROBE|2253|103663|item|I0.focusPercent=0.763
+PROBE|2254|103679|frame|fr=9.76 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.76 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2255|103680|lf|MW.currFocusRow=9.83
+PROBE|2256|103680|item|I0.focusPercent=0.829
+PROBE|2257|103695|frame|fr=9.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.83 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2258|103696|lf|MW.currFocusRow=9.88
+PROBE|2259|103697|item|I0.focusPercent=0.882
+PROBE|2260|103712|frame|fr=9.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.88 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2261|103713|lf|MW.currFocusRow=9.95
+PROBE|2262|103713|item|I0.focusPercent=0.947
+PROBE|2263|103729|frame|fr=9.95 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.95 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2264|103729|lf|MW.currFocusRow=0
+PROBE|2265|103730|item|I0.focusPercent=1
+PROBE|2266|103745|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2267|103746|lf|MW.currFocusRow=0.1
+PROBE|2268|103747|item|I0.focusPercent=0.904
+PROBE|2269|103762|frame|fr=0.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.9 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2270|103763|lf|MW.currFocusRow=0.17
+PROBE|2271|103764|item|I0.focusPercent=0.827
+PROBE|2272|103779|frame|fr=0.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.83 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2273|103780|lf|MW.currFocusRow=0.27
+PROBE|2274|103780|item|I0.focusPercent=0.731
+PROBE|2275|103781|item|I1.focusPercent=0.269
+PROBE|2276|103795|frame|fr=0.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.73 1:100@0.27 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2277|103797|lf|MW.currFocusRow=0.35
+PROBE|2278|103797|item|I0.focusPercent=0.654
+PROBE|2279|103798|item|I1.focusPercent=0.346
+PROBE|2280|103812|frame|fr=0.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.65 1:100@0.35 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2281|103813|lf|MW.currFocusRow=0.44
+PROBE|2282|103814|item|I0.focusPercent=0.558
+PROBE|2283|103814|item|I1.focusPercent=0.442
+PROBE|2284|103829|frame|fr=0.44 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.56 1:100@0.44 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2285|103830|lf|MW.currFocusRow=0.54
+PROBE|2286|103830|item|I0.focusPercent=0.462
+PROBE|2287|103831|item|I1.focusPercent=0.538
+PROBE|2288|103846|frame|fr=0.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.46 1:100@0.54 2:100@0 3:100@0 4:100@0 5:100@0.13 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2289|103846|lf|MW.currFocusRow=0.62
+PROBE|2290|103847|item|I0.focusPercent=0.385
+PROBE|2291|103848|item|I1.focusPercent=0.615
+PROBE|2292|103848|item|I5.focusPercent=0
+PROBE|2293|103862|frame|fr=0.62 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.38 1:100@0.62 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2294|103863|lf|MW.currFocusRow=0.71
+PROBE|2295|103864|item|I0.focusPercent=0.288
+PROBE|2296|103864|item|I1.focusPercent=0.712
+PROBE|2297|103879|frame|fr=0.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.29 1:100@0.71 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2298|103882|lf|MW.currFocusRow=0.79
+PROBE|2299|103883|item|I0.focusPercent=0.212
+PROBE|2300|103883|item|I1.focusPercent=0.788
+PROBE|2301|103896|frame|fr=0.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.21 1:100@0.79 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2302|103896|lf|MW.currFocusRow=0.92
+PROBE|2303|103897|item|I1.focusPercent=0.923
+PROBE|2304|103906|frame|fr=0.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.21 1:100@0.92 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2305|103913|lf|MW.currFocusRow=0.98
+PROBE|2306|103914|item|I1.focusPercent=0.981
+PROBE|2307|103929|frame|fr=0.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.21 1:100@0.98 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2308|103930|lf|MW.currFocusRow=1
+PROBE|2309|103930|item|I1.focusPercent=1
+PROBE|2310|103945|item|I1.itemHasFocus=true
+PROBE|2311|103945|lf|MW.itemFocused=1
+PROBE|2312|103946|lf|MW.scrollingStatus=false
+PROBE|2313|103946|lf|MW.vertFocusDirection=none
+PROBE|2314|103949|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.21 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2315|106100|step|49 act:jump0
+PROBE|2316|106100|item|I1.itemHasFocus=false
+PROBE|2317|106101|lf|MW.itemUnfocused=1
+PROBE|2318|106101|lf|MW.currFocusRow=0
+PROBE|2319|106104|item|I0.itemHasFocus=true
+PROBE|2320|106104|lf|MW.itemFocused=0
+PROBE|2321|106104|act|jump0 itemFocused=0 currFocusRow=0 skipFocusAnimations=false 
+PROBE|2322|106105|item|I0.focusPercent=1
+PROBE|2323|106106|item|I1.focusPercent=0
+PROBE|2324|106109|frame|fr=0 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2325|108106|step|50 key:Up
+PROBE|await|Up
+PROBE|2326|108147|lf|MW.scrollingStatus=true
+PROBE|2327|108148|item|I0.itemHasFocus=false
+PROBE|2328|108148|lf|MW.itemUnfocused=0
+PROBE|2329|108148|lf|MW.vertFocusDirection=up
+PROBE|2330|108155|frame|fr=0 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@1 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2331|108156|lf|MW.currFocusRow=9.93
+PROBE|2332|108157|item|I0.focusPercent=0.934
+PROBE|2333|108160|frame|fr=9.93 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.93 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2334|108161|lf|MW.currFocusRow=9.86
+PROBE|2335|108162|item|I0.focusPercent=0.855
+PROBE|2336|108165|frame|fr=9.86 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.86 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2337|108166|lf|MW.currFocusRow=9.79
+PROBE|2338|108167|item|I0.focusPercent=0.789
+PROBE|2339|108183|frame|fr=9.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.79 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2340|108186|lf|MW.currFocusRow=9.58
+PROBE|2341|108187|item|I9.focusPercent=0.421
+PROBE|2342|108187|item|I0.focusPercent=0.579
+PROBE|2343|108200|frame|fr=9.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.58 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.42
+PROBE|2344|108201|lf|MW.currFocusRow=9.42
+PROBE|2345|108202|item|I9.focusPercent=0.579
+PROBE|2346|108202|item|I0.focusPercent=0
+PROBE|2347|108217|frame|fr=9.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.58
+PROBE|2348|108217|lf|MW.currFocusRow=9.3
+PROBE|2349|108218|item|I9.focusPercent=0.697
+PROBE|2350|108233|frame|fr=9.3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.7
+PROBE|2351|108234|lf|MW.currFocusRow=9.2
+PROBE|2352|108235|item|I9.focusPercent=0.803
+PROBE|2353|108250|frame|fr=9.2 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.8
+PROBE|2354|108251|lf|MW.currFocusRow=9.13
+PROBE|2355|108251|item|I9.focusPercent=0.868
+PROBE|2356|108267|frame|fr=9.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.87
+PROBE|2357|108268|lf|MW.currFocusRow=9.08
+PROBE|2358|108269|item|I9.focusPercent=0.921
+PROBE|2359|108283|frame|fr=9.08 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.92
+PROBE|2360|108285|lf|MW.currFocusRow=9.04
+PROBE|2361|108285|item|I9.focusPercent=0.961
+PROBE|2362|108300|frame|fr=9.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.96
+PROBE|2363|108301|lf|MW.currFocusRow=9.03
+PROBE|2364|108302|item|I9.focusPercent=0.974
+PROBE|2365|108317|frame|fr=9.03 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.97
+PROBE|2366|108317|lf|MW.currFocusRow=9.01
+PROBE|2367|108318|item|I9.focusPercent=0.987
+PROBE|2368|108333|frame|fr=9.01 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.99
+PROBE|2369|108350|lf|MW.currFocusRow=9
+PROBE|2370|108351|item|I9.focusPercent=1
+PROBE|2371|108366|item|I9.itemHasFocus=true
+PROBE|2372|108367|lf|MW.itemFocused=9
+PROBE|2373|108367|lf|MW.scrollingStatus=false
+PROBE|2374|108367|lf|MW.vertFocusDirection=none
+PROBE|2375|108371|frame|fr=9 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@1
+PROBE|2376|110107|step|51 act:animate6
+PROBE|2377|110108|lf|MW.scrollingStatus=true
+PROBE|2378|110108|item|I9.itemHasFocus=false
+PROBE|2379|110108|lf|MW.itemUnfocused=9
+PROBE|2380|110109|lf|MW.vertFocusDirection=down
+PROBE|2381|110109|act|animate6 itemFocused=9 currFocusRow=9 skipFocusAnimations=false 
+PROBE|2382|110113|frame|fr=9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@1
+PROBE|2383|110113|lf|MW.currFocusRow=9.03
+PROBE|2384|110114|item|I9.focusPercent=0.974
+PROBE|2385|110117|frame|fr=9.03 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.97
+PROBE|2386|110118|lf|MW.currFocusRow=9.07
+PROBE|2387|110119|item|I9.focusPercent=0.934
+PROBE|2388|110122|frame|fr=9.07 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.93
+PROBE|2389|110123|lf|MW.currFocusRow=9.12
+PROBE|2390|110123|item|I9.focusPercent=0.882
+PROBE|2391|110135|frame|fr=9.12 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.88
+PROBE|2392|110136|lf|MW.currFocusRow=9.26
+PROBE|2393|110137|item|I9.focusPercent=0.737
+PROBE|2394|110152|frame|fr=9.26 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.74
+PROBE|2395|110153|lf|MW.currFocusRow=9.43
+PROBE|2396|110153|item|I9.focusPercent=0.566
+PROBE|2397|110168|frame|fr=9.43 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.57
+PROBE|2398|110169|lf|MW.currFocusRow=9.59
+PROBE|2399|110170|item|I9.focusPercent=0.408
+PROBE|2400|110171|item|I0.focusPercent=0.592
+PROBE|2401|110185|frame|fr=9.59 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.59 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2402|110187|lf|MW.currFocusRow=9.76
+PROBE|2403|110187|item|I0.focusPercent=0.763
+PROBE|2404|110202|frame|fr=9.76 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.76 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2405|110204|lf|MW.currFocusRow=9.92
+PROBE|2406|110204|item|I0.focusPercent=0.921
+PROBE|2407|110219|frame|fr=9.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.92 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2408|110220|lf|MW.currFocusRow=0.1
+PROBE|2409|110221|item|I0.focusPercent=0.904
+PROBE|2410|110236|frame|fr=0.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.9 1:100@0 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2411|110237|lf|MW.currFocusRow=0.33
+PROBE|2412|110237|item|I0.focusPercent=0.673
+PROBE|2413|110238|item|I1.focusPercent=0.327
+PROBE|2414|110252|frame|fr=0.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.67 1:100@0.33 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2415|110254|lf|MW.currFocusRow=0.54
+PROBE|2416|110254|item|I0.focusPercent=0.462
+PROBE|2417|110255|item|I1.focusPercent=0.538
+PROBE|2418|110269|frame|fr=0.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.46 1:100@0.54 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2419|110270|lf|MW.currFocusRow=0.75
+PROBE|2420|110271|item|I0.focusPercent=0.25
+PROBE|2421|110272|item|I1.focusPercent=0.75
+PROBE|2422|110286|frame|fr=0.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.75 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2423|110287|lf|MW.currFocusRow=0.94
+PROBE|2424|110287|item|I1.focusPercent=0.942
+PROBE|2425|110302|frame|fr=0.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.94 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2426|110304|lf|MW.currFocusRow=1.13
+PROBE|2427|110305|item|I1.focusPercent=0.865
+PROBE|2428|110319|frame|fr=1.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.87 2:100@0 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2429|110320|lf|MW.currFocusRow=1.35
+PROBE|2430|110321|item|I1.focusPercent=0.654
+PROBE|2431|110321|item|I2.focusPercent=0.346
+PROBE|2432|110335|frame|fr=1.35 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.65 2:100@0.35 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2433|110337|lf|MW.currFocusRow=1.52
+PROBE|2434|110337|item|I1.focusPercent=0.481
+PROBE|2435|110338|item|I2.focusPercent=0.519
+PROBE|2436|110352|frame|fr=1.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.48 2:100@0.52 3:100@0 4:100@0 5:100@0 6:100@0.12 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2437|110354|lf|MW.currFocusRow=1.71
+PROBE|2438|110354|item|I1.focusPercent=0.288
+PROBE|2439|110355|item|I2.focusPercent=0.712
+PROBE|2440|110356|item|I6.focusPercent=0
+PROBE|2441|110369|frame|fr=1.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.29 2:100@0.71 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2442|110370|lf|MW.currFocusRow=1.88
+PROBE|2443|110371|item|I1.focusPercent=0.115
+PROBE|2444|110371|item|I2.focusPercent=0.885
+PROBE|2445|110386|frame|fr=1.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.88 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2446|110387|lf|MW.currFocusRow=2.06
+PROBE|2447|110388|item|I2.focusPercent=0.942
+PROBE|2448|110402|frame|fr=2.06 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.94 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2449|110404|lf|MW.currFocusRow=2.23
+PROBE|2450|110404|item|I2.focusPercent=0.769
+PROBE|2451|110405|item|I3.focusPercent=0.231
+PROBE|2452|110419|frame|fr=2.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.77 3:100@0.23 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2453|110420|lf|MW.currFocusRow=2.4
+PROBE|2454|110421|item|I2.focusPercent=0.596
+PROBE|2455|110421|item|I3.focusPercent=0.404
+PROBE|2456|110429|frame|fr=2.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.6 3:100@0.4 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2457|110437|lf|MW.currFocusRow=2.54
+PROBE|2458|110437|item|I2.focusPercent=0.462
+PROBE|2459|110438|item|I3.focusPercent=0.538
+PROBE|2460|110452|frame|fr=2.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.46 3:100@0.54 4:100@0 5:100@0 6:100@0 7:100@0.15 8:100@0.1 9:100@0.41
+PROBE|2461|110454|lf|MW.currFocusRow=2.71
+PROBE|2462|110454|item|I2.focusPercent=0.288
+PROBE|2463|110455|item|I3.focusPercent=0.712
+PROBE|2464|110456|item|I7.focusPercent=0
+PROBE|2465|110469|frame|fr=2.71 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.29 3:100@0.71 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2466|110470|lf|MW.currFocusRow=2.87
+PROBE|2467|110471|item|I2.focusPercent=0.135
+PROBE|2468|110472|item|I3.focusPercent=0.865
+PROBE|2469|110486|frame|fr=2.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.87 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2470|110487|lf|MW.currFocusRow=3
+PROBE|2471|110488|item|I3.focusPercent=1
+PROBE|2472|110502|frame|fr=3 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@1 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2473|110503|lf|MW.currFocusRow=3.13
+PROBE|2474|110504|item|I3.focusPercent=0.865
+PROBE|2475|110519|frame|fr=3.13 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.87 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2476|110520|lf|MW.currFocusRow=3.27
+PROBE|2477|110521|item|I3.focusPercent=0.731
+PROBE|2478|110522|item|I4.focusPercent=0.269
+PROBE|2479|110536|frame|fr=3.27 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.73 4:100@0.27 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2480|110537|lf|MW.currFocusRow=3.4
+PROBE|2481|110538|item|I3.focusPercent=0.596
+PROBE|2482|110538|item|I4.focusPercent=0.404
+PROBE|2483|110552|frame|fr=3.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.6 4:100@0.4 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2484|110554|lf|MW.currFocusRow=3.54
+PROBE|2485|110554|item|I3.focusPercent=0.462
+PROBE|2486|110555|item|I4.focusPercent=0.538
+PROBE|2487|110569|frame|fr=3.54 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.46 4:100@0.54 5:100@0 6:100@0 7:100@0 8:100@0.1 9:100@0.41
+PROBE|2488|110570|lf|MW.currFocusRow=3.65
+PROBE|2489|110570|item|I3.focusPercent=0.346
+PROBE|2490|110571|item|I4.focusPercent=0.654
+PROBE|2491|110571|item|I8.focusPercent=0
+PROBE|2492|110585|frame|fr=3.65 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.35 4:100@0.65 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2493|110586|lf|MW.currFocusRow=3.77
+PROBE|2494|110587|item|I3.focusPercent=0.231
+PROBE|2495|110588|item|I4.focusPercent=0.769
+PROBE|2496|110602|frame|fr=3.77 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.23 4:100@0.77 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2497|110603|lf|MW.currFocusRow=3.88
+PROBE|2498|110604|item|I3.focusPercent=0.115
+PROBE|2499|110604|item|I4.focusPercent=0.885
+PROBE|2500|110619|frame|fr=3.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.88 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2501|110620|lf|MW.currFocusRow=4
+PROBE|2502|110620|item|I4.focusPercent=1
+PROBE|2503|110636|frame|fr=4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@1 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2504|110636|lf|MW.currFocusRow=4.1
+PROBE|2505|110637|item|I4.focusPercent=0.904
+PROBE|2506|110652|frame|fr=4.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.9 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2507|110653|lf|MW.currFocusRow=4.21
+PROBE|2508|110653|item|I4.focusPercent=0.788
+PROBE|2509|110654|item|I5.focusPercent=0.212
+PROBE|2510|110669|frame|fr=4.21 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.79 5:100@0.21 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2511|110670|lf|MW.currFocusRow=4.31
+PROBE|2512|110670|item|I4.focusPercent=0.692
+PROBE|2513|110671|item|I5.focusPercent=0.308
+PROBE|2514|110685|frame|fr=4.31 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.69 5:100@0.31 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2515|110686|lf|MW.currFocusRow=4.4
+PROBE|2516|110687|item|I4.focusPercent=0.596
+PROBE|2517|110687|item|I5.focusPercent=0.404
+PROBE|2518|110702|frame|fr=4.4 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.6 5:100@0.4 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2519|110703|lf|MW.currFocusRow=4.5
+PROBE|2520|110704|item|I4.focusPercent=0.5
+PROBE|2521|110704|item|I5.focusPercent=0.5
+PROBE|2522|110719|frame|fr=4.5 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.5 5:100@0.5 6:100@0 7:100@0 8:100@0 9:100@0.41
+PROBE|2523|110720|lf|MW.currFocusRow=4.58
+PROBE|2524|110720|item|I4.focusPercent=0.423
+PROBE|2525|110721|item|I5.focusPercent=0.577
+PROBE|2526|110721|item|I9.focusPercent=0
+PROBE|2527|110736|frame|fr=4.58 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.42 5:100@0.58 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2528|110737|lf|MW.currFocusRow=4.67
+PROBE|2529|110737|item|I4.focusPercent=0.327
+PROBE|2530|110738|item|I5.focusPercent=0.673
+PROBE|2531|110753|frame|fr=4.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.33 5:100@0.67 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2532|110753|lf|MW.currFocusRow=4.75
+PROBE|2533|110754|item|I4.focusPercent=0.25
+PROBE|2534|110755|item|I5.focusPercent=0.75
+PROBE|2535|110769|frame|fr=4.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.25 5:100@0.75 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2536|110770|lf|MW.currFocusRow=4.83
+PROBE|2537|110771|item|I4.focusPercent=0.173
+PROBE|2538|110772|item|I5.focusPercent=0.827
+PROBE|2539|110786|frame|fr=4.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.17 5:100@0.83 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2540|110787|lf|MW.currFocusRow=4.9
+PROBE|2541|110787|item|I4.focusPercent=0.096
+PROBE|2542|110788|item|I5.focusPercent=0.904
+PROBE|2543|110803|frame|fr=4.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.9 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2544|110803|lf|MW.currFocusRow=4.98
+PROBE|2545|110804|item|I5.focusPercent=0.981
+PROBE|2546|110819|frame|fr=4.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.98 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2547|110820|lf|MW.currFocusRow=5.04
+PROBE|2548|110821|item|I5.focusPercent=0.962
+PROBE|2549|110836|frame|fr=5.04 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.96 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2550|110837|lf|MW.currFocusRow=5.1
+PROBE|2551|110838|item|I5.focusPercent=0.904
+PROBE|2552|110853|frame|fr=5.1 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.9 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2553|110854|lf|MW.currFocusRow=5.17
+PROBE|2554|110854|item|I5.focusPercent=0.827
+PROBE|2555|110869|frame|fr=5.17 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.83 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2556|110870|lf|MW.currFocusRow=5.23
+PROBE|2557|110871|item|I5.focusPercent=0.769
+PROBE|2558|110871|item|I6.focusPercent=0.231
+PROBE|2559|110886|frame|fr=5.23 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.77 6:100@0.23 7:100@0 8:100@0 9:100@0
+PROBE|2560|110887|lf|MW.currFocusRow=5.29
+PROBE|2561|110888|item|I5.focusPercent=0.712
+PROBE|2562|110888|item|I6.focusPercent=0.288
+PROBE|2563|110903|frame|fr=5.29 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.71 6:100@0.29 7:100@0 8:100@0 9:100@0
+PROBE|2564|110904|lf|MW.currFocusRow=5.33
+PROBE|2565|110904|item|I5.focusPercent=0.673
+PROBE|2566|110905|item|I6.focusPercent=0.327
+PROBE|2567|110919|frame|fr=5.33 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.67 6:100@0.33 7:100@0 8:100@0 9:100@0
+PROBE|2568|110920|lf|MW.currFocusRow=5.38
+PROBE|2569|110921|item|I5.focusPercent=0.615
+PROBE|2570|110921|item|I6.focusPercent=0.385
+PROBE|2571|110932|frame|fr=5.38 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.62 6:100@0.38 7:100@0 8:100@0 9:100@0
+PROBE|2572|110937|lf|MW.currFocusRow=5.42
+PROBE|2573|110937|item|I5.focusPercent=0.577
+PROBE|2574|110938|item|I6.focusPercent=0.423
+PROBE|2575|110953|frame|fr=5.42 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.58 6:100@0.42 7:100@0 8:100@0 9:100@0
+PROBE|2576|110954|lf|MW.currFocusRow=5.48
+PROBE|2577|110954|item|I5.focusPercent=0.519
+PROBE|2578|110955|item|I6.focusPercent=0.481
+PROBE|2579|110969|frame|fr=5.48 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.52 6:100@0.48 7:100@0 8:100@0 9:100@0
+PROBE|2580|110970|lf|MW.currFocusRow=5.52
+PROBE|2581|110971|item|I5.focusPercent=0.481
+PROBE|2582|110972|item|I6.focusPercent=0.519
+PROBE|2583|110986|frame|fr=5.52 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.48 6:100@0.52 7:100@0 8:100@0 9:100@0
+PROBE|2584|110987|lf|MW.currFocusRow=5.56
+PROBE|2585|110987|item|I5.focusPercent=0.442
+PROBE|2586|110988|item|I6.focusPercent=0.558
+PROBE|2587|111003|frame|fr=5.56 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.44 6:100@0.56 7:100@0 8:100@0 9:100@0
+PROBE|2588|111004|lf|MW.currFocusRow=5.6
+PROBE|2589|111004|item|I5.focusPercent=0.404
+PROBE|2590|111005|item|I6.focusPercent=0.596
+PROBE|2591|111019|frame|fr=5.6 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.4 6:100@0.6 7:100@0 8:100@0 9:100@0
+PROBE|2592|111020|lf|MW.currFocusRow=5.63
+PROBE|2593|111021|item|I5.focusPercent=0.365
+PROBE|2594|111021|item|I6.focusPercent=0.635
+PROBE|2595|111036|frame|fr=5.63 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.37 6:100@0.63 7:100@0 8:100@0 9:100@0
+PROBE|2596|111037|lf|MW.currFocusRow=5.67
+PROBE|2597|111038|item|I5.focusPercent=0.327
+PROBE|2598|111038|item|I6.focusPercent=0.673
+PROBE|2599|111053|frame|fr=5.67 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.33 6:100@0.67 7:100@0 8:100@0 9:100@0
+PROBE|2600|111054|lf|MW.currFocusRow=5.69
+PROBE|2601|111054|item|I5.focusPercent=0.308
+PROBE|2602|111055|item|I6.focusPercent=0.692
+PROBE|2603|111069|frame|fr=5.69 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.31 6:100@0.69 7:100@0 8:100@0 9:100@0
+PROBE|2604|111070|lf|MW.currFocusRow=5.73
+PROBE|2605|111071|item|I5.focusPercent=0.269
+PROBE|2606|111072|item|I6.focusPercent=0.731
+PROBE|2607|111086|frame|fr=5.73 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.27 6:100@0.73 7:100@0 8:100@0 9:100@0
+PROBE|2608|111087|lf|MW.currFocusRow=5.75
+PROBE|2609|111088|item|I5.focusPercent=0.25
+PROBE|2610|111088|item|I6.focusPercent=0.75
+PROBE|2611|111103|frame|fr=5.75 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.25 6:100@0.75 7:100@0 8:100@0 9:100@0
+PROBE|2612|111105|lf|MW.currFocusRow=5.79
+PROBE|2613|111105|item|I5.focusPercent=0.212
+PROBE|2614|111106|item|I6.focusPercent=0.788
+PROBE|2615|111120|frame|fr=5.79 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.21 6:100@0.79 7:100@0 8:100@0 9:100@0
+PROBE|2616|111121|lf|MW.currFocusRow=5.81
+PROBE|2617|111122|item|I5.focusPercent=0.192
+PROBE|2618|111123|item|I6.focusPercent=0.808
+PROBE|2619|111136|frame|fr=5.81 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.19 6:100@0.81 7:100@0 8:100@0 9:100@0
+PROBE|2620|111138|lf|MW.currFocusRow=5.83
+PROBE|2621|111138|item|I5.focusPercent=0.173
+PROBE|2622|111139|item|I6.focusPercent=0.827
+PROBE|2623|111153|frame|fr=5.83 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.17 6:100@0.83 7:100@0 8:100@0 9:100@0
+PROBE|2624|111154|lf|MW.currFocusRow=5.85
+PROBE|2625|111155|item|I5.focusPercent=0.154
+PROBE|2626|111156|item|I6.focusPercent=0.846
+PROBE|2627|111170|frame|fr=5.85 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.15 6:100@0.85 7:100@0 8:100@0 9:100@0
+PROBE|2628|111171|lf|MW.currFocusRow=5.87
+PROBE|2629|111172|item|I5.focusPercent=0.135
+PROBE|2630|111173|item|I6.focusPercent=0.865
+PROBE|2631|111187|frame|fr=5.87 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.13 6:100@0.87 7:100@0 8:100@0 9:100@0
+PROBE|2632|111188|lf|MW.currFocusRow=5.88
+PROBE|2633|111188|item|I5.focusPercent=0.115
+PROBE|2634|111189|item|I6.focusPercent=0.885
+PROBE|2635|111203|frame|fr=5.88 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.12 6:100@0.88 7:100@0 8:100@0 9:100@0
+PROBE|2636|111204|lf|MW.currFocusRow=5.9
+PROBE|2637|111205|item|I5.focusPercent=0.096
+PROBE|2638|111206|item|I6.focusPercent=0.904
+PROBE|2639|111220|frame|fr=5.9 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@0.9 7:100@0 8:100@0 9:100@0
+PROBE|2640|111237|lf|MW.currFocusRow=5.92
+PROBE|2641|111238|item|I6.focusPercent=0.923
+PROBE|2642|111253|frame|fr=5.92 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@0.92 7:100@0 8:100@0 9:100@0
+PROBE|2643|111271|lf|MW.currFocusRow=5.94
+PROBE|2644|111272|item|I6.focusPercent=0.942
+PROBE|2645|111286|frame|fr=5.94 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@0.94 7:100@0 8:100@0 9:100@0
+PROBE|2646|111304|lf|MW.currFocusRow=5.96
+PROBE|2647|111305|item|I6.focusPercent=0.962
+PROBE|2648|111320|frame|fr=5.96 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@0.96 7:100@0 8:100@0 9:100@0
+PROBE|2649|111354|lf|MW.currFocusRow=5.98
+PROBE|2650|111355|item|I6.focusPercent=0.981
+PROBE|2651|111370|frame|fr=5.98 ss=true fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@0.98 7:100@0 8:100@0 9:100@0
+PROBE|2652|111537|lf|MW.currFocusRow=6
+PROBE|2653|111538|item|I6.focusPercent=1
+PROBE|2654|111554|item|I6.itemHasFocus=true
+PROBE|2655|111554|lf|MW.itemFocused=6
+PROBE|2656|111555|lf|MW.scrollingStatus=false
+PROBE|2657|111555|lf|MW.vertFocusDirection=none
+PROBE|2658|111558|frame|fr=6 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@0.12 2:100@0.13 3:100@0.12 4:100@0.1 5:100@0.1 6:100@1 7:100@0 8:100@0 9:100@0
+PROBE|2659|112111|step|52 act:jump1
+PROBE|2660|112111|item|I6.itemHasFocus=false
+PROBE|2661|112111|lf|MW.itemUnfocused=6
+PROBE|2662|112112|lf|MW.currFocusRow=1
+PROBE|2663|112114|item|I1.itemHasFocus=true
+PROBE|2664|112114|lf|MW.itemFocused=1
+PROBE|2665|112115|act|jump1 itemFocused=1 currFocusRow=1 skipFocusAnimations=false 
+PROBE|2666|112116|item|I1.focusPercent=1
+PROBE|2667|112116|item|I2.focusPercent=0
+PROBE|2668|112117|item|I3.focusPercent=0
+PROBE|2669|112117|item|I4.focusPercent=0
+PROBE|2670|112118|item|I5.focusPercent=0
+PROBE|2671|112121|frame|fr=1 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@1 2:100@0 3:100@0 4:100@0 5:100@0 6:100@1 7:100@0 8:100@0 9:100@0
+PROBE|2672|114115|step|53 act:skip
+PROBE|2673|114116|act|skip itemFocused=1 currFocusRow=1 skipFocusAnimations=true 
+PROBE|2674|116117|step|54 key:Down
+PROBE|await|Down
+PROBE|2675|116156|lf|MW.scrollingStatus=true
+PROBE|2676|116156|item|I1.itemHasFocus=false
+PROBE|2677|116157|lf|MW.itemUnfocused=1
+PROBE|2678|116157|lf|MW.currFocusRow=2
+PROBE|2679|116159|item|I2.itemHasFocus=true
+PROBE|2680|116160|lf|MW.itemFocused=2
+PROBE|2681|116160|lf|MW.scrollingStatus=false
+PROBE|2682|116161|lf|MW.vertFocusDirection=down
+PROBE|2683|116164|item|I2.focusPercent=1
+PROBE|2684|116164|item|I6.focusPercent=0
+PROBE|2685|116170|frame|fr=2 ss=false fi=-6/60 sub 0:0 1:0 2:0 3:0 4:0 5:0 6:0 7:0 8:0 9:0 node 0:100@0.25 1:100@1 2:100@1 3:100@0 4:100@0 5:100@0 6:100@0 7:100@0 8:100@0 9:100@0
+PROBE|2686|116183|lf|MW.vertFocusDirection=none
+PROBE|2687|118119|step|55 act:noskip
+PROBE|2688|118120|act|noskip itemFocused=2 currFocusRow=2 skipFocusAnimations=false 
+PROBE|2689|120120|step|56 done
+PROBE|2690|120120|info|samples=51678
+PROBE|done
+PROBE|999|0|boot|end

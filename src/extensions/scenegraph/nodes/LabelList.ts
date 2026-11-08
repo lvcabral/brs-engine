@@ -37,8 +37,9 @@ export class LabelList extends ArrayGrid {
             this.setValueSilent("itemSize", brsValueOf([340, 48]));
         }
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
-        const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
+        // Re-derive the cached focus style now that this node's own default (fixedFocusWrap) and any
+        // XML/initialized value are in place — the ArrayGrid constructor cached its floatingFocus default.
+        this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
@@ -61,6 +62,10 @@ export class LabelList extends ArrayGrid {
         } else if (fieldName === "numrows") {
             this.clampTopRow();
         }
+    }
+
+    protected focusMotionEnabled(): boolean {
+        return true;
     }
 
     protected handleUpDown(key: string) {
@@ -106,7 +111,6 @@ export class LabelList extends ArrayGrid {
         const hasSections = this.metadata.length > 0;
         const nodeFocus = sgRoot.focused === this;
         this.currRow = this.updateListCurrRow();
-        let lastIndex = -1;
         const displayRows = Math.min(this.content.length, this.numRows);
         const itemSize = this.getValueJS("itemSize") as number[];
         // DEVICE-MEASURED (Streaming Stick, Roku OS 15.2): a LabelList DOES honor rowHeights and
@@ -122,16 +126,84 @@ export class LabelList extends ArrayGrid {
         let sectionIndex = displayRows + 1;
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
-        for (let r = 0; r < displayRows; r++) {
-            const index = this.getRenderRowIndex(r);
+        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
+        const motion = this.listMotionFrame(displayRows);
+        const pitch = itemSize[1] + rowSpacingDefault;
+        let firstRow = 0;
+        let lastRow = displayRows;
+        const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
+        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
+        if (motion) {
+            firstRow = -Math.ceil(Math.max(0, motion.shift));
+            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
+            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            if (drawFocus && !drawFocusOnTop) {
+                this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+            }
+            this.pushMotionClip(rect, displayRows * pitch - rowSpacingDefault, draw2D);
+        }
+        try {
+            this.renderRows(
+                firstRow,
+                lastRow,
+                motion,
+                itemRect,
+                rowHeights,
+                rowSpacings,
+                rowSpacingDefault,
+                pitch,
+                screen,
+                {
+                    hasSections,
+                    nodeFocus,
+                    opacity,
+                    sectionIndex,
+                    draw2D,
+                }
+            );
+        } finally {
+            if (motion) {
+                draw2D?.popClip();
+            }
+        }
+        if (motion && drawFocus && drawFocusOnTop) {
+            this.renderMotionFocus(rect, itemSize, pitch, motion.focusSlot, opacity, draw2D);
+        }
+        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
+    }
+
+    /** Draws viewport rows `firstRow`..`lastRow - 1`, advancing `itemRect` down the list. */
+    private renderRows(
+        firstRow: number,
+        lastRow: number,
+        motion: { visualIndex: number } | undefined,
+        itemRect: Rect,
+        rowHeights: number[],
+        rowSpacings: number[],
+        rowSpacingDefault: number,
+        pitch: number,
+        screen: Rect,
+        ctx: { hasSections: boolean; nodeFocus: boolean; opacity: number; sectionIndex: number; draw2D?: IfDraw2D }
+    ) {
+        const { hasSections, nodeFocus, opacity, draw2D } = ctx;
+        const itemSize = this.getValueJS("itemSize") as number[];
+        let { sectionIndex } = ctx;
+        let lastIndex = -1;
+        for (let r = firstRow; r < lastRow; r++) {
+            const index = motion ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
             if (index < 0) {
+                if (motion) {
+                    itemRect.y += pitch;
+                    continue;
+                }
                 break;
             }
-            const focused = index === this.focusIndex;
+            // In motion the focused style follows the item nearest the moving focus.
+            const focused = index === (motion ? motion.visualIndex : this.focusIndex);
             const item = this.getContentItem(index);
-            if (!hasSections && this.wrap && index < lastIndex && r > 0) {
+            if (!hasSections && this.wrap && index < lastIndex && r > firstRow) {
                 itemRect.y += this.renderWrapDivider(itemRect, opacity, draw2D);
-            } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > 0) {
+            } else if (hasSections && this.wrap && this.metadata[index]?.divider && r > firstRow) {
                 const divText = this.metadata[index].sectionTitle;
                 itemRect.y += this.renderSectionDivider(divText, itemRect, opacity, sectionIndex, draw2D);
                 sectionIndex++;
@@ -142,11 +214,10 @@ export class LabelList extends ArrayGrid {
             this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             itemRect.y += itemRect.height + (rowSpacings[index] ?? rowSpacingDefault);
             lastIndex = index;
-            if (!RectRect(screen, itemRect)) {
+            if (!motion && !RectRect(screen, itemRect)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }
 
     protected renderItem(
@@ -207,15 +278,17 @@ export class LabelList extends ArrayGrid {
         const align = this.getValueJS("textHorizAlign") as string;
         const textRect = { ...rect, x: rect.x + iconGap, width: rect.width - (iconGap ? this.gap : 0) };
         const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
+        // While the focus moves, the indicator is drawn once at its in-transit slot instead.
+        const drawItemFocus = drawFocus && !this.motion;
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
-        if (drawFocus && !drawFocusOnTop) {
+        if (drawItemFocus && !drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D, index);
         }
         if (iconBmp) {
             this.renderIcon(iconBmp, rect, opacity, draw2D, iconColor ? color : undefined);
         }
         this.drawText(text, font, color, opacity, textRect, align, "center", 0, draw2D, "...", index);
-        if (drawFocus && drawFocusOnTop) {
+        if (drawItemFocus && drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D, index);
         }
         this.hasNinePatch &&= drawFocus;

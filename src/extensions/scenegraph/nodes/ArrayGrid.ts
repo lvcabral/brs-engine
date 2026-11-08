@@ -22,6 +22,8 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { UNIT_SCALE } from "../SGUtil";
+import { sgClock } from "../SGClock";
+import { easeOutCubic, UITransition } from "../SGTransition";
 
 export enum FocusStyle {
     FixedFocusWrap = "fixedFocusWrap",
@@ -70,7 +72,34 @@ export declare namespace ArrayGrid {
  */
 const noopInterpreter = {} as Interpreter;
 
-export class ArrayGrid extends Group {
+/**
+ * List focus motion, DEVICE-MEASURED (Roku OS 16.0, `test/simulator/probes/list-focus-motion-probe`): each
+ * row of travel is a cubic ease-out of ~200 ms; a held key, after one row and a ~400 ms pause, scrolls on
+ * linearly at one row per ~200 ms until it is released.
+ */
+const ListRowMotionMs = 200;
+const ListHoldDelayMs = 400;
+const ListSettleEpsilon = 0.01;
+
+/** A list's in-flight focus motion. Positions are in rows, unwrapped (a wrap continues past the end). */
+type ListMotion = {
+    /** Segment start and end positions, and timing. */
+    from: number;
+    to: number;
+    start: number;
+    duration: number;
+    linear: boolean;
+    /** One key press received mid-segment: the next segment's target. */
+    queued?: number;
+    /** The final row was reached; the settle goes out on a later frame. */
+    arrived: boolean;
+    /** Floating focus: the visual top row when the motion began. */
+    topFrom: number;
+    /** Data-model index published as `itemFocused` when the motion settles. */
+    contentIndex: number;
+};
+
+export class ArrayGrid extends Group implements UITransition {
     readonly defaultFields: FieldModel[] = [
         { name: "content", type: "node" },
         { name: "itemSize", type: "vector2d", value: "[0,0]" },
@@ -125,6 +154,7 @@ export class ArrayGrid extends Group {
         // apps observe it to track scroll direction (e.g. to position an in-transit overlay toward the
         // incoming row). Emitted as up/down on a vertical nav then reset to "none".
         { name: "vertFocusDirection", type: "string", value: "none" },
+        { name: "skipFocusAnimations", type: "boolean", value: "false" },
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     /**
@@ -165,6 +195,20 @@ export class ArrayGrid extends Group {
     protected vertFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     protected horizFocusAnimationStyleName: string = FocusStyle.FloatingFocus.toLowerCase();
     public itemFocusCallback?: (index: number) => void;
+    /** List focus motion (see `focusMotionEnabled`). */
+    protected motion?: ListMotion;
+    /** The visual focus position in rows: unwrapped while moving, the focused row when idle. */
+    protected motionPos = 0;
+    /** Items holding a fractional `focusPercent` from the last motion frame. */
+    private readonly motionPercentItems = new Set<number>();
+    /** Set while `animateToItem` (app write or key navigation) is being applied. */
+    private animateRequested = false;
+    /** Direction of the navigation key being handled (+1 down, -1 up), 0 for programmatic moves. */
+    private navDirection = 0;
+    /** The navigation key still held down, and when it was pressed. */
+    private heldKey = "";
+    private heldSince = 0;
+    private holdRepeating = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
@@ -211,13 +255,22 @@ export class ArrayGrid extends Group {
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "content" && value instanceof ContentNode) {
+            this.abortMotion();
             super.setValue(index, value, alwaysNotify, kind);
             this.itemComps.length = 0;
             this.refreshContent();
             this.resetFocusForNewContent(true);
             return;
-        } else if (["jumptoitem", "animatetoitem"].includes(fieldName) && isNumberComp(value)) {
+        } else if (fieldName === "jumptoitem" && isNumberComp(value)) {
+            this.settleMotion();
             this.setFocusedItem(jsValueOf(value));
+        } else if (fieldName === "animatetoitem" && isNumberComp(value)) {
+            this.animateRequested = true;
+            try {
+                this.setFocusedItem(jsValueOf(value));
+            } finally {
+                this.animateRequested = false;
+            }
         } else if (fieldName === "focusfeedbackposter") {
             // Must stay a Poster (matches BusySpinner's `poster` field). No private cache is kept for
             // it — `renderFocus` re-reads the field every draw, because `Node.cloneNode` aliases a
@@ -263,6 +316,10 @@ export class ArrayGrid extends Group {
     }
 
     setNodeFocus(focusOn: boolean): boolean {
+        if (!focusOn) {
+            // Losing focus mid-motion: land the focus first, while the list is still in the chain.
+            this.settleMotion();
+        }
         const focus = super.setNodeFocus(focusOn);
         if (focus) {
             let focusIndex = this.getValueJS("itemFocused") as number;
@@ -335,21 +392,20 @@ export class ArrayGrid extends Group {
         }
         const nodeFocus = sgRoot.focused === this;
         const inFocusChain = nodeFocus || this.isChildrenFocused();
-        if (inFocusChain) {
-            // Emit the scroll pulse BEFORE the settled focus fields go out: on a device
-            // scrollingStatus falls while the scroll finishes and the focus settles afterward, and
-            // apps depend on that order (the falling edge tears transient scroll state down, the
-            // focus settle rebuilds it at the new position). Deliberately outside the internal-update
-            // bracket below — these notifications must dispatch synchronously here, not defer past
-            // the settle they precede. Skipped when unfocused: that path publishes no focus fields at
-            // all, so a pulse would be a teardown with nothing to rebuild from (see armScrollPulse).
-            this.emitScrollPulse();
+        if (inFocusChain && this.animateRequested && this.focusMotionEnabled() && sgRoot.uiTransitionsEnabled) {
+            this.moveFocusAnimated(index, newFocus);
+            return;
         }
         // Focus fields are emitted by the grid's internal machinery, not by a direct BrightScript
         // assignment — on Roku their observers dispatch from the message loop, so a reentrant
-        // notification defers (see Field.enterInternalUpdate).
+        // notification defers (see Field.enterInternalUpdate). The scroll pulse edges go out inside
+        // the same bracket so a deferred dispatch keeps their place in the sequence.
         Field.enterInternalUpdate();
         try {
+            if (inFocusChain) {
+                // Skipped when unfocused: that path publishes no focus fields at all (see armScrollPulse).
+                this.openScrollPulse();
+            }
             const focusedIndex = this.getValueJS("itemFocused") as number;
             this.updateItemFocus(this.focusIndex, false, nodeFocus);
             this.focusIndex = newFocus;
@@ -365,6 +421,7 @@ export class ArrayGrid extends Group {
                 super.setValue("currFocusRow", new Float(Math.floor(newFocus / numCols)));
                 super.setValue("currFocusColumn", new Float(newFocus % numCols));
                 super.setValue("itemFocused", new Int32(index));
+                this.closeScrollPulse();
             } else {
                 // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
                 // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
@@ -376,6 +433,307 @@ export class ArrayGrid extends Group {
         } finally {
             Field.exitInternalUpdate();
         }
+    }
+
+    // ---- List focus motion ----
+
+    /**
+     * Whether this node animates its focus moves (`animateToItem` and key navigation). Lists opt in;
+     * grids and row lists keep moving instantly until their motion is measured.
+     */
+    protected focusMotionEnabled(): boolean {
+        return false;
+    }
+
+    /**
+     * Starts or extends the focus motion toward `newFocus`. DEVICE-MEASURED field timing: the motion
+     * opens with `scrollingStatus` true, the old item's `itemHasFocus` false, `itemUnfocused` and
+     * `vertFocusDirection`; `currFocusRow` and the two items' `focusPercent` then follow the motion frame
+     * by frame, and `itemFocused` only goes out when it settles (see `settleMotion`). The focus cursor
+     * itself moves now, so further keys navigate from the target.
+     */
+    protected moveFocusAnimated(index: number, newFocus: number) {
+        const count = this.content.length;
+        const motion = this.motion;
+        const base = motion ? motion.queued ?? motion.to : this.focusIndex;
+        const baseRow = ((Math.round(base) % count) + count) % count;
+        let delta = newFocus - baseRow;
+        if (this.wrap) {
+            // A wrapping list scrolls the way the key points; a programmatic move always scrolls down.
+            const forward = ((delta % count) + count) % count;
+            delta = forward !== 0 && this.navDirection < 0 ? forward - count : forward;
+        }
+        if (delta === 0) {
+            return;
+        }
+        const target = base + delta;
+        const now = sgClock.perfNow();
+        this.scrollPulseArmed = false;
+        if (motion) {
+            if (!motion.arrived && this.navDirection !== 0 && !this.holdRepeating) {
+                motion.queued = target;
+            } else {
+                this.startMotionSegment(motion, this.motionPos, target, now);
+            }
+            motion.contentIndex = index;
+        } else {
+            this.beginMotion(index, base, target, now, delta > 0 ? "down" : "up");
+        }
+        this.focusIndex = newFocus;
+        this.focusLayoutDirty = true;
+        this.updateHorizScroll(newFocus);
+        if (this.getValueJS("skipFocusAnimations") === true) {
+            this.motionPos = target;
+            this.emitMotionFrame();
+            this.settleMotion();
+            return;
+        }
+        sgRoot.addTransition(this);
+    }
+
+    private beginMotion(index: number, base: number, target: number, now: number, direction: string) {
+        const oldFocus = this.focusIndex;
+        const nodeFocus = sgRoot.focused === this;
+        super.setValue("scrollingStatus", BrsBoolean.True);
+        const motion: ListMotion = {
+            from: base,
+            to: target,
+            start: now,
+            duration: 0,
+            linear: false,
+            arrived: false,
+            topFrom: this.topRow,
+            contentIndex: index,
+        };
+        this.startMotionSegment(motion, base, target, now);
+        this.motion = motion;
+        this.motionPos = base;
+        this.motionPercentItems.clear();
+        this.motionPercentItems.add(oldFocus);
+        this.updateItemFocus(oldFocus, false, nodeFocus);
+        super.setValue("itemUnfocused", new Int32(this.getValueJS("itemFocused") as number));
+        super.setValue("vertFocusDirection", new BrsString(direction));
+    }
+
+    /** A key-driven segment eases over ~200 ms per row; a held key's repeat segments run linearly. */
+    private startMotionSegment(motion: ListMotion, from: number, to: number, now: number) {
+        motion.from = from;
+        motion.to = to;
+        motion.start = now;
+        motion.duration = Math.abs(to - from) * ListRowMotionMs;
+        motion.linear = this.holdRepeating;
+        motion.arrived = false;
+    }
+
+    /** One press already waits behind the segment in flight. */
+    private motionQueueFull(): boolean {
+        return this.motion !== undefined && !this.motion.arrived && this.motion.queued !== undefined;
+    }
+
+    /** `focusPercent` while moving: the item the motion leaves holds `1 - fraction`, the next one `fraction`. */
+    protected motionFocusPercent(index: number): number {
+        const count = this.content.length;
+        if (count === 0) {
+            return 0;
+        }
+        const row = ((this.motionPos % count) + count) % count;
+        const lower = Math.floor(row);
+        const fraction = row - lower;
+        if (index === lower) {
+            return 1 - fraction;
+        }
+        return fraction > 0 && index === (lower + 1) % count ? fraction : 0;
+    }
+
+    /** Publishes the in-transit fields: `currFocusRow` (wrapping with the list) and both items' `focusPercent`. */
+    private emitMotionFrame() {
+        const count = this.content.length;
+        const row = ((this.motionPos % count) + count) % count;
+        super.setValue("currFocusRow", new Float(row));
+        const lower = Math.floor(row);
+        const touched = new Set([...this.motionPercentItems, lower, (lower + 1) % count]);
+        this.motionPercentItems.clear();
+        for (const item of touched) {
+            const percent = this.motionFocusPercent(item);
+            this.itemComps[item]?.setValue("focusPercent", new Float(percent), false);
+            if (percent > 0) {
+                this.motionPercentItems.add(item);
+            }
+        }
+    }
+
+    /** Advances the focus motion one frame. */
+    tickTransition(now: number): boolean {
+        const motion = this.motion;
+        if (!motion) {
+            return false;
+        }
+        if (this.content.length === 0) {
+            this.abortMotion();
+            return false;
+        }
+        if (motion.arrived) {
+            // DEVICE-MEASURED: a held key keeps scrolling after a ~400 ms pause, and the motion only
+            // settles once the key is released (even when the list has reached its end).
+            if (this.heldKey) {
+                if (now - this.heldSince >= ListHoldDelayMs) {
+                    this.repeatHeldKey();
+                }
+                return true;
+            }
+            this.settleMotion();
+            return false;
+        }
+        const u = motion.duration > 0 ? (now - motion.start) / motion.duration : 1;
+        const eased = motion.linear ? Math.min(Math.max(u, 0), 1) : easeOutCubic(u);
+        this.motionPos = motion.from + (motion.to - motion.from) * eased;
+        // DEVICE-MEASURED: the focus snaps to the row once within ~0.01 of it (0.98 is followed by 1).
+        if (u >= 1 || Math.abs(motion.to - this.motionPos) < ListSettleEpsilon) {
+            this.motionPos = motion.to;
+            motion.arrived = true;
+            if (motion.queued !== undefined) {
+                const queued = motion.queued;
+                motion.queued = undefined;
+                this.startMotionSegment(motion, motion.to, queued, now);
+            } else if (this.heldKey && now - this.heldSince >= ListHoldDelayMs) {
+                this.repeatHeldKey();
+            }
+        }
+        this.emitMotionFrame();
+        this.makeDirty();
+        return true;
+    }
+
+    /** Moves one more row in the held key's direction; false at the end of a non-wrapping list. */
+    private repeatHeldKey(): boolean {
+        this.holdRepeating = true;
+        this.navDirection = this.heldKey === "up" ? -1 : 1;
+        try {
+            return this.handleUpDown(this.heldKey);
+        } finally {
+            this.holdRepeating = false;
+            this.navDirection = 0;
+        }
+    }
+
+    /**
+     * Lands the focus. DEVICE-MEASURED order: the new item's `itemHasFocus`, `itemFocused`, then
+     * `scrollingStatus` false and `vertFocusDirection` "none" — the same order the instant path uses
+     * (see `armScrollPulse`).
+     */
+    protected settleMotion() {
+        const motion = this.motion;
+        if (!motion) {
+            return;
+        }
+        this.motion = undefined;
+        this.heldKey = "";
+        sgRoot.removeTransition(this);
+        const numCols = Math.max(1, this.numCols || 1);
+        this.motionPos = this.focusIndex;
+        const nodeFocus = sgRoot.focused === this;
+        const inFocusChain = nodeFocus || this.isChildrenFocused();
+        for (const item of this.motionPercentItems) {
+            if (item !== this.focusIndex) {
+                this.updateItemFocus(item, false, nodeFocus);
+            }
+        }
+        this.motionPercentItems.clear();
+        super.setValue("currFocusRow", new Float(Math.floor(this.focusIndex / numCols)));
+        Field.enterInternalUpdate();
+        try {
+            this.updateItemFocus(this.focusIndex, true, nodeFocus);
+            if (inFocusChain) {
+                super.setValue("itemFocused", new Int32(motion.contentIndex));
+            } else {
+                this.setValueSilent("itemFocused", new Int32(motion.contentIndex));
+            }
+            if (this.itemFocusCallback) {
+                this.itemFocusCallback(motion.contentIndex);
+            }
+        } finally {
+            Field.exitInternalUpdate();
+        }
+        super.setValue("scrollingStatus", BrsBoolean.False);
+        super.setValue("vertFocusDirection", new BrsString("none"));
+        this.makeDirty();
+    }
+
+    /** Drops a motion whose content went away, without publishing a settle. */
+    private abortMotion() {
+        if (!this.motion) {
+            return;
+        }
+        this.motion = undefined;
+        this.heldKey = "";
+        this.motionPercentItems.clear();
+        sgRoot.removeTransition(this);
+        super.setValue("scrollingStatus", BrsBoolean.False);
+        super.setValue("vertFocusDirection", new BrsString("none"));
+    }
+
+    /**
+     * Where a list draws while its focus moves, relative to the settled layout `renderContent` just
+     * computed (`topRow`/`currRow` for the target): every item is drawn `shift` rows further down than its
+     * settled row, and the focus indicator sits at row `focusSlot` of the viewport. Fixed-focus styles keep
+     * the indicator still and scroll the items; floating focus glides the indicator and scrolls the items
+     * only when the focus would leave the window. Paint-time only: bounding rects keep the settled layout,
+     * as a device reports them.
+     */
+    protected listMotionFrame(
+        displayRows: number
+    ): { shift: number; focusSlot: number; visualIndex: number } | undefined {
+        const motion = this.motion;
+        const count = this.content.length;
+        if (!motion || count === 0) {
+            return undefined;
+        }
+        const target = motion.queued ?? motion.to;
+        let visualTop: number;
+        let targetTop: number;
+        if (this.isFixedFocusMode()) {
+            visualTop = this.motionPos - this.currRow;
+            targetTop = target - this.currRow;
+        } else {
+            const maxTop = Math.max(0, count - displayRows);
+            const kept = Math.min(Math.max(motion.topFrom, this.motionPos - (displayRows - 1)), this.motionPos);
+            visualTop = Math.min(Math.max(kept, 0), maxTop);
+            targetTop = this.topRow;
+        }
+        const visualIndex = ((Math.round(this.motionPos) % count) + count) % count;
+        return { shift: targetTop - visualTop, focusSlot: this.motionPos - visualTop, visualIndex };
+    }
+
+    /** The item drawn at viewport row `r` (which may be outside the window while scrolling), or -1. */
+    protected motionRowIndex(r: number): number {
+        if (this.isFixedFocusMode()) {
+            return this.getRenderRowIndex(r);
+        }
+        const numCols = Math.max(1, this.numCols || 1);
+        const row = this.topRow + r;
+        const rows = Math.ceil(this.content.length / numCols);
+        return row >= 0 && row < rows ? row * numCols : -1;
+    }
+
+    /** Draws the focus indicator at its in-transit slot (per-item focus frames are suppressed while moving). */
+    protected renderMotionFocus(
+        rect: Rect,
+        itemSize: number[],
+        pitch: number,
+        focusSlot: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        if (!this.getValueJS("drawFocusFeedback")) {
+            return;
+        }
+        const focusRect = { x: rect.x, y: rect.y + focusSlot * pitch, width: itemSize[0], height: itemSize[1] };
+        this.renderFocus(focusRect, opacity, sgRoot.focused === this, draw2D);
+    }
+
+    /** Clips scrolling items to the list's viewport rows (horizontally unbounded). */
+    protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D) {
+        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: viewportHeight });
     }
 
     protected findContentIndex(index: number) {
@@ -418,9 +776,13 @@ export class ArrayGrid extends Group {
         if (!itemComp) return;
         // Per the reference, an item only "has focus" when it is the focused cell AND the grid itself
         // has focus; a defocused grid must report itemHasFocus=false for every item (see RowList).
-        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus), false);
+        // While the focus is in motion no item "has" it (DEVICE-MEASURED): itemHasFocus drops when the
+        // motion starts and returns on the new item when it settles, and focusPercent follows the motion.
+        const moving = this.motion !== undefined;
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus && !moving), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
-        itemComp.setValue("focusPercent", new Float(focus ? 1 : 0), false);
+        const percent = moving ? this.motionFocusPercent(index) : focus ? 1 : 0;
+        itemComp.setValue("focusPercent", new Float(percent), false);
     }
 
     /**
@@ -431,41 +793,59 @@ export class ArrayGrid extends Group {
      * apps alias it from a plain RowList). It was declared here but never emitted, so an observer on
      * it never fired.
      *
-     * On a device the scroll spans several frames: the field goes true, the focus fields pass
-     * through in-transit values, and it goes false BEFORE the focus finally settles. Apps rely on
-     * that interleave — the falling edge is where they tear transient scroll state down (hiding a
-     * shared overlay/preview player that belongs to the outgoing item), and the *settle* emission of
-     * the focus fields is what rebuilds it at the new position. Our scroll is instant, so both edges
-     * land in one frame and the ORDER is the whole contract: the falling edge must precede the focus
-     * settle, or the teardown runs last and the app is left with its overlay torn down and nothing
-     * to restore it.
+     * DEVICE-MEASURED order of a move (RowList OS 15.3, `list-refocus-settle-probe`; LabelList and
+     * MarkupList OS 16.0, `list-focus-motion-probe`): `scrollingStatus` true, `itemUnfocused`, the
+     * in-transit `currFocusRow` values, then `currFocusRow`, `itemFocused`, `scrollingStatus` false and
+     * finally `rowItemFocused`. Apps rely on the tail: the falling edge is where they tear transient
+     * scroll state down (hiding a shared overlay/preview player that belongs to the outgoing item),
+     * and the `rowItemFocused` settle is what rebuilds it at the new position. When the move is
+     * instant both edges land in one frame and that ORDER is the whole contract — `openScrollPulse`
+     * goes out first and `closeScrollPulse` right after `itemFocused`, inside the same internal-update
+     * bracket as the focus fields so a deferred dispatch keeps the sequence.
      *
-     * Hence "armed" rather than "open": the pulse is only *emitted* by `emitScrollPulse`, called
-     * from the focus-settle paths. A key that scrolls nothing — a boundary press on a non-wrapping
-     * list, or any key while the grid is outside the focus chain (both of which publish no focus
-     * fields at all) — must emit NOTHING, exactly as a device does. Pulsing there would hand an app
-     * a teardown edge with no settle behind it to rebuild from, which is the same failure as
-     * emitting the edges in the wrong order.
+     * Hence "armed" rather than "open": the pulse is only *emitted* by the focus-settle paths. A key
+     * that scrolls nothing — a boundary press on a non-wrapping list, or any key while the grid is
+     * outside the focus chain (both of which publish no focus fields at all) — must emit NOTHING,
+     * exactly as a device does. Pulsing there would hand an app a teardown edge with no settle behind
+     * it to rebuild from.
      */
     protected armScrollPulse() {
         this.scrollPulseArmed = true;
     }
 
     /**
-     * Emits the rising edge the first time a focus move is about to publish its settled fields, then
-     * immediately the falling edge — the pair a device produces around an instant scroll. Called by
-     * every settle path right before it emits the focus fields, and idempotent per key press: later
-     * calls within the same press (a move that touches several settle paths) do nothing.
+     * Rising edge of a key-driven scroll: emitted once per press, ahead of the first focus field the
+     * move publishes (`itemUnfocused`). A no-op unless `armScrollPulse` armed it, so a key that moves
+     * nothing emits nothing.
      */
-    protected emitScrollPulse() {
+    protected openScrollPulse() {
         if (!this.scrollPulseArmed) {
             return;
         }
         this.scrollPulseArmed = false;
         this.scrollPulseActive = true;
         super.setValue("scrollingStatus", BrsBoolean.True);
+    }
+
+    /**
+     * Falling edge: DEVICE-MEASURED after `itemFocused` and before `rowItemFocused` (RowList, OS 15.3,
+     * `list-refocus-settle-probe`; LabelList/MarkupList, OS 16.0, `list-focus-motion-probe`). Idempotent.
+     */
+    protected closeScrollPulse() {
+        if (!this.scrollPulseActive) {
+            return;
+        }
         this.scrollPulseActive = false;
         super.setValue("scrollingStatus", BrsBoolean.False);
+    }
+
+    /**
+     * Both edges back to back, ahead of the settle. Kept for TimeGrid, whose channel/program settle
+     * order has not been measured on a device yet.
+     */
+    protected emitScrollPulse() {
+        this.openScrollPulse();
+        this.closeScrollPulse();
     }
 
     /**
@@ -483,6 +863,14 @@ export class ArrayGrid extends Group {
     }
 
     handleKey(key: string, press: boolean): boolean {
+        if (!press && key === this.heldKey) {
+            this.heldKey = "";
+        }
+        if (press && this.motionQueueFull() && ["up", "down", "rewind", "fastforward"].includes(key)) {
+            // A device takes one press ahead of the motion in flight; further ones are dropped.
+            this.lastPressHandled = key;
+            return true;
+        }
         if (!press && this.lastPressHandled === key) {
             this.lastPressHandled = "";
             return true;
@@ -495,6 +883,7 @@ export class ArrayGrid extends Group {
                 // Arm inside the try so an exception from either edge's observers still unwinds
                 // through the finally below and cannot strand the field at true.
                 this.armScrollPulse();
+                this.navDirection = key === "up" || key === "rewind" ? -1 : 1;
                 if (key === "up" || key === "down") {
                     handled = this.handleUpDown(key);
                 } else if (key === "left" || key === "right") {
@@ -503,8 +892,13 @@ export class ArrayGrid extends Group {
                     handled = this.handlePageUpDown(key);
                 }
             } finally {
+                this.navDirection = 0;
                 // Disarm: a key that scrolled nothing emits no pulse at all (see armScrollPulse).
                 this.endScrollPulse();
+            }
+            if (handled && this.motion && (key === "up" || key === "down")) {
+                this.heldKey = key;
+                this.heldSince = sgClock.perfNow();
             }
         }
         this.lastPressHandled = handled && key !== "OK" ? key : "";
@@ -692,7 +1086,8 @@ export class ArrayGrid extends Group {
             content.changed = false;
         }
         this.updateItemFocus(index, focused, nodeFocus);
-        const drawFocus = this.getValueJS("drawFocusFeedback");
+        // While the focus moves, the indicator is drawn once at its in-transit slot instead.
+        const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
         const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);

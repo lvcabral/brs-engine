@@ -874,7 +874,7 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 ## Intrinsic UI transitions (`SGTransition.ts`) — logical state is instant, only presentation is timed
 
-Nodes with built-in motion (today: `PanelSet` slides; lists and grids later) implement `UITransition`
+Nodes with built-in motion (today: `PanelSet` slides and `LabelList`/`MarkupList` focus motion; grids and row lists later) implement `UITransition`
 and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
 `sgRoot.processTransitions()` next to `processAnimations()`, before painting, and the frame stays dirty
 only while one is active, so an idle scene costs nothing. The rules:
@@ -907,6 +907,27 @@ PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-sli
 - `isGoingBack` is a pulse;
 - a full-screen panel counts twice in `numPanels`;
 - `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
+
+List focus motion (`LabelList`, `MarkupList`, via `ArrayGrid.focusMotionEnabled()`; device-measured, see
+`test/simulator/probes/list-focus-motion-probe/README.md`):
+- `focusIndex` moves at the key, so the next key navigates from the target. The `itemFocused` *field*
+  keeps the old value until the settle.
+- Each row is a 200 ms `easeOutCubic` of the unwrapped `motionPos`, which snaps within 0.01.
+  `currFocusRow` is `motionPos` modulo the item count. `focusPercent` is `1 − fraction` on the item being
+  left and `fraction` on the next one. `itemHasFocus` is false on every item while moving.
+- A press mid-row queues one more row (one at most; further presses are consumed). A held key repeats
+  linearly after 400 ms, and the settle waits for the release. `animateToItem` eases `rows × 200 ms`;
+  `jumpToItem` and `skipFocusAnimations` are instant.
+- Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows and places the indicator at
+  `focusSlot`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
+  (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
+- **Cached focus style must match the field.** The `ArrayGrid` constructor caches
+  `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, *before* a subclass registers
+  its default. Every subclass with a different default must call `applyVertFocusStyle()` at the end of its
+  constructor: MarkupGrid, PosterGrid, LabelList and MarkupList do. The static layout keys off `wrap` and
+  hid the mismatch, but the motion asks `isFixedFocusMode()`. A default-style list then animated as
+  floating focus, with the indicator walking further down on every press.
+  Regression: `test/extensions/scenegraph/ListFocusMotion.test.js`.
 
 `PanelSet.focusIndex` must follow **where focus actually lands**, not where the PanelSet sent it.
 Going back from a full-screen panel focuses the panel before it, and apps commonly redirect from that
@@ -1314,46 +1335,62 @@ Each needs its own probe and PR; none is fixed:
   in with a test rather than reverting: `SimpleLabel` reports the anchored glyph box (a center/center label
   at `[500,300]` reports `{473,288}`), and `PosterGridItem`'s sub-rect landed on its poster (`sub.y` 4 → 0).
 
-## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
+## `ArrayGrid.scrollingStatus` — a lazy pulse around the focus settle, in device order
 
 Per `zoomrowlist.md` the field is "set to true whenever the list is scrolling the focus horizontally or
 vertically". It is documented only under `ZoomRowList` but exists on **every** `ArrayGrid`-derived node on
-a device, and apps alias it up from a plain `RowList`. On a device the scroll spans several frames: the
-field goes true, the focus fields pass through in-transit values, and it goes **false before the focus
-finally settles**. Our scroll is instant, so both edges land in one frame — which makes their **order
-relative to the focus fields the entire contract**, and the two rules below easy to get backwards. Both
-were regressed once each while this was being written.
+a device, and apps alias it up from a plain `RowList`. The order of a move is **device-measured**, the same
+on RowList (Roku OS 15.3, `test/simulator/probes/list-refocus-settle-probe`) and LabelList/MarkupList
+(OS 16.0, `test/simulator/probes/list-focus-motion-probe`):
 
-1. **The falling edge must precede the settled focus fields.** Apps depend on the interleave in both
-   directions: the falling edge is where they tear transient scroll state down (hiding a shared
-   overlay/preview container that belongs to the *outgoing* item), and the **settle** emission of the focus
-   fields (`itemFocused`/`rowItemFocused`/`currFocusRow`…) is what rebuilds it at the new position. Put the
-   pulse *after* the settle and the teardown runs last: the app is left with its overlay torn down and
-   nothing to restore it — the symptom is the focused item's poster **and** its preview player both
-   vanishing. The edges are therefore emitted **outside** the `Field.enterInternalUpdate()` bracket on
-   purpose: inside it, a reentrant falling edge would defer past the very settle it must precede.
+```
+key:     scrollingStatus=true → itemUnfocused → vertFocusDirection=down|up
+motion:  currFocusRow 0.10 … 0.99            (instant path: skipped)
+settle:  currFocusRow → itemFocused → scrollingStatus=false → rowItemFocused → vertFocusDirection=none
+```
 
-2. **A key that scrolls nothing must emit NOTHING.** Hence the pulse is *armed* by `handleKey`
-   (`armScrollPulse`) and only *emitted* by the settle paths (`emitScrollPulse`, idempotent per press),
-   rather than opened before the handler and closed after it. A boundary press on a non-wrapping list, or
-   any key while the grid is outside the focus chain, publishes **no** focus fields at all — so a pulse
-   there is a teardown with no settle behind it, the same failure as rule 1. (Reachable in practice:
-   `StandardDialog`/`Dialog`/`PanelSet` forward keys to children without checking focus.) It is not
-   `alwaysNotify`, so a device emits nothing on those paths; don't add `alwaysNotify` — the pulse always
-   changes value, so both edges notify without it, and adding it resurrects the spurious same-value
-   notification that `ZoomRowList`'s old redeclaration produced.
+The rules below are easy to get backwards. An earlier version put **both** edges ahead of every settled
+field. That was half right: it was built for an app that tears its overlay down on the falling edge and
+rebuilds it from `rowItemFocused`, and the device order still serves it.
 
-`handleKey` arms **inside** its `try` and disarms in the `finally`: an exception from either edge's
-observers must not strand the field at `true`, which would silently suppress every later notification.
+1. **The falling edge goes after `itemFocused` and before `rowItemFocused`.** Apps tear transient scroll
+   state down on the falling edge (hiding a shared overlay/preview container that belongs to the
+   *outgoing* item) and rebuild it from the `rowItemFocused` settle. Put the edge after `rowItemFocused`
+   and the teardown runs last: the focused item's poster **and** its preview player both vanish.
+   `openScrollPulse` goes out before `itemUnfocused` and `closeScrollPulse` right after `itemFocused`,
+   both **inside** the `Field.enterInternalUpdate()` bracket with the focus fields. Deferred dispatch is a
+   FIFO, so the sequence holds; an edge emitted outside the bracket would jump ahead of deferred ones.
 
-Every path that publishes settled focus fields must call `emitScrollPulse()` first — `ArrayGrid`.
-`setFocusedItem`, `RowList.setFocusedItem` *and* `setRowItemFocused` (the horizontal handlers reach the
-latter directly, bypassing the former), `ZoomRowList.setFocusedItem` *and* its direct `rowItemFocused`
-write in `handleLeftRight`, and `TimeGrid.focusCell` *plus* the three paths that bypass it
-(entering/leaving the channel-info column, moving within it, panning the time window). Adding a new
-navigation path means adding the call. Programmatic focus writes (`jumpToItem`/`jumpToRowItem`/
-`animateToItem`) deliberately do **not** pulse: those are content-loading paths and don't scroll the focus
-on a device.
+2. **A key that scrolls nothing must emit NOTHING.** That is why the pulse is *armed* by `handleKey`
+   (`armScrollPulse`) and only *emitted* by the settle paths (both edges idempotent per press), rather
+   than opened before the handler and closed after it. A boundary press on a non-wrapping list, or any
+   key while the grid is outside the focus chain, publishes **no** focus fields at all. A pulse there is
+   a teardown with no settle behind it. (Reachable in practice: `StandardDialog`/`Dialog`/`PanelSet`
+   forward keys to children without checking focus.)
+   - It is not `alwaysNotify`, so a device emits nothing on those paths.
+   - Don't add `alwaysNotify`: the pulse always changes value, so both edges notify without it. Adding it
+     resurrects the spurious same-value notification that `ZoomRowList`'s old redeclaration produced.
+
+`handleKey` arms **inside** its `try`, and `endScrollPulse` disarms (and closes a stranded pulse) in the
+`finally`. An exception from an observer must not strand the field at `true`, which would silently
+suppress every later notification.
+
+The settle paths are:
+- `ArrayGrid.setFocusedItem`;
+- `RowList.setFocusedItem` *and* `setRowItemFocused`. The horizontal handlers reach the latter directly,
+  so it opens the pulse too and closes it right before `rowItemFocused`;
+- `ZoomRowList.setFocusedItem` (open before `rowUnfocused`, close after `rowFocused`, before
+  `rowItemFocused`) *and* its direct `rowItemFocused` write in `handleLeftRight`;
+- the animated list motion (`moveFocusAnimated`/`settleMotion`), which emits the same order spread over
+  the motion's frames.
+
+**TimeGrid** still uses `emitScrollPulse` (both edges ahead of its settle), because its
+channel/program settle order has not been measured. Probe it before moving its edges. Adding a new
+navigation path means opening and closing the pulse in it.
+
+`jumpToItem`/`jumpToRowItem` deliberately do **not** pulse: those are content-loading paths, and
+device-confirmed not to scroll the focus. `animateToItem` pulses on an animated list (device-measured)
+but not on the instant path.
 
 Related trap in the same area: `ZoomRowList.handleUpDown` must **not** pre-assign `this.focusIndex` before
 calling `setFocusedItem`, which reads it as the *outgoing* row to emit `rowUnfocused` (and assigns it
@@ -1361,7 +1398,7 @@ itself). Pre-assigning made that emission dead, so an app collapsing the outgoin
 callback.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js` (asserts on a merged notification log, so
-values *and* order are pinned — including three no-pulse cases) and the channel-info/time-pan test in
+values *and* order are pinned — including three no-pulse cases), `ListFocusMotion.test.js` and the channel-info/time-pan test in
 `test/extensions/scenegraph/TimeGrid.test.js`.
 
 ### `currFocusRow`/`currFocusColumn` must be current BEFORE `itemFocused` fires

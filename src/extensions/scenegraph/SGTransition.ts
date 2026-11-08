@@ -30,3 +30,9 @@ export function easeOutQuint(u: number): number {
     const clamped = Math.min(Math.max(u, 0), 1);
     return 1 - Math.pow(1 - clamped, 5);
 }
+
+/** Cubic ease-out: Roku's list focus motion curve (device-measured, see list-focus-motion-probe). */
+export function easeOutCubic(u: number): number {
+    const clamped = Math.min(Math.max(u, 0), 1);
+    return 1 - Math.pow(1 - clamped, 3);
+}
