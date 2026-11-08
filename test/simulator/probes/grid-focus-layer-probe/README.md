@@ -10,6 +10,7 @@ The scene is HD and contains:
 - MarkupGrid `over`: the same, with `drawFocusFeedbackOnTop=true`. Down focuses it, Up returns to `under`.
 - LabelList `list`: `floatingFocus`, 4 rows. Play focuses it.
 - MarkupList `mlist`: narrow opaque cells, `floatingFocus`, 4 rows. Options (ECP `Info`) focuses it.
+- RowList `rows`: one row of 8 opaque cells. InstantReplay focuses it.
 
 ## Capture
 
@@ -31,6 +32,7 @@ curl --digest -u rokudev:<pw> http://<ip>/pkgs/dev.jpg -o shot.jpg
 | `device-markupgrid-glide-ontop-true.jpg` | MarkupGrid, `drawFocusFeedbackOnTop=true` | **over** (same as `false`) |
 | `device-labellist-scroll.jpg` | LabelList | **under** the text (the focused label is drawn on the highlight) |
 | `device-markuplist-scroll.jpg` | MarkupList | **under** every item it crosses |
+| `device-rowlist-glide.jpg` | RowList (one row; focused with InstantReplay) | **over** the cells, like a grid |
 
 In `device-rest.jpg`, the ring at rest surrounds its cell with the outset showing, so the at-rest order can't be told apart from these images.
 

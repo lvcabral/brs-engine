@@ -134,15 +134,14 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         expect(list.getValueJS("scrollingStatus")).toBe(false);
     });
 
-    test("horizontal navigation also closes the pulse before the settle", () => {
+    test("horizontal navigation settles rowItemFocused before the pulse closes (device order)", () => {
+        // rowlist-focus-motion-probe: a move along a RowList row publishes rowItemFocused, then
+        // scrollingStatus=false (the reverse of a row change, where the edge precedes rowItemFocused).
         const list = makeList("RowList", [["A", "B", "C"]]);
         const log = observe(list, ["scrollingStatus", "rowItemFocused"]);
 
         expect(list.handleKey("right", true)).toBe(true);
-        expect(log[0]).toBe("scrollingStatus=true");
-        expect(log[1]).toBe("scrollingStatus=false");
-        expect(log).toContain("rowItemFocused=[...]");
-        expect(log.lastIndexOf("rowItemFocused=[...]")).toBeGreaterThan(1);
+        expect(log).toEqual(["scrollingStatus=true", "rowItemFocused=[...]", "scrollingStatus=false"]);
         expect(list.getValueJS("scrollingStatus")).toBe(false);
     });
 
@@ -199,7 +198,7 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         // ZoomRowList used to emit the field manually and redeclare it with alwaysNotify, which
         // produced a spurious same-value notification; both are gone and the base pulse covers it.
         // Its vertical and horizontal handlers emit the settle by different routes (setFocusedItem
-        // vs. a direct rowItemFocused write); both close the pulse before rowItemFocused, as RowList.
+        // vs. a direct rowItemFocused write); both close the pulse before rowFocused/rowItemFocused.
         const list = makeList("ZoomRowList", [
             ["A", "B"],
             ["C", "D"],
@@ -208,11 +207,12 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         const log = observe(list, ["scrollingStatus", "rowUnfocused", "rowFocused", "rowItemFocused"]);
 
         expect(list.handleKey("down", true)).toBe(true);
+        // rowlist-focus-motion-probe: a ZoomRowList drops scrollingStatus AHEAD of rowFocused.
         expect(log).toEqual([
             "scrollingStatus=true",
             "rowUnfocused=0",
-            "rowFocused=1",
             "scrollingStatus=false",
+            "rowFocused=1",
             "rowItemFocused=[...]",
         ]);
         // handleUpDown must not pre-assign focusIndex: setFocusedItem reads it as the OUTGOING row,

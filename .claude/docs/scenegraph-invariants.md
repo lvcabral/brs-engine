@@ -874,7 +874,7 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 ## Intrinsic UI transitions (`SGTransition.ts`) — logical state is instant, only presentation is timed
 
-Nodes with built-in motion (today: `PanelSet` slides and list/grid focus motion; row lists later) implement `UITransition`
+Nodes with built-in motion (today: `PanelSet` slides and list/grid/row-list focus motion) implement `UITransition`
 and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
 `sgRoot.processTransitions()` next to `processAnimations()`, before painting, and the frame stays dirty
 only while one is active, so an idle scene costs nothing. The rules:
@@ -941,7 +941,32 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   - lists (LabelList, MarkupList) draw it **under** their items unless `drawFocusFeedbackOnTop` is set.
 
   Don't unify them. Drawing a grid's indicator before its cells (or between them) hides the ring behind
-  the opaque posters it crosses. Regression: the draw-order tests in `GridFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
+  the opaque posters it crosses. RowList and ZoomRowList draw it over the cells too (RowList measured).
+  Regression: the draw-order tests in `GridFocusMotion.test.js`.
+
+Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same engine through hooks.
+`startFocusMotion` takes the target cell and an `apply` callback, and `openMotion` /
+`emitMotionFrame` / `publishMotionSettle` / `directionFieldFor` / `onMotionPaused` are overridden.
+`motionRowWeight`, `motionCellPercentIn`, `emitRowMotionFrame` and `settleRowMotionPercents` write
+`rowFocusPercent` (ZoomRowList also `rowHeightPercent`, same values) and `focusPercent` over the
+`rowItemComps` matrix. Device facts that look like bugs but are not:
+- **The settle order differs per node and axis:**
+  - RowList row change: `itemFocused`, `rowHasFocus` swap, `scrollingStatus=false`, `rowItemFocused`.
+  - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
+  - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
+  - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
+- `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts.
+- An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a
+  later `itemUnfocused` reports the stale value). Key navigation, which routes through `jumpToRowItem`
+  internally, still publishes both.
+- While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
+  `itemHasFocus`.
+- A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
+  `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
+  `animateToRow` takes ~265 ms per row against ~330 ms for key steps.
+- RowList's `currRow` is the absolute top row (not a slot, as on ArrayGrid), so it has its own
+  `rowMotionFrame`.
+- Regression: `test/extensions/scenegraph/RowListFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
   (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
 - **Cached focus style must match the field.** The `ArrayGrid` constructor caches
   `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, *before* a subclass registers

@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+        <function name="itemLog" />
+        <function name="registerItem" />
+    </interface>
+    <children>
+        <RowList id="RF" translation="[80,100]" itemComponentName="ProbeRowItem" itemSize="[1120,120]" itemSpacing="[0,20]" rowItemSize="[[160,100]]" rowItemSpacing="[[16,0]]" numRows="2" showRowLabel="false" visible="false" />
+        <RowList id="RW" translation="[80,100]" itemComponentName="ProbeRowItem" itemSize="[1120,120]" itemSpacing="[0,20]" rowItemSize="[[160,100]]" rowItemSpacing="[[16,0]]" numRows="2" showRowLabel="false" rowFocusAnimationStyle="fixedFocusWrap" visible="false" />
+        <RowList id="RV" translation="[80,100]" itemComponentName="ProbeRowItem" itemSize="[1120,120]" itemSpacing="[0,20]" rowItemSize="[[160,100]]" rowItemSpacing="[[16,0]]" numRows="2" showRowLabel="false" vertFocusAnimationStyle="floatingFocus" visible="false" />
+        <ZoomRowList id="ZR" translation="[80,100]" itemComponentName="ProbeRowItem" rowWidth="1120" rowHeight="[120]" rowZoomHeight="[160]" rowItemHeight="[100]" rowItemZoomHeight="[140]" rowItemAspectRatio="[1.6]" spacingAfterRow="20" spacingAfterRowItem="[16]" visible="false" />
+        <Timer id="sampler" duration="0.001" repeat="true" />
+        <Timer id="stepTimer" duration="2" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.clock = CreateObject("roTimespan")
+        m.seq = 0
+        m.samples = 0
+        m.lastState = ""
+        m.items = {}
+        m.list = invalid
+        perList = ["key:Right", "key:Right", "key:Left", "key:Down", "key:Down", "key:Up", "key:Down_Down", "act:jump0", "hold:Right", "act:jump0", "hold:Down", "act:jump0", "act:animate2", "act:jump0", "act:skip", "key:Down", "key:Right", "act:noskip"]
+        m.steps = []
+        for each id in ["RF", "RW", "RV", "ZR"]
+            m.steps.push("list:" + id)
+            m.steps.append(perList)
+        end for
+        m.steps.push("done")
+        m.step = -1
+        for each id in ["RF", "RW", "RV", "ZR"]
+            l = m.top.findNode(id)
+            l.content = makeContent()
+            for each f in ["itemFocused", "itemUnfocused", "rowItemFocused", "rowFocused", "rowUnfocused", "currFocusRow", "currFocusColumn", "scrollingStatus", "vertFocusDirection", "horizFocusDirection"]
+                if l.hasField(f) then l.observeField(f, "onListField")
+            end for
+        end for
+        for each id in ["RF", "RW", "RV", "ZR"]
+            rec("info", "fields " + id + " " + fieldList(m.top.findNode(id), ["skipFocusAnimations", "vertFocusAnimationStyle", "rowFocusAnimationStyle", "numRows", "vertFocusDirection", "horizFocusDirection", "scrollingStatus", "wrap", "fadeFocusFeedbackWhenAutoScrolling"]))
+        end for
+        m.top.findNode("sampler").observeField("fire", "onSample")
+        m.top.findNode("stepTimer").observeField("fire", "onStep")
+        m.top.findNode("sampler").control = "start"
+        m.top.findNode("stepTimer").control = "start"
+    end sub
+
+    function makeContent() as object
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to 3
+            row = root.createChild("ContentNode")
+            row.title = "Row " + StrI(r).trim()
+            for c = 0 to 7
+                item = row.createChild("ContentNode")
+                item.title = "R" + StrI(r).trim() + "I" + StrI(c).trim()
+            end for
+        end for
+        return root
+    end function
+
+    function now() as string
+        return StrI(m.clock.TotalMilliseconds()).trim()
+    end function
+
+    sub rec(kind as string, body as string)
+        m.seq = m.seq + 1
+        s = StrI(m.seq).trim()
+        while len(s) < 4
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + now() + "|" + kind + "|" + body
+    end sub
+
+    function num(v as dynamic) as string
+        return Str(Int(v * 100 + 0.5) / 100).trim()
+    end function
+
+    function valStr(v as dynamic) as string
+        t = type(v)
+        if t = "roBoolean" or t = "Boolean"
+            if v then return "true" else return "false"
+        else if t = "roInt" or t = "Integer" or t = "roFloat" or t = "Float" or t = "roDouble" or t = "Double"
+            return num(v)
+        else if t = "roString" or t = "String"
+            return v
+        else if t = "roArray"
+            out = "["
+            for each e in v
+                out = out + valStr(e) + ","
+            end for
+            return out + "]"
+        end if
+        return "<" + t + ">"
+    end function
+
+    function fieldList(node as object, keys as object) as string
+        out = ""
+        for each k in keys
+            if node.hasField(k)
+                out = out + k + "=" + valStr(node.getField(k)) + " "
+            else
+                out = out + k + "=<absent> "
+            end if
+        end for
+        return out
+    end function
+
+    function itemLog(text as string) as boolean
+        rec("item", text)
+        return true
+    end function
+
+    function registerItem(info as object) as boolean
+        m.items[info.name] = info.node
+        return true
+    end function
+
+    sub onListField(ev as object)
+        rec("lf", ev.getRoSGNode().id + "." + ev.getField() + "=" + valStr(ev.getData()))
+    end sub
+
+    sub onSample()
+        m.samples = m.samples + 1
+        if m.list = invalid then return
+        l = m.list
+        state = "fr=" + num(l.currFocusRow)
+        if l.hasField("currFocusColumn") then state = state + " fc=" + num(l.currFocusColumn)
+        state = state + " ss=" + valStr(l.scrollingStatus)
+        if state <> m.lastState
+            m.lastState = state
+            rec("frame", state)
+        end if
+    end sub
+
+    sub onStep()
+        m.step = m.step + 1
+        action = m.steps[m.step]
+        rec("step", StrI(m.step).trim() + " " + action)
+        timer = m.top.findNode("stepTimer")
+        timer.duration = 2
+        if action = "done"
+            rec("info", "samples=" + StrI(m.samples).trim())
+            print "PROBE|done"
+            m.top.probeExit = true
+            return
+        end if
+        parts = action.split(":")
+        if parts[0] = "list"
+            if m.list <> invalid then m.list.visible = false
+            m.list = m.top.findNode(parts[1])
+            m.list.visible = true
+            m.items = {}
+            m.lastState = ""
+            m.list.setFocus(true)
+            rec("act", "focus " + parts[1] + " " + fieldList(m.list, ["itemFocused", "rowItemFocused", "currFocusRow"]))
+        else if parts[0] = "key"
+            print "PROBE|await|" + parts[1]
+        else if parts[0] = "hold"
+            print "PROBE|await|Hold" + parts[1]
+            timer.duration = 3.5
+        else if parts[0] = "act"
+            a = parts[1]
+            if a = "jump0"
+                m.list.jumpToRowItem = [0, 0]
+            else if a = "animate2"
+                if m.list.hasField("animateToRow")
+                    m.list.animateToRow = 2
+                else
+                    m.list.animateToItem = 2
+                end if
+            else if a = "skip"
+                if m.list.hasField("skipFocusAnimations") then m.list.skipFocusAnimations = true
+            else if a = "noskip"
+                if m.list.hasField("skipFocusAnimations") then m.list.skipFocusAnimations = false
+            end if
+            rec("act", a + " " + fieldList(m.list, ["itemFocused", "rowItemFocused", "currFocusRow", "skipFocusAnimations"]))
+        end if
+        timer.control = "start"
+    end sub
+    ]]>
+    </script>
+</component>
