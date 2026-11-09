@@ -1024,42 +1024,58 @@ export class RowList extends ArrayGrid {
         if (scrolling) {
             this.pushMotionClip(rect, this.windowLayoutHeight(context), draw2D);
         }
-        // Only the settled window's rows make up the reported extent.
-        let windowHeight = 0;
-        let renderedRows = 0;
-        let trailingSpacing = 0;
+        let window: { windowHeight: number; renderedRows: number; trailingSpacing: number };
         try {
-            for (let r = firstRow; r < lastRow; r++) {
-                const rowIndex = this.calculateActualRowIndex(r);
-                if (rowIndex === -1) {
-                    if (frame) {
-                        context.itemRect.y += pitch;
-                        continue;
-                    }
-                    break;
-                }
-                const rowStartY = context.itemRect.y;
-                const fits = this.renderSingleRow(rowIndex, r - firstRow, context);
-                if (r >= 0 && r < context.displayRows) {
-                    windowHeight += context.itemRect.y - rowStartY;
-                    renderedRows++;
-                    trailingSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
-                }
-                if (!fits && !frame) {
-                    break;
-                }
-            }
+            window = this.renderWindowRows(firstRow, lastRow, frame !== undefined, pitch, context);
         } finally {
             if (scrolling) {
                 draw2D?.popClip();
             }
         }
+        const { windowHeight, renderedRows, trailingSpacing } = window;
         if (indicatorRect && focusOnTop) {
             this.renderFocus(indicatorRect, opacity, sgRoot.focused === this, draw2D);
         }
         const margin = this.rectMargins();
         const height = renderedRows === 0 ? 0 : windowHeight - trailingSpacing + margin.y * 2;
         this.updateRect(rect, context.displayRows, context.itemSize, { height, firstRow: this.currRow });
+    }
+
+    /**
+     * Draws rows `firstRow`..`lastRow - 1` and measures the settled window's rows among them, which alone
+     * make up the reported extent. While moving, a slot with no row (past either end) advances by `pitch`.
+     */
+    private renderWindowRows(
+        firstRow: number,
+        lastRow: number,
+        moving: boolean,
+        pitch: number,
+        context: RowListRenderContext
+    ): { windowHeight: number; renderedRows: number; trailingSpacing: number } {
+        let windowHeight = 0;
+        let renderedRows = 0;
+        let trailingSpacing = 0;
+        for (let r = firstRow; r < lastRow; r++) {
+            const rowIndex = this.calculateActualRowIndex(r);
+            if (rowIndex === -1) {
+                if (moving) {
+                    context.itemRect.y += pitch;
+                    continue;
+                }
+                break;
+            }
+            const rowStartY = context.itemRect.y;
+            const fits = this.renderSingleRow(rowIndex, r - firstRow, context);
+            if (r >= 0 && r < context.displayRows) {
+                windowHeight += context.itemRect.y - rowStartY;
+                renderedRows++;
+                trailingSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
+            }
+            if (!fits && !moving) {
+                break;
+            }
+        }
+        return { windowHeight, renderedRows, trailingSpacing };
     }
 
     /**

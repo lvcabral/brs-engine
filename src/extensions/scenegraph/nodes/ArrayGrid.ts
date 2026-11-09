@@ -301,50 +301,74 @@ export class ArrayGrid extends Group implements UITransition {
             this.resetFocusForNewContent(true);
             return;
         } else if (fieldName === "jumptoitem" && isNumberComp(value)) {
-            this.settleMotion();
-            this.flushContentFocus();
-            if (this.listFocusModel() && sgRoot.focused !== this && !this.isChildrenFocused()) {
-                // An unfocused jump reports that no item has the focus, on every write (DEVICE-MEASURED,
-                // list-focus-dispatch-probe R2-R4).
-                super.setValue("itemUnfocused", new Int32(-1));
-            }
-            this.setFocusedItem(jsValueOf(value));
+            this.jumpToItem(value);
         } else if (fieldName === "animatetoitem" && isNumberComp(value)) {
-            this.flushContentFocus();
-            this.animateRequested = true;
-            try {
-                this.setFocusedItem(jsValueOf(value));
-            } finally {
-                this.animateRequested = false;
-            }
-        } else if (fieldName === "focusfeedbackposter") {
+            this.animateToItem(value);
+        } else if (!this.acceptFieldValue(fieldName, value)) {
+            return;
+        }
+        super.setValue(index, value, alwaysNotify, kind);
+        this.afterFieldSet(fieldName);
+    }
+
+    /** An app's `jumpToItem` write: the focus lands at once. */
+    private jumpToItem(value: BrsType) {
+        this.settleMotion();
+        this.flushContentFocus();
+        if (this.listFocusModel() && sgRoot.focused !== this && !this.isChildrenFocused()) {
+            // An unfocused jump reports that no item has the focus, on every write (DEVICE-MEASURED,
+            // list-focus-dispatch-probe R2-R4).
+            super.setValue("itemUnfocused", new Int32(-1));
+        }
+        this.setFocusedItem(jsValueOf(value));
+    }
+
+    /** An app's `animateToItem` write: the focus moves like a key press. */
+    private animateToItem(value: BrsType) {
+        this.flushContentFocus();
+        this.animateRequested = true;
+        try {
+            this.setFocusedItem(jsValueOf(value));
+        } finally {
+            this.animateRequested = false;
+        }
+    }
+
+    /**
+     * Applies a field whose value this grid caches or validates before it is stored. Returns false when
+     * the write is rejected and the field keeps its current value.
+     */
+    private acceptFieldValue(fieldName: string, value: BrsType): boolean {
+        if (fieldName === "focusfeedbackposter") {
             // Must stay a Poster (matches BusySpinner's `poster` field). No private cache is kept for
             // it — `renderFocus` re-reads the field every draw, because `Node.cloneNode` aliases a
             // node-valued field onto the SAME node while still re-running this constructor, which
             // would desync a cache from the field the moment a grid is cloned.
             if (!(value instanceof Poster)) {
-                return;
+                return false;
             }
             value.setNodeParent(this);
         } else if (fieldName === "vertfocusanimationstyle" && isBrsString(value)) {
+            // An invalid style is ignored.
             const style = resolveFocusStyle(value.toString());
-            if (style) {
-                this.vertFocusAnimationStyleName = style.toLowerCase();
-                this.wrap = style === FocusStyle.FixedFocusWrap;
-            } else {
-                // Invalid vertFocusAnimationStyle
-                return;
+            if (!style) {
+                return false;
             }
+            this.vertFocusAnimationStyleName = style.toLowerCase();
+            this.wrap = style === FocusStyle.FixedFocusWrap;
         } else if (fieldName === "horizfocusanimationstyle" && isBrsString(value)) {
+            // An invalid style keeps the field's current value (device behavior).
             const style = resolveFocusStyle(value.toString());
-            if (style) {
-                this.horizFocusAnimationStyleName = style.toLowerCase();
-            } else {
-                // Invalid horizFocusAnimationStyle: keep the field's current value (device behavior)
-                return;
+            if (!style) {
+                return false;
             }
+            this.horizFocusAnimationStyleName = style.toLowerCase();
         }
-        super.setValue(index, value, alwaysNotify, kind);
+        return true;
+    }
+
+    /** Refreshes the state derived from a field after it is stored. */
+    private afterFieldSet(fieldName: string) {
         if (fieldName === "focusedchild" && sgRoot.focused !== this && !this.isChildrenFocused()) {
             // Leaving the focus chain drops the item's focus at once, even on a hidden list (DEVICE-MEASURED,
             // focus-motion-edge-probe C/D); the render pass would only catch up once the list is drawn.
@@ -1442,7 +1466,10 @@ export class ArrayGrid extends Group implements UITransition {
         const held = moving && !this.motion?.regained;
         itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus && !held), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
-        const percent = moving ? this.motionFocusPercent(index) : focus ? 1 : 0;
+        let percent = focus ? 1 : 0;
+        if (moving) {
+            percent = this.motionFocusPercent(index);
+        }
         itemComp.setValue("focusPercent", new Float(percent), false);
     }
 

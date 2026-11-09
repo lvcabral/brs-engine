@@ -313,7 +313,7 @@ export class SGRoot {
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
     /** `BRS_UI_TRANSITIONS=0`: intrinsic UI transitions start disabled and DeviceInfo cannot enable them. */
-    private transitionsEnvDisabled: boolean = false;
+    private readonly transitionsEnvDisabled: boolean = false;
 
     /**
      * True while `Group.renderNode` has dropped the draw target of a fully transparent subtree, so its

@@ -164,10 +164,7 @@ export class LabelList extends ArrayGrid {
                 lastRow,
                 motion,
                 itemRect,
-                rowHeights,
-                rowSpacings,
-                rowSpacingDefault,
-                spanOf,
+                { rowHeights, rowSpacings, rowSpacingDefault, spanOf },
                 screen,
                 {
                     hasSections,
@@ -194,14 +191,12 @@ export class LabelList extends ArrayGrid {
         lastRow: number,
         motion: { visualIndex: number } | undefined,
         itemRect: Rect,
-        rowHeights: number[],
-        rowSpacings: number[],
-        rowSpacingDefault: number,
-        spanOf: (r: number) => number,
+        rows: { rowHeights: number[]; rowSpacings: number[]; rowSpacingDefault: number; spanOf: (r: number) => number },
         screen: Rect,
         ctx: { hasSections: boolean; nodeFocus: boolean; opacity: number; sectionIndex: number; draw2D?: IfDraw2D }
     ) {
         const { hasSections, nodeFocus, opacity, draw2D } = ctx;
+        const { rowHeights, rowSpacings, rowSpacingDefault, spanOf } = rows;
         const itemSize = this.getValueJS("itemSize") as number[];
         let { sectionIndex } = ctx;
         let lastIndex = -1;
