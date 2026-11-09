@@ -175,6 +175,39 @@ describe("List focus motion", () => {
         ]);
     });
 
+    test("animateToItem during a queued press drops the queued press", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        observe(list, "L", ["itemFocused"]);
+        tap(list, "down");
+        advance(100);
+        tap(list, "down");
+        list.setValue("animateToItem", new Int32(8));
+        let reached = false;
+        for (let i = 0; i < 150; i++) {
+            advance(16);
+            if (row(list) === 8) {
+                reached = true;
+            } else if (reached) {
+                throw new Error(`the focus left row 8 for ${row(list)}`);
+            }
+        }
+        expect(row(list)).toBe(8);
+        expect(log).toEqual(["L.itemFocused=8"]);
+    });
+
+    test("a held key stops repeating when the focus moves to another node", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        list.handleKey("down", true);
+        advance(100);
+        const other = SGNodeFactory.createNode("Group");
+        other.setNodeFocus(true);
+        // The release goes to the newly focused node, never to the list.
+        advance(2000);
+        expect(row(list)).toBe(1);
+        expect(list.getValueJS("scrollingStatus")).toBe(false);
+        expect(sgRoot.processTransitions()).toBe(false);
+    });
+
     test("a held key scrolls on after ~400 ms and settles only when released", () => {
         const list = makeList("LabelList", "floatingFocus");
         observe(list, "L", ["itemFocused"]);

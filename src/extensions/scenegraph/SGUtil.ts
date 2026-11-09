@@ -1,5 +1,6 @@
 import { Rect } from "brs-engine";
 import Long from "long";
+import { easeOutCubic, easeOutQuint } from "./SGTransition";
 
 /**
  * Checks if all properties of a Rect are finite numbers.
@@ -424,7 +425,7 @@ export function applyEase(t: number, ease: string): number {
         case "incubic":
             return Math.pow(clamped, 3);
         case "outcubic":
-            return Math.pow(clamped - 1, 3) + 1;
+            return easeOutCubic(clamped);
         case "inoutcubic":
             return clamped < 0.5 ? 4 * Math.pow(clamped, 3) : Math.pow(clamped - 1, 3) * 4 + 1;
         case "inquartic":
@@ -436,7 +437,7 @@ export function applyEase(t: number, ease: string): number {
         case "inquintic":
             return Math.pow(clamped, 5);
         case "outquintic":
-            return 1 + Math.pow(clamped - 1, 5);
+            return easeOutQuint(clamped);
         case "inoutquintic":
             return clamped < 0.5 ? 16 * Math.pow(clamped, 5) : 1 + 16 * Math.pow(clamped - 1, 5);
         case "inexpo":

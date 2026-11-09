@@ -183,6 +183,27 @@ export class RowList extends ArrayGrid {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
+    /**
+     * A focus gain lands on the row in `rowItemFocused`: an app's jumpToRowItem leaves `itemFocused`
+     * stale (DEVICE-MEASURED) but moves the focus.
+     */
+    protected focusGainIndex(): number {
+        const itemFocused = this.getValueJS("itemFocused") as number;
+        const rowItem = this.getValueJS("rowItemFocused");
+        if (itemFocused >= 0 && Array.isArray(rowItem) && typeof rowItem[0] === "number" && rowItem[0] >= 0) {
+            return rowItem[0];
+        }
+        return itemFocused;
+    }
+
+    protected resetFocusForNewContent(freshContent: boolean) {
+        super.resetFocusForNewContent(freshContent);
+        // An unfocused reset moves the cursor silently; rowHasFocus follows it (a motion moves it at its settle).
+        if (!this.motion) {
+            this.flaggedRow = this.focusIndex;
+        }
+    }
+
     protected setFocusedItem(rowIndex: number, colIndex: number = -1) {
         if (rowIndex < 0 || rowIndex >= this.content.length) {
             return;
@@ -391,15 +412,18 @@ export class RowList extends ArrayGrid {
         );
     }
 
+    /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
     private rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.getContentChildren(this.content[rowIndex]).length);
+        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
     }
 
     /** Whether the row wraps its columns (fixedFocusWrap with more items than fit). */
     private rowWrapsColumns(rowIndex: number): boolean {
         const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
-        const cols = this.getContentChildren(this.content[rowIndex]);
-        return style === RowFocusStyle.Wrap && !this.allItemsFitOnScreen(rowIndex, cols);
+        if (style !== RowFocusStyle.Wrap) {
+            return false;
+        }
+        return !this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
     }
 
     private animateRowMove(rowIndex: number, colIndex: number) {
@@ -989,7 +1013,7 @@ export class RowList extends ArrayGrid {
             lastRow = context.displayRows + Math.ceil(Math.max(0, -frame.shift));
             context.itemRect.y = rect.y + (firstRow + frame.shift) * pitch;
             const viewport = context.displayRows * pitch - (context.globalSpacing[1] ?? 0);
-            draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: viewport });
+            this.pushMotionClip(rect, viewport, draw2D);
         }
         // Only the settled window's rows make up the reported extent.
         let windowHeight = 0;

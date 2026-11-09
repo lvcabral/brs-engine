@@ -924,7 +924,15 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
 - Directions: `vertFocusDirection` for rows and `horizFocusDirection` (an undocumented grid field) for
   columns. Each opens when its axis starts moving. An axis that lands first resets its own; the last
   one resets after the settle.
-- A press mid-step queues one more step (one at most; further presses are consumed).
+- A press mid-step queues one more step (one at most; further presses are consumed). A retarget
+  (`animateToItem`, a held key's repeat) drops the queued step, or the motion would return to it.
+- The motion's emissions (`startFocusMotion` and `settleMotion`) run inside `Field.enterInternalUpdate`,
+  like the instant path, so an app writing `animateToItem` from an observer sees the same deferral with
+  transitions on or off.
+- A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
+  release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
+  list. Without this the list repeats to its end and the scene redraws forever.
+- Every jump path (`jumpToItem`, `jumpToRowItem`, `jumpToRow`) calls `settleMotion()` first.
 - A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
   later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
   out from rest. On release the step in flight eases out; the settle waits for the release.
@@ -955,10 +963,14 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
   - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
   - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
-- `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts.
+- `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
+  the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
 - An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a
   later `itemUnfocused` reports the stale value). Key navigation, which routes through `jumpToRowItem`
-  internally, still publishes both.
+  internally, still publishes both. A focus gain therefore lands on `rowItemFocused`'s row, not on the
+  stale `itemFocused` (`focusGainIndex`). `Node.setNodeFocus` returns focusability, not "gained", so
+  `ArrayGrid.setNodeFocus` re-applies the focus only when `focusOn` is true (a blur used to snap a RowList
+  back to the stale row).
 - While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
   `itemHasFocus`.
 - A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,

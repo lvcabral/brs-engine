@@ -180,6 +180,29 @@ describe("RowList focus motion", () => {
         expect(log).toEqual(["rowItemFocused=[...]"]);
     });
 
+    test("losing focus keeps the row an app's jumpToRowItem moved to", () => {
+        const list = makeList();
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(3)]));
+        list.setNodeFocus(false);
+        expect(list.getValueJS("rowItemFocused")).toEqual([2, 3]);
+        list.setNodeFocus(true);
+        expect(list.getValueJS("rowItemFocused")).toEqual([2, 3]);
+    });
+
+    test("an unfocused content reset moves rowHasFocus back to row 0", () => {
+        const list = makeList();
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+        SGNodeFactory.createNode("Group").setNodeFocus(true);
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (let r = 0; r < 3; r++) {
+            const row = SGNodeFactory.createNode("ContentNode");
+            row.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+            root.appendChildToParent(row);
+        }
+        list.setValue("content", root);
+        expect(list.flaggedRow).toBe(0);
+    });
+
     test("a held key publishes an interim rowItemFocused while it pauses before repeating", () => {
         const list = makeList();
         observe(list, ["rowItemFocused", "itemFocused"]);
@@ -236,6 +259,22 @@ describe("RowList focus motion", () => {
                 "rowFocused=1",
                 "rowItemFocused=[...]",
             ]);
+        });
+
+        test("jumpToRowItem mid-motion lands the motion first and publishes nothing after the jump", () => {
+            const list = makeZoom();
+            observe(list, ["scrollingStatus", "rowFocused", "rowItemFocused"]);
+            tap(list, "down");
+            advance(100);
+            list.setValue("jumpToRowItem", new RoArray([new Int32(0), new Int32(0)]));
+            const settled = log.length;
+            expect(log.slice(0, settled).filter((entry) => entry.startsWith("rowFocused"))).toEqual([
+                "rowFocused=1",
+                "rowFocused=0",
+            ]);
+            advance(500);
+            expect(log.length).toBe(settled);
+            expect(list.getValueJS("currFocusRow")).toBe(0);
         });
 
         test("the zoom percents ramp between the rows while moving", () => {

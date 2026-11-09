@@ -178,6 +178,7 @@ export class ZoomRowList extends ArrayGrid {
         } else if (fieldName === "jumptorowitem" && value instanceof RoArray) {
             const coords = jsValueOf(value) as any[];
             if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+                this.settleMotion();
                 this.setFocusedItem(coords[0], coords[1]);
             }
         } else if (fieldName === "rowfocusanimationstyle" && isBrsString(value)) {
@@ -280,8 +281,9 @@ export class ZoomRowList extends ArrayGrid {
         return sgRoot.uiTransitionsEnabled && (this.navDirection !== 0 || this.animateRequested);
     }
 
+    /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
     private rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.getRowContent(rowIndex).length);
+        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
     }
 
     private animateZoomRow(rowIndex: number, colIndex: number) {
@@ -535,7 +537,7 @@ export class ZoomRowList extends ArrayGrid {
             currentY = rect.y - fraction * (firstMetrics.rowHeight + firstMetrics.spacingY);
         }
         if (motion) {
-            draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: 100000 });
+            this.pushMotionClip(rect, 100000, draw2D);
         }
         let firstRenderedRow = -1;
         let lastRenderedRow = -1;

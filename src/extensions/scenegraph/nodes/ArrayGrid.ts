@@ -346,8 +346,9 @@ export class ArrayGrid extends Group implements UITransition {
             this.settleMotion();
         }
         const focus = super.setNodeFocus(focusOn);
-        if (focus) {
-            let focusIndex = this.getValueJS("itemFocused") as number;
+        // Node.setNodeFocus reports focusability, not a gain: only a gain re-applies itemFocused.
+        if (focus && focusOn) {
+            let focusIndex = this.focusGainIndex();
             if (focusIndex < 0) {
                 // No item has been focused yet: default to the first item (Roku's itemFocused
                 // default is 0). Rebuild the internal content view first so items added in place
@@ -362,6 +363,11 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         return focus;
+    }
+
+    /** The item a focus gain lands on: the last `itemFocused`, or -1 when none was focused yet. */
+    protected focusGainIndex(): number {
+        return this.getValueJS("itemFocused") as number;
     }
 
     /**
@@ -544,6 +550,22 @@ export class ArrayGrid extends Group implements UITransition {
         target: { row: number; col: number },
         apply: () => void
     ) {
+        // Engine-initiated emission: reentrant observers defer, as on the instant path
+        // (see Field.enterInternalUpdate).
+        Field.enterInternalUpdate();
+        try {
+            this.startOrExtendMotion(contentIndex, base, target, apply);
+        } finally {
+            Field.exitInternalUpdate();
+        }
+    }
+
+    private startOrExtendMotion(
+        contentIndex: number,
+        base: { row: number; col: number },
+        target: { row: number; col: number },
+        apply: () => void
+    ) {
         const now = sgClock.perfNow();
         this.scrollPulseArmed = false;
         const motion = this.motion;
@@ -551,6 +573,8 @@ export class ArrayGrid extends Group implements UITransition {
             if (!motion.arrived && this.navDirection !== 0 && !this.holdRepeating) {
                 motion.queued = target;
             } else {
+                // A retarget supersedes any press waiting behind the step in flight.
+                motion.queued = undefined;
                 this.startMotionSegments(motion, target, now);
             }
             motion.contentIndex = contentIndex;
@@ -927,6 +951,10 @@ export class ArrayGrid extends Group implements UITransition {
             this.abortMotion();
             return false;
         }
+        if (this.heldKey && sgRoot.focused !== this && !this.isChildrenFocused()) {
+            // The focus moved away while the key was held: its release goes to another node.
+            this.releaseHeldKey();
+        }
         if (motion.arrived) {
             // DEVICE-MEASURED: a held key keeps stepping after a pause, and the motion only settles once
             // the key is released (even when the focus has reached the end).
@@ -1026,7 +1054,13 @@ export class ArrayGrid extends Group implements UITransition {
         this.heldKey = "";
         this.holdRepeats = 0;
         sgRoot.removeTransition(this);
-        this.publishMotionSettle(motion);
+        // Reentrant observers defer however the settle is reached (a tick, jumpToItem, focus loss).
+        Field.enterInternalUpdate();
+        try {
+            this.publishMotionSettle(motion);
+        } finally {
+            Field.exitInternalUpdate();
+        }
         this.makeDirty();
     }
 

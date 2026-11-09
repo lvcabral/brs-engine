@@ -254,6 +254,16 @@ export class PanelSet extends Group implements UITransition {
     appendChildToParent(child: BrsType): boolean {
         const added = super.appendChildToParent(child);
         if (added && child instanceof Panel) {
+            // A panel still sliding off (or already listed) is re-appended as a fresh entry at the end,
+            // so the settle doesn't remove it and it isn't listed twice.
+            const exitIndex = this.exiting.indexOf(child);
+            if (exitIndex >= 0) {
+                this.exiting.splice(exitIndex, 1);
+            }
+            const listedIndex = this.panels.indexOf(child);
+            if (listedIndex >= 0) {
+                this.panels.splice(listedIndex, 1);
+            }
             this.panels.push(child);
             this.adoptPanel(child);
             if (child instanceof GridPanel) {

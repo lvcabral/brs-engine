@@ -139,7 +139,7 @@ export class LabelList extends ArrayGrid {
             itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
             if (drawFocus && !drawFocusOnTop) {
                 this.renderMotionFocus(
-                    { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] },
+                    this.listMotionFocusRect(rect, motion, itemSize, pitch),
                     motion.visualIndex,
                     opacity,
                     draw2D
@@ -173,7 +173,7 @@ export class LabelList extends ArrayGrid {
         }
         if (motion && drawFocus && drawFocusOnTop) {
             this.renderMotionFocus(
-                { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] },
+                this.listMotionFocusRect(rect, motion, itemSize, pitch),
                 motion.visualIndex,
                 opacity,
                 draw2D

@@ -162,6 +162,21 @@ describe("PanelSet slide transition", () => {
         expect(log.at(-1)).toBe("ps.slidingStatus=false");
     });
 
+    test("a panel re-appended while it slides off stays a child and is listed once", () => {
+        const { panelSet } = buildPair();
+        panelSet.handleKey("right", true);
+        const c = makePanel("C", "narrow");
+        panelSet.appendChildToParent(c);
+        advance(700);
+        panelSet.handleKey("left", true);
+        advance(100);
+        panelSet.appendChildToParent(c);
+        advance(1500);
+        expect(c.getNodeParent()).toBe(panelSet);
+        expect(panelSet.panels.filter((panel) => panel === c)).toHaveLength(1);
+        expect(panelSet.getValueJS("numPanels")).toBe(3);
+    });
+
     test("a key mid-slide retargets from the current positions within one slidingStatus pulse", () => {
         const { panelSet, a, b } = buildPair();
         observe(panelSet, "ps", ["slidingStatus"]);
