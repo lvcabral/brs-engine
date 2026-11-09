@@ -546,8 +546,8 @@ export class ZoomRowList extends ArrayGrid {
 
         this.currRow = startRow;
         let currentY = rect.y;
-        // A row change in transit: the rows scroll up/down by the moving fraction from the row the
-        // focus is passing, clipped at the list top; the indicator is drawn once over the cells.
+        // In transit, the rows are laid out from the motion's row (a row change scrolls them by the moving
+        // fraction, clipped at the list top) and the indicator is drawn once over the cells.
         const motion = this.motion;
         let firstRow = startRow;
         this.motionIndicator = undefined;
@@ -741,15 +741,9 @@ export class ZoomRowList extends ArrayGrid {
 
         const canWrapItems = this.canWrapItems(rowContent.length, metrics, this.nodeWidth);
         let startCol = canWrapItems ? this.rowFocus[rowIndex] ?? 0 : 0;
-        // A slide still in flight keeps the indicator on its row, even with a row change queued behind it.
-        const sliding = this.slidingRow();
-        if (this.motion && rowIndex === (sliding >= 0 ? sliding : this.focusIndex)) {
-            const row = {
-                index: rowIndex,
-                length: canWrapItems ? rowContent.length : 0,
-                sliding: rowIndex === sliding,
-            };
-            startCol = this.placeMotionRow(rect, itemRect, metrics, row, startCol);
+        if (this.motion && rowIndex === this.stepRow()) {
+            const wrapCount = canWrapItems ? rowContent.length : 0;
+            startCol = this.placeMotionRow(rect, itemRect, metrics, rowIndex, wrapCount, startCol);
         }
         const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
@@ -806,34 +800,26 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     /**
-     * Lays out the focused row for a move along it: a wrapping row (`row.length` items, 0 when it doesn't
-     * wrap) slides under the fixed focus while `row.sliding`, otherwise the indicator glides. Records the in-transit
+     * Lays out the row the motion is on: while it slides, a wrapping row (`wrapCount` items, 0 when it
+     * doesn't wrap) moves under the fixed focus, otherwise the indicator glides. Records the in-transit
      * indicator, draws it now when it goes under the cells, and returns the first column to draw.
      */
     private placeMotionRow(
         rect: Rect,
         itemRect: Rect,
         metrics: RowMetrics,
-        row: { index: number; length: number; sliding: boolean },
+        rowIndex: number,
+        wrapCount: number,
         startCol: number
     ) {
-        const motion = this.motion;
-        if (!motion) {
-            return startCol;
-        }
         const pitchX = metrics.itemWidth + metrics.spacingX;
-        // The moving column while the slide is in flight, and on a row that doesn't wrap (a row change keeps
-        // the indicator's column slot); a wrapping row at rest holds its focus at the fixed slot.
-        let focusCol = this.rowFocus[row.index] ?? 0;
-        if (motion.colMoved && (row.sliding || row.length === 0)) {
-            focusCol = this.motionCol;
-        }
+        const focusCol = this.motionIndicatorCol(rowIndex, this.rowFocus[rowIndex] ?? 0, wrapCount > 0);
         let visualStart = startCol;
-        if (row.sliding && row.length > 0) {
+        if (wrapCount > 0 && rowIndex === this.slidingRow()) {
             visualStart = this.motionCol;
             const whole = Math.floor(visualStart);
             itemRect.x -= (visualStart - whole) * pitchX;
-            startCol = ((whole % row.length) + row.length) % row.length;
+            startCol = ((whole % wrapCount) + wrapCount) % wrapCount;
         }
         this.indicatorRowTop = rect.y;
         this.motionIndicator = {
@@ -1086,7 +1072,7 @@ export class ZoomRowList extends ArrayGrid {
         const show = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         const row = this.content[rowIndex];
         const items = row.getNodeChildren().length;
-        if (!show || items === 0 || rowIndex !== this.focusIndex) {
+        if (!show || items === 0 || rowIndex !== this.stepRow()) {
             return 0;
         }
         const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;

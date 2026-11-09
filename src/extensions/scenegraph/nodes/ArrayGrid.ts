@@ -988,25 +988,40 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
-     * In-transit `focusPercent` of [row, col] in a row list: the row's weight times the column's weight
-     * within the moving row (`focusedCol` is the column a non-moving row holds).
+     * Row lists: the row the motion's step in flight is on (its row segment's target), `focusIndex` at
+     * rest. A press queued behind the step moves `focusIndex` at once, so code that draws or publishes the
+     * motion reads this instead: the new row must not take the old row's in-transit column, nor its place.
      */
-    /**
-     * The row a move along a row is sliding while its column segment is in flight, -1 otherwise. It is the
-     * motion's own row, not `focusIndex`: a row change queued behind the slide moves the focus cursor at
-     * once, and the new row must not take the old row's in-transit column (it would draw shifted until the
-     * settle).
-     */
-    protected slidingRow(): number {
+    protected stepRow(): number {
         const motion = this.motion;
-        if (!motion?.colMoved || this.motionCol === motion.col.to) {
-            return -1;
+        if (!motion) {
+            return this.focusIndex;
         }
         const rows = this.motionRows();
-        const row = Math.round(this.motionPos);
+        const row = Math.round(motion.row.to);
         return ((row % rows) + rows) % rows;
     }
 
+    /** Row lists: the row sliding along its items while the column segment is in flight, -1 otherwise. */
+    protected slidingRow(): number {
+        const motion = this.motion;
+        return motion?.colMoved && this.motionCol !== motion.col.to ? this.stepRow() : -1;
+    }
+
+    /**
+     * Row lists: the column the in-transit indicator points at on `rowIndex`. The moving column while that
+     * row slides, and on a row that doesn't wrap (a row change keeps the indicator's column slot); a
+     * wrapping row at rest holds its focus at the fixed slot, `focusedCol`.
+     */
+    protected motionIndicatorCol(rowIndex: number, focusedCol: number, wraps: boolean): number {
+        const slides = rowIndex === this.slidingRow() || (this.motion?.colMoved === true && !wraps);
+        return slides ? this.motionCol : focusedCol;
+    }
+
+    /**
+     * In-transit `focusPercent` of [row, col] in a row list: the row's weight times the column's weight
+     * within the moving row (`focusedCol` is the column a non-moving row holds).
+     */
     protected motionCellPercentIn(rowIndex: number, colIndex: number, focusedCol: number, numCols: number): number {
         const rowWeight = this.motionRowWeight(rowIndex);
         if (rowWeight === 0) {
@@ -1060,7 +1075,7 @@ export class ArrayGrid extends Group implements UITransition {
         const touchedCells = new Set(this.motionCellSet);
         for (const rowIndex of this.motionRowSet) {
             touchedCells.add(`${rowIndex},${rowFocus[rowIndex] ?? 0}`);
-            if (rowIndex === this.focusIndex && this.motion?.colMoved) {
+            if (rowIndex === this.slidingRow()) {
                 const numCols = Math.max(1, numColsOf(rowIndex));
                 const col0 = Math.floor(((this.motionCol % numCols) + numCols) % numCols);
                 touchedCells.add(`${rowIndex},${col0}`);
