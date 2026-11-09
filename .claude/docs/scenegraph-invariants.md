@@ -951,15 +951,21 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
   `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
   reported extent from the settled window's rows only.
-- **Indicator layering while moving is per node type** (screenshots in
-  `test/simulator/probes/grid-focus-layer-probe`):
-  - grids (MarkupGrid, PosterGrid) draw the moving indicator **over every cell**, whatever
-    `drawFocusFeedbackOnTop` says;
-  - lists (LabelList, MarkupList) draw it **under** their items unless `drawFocusFeedbackOnTop` is set.
+- **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
+  `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
+  opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):
+  - written (XML attribute or BrightScript): honored as is, on every node;
+  - never written: the field **reads false**, yet grids and row lists (MarkupGrid, PosterGrid, RowList,
+    ZoomRowList) draw the indicator **over** their items, while lists (LabelList, MarkupList) draw it
+    **under**.
 
-  Don't unify them. Drawing a grid's indicator before its cells (or between them) hides the ring behind
-  the opaque posters it crosses. RowList and ZoomRowList draw it over the cells too (RowList measured).
-  Regression: the draw-order tests in `GridFocusMotion.test.js`.
+  `ArrayGrid.focusFeedbackOnTop()` holds the rule (`focusOnTopWritten` + `focusOnTopByDefault()`); every
+  draw site asks it, never the raw field. Don't make the grid default `true` to get the over-the-items
+  look (MarkupGrid once did): the device reads `false`. A moving indicator drawn over the cells regardless
+  of the field hid the new item's content in an app whose side menu writes it false. RowList computes the
+  in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an
+  under-indicator before the focused row's items, because its item offset depends on the measured title.
+  Regression: the draw-order tests in `GridFocusMotion.test.js` and `RowListFocusMotion.test.js`.
 
 Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same engine through hooks.
 `startFocusMotion` takes the target cell and an `apply` callback, and `openMotion` /

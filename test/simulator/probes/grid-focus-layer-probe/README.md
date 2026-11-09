@@ -36,4 +36,4 @@ curl --digest -u rokudev:<pw> http://<ip>/pkgs/dev.jpg -o shot.jpg
 
 In `device-rest.jpg`, the ring at rest surrounds its cell with the outset showing, so the at-rest order can't be told apart from these images.
 
-The engine follows the table: `ArrayGrid.renderMotionFocus` is called after the cells by MarkupGrid and PosterGrid, and before the items by LabelList and MarkupList (after them with `drawFocusFeedbackOnTop`). PosterGrid wasn't captured, because it needs real poster images; it is assumed to behave like MarkupGrid.
+Neither grid in this probe writes `drawFocusFeedbackOnTop` from BrightScript or XML (the `over` grid's XML attribute is the only write, and it is `true`). `../focus-opaque-layer-probe` later showed that a grid draws over its items only while the field is unwritten or written true; written `false`, the indicator goes under the items, at rest and while moving. See that README for the rule the engine follows (`ArrayGrid.focusFeedbackOnTop`).

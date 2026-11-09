@@ -339,6 +339,40 @@ describe("RowList focus motion", () => {
         expect(backdrop.getValueJS("opacity")).toBeCloseTo(0, 2);
     });
 
+    test("the moving indicator follows drawFocusFeedbackOnTop like the settled one (device screenshot)", () => {
+        // focus-opaque-layer-probe: unwritten, the RowList indicator covers the cells; written false, it
+        // stays under them while moving along the row too.
+        const order = (list) => {
+            const steps = [];
+            const renderFocus = list.renderFocus.bind(list);
+            list.renderFocus = (...args) => {
+                steps.push("indicator");
+                return renderFocus(...args);
+            };
+            const renderCell = list.renderRowItemComponent.bind(list);
+            list.renderRowItemComponent = (...args) => {
+                steps.push("cell");
+                return renderCell(...args);
+            };
+            paintClips(list);
+            return steps;
+        };
+        const unwritten = makeClipList();
+        tap(unwritten, "right");
+        advance(100);
+        const over = order(unwritten);
+        expect(over.at(-1)).toBe("indicator");
+        expect(over.filter((step) => step === "cell").length).toBeGreaterThan(0);
+
+        const written = makeClipList();
+        written.setValue("drawFocusFeedbackOnTop", core.BrsBoolean.False);
+        tap(written, "down");
+        advance(100);
+        const under = order(written);
+        expect(under[0]).toBe("indicator");
+        expect(under.filter((step) => step === "indicator")).toHaveLength(1);
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");

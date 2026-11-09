@@ -230,6 +230,8 @@ export class ArrayGrid extends Group implements UITransition {
     protected navAxis: MotionAxis | "" = "";
     /** The navigation key still held down, and when it was pressed. */
     private heldKey = "";
+    /** The app wrote `drawFocusFeedbackOnTop` (XML or BrightScript); see `focusFeedbackOnTop`. */
+    private focusOnTopWritten = false;
     private heldSince = 0;
     private holdRepeating = false;
     /** Repeats of the held key so far (the first one accelerates from rest). */
@@ -279,6 +281,9 @@ export class ArrayGrid extends Group implements UITransition {
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
+        if (fieldName === "drawfocusfeedbackontop") {
+            this.focusOnTopWritten = true;
+        }
         if (fieldName === "content" && value instanceof ContentNode) {
             this.abortMotion();
             super.setValue(index, value, alwaysNotify, kind);
@@ -1173,10 +1178,26 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
+     * Whether the focus indicator is drawn over the items, at rest and while moving (DEVICE-MEASURED,
+     * `focus-opaque-layer-probe`). A written `drawFocusFeedbackOnTop` (XML attribute or BrightScript) is
+     * honored as is. Left unwritten, the field reads false, but a grid or row list still draws the
+     * indicator over its items, while a list (`focusOnTopByDefault` false) draws it under.
+     */
+    protected focusFeedbackOnTop(): boolean {
+        if (this.focusOnTopWritten) {
+            return this.getValueJS("drawFocusFeedbackOnTop") === true;
+        }
+        return this.focusOnTopByDefault();
+    }
+
+    /** Where the indicator goes while `drawFocusFeedbackOnTop` was never written: over the items on a grid. */
+    protected focusOnTopByDefault(): boolean {
+        return true;
+    }
+
+    /**
      * Draws the focus indicator at its in-transit rect (per-item focus frames are suppressed while moving).
-     * DEVICE-MEASURED layering (screenshots, `grid-focus-layer-probe`): a grid draws the moving indicator
-     * over every cell, whatever `drawFocusFeedbackOnTop` says; a list draws it under every item unless
-     * `drawFocusFeedbackOnTop` is set — so grids call this after their cells, lists before.
+     * Callers draw it before their items, or after them when `focusFeedbackOnTop()`.
      */
     protected renderMotionFocus(focusRect: Rect, index: number, opacity: number, draw2D?: IfDraw2D) {
         if (!this.getValueJS("drawFocusFeedback")) {
@@ -1583,7 +1604,7 @@ export class ArrayGrid extends Group implements UITransition {
         this.updateItemFocus(index, focused, nodeFocus);
         // While the focus moves, the indicator is drawn once at its in-transit slot instead.
         const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }

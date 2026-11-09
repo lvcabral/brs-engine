@@ -97,8 +97,6 @@ export class RowList extends ArrayGrid {
     private motionColOrigin = 0;
     private motionScrollFrom = 0;
     /** The in-transit indicator for this paint, recorded while the focused row is drawn. */
-    private motionIndicator?: { x: number; y: number; width: number; height: number; bandOffset: number };
-    private rowTopForIndicator = 0;
     // The row label font and its line height, resolved the first time a row label is laid out and
     // then kept: a device lays the label out once, so a later `rowLabelFont` write changes neither the
     // label text nor its space, while a font that is invalid from the start leaves no label and no
@@ -598,11 +596,6 @@ export class RowList extends ArrayGrid {
         return { shift: this.currRow - visualTop, focusSlot: this.motionPos - visualTop };
     }
 
-    /** The indicator recorded while this paint drew the focused row (see renderRowItems). */
-    private recordedMotionIndicator() {
-        return this.motionIndicator;
-    }
-
     /** Moves `rowHasFocus` from the previously flagged row to `rowIndex`. */
     private flagFocusedRow(rowIndex: number) {
         const previous = this.flaggedRow;
@@ -997,13 +990,12 @@ export class RowList extends ArrayGrid {
         // that without re-measuring the label, so accumulate the extent the loop actually laid out and
         // hand it over. `itemRect.y` ends one rowSpacing past the last row, which is dropped below.
         // Focus in motion: the settled window drawn `shift` rows lower plus the rows scrolling in/out, clipped
-        // to the viewport, and the indicator drawn once at its in-transit slot over every cell (RowList
-        // layers its moving ring like a grid — DEVICE-MEASURED, grid-focus-layer-probe).
+        // to the viewport, and the indicator drawn once at its in-transit slot.
         const frame = this.rowMotionFrame(context.displayRows);
         let firstRow = 0;
         let lastRow = context.displayRows;
-        let pitch = 0;
-        this.motionIndicator = undefined;
+        // The height of a slot with no row (one past either end of a non-wrapping list).
+        const pitch = context.itemSize[1] + (context.globalSpacing[1] ?? 0);
         // Only a row change scrolls and clips: a move along a row draws like the settled list
         // (DEVICE-MEASURED, rowlist-clip-probe).
         const scrolling = frame !== undefined && this.motion?.rowMoved === true;
@@ -1011,12 +1003,23 @@ export class RowList extends ArrayGrid {
         // scrolled past, which differ per row (rowHeights, rowSpacings, label bands).
         let visualTop = 0;
         if (scrolling) {
-            pitch = context.itemSize[1] + (context.globalSpacing[1] ?? 0);
             visualTop = -frame.shift;
             firstRow = Math.floor(Math.min(0, visualTop));
             // One spare row: shorter rows scrolling in can leave room for more rows than the settled window.
             lastRow = context.displayRows + Math.ceil(Math.max(0, visualTop)) + 1;
             context.itemRect.y = rect.y - this.slotOffset(firstRow, visualTop, context, pitch);
+        }
+        // The in-transit indicator, drawn under the cells or over them like the settled one
+        // (see focusFeedbackOnTop).
+        const indicatorRect =
+            frame && this.getValueJS("drawFocusFeedback")
+                ? this.motionIndicatorRect(rect, frame.focusSlot, firstRow, visualTop, context, pitch)
+                : undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
+        if (indicatorRect && !focusOnTop) {
+            this.renderFocus(indicatorRect, opacity, sgRoot.focused === this, draw2D);
+        }
+        if (scrolling) {
             this.pushMotionClip(rect, this.windowLayoutHeight(context), draw2D);
         }
         // Only the settled window's rows make up the reported extent.
@@ -1049,20 +1052,8 @@ export class RowList extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        const indicator = this.recordedMotionIndicator();
-        if (frame && indicator && this.getValueJS("drawFocusFeedback")) {
-            const focusRect = {
-                x: indicator.x,
-                y: scrolling
-                    ? rect.y +
-                      this.slotOffset(firstRow, visualTop + frame.focusSlot, context, pitch) -
-                      this.slotOffset(firstRow, visualTop, context, pitch) +
-                      indicator.bandOffset
-                    : indicator.y,
-                width: indicator.width,
-                height: indicator.height,
-            };
-            this.renderFocus(focusRect, opacity, sgRoot.focused === this, draw2D);
+        if (indicatorRect && focusOnTop) {
+            this.renderFocus(indicatorRect, opacity, sgRoot.focused === this, draw2D);
         }
         const margin = this.rectMargins();
         const height = renderedRows === 0 ? 0 : windowHeight - trailingSpacing + margin.y * 2;
@@ -1198,8 +1189,6 @@ export class RowList extends ArrayGrid {
         // row, while the label/counter stay at the row top with the row's normal spacing above them.
         const title = row.getValueJS("title") ?? "";
         const rowTopY = context.itemRect.y;
-        // The row top the in-transit indicator's band offset is measured from (see renderRowItems).
-        this.rowTopForIndicator = rowTopY;
         const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         context.showRowLabel = showLabel;
@@ -1288,6 +1277,72 @@ export class RowList extends ArrayGrid {
         return rowHeight + (bandHeight <= Math.max(0, rowHeight - posterHeight) ? 0 : bandHeight);
     }
 
+    /**
+     * The first column a row draws from and, while a move along it is in flight, the fractional column it
+     * visually starts at: wrap mode follows the moving column, scroll mode slides from the start column
+     * last drawn.
+     */
+    private rowColumnWindow(rowIndex: number, renderMode: string): { startCol: number; visualStart: number } {
+        let startCol: number;
+        if (renderMode === "allItemsFit") {
+            startCol = 0;
+        } else if (renderMode === "wrapMode") {
+            startCol = this.rowFocus[rowIndex] ?? 0;
+        } else {
+            startCol = this.rowScrollOffset[rowIndex] ?? 0;
+        }
+        let visualStart = startCol;
+        const motion = this.motion;
+        if (motion?.colMoved && rowIndex === this.focusIndex) {
+            if (renderMode === "wrapMode") {
+                visualStart = this.motionCol;
+            } else if (renderMode === "scrollMode") {
+                const target = motion.queued?.col ?? motion.col.to;
+                const span = target - this.motionColOrigin;
+                const progress =
+                    span === 0 ? 1 : Math.min(Math.max((this.motionCol - this.motionColOrigin) / span, 0), 1);
+                visualStart = this.motionScrollFrom + (startCol - this.motionScrollFrom) * progress;
+            }
+        }
+        return { startCol, visualStart };
+    }
+
+    /**
+     * The in-transit focus indicator: over the focused column of the focused row, at viewport slot
+     * `focusSlot` measured from the visual top (`firstRow`/`visualTop` as laid out by renderContent), below
+     * the row's label/counter band.
+     */
+    private motionIndicatorRect(
+        rect: Rect,
+        focusSlot: number,
+        firstRow: number,
+        visualTop: number,
+        context: RowListRenderContext,
+        fallback: number
+    ): Rect {
+        const rowIndex = this.focusIndex;
+        const cols = this.getContentChildren(this.content[rowIndex]);
+        const [itemWidth, itemHeight] = this.getRowItemSize(rowIndex);
+        const spacing = this.getRowItemSpacing(rowIndex);
+        const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const renderMode = this.determineRenderMode(this.allItemsFitOnScreen(rowIndex, cols), style);
+        const { visualStart } = this.rowColumnWindow(rowIndex, renderMode);
+        const focusCol = this.motion?.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
+        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
+        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
+        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
+        const rowTop =
+            rect.y +
+            this.slotOffset(firstRow, visualTop + focusSlot, context, fallback) -
+            this.slotOffset(firstRow, visualTop, context, fallback);
+        return {
+            x: rect.x + this.getRowXOffset(rowIndex) + (focusCol - visualStart) * (itemWidth + spacing[0]),
+            y: rowTop + this.rowBandHeight(rowIndex, hasLabel, showCounter),
+            width: itemWidth,
+            height: itemHeight,
+        };
+    }
+
     private getRowXOffset(rowIndex: number): number {
         const focusXOffset = this.getValueJS("focusXOffset") as number[];
         if (!focusXOffset || focusXOffset.length === 0) {
@@ -1361,39 +1416,11 @@ export class RowList extends ArrayGrid {
     ): void {
         const numCols = cols.length;
 
-        // Calculate startCol based on render mode
-        let startCol: number;
-        if (renderMode === "allItemsFit") {
-            startCol = 0;
-        } else if (renderMode === "wrapMode") {
-            startCol = this.rowFocus[rowIndex] ?? 0;
-        } else {
-            startCol = this.rowScrollOffset[rowIndex] ?? 0;
-        }
-        // A move along the focused row scrolls it by a fraction of a column while in transit: wrap mode
-        // follows the moving column, scroll mode slides from the start column last drawn.
-        const pitchX = rowItemWidth + spacing[0];
-        let visualStart = startCol;
+        const window = this.rowColumnWindow(rowIndex, renderMode);
+        let startCol = window.startCol;
+        const visualStart = window.visualStart;
         const moving = this.motion?.colMoved === true && rowIndex === this.focusIndex;
-        if (moving && renderMode === "wrapMode") {
-            visualStart = this.motionCol;
-        } else if (moving && renderMode === "scrollMode") {
-            const motion = this.motion!;
-            const target = motion.queued?.col ?? motion.col.to;
-            const span = target - this.motionColOrigin;
-            const progress = span === 0 ? 1 : Math.min(Math.max((this.motionCol - this.motionColOrigin) / span, 0), 1);
-            visualStart = this.motionScrollFrom + (startCol - this.motionScrollFrom) * progress;
-        }
-        if (this.motion && rowIndex === this.focusIndex) {
-            const focusCol = this.motion.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
-            this.motionIndicator = {
-                x: itemRect.x + (focusCol - visualStart) * pitchX,
-                y: itemRect.y,
-                width: rowItemWidth,
-                height: itemRect.height,
-                bandOffset: itemRect.y - this.rowTopForIndicator,
-            };
-        }
+        const pitchX = rowItemWidth + spacing[0];
         if (!this.motion) {
             this.renderedStartCol[rowIndex] = startCol;
         }
@@ -1573,7 +1600,7 @@ export class RowList extends ArrayGrid {
 
         // While the focus moves, the indicator is drawn once at its in-transit rect instead (renderContent).
         const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }

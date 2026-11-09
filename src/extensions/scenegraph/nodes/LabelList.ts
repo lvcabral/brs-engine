@@ -64,6 +64,11 @@ export class LabelList extends ArrayGrid {
         }
     }
 
+    /** A list draws its indicator under the items unless `drawFocusFeedbackOnTop` is written true. */
+    protected focusOnTopByDefault(): boolean {
+        return false;
+    }
+
     protected focusMotionEnabled(): boolean {
         return true;
     }
@@ -132,7 +137,7 @@ export class LabelList extends ArrayGrid {
         let firstRow = 0;
         let lastRow = displayRows;
         const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (motion) {
             firstRow = -Math.ceil(Math.max(0, motion.shift));
             lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
@@ -290,7 +295,7 @@ export class LabelList extends ArrayGrid {
         const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
         // While the focus moves, the indicator is drawn once at its in-transit slot instead.
         const drawItemFocus = drawFocus && !this.motion;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (drawItemFocus && !drawFocusOnTop) {
             this.renderFocus(rect, opacity, nodeFocus, draw2D, index);
         }

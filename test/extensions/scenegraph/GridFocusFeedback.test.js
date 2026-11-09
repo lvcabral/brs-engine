@@ -120,7 +120,7 @@ describe("ArrayGrid focus feedback rendering", () => {
 
         const frames = [];
         const draw2D = {
-            drawNinePatch: (bmp, rect) => frames.push({ ...rect }),
+            drawNinePatch: (bmp, rect) => inFocus && frames.push({ ...rect }),
             doDrawRotatedRect: () => {},
             doDrawRotatedText: () => {},
             doDrawScaledObject: () => {},
@@ -128,6 +128,18 @@ describe("ArrayGrid focus feedback rendering", () => {
             doDrawCroppedBitmap: () => {},
             pushClip: () => {},
             popClip: () => {},
+        };
+        // Only the focus frame (the captions draw 9-patches too, and an unwritten drawFocusFeedbackOnTop
+        // draws the frame after them).
+        let inFocus = false;
+        const renderFocus = grid.renderFocus.bind(grid);
+        grid.renderFocus = (...args) => {
+            inFocus = true;
+            try {
+                return renderFocus(...args);
+            } finally {
+                inFocus = false;
+            }
         };
         grid.paintNode(interpreter, [0, 0], 0, 1, draw2D);
 

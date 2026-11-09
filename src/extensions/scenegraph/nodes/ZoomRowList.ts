@@ -98,6 +98,8 @@ export class ZoomRowList extends ArrayGrid {
     /** The in-transit indicator for this paint, recorded while the focused row is drawn. */
     private motionIndicator?: Rect;
     private indicatorRowTop = 0;
+    /** This paint draws the in-transit indicator under the focused row's items, at the list top `y`. */
+    private indicatorUnder?: { listTop: number; opacity: number; draw2D?: IfDraw2D };
     protected readonly rowFocus: number[] = [];
     private readonly defaultAspectRatio = 16 / 9;
     private readonly defaultRowHeight: number;
@@ -410,6 +412,12 @@ export class ZoomRowList extends ArrayGrid {
         }
     }
 
+    /** The recorded indicator at its in-transit slot: a row change keeps it at the list top. */
+    private motionIndicatorAt(indicator: Rect, listTop: number): Rect {
+        const y = this.motion?.rowMoved ? listTop + (indicator.y - this.indicatorRowTop) : indicator.y;
+        return { ...indicator, y };
+    }
+
     private recordedMotionIndicator() {
         return this.motionIndicator;
     }
@@ -529,6 +537,11 @@ export class ZoomRowList extends ArrayGrid {
         const motion = this.motion;
         let firstRow = startRow;
         this.motionIndicator = undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
+        this.indicatorUnder =
+            motion && !focusOnTop && this.getValueJS("drawFocusFeedback")
+                ? { listTop: rect.y, opacity, draw2D }
+                : undefined;
         if (motion?.rowMoved) {
             const base = Math.floor(this.motionPos);
             const fraction = this.motionPos - base;
@@ -600,9 +613,9 @@ export class ZoomRowList extends ArrayGrid {
             }
         }
         const indicator = this.recordedMotionIndicator();
-        if (motion && indicator && this.getValueJS("drawFocusFeedback")) {
-            const slotY = motion.rowMoved ? rect.y + (indicator.y - this.indicatorRowTop) : indicator.y;
-            this.renderFocus({ ...indicator, y: slotY }, opacity, sgRoot.focused === this, draw2D);
+        this.indicatorUnder = undefined;
+        if (motion && indicator && focusOnTop && this.getValueJS("drawFocusFeedback")) {
+            this.renderFocus(this.motionIndicatorAt(indicator, rect.y), opacity, sgRoot.focused === this, draw2D);
         }
 
         if (firstRenderedRow !== -1) {
@@ -712,6 +725,12 @@ export class ZoomRowList extends ArrayGrid {
                 width: metrics.itemWidth,
                 height: metrics.itemHeight,
             };
+            const under = this.indicatorUnder;
+            if (under) {
+                // Under the cells: drawn now, before this row's items (see focusFeedbackOnTop).
+                const focusRect = this.motionIndicatorAt(this.motionIndicator, under.listTop);
+                this.renderFocus(focusRect, under.opacity, sgRoot.focused === this, under.draw2D);
+            }
         }
         const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
@@ -939,7 +958,7 @@ export class ZoomRowList extends ArrayGrid {
 
         // While the focus moves, the indicator is drawn once at its in-transit rect instead (renderContent).
         const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }

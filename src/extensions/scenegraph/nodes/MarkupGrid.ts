@@ -8,7 +8,6 @@ import { customNodeExists } from "../factory/NodeFactory";
 export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
-        { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
         { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
         { name: "numRows", type: "integer", value: "12" },
         { name: "numColumns", type: "integer", value: "1" },
@@ -232,6 +231,7 @@ export class MarkupGrid extends ArrayGrid {
         let firstRow = 0;
         let lastRow = displayRows;
         let motionFocus: Rect | undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
         if (motion) {
             firstRow = -Math.ceil(Math.max(0, motion.shift));
             lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
@@ -245,6 +245,9 @@ export class MarkupGrid extends ArrayGrid {
                 (c) => columnWidths[c] ?? itemSize[0],
                 (c) => columnSpacings[c] ?? spacing[0]
             );
+            if (!focusOnTop) {
+                this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
+            }
             this.pushMotionClip(rect, displayRows * pitch - spacing[1], draw2D);
         }
         try {
@@ -296,8 +299,8 @@ export class MarkupGrid extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        if (motionFocus && motion) {
-            // A grid's moving indicator goes over every cell (see renderMotionFocus).
+        if (motionFocus && motion && focusOnTop) {
+            // Over every cell, as at rest (see focusFeedbackOnTop).
             this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
         }
         this.updateRect(rect, displayRows, itemSize, {

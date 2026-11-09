@@ -56,6 +56,11 @@ export class MarkupList extends ArrayGrid {
         }
     }
 
+    /** A list draws its indicator under the items unless `drawFocusFeedbackOnTop` is written true. */
+    protected focusOnTopByDefault(): boolean {
+        return false;
+    }
+
     protected focusMotionEnabled(): boolean {
         return true;
     }
@@ -134,12 +139,12 @@ export class MarkupList extends ArrayGrid {
         const pitch = itemSize[1] + spacing[1];
         let firstRow = 0;
         let lastRow = displayRows;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop") as boolean;
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (motion) {
             firstRow = -Math.ceil(Math.max(0, motion.shift));
             lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
             itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
-            // A list's moving indicator goes under its items unless drawFocusFeedbackOnTop (see renderMotionFocus).
+            // The moving indicator goes under the items unless it is drawn on top (see focusFeedbackOnTop).
             if (!drawFocusOnTop) {
                 const focusRect = this.listMotionFocusRect(rect, motion, itemSize, pitch);
                 this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);

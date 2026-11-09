@@ -228,6 +228,45 @@ describe("Grid focus motion", () => {
         expect(order.filter((step) => step === "cell").length).toBeGreaterThan(1);
     });
 
+    test("drawFocusFeedbackOnTop written false draws a grid's moving indicator under the cells (device screenshot)", () => {
+        // focus-opaque-layer-probe: with the field written false (XML or BrightScript), an opaque focus
+        // bitmap stays under the item's content, at rest and while the focus moves.
+        const grid = makeGrid("PosterGrid", "floatingFocus");
+        grid.setValue("drawFocusFeedbackOnTop", core.BrsBoolean.False);
+        tap(grid, "right");
+        advance(100);
+        const order = drawOrder(grid, "renderItemComponent");
+        expect(order[0]).toBe("indicator");
+        expect(order.filter((step) => step === "indicator")).toHaveLength(1);
+    });
+
+    test("a grid draws its settled indicator over the item until drawFocusFeedbackOnTop is written", () => {
+        // focus-opaque-layer-probe: the field reads false, yet an unwritten grid draws the indicator on top.
+        const order = (grid) => {
+            const steps = [];
+            const renderFocus = grid.renderFocus.bind(grid);
+            grid.renderFocus = (...args) => {
+                steps.push("indicator");
+                return renderFocus(...args);
+            };
+            const renderItem = grid.renderItemClipped.bind(grid);
+            grid.renderItemClipped = (...args) => {
+                steps.push("item");
+                return renderItem(...args);
+            };
+            grid.renderNode(new core.Interpreter(), [0, 0], 0, 1, nullDraw2D());
+            const at = steps.indexOf("indicator");
+            return [steps[at - 1], steps[at + 1]];
+        };
+        expect(SGNodeFactory.createNode("MarkupGrid").getValueJS("drawFocusFeedbackOnTop")).toBe(false);
+        const unwritten = makeGrid("PosterGrid", "floatingFocus");
+        expect(unwritten.getValueJS("drawFocusFeedbackOnTop")).toBe(false);
+        expect(order(unwritten)[0]).toBe("item");
+        const written = makeGrid("PosterGrid", "floatingFocus");
+        written.setValue("drawFocusFeedbackOnTop", core.BrsBoolean.False);
+        expect(order(written)[1]).toBe("item");
+    });
+
     test("a list draws its moving indicator under its items (device screenshot)", () => {
         // grid-focus-layer-probe: mid-scroll, a LabelList's focused text and a MarkupList's opaque items
         // are drawn over the focus highlight.

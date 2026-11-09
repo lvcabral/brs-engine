@@ -413,6 +413,7 @@ export class PosterGrid extends ArrayGrid {
         let lastRow = displayRows;
         let pitch = 0;
         let motionFocus: Rect | undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
         if (motion) {
             const topIndex = Math.max(0, this.getRenderRowIndex(0));
             const topRowNumber = Math.floor(topIndex / this.numCols);
@@ -432,6 +433,9 @@ export class PosterGrid extends ArrayGrid {
                 (c) => columnWidths[c] ?? columnWidths[0],
                 (c) => columnSpacings[c] ?? defaultColumnSpacing
             );
+            if (!focusOnTop) {
+                this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
+            }
             this.pushMotionClip(rect, displayRows * pitch - baseRowSpacing, draw2D);
         }
         try {
@@ -532,8 +536,8 @@ export class PosterGrid extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        if (motionFocus && motion) {
-            // A grid's moving indicator goes over every cell (see renderMotionFocus).
+        if (motionFocus && motion && focusOnTop) {
+            // Over every cell, as at rest (see focusFeedbackOnTop).
             this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
         }
         // Explicit extents, both including the focus outset the arithmetic path would otherwise add
@@ -673,7 +677,7 @@ export class PosterGrid extends ArrayGrid {
         this.updateItemFocus(index, focused, nodeFocus);
         // While the focus moves, the indicator is drawn once at its in-transit rect instead.
         const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D, index);
         }
