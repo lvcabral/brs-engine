@@ -1001,6 +1001,14 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an
   under-indicator before the focused row's items, because its item offset depends on the measured title.
   Regression: the draw-order tests in `GridFocusMotion.test.js` and `RowListFocusMotion.test.js`.
+- **The footprint (an unfocused list's indicator) follows the same layering, but only lists have a
+  built-in one** (screenshots in `test/simulator/probes/focus-footprint-layer-probe`).
+  `focusFootprintBitmapUri` reads `""` on every node. Left unset, LabelList and MarkupList draw a built-in
+  gray footprint on the focused item. MarkupGrid, PosterGrid and RowList draw nothing there, even with
+  `drawFocusFeedbackOnTop` written true. So only LabelList, MarkupList (and TimeGrid, not probed) seed
+  `ArrayGrid.builtinFootprintUri`. Don't seed it in the ArrayGrid base: once grids draw over their items,
+  the translucent footprint shades the item the focus left (a RowList the app moved the focus away from).
+  Regression: "draws %i built-in footprint while unfocused" in `GridFocusFeedback.test.js`.
 
 Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same engine through hooks.
 `startFocusMotion` takes the target cell and an `apply` callback, and `openMotion` /

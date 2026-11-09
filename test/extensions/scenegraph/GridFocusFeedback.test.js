@@ -56,6 +56,8 @@ describe("ArrayGrid focus feedback rendering", () => {
         ["unfocused", false, "focusFootprintBlendColor"],
     ])("PosterGrid honors the %s blend color through the shared renderFocus", (_label, nodeFocus, blendField) => {
         const grid = SGNodeFactory.createNode("PosterGrid");
+        // A grid has no built-in footprint; the app sets one.
+        grid.setValue("focusFootprintBitmapUri", new BrsString("common:/images/focus_footprint.9.png"));
         const purple = 0x7b2ff7ff | 0;
         grid.setValue(blendField, new Int32(purple));
 
@@ -68,6 +70,25 @@ describe("ArrayGrid focus feedback rendering", () => {
 
         expect(calls).toHaveLength(1);
         expect(calls[0].rgba).toBe(purple);
+    });
+
+    // DEVICE-MEASURED (focus-footprint-layer-probe): focusFootprintBitmapUri reads "" on every node. Unset,
+    // a list draws a built-in footprint on its focused item while unfocused; a grid or row list draws none.
+    test.each([
+        ["MarkupGrid", 0],
+        ["PosterGrid", 0],
+        ["RowList", 0],
+        ["ZoomRowList", 0],
+        ["LabelList", 1],
+        ["MarkupList", 1],
+    ])("%s draws %i built-in footprint while unfocused", (type, expected) => {
+        const grid = SGNodeFactory.createNode(type);
+        const calls = [];
+        const draw2D = { drawNinePatch: () => calls.push(1), doDrawScaledObject: () => calls.push(1) };
+
+        grid.renderFocus({ x: 100, y: 100, width: 300, height: 100 }, 1, false, draw2D);
+
+        expect(calls).toHaveLength(expected);
     });
 
     test("PosterGrid records hasNinePatch from the drawn frame, like every other grid", () => {
@@ -110,6 +131,8 @@ describe("ArrayGrid focus feedback rendering", () => {
         grid.setValue("basePosterSize", new RoArray([new Float(120), new Float(120)]));
         grid.setValue("caption1NumLines", new Int32(1));
         grid.setValue("numColumns", new Int32(1));
+        // The grid is painted unfocused, and a grid has no built-in footprint.
+        grid.setValue("focusFootprintBitmapUri", new BrsString("common:/images/focus_footprint.9.png"));
         const content = SGNodeFactory.createNode("ContentNode");
         for (const title of ["A", "B"]) {
             const item = SGNodeFactory.createNode("ContentNode");

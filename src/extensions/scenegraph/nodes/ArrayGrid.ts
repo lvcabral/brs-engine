@@ -181,12 +181,11 @@ export class ArrayGrid extends Group implements UITransition {
     ];
     protected readonly dividerUri = "common:/images/dividerHorizontal.9.png";
     /**
-     * The unfocused-item footprint frame. Unlike `focusUri` — which genuinely varies by type
-     * (`focus_grid` for grids, `focus_list` for lists) and so stays per-subclass — every ArrayGrid
-     * derivative uses this same asset, so it is seeded once here. Subclasses that were each setting it
-     * in their own constructor drifted: four of the seven had no footprint at all.
+     * The built-in footprint a list (LabelList, MarkupList) draws on its focused item while it doesn't
+     * have the focus. Grids and row lists have none: unless the app sets `focusFootprintBitmapUri`, they
+     * draw nothing there (DEVICE-MEASURED, focus-footprint-layer-probe). Subclasses seed it themselves.
      */
-    protected readonly footprintUri = "common:/images/focus_footprint.9.png";
+    protected static readonly builtinFootprintUri = "common:/images/focus_footprint.9.png";
     protected readonly content: ContentNode[] = [];
     protected readonly metadata: ArrayGrid.Metadata[] = [];
     protected readonly itemComps: Group[] = [];
@@ -279,7 +278,6 @@ export class ArrayGrid extends Group implements UITransition {
         this.setValueSilent("focusable", BrsBoolean.True);
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         this.setValueSilent("sectionDividerBitmapUri", new BrsString(this.dividerUri));
-        this.setValueSilent("focusFootprintBitmapUri", new BrsString(this.footprintUri));
         const focusFeedbackPoster = SGNodeFactory.createNode(SGNodeType.Poster) as Poster;
         focusFeedbackPoster.setNodeParent(this);
         this.setValueSilent("focusFeedbackPoster", focusFeedbackPoster);

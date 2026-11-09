@@ -28,6 +28,7 @@ export class MarkupList extends ArrayGrid {
 
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(ArrayGrid.builtinFootprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
         // Re-derive the cached focus style now that this node's own default (fixedFocusWrap) and any
         // XML/initialized value are in place — the ArrayGrid constructor cached its floatingFocus default.

@@ -37,6 +37,7 @@ export class LabelList extends ArrayGrid {
             this.setValueSilent("itemSize", brsValueOf([340, 48]));
         }
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(ArrayGrid.builtinFootprintUri));
         // Re-derive the cached focus style now that this node's own default (fixedFocusWrap) and any
         // XML/initialized value are in place — the ArrayGrid constructor cached its floatingFocus default.
         this.applyVertFocusStyle();

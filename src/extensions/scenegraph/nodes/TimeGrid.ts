@@ -185,6 +185,7 @@ export class TimeGrid extends ArrayGrid {
             this.setValueSilent("nowBarWidth", new Float(2));
         }
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(ArrayGrid.builtinFootprintUri));
         // Initialize to a valid AA so reads never return invalid (matches Roku, which keeps
         // this field populated alongside channelFocused/programFocused).
         this.setValueSilent("programFocusedDetails", brsValueOf({ focusChannelIndex: 0, focusIndex: 0 }));
