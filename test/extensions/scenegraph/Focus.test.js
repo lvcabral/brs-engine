@@ -140,6 +140,37 @@ describe("SceneGraph focus management", () => {
         expect(container.getValue("focusedchild")).not.toBeInstanceOf(Node);
     });
 
+    test.each([
+        ["into its child", true],
+        ["to a node beside it", false],
+    ])("setFocus(true) returns focusable when an observer forwards the focus %s", (_label, inside) => {
+        // setfocus-return-probe C2/D2: the return is the node's focusable value, wherever the focus lands.
+        const scene = focusableNode();
+        const container = focusableNode();
+        const child = focusableNode();
+        const beside = focusableNode();
+        scene.appendChildToParent(container);
+        container.appendChildToParent(child);
+        scene.appendChildToParent(beside);
+
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        let forwarded = false;
+        port.pushMessage = (event) => {
+            if (!forwarded && sgRoot.focused === container) {
+                forwarded = true;
+                (inside ? child : beside).setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+
+        expect(container.setNodeFocus(true)).toBe(true);
+        expect(sgRoot.focused).toBe(inside ? child : beside);
+    });
+
     test("honors a re-grab when the competing focus lives in a still-detached subtree", () => {
         // Real-world shape (JellyRock's sgRouter + JRDialog): an outlet observes its own
         // focusedChild and re-grabs focus into its routed content whenever it loses focus. A

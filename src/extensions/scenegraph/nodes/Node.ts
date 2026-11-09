@@ -1359,9 +1359,9 @@ export class Node extends RoSGNode implements BrsValue {
                 this.applyFocus(path, staged);
             }
             Node.notifyStagedFocus(staged);
-            // A request raised during a focus notification may only write part of the chain; it took the
-            // focus only if the chain now leads to it.
-            return sgRoot.focused === this ? this.isFocusable() : false;
+            // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
+            // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
+            return this.isFocusable();
         } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;

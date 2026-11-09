@@ -136,7 +136,8 @@ program
             deviceData.connectionInfo.dns = dns.getServers();
             deviceData.debugOnCrash = program.debug ?? false;
             deviceData.logRendezvous = program.logRendezvous ?? false;
-            deviceData.uiTransitions = program.transitions !== false && process.env.BRS_UI_TRANSITIONS !== "0";
+            // BRS_UI_TRANSITIONS=0 is applied by the SceneGraph extension itself, for every host.
+            deviceData.uiTransitions = program.transitions !== false;
             deviceData.logLevel = program.logLevel;
             if (program.registry) {
                 deviceData.registry = getRegistry();

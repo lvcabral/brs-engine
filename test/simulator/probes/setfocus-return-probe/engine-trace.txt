@@ -1,0 +1,13 @@
+PROBE|A|ret=false hasFocus=true inChain=true chain=/leaf
+PROBE|B|ret=false hasFocus=true inChain=true chain=/leaf
+PROBE|C|ret=false hasFocus=false inChain=true chain=/fwdIn/fwdInChild
+PROBE|D|ret=false hasFocus=false inChain=false chain=/outside
+PROBE|E|ret=false hasFocus=false inChain=false chain=/leaf
+PROBE|F|ret=true hasFocus=true inChain=true chain=/buttons
+PROBE|G|ret=false hasFocus=true inChain=true chain=/nope
+PROBE|A2|ret=true hasFocus=true inChain=true chain=/leaf2
+PROBE|B2|ret=true hasFocus=true inChain=true chain=/leaf2
+PROBE|C2|ret=true hasFocus=false inChain=true chain=/fwdIn2/fwdInChild2
+PROBE|D2|ret=true hasFocus=false inChain=false chain=/outside
+PROBE|E2|ret=true hasFocus=false inChain=false chain=/leaf
+PROBE|done

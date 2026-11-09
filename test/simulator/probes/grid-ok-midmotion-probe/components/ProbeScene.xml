@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  A 4-column MarkupGrid (like Rokanban's team screen). The host sends a direction key and OK back to
+  back, so OK arrives while the focus is still moving. Every field change is logged with the ms since
+  init(): does the device settle the motion (itemFocused) before itemSelected, select the item the
+  motion is heading to, or ignore OK until it settles?
+-->
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <MarkupGrid id="grid" translation="[40,60]" itemComponentName="ProbeItem" numColumns="4" numRows="3"
+            itemSize="[200,80]" itemSpacing="[20,20]" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.clock = CreateObject("roTimespan")
+        m.grid = m.top.findNode("grid")
+        root = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 15
+            root.createChild("ContentNode").title = "Item " + i.toStr()
+        end for
+        m.grid.content = root
+        for each f in ["itemFocused", "itemUnfocused", "itemSelected", "scrollingStatus", "currFocusColumn", "currFocusRow"]
+            m.grid.observeField(f, "onField")
+        end for
+        m.grid.setFocus(true)
+        print "PROBE|" + m.clock.TotalMilliseconds().toStr() + "|ready"
+        print "PROBE|0|MANUAL|press"
+    end sub
+
+    sub onField(event as object)
+        value = event.getData()
+        if type(value) = "roFloat" or type(value) = "Float" then value = Int(value * 100) / 100
+        print "PROBE|" + m.clock.TotalMilliseconds().toStr() + "|" + event.getField() + "=" + value.toStr()
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        print "PROBE|" + m.clock.TotalMilliseconds().toStr() + "|key " + key + " " + press.toStr()
+        return false
+    end function
+    ]]>
+    </script>
+</component>

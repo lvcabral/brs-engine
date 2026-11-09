@@ -131,6 +131,11 @@ export class Field {
         return Field.initDepth === 0 && Field.observerDepth === 0;
     }
 
+    /** How many observers are running on this thread: app code a node's own handler may have raised. */
+    static currentObserverDepth(): number {
+        return Field.observerDepth;
+    }
+
     /** True while inside a component's `init()` hierarchy walk (construction). */
     static isConstructing(): boolean {
         return Field.initDepth > 0;

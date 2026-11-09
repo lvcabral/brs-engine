@@ -140,7 +140,8 @@ export class LabelList extends ArrayGrid {
         };
         const spanOf = (r: number) => {
             const index = this.motionRowIndex(r);
-            return heightOf(r) + (index < 0 ? rowSpacingDefault : rowSpacings[index] ?? rowSpacingDefault);
+            const gap = index < 0 ? rowSpacingDefault : rowSpacings[index] ?? rowSpacingDefault;
+            return heightOf(r) + gap + this.motionDividerSpace(r + 1, 0);
         };
         let firstRow = 0;
         let lastRow = displayRows;

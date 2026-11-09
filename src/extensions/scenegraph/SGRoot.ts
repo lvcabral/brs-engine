@@ -851,6 +851,11 @@ export class SGRoot {
         this._transitions.delete(transition);
     }
 
+    /** Drops every active transition unticked, so a previous app's motions don't run into the next one. */
+    clearTransitions() {
+        this._transitions.clear();
+    }
+
     /**
      * Advances every active intrinsic UI transition to the current clock. A tick that ends its
      * transition can still start a new one (a settle observer writing `animateToItem`, or appending a

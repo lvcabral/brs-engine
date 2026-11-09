@@ -225,11 +225,37 @@ export class ArrayGrid extends Group implements UITransition {
     protected motionCol = 0;
     /** Items holding a fractional `focusPercent` from the last motion frame. */
     private readonly motionPercentItems = new Set<number>();
+    /**
+     * The navigation key being handled (`navDirection`, `navAxis`) and an `animateToItem` being applied
+     * (`animateRequested`). Each holds only at the observer depth it was set at: an observer those
+     * moves raise runs app code, and a `jumpToItem` it writes is an app write, not part of the move.
+     */
+    private navState = { direction: 0, axis: "" as MotionAxis | "", depth: 0 };
+    private animateState = { requested: false, depth: 0 };
+
     /** Set while `animateToItem` (app write or key navigation) is being applied. */
-    protected animateRequested = false;
-    /** Direction (+1 down/right, -1 up/left) and axis of the navigation key being handled; 0/"" otherwise. */
-    protected navDirection = 0;
-    protected navAxis: MotionAxis | "" = "";
+    protected get animateRequested(): boolean {
+        return this.animateState.requested && this.animateState.depth === Field.currentObserverDepth();
+    }
+    protected set animateRequested(requested: boolean) {
+        this.animateState = { requested, depth: Field.currentObserverDepth() };
+    }
+
+    /** Direction (+1 down/right, -1 up/left) of the navigation key being handled; 0 otherwise. */
+    protected get navDirection(): number {
+        return this.navState.depth === Field.currentObserverDepth() ? this.navState.direction : 0;
+    }
+    protected set navDirection(direction: number) {
+        this.navState = { ...this.navState, direction, depth: Field.currentObserverDepth() };
+    }
+
+    /** Axis of the navigation key being handled; "" otherwise. */
+    protected get navAxis(): MotionAxis | "" {
+        return this.navState.depth === Field.currentObserverDepth() ? this.navState.axis : "";
+    }
+    protected set navAxis(axis: MotionAxis | "") {
+        this.navState = { ...this.navState, axis, depth: Field.currentObserverDepth() };
+    }
     /** The navigation key still held down, and when it was pressed. */
     private heldKey = "";
     /** The app wrote `drawFocusFeedbackOnTop` (XML or BrightScript); see `focusFeedbackOnTop`. */
@@ -396,10 +422,12 @@ export class ArrayGrid extends Group implements UITransition {
             this.settleMotion();
         }
         const focus = super.setNodeFocus(focusOn);
-        // Node.setNodeFocus reports focusability, not a gain: only a gain re-applies itemFocused.
-        if (focus && focusOn && this.motion) {
+        // Node.setNodeFocus reports focusability, not a gain: only a gain re-applies itemFocused, and an
+        // observer may have moved the focus on before it returned.
+        const gained = focus && focusOn && sgRoot.focused === this;
+        if (gained && this.motion) {
             this.publishMotionRegain(this.motion);
-        } else if (focus && focusOn) {
+        } else if (gained) {
             let focusIndex = this.focusGainIndex();
             if (focusIndex < 0) {
                 // No item has been focused yet: default to the first item (Roku's itemFocused
@@ -659,8 +687,18 @@ export class ArrayGrid extends Group implements UITransition {
         apply: () => void
     ) {
         if (this.settleFollowUps) {
-            // A settle observer moved the focus on: the new motion opens after the settle's last field.
-            this.settleFollowUps.push(() => this.startFocusMotion(contentIndex, base, target, apply));
+            // A settle observer moved the focus on: the new motion opens after the settle's last field,
+            // still timed as the request it came from (an `animateToRow` steps faster than a key).
+            const animate = this.animateRequested;
+            this.settleFollowUps.push(() => {
+                const previous = this.animateRequested;
+                this.animateRequested = animate;
+                try {
+                    this.startFocusMotion(contentIndex, base, target, apply);
+                } finally {
+                    this.animateRequested = previous;
+                }
+            });
             return;
         }
         this.startOrExtendMotion(contentIndex, base, target, apply);
@@ -685,8 +723,8 @@ export class ArrayGrid extends Group implements UITransition {
             }
             motion.contentIndex = contentIndex;
             apply();
-        } else {
-            this.beginMotion(contentIndex, base, target, now, apply);
+        } else if (!this.beginMotion(contentIndex, base, target, now, apply)) {
+            return;
         }
         if (this.getValueJS("skipFocusAnimations") === true) {
             this.motionPos = target.row;
@@ -698,15 +736,19 @@ export class ArrayGrid extends Group implements UITransition {
         sgRoot.addTransition(this);
     }
 
+    /**
+     * Opens a motion from rest. Returns false when an observer of the opening fields superseded it (an
+     * app's `jumpToItem` lands the motion at once): the move is dropped and the app's write stands.
+     */
     private beginMotion(
         contentIndex: number,
         base: { row: number; col: number },
         target: { row: number; col: number },
         now: number,
         apply: () => void
-    ) {
+    ): boolean {
         const idle = (at: number): MotionSegment => ({ from: at, to: at, start: now, duration: 0, curve: "out" });
-        this.motion = {
+        const motion: FocusMotion = {
             row: idle(base.row),
             col: idle(base.col),
             arrived: false,
@@ -718,12 +760,17 @@ export class ArrayGrid extends Group implements UITransition {
             colMoved: false,
             paused: false,
         };
+        this.motion = motion;
         this.motionPos = base.row;
         this.motionCol = base.col;
         this.motionPercentItems.clear();
         this.openMotion(target);
+        if (this.motion !== motion) {
+            return false;
+        }
         apply();
-        this.startMotionSegments(this.motion, target, now);
+        this.startMotionSegments(motion, target, now);
+        return true;
     }
 
     /**
@@ -1410,6 +1457,27 @@ export class ArrayGrid extends Group implements UITransition {
         return { firstRow, lastRow, firstY, focusY: offset(slot) - top, focusHeight, viewportHeight };
     }
 
+    /**
+     * The space the wrap or section divider drawn above motion slot `r` takes, 0 when there is none, so a
+     * node's `spanOf(r - 1)` can include it and `motionRowLayout` places the rows below it where they are
+     * drawn. A wrapping list draws a wrap divider where the content wraps and, with sections, one ahead of
+     * each section's first row; `gap` is the spacing the node adds after it.
+     */
+    protected motionDividerSpace(r: number, gap: number): number {
+        if (!this.wrap) {
+            return 0;
+        }
+        const index = this.motionRowIndex(r);
+        const previous = this.motionRowIndex(r - 1);
+        if (index < 0 || previous < 0 || index >= this.content.length) {
+            return 0;
+        }
+        if (this.metadata.length === 0) {
+            return index < previous ? (this.getValueJS("wrapDividerHeight") as number) + gap : 0;
+        }
+        return this.metadata[index]?.divider ? (this.getValueJS("sectionDividerHeight") as number) + gap : 0;
+    }
+
     /** A list's in-transit indicator rect: the list's width, at the y and height `motionRowLayout` gave. */
     protected listMotionFocusRect(rect: Rect, rows: { focusY: number; focusHeight: number }, width: number): Rect {
         return { x: rect.x, y: rect.y + rows.focusY, width, height: rows.focusHeight };
@@ -1564,6 +1632,9 @@ export class ArrayGrid extends Group implements UITransition {
         }
         let handled = false;
         if (key === "OK") {
+            if (press) {
+                this.landMotionForSelect();
+            }
             handled = this.handleOK(press);
         } else if (press && ["up", "down", "left", "right", "rewind", "fastforward"].includes(key)) {
             try {
@@ -1614,6 +1685,23 @@ export class ArrayGrid extends Group implements UITransition {
 
     protected handlePageUpDown(_key: string) {
         return false;
+    }
+
+    /**
+     * OK pressed while the focus moves lands the motion first (DEVICE-MEASURED, grid-ok-midmotion-probe):
+     * the settle publishes `itemFocused` and `scrollingStatus` false at once, then `itemFocused` goes out
+     * again ahead of `itemSelected`, so an app reading its focused item on `itemFocused` selects the item
+     * the motion was heading to. At rest, OK publishes only `itemSelected`.
+     */
+    private landMotionForSelect() {
+        const motion = this.motion;
+        if (!motion) {
+            return;
+        }
+        this.settleMotion();
+        if (this.listFocusModel() && sgRoot.focused === this) {
+            super.setValue("itemFocused", new Int32(motion.contentIndex));
+        }
     }
 
     protected handleOK(press: boolean) {

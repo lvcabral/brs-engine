@@ -222,6 +222,7 @@ export class PanelSet extends Group implements UITransition {
         currentPanel.setNodeFocus(false);
         this.setNodeFocus(true);
         this.syncFocusToActual();
+        this.applyInstantSlide();
         super.setValue("isGoingBack", BrsBoolean.False);
         return true;
     }
@@ -248,6 +249,7 @@ export class PanelSet extends Group implements UITransition {
         currentPanel?.setNodeFocus(false);
         this.setNodeFocus(true);
         this.syncFocusToActual();
+        this.applyInstantSlide();
         return true;
     }
 
@@ -286,6 +288,7 @@ export class PanelSet extends Group implements UITransition {
             this.requestSlide();
             this.placeNewPanel(child);
             this.refreshFocus();
+            this.applyInstantSlide();
         }
         return added;
     }
@@ -558,14 +561,27 @@ export class PanelSet extends Group implements UITransition {
         super.setValue("numPanels", new Float(this.countPanels()));
     }
 
-    /** Marks the layout change as a navigation, so the next reconcile slides to it. */
+    /**
+     * Marks the layout change as a navigation, so the next reconcile slides to it. An animated slide
+     * starts from the next render-loop pass (one frame after the navigation, as a device does); with
+     * transitions off, `applyInstantSlide` jumps the panels when the navigation returns.
+     */
     private requestSlide() {
         this.slidePending = true;
         this.makeDirty();
         if (this.slideAnimated()) {
-            // Ticked from the next render-loop pass, which starts the slide (one frame after the
-            // navigation, as a device does).
             sgRoot.addTransition(this);
+        }
+    }
+
+    /**
+     * With transitions off, applies a pending navigation now: the panels jump, `slidingStatus` pulses
+     * and the panels that left are removed, inside the call that navigated, rather than from the next
+     * paint (mid-frame, and never while the PanelSet isn't drawn).
+     */
+    private applyInstantSlide() {
+        if (this.slidePending && !this.slideAnimated()) {
+            this.reconcileLayout(sgClock.perfNow());
         }
     }
 

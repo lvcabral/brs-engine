@@ -88,6 +88,8 @@ export class RowList extends ArrayGrid {
     private pendingVertDirection = "";
     /** An app wrote `jumpToRowItem`: the move publishes no itemUnfocused/itemFocused (DEVICE-MEASURED). */
     private jumpingToRowItem = false;
+    /** `rowItemsFit` per row for the motion in progress (see `rowItemsFit`). */
+    private fitCache?: { motion: FocusMotion; fits: Map<number, boolean> };
     /** The indicator's x (from the list's left edge) and size at the last paint, or at rest when a motion opened. */
     private indicatorBox = { x: 0, width: 0, height: 0 };
     /** A row change's glide of the indicator, from its x and size when the current segment started. */
@@ -1363,7 +1365,20 @@ export class RowList extends ArrayGrid {
 
     /** Whether every item of the row fits on screen, so its focus floats (except with fixedFocus). */
     private rowItemsFit(rowIndex: number): boolean {
-        return this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+        const motion = this.motion;
+        if (!motion) {
+            return this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+        }
+        // Asked on every frame of a motion: measured once per motion, without rebuilding the row's items.
+        if (this.fitCache?.motion !== motion) {
+            this.fitCache = { motion, fits: new Map() };
+        }
+        let fits = this.fitCache.fits.get(rowIndex);
+        if (fits === undefined) {
+            fits = this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+            this.fitCache.fits.set(rowIndex, fits);
+        }
+        return fits;
     }
 
     /** The x (from the list's left edge) of column `col` of a row, as the row is drawn now. */

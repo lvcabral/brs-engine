@@ -428,6 +428,10 @@ export class ZoomRowList extends ArrayGrid {
         return { ...indicator, y };
     }
 
+    /**
+     * The indicator `renderRows` recorded. Read through a call because `renderContent` cleared the field
+     * before drawing the rows, and TypeScript would otherwise keep it narrowed to `undefined`.
+     */
     private recordedMotionIndicator() {
         return this.motionIndicator;
     }

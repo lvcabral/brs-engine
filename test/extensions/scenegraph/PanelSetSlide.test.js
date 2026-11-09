@@ -280,4 +280,26 @@ describe("PanelSet slide transition", () => {
         // Removed at once: there is no slide to wait for.
         expect(c.getNodeParent()).not.toBe(panelSet);
     });
+
+    test("with transitions off a navigation settles inside the call, even on a PanelSet never drawn", () => {
+        // Not from the next paint: observers would run mid-frame, and a hidden PanelSet never paints.
+        sgRoot.uiTransitionsEnabled = false;
+        const panelSet = SGNodeFactory.createNode("PanelSet");
+        const a = makePanel("A", "narrow");
+        const b = makePanel("B", "wide");
+        panelSet.appendChildToParent(a);
+        a.setNodeFocus(true);
+        panelSet.appendChildToParent(b);
+        observe(panelSet, "ps", ["slidingStatus"]);
+
+        panelSet.handleKey("right", true);
+        const c = makePanel("C", "narrow");
+        panelSet.appendChildToParent(c);
+        expect(x(a)).toBe(-388);
+        expect(x(c)).toBe(797);
+        expect(log).toEqual(["ps.slidingStatus=true", "ps.slidingStatus=false"]);
+        panelSet.handleKey("left", true);
+        expect(c.getNodeParent()).not.toBe(panelSet);
+        expect(log.filter((entry) => entry === "ps.slidingStatus=false")).toHaveLength(2);
+    });
 });

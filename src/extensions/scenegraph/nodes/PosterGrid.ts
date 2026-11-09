@@ -426,7 +426,7 @@ export class PosterGrid extends ArrayGrid {
                 index < 0
                     ? baseRowSpacing
                     : this.resolveSpacingValue(rowSpacingValues, Math.floor(index / this.numCols), baseRowSpacing);
-            return heightOf(r) + gap;
+            return heightOf(r) + gap + this.motionDividerSpace(r + 1, gap);
         };
         let firstRow = 0;
         let lastRow = displayRows;

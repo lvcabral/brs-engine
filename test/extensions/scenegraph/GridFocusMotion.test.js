@@ -115,6 +115,31 @@ describe("Grid focus motion", () => {
         ]);
     });
 
+    test.each(["MarkupGrid", "PosterGrid"])("%s: OK during a move lands it before itemSelected", (type) => {
+        // grid-ok-midmotion-probe: the settle goes out at once, then itemFocused again and itemSelected, so
+        // an app that tracks its focused item from itemFocused selects the item the move was heading to.
+        const grid = makeGrid(type, "floatingFocus");
+        observe(grid, [...fields, "itemSelected"]);
+        tap(grid, "right");
+        advance(60);
+        log.length = 0;
+        tap(grid, "OK");
+        expect(log).toEqual([
+            "itemFocused=1",
+            "scrollingStatus=false",
+            "horizFocusDirection=none",
+            "itemFocused=1",
+            "itemSelected=1",
+        ]);
+        expect(col(grid)).toBe(1);
+        log.length = 0;
+        advance(400);
+        expect(log).toEqual([]);
+        // At rest, OK publishes only itemSelected.
+        tap(grid, "OK");
+        expect(log).toEqual(["itemSelected=1"]);
+    });
+
     test("a row move takes ~330 ms floating and ~315 ms when the rows wrap", () => {
         const floating = makeGrid("PosterGrid", "floatingFocus");
         tap(floating, "down");

@@ -1,0 +1,50 @@
+PROBE|2|itemFocused=0
+PROBE|2|ready
+PROBE|0|MANUAL|press
+PROBE|6|currFocusRow=0
+PROBE|6|currFocusColumn=0
+PROBE|7|itemFocused=0
+PROBE|27308|scrollingStatus=true
+PROBE|27309|itemUnfocused=0
+PROBE|27317|currFocusColumn=0.05
+PROBE|27322|currFocusColumn=0.11
+PROBE|27329|currFocusColumn=0.16
+PROBE|27351|currFocusColumn=0.31
+PROBE|27365|currFocusColumn=0.42
+PROBE|27383|itemFocused=1
+PROBE|27384|scrollingStatus=false
+PROBE|27384|currFocusColumn=1
+PROBE|27386|itemFocused=1
+PROBE|27386|itemSelected=1
+PROBE|27387|key OK true
+PROBE|27400|key OK false
+PROBE|29448|scrollingStatus=true
+PROBE|29449|itemUnfocused=1
+PROBE|29461|currFocusColumn=1.06
+PROBE|29466|currFocusColumn=1.15
+PROBE|29473|currFocusColumn=1.2
+PROBE|29486|currFocusColumn=1.28
+PROBE|29502|currFocusColumn=1.39
+PROBE|29518|currFocusColumn=1.5
+PROBE|29534|currFocusColumn=1.59
+PROBE|29551|currFocusColumn=1.66
+PROBE|29567|currFocusColumn=1.73
+PROBE|29584|currFocusColumn=1.79
+PROBE|29601|currFocusColumn=1.83
+PROBE|29617|currFocusColumn=1.87
+PROBE|29635|currFocusColumn=1.91
+PROBE|29652|currFocusColumn=1.93
+PROBE|29667|currFocusColumn=1.95
+PROBE|29684|currFocusColumn=1.97
+PROBE|29702|currFocusColumn=1.98
+PROBE|29718|currFocusColumn=1.99
+PROBE|29734|currFocusColumn=1.99
+PROBE|29784|currFocusColumn=2
+PROBE|29802|itemFocused=2
+PROBE|29803|scrollingStatus=false
+PROBE|30129|itemSelected=2
+PROBE|30130|key OK true
+PROBE|30155|key OK false
+PROBE|32204|itemSelected=2
+PROBE|32205|key OK true
+PROBE|32230|key OK false

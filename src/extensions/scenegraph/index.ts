@@ -59,6 +59,7 @@ export class BrightScriptExtension implements BrsExtension {
         // Reset per-thread deferred observer-dispatch state so nothing leaks across app runs.
         Field.resetDispatch();
         Node.resetFocusDispatch();
+        sgRoot.clearTransitions();
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;

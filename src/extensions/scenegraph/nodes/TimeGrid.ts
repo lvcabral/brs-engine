@@ -209,7 +209,8 @@ export class TimeGrid extends ArrayGrid {
      */
     setNodeFocus(focusOn: boolean): boolean {
         const focus = super.setNodeFocus(focusOn);
-        if (focus) {
+        // An observer may have moved the focus on before setNodeFocus returned.
+        if (focus && (!focusOn || sgRoot.focused === this)) {
             const ch = this.channelIndex;
             const prog = this.programIndexByChannel[ch] ?? 0;
             if (this.channels.length > 0) {
@@ -476,12 +477,12 @@ export class TimeGrid extends ArrayGrid {
         return end <= cst;
     }
 
-    /** Initial focus when content is (re)assigned — `index` is treated as a channel index. */
     /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
     protected listFocusModel(): boolean {
         return false;
     }
 
+    /** Initial focus when content is (re)assigned — `index` is treated as a channel index. */
     protected setFocusedItem(index: number) {
         if (this.channels.length === 0) {
             return;

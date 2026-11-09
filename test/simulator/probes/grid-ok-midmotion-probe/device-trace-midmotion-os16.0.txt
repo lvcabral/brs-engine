@@ -1,0 +1,71 @@
+PROBE|2|itemFocused=0
+PROBE|2|ready
+PROBE|0|MANUAL|press
+PROBE|6|currFocusRow=0
+PROBE|6|currFocusColumn=0
+PROBE|7|itemFocused=0
+PROBE|27106|scrollingStatus=true
+PROBE|27106|itemUnfocused=0
+PROBE|27118|currFocusColumn=0.05
+PROBE|27128|currFocusColumn=0.14
+PROBE|27135|currFocusColumn=0.22
+PROBE|27150|currFocusColumn=0.33
+PROBE|27168|itemFocused=1
+PROBE|27169|scrollingStatus=false
+PROBE|27169|currFocusColumn=1
+PROBE|27171|itemFocused=1
+PROBE|27171|itemSelected=1
+PROBE|27172|key OK true
+PROBE|27200|key OK false
+PROBE|29228|scrollingStatus=true
+PROBE|29228|itemUnfocused=1
+PROBE|29238|currFocusColumn=1.07
+PROBE|29246|currFocusColumn=1.14
+PROBE|29252|currFocusColumn=1.2
+PROBE|29271|currFocusColumn=1.31
+PROBE|29285|currFocusColumn=1.42
+PROBE|29302|currFocusColumn=1.52
+PROBE|29320|currFocusColumn=1.6
+PROBE|29336|currFocusColumn=1.68
+PROBE|29353|currFocusColumn=1.74
+PROBE|29369|currFocusColumn=1.8
+PROBE|29385|currFocusColumn=1.85
+PROBE|29402|currFocusColumn=1.89
+PROBE|29420|itemFocused=2
+PROBE|29421|scrollingStatus=false
+PROBE|29421|currFocusColumn=2
+PROBE|29423|itemFocused=2
+PROBE|29423|itemSelected=2
+PROBE|29424|key OK true
+PROBE|29453|key OK false
+PROBE|31500|scrollingStatus=true
+PROBE|31500|itemUnfocused=2
+PROBE|31508|currFocusRow=0.04
+PROBE|31512|currFocusRow=0.11
+PROBE|31517|currFocusRow=0.15
+PROBE|31540|currFocusRow=0.32
+PROBE|31555|currFocusRow=0.44
+PROBE|31572|itemFocused=6
+PROBE|31573|scrollingStatus=false
+PROBE|31573|currFocusRow=1
+PROBE|31575|itemFocused=6
+PROBE|31575|itemSelected=6
+PROBE|31576|key OK true
+PROBE|31588|key OK false
+PROBE|33637|scrollingStatus=true
+PROBE|33638|itemUnfocused=6
+PROBE|33643|currFocusColumn=1.94
+PROBE|33649|currFocusColumn=1.89
+PROBE|33655|currFocusColumn=1.84
+PROBE|33674|currFocusColumn=1.71
+PROBE|33689|currFocusColumn=1.6
+PROBE|33708|currFocusColumn=1.5
+PROBE|33725|currFocusColumn=1.29
+PROBE|33740|currFocusColumn=1.09
+PROBE|33757|itemFocused=4
+PROBE|33757|scrollingStatus=false
+PROBE|33758|currFocusColumn=0
+PROBE|33759|itemFocused=4
+PROBE|33759|itemSelected=4
+PROBE|33760|key OK true
+PROBE|33790|key OK false

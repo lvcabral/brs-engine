@@ -906,7 +906,13 @@ The rules:
    reads them, so layout passes stay pure and bounding rects report the in-transit geometry, as a device
    does. `PanelSet.renderChildNodes` does call `reconcileLayout`, which detects target changes. That call
    snaps a non-navigation change (an app resizing a panel) and starts a navigation slide. It doesn't move
-   anything by elapsed time.
+   anything by elapsed time. With transitions off, a navigation never waits for that paint:
+   `applyInstantSlide` reconciles at the end of `goBack`/`goForward`/`appendChildToParent`, so the jump, the
+   `slidingStatus` pulse and the panel removal happen inside the call, not mid-frame, and also on a
+   PanelSet that isn't drawn. Regression: "with transitions off a navigation settles inside the call" in
+   `PanelSetSlide.test.js`.
+   `BrightScriptExtension.onInit` clears the registry (`sgRoot.clearTransitions`), so a motion left
+   running by one app never ticks into the next one on the same thread.
 4. **Only a navigation slides.** `requestSlide()` (append/back/forward/replace) arms the next reconcile to
    animate. Any other layout change snaps. Don't make reconcile animate unconditionally: apps that size
    panels after attaching them would slide on startup.
@@ -983,8 +989,26 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   shrinks toward a smaller one. `motionRowLayout` holds the vertical half (rows to draw, indicator y and
   height, window height) for MarkupGrid, PosterGrid, MarkupList and LabelList (CheckList and
   RadioButtonList through it); `gridMotionFocusRect` the horizontal. Never scroll by `itemSize` or one
-  row's pitch: the rows and the ring then jump when the move settles. Regression: the resize tests in
-  `GridFocusMotion.test.js` and `ListFocusMotion.test.js`.
+  row's pitch: the rows and the ring then jump when the move settles. A wrapping list's wrap and section
+  dividers take room too: each node's `spanOf(r)` adds `motionDividerSpace(r + 1, gap)`, the divider its row
+  loop draws above slot `r + 1`, with the spacing that loop adds after it. Regression: the resize tests in
+  `GridFocusMotion.test.js` and `ListFocusMotion.test.js`, and "rows scrolling across the wrap divider land
+  where they settle" in the latter.
+- **A key's navigation state holds only at the observer depth the key set it at.** `navDirection`,
+  `navAxis` and `animateRequested` are accessors that read 0/""/false inside an observer the move raised
+  (`Field.currentObserverDepth()`), because that observer is app code: a `jumpToItem`/`jumpToRowItem`/
+  `jumpToRow` it writes is an app jump (instant, no direction, no `itemUnfocused`/`itemFocused` on a row
+  list). An opening observer that jumps supersedes the key's motion: `beginMotion` sees the motion it
+  opened is gone and drops the move. A motion a settle observer starts is deferred to `settleFollowUps`
+  and keeps the `animateRequested` it was requested with (ZoomRowList's ~265 ms `animateToRow` step).
+  Regression: "an observer writes during a key move" in `ListFocusMotion.test.js` and
+  `RowListFocusMotion.test.js`, and "an animateToRow written from a settle observer" there.
+- **OK lands a running motion before it selects** (`test/simulator/probes/grid-ok-midmotion-probe`).
+  `ArrayGrid.handleKey` calls `landMotionForSelect` ahead of every `handleOK`: the settle goes out at
+  once, then lists and grids publish `itemFocused` again, and only then `itemSelected`. At rest OK
+  publishes `itemSelected` alone. Without the landing, an app that tracks its focused item from
+  `itemFocused` (Rokanban's team screen) opened the item focused before the move. Regression: "OK during a
+  move lands it before itemSelected" in `GridFocusMotion.test.js`.
 - **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
   `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
   opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):
@@ -1634,8 +1658,14 @@ re-shown from `rowItemFocused`).
    - **A call raised while a focus round is dispatching** (`applyNestedFocus`) writes its path only below
      its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
      chain owner's path and takes it over. The live focus follows only when the chain from the root now
-     leads to the target. The call returns false otherwise, so a subclass (ArrayGrid) skips its gain
-     bookkeeping.
+     leads to the target.
+   - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
+     `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
+     return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus
+     cell) checks `sgRoot.focused === this` after `super.setNodeFocus`. PanelSet's and ButtonGroup's
+     `refreshFocus` check the chain themselves, so they run when an observer forwarded the focus inside
+     them. Regression: "setFocus(true) returns focusable when an observer forwards the focus" in
+     `Focus.test.js`.
    - **What this produces:**
      - *Forward focus* to a sibling or into the container that just gained focus, or a request reaching
        for an overlay beside it, writes up to the Scene and takes the focus.

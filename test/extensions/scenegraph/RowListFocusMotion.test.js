@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, sgRoot, sgClock } = scenegraph;
+const { Field, SGNodeFactory, sgRoot, sgClock } = scenegraph;
 const { BrsBoolean, BrsDevice, BrsString, Int32, Float, RoArray, RoMessagePort } = core;
 
 /**
@@ -178,6 +178,32 @@ describe("RowList focus motion", () => {
         expect(list.getValueJS("rowItemFocused")).toEqual([2, 3]);
         expect(list.getValueJS("itemFocused")).toBe(0);
         expect(log).toEqual(["rowItemFocused=[...]"]);
+    });
+
+    test("a jumpToRowItem an observer writes during a key move is an app jump", () => {
+        // The key handler's observers run app code: what they write is not part of the key's move.
+        const list = makeList();
+        observe(list, fields);
+        const port = new RoMessagePort();
+        let jumped = false;
+        port.pushMessage = () => {
+            if (jumped) return;
+            jumped = true;
+            Field.observerDepth++;
+            try {
+                list.setValue("jumpToRowItem", new RoArray([new Int32(3), new Int32(2)]));
+            } finally {
+                Field.observerDepth--;
+            }
+            log.push("jumped");
+        };
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("itemUnfocused"), port);
+        tap(list, "down");
+        const afterJump = log.slice(log.indexOf("jumped") + 1);
+        expect(afterJump.filter((entry) => /^item(Un)?[fF]ocused=/.test(entry))).toEqual([]);
+        expect(list.getValueJS("rowItemFocused")).toEqual([3, 2]);
+        advance(500);
+        expect(list.getValueJS("rowItemFocused")).toEqual([3, 2]);
     });
 
     test("losing focus keeps the row an app's jumpToRowItem moved to", () => {
@@ -630,6 +656,25 @@ describe("RowList focus motion", () => {
             expect(leftClips()).toHaveLength(1);
             advance(500);
             expect(leftClips()).toEqual([]);
+        });
+
+        test("an animateToRow written from a settle observer keeps its ~265 ms per row", () => {
+            const list = makeZoom();
+            observe(list, ["rowFocused"]);
+            const port = new RoMessagePort();
+            port.pushMessage = (event) => {
+                if (event.fieldValue.getValue() === 1) {
+                    list.setValue("animateToRow", new Int32(3));
+                }
+            };
+            list.addObserver(fakeInterpreter, "unscoped", new BrsString("rowFocused"), port);
+            tap(list, "down");
+            advance(380);
+            expect(log).toEqual(["rowFocused=1"]);
+            advance(500);
+            expect(log).toEqual(["rowFocused=1"]);
+            advance(80);
+            expect(log).toEqual(["rowFocused=1", "rowFocused=3"]);
         });
 
         test("animateToRow moves ~265 ms per row", () => {

@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, sgRoot, sgClock } = scenegraph;
+const { Field, SGNodeFactory, sgRoot, sgClock } = scenegraph;
 const { BrsBoolean, BrsDevice, BrsString, Int32, RoArray, Float, RoMessagePort } = core;
 
 /**
@@ -248,6 +248,45 @@ describe("List focus motion", () => {
         expect(log).toEqual(["L.itemUnfocused=0", "L.itemFocused=5"]);
     });
 
+    test("a jumpToItem an observer writes during a key move is an app jump", () => {
+        // The key handler's observers run app code: what they write is not part of the key's move.
+        const list = makeList("LabelList", "floatingFocus");
+        observe(list, "L", listFields);
+        const port = new RoMessagePort();
+        let jumped = false;
+        port.pushMessage = () => {
+            if (jumped) return;
+            jumped = true;
+            Field.observerDepth++;
+            try {
+                list.setValue("jumpToItem", new Int32(6));
+            } finally {
+                Field.observerDepth--;
+            }
+            log.push("jumped");
+        };
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("itemUnfocused"), port);
+        tap(list, "down");
+        expect(row(list)).toBe(6);
+        advance(400);
+        expect(row(list)).toBe(6);
+        expect(list.getValueJS("itemFocused")).toBe(6);
+        // The jump reports no direction of its own.
+        const jumpLog = log.slice(log.indexOf("jumped") - 2, log.indexOf("jumped"));
+        expect(jumpLog.some((entry) => entry.includes("vertFocusDirection=down"))).toBe(false);
+    });
+
+    test("a new app run drops the motions a previous run left moving", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        observe(list, "L", listFields);
+        tap(list, "down");
+        log.length = 0;
+        new scenegraph.BrightScriptExtension().onInit();
+        sgRoot.uiTransitionsEnabled = true;
+        advance(400);
+        expect(log).toEqual([]);
+    });
+
     test("skipFocusAnimations moves instantly with the motion's field order", () => {
         const list = makeList("LabelList", "floatingFocus");
         list.setValue("skipFocusAnimations", BrsBoolean.True);
@@ -352,6 +391,33 @@ describe("List focus motion", () => {
         }
         return result;
     }
+
+    test.each(["LabelList", "MarkupList"])(
+        "%s: rows scrolling across the wrap divider land where they settle",
+        (type) => {
+            // The wrap divider between the last and the first item takes room in the motion layout too, so
+            // the first item rises into the fixed indicator instead of stopping a divider-height short.
+            const list = makeSizedList(type, "fixedFocusWrap");
+            list.setValue("rowHeights", new RoArray([]));
+            list.setValue("jumpToItem", new Int32(7));
+            tap(list, "down");
+            advance(48);
+            const f = list.motionPos - Math.floor(list.motionPos);
+            expect(f).toBeGreaterThan(0.2);
+            expect(f).toBeLessThan(0.9);
+            const divider = list.getValueJS("wrapDividerHeight");
+            expect(divider).toBeGreaterThan(0);
+            const gap = type === "MarkupList" ? 20 : 0;
+            const span = 48 + 20 + divider + gap;
+            const { focus, rowY } = paintSized(list);
+            expect(focus.y).toBe(0);
+            expect(rowY.get(7)).toBeCloseTo(-span * f, 5);
+            expect(rowY.get(0)).toBeCloseTo(span * (1 - f), 5);
+            advance(300);
+            expect(list.getValueJS("itemFocused")).toBe(0);
+            expect(paintSized(list).rowY.get(0)).toBe(0);
+        }
+    );
 
     test.each(["LabelList", "MarkupList"])(
         "%s: the floating indicator grows and shrinks to the row it moves to (device screenshot)",

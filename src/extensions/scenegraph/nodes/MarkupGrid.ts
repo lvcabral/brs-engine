@@ -247,7 +247,8 @@ export class MarkupGrid extends ArrayGrid {
         };
         const spanOf = (r: number) => {
             const row = motionRow(r);
-            return heightOf(r) + (row < 0 ? spacing[1] : rowSpacings[row] ?? spacing[1]);
+            const gap = row < 0 ? spacing[1] : rowSpacings[row] ?? spacing[1];
+            return heightOf(r) + gap + this.motionDividerSpace(r + 1, spacing[1]);
         };
         let firstRow = 0;
         let lastRow = displayRows;
