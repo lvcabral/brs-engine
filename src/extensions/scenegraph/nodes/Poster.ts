@@ -144,12 +144,19 @@ export class Poster extends Group {
                 // rounded clip is pushed from `rect` up front, so the clamped size has to be known
                 // by then too — discovering it only while drawing left the clip sized to the
                 // pre-clamp rect while the gradient/border (read after) used the clamped one.
+                // The clamp limits the texture, not the Poster: a set width/height is still filled
+                // (DEVICE-MEASURED, JellyRock's 300x300 limitSize profile images); only a 0 extent
+                // draws at the clamped texture size.
                 const loadWidth = this.getValueJS("loadWidth") as number;
                 const loadHeight = this.getValueJS("loadHeight") as number;
                 if (loadWidth > 0 && loadHeight > 0) {
                     const clamped = this.clampLoadSize(bitmap.width, bitmap.height, loadWidth, loadHeight);
-                    rect.width = clamped.width;
-                    rect.height = clamped.height;
+                    if (size.width <= 0) {
+                        rect.width = clamped.width;
+                    }
+                    if (size.height <= 0) {
+                        rect.height = clamped.height;
+                    }
                 }
             }
             if (!bitmap.ninePatch && mode !== "scaletofit" && mode !== "scaletozoom") {
