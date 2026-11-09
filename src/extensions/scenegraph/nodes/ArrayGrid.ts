@@ -239,6 +239,10 @@ export class ArrayGrid extends Group implements UITransition {
     private settleFollowUps: (() => void)[] | undefined;
     /** A motion that settled outside the focus chain: the item a focus gain lands on (see `focusGainIndex`). */
     private unfocusedSettleIndex: number | undefined;
+    /** New content reset the focus to item 0; its `itemFocused` goes out later (see `resetFocusForNewContent`). */
+    private pendingContentFocus = false;
+    /** `setNodeFocus` is re-applying the focus on a gain (see `setFocusedItem`). */
+    private gainingFocus = false;
     private heldSince = 0;
     private holdRepeating = false;
     /** Repeats of the held key so far (the first one accelerates from rest). */
@@ -300,8 +304,15 @@ export class ArrayGrid extends Group implements UITransition {
             return;
         } else if (fieldName === "jumptoitem" && isNumberComp(value)) {
             this.settleMotion();
+            this.flushContentFocus();
+            if (this.listFocusModel() && sgRoot.focused !== this && !this.isChildrenFocused()) {
+                // An unfocused jump reports that no item has the focus, on every write (DEVICE-MEASURED,
+                // list-focus-dispatch-probe R2-R4).
+                super.setValue("itemUnfocused", new Int32(-1));
+            }
             this.setFocusedItem(jsValueOf(value));
         } else if (fieldName === "animatetoitem" && isNumberComp(value)) {
+            this.flushContentFocus();
             this.animateRequested = true;
             try {
                 this.setFocusedItem(jsValueOf(value));
@@ -378,7 +389,12 @@ export class ArrayGrid extends Group implements UITransition {
                 }
             }
             if (focusIndex >= 0) {
-                this.setFocusedItem(focusIndex);
+                this.gainingFocus = true;
+                try {
+                    this.setFocusedItem(focusIndex);
+                } finally {
+                    this.gainingFocus = false;
+                }
             }
         }
         return focus;
@@ -394,18 +410,33 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
+     * Lists and grids follow the device-measured focus model (list-focus-dispatch-probe): a gain publishes
+     * no `itemUnfocused`, an unfocused `jumpToItem` publishes `itemUnfocused` -1, and new content
+     * publishes its reset lazily. Row lists and TimeGrid keep their own model until measured.
+     */
+    protected listFocusModel(): boolean {
+        return true;
+    }
+
+    /** Publishes the reset to item 0 that new content left pending, when the list is in the focus chain. */
+    protected flushContentFocus() {
+        if (!this.pendingContentFocus) {
+            return;
+        }
+        this.pendingContentFocus = false;
+        if ((sgRoot.focused === this || this.isChildrenFocused()) && this.content.length > 0) {
+            super.setValue("itemFocused", new Int32(0));
+        }
+    }
+
+    /**
      * Focus regained mid-motion (DEVICE-MEASURED, focus-motion-edge-probe B): the target item's
      * `itemHasFocus`, then `itemFocused`, while the motion runs on; its settle publishes `itemFocused` again.
      */
     protected publishMotionRegain(motion: FocusMotion) {
         motion.regained = true;
-        Field.enterInternalUpdate();
-        try {
-            this.updateItemFocus(this.focusIndex, true, sgRoot.focused === this);
-            super.setValue("itemFocused", new Int32(motion.contentIndex));
-        } finally {
-            Field.exitInternalUpdate();
-        }
+        this.updateItemFocus(this.focusIndex, true, sgRoot.focused === this);
+        super.setValue("itemFocused", new Int32(motion.contentIndex));
     }
 
     /**
@@ -427,6 +458,20 @@ export class ArrayGrid extends Group implements UITransition {
     protected resetFocusForNewContent(freshContent: boolean) {
         this.unfocusedSettleIndex = undefined;
         const focused = sgRoot.focused === this || this.isChildrenFocused();
+        if (freshContent && this.listFocusModel()) {
+            // DEVICE-MEASURED (list-focus-dispatch-probe D2, D5, S): a content write publishes nothing. The
+            // focus resets to item 0 at once, and its `itemFocused` 0 goes out before the next jump or once
+            // the current handler (or init) returns, and only if the list is in the focus chain by then.
+            this.focusIndex = 0;
+            this.focusLayoutDirty = true;
+            this.updateHorizScroll(0);
+            this.setValueSilent("itemFocused", new Int32(focused && this.content.length > 0 ? 0 : -1));
+            if (this.content.length > 0 && !this.pendingContentFocus) {
+                this.pendingContentFocus = true;
+                Field.runAfterConstruction(() => this.flushContentFocus());
+            }
+            return;
+        }
         if (focused) {
             if (this.content.length > 0 && (freshContent || (this.getValueJS("itemFocused") as number) < 0)) {
                 this.setFocusedItem(0);
@@ -467,55 +512,54 @@ export class ArrayGrid extends Group implements UITransition {
             this.moveFocusAnimated(index, newFocus);
             return;
         }
-        // Focus fields are emitted by the grid's internal machinery, not by a direct BrightScript
-        // assignment — on Roku their observers dispatch from the message loop, so a reentrant
-        // notification defers (see Field.enterInternalUpdate). The scroll pulse edges go out inside
-        // the same bracket so a deferred dispatch keeps their place in the sequence.
-        Field.enterInternalUpdate();
-        try {
-            if (inFocusChain) {
-                // Skipped when unfocused: that path publishes no focus fields at all (see armScrollPulse).
-                this.openScrollPulse();
-            }
-            const focusedIndex = this.getValueJS("itemFocused") as number;
+        if (inFocusChain) {
+            // Skipped when unfocused: that path publishes no focus fields at all (see armScrollPulse).
+            this.openScrollPulse();
+        }
+        const focusedIndex = this.getValueJS("itemFocused") as number;
+        // A gain re-applies the focus where it is (DEVICE-MEASURED, list-focus-dispatch-probe): no
+        // `itemUnfocused`, and the item keeps its focus rather than dropping and regaining it.
+        const gaining = this.gainingFocus && this.listFocusModel();
+        if (!gaining || newFocus !== this.focusIndex) {
             this.updateItemFocus(this.focusIndex, false, nodeFocus);
-            this.focusIndex = newFocus;
-            this.focusLayoutDirty = true;
-            this.updateHorizScroll(newFocus);
-            this.updateItemFocus(this.focusIndex, true, nodeFocus);
-            // A key-driven move publishes its direction right after itemUnfocused and resets it after the
-            // settle (DEVICE-MEASURED order, list/grid-focus-motion-probe).
-            const directionField = this.navAxis ? this.directionFieldFor(this.navAxis) : "";
-            const direction =
-                this.navDirection === 0 || !this.navAxis || !directionField
-                    ? ""
-                    : this.directionName(this.navAxis, this.navDirection);
-            if (inFocusChain) {
-                super.setValue("itemUnfocused", new Int32(focusedIndex));
-                if (direction) {
-                    super.setValue(directionField, new BrsString(direction));
-                }
-                // currFocusRow/currFocusColumn must already reflect the new position before
-                // itemFocused fires: apps commonly read them synchronously from an itemFocused
-                // observer (see RowList.setFocusedItem for the same ordering requirement).
-                const numCols = Math.max(1, this.numCols || 1);
-                super.setValue("currFocusRow", new Float(Math.floor(newFocus / numCols)));
-                super.setValue("currFocusColumn", new Float(newFocus % numCols));
-                super.setValue("itemFocused", new Int32(index));
-                this.closeScrollPulse();
-                if (direction) {
-                    super.setValue(directionField, new BrsString("none"));
-                }
-            } else {
-                // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
-                // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
-                this.setValueSilent("itemFocused", new Int32(index));
+        }
+        // A key-driven move publishes its direction right after itemUnfocused and resets it after the
+        // settle (DEVICE-MEASURED order, list/grid-focus-motion-probe).
+        const directionField = this.navAxis ? this.directionFieldFor(this.navAxis) : "";
+        const direction =
+            this.navDirection === 0 || !this.navAxis || !directionField
+                ? ""
+                : this.directionName(this.navAxis, this.navDirection);
+        if (inFocusChain && !gaining) {
+            super.setValue("itemUnfocused", new Int32(focusedIndex));
+            if (direction) {
+                super.setValue(directionField, new BrsString(direction));
             }
-            if (this.itemFocusCallback) {
-                this.itemFocusCallback(index);
+        }
+        // The new item gains its focus after itemUnfocused (DEVICE-MEASURED, list-focus-dispatch-probe D1).
+        this.focusIndex = newFocus;
+        this.focusLayoutDirty = true;
+        this.updateHorizScroll(newFocus);
+        this.updateItemFocus(this.focusIndex, true, nodeFocus);
+        if (inFocusChain) {
+            // currFocusRow/currFocusColumn must already reflect the new position before
+            // itemFocused fires: apps commonly read them synchronously from an itemFocused
+            // observer (see RowList.setFocusedItem for the same ordering requirement).
+            const numCols = Math.max(1, this.numCols || 1);
+            super.setValue("currFocusRow", new Float(Math.floor(newFocus / numCols)));
+            super.setValue("currFocusColumn", new Float(newFocus % numCols));
+            super.setValue("itemFocused", new Int32(index));
+            this.closeScrollPulse();
+            if (direction) {
+                super.setValue(directionField, new BrsString("none"));
             }
-        } finally {
-            Field.exitInternalUpdate();
+        } else {
+            // Unfocused: remember the target without notifying observers. setNodeFocus emits it on
+            // focus-gain (it reads itemFocused, defaulting to 0 when still at the -1 sentinel).
+            this.setValueSilent("itemFocused", new Int32(index));
+        }
+        if (this.itemFocusCallback) {
+            this.itemFocusCallback(index);
         }
     }
 
@@ -597,14 +641,7 @@ export class ArrayGrid extends Group implements UITransition {
             this.settleFollowUps.push(() => this.startFocusMotion(contentIndex, base, target, apply));
             return;
         }
-        // Engine-initiated emission: reentrant observers defer, as on the instant path
-        // (see Field.enterInternalUpdate).
-        Field.enterInternalUpdate();
-        try {
-            this.startOrExtendMotion(contentIndex, base, target, apply);
-        } finally {
-            Field.exitInternalUpdate();
-        }
+        this.startOrExtendMotion(contentIndex, base, target, apply);
     }
 
     private startOrExtendMotion(
@@ -1106,12 +1143,9 @@ export class ArrayGrid extends Group implements UITransition {
         sgRoot.removeTransition(this);
         const followUps: (() => void)[] = [];
         this.settleFollowUps = followUps;
-        // Reentrant observers defer however the settle is reached (a tick, jumpToItem, focus loss).
-        Field.enterInternalUpdate();
         try {
             this.publishMotionSettle(motion);
         } finally {
-            Field.exitInternalUpdate();
             this.settleFollowUps = undefined;
         }
         this.makeDirty();
@@ -1138,20 +1172,15 @@ export class ArrayGrid extends Group implements UITransition {
         this.motionPercentItems.clear();
         super.setValue("currFocusRow", new Float(this.motionPos));
         super.setValue("currFocusColumn", new Float(this.motionCol));
-        Field.enterInternalUpdate();
-        try {
-            this.updateItemFocus(this.focusIndex, true, nodeFocus);
-            if (inFocusChain) {
-                super.setValue("itemFocused", new Int32(motion.contentIndex));
-            } else {
-                // The field keeps the item the motion left until the focus comes back (DEVICE-MEASURED).
-                this.unfocusedSettleIndex = motion.contentIndex;
-            }
-            if (this.itemFocusCallback) {
-                this.itemFocusCallback(motion.contentIndex);
-            }
-        } finally {
-            Field.exitInternalUpdate();
+        this.updateItemFocus(this.focusIndex, true, nodeFocus);
+        if (inFocusChain) {
+            super.setValue("itemFocused", new Int32(motion.contentIndex));
+        } else {
+            // The field keeps the item the motion left until the focus comes back (DEVICE-MEASURED).
+            this.unfocusedSettleIndex = motion.contentIndex;
+        }
+        if (this.itemFocusCallback) {
+            this.itemFocusCallback(motion.contentIndex);
         }
         super.setValue("scrollingStatus", BrsBoolean.False);
         this.closeMotionDirections(motion);
@@ -1434,8 +1463,7 @@ export class ArrayGrid extends Group implements UITransition {
      * scroll state down (hiding a shared overlay/preview player that belongs to the outgoing item),
      * and the `rowItemFocused` settle is what rebuilds it at the new position. When the move is
      * instant both edges land in one frame and that ORDER is the whole contract — `openScrollPulse`
-     * goes out first and `closeScrollPulse` right after `itemFocused`, inside the same internal-update
-     * bracket as the focus fields so a deferred dispatch keeps the sequence.
+     * goes out first and `closeScrollPulse` right after `itemFocused`.
      *
      * Hence "armed" rather than "open": the pulse is only *emitted* by the focus-settle paths. A key
      * that scrolls nothing — a boundary press on a non-wrapping list, or any key while the grid is

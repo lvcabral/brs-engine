@@ -274,6 +274,11 @@ export class ZoomRowList extends ArrayGrid {
         return Math.max(1, this.content.length);
     }
 
+    /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
+    protected listFocusModel(): boolean {
+        return false;
+    }
+
     /** Focus regained mid-motion: unmeasured on a row list, so the settle alone publishes the landing. */
     protected publishMotionRegain(_motion: FocusMotion) {
         // The motion runs on; publishMotionSettle publishes the focus fields.

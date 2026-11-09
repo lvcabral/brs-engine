@@ -44,6 +44,8 @@ export class SGRoot {
     private _screen?: RoSGScreen;
     private _scene?: Scene;
     private _focused?: RoSGNode;
+    private _chainOwner?: RoSGNode;
+    private _lastFocusTarget?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
     private readonly _autoSub: { search: string; replace: string };
@@ -186,6 +188,16 @@ export class SGRoot {
 
     get focused(): RoSGNode | undefined {
         return this._focused;
+    }
+
+    /** The node whose path the next focus transaction unsets (see `Node.applyFocus`). */
+    get chainOwner(): RoSGNode | undefined {
+        return this._chainOwner;
+    }
+
+    /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
+    get lastFocusTarget(): RoSGNode | undefined {
+        return this._lastFocusTarget;
     }
 
     get sfx(): (SoundEffect | undefined)[] {
@@ -482,10 +494,30 @@ export class SGRoot {
 
     /**
      * Sets the currently focused node.
-     * @param node Node to set as focused, or undefined to clear focus
+     * @param node Node to set as focused, or undefined to clear focus (which also drops the chain owner:
+     *   with nothing focused there is no path to unset)
      */
     setFocused(node?: RoSGNode) {
         this._focused = node;
+        if (!node) {
+            this._chainOwner = undefined;
+        }
+    }
+
+    /**
+     * Sets the node whose path the next focus transaction unsets.
+     * @param node The chain owner, or undefined to clear it
+     */
+    setChainOwner(node?: RoSGNode) {
+        this._chainOwner = node;
+    }
+
+    /**
+     * Records the target of the `setFocus(true)` call that is returning.
+     * @param node The call's target, or undefined to clear it
+     */
+    setLastFocusTarget(node?: RoSGNode) {
+        this._lastFocusTarget = node;
     }
 
     /**

@@ -802,25 +802,28 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > wins) exists for — it is the field's only route back to its owner's `syncType`/address. Regression:
    > `task-contentcache-app` in `test/cli/`.
 
-   > **Two deferral mechanisms coexist in `Field` — keep them consistent.** Besides the synchronous
-   > dispatch above, `Field` carries *two* separate deferral paths, gated by five interacting statics
-   > (`observerDepth`, `internalUpdateDepth`, `initDepth`, `focusEmissionDepth`, `draining`).
-   > (a) **`deferredQueue`** — *callback-level*, for reentrant engine emissions (grid
-   > `itemFocused`/`rowItemFocused` under `enterInternalUpdate`); queued while another observer runs
-   > (`observerDepth > 0`) and drained when the outermost dispatch unwinds (`observerDepth === 1`).
-   > (b) **`pendingInitFocusFields`** — *field-level*, for `focusedChild` emissions raised during a
-   > component's `init()` (`initDepth > 0 && focusEmissionDepth > 0`); the reacting observer is often
-   > registered *after* the `setFocus` call, so a field (not a callback) is recorded and re-notified from
-   > the extension `tick` hook after init unwinds (`deliverPendingInitFocus`, render-thread only). The
-   > split is intentional (callback-level reentrant-unwind vs. field-level message-loop delivery) — do
-   > **not** naively merge them. A `deferredQueue` entry also carries the `focusedChild` notification it
-   > was raised under (`focusNotifyOwner`), reinstated around the deferred dispatch so a nested `setFocus`
-   > is still classifiable as a focus steal — see the focus-chain section below. `notifyObservers` **consumes** a field from `pendingInitFocusFields` as
-   > it dispatches so an inline re-focus of a still-pending ancestor doesn't double-fire; and `invoke`
-   > stashes/zeroes both `internalUpdateDepth` and `focusEmissionDepth` so a handler's own writes are
-   > treated as app-initiated. Any change to dispatch semantics must be re-checked against *both* paths
-   > and all five counters. Regression: `init-focus-observer-app` (deferred delivery + no double-fire)
-   > plus the cascade apps above.
+   > **Observers a node's own machinery raises dispatch inline too.** A list's `itemFocused` from
+   > `setFocus` or `jumpToItem` runs its observers before the call returns, even inside another observer
+   > (device-measured, Roku Express 4K+ OS 16.0, `test/simulator/probes/list-focus-dispatch-probe`; the
+   > `deferred-observer-app` fixture's unguarded read crashes on the device exactly where inline dispatch
+   > reaches it). The engine once queued these "engine emissions" until the outermost observer
+   > returned (`deferredQueue`, `enterInternalUpdate`), on the belief that a device delivers them from
+   > the message loop. It doesn't, and the queue reordered every focus trace taken from an observer.
+   > Don't bring it back to work around an app that reads state its own handler hasn't assigned yet:
+   > that app crashes on a device too.
+   >
+   > One deferral path remains, gated by `observerDepth`, `initDepth` and `focusEmissionDepth`:
+   > **`pendingInitFocusFields`**, for `focusedChild` emissions raised during a component's `init()`
+   > (`initDepth > 0 && focusEmissionDepth > 0`). The reacting observer is often registered *after* the
+   > `setFocus` call, so a field (not a callback) is recorded and re-notified from the extension `tick`
+   > hook after init unwinds (`deliverPendingInitFocus`, render-thread only). `notifyObservers`
+   > **consumes** a field from `pendingInitFocusFields` as it dispatches so an inline re-focus of a
+   > still-pending ancestor doesn't double-fire, and `invoke` zeroes `focusEmissionDepth` so a handler's
+   > own focus changes are treated as app-initiated. `runAfterConstruction` shares its trigger (no init
+   > and no observer on the stack): AnimatedImage replays its construction-time states through it, and a
+   > list publishes the pending reset of new content (see the `ArrayGrid` focus model below).
+   > Regression: `init-focus-observer-app` (deferred delivery + no double-fire) plus the cascade apps
+   > above.
    >
    > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
    > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
@@ -915,9 +918,9 @@ The rules:
    it and keeps it only when the tick reports it active or the owner re-registered during the tick. A
    settle observer writing `animateToItem`, or appending a panel, re-registers; dropping it after the tick
    froze the list mid-motion with `scrollingStatus` true. On a list, a motion its own settle observer
-   starts is queued (`ArrayGrid.settleFollowUps`) and opens after the settle's last field, as on a device
-   where the observer runs after the settle: started inline, the settle's tail wrote `scrollingStatus`
-   false and the direction "none" over the new motion. Regression: "a motion started by a settle
+   starts is queued (`ArrayGrid.settleFollowUps`) and opens after the settle's last field: started inline
+   (the observer runs inside the settle), the settle's tail wrote `scrollingStatus` false and the
+   direction "none" over the new motion. Regression: "a motion started by a settle
    observer…" in `ListFocusMotion.test.js`.
 
 PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-slide-probe/README.md`):
@@ -947,9 +950,6 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   one resets after the settle.
 - A press mid-step queues one more step (one at most; further presses are consumed). A retarget
   (`animateToItem`, a held key's repeat) drops the queued step, or the motion would return to it.
-- The motion's emissions (`startFocusMotion` and `settleMotion`) run inside `Field.enterInternalUpdate`,
-  like the instant path, so an app writing `animateToItem` from an observer sees the same deferral with
-  transitions on or off.
 - A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
   release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
   list. Without this the list repeats to its end and the scene redraws forever.
@@ -1486,9 +1486,7 @@ rebuilds it from `rowItemFocused`, and the device order still serves it.
    state down on the falling edge (hiding a shared overlay/preview container that belongs to the
    *outgoing* item) and rebuild it from the `rowItemFocused` settle. Put the edge after `rowItemFocused`
    and the teardown runs last: the focused item's poster **and** its preview player both vanish.
-   `openScrollPulse` goes out before `itemUnfocused` and `closeScrollPulse` right after `itemFocused`,
-   both **inside** the `Field.enterInternalUpdate()` bracket with the focus fields. Deferred dispatch is a
-   FIFO, so the sequence holds; an edge emitted outside the bracket would jump ahead of deferred ones.
+   `openScrollPulse` goes out before `itemUnfocused` and `closeScrollPulse` right after `itemFocused`.
 
 2. **A key that scrolls nothing must emit NOTHING.** That is why the pulse is *armed* by `handleKey`
    (`armScrollPulse`) and only *emitted* by the settle paths (both edges idempotent per press), rather
@@ -1556,6 +1554,30 @@ no-op) before settling `rowItemFocused` last — that ordering is unchanged.
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js`, describe block
 `"ArrayGrid currFocusRow/currFocusColumn reflect the new focus before itemFocused fires"`.
 
+### The list focus model: gains, jumps and new content (`ArrayGrid.listFocusModel`)
+
+Device-measured on a Roku Express 4K+ (OS 16.0) with `test/simulator/probes/list-focus-dispatch-probe`, for
+LabelList/MarkupList (and the grids, which share the code). RowList, ZoomRowList and TimeGrid override
+`listFocusModel()` to keep their older behavior until they are measured.
+
+- **A focus gain re-applies the focus where it is.** The item's `itemHasFocus` (if it changes) and then
+  `itemFocused`; never `itemUnfocused`, also not -1 on the first focus. `setNodeFocus` sets `gainingFocus`
+  around its `setFocusedItem` call.
+- **A move** (`jumpToItem`, an instant key): the old item's `itemHasFocus` false, `itemUnfocused`, the
+  direction, then the new item's `itemHasFocus` true, `currFocusRow`/`Column` and `itemFocused`.
+- **An unfocused `jumpToItem`** publishes `itemUnfocused` -1 at once, on every write (the field is
+  alwaysNotify), and records the target silently; the next gain lands there.
+- **New content publishes nothing at the write.** The focus resets to item 0 silently, and `itemFocused` 0
+  goes out once: before the next `jumpToItem`/`animateToItem`, or when the current handler or `init()`
+  returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. So `init()`
+  assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
+  handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
+  `flushContentFocus()` where a device would have returned from the handler.
+
+Still unmodeled: the device creates the target item's component during `jumpToItem` (its `itemHasFocus`
+lands between `itemUnfocused` and `itemFocused` even when it was off screen); the engine creates item
+components at the next paint.
+
 ## Focus chain consistency (`focusedChild` ↔ live focus)
 
 `focusedChild` is a stored, observable field: `Node.setNodeFocus` walks the parent chain (`createPath`) at
@@ -1568,95 +1590,71 @@ attach**: if live `sgRoot.focused` is within the newly parented subtree, it re-p
 the root down. Each attach extends the chain one level. Don't remove that repair as "redundant".
 Regression: `test/extensions/scenegraph/FocusBeforeAttach.test.js`.
 
-### A focus transaction commits before it notifies, and a focus-loss observer can't re-grab
+### A focus transaction commits before it notifies, and a nested request writes only part of the chain
 
-Two rules, both **device-measured** on a Roku Express 4K+ (OS 15.3) with `test/simulator/probes/focus-probe*`. They exist
-because an app that re-grabs focus from its own `focusedChild` observer (sgRouter's outlet, and the same
-`OnFocusedChildChange` shape in several media apps) behaves on a device and used to corrupt the chain here.
+Device-measured on a Roku Express 4K+, OS 15.3 and 16.0 (identical): `test/simulator/probes/focus-probe`,
+`focus-probe2`, `focus-flag-probe` and `list-refocus-settle-probe`, plus OS 16.0 runs of the
+`focus-steal-app` and `container-redirect-focus-app` CLI fixtures. The engine matches `focus-probe2`,
+`focus-flag-probe` and `focus-steal-app` line for line. These rules exist because apps re-grab focus from
+their own observers (sgRouter's outlet, the `OnFocusedChildChange` shape in media apps, an overlay
+re-shown from `rowItemFocused`).
 
-1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`) and
-   dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first. An observer must
-   therefore read the **finished** chain. Writing-and-notifying node by node — what the code did before —
-   let the losing subtree's observer see a half-rewritten chain (`sceneFC` still pointing at the old
-   subtree). Dispatch is still **synchronous**, inside the `setFocus` call: Roku commits atomically, it
-   does not defer these to the message loop. (Init-time focus emissions are the one exception — see
-   `pendingInitFocusFields` above.) `restoreFocusChainOnAttach` stages its repair the same way.
+1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`)
+   and dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first, so an
+   observer reads the **finished** chain. Dispatch is synchronous, inside the `setFocus` call (init-time
+   focus emissions excepted, see `pendingInitFocusFields`). Staging holds back only the notification:
+   the write still goes through the virtual `setValue`, because `Group.setValue` marks the node dirty and
+   `ScrollableText.setValue` tracks its focused state. Writing the `Field` directly freezes every focus
+   visual.
 
-   Staging holds back only the **notification**: the write itself goes through the regular virtual
-   `setValue` (suppressed via `focusStagingSink`), because subclasses override it — `Group.setValue`
-   marks the node dirty so focus visuals repaint, `ScrollableText.setValue` tracks its focused state.
-   Writing the `Field` directly instead silently freezes every focus visual (a `Button` keeps its
-   unfocused font, a `ScrollableText` its unfocused scrollbar thumb) while `hasFocus()` still reports
-   true.
+2. **`hasFocus()` is "my `focusedChild` links to myself"** (or the node holds the live focus,
+   `sgRoot.focused`, which internal dialog focus moves set without writing links). A device leaves stale
+   links in place, so a node the chain moved away from can keep reporting focus, and two or more nodes
+   can report it at once. That is device behavior; don't "fix" it.
 
-2. **A focus request raised from a focus-LOSS notification is dropped** (`isFocusRequestDropped`, keyed
-   off the `focusNotifyOwners` stack). A Roku honors `setFocus` from a `focusedChild` observer only while
-   the observed node is still in the focus chain — the "forward focus" pattern where a container that
-   just *gained* focus hands it to an inner widget. The mirror case, a node re-grabbing focus as it
-   *loses* it, leaves the chain and the remote with the node the in-flight transaction focused.
+3. **Two pointers drive the writes.** `sgRoot.chainOwner` is the node whose path the next transaction
+   unsets. `sgRoot.lastFocusTarget` is the target of the last BrightScript `setFocus(true)` call to
+   return (set in the `setFocus` callable, after the subclass overrides ran).
+   - **A top-level call** (`applyFocus`) unsets the chain owner's path below their common ancestor,
+     clearing only links that still point along it (`unsetPathBelow`). It then writes the target's whole
+     path, moves `sgRoot.focused`, and becomes the chain owner.
+   - **A call raised while a focus round is dispatching** (`applyNestedFocus`) writes its path only below
+     its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
+     chain owner's path and takes it over. The live focus follows only when the chain from the root now
+     leads to the target. The call returns false otherwise, so a subclass (ArrayGrid) skips its gain
+     bookkeeping.
+   - **What this produces:**
+     - *Forward focus* to a sibling or into the container that just gained focus, or a request reaching
+       for an overlay beside it, writes up to the Scene and takes the focus.
+     - *A node re-grabbing the focus it is losing* writes only its own self-link (`focus-probe` S4,
+       `focus-probe2` N3), which leaves the chain where the transaction put it.
+     - *A request raised before a forward's `setFocus` returned* (an `itemFocused` observer inside the
+       forwarded list's call: R7, container-redirect scenario 1) does the same.
+     - *An observer restoring focus during a `setFocus(false)`* restores only the self-link, which leaves
+       nothing focused (`focus-steal-app`).
 
-   **The owner alone is not enough — the TARGET is classified too.** A container that observes its own
-   `focusedChild` and redirects focus into its own child *stays* in the chain, so an owner-only test reads
-   a subsequent re-grab to an unrelated sibling as legal forward focus and strands the app on the node it
-   was navigating away from (device-measured: `list-refocus-settle-probe` R7). Three rules, sharing one
-   bounded ancestor walk (`Node.isAncestorOrSelf`), and the **order** matters:
-   - The owner must still be in the focus chain (the classic backwards steal). `target === focused`
-     (probe2 N4, re-asserting the node that just took focus) is idempotent and falls out of the next rule
-     for free once this one confirms the owner is a proper ancestor — it is not a separate check.
-   - The target-subtree test applies **only when the owner is a proper ancestor** of the focused node. When
-     the owner *is* the focused node, the transaction staged `focusedChild` on the leaf itself, so the
-     redirect is the ordinary "I got focus but nothing to show, pass it on" pattern — which legitimately
-     targets a sibling or the parent.
-   - A target that is **not in the owner's tree** is never a steal, or the subtree walk drops it: a node
-     still unparented (a component focusing itself from `init()`, which runs *before* `appendChild`) and
-     the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner). Checked last —
-     it costs an unbounded walk to the scene root, so it only runs once the cheap subtree walk has already
-     failed to place `target` under `owner`.
-   - The mirror case, checked **first**: the *currently-focused* node can be the one that is unparented,
-     not the target. A component's `init()` focusing one of its own not-yet-attached children still runs
-     the ordinary `setNodeFocus` LCA walk, which unsets *every* non-common ancestor of the previously
-     focused chain as a side effect — including ancestors with no relationship whatsoever to the new
-     (detached) subtree. That fires their `focusedChild`-loss observers while nothing has actually left
-     their tree yet: a router outlet observing its own `focusedChild` and re-grabbing focus into its
-     routed content (sgRouter + a `JRDialog`-style overlay that focuses its own button from a field
-     observer *before* `presentOverlayDialog` appends it to the scene) is a real, device-confirmed
-     instance. Testing only "is `owner` still an ancestor of `focused`" reads this as a permanent
-     cross-tree steal and drops it — corrupting the chain exactly the way this whole mechanism exists to
-     prevent: `sgRoot.focused` is left on a node outside the visible tree, and the scene's own
-     `focusedChild` is left cleared instead of re-threaded to the re-grabbed node. Guard: if `owner` and
-     `focused` don't share the same root (`createPath()[0]`), there is no steal to classify yet — honor
-     the request. It resolves itself once the detached subtree is eventually mounted, via
-     `restoreFocusChainOnAttach`.
+4. **A nested call's notifications join the current round.** `notifyStagedFocus` appends them to the
+   dispatching round (each field once per round) and returns, so the forwarded node's observer runs after
+   the forward's `setFocus` returned (`focus-flag-probe` A1). Ordinary field observers stay synchronous.
 
-   **The classification must survive the deferral, not defeat it.** A grid's focus-gain settle is an
-   engine emission, so raised inside another observer it defers — by which point the transaction has left
-   the stack and the steal is unclassifiable. Do **not** fix that by dispatching the settle synchronously:
-   the settle is also what carries an app's reentrant multi-list load, so inline dispatch re-creates the
-   `deferred-observer-app` crash (an earlier list's `content` still `invalid` when a later list's handler
-   runs), and the two shapes are indistinguishable — both are "a container's `focusedChild` observer calls
-   `setFocus` on a list". Instead the deferred entry records the notification it was raised under and
-   `Node.runWithFocusNotifyOwner` reinstates it around the dispatch, leaving *when* observers run alone.
+The engine once dropped a nested request when a classifier judged it a "backwards steal", and kept its own
+flag for `hasFocus()`. The probes contradict both: a container's gain observer can send the focus to an
+overlay beside it (B1), and a loss observer's re-grab still writes the grabber's own link. Don't
+reintroduce a drop rule; the partial writes above are what keeps the chain consistent with the live focus.
+The original bug (live focus on the grabber, `focusedChild` on another node, so the remote drove the old
+subtree) can't happen, because the live focus moves only when the chain leads to the target.
 
-   Scoped to transactions where a node is **taking** focus (`notifyStagedFocus`'s `gaining` flag). The
-   unfocus paths notify without classifying: with no competing target there is nothing to defend, and
-   swallowing an unfocus observer's restore would leave the app with **no focused node at all**. The
-   dropped path returns `false`, not `isFocusable()`, so a subclass override gated on
-   `super.setNodeFocus(...)` skips its own bookkeeping too (an `ArrayGrid` must not move `itemFocused`
-   for a grid that never took focus).
+**Still unmodeled: dialogs.** A device keeps a shown `scene.dialog` out of the scene's chain: `sceneFC` and
+`isInFocusChain()` of the scene subtree are unchanged, and the dialog stays modal even after the app
+re-focuses a node behind it (`focus-probe` S6/S7, container-redirect scenario 2). The engine moves the
+chain to the dialog.
 
-   Don't "simplify" this to dropping all nested focus changes: forward focus is how every custom dialog
-   highlights its buttons (`dialog-buttongroup-focus-app`). And don't drop only the chain writes while
-   letting `sgRoot.focused` move — that hybrid (live focus on one node, `focusedChild` on another) is the
-   original bug: the remote drove the old subtree while the chain said otherwise, so a key handler
-   returned `true` (playing the "handled" navigation sound) without focus visibly moving, and a
-   `scene.dialog` drew unfocused with up/down/OK falling through to the scene behind it.
+**Disconnected trees.** A component's `init()` focusing itself before it is appended has a path rooted at
+the detached node. It writes that path, and the live focus moves there. It doesn't touch the scene's
+chain owner, and `restoreFocusChainOnAttach` threads the chain once the subtree is mounted
+(`FocusBeforeAttach.test.js`, "honors a re-grab when the competing focus lives in a still-detached
+subtree").
 
-   **Deliberately not modeled:** on a device the node that lost the race keeps reporting `hasFocus() =
-   true` until the next focus transaction, so two nodes report focus at once. Reproducing that would make
-   both render focused. We report `hasFocus()` only for the live focus.
-
-   Regression: `focus-steal-app` and `container-redirect-focus-app` in `test/cli/` (the latter drives all
-   four rules plus the deferral through a real app; the `Focus.test.js` unit tests use port observers,
-   which never defer), which must stay green alongside `dialog-buttongroup-focus-app`,
-   `deferred-observer-app` and `init-focus-observer-app`. The disconnected-tree carve-out: "honors a
-   re-grab when the competing focus lives in a still-detached subtree" in `Focus.test.js`.
+Regression: `focus-steal-app`, `container-redirect-focus-app` and `dialog-buttongroup-focus-app` in
+`test/cli/`, and `Focus.test.js` (port observers stand in for BrightScript ones; the tests set
+`sgRoot.setLastFocusTarget` where a BrightScript `setFocus` would).

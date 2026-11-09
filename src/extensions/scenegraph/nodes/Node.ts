@@ -87,45 +87,15 @@ export class Node extends RoSGNode implements BrsValue {
     /** Reference to this instance's class spec (see hiddenSpecCache). */
     private hiddenFieldSpec?: Map<string, FieldModel>;
     /**
-     * Stack of nodes whose `focusedChild` observers are currently dispatching, innermost last.
-     * Read by `isFocusRequestDropped` to tell a focus-gain notification (whose observer may move
-     * focus onward) from a focus-loss one (whose focus requests a Roku ignores).
-     */
-    private static readonly focusNotifyOwners: Node[] = [];
-
-    /**
-     * The `focusedChild` notification dispatching right now, if any — the context a nested
-     * `setFocus` is classified against by `isFocusRequestDropped`. Captured by
-     * `Field.executeCallbacks` when it defers an emission raised inside a focus transaction, so the
-     * classification survives the wait; see `runWithFocusNotifyOwner`.
-     */
-    static currentFocusNotifyOwner(): Node | undefined {
-        return Node.focusNotifyOwners.at(-1);
-    }
-
-    /**
-     * Runs `body` with `owner` reinstated as the in-flight `focusedChild` notification, so a
-     * `setFocus` raised from a deferred grid focus-settle observer (`itemFocused`/`rowItemFocused`)
-     * is still classified against the notification it was originally raised under.
-     * @param owner Notification owner captured at defer time, or undefined if there was none.
-     * @param body Deferred dispatch to run.
-     */
-    static runWithFocusNotifyOwner<T>(owner: Node | undefined, body: () => T): T {
-        if (!owner) {
-            return body();
-        }
-        Node.focusNotifyOwners.push(owner);
-        try {
-            return body();
-        } finally {
-            Node.focusNotifyOwners.pop();
-        }
-    }
-    /**
      * Set while a focus transaction stages its `focusedChild` writes: `setValue` applies the value
      * but routes the notification here instead of dispatching it — see `stageFocusedChild`.
      */
     private static focusStagingSink: StagedFocus[] | undefined;
+    /**
+     * The `focusedChild` notifications of the focus transaction dispatching now. A `setFocus` raised from
+     * one of them appends its own to this round instead of dispatching them (see `notifyStagedFocus`).
+     */
+    private static focusRound: { queue: StagedFocus[]; fields: Set<Field> } | undefined;
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
@@ -958,7 +928,7 @@ export class Node extends RoSGNode implements BrsValue {
                 chain[i].stageFocusedChild(chain[i + 1], staged);
             }
         }
-        Node.notifyStagedFocus(staged, true);
+        Node.notifyStagedFocus(staged);
     }
 
     /**
@@ -1365,12 +1335,6 @@ export class Node extends RoSGNode implements BrsValue {
      * @returns Whether the node is focusable.
      */
     setNodeFocus(focusOn: boolean): boolean {
-        if (focusOn && Node.isFocusRequestDropped(this)) {
-            // Report the request as not applied, so a subclass override gated on
-            // `super.setNodeFocus(...)` skips its own focus bookkeeping too (an ArrayGrid must not
-            // move `itemFocused` for a grid that never took focus).
-            return false;
-        }
         if (focusOn) {
             if (!this.triedInitFocus) {
                 // Only try initial focus once
@@ -1387,54 +1351,17 @@ export class Node extends RoSGNode implements BrsValue {
                 return false;
             }
 
-            // Get the focus chain, with lowest ancestor first.
-            let newFocusChain = this.createPath();
-
-            // Capture the previously focused node, then update the global focus
-            // reference up front so any observers fired while we rewrite the
-            // focusedChild fields below already see the new focus state
-            // (hasFocus() === sgRoot.focused === this). Otherwise, clearing the old
-            // focus chain flushes its observers synchronously while sgRoot.focused
-            // still points at the node losing focus, making it (incorrectly) report
-            // hasFocus() === true alongside the node gaining focus.
-            const prevFocused = sgRoot.focused;
-            sgRoot.setFocused(this);
-
-            // Stage every focusedChild write first, then notify. A Roku commits the whole focus
-            // transaction before it dispatches any focusedChild observer, so an observer always
-            // reads the FINISHED chain — never a half-rewritten one (device-measured).
+            const path = this.createPath();
             const staged: StagedFocus[] = [];
-
-            // If there was already a focused node somewhere, we need to remove focus
-            // from it and its ancestors.
-            if (prevFocused instanceof Node) {
-                // Get the focus chain, with root-most ancestor first.
-                let currFocusChain = this.createPath(prevFocused);
-
-                // Find the lowest common ancestor (LCA) between the newly focused node
-                // and the current focused node.
-                let lcaIndex = 0;
-                while (lcaIndex < newFocusChain.length && lcaIndex < currFocusChain.length) {
-                    if (currFocusChain[lcaIndex] !== newFocusChain[lcaIndex]) break;
-                    lcaIndex++;
-                }
-
-                // Unset all of the not-common ancestors of the current focused node.
-                for (let i = lcaIndex; i < currFocusChain.length; i++) {
-                    currFocusChain[i].stageFocusedChild(BrsInvalid.Instance, staged);
-                }
+            if (Node.focusRound) {
+                this.applyNestedFocus(path, staged);
+            } else {
+                this.applyFocus(path, staged);
             }
-
-            // Set the focusedChild for each ancestor to the next node in the chain,
-            // which is the current node's child.
-            for (let i = 0; i < newFocusChain.length - 1; i++) {
-                newFocusChain[i].stageFocusedChild(newFocusChain[i + 1], staged);
-            }
-
-            // Finally, set the focusedChild of the newly focused node to itself (to mimic RBI behavior).
-            this.stageFocusedChild(this, staged);
-
-            Node.notifyStagedFocus(staged, true);
+            Node.notifyStagedFocus(staged);
+            // A request raised during a focus notification may only write part of the chain; it took the
+            // focus only if the chain now leads to it.
+            return sgRoot.focused === this ? this.isFocusable() : false;
         } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
@@ -1448,12 +1375,121 @@ export class Node extends RoSGNode implements BrsValue {
             Node.notifyStagedFocus(staged);
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
-            // we don't need to notify any ancestors.
+            // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
+            if (sgRoot.chainOwner === this) {
+                sgRoot.setChainOwner();
+            }
             const staged: StagedFocus[] = [];
             this.stageFocusedChild(BrsInvalid.Instance, staged);
             Node.notifyStagedFocus(staged);
         }
         return this.isFocusable();
+    }
+
+    /**
+     * A top-level `setFocus(true)` (DEVICE-MEASURED, focus-probe, focus-probe2, focus-flag-probe): unsets the
+     * chain owner's path below the common ancestor, clearing only the links that still point along it (a
+     * stale link elsewhere stays, and so does its node's hasFocus()), then writes this node's whole path
+     * and becomes the chain owner. The live focus moves up front, so observers already read the new state.
+     * @param path This node's path, root first.
+     * @param staged Accumulator for the staged writes.
+     */
+    private applyFocus(path: Node[], staged: StagedFocus[]) {
+        const previous = sgRoot.chainOwner ?? sgRoot.focused;
+        sgRoot.setFocused(this);
+        sgRoot.setChainOwner(this);
+        if (previous instanceof Node && previous !== this) {
+            Node.unsetPathBelow(previous, path, staged);
+        }
+        for (let i = 0; i < path.length - 1; i++) {
+            path[i].stageFocusedChild(path[i + 1], staged);
+        }
+        this.stageFocusedChild(this, staged);
+    }
+
+    /**
+     * A `setFocus(true)` raised during a focus notification (DEVICE-MEASURED, same probes). It writes this
+     * node's path only below its common ancestor with the last call's target (`lastFocusTarget`): a node
+     * re-grabbing the focus it is losing writes just its own link, which leaves the chain where the
+     * transaction put it, while a forward to a sibling or to an overlay beside the container writes up to
+     * the Scene. Replacing the Scene's link also unsets the chain owner's path and takes it over. The
+     * live focus follows only when the chain from the root now leads to this node.
+     * @param path This node's path, root first.
+     * @param staged Accumulator for the staged writes.
+     */
+    private applyNestedFocus(path: Node[], staged: StagedFocus[]) {
+        const root = path[0];
+        let start = 0;
+        const last = sgRoot.lastFocusTarget;
+        if (last instanceof Node) {
+            const lastPath = last.createPath();
+            if (lastPath[0] === root) {
+                let common = 0;
+                while (common < path.length && common < lastPath.length && path[common] === lastPath[common]) {
+                    common++;
+                }
+                start = common - 1;
+            }
+        }
+        // Replacing the root's link (the Scene's) takes over the chain, but only of this tree: a detached
+        // subtree focusing itself leaves the scene's chain alone.
+        const owner = sgRoot.chainOwner;
+        const ownerTree = owner instanceof Node ? owner.createPath()[0] : root;
+        if (start === 0 && path.length > 1 && ownerTree === root && root.getValue("focusedchild") !== path[1]) {
+            if (owner instanceof Node && owner !== this) {
+                Node.unsetPathBelow(owner, path, staged);
+            }
+            sgRoot.setChainOwner(this);
+        }
+        for (let i = start; i < path.length - 1; i++) {
+            path[i].stageFocusedChild(path[i + 1], staged);
+        }
+        this.stageFocusedChild(this, staged);
+        if (Node.chainLeaf(root) === this) {
+            sgRoot.setFocused(this);
+        }
+    }
+
+    /**
+     * Stages the unset of `previous`'s path below its common ancestor with `path`: each link that still
+     * points at the next node of that path (and `previous`'s link to itself) is cleared.
+     * @param previous The node whose path is unset.
+     * @param path The path being focused, root first.
+     * @param staged Accumulator for the staged writes.
+     */
+    private static unsetPathBelow(previous: Node, path: Node[], staged: StagedFocus[]) {
+        const old = previous.createPath();
+        let common = 0;
+        while (common < path.length && common < old.length && old[common] === path[common]) {
+            common++;
+        }
+        for (let i = common; i < old.length; i++) {
+            const node = old[i];
+            const next = old[i + 1] ?? node;
+            if (node.getValue("focusedchild") === next) {
+                node.stageFocusedChild(BrsInvalid.Instance, staged);
+            }
+        }
+    }
+
+    /**
+     * Follows `focusedChild` links down from `root` to the node that links to itself.
+     * @param root Node to start from.
+     * @returns That node, or undefined when the links break off first.
+     */
+    private static chainLeaf(root: Node): Node | undefined {
+        let node = root;
+        for (let depth = 0; depth < 1000; depth++) {
+            const next = node.getValue("focusedchild");
+            if (next === node) {
+                return node;
+            }
+            if (!(next instanceof Node)) {
+                return undefined;
+            }
+            node = next;
+        }
+        return undefined;
     }
 
     /**
@@ -1478,109 +1514,44 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Dispatches the staged `focusedChild` notifications for a committed focus transaction, in
-     * chain order (the subtree losing focus first, then the one gaining it).
+     * chain order (the subtree losing focus first, then the one gaining it). A transaction raised from
+     * one of them appends its own notifications to this round, each field once per round, and returns
+     * before they dispatch (DEVICE-MEASURED, focus-flag-probe A1: the forwarded node's observer runs after
+     * the forward's `setFocus` call returned).
      * @param staged Fields staged by `stageFocusedChild`.
-     * @param gaining True when a node is taking focus, so a competing request raised from one of
-     *   these callbacks can be classified — see `isFocusRequestDropped`. False for the unfocus
-     *   paths: with no node taking focus there is nothing to defend, and dropping an observer's
-     *   restore there would leave the app with no focused node at all.
      */
-    private static notifyStagedFocus(staged: StagedFocus[], gaining = false) {
+    private static notifyStagedFocus(staged: StagedFocus[]) {
+        const round = Node.focusRound;
+        if (round) {
+            for (const entry of staged) {
+                if (!round.fields.has(entry.field)) {
+                    round.fields.add(entry.field);
+                    round.queue.push(entry);
+                }
+            }
+            return;
+        }
+        const queue = [...staged];
+        Node.focusRound = { queue, fields: new Set(queue.map((entry) => entry.field)) };
         // Marks these as an engine-initiated focus emission, so notifications raised during a
         // component's init() defer until init returns (see Field.enterInit).
         Field.enterFocusEmission();
         try {
-            for (const entry of staged) {
-                Node.runWithFocusNotifyOwner(gaining ? entry.node : undefined, () => entry.field.notifyObservers());
+            // The array iterator also visits the entries nested transactions append while this runs.
+            for (const entry of queue) {
+                entry.field.notifyObservers();
             }
         } finally {
             Field.exitFocusEmission();
+            Node.focusRound = undefined;
         }
     }
 
     /** Resets focus-dispatch state between app runs so nothing leaks across setups. */
     static resetFocusDispatch() {
-        Node.focusNotifyOwners.length = 0;
-    }
-
-    /**
-     * Whether a `setFocus(true)` issued right now must be ignored.
-     *
-     * A Roku honors a focus request raised from a `focusedChild` observer only when the observed node
-     * is still in the focus chain (forward focus — a container that just gained focus hands it to an
-     * inner widget) AND the target stays inside that owner's subtree. A request from a node that just
-     * lost focus, or one that reaches for a target outside the subtree the owner just focused, is a
-     * backwards steal and is dropped.
-     * @param target Node the nested `setFocus(true)` is trying to focus.
-     * @returns True when the request must be ignored.
-     */
-    private static isFocusRequestDropped(target: Node): boolean {
-        const owner = Node.focusNotifyOwners.at(-1);
-        const focused = sgRoot.focused;
-        if (!owner || !(focused instanceof Node)) {
-            return false;
-        }
-        // Owner and focused must belong to the same tree for the ancestor comparison below to mean
-        // anything — see the disconnected-tree carve-out in scenegraph-invariants.md.
-        if (Node.rootOf(owner) !== Node.rootOf(focused)) {
-            return false;
-        }
-        // Owner must still be in the focus chain.
-        if (!Node.isAncestorOrSelf(owner, focused)) {
-            return true;
-        }
-        // Legitimate forward focus: the owner focused itself (nothing to redirect out of), or the
-        // target is inside the subtree the owner just focused.
-        if (owner === focused || Node.isAncestorOrSelf(owner, target)) {
-            return false;
-        }
-        // A target outside the owner's tree entirely is not a steal either — a node still unparented
-        // (mid-`init()`, before `appendChild`), or the scene's modal `dialog` (parented straight to
-        // the Scene, never into the owner).
-        if (!(target.parent instanceof Node) || Node.isSceneDialog(target)) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Whether the upward walk from `node` reaches `ancestor` (`node` itself counts).
-     * @param ancestor Node to test membership against.
-     * @param node Node (or non-Node value) to walk up from.
-     * @returns True when `node` is `ancestor` or nested somewhere below it.
-     */
-    private static isAncestorOrSelf(ancestor: Node, node: BrsType): boolean {
-        let current = node;
-        while (current instanceof Node) {
-            if (current === ancestor) {
-                return true;
-            }
-            current = current.parent;
-        }
-        return false;
-    }
-
-    /**
-     * Walks `node`'s raw `.parent` chain to its top-most ancestor.
-     * @param node Node to walk up from.
-     * @returns The root-most ancestor (which is `node` itself if it has no parent).
-     */
-    private static rootOf(node: Node): Node {
-        let current = node;
-        while (current.parent instanceof Node) {
-            current = current.parent;
-        }
-        return current;
-    }
-
-    /**
-     * Whether `node` is the dialog the scene is currently showing, or sits inside it.
-     * @param node Node to test.
-     * @returns True when the node is the current scene dialog or one of its descendants.
-     */
-    private static isSceneDialog(node: Node): boolean {
-        const dialog = sgRoot.scene?.dialog;
-        return dialog instanceof Node && Node.isAncestorOrSelf(dialog, node);
+        Node.focusRound = undefined;
+        sgRoot.setChainOwner();
+        sgRoot.setLastFocusTarget();
     }
 
     /**

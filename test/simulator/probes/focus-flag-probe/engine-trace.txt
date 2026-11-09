@@ -1,0 +1,20 @@
+PROBE|A0 overlay focused|overlay=T/self other=F/- third=F/- container=F/- leaf=F/- leaf2=F/- sceneFC=overlay
+PROBE|  fwdDrop: after nested overlay request|overlay=T/self other=F/- third=F/- container=F/leaf leaf=T/self leaf2=F/- sceneFC=overlay
+PROBE|A1 container.setFocus (fwd to leaf, leaf asks overlay)|overlay=T/self other=F/- third=F/- container=F/leaf leaf=T/self leaf2=F/- sceneFC=overlay
+PROBE|A2 other.setFocus|overlay=F/- other=T/self third=F/- container=F/leaf leaf=T/self leaf2=F/- sceneFC=other
+PROBE|A3 third.setFocus|overlay=F/- other=F/- third=T/self container=F/leaf leaf=T/self leaf2=F/- sceneFC=third
+PROBE|B0 reset on other|overlay=F/- other=T/self third=F/- container=F/leaf leaf=T/self leaf2=F/- sceneFC=other
+PROBE|  ctrDrop: after nested overlay request|overlay=T/self other=F/- third=F/- container=F/- leaf=T/self leaf2=F/- sceneFC=overlay
+PROBE|B1 container.setFocus (container asks overlay)|overlay=T/self other=F/- third=F/- container=F/- leaf=T/self leaf2=F/- sceneFC=overlay
+PROBE|B2 third.setFocus|overlay=F/- other=F/- third=T/self container=F/- leaf=T/self leaf2=F/- sceneFC=third
+PROBE|B3 other.setFocus|overlay=F/- other=T/self third=F/- container=F/- leaf=T/self leaf2=F/- sceneFC=other
+PROBE|C0 leaf focused|overlay=F/- other=F/- third=F/- container=F/leaf leaf=T/self leaf2=F/- sceneFC=container
+PROBE|  lossDrop: after nested leaf2 request|overlay=F/- other=T/self third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=other
+PROBE|C1 other.setFocus (container loss asks leaf2)|overlay=F/- other=T/self third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=other
+PROBE|C2 third.setFocus|overlay=F/- other=F/- third=T/self container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=third
+PROBE|C3 overlay.setFocus|overlay=T/self other=F/- third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=overlay
+PROBE|  fwdOk: after nested leaf2 forward|overlay=F/- other=F/- third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=container
+PROBE|D1 container.setFocus (fwd to leaf2)|overlay=F/- other=F/- third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=container
+PROBE|D2 other.setFocus|overlay=F/- other=T/self third=F/- container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=other
+PROBE|D3 third.setFocus|overlay=F/- other=F/- third=T/self container=F/leaf2 leaf=F/- leaf2=T/self sceneFC=third
+PROBE|done

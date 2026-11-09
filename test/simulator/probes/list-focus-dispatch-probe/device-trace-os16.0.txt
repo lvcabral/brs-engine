@@ -1,0 +1,84 @@
+PROBE|boot
+PROBE|0|S init: content
+PROBE|1|S init: setFocus
+PROBE|1|list.itemFocused=0
+PROBE|1|S init: end
+PROBE|3|list.itemFocused=0
+PROBE|item|?.itemHasFocus=true
+PROBE|1003|case|R1 focus away and back, same item
+PROBE|item|I0.itemHasFocus=false
+PROBE|1004|list.itemUnfocused=0
+PROBE|item|I2.itemHasFocus=true
+PROBE|1006|list.itemFocused=2
+PROBE|item|I2.itemHasFocus=false
+PROBE|1006|R1 call setFocus
+PROBE|item|I2.itemHasFocus=true
+PROBE|1007|list.itemFocused=2
+PROBE|1007|R1 returned
+PROBE|1508|case|R2 unfocused jumpToItem to another item, then focus
+PROBE|item|I2.itemHasFocus=false
+PROBE|1509|list.itemUnfocused=-1
+PROBE|1509|R2 call setFocus
+PROBE|item|I4.itemHasFocus=true
+PROBE|1510|list.itemFocused=4
+PROBE|1510|R2 returned
+PROBE|2010|case|R3 unfocused jumpToItem to the same item, then focus
+PROBE|item|I4.itemHasFocus=false
+PROBE|2012|list.itemUnfocused=-1
+PROBE|2012|R3 call setFocus
+PROBE|item|I4.itemHasFocus=true
+PROBE|2013|list.itemFocused=4
+PROBE|2013|R3 returned
+PROBE|2514|case|R4 unfocused jumpToItem away and back, then focus
+PROBE|item|I4.itemHasFocus=false
+PROBE|2515|list.itemUnfocused=-1
+PROBE|2515|list.itemUnfocused=-1
+PROBE|2515|R4 call setFocus
+PROBE|item|I4.itemHasFocus=true
+PROBE|2516|list.itemFocused=4
+PROBE|2516|R4 returned
+PROBE|3016|case|D1 timer: live list jumpToItem
+PROBE|item|I4.itemHasFocus=false
+PROBE|3017|list.itemUnfocused=4
+PROBE|item|I7.itemHasFocus=true
+PROBE|3019|list.itemFocused=7
+PROBE|3019|D1 returned
+PROBE|3520|case|D2 timer: fresh list setFocus + jumpToItem
+PROBE|item|I7.itemHasFocus=false
+PROBE|3530|F1.itemFocused=0
+PROBE|3530|D2 setFocus returned
+PROBE|3531|F1.itemFocused=0
+PROBE|3531|F1.itemUnfocused=0
+PROBE|3532|F1.itemFocused=3
+PROBE|3532|D2 returned
+PROBE|item|?.itemHasFocus=true
+PROBE|4033|case|D5 timer: live list new content + jumpToItem
+PROBE|item|F1_3.itemHasFocus=false
+PROBE|item|I7.itemHasFocus=true
+PROBE|4039|list.itemFocused=7
+PROBE|4039|D5 setFocus returned
+PROBE|4041|D5 content returned
+PROBE|4042|list.itemFocused=0
+PROBE|4042|list.itemUnfocused=0
+PROBE|4043|list.itemFocused=2
+PROBE|4043|D5 returned
+PROBE|item|I2.itemHasFocus=true
+PROBE|item|I7.itemHasFocus=false
+PROBE|4550|case|D3 main-thread field observer: live list setFocus + jumpToItem
+PROBE|4552|list.itemFocused=2
+PROBE|4552|D3 setFocus returned
+PROBE|item|J2.itemHasFocus=false
+PROBE|4553|list.itemUnfocused=2
+PROBE|item|J6.itemHasFocus=true
+PROBE|4554|list.itemFocused=6
+PROBE|4555|D3 returned
+PROBE|5057|case|D4 main-thread field observer: fresh list setFocus + jumpToItem
+PROBE|item|J6.itemHasFocus=false
+PROBE|5066|F2.itemFocused=0
+PROBE|5066|D4 setFocus returned
+PROBE|5067|F2.itemFocused=0
+PROBE|5067|F2.itemUnfocused=0
+PROBE|5068|F2.itemFocused=3
+PROBE|5068|D4 returned
+PROBE|item|?.itemHasFocus=true
+PROBE|6069|done

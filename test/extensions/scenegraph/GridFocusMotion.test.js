@@ -80,6 +80,8 @@ describe("Grid focus motion", () => {
         }
         grid.setValue("content", root);
         grid.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        grid.flushContentFocus();
         return grid;
     }
 
@@ -280,6 +282,8 @@ describe("Grid focus motion", () => {
         }
         list.setValue("content", root);
         list.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        list.flushContentFocus();
         tap(list, "down");
         advance(100);
         const order = drawOrder(list, "renderItem");
@@ -315,6 +319,8 @@ describe("Grid focus motion", () => {
         }
         grid.setValue("content", root);
         grid.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        grid.flushContentFocus();
         return grid;
     }
 

@@ -77,6 +77,8 @@ describe("List focus motion", () => {
         }
         list.setValue("content", root);
         list.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        list.flushContentFocus();
         return list;
     }
 
@@ -322,6 +324,8 @@ describe("List focus motion", () => {
         }
         list.setValue("content", root);
         list.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        list.flushContentFocus();
         return list;
     }
 

@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    When does the target of a DROPPED setFocus stop reporting hasFocus()?
+
+    overlay and other sit beside container under the Scene; container holds leaf (and leaf2).
+    The "arm" decides which observer raises the nested request:
+      fwdDrop   container's focusedChild (gaining) forwards to leaf; leaf's focusedChild (gaining)
+                then asks for overlay: dropped.
+      ctrDrop   container's focusedChild (gaining) asks for overlay directly: dropped.
+      lossDrop  container's focusedChild (losing) asks for leaf2: dropped (focus-probe2 N3 shape).
+      fwdOk     container's focusedChild (gaining) forwards to leaf2: honored.
+    After each, a plain setFocus on another node shows whose flag that call clears.
+-->
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="overlay" width="100" height="100" focusable="true" />
+        <Rectangle id="other" width="100" height="100" translation="[0,200]" focusable="true" />
+        <Rectangle id="third" width="100" height="100" translation="[0,400]" focusable="true" />
+        <Group id="container" focusable="true">
+            <Rectangle id="leaf" width="100" height="100" translation="[300,0]" focusable="true" />
+            <Rectangle id="leaf2" width="100" height="100" translation="[300,200]" focusable="true" />
+        </Group>
+        <Timer id="stepTimer" duration="0.4" repeat="true" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.ids = ["overlay", "other", "third", "container", "leaf", "leaf2"]
+        m.n = {}
+        for each id in m.ids
+            m.n[id] = m.top.findNode(id)
+        end for
+        m.arm = ""
+        m.n.container.observeField("focusedChild", "onContainerFocus")
+        m.n.leaf.observeField("focusedChild", "onLeafFocus")
+        m.step = 0
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "onStep")
+        m.timer.control = "start"
+    end sub
+
+    function flags() as string
+        s = ""
+        for each id in m.ids
+            v = "F"
+            if m.n[id].hasFocus() then v = "T"
+            s = s + id + "=" + v + "/" + fcOf(m.n[id]) + " "
+        end for
+        return s + "sceneFC=" + fcOf(m.top)
+    end function
+
+    function fcOf(node as object) as string
+        fc = node.focusedChild
+        if fc = invalid then return "-"
+        if fc.isSameNode(node) then return "self"
+        return fc.id
+    end function
+
+    sub p(tag as string)
+        print "PROBE|" + tag + "|" + flags()
+    end sub
+
+    sub onContainerFocus()
+        gaining = m.n.container.isInFocusChain()
+        if m.arm = "fwdDrop" and gaining
+            m.arm = "fwdDrop2"
+            m.n.leaf.setFocus(true)
+        else if m.arm = "ctrDrop" and gaining
+            m.arm = ""
+            m.n.overlay.setFocus(true)
+            p("  ctrDrop: after nested overlay request")
+        else if m.arm = "lossDrop" and not gaining
+            m.arm = ""
+            m.n.leaf2.setFocus(true)
+            p("  lossDrop: after nested leaf2 request")
+        else if m.arm = "fwdOk" and gaining
+            m.arm = ""
+            m.n.leaf2.setFocus(true)
+            p("  fwdOk: after nested leaf2 forward")
+        end if
+    end sub
+
+    sub onLeafFocus()
+        if m.arm = "fwdDrop2" and m.n.leaf.isInFocusChain()
+            m.arm = ""
+            m.n.overlay.setFocus(true)
+            p("  fwdDrop: after nested overlay request")
+        end if
+    end sub
+
+    sub onStep()
+        m.step = m.step + 1
+        s = m.step
+        if s = 1
+            m.n.overlay.setFocus(true)
+            p("A0 overlay focused")
+        else if s = 2
+            m.arm = "fwdDrop"
+            m.n.container.setFocus(true)
+            p("A1 container.setFocus (fwd to leaf, leaf asks overlay)")
+        else if s = 3
+            m.n.other.setFocus(true)
+            p("A2 other.setFocus")
+        else if s = 4
+            m.n.third.setFocus(true)
+            p("A3 third.setFocus")
+        else if s = 5
+            m.n.overlay.setFocus(true)
+            m.n.overlay.setFocus(false)
+            m.n.other.setFocus(true)
+            p("B0 reset on other")
+        else if s = 6
+            m.arm = "ctrDrop"
+            m.n.container.setFocus(true)
+            p("B1 container.setFocus (container asks overlay)")
+        else if s = 7
+            m.n.third.setFocus(true)
+            p("B2 third.setFocus")
+        else if s = 8
+            m.n.other.setFocus(true)
+            p("B3 other.setFocus")
+        else if s = 9
+            m.n.leaf.setFocus(true)
+            p("C0 leaf focused")
+        else if s = 10
+            m.arm = "lossDrop"
+            m.n.other.setFocus(true)
+            p("C1 other.setFocus (container loss asks leaf2)")
+        else if s = 11
+            m.n.third.setFocus(true)
+            p("C2 third.setFocus")
+        else if s = 12
+            m.n.overlay.setFocus(true)
+            p("C3 overlay.setFocus")
+        else if s = 13
+            m.arm = "fwdOk"
+            m.n.container.setFocus(true)
+            p("D1 container.setFocus (fwd to leaf2)")
+        else if s = 14
+            m.n.other.setFocus(true)
+            p("D2 other.setFocus")
+        else if s = 15
+            m.n.third.setFocus(true)
+            p("D3 third.setFocus")
+        else if s = 16
+            m.timer.control = "stop"
+            print "PROBE|done"
+            m.top.probeExit = true
+        end if
+    end sub
+    ]]></script>
+</component>

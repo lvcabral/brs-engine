@@ -476,6 +476,11 @@ export class TimeGrid extends ArrayGrid {
     }
 
     /** Initial focus when content is (re)assigned — `index` is treated as a channel index. */
+    /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
+    protected listFocusModel(): boolean {
+        return false;
+    }
+
     protected setFocusedItem(index: number) {
         if (this.channels.length === 0) {
             return;

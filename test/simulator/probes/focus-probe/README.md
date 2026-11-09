@@ -82,3 +82,15 @@ After the steal, `gridA` holds focus but the scene's chain still points at `over
 `sgRoot.focused` and the `focusedChild` chain disagree. That hybrid state is what makes the first UP
 press in JellyRock play the nav sound without moving focus, and what leaves the exit dialog drawn but
 unfocused.
+
+## OS 16.0 (`device-trace-os16.0.txt`, Roku Express 4K+)
+
+**S1–S5.** The engine matches these. In S4, the steal writes only `gridA`'s self-link: `gridA` reports
+`hasFocus()` beside `menu` while the chain stays on the overhang. S5 then re-focuses `gridA`, because it
+reports focus. See `test/simulator/probes/focus-flag-probe` for the model.
+
+**S6–S7, still different.** The device keeps a shown `scene.dialog` out of the scene's chain:
+- `sceneFC` stays `outlet`, and `outletInChain` and `dialogInChain` are both true.
+- The dialog stays modal after the app re-focuses `gridA` behind it: Down and OK reach the dialog.
+
+The engine moves the scene's chain to the dialog, and after S7's re-focus the keys reach the scene.

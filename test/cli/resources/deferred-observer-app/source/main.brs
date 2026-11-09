@@ -6,8 +6,7 @@ sub Main()
     scene = screen.CreateScene("MainScene")
     screen.show()
     ' Set a plain trigger field at the top level (not from inside another observer). Its observer
-    ' runs the list-loading sequence; the itemFocused observers it fires reentrantly must be
-    ' deferred until it returns, by which point dayList.content is assigned (Roku behavior).
+    ' runs the list-loading sequence; the itemFocused observers it fires run inline, before it returns.
     scene.runTrigger = 1
     for i = 0 to 5
         msg = wait(20, port)

@@ -16,10 +16,13 @@
       3. a focus-LOSS observer re-asserting the node that is TAKING focus -> still dropped, so the
          focus transaction is not re-run and `itemFocused` fires exactly once.
 
-    All three run from a real focus transaction (a top-level field write), and the settle that carries
-    them is DEFERRED - which is what makes this a regression test for the classification surviving the
-    deferral rather than the settle being forced to dispatch inline. Forcing it inline instead
-    re-creates the reentrancy crash `deferred-observer-app` pins.
+    All three run from a real focus transaction (a top-level field write), with the settle observer
+    running inline inside it. Scenario 4 shows the settle observers running inline inside a container's
+    focusedChild observer (device-measured, as in `deferred-observer-app`).
+
+    On a Roku Express 4K+ (OS 16.0) scenarios 1 and 3 come out differently (the steal reports
+    overlayFocus=true; the re-assert fires itemFocused twice), while R7 was measured on OS 15.3: the
+    expected output pins the engine's R7 rules until they are re-measured.
 -->
 <component name="MainScene" extends="Scene">
     <interface>
@@ -78,7 +81,7 @@
             return
         end if
         if m.scenario = 4
-            ' Focus the deferral-check container, whose observer runs the multi-list load below.
+            ' Focus the loader container, whose observer runs the multi-list load below.
             m.loaderContainer.setFocus(true)
             return
         end if
@@ -87,12 +90,9 @@
         print "   after setFocus: listInChain="; m.list.isInFocusChain(); " overlayFocus="; m.overlay.hasFocus()
     end sub
 
-    ' Scenario 4 pins that the settle still DEFERS. This is `deferred-observer-app`'s crash shape with
-    ' its trigger changed to a focusedChild notification: content + setFocus on two lists before the
-    ' third list's content is assigned, where each focus-gain settle's observer reads that third
-    ' list. Dispatching those settles inline runs them while `loaderC.content` is still invalid ->
-    ' dot-on-invalid crash. So the steal classification must NOT be bought by forcing the settle
-    ' synchronous; it has to travel with the deferred entry instead.
+    ' Scenario 4: `deferred-observer-app`'s shape with its trigger changed to a focusedChild notification:
+    ' content + setFocus on two lists before the third list's content is assigned. Each focus-gain
+    ' settle's observer runs inline, while `loaderC.content` is still invalid (as on a device).
     sub onLoaderContainerFocus(event as object)
         if not m.loaderContainer.hasFocus() then return
         print "   loader: start"
@@ -108,7 +108,11 @@
     end sub
 
     sub onLoaderFocused(event as object)
-        print "   loader: observer sees loaderC count="; m.loaderC.content.getChildCount()
+        if m.loaderC.content = invalid
+            print "   loader: observer sees loaderC content invalid"
+        else
+            print "   loader: observer sees loaderC count="; m.loaderC.content.getChildCount()
+        end if
     end sub
 
     ' The container's redirect. After this the container is a PROPER ANCESTOR of the focused node,
@@ -117,7 +121,7 @@
         if m.container.hasFocus() then m.list.setFocus(true)
     end sub
 
-    ' Runs from the list's focus-gain settle, which is deferred to this handler's boundary.
+    ' Runs from the list's focus-gain settle, inline inside the focus transaction.
     sub onItemFocused(event as object)
         m.focusedCount = m.focusedCount + 1
         print "   onItemFocused index="; event.getData(); " fireCount="; m.focusedCount

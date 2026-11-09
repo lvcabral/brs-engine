@@ -97,6 +97,8 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         list.setValue("content", buildContent(rows));
         if (focused) {
             list.setNodeFocus(true);
+            // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+            list.flushContentFocus();
         }
         return list;
     }
@@ -233,6 +235,8 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         grid.setValue("numColumns", new Int32(4));
         grid.setValue("content", buildContent([["A", "B", "C", "D"]]).getNodeChildren()[0]);
         grid.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        grid.flushContentFocus();
         const log = observe(grid, ["scrollingStatus", "itemFocused"]);
 
         grid.handleKey("right", true);

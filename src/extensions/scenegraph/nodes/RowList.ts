@@ -19,7 +19,6 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
 import { Node } from "./Node";
-import { Field } from "./Field";
 import { ArrayGrid, FocusMotion, FocusStyle, GridHoldDelayMs, GridStepMs, MotionAxis } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { resolveRowItemSubpart } from "../SGUtil";
@@ -189,6 +188,11 @@ export class RowList extends ArrayGrid {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
+    /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
+    protected listFocusModel(): boolean {
+        return false;
+    }
+
     /** Focus regained mid-motion: unmeasured on a row list, so the settle alone publishes the landing. */
     protected publishMotionRegain(_motion: FocusMotion) {
         // The motion runs on; publishMotionSettle publishes the focus fields.
@@ -235,23 +239,16 @@ export class RowList extends ArrayGrid {
         }
 
         if (inFocusChain) {
-            // Engine-initiated emission (not a direct BrightScript assignment): on Roku its
-            // observers dispatch from the message loop, so a reentrant notification defers
-            // (see Field.enterInternalUpdate). DEVICE-MEASURED order of a move: scrollingStatus true,
+            // DEVICE-MEASURED order of a move: scrollingStatus true,
             // itemUnfocused, vertFocusDirection ... currFocusRow, itemFocused, scrollingStatus false,
             // rowItemFocused (see ArrayGrid.closeScrollPulse). The pulse is skipped entirely when the
             // list is outside the focus chain (that path notifies nothing).
-            Field.enterInternalUpdate();
-            try {
-                this.openScrollPulse();
-                if (isChangingRow && !this.jumpingToRowItem) {
-                    super.setValue("itemUnfocused", new Int32(oldRow));
-                    if (this.pendingVertDirection) {
-                        super.setValue("vertFocusDirection", new BrsString(this.pendingVertDirection));
-                    }
+            this.openScrollPulse();
+            if (isChangingRow && !this.jumpingToRowItem) {
+                super.setValue("itemUnfocused", new Int32(oldRow));
+                if (this.pendingVertDirection) {
+                    super.setValue("vertFocusDirection", new BrsString(this.pendingVertDirection));
                 }
-            } finally {
-                Field.exitInternalUpdate();
             }
         }
 
@@ -261,23 +258,17 @@ export class RowList extends ArrayGrid {
         this.motionCol = colIndex;
 
         if (inFocusChain) {
-            // Engine-initiated emission: reentrant observers defer (see Field.enterInternalUpdate).
-            Field.enterInternalUpdate();
-            try {
-                // currFocusRow/currFocusColumn must already reflect the new position before
-                // itemFocused fires: apps commonly read them synchronously from an itemFocused
-                // observer (e.g. collapsing a header when the focused row leaves index 0). The
-                // values are re-applied (as a same-value no-op) by setRowItemFocused below, which
-                // still settles rowItemFocused last — see its own ordering comment.
-                super.setValue("currFocusRow", new Float(rowIndex));
-                super.setValue("currFocusColumn", new Float(colIndex));
-                if (!this.jumpingToRowItem) {
-                    super.setValue("itemFocused", new Int32(rowIndex));
-                }
-                this.closeScrollPulse();
-            } finally {
-                Field.exitInternalUpdate();
+            // currFocusRow/currFocusColumn must already reflect the new position before
+            // itemFocused fires: apps commonly read them synchronously from an itemFocused
+            // observer (e.g. collapsing a header when the focused row leaves index 0). The
+            // values are re-applied (as a same-value no-op) by setRowItemFocused below, which
+            // still settles rowItemFocused last — see its own ordering comment.
+            super.setValue("currFocusRow", new Float(rowIndex));
+            super.setValue("currFocusColumn", new Float(colIndex));
+            if (!this.jumpingToRowItem) {
+                super.setValue("itemFocused", new Int32(rowIndex));
             }
+            this.closeScrollPulse();
             this.setRowItemFocused(rowIndex, colIndex);
         } else {
             // Unfocused: remember the row/column silently (no observer notification). The values are
@@ -309,29 +300,23 @@ export class RowList extends ArrayGrid {
         // focused item synchronously via subBoundingRect, and the dirty flag makes that query refresh
         // layout first so it reports the settled focus-band position (see needsSubBoundingRectRefresh).
         this.focusLayoutDirty = true;
-        // Engine-initiated emissions: reentrant observers defer (see Field.enterInternalUpdate).
-        Field.enterInternalUpdate();
-        try {
-            // The horizontal handlers reach this method directly, without setFocusedItem, so the pulse
-            // opens here too; both edges are idempotent per key press, so the vertical path (which
-            // already opened and closed it) does not double-emit.
-            this.openScrollPulse();
-            // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
-            // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
-            // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"
-            // callback (e.g. the one that positions a per-row overlay on the final row). Since our scroll is
-            // instant, honoring that ordering — the settle notification fires last — keeps such an app from
-            // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
-            // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
-            super.setValue("currFocusRow", new Float(rowIndex));
-            super.setValue("currFocusColumn", new Float(colIndex));
-            super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
-            // DEVICE-MEASURED: a move along the row settles rowItemFocused BEFORE scrollingStatus falls
-            // (a row change already closed the pulse after itemFocused, so this is a no-op there).
-            this.closeScrollPulse();
-        } finally {
-            Field.exitInternalUpdate();
-        }
+        // The horizontal handlers reach this method directly, without setFocusedItem, so the pulse
+        // opens here too; both edges are idempotent per key press, so the vertical path (which
+        // already opened and closed it) does not double-emit.
+        this.openScrollPulse();
+        // Emit currFocusRow/currFocusColumn BEFORE rowItemFocused. On a real device the focus fields
+        // pass through in-transit (fractional) values during the scroll animation and rowItemFocused
+        // settles last, so apps treat the rowItemFocused observer as the authoritative "focus settled"
+        // callback (e.g. the one that positions a per-row overlay on the final row). Since our scroll is
+        // instant, honoring that ordering — the settle notification fires last — keeps such an app from
+        // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
+        // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
+        super.setValue("currFocusRow", new Float(rowIndex));
+        super.setValue("currFocusColumn", new Float(colIndex));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        // DEVICE-MEASURED: a move along the row settles rowItemFocused BEFORE scrollingStatus falls
+        // (a row change already closed the pulse after itemFocused, so this is a no-op there).
+        this.closeScrollPulse();
     }
 
     /** Moves the focus cursor and the row's horizontal scroll state to [row, col] — no notifications. */
@@ -567,25 +552,20 @@ export class RowList extends ArrayGrid {
         super.setValue("currFocusRow", new Float(rowIndex));
         super.setValue("currFocusColumn", new Float(colIndex));
         const rowItem = new RoArray([new Int32(rowIndex), new Int32(colIndex)]);
-        Field.enterInternalUpdate();
-        try {
-            if (motion.rowMoved) {
-                if (inFocusChain) {
-                    super.setValue("itemFocused", new Int32(rowIndex));
-                } else {
-                    this.setValueSilent("itemFocused", new Int32(rowIndex));
-                }
-                this.flagFocusedRow(rowIndex);
-                super.setValue("scrollingStatus", BrsBoolean.False);
-                super.setValue("rowItemFocused", rowItem);
-                focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
+        if (motion.rowMoved) {
+            if (inFocusChain) {
+                super.setValue("itemFocused", new Int32(rowIndex));
             } else {
-                super.setValue("rowItemFocused", rowItem);
-                focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
-                super.setValue("scrollingStatus", BrsBoolean.False);
+                this.setValueSilent("itemFocused", new Int32(rowIndex));
             }
-        } finally {
-            Field.exitInternalUpdate();
+            this.flagFocusedRow(rowIndex);
+            super.setValue("scrollingStatus", BrsBoolean.False);
+            super.setValue("rowItemFocused", rowItem);
+            focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
+        } else {
+            super.setValue("rowItemFocused", rowItem);
+            focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
+            super.setValue("scrollingStatus", BrsBoolean.False);
         }
         this.closeMotionDirections(motion);
     }

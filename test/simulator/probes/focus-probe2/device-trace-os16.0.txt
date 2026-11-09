@@ -1,0 +1,35 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=16.0
+PROBE2|001|init|ready|gridA=F gridB=F menuA=F menuB=F outletInChain=F outletFC=invalid pageFC=invalid overhangFC=invalid sceneFC=invalid
+PROBE2|002|prep|OBS-outlet|data=node:page gridA=T gridB=F menuA=F menuB=F outletInChain=T outletFC=page pageFC=gridA overhangFC=invalid sceneFC=outlet
+PROBE2|003|prep|after|gridA=T gridB=F menuA=F menuB=F outletInChain=T outletFC=page pageFC=gridA overhangFC=invalid sceneFC=outlet
+PROBE2|004|N1-forward-sibling|before|gridA=T gridB=F menuA=F menuB=F outletInChain=T outletFC=page pageFC=gridA overhangFC=invalid sceneFC=outlet
+PROBE2|005|N1-forward-sibling|OBS-outlet|data=invalid gridA=F gridB=F menuA=T menuB=F outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|006|N1-forward-sibling|OBS-overhang|data=node:menuA gridA=F gridB=F menuA=T menuB=F outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|007|N1-forward-sibling|OBS-overhang-nested|calling menuB.setFocus(true)  [forward: sibling inside the chain just committed]
+PROBE2|008|N1-forward-sibling|OBS-overhang-nested-done|gridA=F gridB=F menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuB sceneFC=overhang
+PROBE2|009|N1-forward-sibling|after|gridA=F gridB=F menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuB sceneFC=overhang
+PROBE2|010|N1-forward-sibling|settled|gridA=F gridB=F menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuB sceneFC=overhang
+PROBE2|011|N2-forward-deeper|before|gridA=F gridB=F menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuB sceneFC=overhang
+PROBE2|012|N2-forward-deeper|OBS-outlet|data=node:page gridA=T gridB=F menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridA overhangFC=menuB sceneFC=outlet
+PROBE2|013|N2-forward-deeper|OBS-outlet-nested|calling gridB.setFocus(true)  [forward: inside the chain just committed]
+PROBE2|014|N2-forward-deeper|OBS-outlet-nested-done|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=menuB sceneFC=outlet
+PROBE2|015|N2-forward-deeper|after|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=menuB sceneFC=outlet
+PROBE2|016|N2-forward-deeper|settled|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=menuB sceneFC=outlet
+PROBE2|017|N3-prep|OBS-outlet|data=node:page gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridA overhangFC=menuB sceneFC=outlet
+PROBE2|018|N3-prep|after|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridA overhangFC=menuB sceneFC=outlet
+PROBE2|019|N3-backwards-steal|before|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridA overhangFC=menuB sceneFC=outlet
+PROBE2|020|N3-backwards-steal|OBS-outlet|data=invalid gridA=F gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|021|N3-backwards-steal|OBS-outlet-nested|calling gridA.setFocus(true)  [backwards: outside the chain just committed]
+PROBE2|022|N3-backwards-steal|OBS-outlet-nested-done|gridA=T gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|023|N3-backwards-steal|OBS-overhang|data=node:menuA gridA=T gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|024|N3-backwards-steal|after|gridA=T gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|025|N3-backwards-steal|settled|gridA=T gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|026|N4-recover|before|gridA=T gridB=T menuA=T menuB=T outletInChain=F outletFC=invalid pageFC=invalid overhangFC=menuA sceneFC=overhang
+PROBE2|027|N4-recover|OBS-overhang|data=invalid gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=invalid sceneFC=outlet
+PROBE2|028|N4-recover|OBS-outlet|data=node:page gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=invalid sceneFC=outlet
+PROBE2|029|N4-recover|after|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=invalid sceneFC=outlet
+PROBE2|030|N4-recover|settled|gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=invalid sceneFC=outlet
+PROBE2|---|done|MANUAL|Probe complete - press BACK to exit.
+PROBE2|031|N4-recover|SCENE-onKeyEvent|key=back gridA=T gridB=T menuA=F menuB=T outletInChain=T outletFC=page pageFC=gridB overhangFC=invalid sceneFC=outlet
+PROBE|999|boot|end|
