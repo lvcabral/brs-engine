@@ -64,6 +64,8 @@ Options:
   -h, --help                output usage information
 ```
 
+SceneGraph nodes animate their built-in motion as a device does: `PanelSet` slides, and focus moves in lists, grids, `RowList` and `ZoomRowList`. `--no-transitions` turns this off, so every move lands at once in the same field order. Setting the `BRS_UI_TRANSITIONS=0` environment variable does the same, which is handy for automated runs that compare screens or field traces.
+
 ### REPL
 
 An interactive BrightScript REPL (Read-Execute-Print Loop) is available by running `brs-cli` with no arguments, e.g.:

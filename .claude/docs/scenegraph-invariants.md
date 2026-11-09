@@ -1547,8 +1547,8 @@ values *and* order are pinned — including three no-pulse cases), `ListFocusMot
 Both fields are documented on the base `ArrayGrid` (`arraygrid.md`), not just `RowList`. Apps commonly read
 `currFocusRow`/`currFocusColumn` **synchronously from inside an `itemFocused` observer** — e.g. a header
 that collapses once the focused row leaves index 0 (found via a real app, Jellyfin-Roku's
-`VisualLibraryScene`). Since an engine-initiated, non-reentrant emission dispatches its observer
-synchronously (see the deferred-dispatch section above), whichever field is `super.setValue`'d *first* in
+`VisualLibraryScene`). Since an engine emission dispatches its observers inline (see "Observers a node's
+own machinery raises dispatch inline too" above), whichever field is `super.setValue`'d *first* in
 source order is the one an observer on a *later* field sees as already-settled — and vice versa. Two bugs
 from getting this backwards, both fixed together:
 
@@ -1561,8 +1561,7 @@ from getting this backwards, both fixed together:
    how many rows existed.
 
 Fix: both `ArrayGrid.setFocusedItem` and `RowList.setFocusedItem` now `super.setValue` `currFocusRow`/
-`currFocusColumn` immediately before `itemFocused`, inside the same `enterInternalUpdate`/`exitInternalUpdate`
-bracket. `RowList.setRowItemFocused` still re-applies the same values afterward (a harmless same-value
+`currFocusColumn` immediately before `itemFocused`. `RowList.setRowItemFocused` still re-applies the same values afterward (a harmless same-value
 no-op) before settling `rowItemFocused` last — that ordering is unchanged.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js`, describe block
