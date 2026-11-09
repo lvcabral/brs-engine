@@ -978,7 +978,10 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   layout height (`rowLayoutHeight`, band included) plus its spacing, **the last spacing included**
   (`windowLayoutHeight`). Never derive the clip from `itemSize`/a uniform pitch: item components draw
   captions below the poster, and a row with a label/counter band is taller than `itemSize`. Either way
-  they were cut mid-move. The device also clips the focused row to its row height at rest; the engine
+  they were cut mid-move. The scroll offset follows the same rule: rows move by the heights of the rows
+  actually scrolled past (`slotOffset`/`slotSpan`), never by `shift × pitch`. With per-row `rowHeights`
+  or `rowSpacings`, a uniform pitch overshoots and then snaps back at the settle (JellyRock's home rows;
+  regression in `RowListFocusMotion.test.js`). The device also clips the focused row to its row height at rest; the engine
   doesn't (yet).
 - A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
   `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.

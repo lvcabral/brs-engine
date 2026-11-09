@@ -271,6 +271,42 @@ describe("RowList focus motion", () => {
         expect(clips[0].height).toBe(340);
     });
 
+    test("a row change scrolls by the heights of the rows it passes, without overshooting", () => {
+        // JellyRock's home rows: per-row rowHeights/rowSpacings, fixedFocus. Row 1 must glide from where it
+        // sat (row 0's height plus its spacing below the top) to the top, never past it.
+        const list = makeClipList();
+        list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocus"));
+        list.setValue("rowHeights", new RoArray([new Float(100), new Float(300), new Float(100), new Float(300)]));
+        list.setValue("rowSpacings", new RoArray([new Float(20), new Float(60), new Float(20), new Float(60)]));
+        const rowTop = () => {
+            let top;
+            const render = list.renderSingleRow.bind(list);
+            list.renderSingleRow = (rowIndex, slot, context) => {
+                if (rowIndex === 1) {
+                    top = context.itemRect.y;
+                }
+                return render(rowIndex, slot, context);
+            };
+            paintClips(list);
+            list.renderSingleRow = render;
+            return top;
+        };
+        expect(rowTop()).toBe(120);
+        tap(list, "down");
+        const tops = [];
+        for (let i = 0; i < 25; i++) {
+            advance(16);
+            tops.push(rowTop());
+        }
+        expect(tops[0]).toBeLessThanOrEqual(120);
+        expect(tops[0]).toBeGreaterThan(60);
+        for (let i = 1; i < tops.length; i++) {
+            expect(tops[i]).toBeLessThanOrEqual(tops[i - 1]);
+            expect(tops[i]).toBeGreaterThanOrEqual(0);
+        }
+        expect(rowTop()).toBe(0);
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");

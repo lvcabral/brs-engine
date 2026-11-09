@@ -1007,14 +1007,16 @@ export class RowList extends ArrayGrid {
         // Only a row change scrolls and clips: a move along a row draws like the settled list
         // (DEVICE-MEASURED, rowlist-clip-probe).
         const scrolling = frame !== undefined && this.motion?.rowMoved === true;
+        // The visual top, in settled-window slots: rows are offset by the heights of the rows actually
+        // scrolled past, which differ per row (rowHeights, rowSpacings, label bands).
+        let visualTop = 0;
         if (scrolling) {
-            const topIndex = Math.max(0, this.calculateActualRowIndex(0));
-            pitch =
-                this.rowLayoutHeight(topIndex, context) +
-                this.calculateRowSpacing(topIndex, context.rowSpacings, context.globalSpacing);
-            firstRow = -Math.ceil(Math.max(0, frame.shift));
-            lastRow = context.displayRows + Math.ceil(Math.max(0, -frame.shift));
-            context.itemRect.y = rect.y + (firstRow + frame.shift) * pitch;
+            pitch = context.itemSize[1] + (context.globalSpacing[1] ?? 0);
+            visualTop = -frame.shift;
+            firstRow = Math.floor(Math.min(0, visualTop));
+            // One spare row: shorter rows scrolling in can leave room for more rows than the settled window.
+            lastRow = context.displayRows + Math.ceil(Math.max(0, visualTop)) + 1;
+            context.itemRect.y = rect.y - this.slotOffset(firstRow, visualTop, context, pitch);
             this.pushMotionClip(rect, this.windowLayoutHeight(context), draw2D);
         }
         // Only the settled window's rows make up the reported extent.
@@ -1051,7 +1053,12 @@ export class RowList extends ArrayGrid {
         if (frame && indicator && this.getValueJS("drawFocusFeedback")) {
             const focusRect = {
                 x: indicator.x,
-                y: scrolling ? rect.y + frame.focusSlot * pitch + indicator.bandOffset : indicator.y,
+                y: scrolling
+                    ? rect.y +
+                      this.slotOffset(firstRow, visualTop + frame.focusSlot, context, pitch) -
+                      this.slotOffset(firstRow, visualTop, context, pitch) +
+                      indicator.bandOffset
+                    : indicator.y,
                 width: indicator.width,
                 height: indicator.height,
             };
@@ -1079,6 +1086,31 @@ export class RowList extends ArrayGrid {
                 this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
         }
         return height;
+    }
+
+    /** Height plus spacing of the row at settled-window slot `slot`; `fallback` for a slot with no row. */
+    private slotSpan(slot: number, context: RowListRenderContext, fallback: number): number {
+        const rowIndex = this.calculateActualRowIndex(slot);
+        if (rowIndex < 0) {
+            return fallback;
+        }
+        return (
+            this.rowLayoutHeight(rowIndex, context) +
+            this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing)
+        );
+    }
+
+    /** Pixels from the top of slot `from` down to the fractional slot position `to` (`to >= from`). */
+    private slotOffset(from: number, to: number, context: RowListRenderContext, fallback: number): number {
+        const whole = Math.floor(to);
+        let offset = 0;
+        for (let slot = from; slot < whole; slot++) {
+            offset += this.slotSpan(slot, context, fallback);
+        }
+        if (to > whole) {
+            offset += (to - whole) * this.slotSpan(whole, context, fallback);
+        }
+        return offset;
     }
 
     private validateRenderPrerequisites(): boolean {
