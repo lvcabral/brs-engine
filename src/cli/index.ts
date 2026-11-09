@@ -99,7 +99,7 @@ program
     .option("-z, --log-rendezvous", "Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-n, --no-sg", "Disable the SceneGraph extension.")
-    .option("--no-transitions", "Disable SceneGraph intrinsic UI transitions (panel slides, focus scrolling).")
+    .option("-t, --no-transitions", "Disable SceneGraph intrinsic UI transitions (panel slides, focus scrolling).")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
