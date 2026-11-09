@@ -89,6 +89,10 @@ export class RowList extends ArrayGrid {
     private pendingVertDirection = "";
     /** An app wrote `jumpToRowItem`: the move publishes no itemUnfocused/itemFocused (DEVICE-MEASURED). */
     private jumpingToRowItem = false;
+    /** The indicator's x (from the list's left edge) at the last paint, or at rest when a motion opened. */
+    private indicatorX = 0;
+    /** A row change's sideways glide of the indicator, from its x when the current segment started. */
+    private indicatorGlide?: { fromX: number; fromRow: number; segmentStart: number };
     /** The row whose items report `rowHasFocus`: it changes only when a motion settles (DEVICE-MEASURED). */
     private flaggedRow = 0;
     /** First column drawn for each row on the last paint (the horizontal scroll a motion starts from). */
@@ -506,6 +510,8 @@ export class RowList extends ArrayGrid {
         }
         this.motionColOrigin = this.motionCol;
         this.motionScrollFrom = this.renderedStartCol[oldRow] ?? 0;
+        this.indicatorX = this.indicatorTargetX(oldRow, oldCol);
+        this.indicatorGlide = undefined;
         super.setValue("scrollingStatus", BrsBoolean.True);
         this.beginRowMotionTracking(oldRow, oldCol);
         this.rowItemComps[oldRow]?.[oldCol]?.setValue("itemHasFocus", BrsBoolean.False, false);
@@ -675,8 +681,12 @@ export class RowList extends ArrayGrid {
                     // Clamp to valid column range
                     targetColIndex = Math.max(0, Math.min(targetColIndex, nextRowColCount - 1));
                 }
+            } else if (rowFocusStyle === RowFocusStyle.Wrap && this.rowItemsFit(nextRow)) {
+                // A fixedFocusWrap row whose items all fit floats its focus, and is entered on its first
+                // item: the one at the fixed focus slot (DEVICE-MEASURED, rowlist-short-row-probe).
+                targetColIndex = 0;
             } else {
-                // For other modes, use the previously focused column in that row
+                // Otherwise the row's own focused column, which sits at the fixed focus slot.
                 targetColIndex = this.rowFocus[nextRow] ?? 0;
             }
 
@@ -1321,13 +1331,9 @@ export class RowList extends ArrayGrid {
         fallback: number
     ): Rect {
         const rowIndex = this.focusIndex;
-        const cols = this.getContentChildren(this.content[rowIndex]);
         const [itemWidth, itemHeight] = this.getRowItemSize(rowIndex);
-        const spacing = this.getRowItemSpacing(rowIndex);
-        const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
-        const renderMode = this.determineRenderMode(this.allItemsFitOnScreen(rowIndex, cols), style);
-        const { visualStart } = this.rowColumnWindow(rowIndex, renderMode);
         const focusCol = this.motion?.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
+        const x = this.glideIndicatorX(this.indicatorTargetX(rowIndex, focusCol));
         const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
         const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
@@ -1336,11 +1342,50 @@ export class RowList extends ArrayGrid {
             this.slotOffset(firstRow, visualTop + focusSlot, context, fallback) -
             this.slotOffset(firstRow, visualTop, context, fallback);
         return {
-            x: rect.x + this.getRowXOffset(rowIndex) + (focusCol - visualStart) * (itemWidth + spacing[0]),
+            x: rect.x + x,
             y: rowTop + this.rowBandHeight(rowIndex, hasLabel, showCounter),
             width: itemWidth,
             height: itemHeight,
         };
+    }
+
+    /** Whether every item of the row fits on screen, so its focus floats (except with fixedFocus). */
+    private rowItemsFit(rowIndex: number): boolean {
+        return this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+    }
+
+    /** The x (from the list's left edge) of column `col` of a row, as the row is drawn now. */
+    private indicatorTargetX(rowIndex: number, col: number): number {
+        const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const renderMode = this.determineRenderMode(this.rowItemsFit(rowIndex), style);
+        const { visualStart } = this.rowColumnWindow(rowIndex, renderMode);
+        const pitchX = this.getRowItemSize(rowIndex)[0] + this.getRowItemSpacing(rowIndex)[0];
+        return this.getRowXOffset(rowIndex) + (col - visualStart) * pitchX;
+    }
+
+    /**
+     * The indicator's x while the focus changes rows: it glides from where it was to the target column's
+     * screen slot at the pace of the row change, crossing empty space when the slots differ
+     * (DEVICE-MEASURED, rowlist-short-row-probe). Paint-time only.
+     */
+    private glideIndicatorX(targetX: number): number {
+        const motion = this.motion;
+        if (!motion?.rowMoved) {
+            this.indicatorGlide = undefined;
+            this.indicatorX = targetX;
+            return targetX;
+        }
+        const segment = motion.row;
+        if (this.indicatorGlide?.segmentStart !== segment.start) {
+            // A new segment (the move opened, or a queued press or held key retargeted it) glides on from
+            // wherever the indicator is.
+            this.indicatorGlide = { fromX: this.indicatorX, fromRow: segment.from, segmentStart: segment.start };
+        }
+        const glide = this.indicatorGlide;
+        const span = segment.to - glide.fromRow;
+        const progress = span === 0 ? 1 : Math.min(Math.max((this.motionPos - glide.fromRow) / span, 0), 1);
+        this.indicatorX = glide.fromX + (targetX - glide.fromX) * progress;
+        return this.indicatorX;
     }
 
     private getRowXOffset(rowIndex: number): number {

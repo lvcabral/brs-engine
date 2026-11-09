@@ -978,6 +978,12 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
   - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
   - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
+- **A row change's column and indicator** (`rowlist-short-row-probe`):
+  - A `fixedFocusWrap` row whose items all fit floats its focus and is entered on column 0, not on its
+    remembered column. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps
+    the screen slot.
+  - The indicator glides sideways from its old x to the target slot over the row change
+    (`glideIndicatorX`). It doesn't snap to the target when the move opens.
 - `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
   the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
 - An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a

@@ -373,6 +373,74 @@ describe("RowList focus motion", () => {
         expect(under.filter((step) => step === "indicator")).toHaveLength(1);
     });
 
+    /** rowlist-short-row-probe's list: rows of 20, 2, 30 and 2 items; the 2-item rows fit on screen. */
+    function makeShortRowList(style) {
+        const list = makeClipList();
+        list.setValue("numRows", new Int32(3));
+        list.setValue("rowFocusAnimationStyle", new BrsString(style));
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (const count of [20, 2, 30, 2]) {
+            const row = SGNodeFactory.createNode("ContentNode");
+            for (let c = 0; c < count; c++) {
+                row.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+            }
+            root.appendChildToParent(row);
+        }
+        list.setValue("content", root);
+        list.setNodeFocus(true);
+        return list;
+    }
+
+    /** The x of the focus frames one paint draws. */
+    function indicatorX(list) {
+        const xs = [];
+        const renderFocus = list.renderFocus.bind(list);
+        list.renderFocus = (rect, ...args) => {
+            xs.push(rect.x);
+            return renderFocus(rect, ...args);
+        };
+        paintClips(list);
+        list.renderFocus = renderFocus;
+        return xs[0];
+    }
+
+    test.each([
+        ["fixedFocusWrap", [1, 0]],
+        ["fixedFocus", [1, 1]],
+    ])("%s: re-entering a row whose items all fit lands on %j (device trace)", (style, expected) => {
+        // rowlist-short-row-probe: a fixedFocusWrap short row floats its focus and is entered on its first item;
+        // fixedFocus keeps the row's own column.
+        const list = makeShortRowList(style);
+        for (const key of ["down", "right", "down", "up"]) {
+            tap(list, key);
+            advance(500);
+        }
+        expect(list.getValueJS("rowItemFocused")).toEqual(expected);
+        tap(list, "up");
+        advance(500);
+        expect(list.getValueJS("rowItemFocused")).toEqual([0, 0]);
+    });
+
+    test("a row change glides the indicator sideways to the target slot (device screenshot)", () => {
+        // rowlist-short-row-probe (floatingFocus): from column 5 of a long row into a 2-item row, the ring is
+        // caught mid-way over the empty slots while the rows scroll.
+        const list = makeShortRowList("floatingFocus");
+        for (let i = 0; i < 5; i++) {
+            tap(list, "right");
+            advance(500);
+        }
+        const from = indicatorX(list);
+        tap(list, "down");
+        advance(100);
+        const mid = indicatorX(list);
+        advance(500);
+        const to = indicatorX(list);
+        expect(list.getValueJS("rowItemFocused")).toEqual([1, 1]);
+        expect(to).toBeLessThan(from);
+        expect(mid).toBeLessThan(from);
+        expect(mid).toBeGreaterThan(to);
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");
