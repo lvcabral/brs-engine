@@ -20,10 +20,16 @@
 export interface UITransition {
     /**
      * Advances the motion to `now` (milliseconds, `sgClock.perfNow()`), writing the in-transit fields.
-     * @returns False once the motion has settled; the registry then drops it.
+     * @returns What the tick did; the registry drops a "settled" transition.
      */
-    tickTransition(now: number): boolean;
+    tickTransition(now: number): TransitionTick;
 }
+
+/**
+ * One tick's outcome: "moving" changed the presentation, "waiting" is still active with nothing to
+ * redraw (a held key paused at the end of a list), "settled" landed (its last step still repaints).
+ */
+export type TransitionTick = "moving" | "waiting" | "settled";
 
 /** Quintic ease-out: Roku's PanelSet slide curve (device-measured, see panelset-slide-probe). */
 export function easeOutQuint(u: number): number {

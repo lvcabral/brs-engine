@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Float, Int32, Interpreter, RoArray } = core;
+const { BrsBoolean, BrsDevice, BrsString, Float, Int32, Interpreter, RoArray } = core;
 
 describe("ArrayGrid focus feedback rendering", () => {
     let interpreter;
@@ -150,5 +150,14 @@ describe("ArrayGrid focus feedback rendering", () => {
         // The caption band is inside the frame's height, so it is taller than the poster: that asymmetry
         // is deliberate, and asserting it here stops a refactor from "fixing" it silently.
         expect(frames[0].height).toBeGreaterThan(120);
+    });
+
+    test.each(["MarkupGrid", "LabelList"])("a %s clone keeps a written drawFocusFeedbackOnTop", (type) => {
+        const grid = SGNodeFactory.createNode(type);
+        const unwritten = grid.focusFeedbackOnTop();
+        grid.setValue("drawFocusFeedbackOnTop", BrsBoolean.from(!unwritten));
+        const clone = grid.cloneNode(false);
+        expect(clone.focusFeedbackOnTop()).toBe(!unwritten);
+        expect(SGNodeFactory.createNode(type).cloneNode(false).focusFeedbackOnTop()).toBe(unwritten);
     });
 });

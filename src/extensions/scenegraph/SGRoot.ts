@@ -820,21 +820,30 @@ export class SGRoot {
     }
 
     /**
-     * Advances every active intrinsic UI transition to the current clock.
-     * @returns True while any transition is still moving (the frame must be redrawn)
+     * Advances every active intrinsic UI transition to the current clock. A tick that ends its
+     * transition can still start a new one (a settle observer writing `animateToItem`, or appending a
+     * panel): the owner re-registers during the tick, and that registration is kept.
+     * @returns True when a transition moved or settled this pass (the frame must be redrawn)
      */
     processTransitions(): boolean {
         if (this._transitions.size === 0) {
             return false;
         }
         const now = sgClock.perfNow();
-        for (const transition of this._transitions) {
-            if (!transition.tickTransition(now)) {
-                this._transitions.delete(transition);
+        let redraw = false;
+        for (const transition of Array.from(this._transitions)) {
+            if (!this._transitions.has(transition)) {
+                // Removed by an earlier tick's side effects this pass.
+                continue;
             }
+            this._transitions.delete(transition);
+            const tick = transition.tickTransition(now);
+            if (tick !== "settled") {
+                this._transitions.add(transition);
+            }
+            redraw ||= tick !== "waiting";
         }
-        // A transition that settled this pass still moved its last step, so this frame is dirty.
-        return true;
+        return redraw;
     }
 
     /**

@@ -16,6 +16,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { Node } from "./Node";
+import type { RoSGNode } from "../components/RoSGNode";
 import { Field } from "./Field";
 import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
@@ -23,7 +24,7 @@ import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { UNIT_SCALE } from "../SGUtil";
 import { sgClock } from "../SGClock";
-import { easeOutCubic, UITransition } from "../SGTransition";
+import { easeOutCubic, TransitionTick, UITransition } from "../SGTransition";
 
 export enum FocusStyle {
     FixedFocusWrap = "fixedFocusWrap",
@@ -114,6 +115,8 @@ export type FocusMotion = {
     colMoved: boolean;
     /** A held key's motion is waiting at a cell for the repeat to start (see `onMotionPaused`). */
     paused: boolean;
+    /** Focus came back mid-motion: the target item already has focus (see `publishMotionRegain`). */
+    regained?: boolean;
 };
 
 export class ArrayGrid extends Group implements UITransition {
@@ -232,6 +235,10 @@ export class ArrayGrid extends Group implements UITransition {
     private heldKey = "";
     /** The app wrote `drawFocusFeedbackOnTop` (XML or BrightScript); see `focusFeedbackOnTop`. */
     private focusOnTopWritten = false;
+    /** While a settle publishes: the motions its observers started, begun once the settle is complete. */
+    private settleFollowUps: (() => void)[] | undefined;
+    /** A motion that settled outside the focus chain: the item a focus gain lands on (see `focusGainIndex`). */
+    private unfocusedSettleIndex: number | undefined;
     private heldSince = 0;
     private holdRepeating = false;
     /** Repeats of the held key so far (the first one accelerates from rest). */
@@ -329,6 +336,11 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         super.setValue(index, value, alwaysNotify, kind);
+        if (fieldName === "focusedchild" && sgRoot.focused !== this && !this.isChildrenFocused()) {
+            // Leaving the focus chain drops the item's focus at once, even on a hidden list (DEVICE-MEASURED,
+            // focus-motion-edge-probe C/D); the render pass would only catch up once the list is drawn.
+            this.updateItemFocus(this.focusIndex, true, false);
+        }
         // Refresh cached row/column counts from the (possibly coerced) field value, so a
         // numeric string such as "7" from a settings lookup is honored — not just a raw
         // number. super.setValue coerces the string into the integer field the same way a
@@ -352,7 +364,9 @@ export class ArrayGrid extends Group implements UITransition {
         }
         const focus = super.setNodeFocus(focusOn);
         // Node.setNodeFocus reports focusability, not a gain: only a gain re-applies itemFocused.
-        if (focus && focusOn) {
+        if (focus && focusOn && this.motion) {
+            this.publishMotionRegain(this.motion);
+        } else if (focus && focusOn) {
             let focusIndex = this.focusGainIndex();
             if (focusIndex < 0) {
                 // No item has been focused yet: default to the first item (Roku's itemFocused
@@ -370,9 +384,28 @@ export class ArrayGrid extends Group implements UITransition {
         return focus;
     }
 
-    /** The item a focus gain lands on: the last `itemFocused`, or -1 when none was focused yet. */
+    /**
+     * The item a focus gain lands on: the last `itemFocused`, or -1 when none was focused yet. A motion that
+     * settled while the focus was elsewhere leaves `itemFocused` on the item it left (DEVICE-MEASURED,
+     * focus-motion-edge-probe A), but the gain lands on the motion's target.
+     */
     protected focusGainIndex(): number {
-        return this.getValueJS("itemFocused") as number;
+        return this.unfocusedSettleIndex ?? (this.getValueJS("itemFocused") as number);
+    }
+
+    /**
+     * Focus regained mid-motion (DEVICE-MEASURED, focus-motion-edge-probe B): the target item's
+     * `itemHasFocus`, then `itemFocused`, while the motion runs on; its settle publishes `itemFocused` again.
+     */
+    protected publishMotionRegain(motion: FocusMotion) {
+        motion.regained = true;
+        Field.enterInternalUpdate();
+        try {
+            this.updateItemFocus(this.focusIndex, true, sgRoot.focused === this);
+            super.setValue("itemFocused", new Int32(motion.contentIndex));
+        } finally {
+            Field.exitInternalUpdate();
+        }
     }
 
     /**
@@ -392,6 +425,7 @@ export class ArrayGrid extends Group implements UITransition {
      *   populate/mutation of the existing tree). A fresh assignment resets the cursor to item 0.
      */
     protected resetFocusForNewContent(freshContent: boolean) {
+        this.unfocusedSettleIndex = undefined;
         const focused = sgRoot.focused === this || this.isChildrenFocused();
         if (focused) {
             if (this.content.length > 0 && (freshContent || (this.getValueJS("itemFocused") as number) < 0)) {
@@ -426,6 +460,7 @@ export class ArrayGrid extends Group implements UITransition {
         if (newFocus === -1) {
             return;
         }
+        this.unfocusedSettleIndex = undefined;
         const nodeFocus = sgRoot.focused === this;
         const inFocusChain = nodeFocus || this.isChildrenFocused();
         if (inFocusChain && this.animateRequested && this.focusMotionEnabled() && sgRoot.uiTransitionsEnabled) {
@@ -450,9 +485,11 @@ export class ArrayGrid extends Group implements UITransition {
             this.updateItemFocus(this.focusIndex, true, nodeFocus);
             // A key-driven move publishes its direction right after itemUnfocused and resets it after the
             // settle (DEVICE-MEASURED order, list/grid-focus-motion-probe).
-            const directionField = this.navAxis === "col" ? "horizFocusDirection" : "vertFocusDirection";
+            const directionField = this.navAxis ? this.directionFieldFor(this.navAxis) : "";
             const direction =
-                this.navDirection === 0 || !this.navAxis ? "" : this.directionName(this.navAxis, this.navDirection);
+                this.navDirection === 0 || !this.navAxis || !directionField
+                    ? ""
+                    : this.directionName(this.navAxis, this.navDirection);
             if (inFocusChain) {
                 super.setValue("itemUnfocused", new Int32(focusedIndex));
                 if (direction) {
@@ -485,8 +522,8 @@ export class ArrayGrid extends Group implements UITransition {
     // ---- Focus motion ----
 
     /**
-     * Whether this node animates its focus moves (`animateToItem` and key navigation). Lists and grids opt
-     * in; row lists keep moving instantly until their motion is measured.
+     * Whether this node animates its focus moves (`animateToItem` and key navigation). Each list, grid and
+     * row list opts in; the base stays instant.
      */
     protected focusMotionEnabled(): boolean {
         return false;
@@ -555,6 +592,11 @@ export class ArrayGrid extends Group implements UITransition {
         target: { row: number; col: number },
         apply: () => void
     ) {
+        if (this.settleFollowUps) {
+            // A settle observer moved the focus on: the new motion opens after the settle's last field.
+            this.settleFollowUps.push(() => this.startFocusMotion(contentIndex, base, target, apply));
+            return;
+        }
         // Engine-initiated emission: reentrant observers defer, as on the instant path
         // (see Field.enterInternalUpdate).
         Field.enterInternalUpdate();
@@ -947,14 +989,14 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /** Advances the focus motion one frame. */
-    tickTransition(now: number): boolean {
+    tickTransition(now: number): TransitionTick {
         const motion = this.motion;
         if (!motion) {
-            return false;
+            return "settled";
         }
         if (this.content.length === 0) {
             this.abortMotion();
-            return false;
+            return "settled";
         }
         if (this.heldKey && sgRoot.focused !== this && !this.isChildrenFocused()) {
             // The focus moved away while the key was held: its release goes to another node.
@@ -964,17 +1006,20 @@ export class ArrayGrid extends Group implements UITransition {
             // DEVICE-MEASURED: a held key keeps stepping after a pause, and the motion only settles once
             // the key is released (even when the focus has reached the end).
             if (this.heldKey) {
+                let tick: TransitionTick = "waiting";
                 if (!motion.paused) {
                     motion.paused = true;
                     this.onMotionPaused();
+                    tick = "moving";
                 }
-                if (now - this.heldSince >= this.motionHoldDelayMs()) {
-                    this.repeatHeldKey();
+                if (now - this.heldSince >= this.motionHoldDelayMs() && this.repeatHeldKey()) {
+                    tick = "moving";
                 }
-                return true;
+                // At the end of a non-wrapping list the repeat steps nothing: no frame to redraw.
+                return tick;
             }
             this.settleMotion();
-            return false;
+            return "settled";
         }
         this.motionPos = this.segmentValue(motion.row, now);
         this.motionCol = this.segmentValue(motion.col, now);
@@ -1001,7 +1046,7 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         this.makeDirty();
-        return true;
+        return "moving";
     }
 
     /** Steps once more in the held key's direction; false at the end of a non-wrapping row or column. */
@@ -1059,14 +1104,20 @@ export class ArrayGrid extends Group implements UITransition {
         this.heldKey = "";
         this.holdRepeats = 0;
         sgRoot.removeTransition(this);
+        const followUps: (() => void)[] = [];
+        this.settleFollowUps = followUps;
         // Reentrant observers defer however the settle is reached (a tick, jumpToItem, focus loss).
         Field.enterInternalUpdate();
         try {
             this.publishMotionSettle(motion);
         } finally {
             Field.exitInternalUpdate();
+            this.settleFollowUps = undefined;
         }
         this.makeDirty();
+        for (const followUp of followUps) {
+            followUp();
+        }
     }
 
     /**
@@ -1093,7 +1144,8 @@ export class ArrayGrid extends Group implements UITransition {
             if (inFocusChain) {
                 super.setValue("itemFocused", new Int32(motion.contentIndex));
             } else {
-                this.setValueSilent("itemFocused", new Int32(motion.contentIndex));
+                // The field keeps the item the motion left until the focus comes back (DEVICE-MEASURED).
+                this.unfocusedSettleIndex = motion.contentIndex;
             }
             if (this.itemFocusCallback) {
                 this.itemFocusCallback(motion.contentIndex);
@@ -1188,6 +1240,19 @@ export class ArrayGrid extends Group implements UITransition {
             return this.getValueJS("drawFocusFeedbackOnTop") === true;
         }
         return this.focusOnTopByDefault();
+    }
+
+    /** A clone keeps whether `drawFocusFeedbackOnTop` was written, which the copied field alone can't tell. */
+    protected cloneNode(
+        isDeepCopy: boolean,
+        interpreter?: Interpreter,
+        visitedNodes?: WeakMap<RoSGNode, RoSGNode>
+    ): BrsType {
+        const cloned = super.cloneNode(isDeepCopy, interpreter, visitedNodes);
+        if (cloned instanceof ArrayGrid) {
+            cloned.focusOnTopWritten = this.focusOnTopWritten;
+        }
+        return cloned;
     }
 
     /** Where the indicator goes while `drawFocusFeedbackOnTop` was never written: over the items on a grid. */
@@ -1347,7 +1412,8 @@ export class ArrayGrid extends Group implements UITransition {
         // While the focus is in motion no item "has" it (DEVICE-MEASURED): itemHasFocus drops when the
         // motion starts and returns on the new item when it settles, and focusPercent follows the motion.
         const moving = this.motion !== undefined;
-        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus && !moving), false);
+        const held = moving && !this.motion?.regained;
+        itemComp.setValue("itemHasFocus", BrsBoolean.from(focus && nodeFocus && !held), false);
         itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
         const percent = moving ? this.motionFocusPercent(index) : focus ? 1 : 0;
         itemComp.setValue("focusPercent", new Float(percent), false);

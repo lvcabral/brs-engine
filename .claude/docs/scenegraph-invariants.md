@@ -907,6 +907,18 @@ The rules:
 4. **Only a navigation slides.** `requestSlide()` (append/back/forward/replace) arms the next reconcile to
    animate. Any other layout change snaps. Don't make reconcile animate unconditionally: apps that size
    panels after attaching them would slide on startup.
+5. **A tick reports what it did** (`TransitionTick`). "moving" and "settled" repaint; "waiting" keeps the
+   transition registered with nothing to draw (a key held at the end of a non-wrapping list, a slide with
+   nothing left to move holding `slidingStatus`). Returning "moving" there redraws every frame while the
+   key is held.
+6. **A settle can start the next transition.** `processTransitions` drops a transition *before* ticking
+   it and keeps it only when the tick reports it active or the owner re-registered during the tick. A
+   settle observer writing `animateToItem`, or appending a panel, re-registers; dropping it after the tick
+   froze the list mid-motion with `scrollingStatus` true. On a list, a motion its own settle observer
+   starts is queued (`ArrayGrid.settleFollowUps`) and opens after the settle's last field, as on a device
+   where the observer runs after the settle: started inline, the settle's tail wrote `scrollingStatus`
+   false and the direction "none" over the new motion. Regression: "a motion started by a settle
+   observer…" in `ListFocusMotion.test.js`.
 
 PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-slide-probe/README.md`):
 - a per-panel `easeOutQuint` lasting `slideDuration`, which is in **seconds**;
@@ -941,6 +953,18 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
 - A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
   release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
   list. Without this the list repeats to its end and the scene redraws forever.
+- Focus leaving mid-motion (device-measured, `test/simulator/probes/focus-motion-edge-probe`): the motion
+  runs on and its settle publishes only `scrollingStatus` false. `itemFocused` keeps the item the motion
+  left, not even written silently. `unfocusedSettleIndex` remembers the target, so a later focus gain lands
+  there (`focusGainIndex`).
+- Focus regained mid-motion keeps the motion. `publishMotionRegain` publishes the target item's
+  `itemHasFocus` and then `itemFocused` at once, and the settle publishes `itemFocused` again.
+  `motion.regained` keeps that item's `itemHasFocus` true for the rest of the motion. Don't re-apply the
+  `itemFocused` field on a gain mid-motion: it still holds the item being left, so the cursor snapped back
+  while the motion settled on the target. RowList and ZoomRowList weren't measured and override it to
+  publish at the settle only.
+- Leaving the focus chain drops the focused item's `itemHasFocus` at once, from the list's `focusedChild`
+  write (`ArrayGrid.setValue`), even while the list is hidden and not rendering.
 - Every jump path (`jumpToItem`, `jumpToRowItem`, `jumpToRow`) calls `settleMotion()` first.
 - A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
   later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
@@ -970,7 +994,8 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
     **under**.
 
   `ArrayGrid.focusFeedbackOnTop()` holds the rule (`focusOnTopWritten` + `focusOnTopByDefault()`); every
-  draw site asks it, never the raw field. Don't make the grid default `true` to get the over-the-items
+  draw site asks it, never the raw field. `focusOnTopWritten` is class state, not a field, so
+  `ArrayGrid.cloneNode` copies it (regression in `GridFocusFeedback.test.js`). Don't make the grid default `true` to get the over-the-items
   look (MarkupGrid once did): the device reads `false`. A moving indicator drawn over the cells regardless
   of the field hid the new item's content in an app whose side menu writes it false. RowList computes the
   in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an

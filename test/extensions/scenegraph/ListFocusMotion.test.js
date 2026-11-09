@@ -424,4 +424,105 @@ describe("List focus motion", () => {
             "L.scrollingStatus=false",
         ]);
     });
+
+    test("a motion started by a settle observer runs to its own settle", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        const port = new RoMessagePort();
+        port.pushMessage = (event) => {
+            const field = event.fieldName.getValue();
+            const value = event.fieldValue?.getValue?.();
+            log.push(`L.${field}=${value}`);
+            if (field === "itemFocused" && value === 1) {
+                // An app skipping past an item from its itemFocused observer.
+                list.setValue("animateToItem", new Int32(3));
+            }
+        };
+        for (const field of ["itemFocused", "scrollingStatus"]) {
+            list.addObserver(fakeInterpreter, "unscoped", new BrsString(field), port);
+        }
+        tap(list, "down");
+        advance(1000);
+        expect(list.getValueJS("itemFocused")).toBe(3);
+        expect(row(list)).toBe(3);
+        expect(list.getValueJS("scrollingStatus")).toBe(false);
+        // The second motion opens after the first one's settle is complete.
+        expect(log).toEqual([
+            "L.scrollingStatus=true",
+            "L.itemFocused=1",
+            "L.scrollingStatus=false",
+            "L.scrollingStatus=true",
+            "L.itemFocused=3",
+            "L.scrollingStatus=false",
+        ]);
+        expect(sgRoot.processTransitions()).toBe(false);
+    });
+
+    // Device (focus-motion-edge-probe, OS 16.0): focus taken mid-motion lets the motion finish with only
+    // scrollingStatus false; `itemFocused` keeps the item left until the focus returns to the list.
+    test("a motion settling outside the focus chain leaves itemFocused until the focus returns", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        const items = attachItems(list, 3);
+        observe(list, "L", ["itemFocused", "scrollingStatus"]);
+        observe(items[1], "I1", ["itemHasFocus"]);
+        tap(list, "down");
+        advance(50);
+        SGNodeFactory.createNode("Group").setNodeFocus(true);
+        advance(500);
+        expect(row(list)).toBe(1);
+        expect(list.getValueJS("itemFocused")).toBe(0);
+        expect(log).toEqual(["L.scrollingStatus=true", "L.scrollingStatus=false"]);
+        log.length = 0;
+        list.setNodeFocus(true);
+        expect(log).toContain("I1.itemHasFocus=true");
+        expect(log.at(-1)).toBe("L.itemFocused=1");
+        expect(list.getValueJS("itemFocused")).toBe(1);
+    });
+
+    test("focus regained mid-motion publishes the target now and again when the motion settles", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        const items = attachItems(list, 3);
+        observe(list, "L", ["itemFocused", "scrollingStatus"]);
+        observe(items[1], "I1", ["itemHasFocus"]);
+        tap(list, "down");
+        advance(50);
+        SGNodeFactory.createNode("Group").setNodeFocus(true);
+        list.setNodeFocus(true);
+        expect(log).toEqual(["L.scrollingStatus=true", "I1.itemHasFocus=true", "L.itemFocused=1"]);
+        expect(list.getValueJS("scrollingStatus")).toBe(true);
+        // The motion runs on: the target item keeps its focus through the rest of it.
+        list.updateItemFocus(1, true, true);
+        expect(items[1].getValueJS("itemHasFocus")).toBe(true);
+        advance(500);
+        expect(row(list)).toBe(1);
+        expect(log.slice(3)).toEqual(["L.itemFocused=1", "L.scrollingStatus=false"]);
+    });
+
+    test.each([
+        ["another node takes the focus", (list) => SGNodeFactory.createNode("Group").setNodeFocus(true)],
+        ["the list calls setFocus(false)", (list) => list.setNodeFocus(false)],
+    ])("a hidden list drops its item's itemHasFocus at once when %s", (_name, unfocus) => {
+        const list = makeList("LabelList", "floatingFocus");
+        const items = attachItems(list, 3);
+        list.updateItemFocus(0, true, true);
+        expect(items[0].getValueJS("itemHasFocus")).toBe(true);
+        list.setValue("visible", BrsBoolean.False);
+        unfocus(list);
+        expect(items[0].getValueJS("itemHasFocus")).toBe(false);
+    });
+
+    test("a key held at the end of a list stops redrawing until it is released", () => {
+        const list = makeList("LabelList", "floatingFocus");
+        list.setValue("jumpToItem", new Int32(8));
+        observe(list, "L", ["itemFocused"]);
+        list.handleKey("down", true);
+        advance(1000);
+        expect(row(list)).toBe(9);
+        // Still held at the last item: nothing moves, so the pass asks for no frame.
+        expect(sgRoot.processTransitions()).toBe(false);
+        expect(log).toEqual([]);
+        list.handleKey("down", false);
+        expect(sgRoot.processTransitions()).toBe(true);
+        expect(log).toEqual(["L.itemFocused=9"]);
+        expect(sgRoot.processTransitions()).toBe(false);
+    });
 });

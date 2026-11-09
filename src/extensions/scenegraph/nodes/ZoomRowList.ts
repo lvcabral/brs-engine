@@ -274,6 +274,11 @@ export class ZoomRowList extends ArrayGrid {
         return Math.max(1, this.content.length);
     }
 
+    /** Focus regained mid-motion: unmeasured on a row list, so the settle alone publishes the landing. */
+    protected publishMotionRegain(_motion: FocusMotion) {
+        // The motion runs on; publishMotionSettle publishes the focus fields.
+    }
+
     /** A device ZoomRowList has no vertFocusDirection/horizFocusDirection fields to report. */
     protected directionFieldFor(_axis: MotionAxis): string {
         return "";

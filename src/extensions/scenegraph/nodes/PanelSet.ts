@@ -5,7 +5,7 @@ import { Group } from "./Group";
 import { Node } from "./Node";
 import { sgRoot } from "../SGRoot";
 import { sgClock } from "../SGClock";
-import { easeOutQuint, UITransition } from "../SGTransition";
+import { easeOutQuint, TransitionTick, UITransition } from "../SGTransition";
 
 /**
  * Horizontal gap between the left and right panels. DEVICE-MEASURED (Roku Express 4K+, OS 16.0,
@@ -376,11 +376,13 @@ export class PanelSet extends Group implements UITransition {
     }
 
     /** Advances the slide: per-panel quintic ease-out over `slideDuration`, staggered by role. */
-    tickTransition(now: number): boolean {
+    tickTransition(now: number): TransitionTick {
+        const wasSliding = this.sliding;
         this.reconcileLayout(now);
         if (!this.sliding) {
-            return false;
+            return "settled";
         }
+        const moving = !wasSliding || this.tweens.size > 0;
         const duration = this.slideDurationMs();
         for (const [panel, tween] of this.tweens) {
             if (panel.getNodeParent() !== this) {
@@ -395,11 +397,15 @@ export class PanelSet extends Group implements UITransition {
             }
             this.movePanel(panel, x);
         }
-        if (this.tweens.size > 0 || now < this.slideMinEnd) {
-            return true;
+        if (this.tweens.size > 0) {
+            return "moving";
+        }
+        if (now < this.slideMinEnd) {
+            // A slide with nothing to move still holds `slidingStatus` for its duration.
+            return moving ? "moving" : "waiting";
         }
         this.settleSlide();
-        return false;
+        return "settled";
     }
 
     private wireNextPanel(panel: GridPanel) {

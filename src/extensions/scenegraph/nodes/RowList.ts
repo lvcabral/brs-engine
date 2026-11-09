@@ -189,6 +189,11 @@ export class RowList extends ArrayGrid {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
+    /** Focus regained mid-motion: unmeasured on a row list, so the settle alone publishes the landing. */
+    protected publishMotionRegain(_motion: FocusMotion) {
+        // The motion runs on; publishMotionSettle publishes the focus fields.
+    }
+
     /**
      * A focus gain lands on the row in `rowItemFocused`: an app's jumpToRowItem leaves `itemFocused`
      * stale (DEVICE-MEASURED) but moves the focus.
