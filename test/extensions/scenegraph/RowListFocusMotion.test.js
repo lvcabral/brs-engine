@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot, sgClock } = scenegraph;
-const { BrsDevice, BrsString, Int32, Float, RoArray, RoMessagePort } = core;
+const { BrsBoolean, BrsDevice, BrsString, Int32, Float, RoArray, RoMessagePort } = core;
 
 /**
  * RowList focus motion, pinned to a device trace (Roku Express 4K+, OS 16.0,
@@ -403,6 +403,105 @@ describe("RowList focus motion", () => {
         list.renderFocus = renderFocus;
         return xs[0];
     }
+
+    /**
+     * rowlist-hero-grid-probe's RowList (Roku's hero-grid-channel sample), scaled to the HD screen a unit
+     * test renders: a hero row, a landscape row and a portrait row of 15 items, then "The Grid", rows of
+     * 4, 4, 4 and 3 items that all fit on screen.
+     */
+    function makeHeroGridList() {
+        const list = SGNodeFactory.createNode("RowList");
+        const arr = (...values) =>
+            new RoArray(
+                values.map((v) =>
+                    Array.isArray(v) ? arr(...v) : typeof v === "boolean" ? BrsBoolean.from(v) : new Float(v)
+                )
+            );
+        list.setValue("itemComponentName", new BrsString("Group"));
+        list.setValue("focusXOffset", arr(100));
+        list.setValue("itemSize", arr(1280, 150));
+        list.setValue("numRows", new Int32(9));
+        list.setValue("rowFocusAnimationStyle", new BrsString("FixedFocusWrap"));
+        list.setValue("rowHeights", arr(500, 200, 400));
+        list.setValue("rowItemSize", arr([800, 400], [200, 100], [200, 300], [200, 100]));
+        list.setValue("rowItemSpacing", arr([20, 0]));
+        list.setValue("showRowLabel", arr(false, true));
+        list.setValue("showRowCounter", arr(true, true, true, false));
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (const [r, count] of [15, 15, 15, 4, 4, 4, 3].entries()) {
+            const row = SGNodeFactory.createNode("ContentNode");
+            row.setValue("title", new BrsString(`Row ${r}`));
+            for (let c = 0; c < count; c++) {
+                row.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+            }
+            root.appendChildToParent(row);
+        }
+        list.setValue("content", root);
+        list.setNodeFocus(true);
+        return list;
+    }
+
+    test("fixedFocusWrap enters a row whose items all fit at the indicator's screen slot (device trace)", () => {
+        // rowlist-hero-grid-probe: grid rows keep the column, a grid row entered from a long row lands on
+        // its first item, and a shorter grid row clamps to its last item.
+        const list = makeHeroGridList();
+        const keys =
+            "down right right right down down right right down down up up up down right right right down down down";
+        const focused = [];
+        for (const key of keys.split(" ")) {
+            tap(list, key);
+            advance(500);
+            focused.push(list.getValueJS("rowItemFocused").join(","));
+        }
+        expect(focused).toEqual(
+            "1,0 1,1 1,2 1,3 2,0 3,0 3,1 3,2 4,2 5,2 4,2 3,2 2,0 3,0 3,1 3,2 3,3 4,3 5,3 6,2".split(" ")
+        );
+    });
+
+    test("a row change grows or shrinks the indicator to the new row's item size (device screenshot)", () => {
+        // rowlist-hero-grid-probe: mid-move the ring's width and height take the same fraction between the
+        // two rows' item sizes as the rows have scrolled.
+        const list = makeHeroGridList();
+        const sizes = [];
+        list.renderFocus = (rect) => sizes.push([rect.width, rect.height]);
+        tap(list, "down");
+        advance(80);
+        const f = list.motionPos;
+        expect(f).toBeGreaterThan(0.2);
+        expect(f).toBeLessThan(0.9);
+        sizes.length = 0;
+        paintClips(list);
+        expect(sizes).toHaveLength(1);
+        expect(sizes[0][0]).toBeCloseTo(800 - 600 * f, 5);
+        expect(sizes[0][1]).toBeCloseTo(400 - 300 * f, 5);
+        advance(500);
+        tap(list, "down");
+        advance(80);
+        const g = list.motionPos - 1;
+        sizes.length = 0;
+        paintClips(list);
+        expect(sizes[0][0]).toBeCloseTo(200, 5);
+        expect(sizes[0][1]).toBeCloseTo(100 + 200 * g, 5);
+    });
+
+    test("no row counter is drawn while the rows scroll (device screenshot)", () => {
+        const list = makeHeroGridList();
+        const counters = () => {
+            const texts = [];
+            const draw2D = new Proxy(
+                {},
+                { get: (_t, name) => (name === "doDrawRotatedText" ? (text) => texts.push(text) : () => undefined) }
+            );
+            list.renderNode(new core.Interpreter(), [0, 0], 0, 1, draw2D);
+            return texts.filter((text) => / of \d+$/.test(text));
+        };
+        expect(counters()).toEqual(["1 of 15"]);
+        tap(list, "down");
+        advance(80);
+        expect(counters()).toEqual([]);
+        advance(500);
+        expect(counters()).toEqual(["1 of 15"]);
+    });
 
     test.each([
         ["fixedFocusWrap", [1, 0]],

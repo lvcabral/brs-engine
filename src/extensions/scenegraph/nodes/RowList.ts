@@ -89,10 +89,14 @@ export class RowList extends ArrayGrid {
     private pendingVertDirection = "";
     /** An app wrote `jumpToRowItem`: the move publishes no itemUnfocused/itemFocused (DEVICE-MEASURED). */
     private jumpingToRowItem = false;
-    /** The indicator's x (from the list's left edge) at the last paint, or at rest when a motion opened. */
-    private indicatorX = 0;
-    /** A row change's sideways glide of the indicator, from its x when the current segment started. */
-    private indicatorGlide?: { fromX: number; fromRow: number; segmentStart: number };
+    /** The indicator's x (from the list's left edge) and size at the last paint, or at rest when a motion opened. */
+    private indicatorBox = { x: 0, width: 0, height: 0 };
+    /** A row change's glide of the indicator, from its x and size when the current segment started. */
+    private indicatorGlide?: {
+        from: { x: number; width: number; height: number };
+        fromRow: number;
+        segmentStart: number;
+    };
     /** The row whose items report `rowHasFocus`: it changes only when a motion settles (DEVICE-MEASURED). */
     private flaggedRow = 0;
     /** First column drawn for each row on the last paint (the horizontal scroll a motion starts from). */
@@ -510,7 +514,8 @@ export class RowList extends ArrayGrid {
         }
         this.motionColOrigin = this.motionCol;
         this.motionScrollFrom = this.renderedStartCol[oldRow] ?? 0;
-        this.indicatorX = this.indicatorTargetX(oldRow, oldCol);
+        const [oldWidth, oldHeight] = this.getRowItemSize(oldRow);
+        this.indicatorBox = { x: this.indicatorTargetX(oldRow, oldCol), width: oldWidth, height: oldHeight };
         this.indicatorGlide = undefined;
         super.setValue("scrollingStatus", BrsBoolean.True);
         this.beginRowMotionTracking(oldRow, oldCol);
@@ -682,9 +687,11 @@ export class RowList extends ArrayGrid {
                     targetColIndex = Math.max(0, Math.min(targetColIndex, nextRowColCount - 1));
                 }
             } else if (rowFocusStyle === RowFocusStyle.Wrap && this.rowItemsFit(nextRow)) {
-                // A fixedFocusWrap row whose items all fit floats its focus, and is entered on its first
-                // item: the one at the fixed focus slot (DEVICE-MEASURED, rowlist-short-row-probe).
-                targetColIndex = 0;
+                // A fixedFocusWrap row whose items all fit floats its focus, and is entered on the item at
+                // the indicator's screen slot, clamped to its last item: the first one coming from a long
+                // row, the same column coming from another such row (DEVICE-MEASURED,
+                // rowlist-short-row-probe, rowlist-hero-grid-probe).
+                targetColIndex = this.columnAtIndicator(nextRow, currentRow, currentCol);
             } else {
                 // Otherwise the row's own focused column, which sits at the fixed focus slot.
                 targetColIndex = this.rowFocus[nextRow] ?? 0;
@@ -1333,7 +1340,11 @@ export class RowList extends ArrayGrid {
         const rowIndex = this.focusIndex;
         const [itemWidth, itemHeight] = this.getRowItemSize(rowIndex);
         const focusCol = this.motion?.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
-        const x = this.glideIndicatorX(this.indicatorTargetX(rowIndex, focusCol));
+        const box = this.glideIndicator({
+            x: this.indicatorTargetX(rowIndex, focusCol),
+            width: itemWidth,
+            height: itemHeight,
+        });
         const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
         const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
@@ -1342,10 +1353,10 @@ export class RowList extends ArrayGrid {
             this.slotOffset(firstRow, visualTop + focusSlot, context, fallback) -
             this.slotOffset(firstRow, visualTop, context, fallback);
         return {
-            x: rect.x + x,
+            x: rect.x + box.x,
             y: rowTop + this.rowBandHeight(rowIndex, hasLabel, showCounter),
-            width: itemWidth,
-            height: itemHeight,
+            width: box.width,
+            height: box.height,
         };
     }
 
@@ -1364,28 +1375,45 @@ export class RowList extends ArrayGrid {
     }
 
     /**
-     * The indicator's x while the focus changes rows: it glides from where it was to the target column's
-     * screen slot at the pace of the row change, crossing empty space when the slots differ
-     * (DEVICE-MEASURED, rowlist-short-row-probe). Paint-time only.
+     * The column of `rowIndex` at the screen slot of the indicator resting on [`fromRow`, `fromCol`],
+     * clamped to the row's items.
      */
-    private glideIndicatorX(targetX: number): number {
+    private columnAtIndicator(rowIndex: number, fromRow: number, fromCol: number): number {
+        const pitchX = this.getRowItemSize(rowIndex)[0] + this.getRowItemSpacing(rowIndex)[0];
+        const x = this.indicatorTargetX(fromRow, fromCol) - this.getRowXOffset(rowIndex);
+        const slot = pitchX > 0 ? Math.round(x / pitchX) : 0;
+        return Math.max(0, Math.min(slot, this.rowColumnCount(rowIndex) - 1));
+    }
+
+    /**
+     * The indicator's x and size while the focus changes rows: it glides from where it was to the target
+     * column's screen slot, crossing empty space when the slots differ, and grows or shrinks from the old
+     * row's item size to the new row's, at the pace of the row change (DEVICE-MEASURED,
+     * rowlist-short-row-probe, rowlist-hero-grid-probe). Its y follows the target row. Paint-time only.
+     */
+    private glideIndicator(target: { x: number; width: number; height: number }) {
         const motion = this.motion;
         if (!motion?.rowMoved) {
             this.indicatorGlide = undefined;
-            this.indicatorX = targetX;
-            return targetX;
+            this.indicatorBox = target;
+            return target;
         }
         const segment = motion.row;
         if (this.indicatorGlide?.segmentStart !== segment.start) {
             // A new segment (the move opened, or a queued press or held key retargeted it) glides on from
             // wherever the indicator is.
-            this.indicatorGlide = { fromX: this.indicatorX, fromRow: segment.from, segmentStart: segment.start };
+            this.indicatorGlide = { from: this.indicatorBox, fromRow: segment.from, segmentStart: segment.start };
         }
-        const glide = this.indicatorGlide;
-        const span = segment.to - glide.fromRow;
-        const progress = span === 0 ? 1 : Math.min(Math.max((this.motionPos - glide.fromRow) / span, 0), 1);
-        this.indicatorX = glide.fromX + (targetX - glide.fromX) * progress;
-        return this.indicatorX;
+        const { from, fromRow } = this.indicatorGlide;
+        const span = segment.to - fromRow;
+        const progress = span === 0 ? 1 : Math.min(Math.max((this.motionPos - fromRow) / span, 0), 1);
+        const lerp = (a: number, b: number) => a + (b - a) * progress;
+        this.indicatorBox = {
+            x: lerp(from.x, target.x),
+            width: lerp(from.width, target.width),
+            height: lerp(from.height, target.height),
+        };
+        return this.indicatorBox;
     }
 
     private getRowXOffset(rowIndex: number): number {
@@ -1663,7 +1691,8 @@ export class RowList extends ArrayGrid {
      * rows whose items all fit on screen. The counter uses the same font/color as the row label.
      */
     private renderRowCounter(rowIndex: number, numCols: number, topY: number, context: RowListRenderContext): void {
-        if (rowIndex !== this.focusIndex || numCols === 0) {
+        // No row shows its counter while the rows scroll (DEVICE-MEASURED, rowlist-hero-grid-probe).
+        if (rowIndex !== this.focusIndex || numCols === 0 || this.motion?.rowMoved) {
             return;
         }
         if (!this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false)) {

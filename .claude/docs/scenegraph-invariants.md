@@ -988,12 +988,16 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
   - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
   - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
-- **A row change's column and indicator** (`rowlist-short-row-probe`):
-  - A `fixedFocusWrap` row whose items all fit floats its focus and is entered on column 0, not on its
-    remembered column. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps
-    the screen slot.
-  - The indicator glides sideways from its old x to the target slot over the row change
-    (`glideIndicatorX`). It doesn't snap to the target when the move opens.
+- **A row change's column and indicator** (`rowlist-short-row-probe`, `rowlist-hero-grid-probe`):
+  - A `fixedFocusWrap` row whose items all fit floats its focus and is entered at the indicator's screen
+    slot, clamped to its last item, not on its remembered column (`columnAtIndicator`). From a long row
+    (indicator at slot 0) that is the first item; between two such rows (a grid made of 4-item rows) the
+    column is kept. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps the
+    screen slot.
+  - The indicator glides from its old x and size to the target slot and the new row's item size over the
+    row change (`glideIndicator`): a landscape row's ring grows into a portrait row's. It doesn't snap to
+    the target when the move opens. Its y is the target row's item top from the start.
+  - No row counter is drawn while the rows scroll.
 - `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
   the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
 - An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a

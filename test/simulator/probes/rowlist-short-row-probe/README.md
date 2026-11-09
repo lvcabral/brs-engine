@@ -36,7 +36,7 @@ It takes a screenshot right after each row change and another once the change ha
 
 ## Engine
 
-- `RowList.handleUpDown` enters a fitting `fixedFocusWrap` row on column 0.
+- `RowList.handleUpDown` enters a fitting `fixedFocusWrap` row at the indicator's screen slot, which is column 0 coming from a long row. `../rowlist-hero-grid-probe` showed the general rule: between two fitting rows the column is kept.
 - `glideIndicatorX` interpolates the indicator's x between its old position and the target slot during a row change.
 
 Regressions are in `test/extensions/scenegraph/RowListFocusMotion.test.js`.

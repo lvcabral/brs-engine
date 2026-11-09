@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <RowList id="rows" itemComponentName="ProbeCell" focusXOffset="[165]" itemSize="[1920,220]" numRows="9"
+            rowFocusAnimationStyle="FixedFocusWrap" rowHeights="[800,300,615]"
+            rowItemSize="[[1600,700],[375,197],[375,526],[375,197]]" rowItemSpacing="[[30,0]]"
+            rowLabelOffset="[[165,8]]" showRowLabel="[false,true]" showRowCounter="[true,true,true,false]"
+            translation="[0,155]" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        colors = ["0x3060C0FF", "0xC03060FF", "0x30A060FF", "0xA08020FF", "0x8040C0FF"]
+        titles = ["Big Hits", "Action", "Drama", "The Grid", "", "", ""]
+        counts = [15, 15, 15, 4, 4, 4, 3]
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            row.title = titles[r]
+            for c = 0 to counts[r] - 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + r.toStr() + " C" + c.toStr()
+                item.hdPosterUrl = colors[c mod colors.count()]
+            end for
+        end for
+        rows = m.top.findNode("rows")
+        rows.content = root
+        rows.observeField("rowItemFocused", "onRowItemFocused")
+        rows.setFocus(true)
+    end sub
+
+    sub onRowItemFocused()
+        f = m.top.findNode("rows").rowItemFocused
+        print "PROBE|rowItemFocused=" + f[0].toStr() + "," + f[1].toStr()
+    end sub
+    ]]>
+    </script>
+</component>
