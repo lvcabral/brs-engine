@@ -32,3 +32,13 @@ The same technique as `../grid-focus-layer-probe/README.md`: relaunch, hold the 
 
 - A move along a row pushes no clip. A row change clips the scrolling rows to the window: each visible row's layout height (the row height, grown by the label/counter band when the band doesn't fit) plus its spacing, the last one included (`RowList.windowLayoutHeight`). ZoomRowList also clips only on a row change.
 - Known difference: the engine doesn't clip the focused row to its row height, at rest or while moving along it. Drawing that clip needs the focus ring moved out of the row's item pass.
+
+## ZoomRowList sliding along a row (OS 16.0)
+
+Seen on the Roku Express 4K+ running Roku's `zoomRowListDefaultLayoutTest` sample (ux components / lists and grids). Its ZoomRowList sits at x=193 with the default `fixedFocusWrap` rows. `plugin_inspect` screenshots were taken while Right or Left was held.
+
+- While a row slides under the fixed focus, its items are cut at the row's left edge (x=193). The item losing the focus slides out of view there, and the next one takes its slot inside the row.
+- Nothing is cut on the right: the items run to the screen edge.
+- At rest the focus ring still extends left of the row edge (x=181), so the ring isn't inside that clip.
+
+The engine pushes that left-edge clip around a row's items whenever they're drawn shifted left of the row (`ZoomRowList.renderRow`).

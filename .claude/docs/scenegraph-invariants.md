@@ -1051,6 +1051,12 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   or `rowSpacings`, a uniform pitch overshoots and then snaps back at the settle (JellyRock's home rows;
   regression in `RowListFocusMotion.test.js`). The device also clips the focused row to its row height at rest; the engine
   doesn't (yet).
+- **A ZoomRowList row sliding under the fixed focus is cut at the row's left edge** (Roku's
+  `zoomRowListDefaultLayoutTest` sample; see the `rowlist-clip-probe` README). The item losing the focus
+  slides out of view there; the right side runs to the screen edge, and the focus ring stays outside the
+  clip. `ZoomRowList.renderRow` pushes that clip whenever the row's items start left of the row.
+  Regression: "a row sliding under the fixed focus is cut at the row's left edge" in
+  `RowListFocusMotion.test.js`.
 - A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
   `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
   `animateToRow` takes ~265 ms per row against ~330 ms for key steps.

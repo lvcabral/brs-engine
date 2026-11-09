@@ -615,6 +615,23 @@ describe("RowList focus motion", () => {
             expect(items[1].getValueJS("rowHasFocus")).toBe(true);
         });
 
+        test("a row sliding under the fixed focus is cut at the row's left edge (device screenshot)", () => {
+            // zoomRowListDefaultLayoutTest sample (rowlist-clip-probe README): the item losing the focus
+            // slides out of view at the row's left edge instead of being drawn to its left.
+            const list = makeZoom();
+            list.setValue("itemComponentName", new BrsString("Group"));
+            // A built-in item type is not an XML component; render it anyway.
+            list.validateRenderPrerequisites = () => true;
+            list.setValue("translation", new RoArray([new Float(193), new Float(110)]));
+            const leftClips = () => paintClips(list).filter((clip) => clip.x === 193 && clip.width < 100000);
+            expect(leftClips()).toEqual([]);
+            tap(list, "right");
+            advance(100);
+            expect(leftClips()).toHaveLength(1);
+            advance(500);
+            expect(leftClips()).toEqual([]);
+        });
+
         test("animateToRow moves ~265 ms per row", () => {
             const list = makeZoom();
             observe(list, ["rowFocused"]);

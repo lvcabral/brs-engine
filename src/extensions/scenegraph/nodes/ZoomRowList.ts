@@ -748,31 +748,45 @@ export class ZoomRowList extends ArrayGrid {
         let firstCol = -1;
         let lastCol = -1;
 
-        for (let c = 0; c < (canWrapItems ? rowContent.length : endCol - startCol); c++) {
-            let colIndex = startCol + c;
-            if (canWrapItems && colIndex >= rowContent.length) {
-                colIndex = colIndex % rowContent.length;
+        // A row sliding under the fixed focus cuts the item leaving it at the row's left edge
+        // (DEVICE-MEASURED, see rowlist-clip-probe). The focus ring is drawn outside this clip.
+        const clipLeft = itemRect.x < rect.x;
+        if (clipLeft) {
+            const screen = this.visibleSceneRect();
+            const right = Math.max(screen.x + screen.width, rect.x + this.nodeWidth);
+            draw2D?.pushClip({ x: rect.x, y: screen.y, width: right - rect.x, height: screen.height });
+        }
+        try {
+            for (let c = 0; c < (canWrapItems ? rowContent.length : endCol - startCol); c++) {
+                let colIndex = startCol + c;
+                if (canWrapItems && colIndex >= rowContent.length) {
+                    colIndex = colIndex % rowContent.length;
+                }
+                if (colIndex >= rowContent.length) {
+                    break;
+                }
+
+                this.renderRowItemComponent(
+                    interpreter,
+                    [rowIndex, colIndex],
+                    rowContent,
+                    itemRect,
+                    rotation,
+                    opacity,
+                    draw2D
+                );
+
+                firstCol = firstCol === -1 ? colIndex : firstCol;
+                lastCol = colIndex;
+
+                itemRect.x += itemRect.width + metrics.spacingX;
+                if (itemRect.x > rect.x + this.nodeWidth) {
+                    break;
+                }
             }
-            if (colIndex >= rowContent.length) {
-                break;
-            }
-
-            this.renderRowItemComponent(
-                interpreter,
-                [rowIndex, colIndex],
-                rowContent,
-                itemRect,
-                rotation,
-                opacity,
-                draw2D
-            );
-
-            firstCol = firstCol === -1 ? colIndex : firstCol;
-            lastCol = colIndex;
-
-            itemRect.x += itemRect.width + metrics.spacingX;
-            if (itemRect.x > rect.x + this.nodeWidth) {
-                break;
+        } finally {
+            if (clipLeft) {
+                draw2D?.popClip();
             }
         }
 
