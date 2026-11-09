@@ -307,6 +307,38 @@ describe("RowList focus motion", () => {
         expect(rowTop()).toBe(0);
     });
 
+    test("an animation started from a settle observer has its first frame applied before the paint", () => {
+        // JellyRock's backdrop: a rowItemFocused observer swaps the image and starts a fade-in from 0. The
+        // settle runs in this pass's transitions, so animations must tick after them or the paint shows the
+        // new image at its old opacity of 1 for a frame.
+        const list = makeList();
+        const backdrop = SGNodeFactory.createNode("Rectangle");
+        backdrop.setValue("id", new BrsString("backdrop"));
+        backdrop.setValue("opacity", new Float(1));
+        const parent = SGNodeFactory.createNode("Group");
+        parent.appendChildToParent(backdrop);
+        const fade = SGNodeFactory.createNode("Animation");
+        fade.setValue("duration", new Float(0.5));
+        const interpolator = SGNodeFactory.createNode("FloatFieldInterpolator");
+        interpolator.setValue("key", new RoArray([new Float(0), new Float(1)]));
+        interpolator.setValue("keyValue", new RoArray([new Float(0), new Float(1)]));
+        interpolator.setValue("fieldToInterp", new BrsString("backdrop.opacity"));
+        fade.appendChildToParent(interpolator);
+        parent.appendChildToParent(fade);
+        const port = new RoMessagePort();
+        port.pushMessage = () => fade.setValue("control", new BrsString("start"));
+        list.addObserver(fakeInterpreter, "unscoped", new BrsString("rowItemFocused"), port);
+        tap(list, "right");
+        // Whole render passes: in the pass that publishes the settle, the fade's first frame is applied too.
+        for (let pass = 0; pass < 40 && list.getValueJS("rowItemFocused")[1] !== 1; pass++) {
+            expect(backdrop.getValueJS("opacity")).toBe(1);
+            now += 16;
+            sgRoot.processScenePass();
+        }
+        expect(list.getValueJS("rowItemFocused")).toEqual([0, 1]);
+        expect(backdrop.getValueJS("opacity")).toBeCloseTo(0, 2);
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");

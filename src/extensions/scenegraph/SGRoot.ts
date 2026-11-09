@@ -762,6 +762,39 @@ export class SGRoot {
     }
 
     /**
+     * Runs one render pass's scene updates, in the order that leaves every field final for the paint.
+     * Animations go LAST: an observer anywhere earlier in the pass (a transition's settle, a Task update,
+     * a timer, a media event) may start one, and its first frame must be applied before the scene is
+     * painted. Ticked earlier, the paint shows the animated field's stale value for a frame, e.g. a
+     * cross-faded image drawn at full opacity before its fade-in starts from 0.
+     * @returns True if anything changed and the scene must be redrawn
+     */
+    processScenePass(): boolean {
+        const libsUpdated = this.processComponentLibraries();
+        const timersFired = this.processTimers();
+        const clockUpdated = this.processClock();
+        const transitionsMoved = this.processTransitions();
+        const tasksUpdated = this.processTasks();
+        const queuesDrained = this.processRenderQueues();
+        const audioUpdated = this.processAudio();
+        const sfxUpdated = this.processSFX();
+        const videoUpdated = this.processVideo();
+        const animUpdated = this.processAnimations();
+        return (
+            libsUpdated ||
+            timersFired ||
+            clockUpdated ||
+            transitionsMoved ||
+            tasksUpdated ||
+            queuesDrained ||
+            audioUpdated ||
+            sfxUpdated ||
+            videoUpdated ||
+            animUpdated
+        );
+    }
+
+    /**
      * Updates all application animations.
      * Checks which animations should update and triggers them.
      * @returns True if any animation updated, false otherwise

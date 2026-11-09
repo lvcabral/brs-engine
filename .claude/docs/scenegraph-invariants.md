@@ -876,8 +876,17 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 Nodes with built-in motion (today: `PanelSet` slides and list/grid/row-list focus motion) implement `UITransition`
 and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
-`sgRoot.processTransitions()` next to `processAnimations()`, before painting, and the frame stays dirty
-only while one is active, so an idle scene costs nothing. The rules:
+`sgRoot.processScenePass()`, before painting, and the frame stays dirty only while one is active, so an
+idle scene costs nothing.
+
+**Animations tick last in the pass** (`processScenePass`). A transition's settle publishes focus fields
+(`rowItemFocused`, `itemFocused`) whose observers commonly start an Animation, such as JellyRock's backdrop
+cross-fade. If animations are ticked before transitions, the paint draws the animated field's stale value
+for one frame: the new image at full opacity, then its fade-in from 0. The same holds for anything else in
+the pass that runs observers (Task updates, render queues, media events). Regression: "an animation
+started from a settle observer…" in `RowListFocusMotion.test.js`.
+
+The rules:
 
 1. **Navigation state changes synchronously.** The focus index, the panel list, focus moves and every
    field a device emits at key time (`isGoingBack`, `numPanels`, `leftPanelIndex`) are still set inside the
