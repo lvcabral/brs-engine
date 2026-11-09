@@ -1003,6 +1003,19 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   and keeps the `animateRequested` it was requested with (ZoomRowList's ~265 ms `animateToRow` step).
   Regression: "an observer writes during a key move" in `ListFocusMotion.test.js` and
   `RowListFocusMotion.test.js`, and "an animateToRow written from a settle observer" there.
+- **A row change queued behind a slide along a row draws from the motion, not from `focusIndex`.** The
+  queued press moves the focus cursor (and so the settled window) at once, while the slide on the old row
+  is still in flight. RowList and ZoomRowList therefore:
+  - take the sliding row from `ArrayGrid.slidingRow()`: the motion's own row while its column segment
+    moves, -1 once it lands;
+  - point the indicator column at `motionCol` only while that row slides, or on a row that doesn't wrap;
+    a wrapping row at rest keeps its fixed slot;
+  - offset the rows by the motion frame whenever it differs from the settled window (RowList
+    `frame.shift !== 0`, ZoomRowList rows from `motionPos`), not only once `rowMoved` is set.
+
+  Keyed to `focusIndex`, the new row drew with the old row's moving column and jumped to the top before
+  the rows scrolled, then snapped back (a flicker on a quick Right then Down). Regression: "a row change
+  pressed during a slide along a row never shifts the row it moves to" in `RowListFocusMotion.test.js`.
 - **OK lands a running motion before it selects** (`test/simulator/probes/grid-ok-midmotion-probe`).
   `ArrayGrid.handleKey` calls `landMotionForSelect` ahead of every `handleOK`: the settle goes out at
   once, then lists and grids publish `itemFocused` again, and only then `itemSelected`. At rest OK

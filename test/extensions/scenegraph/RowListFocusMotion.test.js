@@ -180,6 +180,42 @@ describe("RowList focus motion", () => {
         expect(log).toEqual(["rowItemFocused=[...]"]);
     });
 
+    test("a row change pressed during a slide along a row never shifts the row it moves to", () => {
+        // Right, then Down before the slide lands: the Down queues, and the focus cursor moves to row 1 at
+        // once. Row 1 must draw at its own column all the way; only row 0 slides, and the indicator stays
+        // on it until the row change starts.
+        const list = makeList();
+        list.setValue("rowFocusAnimationStyle", new BrsString("fixedFocusWrap"));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(300), new Float(120)])]));
+        tap(list, "right");
+        advance(60);
+        tap(list, "down");
+        expect(list.focusIndex).toBe(1);
+        expect(list.slidingRow()).toBe(0);
+        // The rows stay put until the row change starts: row 0 is still the top row.
+        const rowTops = new Map();
+        const renderSingleRow = list.renderSingleRow.bind(list);
+        list.renderSingleRow = (rowIndex, slot, context) => {
+            rowTops.set(rowIndex, context.itemRect.y);
+            return renderSingleRow(rowIndex, slot, context);
+        };
+        list.setValue("itemComponentName", new BrsString("Group"));
+        list.renderNode(new core.Interpreter(), [0, 0], 0, 1, new Proxy({}, { get: () => () => undefined }));
+        expect(rowTops.get(0)).toBe(0);
+        expect(rowTops.get(1)).toBeGreaterThan(0);
+        let frames = 0;
+        while (list.motion && frames < 60) {
+            const next = list.rowColumnWindow(1, "wrapMode");
+            expect(next.visualStart).toBe(next.startCol);
+            if (list.slidingRow() === 0) {
+                expect(list.rowColumnWindow(0, "wrapMode").visualStart).not.toBe(list.rowFocus[0]);
+            }
+            advance(16);
+            frames++;
+        }
+        expect(list.getValueJS("rowItemFocused")).toEqual([1, list.rowFocus[1]]);
+    });
+
     test("a jumpToRowItem an observer writes during a key move is an app jump", () => {
         // The key handler's observers run app code: what they write is not part of the key's move.
         const list = makeList();

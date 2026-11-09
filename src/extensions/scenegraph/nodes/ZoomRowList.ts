@@ -556,7 +556,9 @@ export class ZoomRowList extends ArrayGrid {
             motion && !focusOnTop && this.getValueJS("drawFocusFeedback")
                 ? { listTop: rect.y, opacity, draw2D }
                 : undefined;
-        if (motion?.rowMoved) {
+        if (motion) {
+            // From the motion's row, not focusIndex: a row change queued behind a slide along a row has
+            // already moved the focus cursor, but the rows stay put until it starts moving them.
             const base = Math.floor(this.motionPos);
             const fraction = this.motionPos - base;
             firstRow = canWrap ? this.normalizeRowIndex(base) : this.clampRowIndex(base);
@@ -739,8 +741,15 @@ export class ZoomRowList extends ArrayGrid {
 
         const canWrapItems = this.canWrapItems(rowContent.length, metrics, this.nodeWidth);
         let startCol = canWrapItems ? this.rowFocus[rowIndex] ?? 0 : 0;
-        if (this.motion && rowIndex === this.focusIndex) {
-            startCol = this.placeMotionRow(rect, itemRect, metrics, canWrapItems ? rowContent.length : 0, startCol);
+        // A slide still in flight keeps the indicator on its row, even with a row change queued behind it.
+        const sliding = this.slidingRow();
+        if (this.motion && rowIndex === (sliding >= 0 ? sliding : this.focusIndex)) {
+            const row = {
+                index: rowIndex,
+                length: canWrapItems ? rowContent.length : 0,
+                sliding: rowIndex === sliding,
+            };
+            startCol = this.placeMotionRow(rect, itemRect, metrics, row, startCol);
         }
         const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
@@ -797,23 +806,34 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     /**
-     * Lays out the focused row for a move along it: a wrapping row (`wrapCount` items, 0 when it doesn't
-     * wrap) slides under the fixed focus, otherwise the indicator glides. Records the in-transit
+     * Lays out the focused row for a move along it: a wrapping row (`row.length` items, 0 when it doesn't
+     * wrap) slides under the fixed focus while `row.sliding`, otherwise the indicator glides. Records the in-transit
      * indicator, draws it now when it goes under the cells, and returns the first column to draw.
      */
-    private placeMotionRow(rect: Rect, itemRect: Rect, metrics: RowMetrics, wrapCount: number, startCol: number) {
+    private placeMotionRow(
+        rect: Rect,
+        itemRect: Rect,
+        metrics: RowMetrics,
+        row: { index: number; length: number; sliding: boolean },
+        startCol: number
+    ) {
         const motion = this.motion;
         if (!motion) {
             return startCol;
         }
         const pitchX = metrics.itemWidth + metrics.spacingX;
-        const focusCol = motion.colMoved ? this.motionCol : this.rowFocus[this.focusIndex] ?? 0;
+        // The moving column while the slide is in flight, and on a row that doesn't wrap (a row change keeps
+        // the indicator's column slot); a wrapping row at rest holds its focus at the fixed slot.
+        let focusCol = this.rowFocus[row.index] ?? 0;
+        if (motion.colMoved && (row.sliding || row.length === 0)) {
+            focusCol = this.motionCol;
+        }
         let visualStart = startCol;
-        if (motion.colMoved && wrapCount > 0) {
+        if (row.sliding && row.length > 0) {
             visualStart = this.motionCol;
             const whole = Math.floor(visualStart);
             itemRect.x -= (visualStart - whole) * pitchX;
-            startCol = ((whole % wrapCount) + wrapCount) % wrapCount;
+            startCol = ((whole % row.length) + row.length) % row.length;
         }
         this.indicatorRowTop = rect.y;
         this.motionIndicator = {

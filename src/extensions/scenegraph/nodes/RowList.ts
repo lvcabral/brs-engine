@@ -421,7 +421,7 @@ export class RowList extends ArrayGrid {
         if (style !== RowFocusStyle.Wrap) {
             return false;
         }
-        return !this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+        return !this.rowItemsFit(rowIndex);
     }
 
     private animateRowMove(rowIndex: number, colIndex: number) {
@@ -1002,7 +1002,9 @@ export class RowList extends ArrayGrid {
         const pitch = context.itemSize[1] + (context.globalSpacing[1] ?? 0);
         // Only a row change scrolls and clips: a move along a row draws like the settled list
         // (DEVICE-MEASURED, rowlist-clip-probe).
-        const scrolling = frame !== undefined && this.motion?.rowMoved === true;
+        // A row change queued behind a slide along a row has already moved the focus cursor (and so the
+        // settled window): the rows stay where the motion is until that change starts moving them.
+        const scrolling = frame !== undefined && (this.motion?.rowMoved === true || frame.shift !== 0);
         // The visual top, in settled-window slots: rows are offset by the heights of the rows actually
         // scrolled past, which differ per row (rowHeights, rowSpacings, label bands).
         let visualTop = 0;
@@ -1313,7 +1315,7 @@ export class RowList extends ArrayGrid {
         }
         let visualStart = startCol;
         const motion = this.motion;
-        if (motion?.colMoved && rowIndex === this.focusIndex) {
+        if (motion && rowIndex === this.slidingRow()) {
             if (renderMode === "wrapMode") {
                 visualStart = this.motionCol;
             } else if (renderMode === "scrollMode") {
@@ -1340,9 +1342,16 @@ export class RowList extends ArrayGrid {
         context: RowListRenderContext,
         fallback: number
     ): Rect {
-        const rowIndex = this.focusIndex;
+        // A slide still in flight keeps the indicator on its row, even with a row change queued behind it.
+        const sliding = this.slidingRow();
+        const rowIndex = sliding >= 0 ? sliding : this.focusIndex;
         const [itemWidth, itemHeight] = this.getRowItemSize(rowIndex);
-        const focusCol = this.motion?.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
+        // The moving column while the slide is in flight, and on a row that doesn't wrap (a row change keeps
+        // the indicator's column slot); a wrapping row at rest holds its focus at the fixed slot.
+        let focusCol = this.rowFocus[rowIndex] ?? 0;
+        if (this.motion?.colMoved && (sliding >= 0 || !this.rowWrapsColumns(rowIndex))) {
+            focusCol = this.motionCol;
+        }
         const box = this.glideIndicator({
             x: this.indicatorTargetX(rowIndex, focusCol),
             width: itemWidth,
@@ -1508,7 +1517,7 @@ export class RowList extends ArrayGrid {
         const window = this.rowColumnWindow(rowIndex, renderMode);
         let startCol = window.startCol;
         const visualStart = window.visualStart;
-        const moving = this.motion?.colMoved === true && rowIndex === this.focusIndex;
+        const moving = rowIndex === this.slidingRow();
         const pitchX = rowItemWidth + spacing[0];
         if (!this.motion) {
             this.renderedStartCol[rowIndex] = startCol;
