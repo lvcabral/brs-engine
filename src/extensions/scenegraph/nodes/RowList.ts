@@ -97,7 +97,7 @@ export class RowList extends ArrayGrid {
     private motionColOrigin = 0;
     private motionScrollFrom = 0;
     /** The in-transit indicator for this paint, recorded while the focused row is drawn. */
-    private motionIndicator?: { x: number; width: number; height: number; bandOffset: number };
+    private motionIndicator?: { x: number; y: number; width: number; height: number; bandOffset: number };
     private rowTopForIndicator = 0;
     // The row label font and its line height, resolved the first time a row label is laid out and
     // then kept: a device lays the label out once, so a later `rowLabelFont` write changes neither the
@@ -1004,16 +1004,18 @@ export class RowList extends ArrayGrid {
         let lastRow = context.displayRows;
         let pitch = 0;
         this.motionIndicator = undefined;
-        if (frame) {
+        // Only a row change scrolls and clips: a move along a row draws like the settled list
+        // (DEVICE-MEASURED, rowlist-clip-probe).
+        const scrolling = frame !== undefined && this.motion?.rowMoved === true;
+        if (scrolling) {
             const topIndex = Math.max(0, this.calculateActualRowIndex(0));
             pitch =
-                (context.rowHeights[topIndex] ?? context.itemSize[1]) +
+                this.rowLayoutHeight(topIndex, context) +
                 this.calculateRowSpacing(topIndex, context.rowSpacings, context.globalSpacing);
             firstRow = -Math.ceil(Math.max(0, frame.shift));
             lastRow = context.displayRows + Math.ceil(Math.max(0, -frame.shift));
             context.itemRect.y = rect.y + (firstRow + frame.shift) * pitch;
-            const viewport = context.displayRows * pitch - (context.globalSpacing[1] ?? 0);
-            this.pushMotionClip(rect, viewport, draw2D);
+            this.pushMotionClip(rect, this.windowLayoutHeight(context), draw2D);
         }
         // Only the settled window's rows make up the reported extent.
         let windowHeight = 0;
@@ -1041,7 +1043,7 @@ export class RowList extends ArrayGrid {
                 }
             }
         } finally {
-            if (frame) {
+            if (scrolling) {
                 draw2D?.popClip();
             }
         }
@@ -1049,7 +1051,7 @@ export class RowList extends ArrayGrid {
         if (frame && indicator && this.getValueJS("drawFocusFeedback")) {
             const focusRect = {
                 x: indicator.x,
-                y: rect.y + frame.focusSlot * pitch + indicator.bandOffset,
+                y: scrolling ? rect.y + frame.focusSlot * pitch + indicator.bandOffset : indicator.y,
                 width: indicator.width,
                 height: indicator.height,
             };
@@ -1058,6 +1060,25 @@ export class RowList extends ArrayGrid {
         const margin = this.rectMargins();
         const height = renderedRows === 0 ? 0 : windowHeight - trailingSpacing + margin.y * 2;
         this.updateRect(rect, context.displayRows, context.itemSize, { height, firstRow: this.currRow });
+    }
+
+    /**
+     * The settled window's height, each row's layout height plus its spacing (the last one included): a
+     * device clips the scrolling rows there (DEVICE-MEASURED, rowlist-clip-probe), so captions drawn below
+     * a poster stay visible.
+     */
+    private windowLayoutHeight(context: RowListRenderContext): number {
+        let height = 0;
+        for (let r = 0; r < context.displayRows; r++) {
+            const rowIndex = this.calculateActualRowIndex(r);
+            if (rowIndex < 0) {
+                break;
+            }
+            height +=
+                this.rowLayoutHeight(rowIndex, context) +
+                this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
+        }
+        return height;
     }
 
     private validateRenderPrerequisites(): boolean {
@@ -1150,9 +1171,8 @@ export class RowList extends ArrayGrid {
         const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         context.showRowLabel = showLabel;
-        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
         const hasLabel = showLabel && title.length !== 0;
-        const bandHeight = hasLabel || showCounter ? this.titleHeight + (labelOffset[1] ?? 0) : 0;
+        const bandHeight = this.rowBandHeight(rowIndex, hasLabel, showCounter);
         const bandFits = bandHeight <= Math.max(0, rowHeight - context.rowItemHeight);
         if (hasLabel) {
             const divRect = { ...context.itemRect, y: rowTopY, width: rowWidth };
@@ -1211,6 +1231,29 @@ export class RowList extends ArrayGrid {
         // every row below it.
         const screen = this.visibleSceneRect();
         return context.itemRect.y < screen.y + screen.height;
+    }
+
+    /** Height of the label/counter band at the top of a row (0 when it shows neither). */
+    private rowBandHeight(rowIndex: number, hasLabel: boolean, showCounter: boolean): number {
+        if (!hasLabel && !showCounter) {
+            return 0;
+        }
+        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+        return this.titleHeight + (labelOffset[1] ?? 0);
+    }
+
+    /**
+     * The height a row takes in the layout, without its spacing: the row height, grown by the band when
+     * the band does not fit in the row's slack (the advance in renderSingleRow).
+     */
+    private rowLayoutHeight(rowIndex: number, context: RowListRenderContext): number {
+        const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
+        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
+        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
+        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
+        const bandHeight = this.rowBandHeight(rowIndex, hasLabel, showCounter);
+        const posterHeight = this.getRowItemSize(rowIndex)[1];
+        return rowHeight + (bandHeight <= Math.max(0, rowHeight - posterHeight) ? 0 : bandHeight);
     }
 
     private getRowXOffset(rowIndex: number): number {
@@ -1313,6 +1356,7 @@ export class RowList extends ArrayGrid {
             const focusCol = this.motion.colMoved ? this.motionCol : this.rowFocus[rowIndex] ?? 0;
             this.motionIndicator = {
                 x: itemRect.x + (focusCol - visualStart) * pitchX,
+                y: itemRect.y,
                 width: rowItemWidth,
                 height: itemRect.height,
                 bandOffset: itemRect.y - this.rowTopForIndicator,

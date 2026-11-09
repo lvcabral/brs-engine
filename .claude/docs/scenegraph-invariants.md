@@ -973,6 +973,13 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
   back to the stale row).
 - While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
   `itemHasFocus`.
+- **Clipping while moving** (screenshots in `test/simulator/probes/rowlist-clip-probe`): a move along a
+  row clips nothing. A row change clips the scrolling rows to the window, which is each visible row's
+  layout height (`rowLayoutHeight`, band included) plus its spacing, **the last spacing included**
+  (`windowLayoutHeight`). Never derive the clip from `itemSize`/a uniform pitch: item components draw
+  captions below the poster, and a row with a label/counter band is taller than `itemSize`. Either way
+  they were cut mid-move. The device also clips the focused row to its row height at rest; the engine
+  doesn't (yet).
 - A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
   `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
   `animateToRow` takes ~265 ms per row against ~330 ms for key steps.

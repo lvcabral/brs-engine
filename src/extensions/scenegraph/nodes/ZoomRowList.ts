@@ -536,7 +536,10 @@ export class ZoomRowList extends ArrayGrid {
             const firstMetrics = this.getRowMetrics(firstRow);
             currentY = rect.y - fraction * (firstMetrics.rowHeight + firstMetrics.spacingY);
         }
-        if (motion) {
+        // Only a row change clips (the rows scrolling off the top); a move along a row draws like the
+        // settled list (DEVICE-MEASURED on RowList, rowlist-clip-probe).
+        const scrolling = motion?.rowMoved === true;
+        if (scrolling) {
             this.pushMotionClip(rect, 100000, draw2D);
         }
         let firstRenderedRow = -1;
@@ -592,7 +595,7 @@ export class ZoomRowList extends ArrayGrid {
                 }
             }
         } finally {
-            if (motion) {
+            if (scrolling) {
                 draw2D?.popClip();
             }
         }

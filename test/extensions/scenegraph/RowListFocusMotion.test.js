@@ -229,6 +229,48 @@ describe("RowList focus motion", () => {
         expect(log).toEqual(["scrollingStatus=true", "itemFocused=2", "scrollingStatus=false"]);
     });
 
+    /** Records the clips one paint pass pushes (a draw target that accepts every other call). */
+    function paintClips(list) {
+        const clips = [];
+        const draw2D = new Proxy(
+            {},
+            {
+                get: (_target, name) => (name === "pushClip" ? (rect) => clips.push(rect) : () => undefined),
+            }
+        );
+        list.renderNode(new core.Interpreter(), [0, 0], 0, 1, draw2D);
+        return clips;
+    }
+
+    /** rowlist-clip-probe's list: 150 px rows 20 px apart, two visible. */
+    function makeClipList() {
+        const list = makeList();
+        list.setValue("itemSize", new RoArray([new Float(1160), new Float(150)]));
+        list.setValue("itemSpacing", new RoArray([new Float(0), new Float(20)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(160), new Float(100)])]));
+        list.setValue("itemComponentName", new BrsString("Group"));
+        return list;
+    }
+
+    test("a move along a row clips nothing (device screenshot)", () => {
+        // rowlist-clip-probe: mid-move, captions below the posters stay visible on every row.
+        const list = makeClipList();
+        tap(list, "right");
+        advance(100);
+        expect(paintClips(list).filter((clip) => clip.width >= 200000)).toEqual([]);
+    });
+
+    test("a row change clips to the window plus the last row's spacing (device screenshot)", () => {
+        // rowlist-clip-probe: mid-scroll the rows are cut at y = top + 2 x (150 + 20), not at the last row's bottom.
+        const list = makeClipList();
+        tap(list, "down");
+        advance(100);
+        const clips = paintClips(list).filter((clip) => clip.width >= 200000);
+        expect(clips).toHaveLength(1);
+        expect(clips[0].y).toBe(0);
+        expect(clips[0].height).toBe(340);
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");
