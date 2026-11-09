@@ -406,28 +406,41 @@ export class PosterGrid extends ArrayGrid {
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
         const screenBottom = screen.y + screen.height;
-        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
-        // The pitch and cell height come from the target window's top row.
+        // Focus in motion: the settled layout scrolled by the rows it passes, plus the rows scrolling in/out.
         const motion = this.listMotionFrame(displayRows);
+        const motionRowIndex = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < contentLength ? index : -1;
+        };
+        const heightOf = (r: number) => {
+            const index = motionRowIndex(r);
+            if (index < 0) {
+                return baseSize[1];
+            }
+            const posterHeight = this.resolveTrackValue(rowHeights, Math.floor(index / this.numCols), baseSize[1]);
+            return posterHeight + (captionsExtendLayout ? this.computeRowCaptionHeight(index, placement) : 0);
+        };
+        const spanOf = (r: number) => {
+            const index = motionRowIndex(r);
+            const gap =
+                index < 0
+                    ? baseRowSpacing
+                    : this.resolveSpacingValue(rowSpacingValues, Math.floor(index / this.numCols), baseRowSpacing);
+            return heightOf(r) + gap;
+        };
         let firstRow = 0;
         let lastRow = displayRows;
-        let pitch = 0;
         let motionFocus: Rect | undefined;
         const focusOnTop = this.focusFeedbackOnTop();
         if (motion) {
-            const topIndex = Math.max(0, this.getRenderRowIndex(0));
-            const topRowNumber = Math.floor(topIndex / this.numCols);
-            const topCell =
-                this.resolveTrackValue(rowHeights, topRowNumber, baseSize[1]) +
-                (captionsExtendLayout ? this.computeRowCaptionHeight(topIndex, placement) : 0);
-            pitch = topCell + this.resolveSpacingValue(rowSpacingValues, topRowNumber, baseRowSpacing);
-            firstRow = -Math.ceil(Math.max(0, motion.shift));
-            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
-            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
             motionFocus = this.gridMotionFocusRect(
                 rect,
-                rect.y + motion.focusSlot * pitch,
-                topCell,
+                rect.y + rows.focusY,
+                rows.focusHeight,
                 motion.focusCol,
                 0,
                 (c) => columnWidths[c] ?? columnWidths[0],
@@ -436,14 +449,14 @@ export class PosterGrid extends ArrayGrid {
             if (!focusOnTop) {
                 this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
             }
-            this.pushMotionClip(rect, displayRows * pitch - baseRowSpacing, draw2D);
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
         }
         try {
             for (let r = firstRow; r < lastRow; r++) {
                 const rowIndex = motion ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
                 if (rowIndex < 0 || rowIndex >= contentLength) {
                     if (motion) {
-                        itemRect.y += pitch;
+                        itemRect.y += spanOf(r);
                         continue;
                     }
                     break;

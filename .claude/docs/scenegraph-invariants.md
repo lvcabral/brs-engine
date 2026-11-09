@@ -951,6 +951,16 @@ List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid
   indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
   `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
   reported extent from the settled window's rows only.
+- **List and grid rows move by their own heights, and the indicator resizes on the way** (screenshots in
+  `test/simulator/probes/markupgrid-focus-resize-probe`, MarkupGrid, MarkupList and LabelList): with
+  `rowHeights`/`columnWidths`, a fraction of
+  a row scrolls that fraction of the row's own span (height plus spacing), and the indicator's top-left
+  and size take the same fraction between the two items' rects, so it grows toward a larger item and
+  shrinks toward a smaller one. `motionRowLayout` holds the vertical half (rows to draw, indicator y and
+  height, window height) for MarkupGrid, PosterGrid, MarkupList and LabelList (CheckList and
+  RadioButtonList through it); `gridMotionFocusRect` the horizontal. Never scroll by `itemSize` or one
+  row's pitch: the rows and the ring then jump when the move settles. Regression: the resize tests in
+  `GridFocusMotion.test.js` and `ListFocusMotion.test.js`.
 - **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
   `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
   opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):

@@ -131,26 +131,31 @@ export class LabelList extends ArrayGrid {
         let sectionIndex = displayRows + 1;
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
-        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
+        // Focus in motion: the settled layout scrolled by the rows it passes, plus the rows scrolling in/out.
         const motion = this.listMotionFrame(displayRows);
-        const pitch = itemSize[1] + rowSpacingDefault;
+        const heightOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < 0 ? itemSize[1] : rowHeights[index] ?? itemSize[1];
+        };
+        const spanOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return heightOf(r) + (index < 0 ? rowSpacingDefault : rowSpacings[index] ?? rowSpacingDefault);
+        };
         let firstRow = 0;
         let lastRow = displayRows;
+        let focusRect: Rect | undefined;
         const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
         const drawFocusOnTop = this.focusFeedbackOnTop();
         if (motion) {
-            firstRow = -Math.ceil(Math.max(0, motion.shift));
-            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
-            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
+            focusRect = this.listMotionFocusRect(rect, rows, itemSize[0]);
             if (drawFocus && !drawFocusOnTop) {
-                this.renderMotionFocus(
-                    this.listMotionFocusRect(rect, motion, itemSize, pitch),
-                    motion.visualIndex,
-                    opacity,
-                    draw2D
-                );
+                this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
             }
-            this.pushMotionClip(rect, displayRows * pitch - rowSpacingDefault, draw2D);
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
         }
         try {
             this.renderRows(
@@ -161,7 +166,7 @@ export class LabelList extends ArrayGrid {
                 rowHeights,
                 rowSpacings,
                 rowSpacingDefault,
-                pitch,
+                spanOf,
                 screen,
                 {
                     hasSections,
@@ -176,13 +181,8 @@ export class LabelList extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        if (motion && drawFocus && drawFocusOnTop) {
-            this.renderMotionFocus(
-                this.listMotionFocusRect(rect, motion, itemSize, pitch),
-                motion.visualIndex,
-                opacity,
-                draw2D
-            );
+        if (motion && focusRect && drawFocus && drawFocusOnTop) {
+            this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
         }
         this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }
@@ -196,7 +196,7 @@ export class LabelList extends ArrayGrid {
         rowHeights: number[],
         rowSpacings: number[],
         rowSpacingDefault: number,
-        pitch: number,
+        spanOf: (r: number) => number,
         screen: Rect,
         ctx: { hasSections: boolean; nodeFocus: boolean; opacity: number; sectionIndex: number; draw2D?: IfDraw2D }
     ) {
@@ -208,7 +208,7 @@ export class LabelList extends ArrayGrid {
             const index = motion ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
             if (index < 0) {
                 if (motion) {
-                    itemRect.y += pitch;
+                    itemRect.y += spanOf(r);
                     continue;
                 }
                 break;

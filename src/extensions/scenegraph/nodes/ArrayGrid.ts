@@ -1239,9 +1239,64 @@ export class ArrayGrid extends Group implements UITransition {
         return { x: x0 + (x1 - x0) * fraction, y: slotY, width: width0 + (width1 - width0) * fraction, height };
     }
 
-    /** A list's in-transit indicator rect: one item tall, at viewport row `focusSlot`. */
-    protected listMotionFocusRect(rect: Rect, motion: { focusSlot: number }, itemSize: number[], pitch: number): Rect {
-        return { x: rect.x, y: rect.y + motion.focusSlot * pitch, width: itemSize[0], height: itemSize[1] };
+    /**
+     * A list's or grid's rows and indicator while its focus moves, in pixels from the viewport top
+     * (DEVICE-MEASURED, `markupgrid-focus-resize-probe`). Each row keeps its own height and spacing: `spanOf(r)` is the
+     * height plus the gap after the row drawn at viewport row `r` of the settled layout, `heightOf(r)`
+     * its height alone. A fraction of a row scrolls that fraction of the row's span, and the indicator
+     * takes the same fraction between the rects of the two rows it is between, so it grows or shrinks to
+     * the size of the item it goes to. Returns the rows to draw (`firstRow` at `firstY`, up to but not
+     * including `lastRow`), the indicator's y and height, and the settled window's height.
+     */
+    protected motionRowLayout(
+        frame: { shift: number; focusSlot: number },
+        displayRows: number,
+        spanOf: (r: number) => number,
+        heightOf: (r: number) => number
+    ) {
+        const spans = new Map<number, number>();
+        const span = (r: number) => {
+            let value = spans.get(r);
+            if (value === undefined) {
+                value = Math.max(0, spanOf(r));
+                spans.set(r, value);
+            }
+            return value;
+        };
+        const offset = (pos: number) => {
+            const whole = Math.floor(pos);
+            let y = (pos - whole) * span(whole);
+            for (let r = 0; r < whole; r++) {
+                y += span(r);
+            }
+            for (let r = whole; r < 0; r++) {
+                y -= span(r);
+            }
+            return y;
+        };
+        const last = Math.max(0, displayRows - 1);
+        const viewportHeight = offset(last) + heightOf(last);
+        const top = offset(-frame.shift);
+        const firstRow = Math.floor(Math.min(0, -frame.shift));
+        const firstY = offset(firstRow) - top;
+        let lastRow = firstRow;
+        const maxRow = firstRow + this.motionRows() + displayRows + 2;
+        for (let y = firstY; y < viewportHeight && lastRow < maxRow; lastRow++) {
+            y += span(lastRow);
+        }
+        const slot = frame.focusSlot - frame.shift;
+        const whole = Math.floor(slot);
+        const fraction = slot - whole;
+        let focusHeight = heightOf(whole);
+        if (fraction > 0) {
+            focusHeight += (heightOf(whole + 1) - focusHeight) * fraction;
+        }
+        return { firstRow, lastRow, firstY, focusY: offset(slot) - top, focusHeight, viewportHeight };
+    }
+
+    /** A list's in-transit indicator rect: the list's width, at the y and height `motionRowLayout` gave. */
+    protected listMotionFocusRect(rect: Rect, rows: { focusY: number; focusHeight: number }, width: number): Rect {
+        return { x: rect.x, y: rect.y + rows.focusY, width, height: rows.focusHeight };
     }
 
     /** Clips scrolling rows to the viewport (horizontally unbounded). */

@@ -227,19 +227,31 @@ export class MarkupGrid extends ArrayGrid {
         const startCol = Math.min(this.scrollCol, Math.max(0, this.numCols - 1));
         // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
         const motion = this.listMotionFrame(displayRows);
-        const pitch = itemSize[1] + spacing[1];
+        const motionRow = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < 0 ? -1 : Math.floor(index / this.numCols);
+        };
+        const heightOf = (r: number) => {
+            const row = motionRow(r);
+            return row < 0 ? itemSize[1] : rowHeights[row] ?? itemSize[1];
+        };
+        const spanOf = (r: number) => {
+            const row = motionRow(r);
+            return heightOf(r) + (row < 0 ? spacing[1] : rowSpacings[row] ?? spacing[1]);
+        };
         let firstRow = 0;
         let lastRow = displayRows;
         let motionFocus: Rect | undefined;
         const focusOnTop = this.focusFeedbackOnTop();
         if (motion) {
-            firstRow = -Math.ceil(Math.max(0, motion.shift));
-            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
-            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
             motionFocus = this.gridMotionFocusRect(
                 rect,
-                rect.y + motion.focusSlot * pitch,
-                itemSize[1],
+                rect.y + rows.focusY,
+                rows.focusHeight,
                 motion.focusCol,
                 startCol,
                 (c) => columnWidths[c] ?? itemSize[0],
@@ -248,14 +260,14 @@ export class MarkupGrid extends ArrayGrid {
             if (!focusOnTop) {
                 this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
             }
-            this.pushMotionClip(rect, displayRows * pitch - spacing[1], draw2D);
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
         }
         try {
             for (let r = firstRow; r < lastRow; r++) {
                 const rowIndex = motion ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
                 if (rowIndex < 0) {
                     if (motion) {
-                        itemRect.y += pitch;
+                        itemRect.y += spanOf(r);
                         continue;
                     }
                     break;

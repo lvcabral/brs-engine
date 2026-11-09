@@ -134,22 +134,31 @@ export class MarkupList extends ArrayGrid {
         const rowWidth = itemSize[0];
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
-        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
+        // Focus in motion: the settled layout scrolled by the rows it passes, plus the rows scrolling in/out.
         const motion = this.listMotionFrame(displayRows);
-        const pitch = itemSize[1] + spacing[1];
+        const heightOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < 0 ? itemSize[1] : rowHeights[index] ?? itemSize[1];
+        };
+        const spanOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return heightOf(r) + (index < 0 ? spacing[1] : rowSpacings[index] ?? spacing[1]);
+        };
         let firstRow = 0;
         let lastRow = displayRows;
+        let focusRect: Rect | undefined;
         const drawFocusOnTop = this.focusFeedbackOnTop();
         if (motion) {
-            firstRow = -Math.ceil(Math.max(0, motion.shift));
-            lastRow = displayRows + Math.ceil(Math.max(0, -motion.shift));
-            itemRect.y = rect.y + (firstRow + motion.shift) * pitch;
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
+            focusRect = this.listMotionFocusRect(rect, rows, itemSize[0]);
             // The moving indicator goes under the items unless it is drawn on top (see focusFeedbackOnTop).
             if (!drawFocusOnTop) {
-                const focusRect = this.listMotionFocusRect(rect, motion, itemSize, pitch);
                 this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
             }
-            this.pushMotionClip(rect, displayRows * pitch - spacing[1], draw2D);
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
         }
         try {
             this.renderRows(interpreter, firstRow, lastRow, motion !== undefined, itemRect, rect, {
@@ -159,7 +168,7 @@ export class MarkupList extends ArrayGrid {
                 rowSpacings,
                 itemSize,
                 rowWidth,
-                pitch,
+                spanOf,
                 screen,
                 rotation,
                 opacity,
@@ -170,8 +179,7 @@ export class MarkupList extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        if (motion && drawFocusOnTop) {
-            const focusRect = this.listMotionFocusRect(rect, motion, itemSize, pitch);
+        if (motion && focusRect && drawFocusOnTop) {
             this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
         }
         this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
@@ -192,7 +200,7 @@ export class MarkupList extends ArrayGrid {
             rowSpacings: number[];
             itemSize: number[];
             rowWidth: number;
-            pitch: number;
+            spanOf: (r: number) => number;
             screen: Rect;
             rotation: number;
             opacity: number;
@@ -206,7 +214,7 @@ export class MarkupList extends ArrayGrid {
             rowSpacings,
             itemSize,
             rowWidth,
-            pitch,
+            spanOf,
             screen,
             rotation,
             opacity,
@@ -218,7 +226,7 @@ export class MarkupList extends ArrayGrid {
             const rowIndex = moving ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
             if (rowIndex < 0) {
                 if (moving) {
-                    itemRect.y += pitch;
+                    itemRect.y += spanOf(r);
                     continue;
                 }
                 break;

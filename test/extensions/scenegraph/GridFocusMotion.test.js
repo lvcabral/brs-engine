@@ -287,6 +287,109 @@ describe("Grid focus motion", () => {
         expect(order.filter((step) => step === "indicator")).toHaveLength(1);
     });
 
+    /**
+     * The probe's grid (markupgrid-focus-resize-probe): 2 columns 120 and 420 wide (a PosterGrid ignores
+     * columnWidths), rows alternating 60 and 200 tall, 20 px apart. A MarkupGrid's item components are
+     * not built (a unit test has no XML component).
+     */
+    function makeSizedGrid(type, style) {
+        const grid = SGNodeFactory.createNode(type);
+        const size = new RoArray([new Float(200), new Float(100)]);
+        grid.setValue(type === "PosterGrid" ? "basePosterSize" : "itemSize", size);
+        grid.setValue("itemSpacing", new RoArray([new Float(20), new Float(20)]));
+        grid.setValue("numColumns", new Int32(2));
+        grid.setValue("numRows", new Int32(4));
+        grid.setValue("columnWidths", new RoArray([new Float(120), new Float(420)]));
+        const heights = [];
+        for (let r = 0; r < 8; r++) {
+            heights.push(new Float(r % 2 ? 200 : 60));
+        }
+        grid.setValue("rowHeights", new RoArray(heights));
+        grid.setValue("vertFocusAnimationStyle", new BrsString(style));
+        if (type === "MarkupGrid") {
+            grid.setValue("itemComponentName", new BrsString("SizedCell"));
+        }
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (let i = 0; i < 16; i++) {
+            root.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+        }
+        grid.setValue("content", root);
+        grid.setNodeFocus(true);
+        return grid;
+    }
+
+    /** Paints one pass and returns the in-transit indicator rect and each drawn item's y. */
+    function paintSized(grid) {
+        sgRoot.nodeDefMap.set("sizedcell", {});
+        const result = { itemY: new Map() };
+        grid.renderMotionFocus = (focusRect) => {
+            result.focus = { ...focusRect };
+        };
+        if (grid.constructor.name === "MarkupGrid") {
+            grid.renderItemComponent = (_interpreter, index, itemRect) => {
+                result.itemY.set(index, itemRect.y);
+            };
+        }
+        try {
+            grid.renderNode(new core.Interpreter(), [0, 0], 0, 1, nullDraw2D());
+        } finally {
+            sgRoot.nodeDefMap.delete("sizedcell");
+        }
+        return result;
+    }
+
+    test("a MarkupGrid's floating indicator grows and shrinks to the row it moves to (device screenshot)", () => {
+        // markupgrid-focus-resize-probe: the ring's top and height take the same fraction between the
+        // 60 px row and the 200 px row below it.
+        const grid = makeSizedGrid("MarkupGrid", "floatingFocus");
+        tap(grid, "down");
+        advance(60);
+        const f = grid.motionPos;
+        expect(f).toBeGreaterThan(0.2);
+        expect(f).toBeLessThan(0.9);
+        let { focus } = paintSized(grid);
+        expect(focus.y).toBeCloseTo(80 * f, 5);
+        expect(focus.height).toBeCloseTo(60 + 140 * f, 5);
+        expect(focus.width).toBe(120);
+        advance(400);
+        tap(grid, "down");
+        advance(60);
+        const g = grid.motionPos - 1;
+        ({ focus } = paintSized(grid));
+        expect(focus.y).toBeCloseTo(80 + 220 * g, 5);
+        expect(focus.height).toBeCloseTo(200 - 140 * g, 5);
+    });
+
+    test("a MarkupGrid's fixed-focus rows scroll by their own heights under a resizing indicator (device screenshot)", () => {
+        // markupgrid-focus-resize-probe: from the 200 px row down to the 60 px row, the ring stays at the
+        // top and shrinks while the rows move up by the 220 px the tall row spans.
+        const grid = makeSizedGrid("MarkupGrid", "fixedFocusWrap");
+        tap(grid, "down");
+        advance(400);
+        tap(grid, "down");
+        advance(60);
+        const f = grid.motionPos - 1;
+        expect(f).toBeGreaterThan(0.2);
+        expect(f).toBeLessThan(0.9);
+        const { focus, itemY } = paintSized(grid);
+        expect(focus.y).toBeCloseTo(0, 5);
+        expect(focus.height).toBeCloseTo(200 - 140 * f, 5);
+        expect(itemY.get(4)).toBeCloseTo(220 * (1 - f), 5);
+        expect(itemY.get(6)).toBeCloseTo(220 * (1 - f) + 80, 5);
+    });
+
+    test("a PosterGrid's indicator takes the height between the two rows it moves between", () => {
+        const grid = makeSizedGrid("PosterGrid", "floatingFocus");
+        tap(grid, "down");
+        advance(60);
+        const f = grid.motionPos;
+        expect(f).toBeGreaterThan(0.2);
+        expect(f).toBeLessThan(0.9);
+        const { focus } = paintSized(grid);
+        expect(focus.y).toBeCloseTo(80 * f, 5);
+        expect(focus.height).toBeCloseTo(60 + 140 * f, 5);
+    });
+
     test("a PosterGrid keeps its settled bounding rect while the rows scroll", () => {
         const grid = makeGrid("PosterGrid");
         const interpreter = new core.Interpreter();

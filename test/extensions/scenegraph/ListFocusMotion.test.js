@@ -296,6 +296,105 @@ describe("List focus motion", () => {
         }
     });
 
+    /**
+     * markupgrid-focus-resize-probe's lists: rows alternating 40 and 120 tall, 20 px apart. A MarkupList's
+     * item components are not built (a unit test has no XML component).
+     */
+    function makeSizedList(type, style) {
+        const list = SGNodeFactory.createNode(type);
+        list.setValue("itemSize", new RoArray([new Float(420), new Float(48)]));
+        list.setValue("itemSpacing", new RoArray([new Float(0), new Float(20)]));
+        list.setValue("numRows", new Int32(4));
+        const heights = [];
+        for (let r = 0; r < 8; r++) {
+            heights.push(new Float(r % 2 ? 120 : 40));
+        }
+        list.setValue("rowHeights", new RoArray(heights));
+        list.setValue("vertFocusAnimationStyle", new BrsString(style));
+        if (type === "MarkupList") {
+            list.setValue("itemComponentName", new BrsString("SizedRow"));
+        }
+        const root = SGNodeFactory.createNode("ContentNode");
+        for (let i = 0; i < 8; i++) {
+            const item = SGNodeFactory.createNode("ContentNode");
+            item.setValue("title", new BrsString(`I${i}`));
+            root.appendChildToParent(item);
+        }
+        list.setValue("content", root);
+        list.setNodeFocus(true);
+        return list;
+    }
+
+    /** Paints one pass and returns the in-transit indicator rect and each drawn row's y. */
+    function paintSized(list) {
+        sgRoot.nodeDefMap.set("sizedrow", {});
+        const result = { rowY: new Map() };
+        list.renderMotionFocus = (focusRect) => {
+            result.focus = { ...focusRect };
+        };
+        if (list.constructor.name === "MarkupList") {
+            list.renderItemComponent = (_interpreter, index, itemRect) => {
+                result.rowY.set(index, itemRect.y);
+            };
+        } else {
+            list.renderItem = (index, _item, itemRect) => {
+                result.rowY.set(index, itemRect.y);
+            };
+        }
+        try {
+            list.renderNode(new core.Interpreter(), [0, 0], 0, 1, new Proxy({}, { get: () => () => undefined }));
+        } finally {
+            sgRoot.nodeDefMap.delete("sizedrow");
+        }
+        return result;
+    }
+
+    test.each(["LabelList", "MarkupList"])(
+        "%s: the floating indicator grows and shrinks to the row it moves to (device screenshot)",
+        (type) => {
+            // markupgrid-focus-resize-probe: the highlight's top and height take the same fraction
+            // between the two rows' rects.
+            const list = makeSizedList(type, "floatingFocus");
+            tap(list, "down");
+            advance(48);
+            const f = list.motionPos;
+            expect(f).toBeGreaterThan(0.2);
+            expect(f).toBeLessThan(0.9);
+            let { focus } = paintSized(list);
+            expect(focus.y).toBeCloseTo(60 * f, 5);
+            expect(focus.height).toBeCloseTo(40 + 80 * f, 5);
+            expect(focus.width).toBe(420);
+            advance(300);
+            tap(list, "down");
+            advance(48);
+            const g = list.motionPos - 1;
+            ({ focus } = paintSized(list));
+            expect(focus.y).toBeCloseTo(60 + 140 * g, 5);
+            expect(focus.height).toBeCloseTo(120 - 80 * g, 5);
+        }
+    );
+
+    test.each(["LabelList", "MarkupList"])(
+        "%s: fixed-focus rows scroll by their own heights under a resizing indicator (device screenshot)",
+        (type) => {
+            // markupgrid-focus-resize-probe: from the 120 px row down to the 40 px row, the highlight
+            // stays at the top and shrinks while the rows move up by the 140 px the tall row spans.
+            const list = makeSizedList(type, "fixedFocusWrap");
+            tap(list, "down");
+            advance(300);
+            tap(list, "down");
+            advance(48);
+            const f = list.motionPos - 1;
+            expect(f).toBeGreaterThan(0.2);
+            expect(f).toBeLessThan(0.9);
+            const { focus, rowY } = paintSized(list);
+            expect(focus.y).toBeCloseTo(0, 5);
+            expect(focus.height).toBeCloseTo(120 - 80 * f, 5);
+            expect(rowY.get(2)).toBeCloseTo(140 * (1 - f), 5);
+            expect(rowY.get(3)).toBeCloseTo(140 * (1 - f) + 60, 5);
+        }
+    );
+
     test("a layout pass mid-motion keeps the settled bounding rect and does not advance the motion", () => {
         const list = makeList("LabelList", "fixedFocusWrap");
         const interpreter = new core.Interpreter();
