@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Left menu panel: a ListPanel whose MarkupGrid starts empty. createNextPanelOnItemFocus builds the
+     right panel from createNextPanelIndex. -->
+<component name="MenuPanel" extends="ListPanel">
+    <interface>
+        <field id="content" alias="grid.content" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/MenuPanel.brs" />
+    <children>
+        <MarkupGrid id="grid" itemComponentName="MenuItem" numRows="6" numColumns="1" itemSize="[437,72]" />
+    </children>
+</component>

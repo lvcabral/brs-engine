@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A PanelSet holding a left ListPanel menu that is focused while still empty. Its content arrives
+     later, from a Timer handler (like a fetched list): the reset to item 0 that the content publishes
+     must still create the right detail panel through createNextPanelOnItemFocus. -->
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="report" type="integer" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript"><![CDATA[
+sub init()
+    m.panelSet = m.top.findNode("panelSet")
+    m.menuPanel = CreateObject("roSGNode", "MenuPanel")
+    m.panelSet.appendChild(m.menuPanel)
+    m.menuPanel.setFocus(true)
+
+    m.loadTimer = m.top.findNode("loadTimer")
+    m.loadTimer.observeField("fire", "onLoad")
+    m.loadTimer.control = "start"
+    m.reportTimer = m.top.findNode("reportTimer")
+    m.reportTimer.observeField("fire", "onReport")
+end sub
+
+sub onLoad()
+    content = CreateObject("roSGNode", "ContentNode")
+    for i = 1 to 3
+        content.createChild("ContentNode").title = "Menu " + i.toStr()
+    end for
+    m.menuPanel.content = content
+    print "content assigned, numPanels = "; m.panelSet.numPanels
+    m.reportTimer.control = "start"
+end sub
+
+sub onReport()
+    m.top.report = m.panelSet.numPanels
+end sub
+]]></script>
+    <children>
+        <PanelSet id="panelSet" />
+        <Timer id="loadTimer" duration="0.1" />
+        <Timer id="reportTimer" duration="0.2" />
+    </children>
+</component>
