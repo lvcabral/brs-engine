@@ -19,6 +19,7 @@ import {
     isAppData,
     isExtensionInfo,
     isFrameData,
+    isWorkerReady,
     isGraphicsData,
     isNDKStart,
     isRegistryData,
@@ -34,6 +35,7 @@ import {
 import SharedObject from "../core/SharedObject";
 import { handleTaskData, handleThreadUpdate, initTaskModule, resetTasks } from "./task";
 import { connectBackground, stopBackground } from "./backgroundHost";
+import { trackWorkerLoad, waitForWorkerLoad } from "./workerLoad";
 
 /**
  * Node worker host: runs a BrightScript app on a dedicated `worker_threads` thread (the render
@@ -139,6 +141,7 @@ export async function executeApp(payload: AppPayload, options?: ExecuteAppOption
         // must reach the host as an event, never the terminal directly — in frame-rendering
         // modes a stray write lands inside the frame region and flickers the screen.
         appWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+        trackWorkerLoad(appWorker);
         appWorker.stdout.on("data", (chunk: Buffer) => notifyAll("stdout", chunk.toString()));
         appWorker.stderr.on("data", (chunk: Buffer) => notifyAll("stderr", chunk.toString()));
         appWorker.on("message", mainCallback);
@@ -221,6 +224,8 @@ async function cleanupApp() {
     clearTimeout(terminateTimer);
     terminateTimer = undefined;
     if (worker) {
+        // An app that ends right after it started may still be loading (see workerLoad.ts)
+        await waitForWorkerLoad(worker);
         worker.removeAllListeners();
         await worker.terminate().catch(() => {});
     }
@@ -233,7 +238,10 @@ async function cleanupApp() {
  * @param data Message posted by the app worker
  */
 function mainCallback(data: any) {
-    if (isFrameData(data)) {
+    if (isWorkerReady(data)) {
+        // Handled by workerLoad.ts
+        return;
+    } else if (isFrameData(data)) {
         // Revive the flattened frame into a real node-canvas ImageData instance. The pixels may
         // come from another JS realm (a VM-sandboxed test runner pool), where instanceof-based
         // native checks fail — rewrap them in a local Uint8ClampedArray view over the same buffer.

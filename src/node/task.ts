@@ -16,6 +16,7 @@ import {
     isTaskData,
     isThreadUpdate,
     isTypeOf,
+    isWorkerReady,
     TaskData,
     TaskPayload,
     TaskState,
@@ -23,6 +24,7 @@ import {
 } from "../core/common";
 import SharedObject from "../core/SharedObject";
 import { connectBackground, releaseBackground } from "./backgroundHost";
+import { trackWorkerLoad, waitForWorkerLoad } from "./workerLoad";
 
 // NOTE: Keep in sync with `src/api/task.ts` (the browser task broker). Both implement the same
 // task-spawn protocol and thread-update relay; only the Worker API and event routing differ.
@@ -132,6 +134,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     // Pipe stdout/stderr so console output from inside the task worker becomes a host
     // event instead of writing straight to the terminal (see the app worker in host.ts).
     const taskWorker = new Worker(workerEntry, { stdout: true, stderr: true });
+    trackWorkerLoad(taskWorker);
     taskWorker.stdout.on("data", (chunk: Buffer) => notifyHost("stdout", chunk.toString()));
     taskWorker.stderr.on("data", (chunk: Buffer) => notifyHost("stderr", chunk.toString()));
     // A leaked task worker must never keep the host process alive after the app ends.
@@ -234,6 +237,9 @@ async function endTask(taskId: number) {
     }
     const taskWorker = tasks.get(taskId);
     if (taskWorker) {
+        // A task stopped right after it started may still be loading: terminating it then would
+        // abort the whole process (see workerLoad.ts).
+        await waitForWorkerLoad(taskWorker);
         // Drain before detaching the real "message" listener: a print in flight when this was
         // called must still reach taskCallback/notifyHost, not just be waited on.
         await drainWorkerOutput(taskWorker);
@@ -270,7 +276,13 @@ export async function resetTasks() {
     // Drain every worker concurrently, real "message" listener still attached, before tearing any
     // of them down -- sequential draining would multiply the (usually negligible) quiet-window
     // wait by the number of still-running tasks.
-    await Promise.all(workers.map(async (worker) => drainWorkerOutput(worker)));
+    // Each worker must also have finished loading before it's terminated (see workerLoad.ts).
+    await Promise.all(
+        workers.map(async (worker) => {
+            await waitForWorkerLoad(worker);
+            await drainWorkerOutput(worker);
+        })
+    );
     for (const worker of workers) {
         worker.removeAllListeners("message");
         worker.terminate().catch(() => {});
@@ -300,7 +312,10 @@ export async function resetTasks() {
  * @param data Message posted by the task worker
  */
 function taskCallback(data: any) {
-    if (isRegistryData(data)) {
+    if (isWorkerReady(data)) {
+        // Handled by workerLoad.ts
+        return;
+    } else if (isRegistryData(data)) {
         notifyHost("registry", data);
     } else if (isChannelCredData(data)) {
         notifyHost("channelCredentials", data);
