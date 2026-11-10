@@ -821,9 +821,12 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > still-pending ancestor doesn't double-fire, and `invoke` zeroes `focusEmissionDepth` so a handler's
    > own focus changes are treated as app-initiated. `runAfterConstruction` shares its trigger (no init
    > and no observer on the stack): AnimatedImage replays its construction-time states through it, and a
-   > list publishes the pending reset of new content (see the `ArrayGrid` focus model below).
+   > list publishes the pending reset of new content (see the `ArrayGrid` focus model below). It drains
+   > from `tick` **and** from `onMessageLoop`: a handler dispatched from the message loop returns there,
+   > and while `Main` blocks in `wait(0)` no statement runs outside an observer, so a tick-only drain never
+   > fires (a menu's content reset then never reached its ListPanel's `createNextPanelIndex`).
    > Regression: `init-focus-observer-app` (deferred delivery + no double-fire) plus the cascade apps
-   > above.
+   > above; `panelset-content-nextpanel-app` for the message-loop drain.
    >
    > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
    > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
@@ -1619,7 +1622,9 @@ LabelList/MarkupList (and the grids, which share the code). RowList, ZoomRowList
   alwaysNotify), and records the target silently; the next gain lands there.
 - **New content publishes nothing at the write.** The focus resets to item 0 silently, and `itemFocused` 0
   goes out once: before the next `jumpToItem`/`animateToItem`, or when the current handler or `init()`
-  returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. So `init()`
+  returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. Like every
+  other focus landing it calls `itemFocusCallback`, so a ListPanel/GridPanel publishes
+  `createNextPanelIndex` for it. So `init()`
   assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
   handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
   `flushContentFocus()` where a device would have returned from the handler.

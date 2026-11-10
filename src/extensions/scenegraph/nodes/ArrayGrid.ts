@@ -476,6 +476,9 @@ export class ArrayGrid extends Group implements UITransition {
         this.pendingContentFocus = false;
         if ((sgRoot.focused === this || this.isChildrenFocused()) && this.content.length > 0) {
             super.setValue("itemFocused", new Int32(0));
+            // The owning ListPanel/GridPanel creates its next panel from this focus, as on any other
+            // focus landing (setFocusedItem, the motion settle).
+            this.itemFocusCallback?.(0);
         }
     }
 

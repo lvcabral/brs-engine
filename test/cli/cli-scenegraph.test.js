@@ -1718,6 +1718,30 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("PanelSet creates the right panel when a focused menu receives its content later", async () => {
+        let command = ["node", brsCliPath, "-r panelset-content-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The menu ListPanel is focused while empty; a Timer handler assigns its content, and Main
+        // blocks in wait(0). The content's reset to item 0 is deferred until the handler returns, so it
+        // must be delivered from the message loop (no statement runs outside an observer there) AND
+        // reach the ListPanel's createNextPanelIndex. Before the fix neither happened: the deferred
+        // itemFocused 0 never went out, and even when flushed it bypassed the panel, so numPanels
+        // stayed 1 and the detail panel never appeared.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== PanelSet Content NextPanel Repro ===",
+            "content assigned, numPanels =  1",
+            "created right panel for index  0",
+            "numPanels after content =  2",
+            "=== PanelSet Content NextPanel Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("PanelSet clears the trailing detail panel when the app supplies no next panel", async () => {
         let command = ["node", brsCliPath, "-r panelset-clearpanel-app", "source/main.brs", "-c 0"].join(" ");
 

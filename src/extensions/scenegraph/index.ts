@@ -193,6 +193,10 @@ export class BrightScriptExtension implements BrsExtension {
     }
 
     onMessageLoop(_: Interpreter) {
+        // Work deferred until the current handler returns (e.g. a list's content-reset itemFocused).
+        // A handler dispatched from the message loop returns HERE: while Main blocks in wait(), no
+        // statement runs outside an observer, so the tick drain above would never see depth 0.
+        Field.deliverPendingConstructionCallbacks();
         // Results of operations that are asynchronous on a device (see Field.runOnMessageLoop).
         Field.deliverMessageLoopCallbacks();
     }
