@@ -1690,6 +1690,15 @@ re-shown from `rowItemFocused`).
      from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
      hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
      (container-redirect scenario 2).
+   - **Engine-internal focus moves must keep both pointers honest.** PanelSet's key navigation
+     (`goBack`/`goForward`) releases the panel it leaves through the node that actually holds the focus
+     (`releasePanelFocus`): unfocusing a panel whose observer forwarded the focus to a grid would cut only
+     the panel's link in the middle of the chain, the next transaction would skip it (its link no longer
+     points along the path) and its observer would never see it leave the chain. The move then records
+     the focused panel as `lastFocusTarget` (`focusCurrentPanel`), a firmware `setFocus` completing after
+     any call nested in it; otherwise a details panel forwarding to its grid again after a Left would find
+     that grid as the last target, write only its self-link and lose the focus. Regression:
+     `PanelSetForwardFocus.test.js`.
    - Still open: within one transaction the device notifies the gaining path from the leaf up and then the
      losing nodes (the probe's gallery run), while the engine notifies the losing nodes first, from the
      root down. `focus-probe2` N1 has the device notifying a losing sibling first, so the rule is not yet
