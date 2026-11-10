@@ -1672,6 +1672,23 @@ re-shown from `rowItemFocused`).
      its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
      chain owner's path and takes it over. The live focus follows only when the chain from the root now
      leads to the target.
+   - **A forward extends the owner's chain** (`test/simulator/probes/nested-forward-focus-probe`). When a
+     nested call moves the live focus onto a node below the chain owner and newly writes that node's
+     self-link, the node becomes `sgRoot.chainExtension`, and the next top-level call unsets the chain
+     through it (`previous = chainExtension ?? chainOwner`). Without it, a list that forwards focus to a
+     button from its own observer left the button's self-link behind: the button kept `hasFocus()` and
+     never collapsed (the Popcorn gallery's ExpandButtonList). Re-writing links that already existed
+     extends nothing (`focus-flag-probe` D keeps them), and a takeover of the Scene's link still unsets
+     only the owner's own path (`focus-flag-probe` A1).
+   - **Focusing a node between the chain owner and the focus keeps the chain.** `holdsLiveFocus`: the owner
+     is a proper ancestor and the live focus a proper descendant. `restageChain` re-notifies the chain
+     from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
+     hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
+     (container-redirect scenario 2).
+   - Still open: within one transaction the device notifies the gaining path from the leaf up and then the
+     losing nodes (the probe's gallery run), while the engine notifies the losing nodes first, from the
+     root down. `focus-probe2` N1 has the device notifying a losing sibling first, so the rule is not yet
+     known.
    - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
      `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
      return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus

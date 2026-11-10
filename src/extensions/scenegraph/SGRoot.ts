@@ -45,6 +45,7 @@ export class SGRoot {
     private _scene?: Scene;
     private _focused?: RoSGNode;
     private _chainOwner?: RoSGNode;
+    private _chainExtension?: RoSGNode;
     private _lastFocusTarget?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
@@ -193,6 +194,11 @@ export class SGRoot {
     /** The node whose path the next focus transaction unsets (see `Node.applyFocus`). */
     get chainOwner(): RoSGNode | undefined {
         return this._chainOwner;
+    }
+
+    /** The node a nested forward extended the chain owner's chain to (see `Node.applyNestedFocus`). */
+    get chainExtension(): RoSGNode | undefined {
+        return this._chainExtension;
     }
 
     /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
@@ -501,6 +507,7 @@ export class SGRoot {
         this._focused = node;
         if (!node) {
             this._chainOwner = undefined;
+            this._chainExtension = undefined;
         }
     }
 
@@ -510,6 +517,15 @@ export class SGRoot {
      */
     setChainOwner(node?: RoSGNode) {
         this._chainOwner = node;
+        this._chainExtension = undefined;
+    }
+
+    /**
+     * Records the node a nested forward extended the chain owner's chain to.
+     * @param node That node, or undefined to clear it
+     */
+    setChainExtension(node?: RoSGNode) {
+        this._chainExtension = node;
     }
 
     /**

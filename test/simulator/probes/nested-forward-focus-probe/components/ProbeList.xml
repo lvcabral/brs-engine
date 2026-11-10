@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Like PopcornExpandButtonList: on gaining focus itself, forwards it to the current (or first) button. -->
+<component name="ProbeList" extends="Group">
+    <interface><field id="prefix" type="string" /></interface>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.focusable = true
+        m.focusedIndex = -1
+        m.top.observeFieldScoped("prefix", "build")
+        m.top.observeFieldScoped("focusedChild", "onListFocusChange")
+    end sub
+
+    sub build()
+        m.buttons = []
+        for i = 0 to 2
+            b = CreateObject("roSGNode", "ProbeButton")
+            b.id = m.top.prefix + i.toStr()
+            m.buttons.push(b)
+        end for
+        m.top.appendChildren(m.buttons)
+    end sub
+
+    sub onListFocusChange()
+        fc = "invalid"
+        if m.top.focusedChild <> invalid then fc = m.top.focusedChild.id
+        print "PROBE|" + m.top.prefix + "List focusedChild=" + fc + " hasFocus=" + m.top.hasFocus().toStr()
+        if m.top.hasFocus() = true
+            index = m.focusedIndex
+            if index < 0 then index = 0
+            focusButton(index)
+        end if
+    end sub
+
+    sub focusButton(index as integer)
+        m.focusedIndex = index
+        m.buttons[index].setFocus(true)
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if not press then return false
+        stepBy = 0
+        if m.top.prefix = "h"
+            if key = "left" then stepBy = -1
+            if key = "right" then stepBy = 1
+        else
+            if key = "up" then stepBy = -1
+            if key = "down" then stepBy = 1
+        end if
+        if stepBy = 0 then return false
+        target = m.focusedIndex + stepBy
+        if target < 0 or target > 2 then return false
+        print "PROBE|key " + key + " -> " + m.top.prefix + target.toStr()
+        focusButton(target)
+        dump("after-" + key)
+        return true
+    end function
+
+    sub dump(label as string)
+        scene = m.top.getScene()
+        line = "PROBE|state " + label
+        for each id in ["h0", "h1", "h2", "v0", "v1", "v2"]
+            line = line + " " + id + "=" + scene.findNode(id).hasFocus().toStr()
+        end for
+        print line
+    end sub
+
+    ]]>
+    </script>
+</component>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Like BaseGallery: on gaining focus itself, focuses the current cell; Up/Down move between the two lists. -->
+<component name="ProbeGallery" extends="Group">
+    <interface><function name="focusFirstCell" /></interface>
+    <children>
+        <ProbeList id="hList" prefix="h" />
+        <ProbeList id="vList" prefix="v" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.focusable = true
+        m.row = 0
+        m.cells = [m.top.findNode("hList"), m.top.findNode("vList")]
+        m.top.observeFieldScoped("focusedChild", "onFocusedChildChange")
+    end sub
+
+    sub onFocusedChildChange()
+        fc = "invalid"
+        if m.top.focusedChild <> invalid then fc = m.top.focusedChild.id
+        print "PROBE|body focusedChild=" + fc + " hasFocus=" + m.top.hasFocus().toStr()
+        if m.top.hasFocus() = true then focusCell(m.row)
+    end sub
+
+    sub focusFirstCell()
+        focusCell(0)
+    end sub
+
+    sub focusCell(row as integer)
+        m.row = row
+        m.cells[row].setFocus(true)
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if not press then return false
+        if key = "up" and m.row > 0
+            print "PROBE|key up -> row " + (m.row - 1).toStr()
+            focusCell(m.row - 1)
+            dump("after-" + key)
+            return true
+        else if key = "down" and m.row < 1
+            print "PROBE|key down -> row " + (m.row + 1).toStr()
+            focusCell(m.row + 1)
+            dump("after-" + key)
+            return true
+        end if
+        return false
+    end function
+
+    sub dump(label as string)
+        scene = m.top.getScene()
+        line = "PROBE|state " + label
+        for each id in ["h0", "h1", "h2", "v0", "v1", "v2"]
+            line = line + " " + id + "=" + scene.findNode(id).hasFocus().toStr()
+        end for
+        print line
+    end sub
+
+    ]]>
+    </script>
+</component>

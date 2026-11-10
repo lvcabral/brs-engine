@@ -1,0 +1,47 @@
+PROBE|open: body.setFocus
+PROBE|body focusedChild=body hasFocus=true
+PROBE|hList focusedChild=hList hasFocus=true
+PROBE|h0 focusedChild=h0 hasFocus=true
+PROBE|open: focusFirstCell
+PROBE|h0 focusedChild=h0 hasFocus=true
+PROBE|hList focusedChild=h0 hasFocus=false
+PROBE|body focusedChild=hList hasFocus=false
+PROBE|state open h0=true h1=false h2=false v0=false v1=false v2=false
+PROBE|0|MANUAL|keys
+PROBE|key right -> h1
+PROBE|h0 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=hList hasFocus=false
+PROBE|hList focusedChild=h1 hasFocus=false
+PROBE|h1 focusedChild=h1 hasFocus=true
+PROBE|state after-right h0=false h1=true h2=false v0=false v1=false v2=false
+PROBE|key right -> h2
+PROBE|h1 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=hList hasFocus=false
+PROBE|hList focusedChild=h2 hasFocus=false
+PROBE|h2 focusedChild=h2 hasFocus=true
+PROBE|state after-right h0=false h1=false h2=true v0=false v1=false v2=false
+PROBE|key down -> row 1
+PROBE|hList focusedChild=invalid hasFocus=false
+PROBE|h2 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=vList hasFocus=false
+PROBE|vList focusedChild=vList hasFocus=true
+PROBE|v0 focusedChild=v0 hasFocus=true
+PROBE|state after-down h0=false h1=false h2=false v0=true v1=false v2=false
+PROBE|key down -> v1
+PROBE|v0 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=vList hasFocus=false
+PROBE|vList focusedChild=v1 hasFocus=false
+PROBE|v1 focusedChild=v1 hasFocus=true
+PROBE|state after-down h0=false h1=false h2=false v0=false v1=true v2=false
+PROBE|key down -> v2
+PROBE|v1 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=vList hasFocus=false
+PROBE|vList focusedChild=v2 hasFocus=false
+PROBE|v2 focusedChild=v2 hasFocus=true
+PROBE|state after-down h0=false h1=false h2=false v0=false v1=false v2=true
+PROBE|key up -> v1
+PROBE|v2 focusedChild=invalid hasFocus=false
+PROBE|body focusedChild=vList hasFocus=false
+PROBE|vList focusedChild=v1 hasFocus=false
+PROBE|v1 focusedChild=v1 hasFocus=true
+PROBE|state after-up h0=false h1=false h2=false v0=false v1=true v2=false

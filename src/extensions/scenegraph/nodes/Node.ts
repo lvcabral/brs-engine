@@ -1355,6 +1355,8 @@ export class Node extends RoSGNode implements BrsValue {
             const staged: StagedFocus[] = [];
             if (Node.focusRound) {
                 this.applyNestedFocus(path, staged);
+            } else if (this.holdsLiveFocus(path)) {
+                Node.restageChain(sgRoot.focused as Node, staged);
             } else {
                 this.applyFocus(path, staged);
             }
@@ -1378,6 +1380,8 @@ export class Node extends RoSGNode implements BrsValue {
             // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
             if (sgRoot.chainOwner === this) {
                 sgRoot.setChainOwner();
+            } else if (sgRoot.chainExtension === this) {
+                sgRoot.setChainExtension();
             }
             const staged: StagedFocus[] = [];
             this.stageFocusedChild(BrsInvalid.Instance, staged);
@@ -1395,7 +1399,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param staged Accumulator for the staged writes.
      */
     private applyFocus(path: Node[], staged: StagedFocus[]) {
-        const previous = sgRoot.chainOwner ?? sgRoot.focused;
+        const previous = sgRoot.chainExtension ?? sgRoot.chainOwner ?? sgRoot.focused;
         sgRoot.setFocused(this);
         sgRoot.setChainOwner(this);
         if (previous instanceof Node && previous !== this) {
@@ -1419,6 +1423,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     private applyNestedFocus(path: Node[], staged: StagedFocus[]) {
         const root = path[0];
+        const wasFocused = this.getValue("focusedchild") === this;
         let start = 0;
         const last = sgRoot.lastFocusTarget;
         if (last instanceof Node) {
@@ -1447,6 +1452,47 @@ export class Node extends RoSGNode implements BrsValue {
         this.stageFocusedChild(this, staged);
         if (Node.chainLeaf(root) === this) {
             sgRoot.setFocused(this);
+            // A forward that newly focuses a node below the chain owner extends the owner's chain: the next
+            // transaction unsets through it (nested-forward-focus-probe). Re-writing links that were
+            // already there extends nothing (focus-flag-probe D).
+            const owner = sgRoot.chainOwner;
+            if (!wasFocused && owner instanceof Node && owner !== this && path.includes(owner)) {
+                sgRoot.setChainExtension(this);
+            }
+        }
+    }
+
+    /**
+     * Whether this node sits on the live chain strictly between the chain owner and the focused node, which
+     * a forward extended below the owner: the chain owner is a proper ancestor, the focus a proper descendant.
+     * @param path This node's path, root first.
+     */
+    private holdsLiveFocus(path: Node[]): boolean {
+        const focused = sgRoot.focused;
+        const owner = sgRoot.chainOwner;
+        return (
+            focused instanceof Node &&
+            focused !== this &&
+            owner instanceof Node &&
+            owner !== this &&
+            path.includes(owner) &&
+            Node.chainLeaf(path[0]) === focused &&
+            focused.createPath().includes(this)
+        );
+    }
+
+    /**
+     * A top-level `setFocus(true)` on a node between the chain owner and the focus keeps the chain
+     * (DEVICE-MEASURED, nested-forward-focus-probe): every link stays, and the chain is notified again from
+     * the focused node up to the root, so a container's observer sees it doesn't hold the focus itself.
+     * Focusing the chain owner itself rewrites the chain as usual (container-redirect scenario 2).
+     * @param focused The focused node.
+     * @param staged Accumulator for the staged writes.
+     */
+    private static restageChain(focused: Node, staged: StagedFocus[]) {
+        const chain = focused.createPath();
+        for (let i = chain.length - 1; i >= 0; i--) {
+            chain[i].stageFocusedChild(chain[i].getValue("focusedchild"), staged);
         }
     }
 

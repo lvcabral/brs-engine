@@ -171,6 +171,76 @@ describe("SceneGraph focus management", () => {
         expect(sgRoot.focused).toBe(inside ? child : beside);
     });
 
+    /** A focusable container whose own focusedChild observer forwards the focus to `child` (nested). */
+    function forwardingContainer(child) {
+        const container = focusableNode();
+        container.appendChildToParent(child);
+        const port = new RoMessagePort();
+        const originalPush = port.pushMessage.bind(port);
+        container.forwards = 0;
+        port.pushMessage = (event) => {
+            if (container.getValue("focusedchild") === container) {
+                container.forwards++;
+                child.setNodeFocus(true);
+            }
+            originalPush(event);
+        };
+        container.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, container, focusedChildFieldArg);
+        return container;
+    }
+
+    test.each([
+        ["a sibling inside the container", true],
+        ["a node outside it", false],
+    ])("a forward extends the chain, so focusing %s clears the forwarded node", (_label, inside) => {
+        // nested-forward-focus-probe S1/S2: the forwarded child newly took the focus, so the next
+        // transaction unsets the chain through it, and the child stops reporting hasFocus().
+        const scene = focusableNode();
+        const a = focusableNode();
+        const container = forwardingContainer(a);
+        const b = focusableNode();
+        container.appendChildToParent(b);
+        const other = focusableNode();
+        scene.appendChildToParent(container);
+        scene.appendChildToParent(other);
+
+        container.setNodeFocus(true);
+        sgRoot.setLastFocusTarget(container);
+        expect(sgRoot.focused).toBe(a);
+
+        (inside ? b : other).setNodeFocus(true);
+        expect(a.getValue("focusedchild")).not.toBe(a);
+        if (inside) {
+            expect(container.getValue("focusedchild")).toBe(b);
+        } else {
+            expect(container.getValue("focusedchild")).not.toBeInstanceOf(Node);
+        }
+    });
+
+    test("focusing a node between the chain owner and the focus keeps the chain", () => {
+        // nested-forward-focus-probe (the gallery): the body forwards to the list and the list to its button;
+        // focusing the list again leaves the button focused, and the list sees it doesn't hold the focus.
+        const scene = focusableNode();
+        const button = focusableNode();
+        const list = forwardingContainer(button);
+        const body = forwardingContainer(list);
+        scene.appendChildToParent(body);
+
+        body.setNodeFocus(true);
+        sgRoot.setLastFocusTarget(body);
+        expect(sgRoot.focused).toBe(button);
+
+        expect(list.forwards).toBe(1);
+        list.setNodeFocus(true);
+        // The list's own notification finds it doesn't hold the focus, so it doesn't forward again.
+        expect(list.forwards).toBe(1);
+        expect(sgRoot.focused).toBe(button);
+        expect(list.getValue("focusedchild")).toBe(button);
+        expect(button.getValue("focusedchild")).toBe(button);
+    });
+
     test("honors a re-grab when the competing focus lives in a still-detached subtree", () => {
         // Real-world shape (JellyRock's sgRouter + JRDialog): an outlet observes its own
         // focusedChild and re-grabs focus into its routed content whenever it loses focus. A
