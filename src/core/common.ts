@@ -281,6 +281,22 @@ export function isExtensionInfo(value: any): value is ExtensionInfo {
 }
 
 /**
+ * Posted by a Node worker thread once the engine bundle, including its native modules, has loaded.
+ * A host must not terminate a worker before this: see `src/node/workerLoad.ts`.
+ */
+export interface WorkerReady {
+    workerReady: true;
+}
+
+/** Type guard to check if a value is a WorkerReady message.
+ * @param value the value to check
+ * @returns true if the value is a WorkerReady message, false otherwise
+ */
+export function isWorkerReady(value: any): value is WorkerReady {
+    return value !== null && typeof value === "object" && value.workerReady === true;
+}
+
+/**
  * Frame (screen pixels) data wrapper used to send ImageData across Node worker_threads.
  * node-canvas `ImageData` exposes width/height as prototype getters, which are lost by the
  * structured clone, so the worker flattens frames into this plain shape and the host revives

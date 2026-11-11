@@ -24,6 +24,7 @@ import {
     ExtVolMaxSize,
     Platform,
     isTypeOf,
+    WorkerReady,
 } from "./common";
 import { Lexer, Token } from "./lexer";
 import { Parser, Stmt } from "./parser";
@@ -314,6 +315,10 @@ if (!isMainThread && parentPort) {
             BrsDevice.stderr.write(`warning,[core] Invalid message received: ${data}`);
         }
     });
+    // Tell the host this thread has finished loading. Terminating a worker while it is still loading
+    // a native module (node-canvas, imported above) aborts the whole process, so hosts wait for this.
+    const ready: WorkerReady = { workerReady: true };
+    hostPort.postMessage(ready);
 }
 
 // Keep track of loaded extensions to avoid duplicates

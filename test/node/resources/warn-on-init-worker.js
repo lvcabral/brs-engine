@@ -1,5 +1,6 @@
-// Stand-in background worker for test/node/backgroundHost.test.js: writes a warning the way Node 24
-// does for `url.parse()` during HTTP requests, then idles like the real helper's heartbeat.
+// Stand-in background worker for test/node/backgroundHost.test.js: posts the WorkerReady message the
+// engine bundle posts once loaded (see src/core/index.ts), writes a warning the way Node 24 does for
+// `url.parse()` during HTTP requests, then idles like the real helper's heartbeat.
 const { parentPort } = require("node:worker_threads");
 
 parentPort.on("message", (message) => {
@@ -8,3 +9,4 @@ parentPort.on("message", (message) => {
         setInterval(() => {}, 250);
     }
 });
+parentPort.postMessage({ workerReady: true });

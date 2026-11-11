@@ -16,6 +16,7 @@
  * warning) keeps the host process alive until the worker is gone.
  */
 import { MessageChannel, Worker } from "node:worker_threads";
+import { trackWorkerLoad, waitForWorkerLoad } from "./workerLoad";
 
 /** Receives the helper's console output, like the host's other workers' `stdout`/`stderr` events. */
 export type BackgroundOutput = (stream: "stdout" | "stderr", text: string) => void;
@@ -32,6 +33,7 @@ export function connectBackground(worker: Worker, workerEntry: string, output?: 
     if (!helper || !heartbeat) {
         heartbeat = new SharedArrayBuffer(Int32Array.BYTES_PER_ELEMENT);
         const started = new Worker(workerEntry, { stdout: true, stderr: true });
+        trackWorkerLoad(started);
         started.stdout.on("data", (chunk: Buffer) => output?.("stdout", chunk.toString()));
         started.stderr.on("data", (chunk: Buffer) => output?.("stderr", chunk.toString()));
         started.on("error", () => {});
@@ -64,5 +66,9 @@ export async function stopBackground() {
     const stopping = helper;
     helper = undefined;
     heartbeat = undefined;
-    await stopping?.terminate().catch(() => {});
+    if (stopping) {
+        // A helper started just before the app ended may still be loading (see workerLoad.ts)
+        await waitForWorkerLoad(stopping);
+        await stopping.terminate().catch(() => {});
+    }
 }
