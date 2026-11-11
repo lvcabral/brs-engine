@@ -1,6 +1,6 @@
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
+import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect } from "brs-engine";
 import { ArrayGrid, FocusStyle, GridHoldDelayMs, GridStepMs, GridWrapRowStepMs } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { customNodeExists } from "../factory/NodeFactory";
@@ -355,13 +355,13 @@ export class MarkupGrid extends ArrayGrid {
                 this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
                 state.lastIndex = index;
-                if (!moving && !RectRect(screen, itemRect)) {
+                if (this.pastVisibleArea(screen, itemRect, moving)) {
                     break;
                 }
             }
             itemRect.x = layout.left;
             itemRect.y += itemRect.height + (layout.rowSpacings[absoluteRow] ?? spacing[1]);
-            if (!moving && !RectRect(screen, itemRect)) {
+            if (this.pastVisibleArea(screen, itemRect, moving)) {
                 break;
             }
         }

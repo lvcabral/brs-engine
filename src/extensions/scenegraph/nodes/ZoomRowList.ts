@@ -23,7 +23,7 @@ import { Group } from "./Group";
 import { Node } from "./Node";
 import { ArrayGrid, FocusMotion, FocusStyle, GridHoldDelayMs, GridStepMs, MotionAxis } from "./ArrayGrid";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
-import { resolveRowItemSubpart } from "../SGUtil";
+import { positiveMod, resolveRowItemSubpart } from "../SGUtil";
 import { SGNodeType } from ".";
 
 interface RowMetrics {
@@ -293,21 +293,11 @@ export class ZoomRowList extends ArrayGrid {
         return sgRoot.uiTransitionsEnabled && (this.navDirection !== 0 || this.animateRequested);
     }
 
-    /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
-    private rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
-    }
-
     private animateZoomRow(rowIndex: number, colIndex: number) {
         const rows = this.motionRows();
         const motion = this.motion;
         const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
-        const baseRowIndex = ((Math.round(baseRow) % rows) + rows) % rows;
-        let delta = rowIndex - baseRowIndex;
-        if (this.isWrapEnabled()) {
-            const forward = ((delta % rows) + rows) % rows;
-            delta = forward !== 0 && this.navAxis === "row" && this.navDirection < 0 ? forward - rows : forward;
-        }
+        const delta = this.motionDelta(rowIndex, baseRow, rows, this.isWrapEnabled(), this.rowKeyBackward());
         if (delta === 0) {
             return;
         }
@@ -326,11 +316,7 @@ export class ZoomRowList extends ArrayGrid {
         const motion = this.motion;
         const baseCol = motion ? motion.queued?.col ?? motion.col.to : this.motionCol;
         const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
-        let delta = colIndex - (((Math.round(baseCol) % numCols) + numCols) % numCols);
-        if (wraps) {
-            const forward = ((delta % numCols) + numCols) % numCols;
-            delta = forward !== 0 && this.navDirection < 0 ? forward - numCols : forward;
-        }
+        const delta = this.motionDelta(colIndex, baseCol, numCols, wraps, this.navDirection < 0);
         if (delta === 0) {
             return;
         }
@@ -341,21 +327,9 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     protected canStepPast(target: { row: number; col: number }): boolean {
-        const rows = this.motionRows();
-        const row = ((Math.round(target.row) % rows) + rows) % rows;
-        if (this.navAxis === "col") {
-            const numCols = this.rowColumnCount(row);
-            if (this.canWrapItems(numCols, this.getRowMetrics(row), this.nodeWidth)) {
-                return true;
-            }
-            const col = target.col + this.navDirection;
-            return col >= 0 && col < numCols;
-        }
-        if (this.isWrapEnabled()) {
-            return true;
-        }
-        const next = row + this.navDirection;
-        return next >= 0 && next < rows;
+        const colsWrap = (row: number) =>
+            this.canWrapItems(this.rowColumnCount(row), this.getRowMetrics(row), this.nodeWidth);
+        return this.rowListCanStepPast(target, colsWrap, this.isWrapEnabled());
     }
 
     /**
@@ -387,7 +361,7 @@ export class ZoomRowList extends ArrayGrid {
         }
         if (motion.rowMoved) {
             const rows = this.motionRows();
-            super.setValue("currFocusRow", new Float(((this.motionPos % rows) + rows) % rows));
+            super.setValue("currFocusRow", new Float(positiveMod(this.motionPos, rows)));
         }
         this.emitRowMotionFrame(this.rowItemComps, this.rowFocus, (row) => this.rowColumnCount(row), ZoomRowFields);
     }
@@ -819,7 +793,7 @@ export class ZoomRowList extends ArrayGrid {
             visualStart = this.motionCol;
             const whole = Math.floor(visualStart);
             itemRect.x -= (visualStart - whole) * pitchX;
-            startCol = ((whole % wrapCount) + wrapCount) % wrapCount;
+            startCol = positiveMod(whole, wrapCount);
         }
         this.indicatorRowTop = rect.y;
         this.motionIndicator = {

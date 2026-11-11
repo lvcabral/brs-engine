@@ -21,7 +21,7 @@ import { Group } from "./Group";
 import { Node } from "./Node";
 import { ArrayGrid, FocusMotion, FocusStyle, GridHoldDelayMs, GridStepMs, MotionAxis } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { resolveRowItemSubpart } from "../SGUtil";
+import { positiveMod, resolveRowItemSubpart } from "../SGUtil";
 import { SGNodeType } from ".";
 
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
@@ -105,7 +105,6 @@ export class RowList extends ArrayGrid {
     /** Where a move along the focused row started: its column and the row's first drawn column. */
     private motionColOrigin = 0;
     private motionScrollFrom = 0;
-    /** The in-transit indicator for this paint, recorded while the focused row is drawn. */
     // The row label font and its line height, resolved the first time a row label is laid out and
     // then kept: a device lays the label out once, so a later `rowLabelFont` write changes neither the
     // label text nor its space, while a font that is invalid from the start leaves no label and no
@@ -410,11 +409,6 @@ export class RowList extends ArrayGrid {
         );
     }
 
-    /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
-    private rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
-    }
-
     /** Whether the row wraps its columns (fixedFocusWrap with more items than fit). */
     private rowWrapsColumns(rowIndex: number): boolean {
         const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
@@ -428,12 +422,7 @@ export class RowList extends ArrayGrid {
         const rows = this.motionRows();
         const motion = this.motion;
         const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
-        const baseRowIndex = ((Math.round(baseRow) % rows) + rows) % rows;
-        let delta = rowIndex - baseRowIndex;
-        if (this.wrap) {
-            const forward = ((delta % rows) + rows) % rows;
-            delta = forward !== 0 && this.navAxis === "row" && this.navDirection < 0 ? forward - rows : forward;
-        }
+        const delta = this.motionDelta(rowIndex, baseRow, rows, this.wrap, this.rowKeyBackward());
         if (delta === 0) {
             return;
         }
@@ -451,11 +440,8 @@ export class RowList extends ArrayGrid {
         const motion = this.motion;
         const baseCol = motion ? motion.queued?.col ?? motion.col.to : this.motionCol;
         const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
-        let delta = colIndex - (((Math.round(baseCol) % numCols) + numCols) % numCols);
-        if (this.rowWrapsColumns(rowIndex)) {
-            const forward = ((delta % numCols) + numCols) % numCols;
-            delta = forward !== 0 && this.navDirection < 0 ? forward - numCols : forward;
-        }
+        const wraps = this.rowWrapsColumns(rowIndex);
+        const delta = this.motionDelta(colIndex, baseCol, numCols, wraps, this.navDirection < 0);
         if (delta === 0) {
             return;
         }
@@ -467,20 +453,7 @@ export class RowList extends ArrayGrid {
     }
 
     protected canStepPast(target: { row: number; col: number }): boolean {
-        const rows = this.motionRows();
-        const row = ((Math.round(target.row) % rows) + rows) % rows;
-        if (this.navAxis === "col") {
-            if (this.rowWrapsColumns(row)) {
-                return true;
-            }
-            const col = target.col + this.navDirection;
-            return col >= 0 && col < this.rowColumnCount(row);
-        }
-        if (this.wrap) {
-            return true;
-        }
-        const next = row + this.navDirection;
-        return next >= 0 && next < rows;
+        return this.rowListCanStepPast(target, (row) => this.rowWrapsColumns(row), this.wrap);
     }
 
     /** In-transit `focusPercent` of [row, col] (see ArrayGrid.motionCellPercentIn). */
@@ -524,13 +497,13 @@ export class RowList extends ArrayGrid {
             return;
         }
         const rows = this.motionRows();
-        const pos = ((this.motionPos % rows) + rows) % rows;
+        const pos = positiveMod(this.motionPos, rows);
         if (motion.rowMoved) {
             super.setValue("currFocusRow", new Float(pos));
         }
         if (motion.colMoved) {
             const numCols = this.rowColumnCount(this.stepRow());
-            super.setValue("currFocusColumn", new Float(((this.motionCol % numCols) + numCols) % numCols));
+            super.setValue("currFocusColumn", new Float(positiveMod(this.motionCol, numCols)));
         }
         this.emitRowMotionFrame(this.rowItemComps, this.rowFocus, (row) => this.rowColumnCount(row), [
             "rowFocusPercent",
@@ -587,10 +560,7 @@ export class RowList extends ArrayGrid {
         if (this.isFixedFocusMode()) {
             return { shift: target - this.motionPos, focusSlot: 0 };
         }
-        const rows = this.motionRows();
-        const maxTop = Math.max(0, rows - displayRows);
-        const kept = Math.min(Math.max(motion.topFrom, this.motionPos - (displayRows - 1)), this.motionPos);
-        const visualTop = Math.min(Math.max(kept, 0), maxTop);
+        const visualTop = this.floatingVisualTop(motion, displayRows);
         return { shift: this.currRow - visualTop, focusSlot: this.motionPos - visualTop };
     }
 
@@ -1093,9 +1063,7 @@ export class RowList extends ArrayGrid {
             if (rowIndex < 0) {
                 break;
             }
-            height +=
-                this.rowLayoutHeight(rowIndex, context) +
-                this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
+            height += this.slotSpan(r, context, 0);
         }
         return height;
     }
@@ -1275,6 +1243,14 @@ export class RowList extends ArrayGrid {
         return context.itemRect.y < screen.y + screen.height;
     }
 
+    /** `rowBandHeight` for a row whose label and counter flags the caller hasn't resolved yet. */
+    private rowBandHeightOf(rowIndex: number): number {
+        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
+        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
+        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
+        return this.rowBandHeight(rowIndex, hasLabel, showCounter);
+    }
+
     /** Height of the label/counter band at the top of a row (0 when it shows neither). */
     private rowBandHeight(rowIndex: number, hasLabel: boolean, showCounter: boolean): number {
         if (!hasLabel && !showCounter) {
@@ -1290,10 +1266,7 @@ export class RowList extends ArrayGrid {
      */
     private rowLayoutHeight(rowIndex: number, context: RowListRenderContext): number {
         const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
-        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
-        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
-        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
-        const bandHeight = this.rowBandHeight(rowIndex, hasLabel, showCounter);
+        const bandHeight = this.rowBandHeightOf(rowIndex);
         const posterHeight = this.getRowItemSize(rowIndex)[1];
         return rowHeight + (bandHeight <= Math.max(0, rowHeight - posterHeight) ? 0 : bandHeight);
     }
@@ -1353,16 +1326,13 @@ export class RowList extends ArrayGrid {
             width: itemWidth,
             height: itemHeight,
         });
-        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
-        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
-        const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         const rowTop =
             rect.y +
             this.slotOffset(firstRow, visualTop + focusSlot, context, fallback) -
             this.slotOffset(firstRow, visualTop, context, fallback);
         return {
             x: rect.x + box.x,
-            y: rowTop + this.rowBandHeight(rowIndex, hasLabel, showCounter),
+            y: rowTop + this.rowBandHeightOf(rowIndex),
             width: box.width,
             height: box.height,
         };
@@ -1521,7 +1491,7 @@ export class RowList extends ArrayGrid {
         if (visualStart !== startCol) {
             const whole = Math.floor(visualStart);
             itemRect.x -= (visualStart - whole) * pitchX;
-            startCol = renderMode === "wrapMode" ? ((whole % numCols) + numCols) % numCols : Math.max(0, whole);
+            startCol = renderMode === "wrapMode" ? positiveMod(whole, numCols) : Math.max(0, whole);
         }
 
         // With variable-width items the uniform maxVisibleItems estimate can undercount how many
@@ -1544,7 +1514,7 @@ export class RowList extends ArrayGrid {
             const pitch = rowItemWidth + spacing[0];
             let leftX = itemRect.x - pitch;
             for (let k = 1; pitch > 0 && k <= numCols && leftX + rowItemWidth > context.rect.x; k++) {
-                const colIndex = (((startCol - k) % numCols) + numCols) % numCols;
+                const colIndex = positiveMod(startCol - k, numCols);
                 this.renderRowItemComponent(
                     context.interpreter,
                     rowIndex,

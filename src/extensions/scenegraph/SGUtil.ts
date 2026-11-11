@@ -456,3 +456,12 @@ export function applyEase(t: number, ease: string): number {
             return clamped;
     }
 }
+
+/**
+ * Modulo that never goes negative: wraps `value` into `[0, count)`, for an index or a fractional position.
+ * @param value Value to wrap (may be negative or fractional).
+ * @param count Size of the range; must be positive.
+ */
+export function positiveMod(value: number, count: number): number {
+    return ((value % count) + count) % count;
+}

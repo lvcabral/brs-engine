@@ -1,4 +1,4 @@
-import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
+import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
@@ -256,7 +256,7 @@ export class MarkupList extends ArrayGrid {
             // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
             // which differs as soon as the list is scrolled (rowHeights above already does this).
             itemRect.y += itemRect.height + (rowSpacings[rowIndex] ?? spacing[1]);
-            if (!moving && !RectRect(screen, itemRect)) {
+            if (this.pastVisibleArea(screen, itemRect, moving)) {
                 break;
             }
         }

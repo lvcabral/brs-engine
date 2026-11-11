@@ -202,7 +202,6 @@ export class SGRoot {
         return this._chainExtension;
     }
 
-    /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
     /** A panel a PanelSet move is notifying in its first phase (see `Node.announcePanelFocus`). */
     get pendingPanelFocus(): RoSGNode | undefined {
         return this._pendingPanelFocus;
@@ -216,6 +215,7 @@ export class SGRoot {
         this._pendingPanelFocus = node;
     }
 
+    /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
     get lastFocusTarget(): RoSGNode | undefined {
         return this._lastFocusTarget;
     }
@@ -520,8 +520,7 @@ export class SGRoot {
     setFocused(node?: RoSGNode) {
         this._focused = node;
         if (!node) {
-            this._chainOwner = undefined;
-            this._chainExtension = undefined;
+            this.setChainOwner();
         }
     }
 

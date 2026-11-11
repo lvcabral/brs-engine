@@ -348,7 +348,7 @@ export class PanelSet extends Group implements UITransition {
             }
             // Panels wholly off either edge (stacked to the left, or waiting/leaving on the right)
             // are skipped; the PanelSet does not clip, so a partly visible panel draws in full.
-            const x = (child.getValueJS("translation") as number[])[0];
+            const x = this.currentX(child);
             const width = child.getValueJS("width") as number;
             if (x + width <= 0 || x >= psWidth) {
                 continue;

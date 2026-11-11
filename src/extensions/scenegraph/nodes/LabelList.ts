@@ -1,6 +1,6 @@
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, Interpreter, BrsString, BrsType, Int32, RoBitmap, IfDraw2D, Rect, RectRect } from "brs-engine";
+import { AAMember, Interpreter, BrsString, BrsType, Int32, RoBitmap, IfDraw2D, Rect } from "brs-engine";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
@@ -146,7 +146,6 @@ export class LabelList extends ArrayGrid {
         let firstRow = 0;
         let lastRow = displayRows;
         let focusRect: Rect | undefined;
-        const drawFocus = this.getValueJS("drawFocusFeedback") as boolean;
         const drawFocusOnTop = this.focusFeedbackOnTop();
         if (motion) {
             const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
@@ -154,7 +153,7 @@ export class LabelList extends ArrayGrid {
             lastRow = rows.lastRow;
             itemRect.y = rect.y + rows.firstY;
             focusRect = this.listMotionFocusRect(rect, rows, itemSize[0]);
-            if (drawFocus && !drawFocusOnTop) {
+            if (!drawFocusOnTop) {
                 this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
             }
             this.pushMotionClip(rect, rows.viewportHeight, draw2D);
@@ -180,7 +179,7 @@ export class LabelList extends ArrayGrid {
                 draw2D?.popClip();
             }
         }
-        if (motion && focusRect && drawFocus && drawFocusOnTop) {
+        if (motion && focusRect && drawFocusOnTop) {
             this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
         }
         this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
@@ -226,7 +225,7 @@ export class LabelList extends ArrayGrid {
             this.renderItem(index, item, itemRect, opacity, nodeFocus, focused, draw2D);
             itemRect.y += itemRect.height + (rowSpacings[index] ?? rowSpacingDefault);
             lastIndex = index;
-            if (!motion && !RectRect(screen, itemRect)) {
+            if (this.pastVisibleArea(screen, itemRect, motion !== undefined)) {
                 break;
             }
         }

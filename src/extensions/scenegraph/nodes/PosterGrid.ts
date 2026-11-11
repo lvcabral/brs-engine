@@ -399,8 +399,8 @@ export class PosterGrid extends ArrayGrid {
         const itemRect = { ...rect, width: columnWidths[0], height: baseSize[1] };
         // Accumulate the extent actually laid out. Each row's height is its poster height PLUS its
         // caption zone, which updateRect cannot re-derive from rowHeights alone — measuring from
-        // rowHeights there would silently drop every caption. `startY` is captured before the loop so
-        // wrap/section dividers, which also advance itemRect.y, are counted.
+        // rowHeights there would silently drop every caption. Wrap/section dividers, which also
+        // advance itemRect.y, are added as they are drawn.
         let windowHeight = 0;
         let renderedRows = 0;
         // Culling bound for the loop below; the scene map does not change inside it.
@@ -540,7 +540,9 @@ export class PosterGrid extends ArrayGrid {
                     windowHeight += itemRect.y - rowStartY;
                     renderedRows++;
                 }
-                if (!motion && itemRect.y > screenBottom) {
+                // Mid-motion, only rows past the settled window stop at the screen bottom: the window's own
+                // rows are all measured above.
+                if (itemRect.y > screenBottom && (!motion || r >= displayRows)) {
                     break;
                 }
             }

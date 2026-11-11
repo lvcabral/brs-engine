@@ -10,6 +10,7 @@ import {
     isBrsString,
     IfDraw2D,
     Rect,
+    RectRect,
     RoBitmap,
 } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
@@ -22,7 +23,7 @@ import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { UNIT_SCALE } from "../SGUtil";
+import { positiveMod, UNIT_SCALE } from "../SGUtil";
 import { sgClock } from "../SGClock";
 import { easeOutCubic, TransitionTick, UITransition } from "../SGTransition";
 
@@ -258,6 +259,10 @@ export class ArrayGrid extends Group implements UITransition {
     }
     /** The navigation key still held down, and when it was pressed. */
     private heldKey = "";
+    private heldSince = 0;
+    private holdRepeating = false;
+    /** Repeats of the held key so far (the first one accelerates from rest). */
+    private holdRepeats = 0;
     /** The app wrote `drawFocusFeedbackOnTop` (XML or BrightScript); see `focusFeedbackOnTop`. */
     private focusOnTopWritten = false;
     /** While a settle publishes: the motions its observers started, begun once the settle is complete. */
@@ -268,10 +273,6 @@ export class ArrayGrid extends Group implements UITransition {
     private pendingContentFocus = false;
     /** `setNodeFocus` is re-applying the focus on a gain (see `setFocusedItem`). */
     private gainingFocus = false;
-    private heldSince = 0;
-    private holdRepeating = false;
-    /** Repeats of the held key so far (the first one accelerates from rest). */
-    private holdRepeats = 0;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
@@ -572,7 +573,7 @@ export class ArrayGrid extends Group implements UITransition {
         const focusedIndex = this.getValueJS("itemFocused") as number;
         // A gain re-applies the focus where it is (DEVICE-MEASURED, list-focus-dispatch-probe): no
         // `itemUnfocused`, and the item keeps its focus rather than dropping and regaining it.
-        const gaining = this.gainingFocus && this.listFocusModel();
+        const gaining = this.gainingFocus;
         if (!gaining || newFocus !== this.focusIndex) {
             this.updateItemFocus(this.focusIndex, false, nodeFocus);
         }
@@ -657,14 +658,13 @@ export class ArrayGrid extends Group implements UITransition {
         const motion = this.motion;
         const baseRow = motion ? motion.queued?.row ?? motion.row.to : Math.floor(this.focusIndex / numCols);
         const baseCol = motion ? motion.queued?.col ?? motion.col.to : this.focusIndex % numCols;
-        const baseRowIndex = ((Math.round(baseRow) % rows) + rows) % rows;
-        let deltaRow = Math.floor(newFocus / numCols) - baseRowIndex;
-        if (this.wrap) {
-            // Wrapping rows scroll the way the key points; a programmatic move always scrolls down.
-            const forward = ((deltaRow % rows) + rows) % rows;
-            const backward = this.navAxis === "row" && this.navDirection < 0;
-            deltaRow = forward !== 0 && backward ? forward - rows : forward;
-        }
+        const deltaRow = this.motionDelta(
+            Math.floor(newFocus / numCols),
+            baseRow,
+            rows,
+            this.wrap,
+            this.rowKeyBackward()
+        );
         const deltaCol = (newFocus % numCols) - Math.round(baseCol);
         if (deltaRow === 0 && deltaCol === 0) {
             return;
@@ -675,6 +675,24 @@ export class ArrayGrid extends Group implements UITransition {
             this.focusLayoutDirty = true;
             this.updateHorizScroll(newFocus);
         });
+    }
+
+    /**
+     * Steps from the motion position `base` to slot `index` among `count` slots. A wrapping axis scrolls
+     * the way the key points (`backward`); a programmatic move always scrolls forward.
+     */
+    protected motionDelta(index: number, base: number, count: number, wraps: boolean, backward: boolean): number {
+        const delta = index - positiveMod(Math.round(base), count);
+        if (!wraps) {
+            return delta;
+        }
+        const forward = positiveMod(delta, count);
+        return forward !== 0 && backward ? forward - count : forward;
+    }
+
+    /** Whether an Up key is driving the move (a wrapping row axis then scrolls backward). */
+    protected rowKeyBackward(): boolean {
+        return this.navAxis === "row" && this.navDirection < 0;
     }
 
     /**
@@ -856,7 +874,7 @@ export class ArrayGrid extends Group implements UITransition {
     protected canStepPast(target: { row: number; col: number }): boolean {
         const numCols = this.motionColumns();
         const rows = this.motionRows();
-        const row = ((Math.round(target.row) % rows) + rows) % rows;
+        const row = positiveMod(Math.round(target.row), rows);
         if (this.navAxis === "col") {
             const col = target.col + this.navDirection;
             return col >= 0 && col < numCols && row * numCols + col < this.content.length;
@@ -914,7 +932,7 @@ export class ArrayGrid extends Group implements UITransition {
         if (this.content.length === 0) {
             return 0;
         }
-        const row = ((this.motionPos % rows) + rows) % rows;
+        const row = positiveMod(this.motionPos, rows);
         const row0 = Math.floor(row);
         const rowFraction = row - row0;
         const col0 = Math.floor(this.motionCol);
@@ -945,7 +963,7 @@ export class ArrayGrid extends Group implements UITransition {
     protected emitMotionFrame() {
         const numCols = this.motionColumns();
         const rows = this.motionRows();
-        const row = ((this.motionPos % rows) + rows) % rows;
+        const row = positiveMod(this.motionPos, rows);
         super.setValue("currFocusRow", new Float(row));
         super.setValue("currFocusColumn", new Float(this.motionCol));
         const row0 = Math.floor(row);
@@ -975,13 +993,66 @@ export class ArrayGrid extends Group implements UITransition {
     private readonly motionRowSet = new Set<number>();
     private readonly motionCellSet = new Set<string>();
 
+    /**
+     * Whether a row or column loop can stop at `itemRect`, the next item's slot. At rest that is any slot
+     * off the screen. Mid-motion rows scrolled off the top are followed by visible ones, so only a slot at
+     * or past the bottom or right edge ends the loop: nothing after it can show, and drawing it would
+     * create its item component for nothing.
+     */
+    protected pastVisibleArea(screen: Rect, itemRect: Rect, moving: boolean): boolean {
+        if (!moving) {
+            return !RectRect(screen, itemRect);
+        }
+        return itemRect.y >= screen.y + screen.height || itemRect.x >= screen.x + screen.width;
+    }
+
+    /**
+     * Top row of a floating-focus window mid-motion: it stays where the motion found it until the focus
+     * reaches an edge, then follows it, within the content.
+     */
+    protected floatingVisualTop(motion: FocusMotion, displayRows: number): number {
+        const maxTop = Math.max(0, this.motionRows() - displayRows);
+        const kept = Math.min(Math.max(motion.topFrom, this.motionPos - (displayRows - 1)), this.motionPos);
+        return Math.min(Math.max(kept, 0), maxTop);
+    }
+
+    /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
+    protected rowColumnCount(rowIndex: number): number {
+        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
+    }
+
+    /**
+     * `canStepPast` for a row list: a held key runs on along a row that wraps its columns (`colsWrap`) or
+     * has a further item, and across rows when they wrap (`rowsWrap`) or there is a further row.
+     */
+    protected rowListCanStepPast(
+        target: { row: number; col: number },
+        colsWrap: (row: number) => boolean,
+        rowsWrap: boolean
+    ): boolean {
+        const rows = this.motionRows();
+        const row = positiveMod(Math.round(target.row), rows);
+        if (this.navAxis === "col") {
+            if (colsWrap(row)) {
+                return true;
+            }
+            const col = target.col + this.navDirection;
+            return col >= 0 && col < this.rowColumnCount(row);
+        }
+        if (rowsWrap) {
+            return true;
+        }
+        const next = row + this.navDirection;
+        return next >= 0 && next < rows;
+    }
+
     /** Weight of row `rowIndex` in the vertical motion: the row being left `1 - f`, the next one `f`. */
     protected motionRowWeight(rowIndex: number): number {
         if (!this.motion) {
             return this.focusIndex === rowIndex ? 1 : 0;
         }
         const rows = this.motionRows();
-        const pos = ((this.motionPos % rows) + rows) % rows;
+        const pos = positiveMod(this.motionPos, rows);
         const row0 = Math.floor(pos);
         const fraction = pos - row0;
         if (rowIndex === row0) {
@@ -1002,7 +1073,7 @@ export class ArrayGrid extends Group implements UITransition {
         }
         const rows = this.motionRows();
         const row = Math.round(motion.row.to);
-        return ((row % rows) + rows) % rows;
+        return positiveMod(row, rows);
     }
 
     /** Row lists: the row sliding along its items while the column segment is in flight, -1 otherwise. */
@@ -1033,7 +1104,7 @@ export class ArrayGrid extends Group implements UITransition {
         if (rowIndex !== this.slidingRow()) {
             return colIndex === focusedCol ? this.publishedPercent(rowWeight) : 0;
         }
-        const pos = ((this.motionCol % numCols) + numCols) % numCols;
+        const pos = positiveMod(this.motionCol, numCols);
         const col0 = Math.floor(pos);
         const fraction = pos - col0;
         let colWeight = 0;
@@ -1061,16 +1132,12 @@ export class ArrayGrid extends Group implements UITransition {
         rowFields: string[]
     ) {
         const rows = this.motionRows();
-        const row0 = Math.floor(((this.motionPos % rows) + rows) % rows);
+        const row0 = Math.floor(positiveMod(this.motionPos, rows));
         const touchedRows = new Set([...this.motionRowSet, row0, (row0 + 1) % rows]);
         this.motionRowSet.clear();
         for (const rowIndex of touchedRows) {
             const weight = this.publishedPercent(this.motionRowWeight(rowIndex));
-            for (const comp of comps[rowIndex] ?? []) {
-                for (const field of rowFields) {
-                    comp?.setValue(field, new Float(weight), false);
-                }
-            }
+            this.setRowPercent(comps[rowIndex], rowFields, weight);
             if (weight > 0) {
                 this.motionRowSet.add(rowIndex);
             }
@@ -1080,7 +1147,7 @@ export class ArrayGrid extends Group implements UITransition {
             touchedCells.add(`${rowIndex},${rowFocus[rowIndex] ?? 0}`);
             if (rowIndex === this.slidingRow()) {
                 const numCols = Math.max(1, numColsOf(rowIndex));
-                const col0 = Math.floor(((this.motionCol % numCols) + numCols) % numCols);
+                const col0 = Math.floor(positiveMod(this.motionCol, numCols));
                 touchedCells.add(`${rowIndex},${col0}`);
                 touchedCells.add(`${rowIndex},${(col0 + 1) % numCols}`);
             }
@@ -1105,11 +1172,7 @@ export class ArrayGrid extends Group implements UITransition {
     protected settleRowMotionPercents(comps: (Group | undefined)[][], row: number, col: number, rowFields: string[]) {
         for (const rowIndex of this.motionRowSet) {
             if (rowIndex !== row) {
-                for (const comp of comps[rowIndex] ?? []) {
-                    for (const field of rowFields) {
-                        comp?.setValue(field, new Float(0), false);
-                    }
-                }
+                this.setRowPercent(comps[rowIndex], rowFields, 0);
             }
         }
         for (const key of this.motionCellSet) {
@@ -1120,12 +1183,18 @@ export class ArrayGrid extends Group implements UITransition {
         }
         this.motionRowSet.clear();
         this.motionCellSet.clear();
-        for (const comp of comps[row] ?? []) {
+        this.setRowPercent(comps[row], rowFields, 1);
+        comps[row]?.[col]?.setValue("focusPercent", new Float(1), false);
+    }
+
+    /** Writes one percent to each of `rowFields` on every item component of a row. */
+    private setRowPercent(rowComps: (Group | undefined)[] | undefined, rowFields: string[], percent: number) {
+        const value = new Float(percent);
+        for (const comp of rowComps ?? []) {
             for (const field of rowFields) {
-                comp?.setValue(field, new Float(1), false);
+                comp?.setValue(field, value, false);
             }
         }
-        comps[row]?.[col]?.setValue("focusPercent", new Float(1), false);
     }
 
     /** Advances the focus motion one frame. */
@@ -1207,8 +1276,7 @@ export class ArrayGrid extends Group implements UITransition {
 
     /** On release, the held key's step in flight eases out to its cell (DEVICE-MEASURED). */
     private releaseHeldKey() {
-        this.heldKey = "";
-        this.holdRepeats = 0;
+        this.clearHeldKey();
         const motion = this.motion;
         if (!motion || motion.arrived) {
             return;
@@ -1236,14 +1304,10 @@ export class ArrayGrid extends Group implements UITransition {
      * uses (see `armScrollPulse`).
      */
     protected settleMotion() {
-        const motion = this.motion;
+        const motion = this.dropMotion();
         if (!motion) {
             return;
         }
-        this.motion = undefined;
-        this.heldKey = "";
-        this.holdRepeats = 0;
-        sgRoot.removeTransition(this);
         const followUps: (() => void)[] = [];
         this.settleFollowUps = followUps;
         try {
@@ -1298,17 +1362,33 @@ export class ArrayGrid extends Group implements UITransition {
         }
     }
 
+    /** Forgets the held navigation key and its repeat count. */
+    private clearHeldKey() {
+        this.heldKey = "";
+        this.holdRepeats = 0;
+    }
+
+    /**
+     * Ends the motion in flight without publishing anything: clears it, the held key and its transition.
+     * @returns The motion that was running, for the caller to settle or abort; undefined when there was none.
+     */
+    private dropMotion(): FocusMotion | undefined {
+        const motion = this.motion;
+        if (motion) {
+            this.motion = undefined;
+            this.clearHeldKey();
+            sgRoot.removeTransition(this);
+        }
+        return motion;
+    }
+
     /** Drops a motion whose content went away, without publishing a settle. */
     private abortMotion() {
-        const motion = this.motion;
+        const motion = this.dropMotion();
         if (!motion) {
             return;
         }
-        this.motion = undefined;
-        this.heldKey = "";
-        this.holdRepeats = 0;
         this.motionPercentItems.clear();
-        sgRoot.removeTransition(this);
         super.setValue("scrollingStatus", BrsBoolean.False);
         this.closeMotionDirections(motion);
     }
@@ -1332,15 +1412,10 @@ export class ArrayGrid extends Group implements UITransition {
         const rows = this.motionRows();
         const target = motion.queued?.row ?? motion.row.to;
         const targetTop = target - this.currRow;
-        let visualTop: number;
-        if (this.isFixedFocusMode()) {
-            visualTop = this.motionPos - this.currRow;
-        } else {
-            const maxTop = Math.max(0, rows - displayRows);
-            const kept = Math.min(Math.max(motion.topFrom, this.motionPos - (displayRows - 1)), this.motionPos);
-            visualTop = Math.min(Math.max(kept, 0), maxTop);
-        }
-        const nearestRow = ((Math.round(this.motionPos) % rows) + rows) % rows;
+        const visualTop = this.isFixedFocusMode()
+            ? this.motionPos - this.currRow
+            : this.floatingVisualTop(motion, displayRows);
+        const nearestRow = positiveMod(Math.round(this.motionPos), rows);
         const nearestCol = Math.min(Math.max(Math.round(this.motionCol), 0), numCols - 1);
         const visualIndex = Math.min(nearestRow * numCols + nearestCol, this.content.length - 1);
         return {
@@ -1629,8 +1704,8 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
-     * Both edges back to back, ahead of the settle. Kept for TimeGrid, whose channel/program settle
-     * order has not been measured on a device yet.
+     * Both edges back to back, ahead of the settle. Used by TimeGrid, whose channel/program settle order
+     * has not been measured on a device yet, and by ZoomRowList's instant move along a row.
      */
     protected emitScrollPulse() {
         this.openScrollPulse();
@@ -2359,7 +2434,7 @@ export class ArrayGrid extends Group implements UITransition {
         for (let r = 0; r < numRows; r++) {
             // A wrapping list renders a contiguous window that can run past the last row and resume
             // at the top, so the override arrays are indexed modulo the row count.
-            const absolute = this.wrap ? (((firstRow + r) % totalRows) + totalRows) % totalRows : firstRow + r;
+            const absolute = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
             height += this.resolveTrackValue(rowHeights, absolute, itemSize[1]) + margin.y * 2;
             if (r < numRows - 1) {
                 // Per the reference, rowSpacings[i] is the spacing AFTER row i, so the last rendered

@@ -55,8 +55,8 @@ import type { Task } from "./Task";
 
 type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
-/** A `focusedChild` write held back until its focus transaction is fully committed. */
-type StagedFocus = { node: Node; field: Field };
+/** The field of a `focusedChild` write held back until its focus transaction is fully committed. */
+type StagedFocus = Field;
 
 /** Reads the RSGPalette `colors` set held directly on `node` (an RSGPalette in its `palette` field). */
 function paletteColorsOf(node: Node): RoAssociativeArray | undefined {
@@ -494,7 +494,7 @@ export class Node extends RoSGNode implements BrsValue {
                 const sink = mapKey === "focusedchild" ? Node.focusStagingSink : undefined;
                 this.notified = field.setValue(value, sink === undefined);
                 if (sink) {
-                    sink.push({ node: this, field });
+                    sink.push(field);
                 }
                 this.fields.set(mapKey, field);
                 const alias = this.aliases.get(mapKey);
@@ -1361,9 +1361,6 @@ export class Node extends RoSGNode implements BrsValue {
                 this.applyFocus(path, staged);
             }
             Node.notifyStagedFocus(staged);
-            // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
-            // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
-            return this.isFocusable();
         } else if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
@@ -1387,6 +1384,8 @@ export class Node extends RoSGNode implements BrsValue {
             this.stageFocusedChild(BrsInvalid.Instance, staged);
             Node.notifyStagedFocus(staged);
         }
+        // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
+        // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
         return this.isFocusable();
     }
 
@@ -1404,9 +1403,7 @@ export class Node extends RoSGNode implements BrsValue {
         const previous = sgRoot.chainExtension ?? sgRoot.chainOwner ?? sgRoot.focused;
         sgRoot.setFocused(this);
         sgRoot.setChainOwner(this);
-        if (previous instanceof Node && previous !== this) {
-            Node.unsetPathBelow(previous, path, staged);
-        }
+        Node.unsetPathBelow(previous, path, staged);
         for (let i = 0; i < path.length - 1; i++) {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
@@ -1433,11 +1430,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (last instanceof Node) {
             const lastPath = last.createPath();
             if (lastPath[0] === root) {
-                let common = 0;
-                while (common < path.length && common < lastPath.length && path[common] === lastPath[common]) {
-                    common++;
-                }
-                start = common - 1;
+                start = Node.commonLength(path, lastPath) - 1;
             }
         }
         // Replacing the root's link (the Scene's) takes over the chain, but only of this tree: a detached
@@ -1463,10 +1456,7 @@ export class Node extends RoSGNode implements BrsValue {
             (start === 0 || redirectsOwner)
         ) {
             // Through a node the owner forwarded to, like a top-level call (`applyFocus`).
-            const previous = sgRoot.chainExtension ?? owner;
-            if (previous instanceof Node && previous !== this) {
-                Node.unsetPathBelow(previous, path, staged);
-            }
+            Node.unsetPathBelow(sgRoot.chainExtension ?? owner, path, staged);
             sgRoot.setChainOwner(this);
         }
         for (let i = start; i < path.length - 1; i++) {
@@ -1556,20 +1546,29 @@ export class Node extends RoSGNode implements BrsValue {
         }
     }
 
-    /**
-     * Stages the unset of `previous`'s path below its common ancestor with `path`: each link that still
-     * points at the next node of that path (and `previous`'s link to itself) is cleared.
-     * @param previous The node whose path is unset.
-     * @param path The path being focused, root first.
-     * @param staged Accumulator for the staged writes.
-     */
-    private static unsetPathBelow(previous: Node, path: Node[], staged: StagedFocus[]) {
-        const old = previous.createPath();
+    /** How many leading nodes two paths (root first) share. */
+    private static commonLength(a: Node[], b: Node[]): number {
         let common = 0;
-        while (common < path.length && common < old.length && old[common] === path[common]) {
+        while (common < a.length && common < b.length && a[common] === b[common]) {
             common++;
         }
-        for (let i = common; i < old.length; i++) {
+        return common;
+    }
+
+    /**
+     * Stages the unset of `previous`'s path below its common ancestor with `path`: each link that still
+     * points at the next node of that path (and `previous`'s link to itself) is cleared. Nothing to unset
+     * when there is no previous node, or it is the node being focused.
+     * @param previous The node whose path is unset.
+     * @param path The path being focused, root first, ending at the node taking the focus.
+     * @param staged Accumulator for the staged writes.
+     */
+    private static unsetPathBelow(previous: RoSGNode | undefined, path: Node[], staged: StagedFocus[]) {
+        if (!(previous instanceof Node) || previous === path.at(-1)) {
+            return;
+        }
+        const old = previous.createPath();
+        for (let i = Node.commonLength(path, old); i < old.length; i++) {
             const node = old[i];
             const next = old[i + 1] ?? node;
             if (node.getValue("focusedchild") === next) {
@@ -1629,23 +1628,23 @@ export class Node extends RoSGNode implements BrsValue {
     private static notifyStagedFocus(staged: StagedFocus[]) {
         const round = Node.focusRound;
         if (round) {
-            for (const entry of staged) {
-                if (!round.fields.has(entry.field)) {
-                    round.fields.add(entry.field);
-                    round.queue.push(entry);
+            for (const field of staged) {
+                if (!round.fields.has(field)) {
+                    round.fields.add(field);
+                    round.queue.push(field);
                 }
             }
             return;
         }
         const queue = [...staged];
-        Node.focusRound = { queue, fields: new Set(queue.map((entry) => entry.field)) };
+        Node.focusRound = { queue, fields: new Set(queue) };
         // Marks these as an engine-initiated focus emission, so notifications raised during a
         // component's init() defer until init returns (see Field.enterInit).
         Field.enterFocusEmission();
         try {
             // The array iterator also visits the entries nested transactions append while this runs.
-            for (const entry of queue) {
-                entry.field.notifyObservers();
+            for (const field of queue) {
+                field.notifyObservers();
             }
         } finally {
             Field.exitFocusEmission();
