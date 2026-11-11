@@ -47,6 +47,7 @@ export class SGRoot {
     private _chainOwner?: RoSGNode;
     private _chainExtension?: RoSGNode;
     private _lastFocusTarget?: RoSGNode;
+    private _pendingPanelFocus?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
     private readonly _autoSub: { search: string; replace: string };
@@ -202,6 +203,19 @@ export class SGRoot {
     }
 
     /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
+    /** A panel a PanelSet move is notifying in its first phase (see `Node.announcePanelFocus`). */
+    get pendingPanelFocus(): RoSGNode | undefined {
+        return this._pendingPanelFocus;
+    }
+
+    /**
+     * Records the panel a PanelSet move is notifying in its first phase, or clears it.
+     * @param node That panel, or undefined to clear it
+     */
+    setPendingPanelFocus(node?: RoSGNode) {
+        this._pendingPanelFocus = node;
+    }
+
     get lastFocusTarget(): RoSGNode | undefined {
         return this._lastFocusTarget;
     }

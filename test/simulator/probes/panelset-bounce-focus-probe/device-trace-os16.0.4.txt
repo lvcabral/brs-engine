@@ -1,0 +1,194 @@
+PROBE|bounce@659731|0000|boot|model=Roku Streaming Stick+ os=16.0.4
+PROBE|bounce@659731|0001|fc|menu[c]=menuList
+PROBE|bounce@659731|0002|fc|scene[c]=ps
+PROBE|bounce@659731|0003|fc|ps[c]=menu
+PROBE|bounce@659731|0004|fc|menuList[F]=menuList
+PROBE|bounce@659731|0005|act|createNextPanelIndex=0
+PROBE|bounce@659731|0006|item|menuList itemFocused=0
+PROBE|bounce@659731|0007|fc|menu[c]=menuList
+PROBE|bounce@659731|0008|fc|scene[c]=ps
+PROBE|bounce@659731|0009|fc|ps[c]=menu
+PROBE|bounce@659731|0010|fc|menuList[F]=menuList
+PROBE|bounce@659731|0011|item|menuList itemFocused=0
+PROBE|bounce@659731|0012|boot|case=bounce
+PROBE|bounce@659731|0013|fc|menu[c]=menuList
+PROBE|bounce@659731|0014|fc|scene[c]=ps
+PROBE|bounce@659731|0015|fc|ps[c]=menu
+PROBE|bounce@659731|0016|fc|menuList[F]=menuList
+PROBE|bounce@659731|0017|item|menuList itemFocused=0
+PROBE|bounce@659731|0018|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|bounce@659731|0019|ready||MANUAL|
+PROBE|bounce@659731|0020|act|details gained -> bounce inChain=true
+PROBE|bounce@659731|0021|act|backPressed: details.setFocus(false), menu.setFocus(true)
+PROBE|bounce@659731|0022|fc|menu[c]=menuList
+PROBE|bounce@659731|0023|fc|scene[c]=ps
+PROBE|bounce@659731|0024|fc|ps[c]=menu
+PROBE|bounce@659731|0025|fc|menuList[F]=menuList
+PROBE|bounce@659731|0026|item|menuList itemFocused=0
+PROBE|bounce@659731|0027|act|menu.setFocus returned true
+PROBE|bounce@659731|0028|fc|details[-]=invalid
+PROBE|bounce@659731|0029|fc|menu[c]=menuList
+PROBE|bounce@659731|0030|fc|scene[c]=ps
+PROBE|bounce@659731|0031|fc|ps[c]=menu
+PROBE|bounce@659731|0032|fc|menuList[F]=menuList
+PROBE|bounce@659731|0033|act|createNextPanelIndex=1
+PROBE|bounce@659731|0034|item|menuList itemFocused=1
+PROBE|bounceDirect@777912127|0000|boot|model=Roku Streaming Stick+ os=16.0.4
+PROBE|bounceDirect@777912127|0001|fc|menu[c]=menuList
+PROBE|bounceDirect@777912127|0002|fc|scene[c]=ps
+PROBE|bounceDirect@777912127|0003|fc|ps[c]=menu
+PROBE|bounceDirect@777912127|0004|fc|menuList[F]=menuList
+PROBE|bounceDirect@777912127|0005|act|createNextPanelIndex=0
+PROBE|bounceDirect@777912127|0006|item|menuList itemFocused=0
+PROBE|bounceDirect@777912127|0007|fc|menu[c]=menuList
+PROBE|bounceDirect@777912127|0008|fc|scene[c]=ps
+PROBE|bounceDirect@777912127|0009|fc|ps[c]=menu
+PROBE|bounceDirect@777912127|0010|fc|menuList[F]=menuList
+PROBE|bounceDirect@777912127|0011|item|menuList itemFocused=0
+PROBE|bounceDirect@777912127|0012|boot|case=bounceDirect
+PROBE|bounceDirect@777912127|0013|fc|menu[c]=menuList
+PROBE|bounceDirect@777912127|0014|fc|scene[c]=ps
+PROBE|bounceDirect@777912127|0015|fc|ps[c]=menu
+PROBE|bounceDirect@777912127|0016|fc|menuList[F]=menuList
+PROBE|bounceDirect@777912127|0017|item|menuList itemFocused=0
+PROBE|bounceDirect@777912127|0018|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|bounceDirect@777912127|0019|ready||MANUAL|
+PROBE|bounceDirect@777912127|0020|act|details gained -> bounceDirect inChain=true
+PROBE|bounceDirect@777912127|0021|fc|menu[c]=menuList
+PROBE|bounceDirect@777912127|0022|fc|scene[c]=ps
+PROBE|bounceDirect@777912127|0023|fc|ps[c]=menu
+PROBE|bounceDirect@777912127|0024|fc|menuList[F]=menuList
+PROBE|bounceDirect@777912127|0025|item|menuList itemFocused=0
+PROBE|bounceDirect@777912127|0026|act|menu.setFocus returned true
+PROBE|bounceDirect@777912127|0027|fc|details[-]=invalid
+PROBE|bounceDirect@777912127|0028|fc|menu[c]=menuList
+PROBE|bounceDirect@777912127|0029|fc|scene[c]=ps
+PROBE|bounceDirect@777912127|0030|fc|ps[c]=menu
+PROBE|bounceDirect@777912127|0031|fc|menuList[F]=menuList
+PROBE|bounceDirect@777912127|0032|act|createNextPanelIndex=1
+PROBE|bounceDirect@777912127|0033|item|menuList itemFocused=1
+PROBE|noUnfocus@142255501|0000|boot|model=Roku Streaming Stick+ os=16.0.4
+PROBE|noUnfocus@142255501|0001|fc|menu[c]=menuList
+PROBE|noUnfocus@142255501|0002|fc|scene[c]=ps
+PROBE|noUnfocus@142255501|0003|fc|ps[c]=menu
+PROBE|noUnfocus@142255501|0004|fc|menuList[F]=menuList
+PROBE|noUnfocus@142255501|0005|act|createNextPanelIndex=0
+PROBE|noUnfocus@142255501|0006|item|menuList itemFocused=0
+PROBE|noUnfocus@142255501|0007|fc|menu[c]=menuList
+PROBE|noUnfocus@142255501|0008|fc|scene[c]=ps
+PROBE|noUnfocus@142255501|0009|fc|ps[c]=menu
+PROBE|noUnfocus@142255501|0010|fc|menuList[F]=menuList
+PROBE|noUnfocus@142255501|0011|item|menuList itemFocused=0
+PROBE|noUnfocus@142255501|0012|boot|case=noUnfocus
+PROBE|noUnfocus@142255501|0013|fc|menu[c]=menuList
+PROBE|noUnfocus@142255501|0014|fc|scene[c]=ps
+PROBE|noUnfocus@142255501|0015|fc|ps[c]=menu
+PROBE|noUnfocus@142255501|0016|fc|menuList[F]=menuList
+PROBE|noUnfocus@142255501|0017|item|menuList itemFocused=0
+PROBE|noUnfocus@142255501|0018|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|noUnfocus@142255501|0019|ready||MANUAL|
+PROBE|noUnfocus@142255501|0020|act|details gained -> noUnfocus inChain=true
+PROBE|noUnfocus@142255501|0021|fc|menu[c]=menuList
+PROBE|noUnfocus@142255501|0022|fc|scene[c]=ps
+PROBE|noUnfocus@142255501|0023|fc|ps[c]=menu
+PROBE|noUnfocus@142255501|0024|fc|menuList[F]=menuList
+PROBE|noUnfocus@142255501|0025|item|menuList itemFocused=0
+PROBE|noUnfocus@142255501|0026|act|menu.setFocus returned true
+PROBE|noUnfocus@142255501|0027|fc|details[F]=details
+PROBE|noUnfocus@142255501|0028|fc|menu[-]=invalid
+PROBE|noUnfocus@142255501|0029|fc|menuList[-]=invalid
+PROBE|noUnfocus@142255501|0030|fc|scene[c]=ps
+PROBE|noUnfocus@142255501|0031|fc|ps[c]=details
+PROBE|noUnfocus@142255501|0032|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[F]=details wrap[-]=invalid inner[-]=invalid
+PROBE|chainGate@1817317481|0000|boot|model=Roku Streaming Stick+ os=16.0.4
+PROBE|chainGate@1817317481|0001|fc|menu[c]=menuList
+PROBE|chainGate@1817317481|0002|fc|scene[c]=ps
+PROBE|chainGate@1817317481|0003|fc|ps[c]=menu
+PROBE|chainGate@1817317481|0004|fc|menuList[F]=menuList
+PROBE|chainGate@1817317481|0005|act|createNextPanelIndex=0
+PROBE|chainGate@1817317481|0006|item|menuList itemFocused=0
+PROBE|chainGate@1817317481|0007|fc|menu[c]=menuList
+PROBE|chainGate@1817317481|0008|fc|scene[c]=ps
+PROBE|chainGate@1817317481|0009|fc|ps[c]=menu
+PROBE|chainGate@1817317481|0010|fc|menuList[F]=menuList
+PROBE|chainGate@1817317481|0011|item|menuList itemFocused=0
+PROBE|chainGate@1817317481|0012|boot|case=chainGate
+PROBE|chainGate@1817317481|0013|fc|menu[c]=menuList
+PROBE|chainGate@1817317481|0014|fc|scene[c]=ps
+PROBE|chainGate@1817317481|0015|fc|ps[c]=menu
+PROBE|chainGate@1817317481|0016|fc|menuList[F]=menuList
+PROBE|chainGate@1817317481|0017|item|menuList itemFocused=0
+PROBE|chainGate@1817317481|0018|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|chainGate@1817317481|0019|ready||MANUAL|
+PROBE|chainGate@1817317481|0020|act|details notified hasFocus=true inChain=true
+PROBE|chainGate@1817317481|0021|fc|wrap[c]=inner
+PROBE|chainGate@1817317481|0022|fc|inner[F]=inner
+PROBE|chainGate@1817317481|0023|item|inner itemFocused=0
+PROBE|chainGate@1817317481|0024|fc|details[c]=wrap
+PROBE|chainGate@1817317481|0025|fc|menu[-]=invalid
+PROBE|chainGate@1817317481|0026|fc|menuList[-]=invalid
+PROBE|chainGate@1817317481|0027|fc|scene[c]=ps
+PROBE|chainGate@1817317481|0028|fc|ps[c]=details
+PROBE|chainGate@1817317481|0029|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|chainGate@1817317481|0030|act|details notified hasFocus=false inChain=true
+PROBE|chainGate@1817317481|0031|fc|details[c]=wrap
+PROBE|chainGate@1817317481|0032|fc|scene[c]=ps
+PROBE|chainGate@1817317481|0033|fc|ps[c]=details
+PROBE|chainGate@1817317481|0034|fc|wrap[c]=inner
+PROBE|chainGate@1817317481|0035|fc|inner[F]=inner
+PROBE|chainGate@1817317481|0036|item|inner itemFocused=1
+PROBE|forward@34085457|0000|boot|model=Roku Streaming Stick+ os=16.0.4
+PROBE|forward@34085457|0001|fc|menu[c]=menuList
+PROBE|forward@34085457|0002|fc|scene[c]=ps
+PROBE|forward@34085457|0003|fc|ps[c]=menu
+PROBE|forward@34085457|0004|fc|menuList[F]=menuList
+PROBE|forward@34085457|0005|act|createNextPanelIndex=0
+PROBE|forward@34085457|0006|item|menuList itemFocused=0
+PROBE|forward@34085457|0007|fc|menu[c]=menuList
+PROBE|forward@34085457|0008|fc|scene[c]=ps
+PROBE|forward@34085457|0009|fc|ps[c]=menu
+PROBE|forward@34085457|0010|fc|menuList[F]=menuList
+PROBE|forward@34085457|0011|item|menuList itemFocused=0
+PROBE|forward@34085457|0012|boot|case=forward
+PROBE|forward@34085457|0013|fc|menu[c]=menuList
+PROBE|forward@34085457|0014|fc|scene[c]=ps
+PROBE|forward@34085457|0015|fc|ps[c]=menu
+PROBE|forward@34085457|0016|fc|menuList[F]=menuList
+PROBE|forward@34085457|0017|item|menuList itemFocused=0
+PROBE|forward@34085457|0018|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|forward@34085457|0019|ready||MANUAL|
+PROBE|forward@34085457|0020|act|details gained -> forward inChain=true
+PROBE|forward@34085457|0021|fc|wrap[c]=inner
+PROBE|forward@34085457|0022|fc|inner[F]=inner
+PROBE|forward@34085457|0023|item|inner itemFocused=0
+PROBE|forward@34085457|0024|fc|details[c]=wrap
+PROBE|forward@34085457|0025|fc|menu[-]=invalid
+PROBE|forward@34085457|0026|fc|menuList[-]=invalid
+PROBE|forward@34085457|0027|fc|scene[c]=ps
+PROBE|forward@34085457|0028|fc|ps[c]=details
+PROBE|forward@34085457|0029|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|forward@34085457|0030|fc|menu[c]=menuList
+PROBE|forward@34085457|0031|fc|details[-]=invalid
+PROBE|forward@34085457|0032|fc|wrap[-]=invalid
+PROBE|forward@34085457|0033|fc|inner[-]=invalid
+PROBE|forward@34085457|0034|fc|scene[c]=ps
+PROBE|forward@34085457|0035|fc|ps[c]=menu
+PROBE|forward@34085457|0036|fc|menuList[F]=menuList
+PROBE|forward@34085457|0037|item|menuList itemFocused=0
+PROBE|forward@34085457|0038|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|forward@34085457|0039|act|details gained -> forward inChain=true
+PROBE|forward@34085457|0040|fc|wrap[c]=inner
+PROBE|forward@34085457|0041|fc|inner[F]=inner
+PROBE|forward@34085457|0042|item|inner itemFocused=0
+PROBE|forward@34085457|0043|fc|details[c]=wrap
+PROBE|forward@34085457|0044|fc|menu[-]=invalid
+PROBE|forward@34085457|0045|fc|menuList[-]=invalid
+PROBE|forward@34085457|0046|fc|scene[c]=ps
+PROBE|forward@34085457|0047|fc|ps[c]=details
+PROBE|forward@34085457|0048|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|forward@34085457|0049|fc|details[c]=wrap
+PROBE|forward@34085457|0050|fc|scene[c]=ps
+PROBE|forward@34085457|0051|fc|ps[c]=details
+PROBE|forward@34085457|0052|fc|wrap[c]=inner
+PROBE|forward@34085457|0053|fc|inner[F]=inner
+PROBE|forward@34085457|0054|item|inner itemFocused=1

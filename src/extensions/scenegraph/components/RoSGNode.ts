@@ -1772,7 +1772,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     return remote;
                 }
                 // loop through all children DFS and check if any children has focus
-                if (sgRoot.focused === this) {
+                if (sgRoot.focused === this || sgRoot.pendingPanelFocus === this) {
                     return BrsBoolean.True;
                 }
                 return BrsBoolean.from(this.isChildrenFocused());

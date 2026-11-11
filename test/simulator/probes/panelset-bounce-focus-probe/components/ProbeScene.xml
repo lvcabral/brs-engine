@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A PanelSet with a ListPanel menu whose createNextPanelIndex builds a DetailPanel. The PanelSet's
+     own key handling (Right/Left) moves the focus; the detail panel's gain observer forwards or bounces.
+     Every focusedChild change and every settled focus state is printed. -->
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeCase" type="string" onChange="onCase" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeLog.brs" />
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.ps = m.top.findNode("ps")
+        m.menu = CreateObject("roSGNode", "ListPanel")
+        m.menu.id = "menu"
+        m.menu.panelSize = "narrow"
+        m.menu.focusable = true
+        m.menuList = CreateObject("roSGNode", "LabelList")
+        m.menuList.id = "menuList"
+        m.menuList.itemSize = [300, 60]
+        c = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 2
+            c.createChild("ContentNode").title = "menu " + i.toStr()
+        end for
+        m.menuList.content = c
+        m.menu.appendChild(m.menuList)
+        m.menu.list = m.menuList
+        m.menu.createNextPanelOnItemFocus = true
+        m.menu.observeField("createNextPanelIndex", "onCreateNext")
+        m.menuList.observeField("itemFocused", "onMenuItem")
+        m.details = invalid
+        m.lastState = ""
+        m.nodes = [m.top, m.ps, m.menu, m.menuList]
+        for each n in m.nodes
+            n.observeField("focusedChild", "onFc")
+        end for
+        m.ps.appendChild(m.menu)
+        m.menu.setFocus(true)
+        m.poll = m.top.findNode("poll")
+        m.poll.observeField("fire", "onPoll")
+        m.poll.control = "start"
+        m.ready = m.top.findNode("ready")
+        m.ready.observeField("fire", "onReady")
+        m.ready.control = "start"
+    end sub
+
+    sub onCase()
+        plog("boot", "case=" + m.top.probeCase)
+    end sub
+
+
+    function nid(n as dynamic) as string
+        if n = invalid then return "invalid"
+        if n.isSameNode(m.top) then return "scene"
+        if n.id = "" then return n.subtype()
+        return n.id
+    end function
+
+    function desc(n as object) as string
+        f = "-"
+        if n.hasFocus()
+            f = "F"
+        else if n.isInFocusChain()
+            f = "c"
+        end if
+        return nid(n) + "[" + f + "]=" + nid(n.focusedChild)
+    end function
+
+    sub onFc(ev as object)
+        n = ev.getRoSGNode()
+        plog("fc", desc(n))
+    end sub
+
+    sub onMenuItem()
+        plog("item", "menuList itemFocused=" + m.menuList.itemFocused.toStr())
+    end sub
+
+    sub onInnerItem()
+        plog("item", "inner itemFocused=" + m.inner.itemFocused.toStr())
+    end sub
+
+    sub onCreateNext()
+        plog("act", "createNextPanelIndex=" + m.menu.createNextPanelIndex.toStr())
+        if m.details = invalid
+            m.details = CreateObject("roSGNode", "DetailPanel")
+            m.details.id = "details"
+            m.details.probeCase = m.top.probeCase
+            m.details.menuRef = m.menu
+            m.details.observeField("backPressed", "onBack")
+            m.wrap = m.details.findNode("wrap")
+            m.inner = m.details.findNode("inner")
+            m.inner.observeField("itemFocused", "onInnerItem")
+            for each n in [m.details, m.wrap, m.inner]
+                n.observeField("focusedChild", "onFc")
+                m.nodes.push(n)
+            end for
+        end if
+        m.menu.nextPanel = m.details
+    end sub
+
+    sub onBack()
+        plog("act", "backPressed: details.setFocus(false), menu.setFocus(true)")
+        m.details.setFocus(false)
+        r = m.menu.setFocus(true)
+        plog("act", "menu.setFocus returned " + r.toStr())
+    end sub
+
+    sub onPoll()
+        s = ""
+        for each n in m.nodes
+            s = s + " " + desc(n)
+        end for
+        if s <> m.lastState
+            m.lastState = s
+            plog("state", s.trim())
+        end if
+    end sub
+
+    sub onReady()
+        plog("ready", "|MANUAL|")
+    end sub
+    ]]></script>
+    <children>
+        <PanelSet id="ps" />
+        <Timer id="poll" duration="0.25" repeat="true" />
+        <Timer id="ready" duration="2" />
+    </children>
+</component>

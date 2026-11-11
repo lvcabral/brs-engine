@@ -1,0 +1,121 @@
+PROBE|bounce@0|0000|boot|model=Roku TV os=16.0.4
+PROBE|bounce@0|0001|item|menuList itemFocused=0
+PROBE|bounce@0|0002|act|createNextPanelIndex=0
+PROBE|bounce@0|0003|boot|case=bounce
+PROBE|bounce@0|0004|fc|scene[c]=ps
+PROBE|bounce@0|0005|fc|ps[c]=menu
+PROBE|bounce@0|0006|fc|menu[c]=menuList
+PROBE|bounce@0|0007|fc|menuList[F]=menuList
+PROBE|bounce@0|0008|item|menuList itemFocused=0
+PROBE|bounce@0|0009|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|bounce@0|0010|ready||MANUAL|
+PROBE|bounce@0|0011|act|details gained -> bounce inChain=true
+PROBE|bounce@0|0012|act|backPressed: details.setFocus(false), menu.setFocus(true)
+PROBE|bounce@0|0013|item|menuList itemFocused=0
+PROBE|bounce@0|0014|act|menu.setFocus returned true
+PROBE|bounce@0|0015|fc|details[c]=invalid
+PROBE|bounce@0|0016|fc|menu[c]=menuList
+PROBE|bounce@0|0017|fc|menuList[F]=menuList
+PROBE|bounce@0|0018|item|menuList itemFocused=1
+PROBE|bounce@0|0019|act|createNextPanelIndex=1
+PROBE|bounceDirect@0|0000|boot|model=Roku TV os=16.0.4
+PROBE|bounceDirect@0|0001|item|menuList itemFocused=0
+PROBE|bounceDirect@0|0002|act|createNextPanelIndex=0
+PROBE|bounceDirect@0|0003|boot|case=bounceDirect
+PROBE|bounceDirect@0|0004|fc|scene[c]=ps
+PROBE|bounceDirect@0|0005|fc|ps[c]=menu
+PROBE|bounceDirect@0|0006|fc|menu[c]=menuList
+PROBE|bounceDirect@0|0007|fc|menuList[F]=menuList
+PROBE|bounceDirect@0|0008|item|menuList itemFocused=0
+PROBE|bounceDirect@0|0009|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|bounceDirect@0|0010|ready||MANUAL|
+PROBE|bounceDirect@0|0011|act|details gained -> bounceDirect inChain=true
+PROBE|bounceDirect@0|0012|item|menuList itemFocused=0
+PROBE|bounceDirect@0|0013|act|menu.setFocus returned true
+PROBE|bounceDirect@0|0014|fc|details[c]=invalid
+PROBE|bounceDirect@0|0015|fc|menu[c]=menuList
+PROBE|bounceDirect@0|0016|fc|menuList[F]=menuList
+PROBE|bounceDirect@0|0017|item|menuList itemFocused=1
+PROBE|bounceDirect@0|0018|act|createNextPanelIndex=1
+PROBE|noUnfocus@0|0000|boot|model=Roku TV os=16.0.4
+PROBE|noUnfocus@0|0001|item|menuList itemFocused=0
+PROBE|noUnfocus@0|0002|act|createNextPanelIndex=0
+PROBE|noUnfocus@0|0003|boot|case=noUnfocus
+PROBE|noUnfocus@0|0004|fc|scene[c]=ps
+PROBE|noUnfocus@0|0005|fc|ps[c]=menu
+PROBE|noUnfocus@0|0006|fc|menu[c]=menuList
+PROBE|noUnfocus@0|0007|fc|menuList[F]=menuList
+PROBE|noUnfocus@0|0008|item|menuList itemFocused=0
+PROBE|noUnfocus@0|0009|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|noUnfocus@0|0010|ready||MANUAL|
+PROBE|noUnfocus@0|0011|act|details gained -> noUnfocus inChain=true
+PROBE|noUnfocus@0|0012|item|menuList itemFocused=0
+PROBE|noUnfocus@0|0013|act|menu.setFocus returned true
+PROBE|noUnfocus@0|0014|fc|details[F]=details
+PROBE|noUnfocus@0|0015|fc|menu[c]=menuList
+PROBE|noUnfocus@0|0016|fc|menuList[F]=menuList
+PROBE|noUnfocus@0|0017|fc|menu[-]=invalid
+PROBE|noUnfocus@0|0018|fc|menuList[-]=invalid
+PROBE|noUnfocus@0|0019|fc|scene[c]=ps
+PROBE|noUnfocus@0|0020|fc|ps[c]=details
+PROBE|noUnfocus@0|0021|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[F]=details wrap[-]=invalid inner[-]=invalid
+PROBE|chainGate@0|0000|boot|model=Roku TV os=16.0.4
+PROBE|chainGate@0|0001|item|menuList itemFocused=0
+PROBE|chainGate@0|0002|act|createNextPanelIndex=0
+PROBE|chainGate@0|0003|boot|case=chainGate
+PROBE|chainGate@0|0004|fc|scene[c]=ps
+PROBE|chainGate@0|0005|fc|ps[c]=menu
+PROBE|chainGate@0|0006|fc|menu[c]=menuList
+PROBE|chainGate@0|0007|fc|menuList[F]=menuList
+PROBE|chainGate@0|0008|item|menuList itemFocused=0
+PROBE|chainGate@0|0009|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|chainGate@0|0010|ready||MANUAL|
+PROBE|chainGate@0|0011|act|details notified hasFocus=true inChain=true
+PROBE|chainGate@0|0012|item|inner itemFocused=0
+PROBE|chainGate@0|0013|fc|details[c]=wrap
+PROBE|chainGate@0|0014|fc|menu[-]=invalid
+PROBE|chainGate@0|0015|fc|menuList[-]=invalid
+PROBE|chainGate@0|0016|fc|ps[c]=details
+PROBE|chainGate@0|0017|fc|wrap[c]=inner
+PROBE|chainGate@0|0018|fc|inner[F]=inner
+PROBE|chainGate@0|0019|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|chainGate@0|0020|item|inner itemFocused=1
+PROBE|forward@0|0000|boot|model=Roku TV os=16.0.4
+PROBE|forward@0|0001|item|menuList itemFocused=0
+PROBE|forward@0|0002|act|createNextPanelIndex=0
+PROBE|forward@0|0003|boot|case=forward
+PROBE|forward@0|0004|fc|scene[c]=ps
+PROBE|forward@0|0005|fc|ps[c]=menu
+PROBE|forward@0|0006|fc|menu[c]=menuList
+PROBE|forward@0|0007|fc|menuList[F]=menuList
+PROBE|forward@0|0008|item|menuList itemFocused=0
+PROBE|forward@0|0009|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|forward@0|0010|ready||MANUAL|
+PROBE|forward@0|0011|act|details gained -> forward inChain=true
+PROBE|forward@0|0012|item|inner itemFocused=0
+PROBE|forward@0|0013|fc|details[c]=wrap
+PROBE|forward@0|0014|fc|menu[-]=invalid
+PROBE|forward@0|0015|fc|menuList[-]=invalid
+PROBE|forward@0|0016|fc|ps[c]=details
+PROBE|forward@0|0017|fc|wrap[c]=inner
+PROBE|forward@0|0018|fc|inner[F]=inner
+PROBE|forward@0|0019|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|forward@0|0020|fc|details[-]=invalid
+PROBE|forward@0|0021|fc|wrap[-]=invalid
+PROBE|forward@0|0022|fc|inner[-]=invalid
+PROBE|forward@0|0023|fc|scene[c]=ps
+PROBE|forward@0|0024|fc|ps[c]=menu
+PROBE|forward@0|0025|fc|menu[c]=menuList
+PROBE|forward@0|0026|fc|menuList[F]=menuList
+PROBE|forward@0|0027|item|menuList itemFocused=0
+PROBE|forward@0|0028|state|scene[c]=ps ps[c]=menu menu[c]=menuList menuList[F]=menuList details[-]=invalid wrap[-]=invalid inner[-]=invalid
+PROBE|forward@0|0029|act|details gained -> forward inChain=true
+PROBE|forward@0|0030|item|inner itemFocused=0
+PROBE|forward@0|0031|fc|details[c]=wrap
+PROBE|forward@0|0032|fc|menu[-]=invalid
+PROBE|forward@0|0033|fc|menuList[-]=invalid
+PROBE|forward@0|0034|fc|ps[c]=details
+PROBE|forward@0|0035|fc|wrap[c]=inner
+PROBE|forward@0|0036|fc|inner[F]=inner
+PROBE|forward@0|0037|state|scene[c]=ps ps[c]=details menu[-]=invalid menuList[-]=invalid details[c]=wrap wrap[c]=inner inner[F]=inner
+PROBE|forward@0|0038|item|inner itemFocused=1

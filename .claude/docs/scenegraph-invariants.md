@@ -1677,6 +1677,15 @@ re-shown from `rowItemFocused`).
      its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
      chain owner's path and takes it over. The live focus follows only when the chain from the root now
      leads to the target.
+     - *Redirecting the owner's link lower down takes the chain over too* (`redirectsOwner`). A nested
+       write that moves a link the chain owner hangs below unsets the owner's path (through
+       `chainExtension`, like a top-level call) and takes the chain. A panel whose gain observer appends
+       the next panel and focuses its grid moves the PanelSet's link off the panel; left the owner, it had
+       the next `setFocus` (an app opening an example screen) unset its stale self-link and notify it again,
+       so the app's gain handler ran twice, re-appending the panel and doubling its item observer. The
+       device shows the same takeover: in `panelset-bounce-focus-probe` `forward`, the panel's forward to its
+       list clears the menu's links. Regression: "a forward into a sibling subtree takes the chain over from
+       the container" in `Focus.test.js`.
    - **A forward extends the owner's chain** (`test/simulator/probes/nested-forward-focus-probe`). When a
      nested call moves the live focus onto a node below the chain owner and newly writes that node's
      self-link, the node becomes `sgRoot.chainExtension`, and the next top-level call unsets the chain
@@ -1690,15 +1699,29 @@ re-shown from `rowItemFocused`).
      from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
      hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
      (container-redirect scenario 2).
-   - **Engine-internal focus moves must keep both pointers honest.** PanelSet's key navigation
-     (`goBack`/`goForward`) releases the panel it leaves through the node that actually holds the focus
-     (`releasePanelFocus`): unfocusing a panel whose observer forwarded the focus to a grid would cut only
-     the panel's link in the middle of the chain, the next transaction would skip it (its link no longer
-     points along the path) and its observer would never see it leave the chain. The move then records
-     the focused panel as `lastFocusTarget` (`focusCurrentPanel`), a firmware `setFocus` completing after
-     any call nested in it; otherwise a details panel forwarding to its grid again after a Left would find
-     that grid as the last target, write only its self-link and lose the focus. Regression:
-     `PanelSetForwardFocus.test.js`.
+   - **PanelSet key navigation is one transaction on the target panel** (`moveFocusToCurrentPanel`,
+     `test/simulator/probes/panelset-bounce-focus-probe`, OS 16.0.4). Never a release of the panel left
+     followed by a focus of the PanelSet itself: that cut a forwarding panel's link mid-chain (the next
+     transaction skipped it, so it never saw it leave), and the transient chain clear notified the screen
+     that it had lost the focus. The target's `setFocus` unsets the old chain through any forward.
+     - *A plain panel takes the focus in two phases.* `Node.announcePanelFocus` writes only its self-link
+       and notifies it while the chain still leads to the panel left; `Node.completePanelFocus` then
+       finishes the move, but only if the panel still links to itself **and** the focus is still on the
+       left panel's chain. So a panel that bounces the focus back on its gain (`setFocus(false)` on itself,
+       `setFocus(true)` on the menu: a details panel with nothing to show while it loads) leaves the menu
+       focused; one that forwards into its own list, or to the grid of a panel it just appended, keeps it
+       there; one whose observer only re-focuses the menu (`noUnfocus`) still takes the focus. While it is
+       notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (`sgRoot.pendingPanelFocus`,
+       the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
+       an `initialFocus` to apply, or a move started inside a focus round (an observer setting `goBack`, where
+       the first phase's notification would only be queued) takes the focus at once (the device's Left back
+       to a ListPanel is one ordinary transaction to its list).
+     - *The target becomes `lastFocusTarget`* when the move completes, a firmware `setFocus` returning
+       after any call nested in it; otherwise a panel forwarding to its grid again after a Left would find
+       that grid as the target and write only its self-link.
+     - Regression: `PanelSetForwardFocus.test.js`, and "navigation follows focus that an app redirects
+       while going back" in `PanelSetFullScreen.test.js` (a real observer, not a `setNodeFocus` stub: the
+       two-phase move never calls `setNodeFocus` on a plain panel).
    - Still open: within one transaction the device notifies the gaining path from the leaf up and then the
      losing nodes (the probe's gallery run), while the engine notifies the losing nodes first, from the
      root down. `focus-probe2` N1 has the device notifying a losing sibling first, so the rule is not yet

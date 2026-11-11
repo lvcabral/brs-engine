@@ -219,6 +219,44 @@ describe("SceneGraph focus management", () => {
         }
     });
 
+    test("a forward into a sibling subtree takes the chain over from the container", () => {
+        // A panel that, on gaining focus, appends the next panel and focuses its grid (a sliding-panels
+        // menu): the forward redirects the parent's link off the panel. The panel must not stay the chain
+        // owner, or the next setFocus clears its stale self-link and notifies it again — the app's gain
+        // handler then ran a second time, re-appending the panel and doubling its item observer.
+        const scene = focusableNode();
+        const panelSet = focusableNode();
+        const menu = focusableNode();
+        const grid = focusableNode();
+        const nextPanel = focusableNode();
+        const info = forwardingContainer(grid);
+        // The forward targets a node in the sibling panel, not one of the container's own children.
+        nextPanel.appendChildToParent(grid);
+        const outside = focusableNode();
+        panelSet.appendChildToParent(menu);
+        panelSet.appendChildToParent(info);
+        panelSet.appendChildToParent(nextPanel);
+        scene.appendChildToParent(panelSet);
+        scene.appendChildToParent(outside);
+
+        menu.setNodeFocus(true);
+        sgRoot.setLastFocusTarget(menu);
+        info.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(grid);
+        expect(panelSet.getValue("focusedchild")).toBe(nextPanel);
+        expect(info.forwards).toBe(1);
+
+        // Focus moves on (an example screen opening). The panel that handed its focus on stays out of it.
+        const notified = [];
+        const port = new RoMessagePort();
+        port.pushMessage = () => notified.push(info.getValue("focusedchild"));
+        info.fields.get("focusedchild").addObserver("permanent", fakeInterpreter, port, info, focusedChildFieldArg);
+        outside.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(outside);
+        expect(notified).toEqual([]);
+        expect(info.forwards).toBe(1);
+    });
+
     test("focusing a node between the chain owner and the focus keeps the chain", () => {
         // nested-forward-focus-probe (the gallery): the body forwards to the list and the list to its button;
         // focusing the list again leaves the button focused, and the list sees it doesn't hold the focus.

@@ -4,7 +4,11 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsBoolean, BrsDevice, Float, Interpreter } = core;
+const { BrsBoolean, BrsDevice, Float, Interpreter, RoMessagePort } = core;
+
+/** Minimal fake interpreter accepted by Field.addObserver for a port observer. */
+const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+const focusedChildFieldArg = { getValue: () => "focusedChild", toString: () => "focusedChild" };
 
 /**
  * Regression: a Panel with isFullScreen=true assigned as a menu panel's nextPanel (the
@@ -159,17 +163,22 @@ describe("PanelSet full-screen panel as a nextPanel preview", () => {
         panelSet.focusedPanelCallback = (panel) => reported.push(panel);
         const examplesPanel = SGNodeFactory.createNode("Panel");
         examplesPanel.setValue("isFullScreen", BrsBoolean.True);
-        // Stands in for the app's synchronous focusedChild observer on the info panel.
-        const focusInfo = infoPanel.setNodeFocus.bind(infoPanel);
-        infoPanel.setNodeFocus = (on) => {
-            const result = focusInfo(on);
-            if (on && panelSet.getValueJS("isGoingBack")) {
+        // The app's focusedChild observer on the info panel: on a gain it appends the examples panel, or,
+        // while going back, sends the focus to the menu panel.
+        const port = new RoMessagePort();
+        port.pushMessage = () => {
+            if (infoPanel.getValue("focusedchild") !== infoPanel) {
+                return;
+            }
+            if (panelSet.getValueJS("isGoingBack")) {
                 menuPanel.setNodeFocus(true);
-            } else if (on && examplesPanel.getNodeParent() !== panelSet) {
+            } else if (examplesPanel.getNodeParent() !== panelSet) {
                 panelSet.appendChildToParent(examplesPanel);
             }
-            return result;
         };
+        infoPanel.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, infoPanel, focusedChildFieldArg);
 
         panelSet.handleKey("right", true);
         expect(sgRoot.focused).toBe(examplesPanel);

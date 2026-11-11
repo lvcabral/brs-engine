@@ -219,8 +219,7 @@ export class PanelSet extends Group implements UITransition {
                 this.setSlidingStatus(true);
             }
         }
-        this.releasePanelFocus(currentPanel);
-        this.focusCurrentPanel();
+        this.moveFocusToCurrentPanel(currentPanel);
         this.syncFocusToActual();
         this.applyInstantSlide();
         super.setValue("isGoingBack", BrsBoolean.False);
@@ -246,10 +245,7 @@ export class PanelSet extends Group implements UITransition {
         const currentPanel = this.panels.at(this.focusIndex);
         this.focusIndex = targetIndex;
         this.requestSlide();
-        if (currentPanel) {
-            this.releasePanelFocus(currentPanel);
-        }
-        this.focusCurrentPanel();
+        this.moveFocusToCurrentPanel(currentPanel);
         this.syncFocusToActual();
         this.applyInstantSlide();
         return true;
@@ -505,7 +501,11 @@ export class PanelSet extends Group implements UITransition {
             return;
         }
         this.focusIndex = index;
-        const panel = this.panels[index];
+        this.publishFocusedPanel(this.panels[index]);
+    }
+
+    /** Publishes `leftPanelIndex` for `panel` becoming the focused panel, then announces it. */
+    private publishFocusedPanel(panel: Panel) {
         const leftIndex = this.leftPanelIndexFor(panel);
         super.setValue("leftPanelIndex", new Float(leftIndex));
         this.announceFocusedPanel(panel, leftIndex);
@@ -519,35 +519,46 @@ export class PanelSet extends Group implements UITransition {
     }
 
     /**
-     * Takes the focus off a panel the PanelSet navigates away from. When the focus lives below the panel
-     * (its own `focusedChild` observer forwarded it, e.g. to a grid), the focused node is released, which
-     * unsets the whole chain: unfocusing the panel itself would only cut its link in the middle of the
-     * chain, so the next `setFocus` (which unsets only links still pointing along the old path) would skip
-     * it, and its observer would never see it leave the focus chain.
-     * @param panel The panel losing the focus.
+     * Moves the focus from `from` onto the panel at `focusIndex` for a key navigation (DEVICE-MEASURED,
+     * panelset-bounce-focus-probe, OS 16.0.4). Either way the move is one focus transaction on the target,
+     * never a release of `from` followed by a focus of the PanelSet itself: the target's `setFocus` unsets
+     * the old chain, through a node the left panel forwarded the focus to, so every node on it sees it left.
+     *
+     * A plain panel takes the focus in two phases: its self-link is written and it alone is notified while
+     * the chain still leads to `from`, and the move completes only if the panel still links to itself
+     * afterwards and the focus is still on `from`'s chain (an observer that sent it elsewhere, such as the
+     * grid of a panel it just appended, keeps it there). So a panel whose gain observer bounces the focus
+     * back (a details panel with nothing to focus while it loads: `setFocus(false)` on itself, then
+     * `setFocus(true)` on the menu) leaves the menu focused, and one that forwards to its own list keeps the
+     * focus there (the forward's nested write redirects the PanelSet's link and takes the chain over). A
+     * list panel, a panel with an `initialFocus` to apply, or a move started inside a focus round (an
+     * observer setting `goBack`) takes the focus at once.
+     *
+     * The move is a `setFocus(true)` completing after any call nested in it, so the target becomes
+     * `sgRoot.lastFocusTarget`, like a BrightScript call returning; otherwise, after a Left, a panel
+     * forwarding to its grid again would find that grid as the last target and write only its self-link.
+     * @param from The panel losing the focus, when there is one.
      */
-    private releasePanelFocus(panel: Panel) {
-        const focused = sgRoot.focused;
-        if (focused instanceof Node && focused !== panel && this.isFocusWithin(panel, focused)) {
-            focused.setNodeFocus(false);
-        } else {
-            panel.setNodeFocus(false);
+    private moveFocusToCurrentPanel(from?: Panel) {
+        const target = this.panels[this.focusIndex];
+        if (!target) {
+            return;
         }
-    }
-
-    /**
-     * Moves the focus onto the panel at `focusIndex` for a key navigation. The move is a `setFocus(true)`
-     * on that panel completing, after any call nested in it (a panel forwarding the focus to its grid), so
-     * it becomes `sgRoot.lastFocusTarget`, like a BrightScript call returning. Otherwise the target stays
-     * on whatever the app focused last: after a Left back to a menu, a details panel forwarding to its grid
-     * again would find that grid as the last target, write only the grid's self-link, and lose the focus.
-     */
-    private focusCurrentPanel() {
-        this.setNodeFocus(true);
-        const panel = this.panels[this.focusIndex];
-        if (panel) {
-            sgRoot.setLastFocusTarget(panel);
+        this.publishFocusedPanel(target);
+        this.wasFocused = true;
+        const twoPhase =
+            from !== undefined && !(target instanceof GridPanel) && this.isFocusWithin(from, sgRoot.focused);
+        if (twoPhase && target.announcePanelFocus()) {
+            // Complete only if the panel still links to itself and its observers left the focus where it was
+            // (on `from`'s chain): a bounce clears the self-link, and a forward elsewhere moves the focus.
+            if (target.getValue("focusedchild") === target && this.isFocusWithin(from, sgRoot.focused)) {
+                target.completePanelFocus();
+                sgRoot.setLastFocusTarget(target);
+            }
+            return;
         }
+        target.setNodeFocus(true);
+        sgRoot.setLastFocusTarget(target);
     }
 
     /** Whether `focused` is the panel itself or a node inside the panel's subtree. */

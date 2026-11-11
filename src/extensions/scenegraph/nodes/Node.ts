@@ -1397,8 +1397,10 @@ export class Node extends RoSGNode implements BrsValue {
      * and becomes the chain owner. The live focus moves up front, so observers already read the new state.
      * @param path This node's path, root first.
      * @param staged Accumulator for the staged writes.
+     * @param selfLink Whether to write this node's link to itself; a PanelSet move that already wrote it
+     *   (`completePanelFocus`) leaves it, so the node isn't notified a second time.
      */
-    private applyFocus(path: Node[], staged: StagedFocus[]) {
+    private applyFocus(path: Node[], staged: StagedFocus[], selfLink: boolean = true) {
         const previous = sgRoot.chainExtension ?? sgRoot.chainOwner ?? sgRoot.focused;
         sgRoot.setFocused(this);
         sgRoot.setChainOwner(this);
@@ -1408,7 +1410,9 @@ export class Node extends RoSGNode implements BrsValue {
         for (let i = 0; i < path.length - 1; i++) {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
-        this.stageFocusedChild(this, staged);
+        if (selfLink) {
+            this.stageFocusedChild(this, staged);
+        }
     }
 
     /**
@@ -1437,12 +1441,31 @@ export class Node extends RoSGNode implements BrsValue {
             }
         }
         // Replacing the root's link (the Scene's) takes over the chain, but only of this tree: a detached
-        // subtree focusing itself leaves the scene's chain alone.
+        // subtree focusing itself leaves the scene's chain alone. So does redirecting, lower down, the link
+        // the chain owner hangs below: a panel forwarding to a grid in a sibling panel moves the PanelSet's
+        // link off it, and leaving it the owner would have the next setFocus unset its stale self-link and
+        // notify it again, long after it handed the focus on.
         const owner = sgRoot.chainOwner;
-        const ownerTree = owner instanceof Node ? owner.createPath()[0] : root;
-        if (start === 0 && path.length > 1 && ownerTree === root && root.getValue("focusedchild") !== path[1]) {
-            if (owner instanceof Node && owner !== this) {
-                Node.unsetPathBelow(owner, path, staged);
+        const ownerPath = owner instanceof Node ? owner.createPath() : undefined;
+        const ownerTree = ownerPath ? ownerPath[0] : root;
+        const anchor = path[start];
+        const next = path[start + 1];
+        const anchorIndex = ownerPath ? ownerPath.indexOf(anchor) : -1;
+        const redirectsOwner =
+            ownerPath !== undefined &&
+            anchorIndex >= 0 &&
+            anchorIndex < ownerPath.length - 1 &&
+            ownerPath[anchorIndex + 1] !== next;
+        if (
+            next !== undefined &&
+            ownerTree === root &&
+            anchor.getValue("focusedchild") !== next &&
+            (start === 0 || redirectsOwner)
+        ) {
+            // Through a node the owner forwarded to, like a top-level call (`applyFocus`).
+            const previous = sgRoot.chainExtension ?? owner;
+            if (previous instanceof Node && previous !== this) {
+                Node.unsetPathBelow(previous, path, staged);
             }
             sgRoot.setChainOwner(this);
         }
@@ -1479,6 +1502,43 @@ export class Node extends RoSGNode implements BrsValue {
             Node.chainLeaf(path[0]) === focused &&
             focused.createPath().includes(this)
         );
+    }
+
+    /**
+     * First phase of a PanelSet key move onto a plain panel (DEVICE-MEASURED, panelset-bounce-focus-probe):
+     * the firmware writes only the panel's self-link and notifies it, while the rest of the chain still
+     * leads to the panel being left. A `setFocus` the panel's observers make runs as a nested call, so a
+     * panel that bounces the focus back to the menu (nothing to focus yet) lands it on the intact old chain.
+     * @returns False when the move must take the ordinary path: the panel has an `initialFocus` still to
+     *   apply, or a focus round is already dispatching (an observer set `goBack`), where this notification
+     *   would only be queued and the second phase would run before the panel's observers.
+     */
+    announcePanelFocus(): boolean {
+        if (Node.focusRound || (!this.triedInitFocus && this.componentDef?.initialFocus)) {
+            return false;
+        }
+        const staged: StagedFocus[] = [];
+        this.stageFocusedChild(this, staged);
+        // The panel already reports isInFocusChain() while it is notified (DEVICE-MEASURED, the probe's
+        // chainGate case), though the live focus is still on the panel being left.
+        sgRoot.setPendingPanelFocus(this);
+        try {
+            Node.notifyStagedFocus(staged);
+        } finally {
+            sgRoot.setPendingPanelFocus();
+        }
+        return true;
+    }
+
+    /**
+     * Second phase of a PanelSet key move, run only when the panel still links to itself after its
+     * observers ran: unsets the old chain and links the path down to the panel, which takes the focus. Its
+     * self-link is already in place, so its own observers aren't notified a second time.
+     */
+    completePanelFocus() {
+        const staged: StagedFocus[] = [];
+        this.applyFocus(this.createPath(), staged, false);
+        Node.notifyStagedFocus(staged);
     }
 
     /**
@@ -1598,6 +1658,7 @@ export class Node extends RoSGNode implements BrsValue {
         Node.focusRound = undefined;
         sgRoot.setChainOwner();
         sgRoot.setLastFocusTarget();
+        sgRoot.setPendingPanelFocus();
     }
 
     /**
