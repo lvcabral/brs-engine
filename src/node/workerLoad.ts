@@ -19,6 +19,8 @@
  *
  * The worker posts a `WorkerReady` message once loaded (`src/core/index.ts`); the hosts call
  * `trackWorkerLoad` when they create a worker and await `waitForWorkerLoad` before terminating it.
+ * The task host also holds a task's payload until then (see `task.ts`), since a worker handles the
+ * messages queued during its load as soon as it's ready.
  */
 import { Worker } from "node:worker_threads";
 import { isWorkerReady } from "../core/common";
@@ -59,17 +61,19 @@ export function trackWorkerLoad(worker: Worker) {
  * Resolves at once for a worker that isn't tracked or has already loaded.
  * @param worker Worker about to be terminated
  * @param maxWaitMs Upper bound on the wait
+ * @returns false if the wait gave up after `maxWaitMs` with the worker still loading
  */
-export async function waitForWorkerLoad(worker: Worker, maxWaitMs = MAX_LOAD_WAIT_MS): Promise<void> {
+export async function waitForWorkerLoad(worker: Worker, maxWaitMs = MAX_LOAD_WAIT_MS): Promise<boolean> {
     const loaded = loads.get(worker);
     if (!loaded) {
-        return;
+        return true;
     }
     let timer: NodeJS.Timeout | undefined;
-    const timeout = new Promise<void>((resolve) => {
-        timer = setTimeout(resolve, maxWaitMs);
+    const timeout = new Promise<boolean>((resolve) => {
+        timer = setTimeout(() => resolve(false), maxWaitMs);
         timer.unref();
     });
-    await Promise.race([loaded, timeout]);
+    const finished = await Promise.race([loaded.then(() => true), timeout]);
     clearTimeout(timer);
+    return finished;
 }

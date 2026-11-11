@@ -34,6 +34,23 @@ Node-host invariants (all mirror the browser API):
     reports `EXIT_BRIGHTSCRIPT_STOP`, not `EXIT_USER_NAV`). The CLI home/poweroff key goes through this path
     — do **not** "simplify" it back to a bare `DBG=EXIT` write: a worker idling in `wait()` can miss it (see
     next point) and there is no backstop.
+-   **Never terminate a worker that is still loading** (`src/node/workerLoad.ts`): `terminate()` landing
+    while node-canvas registers its classes aborts the whole process (`FATAL ERROR:
+    Error::ThrowAsJavaScriptException napi_throw`). The bundle posts `{ workerReady: true }` once
+    loaded; every host waits for it (10 s cap) before terminating. Three rules in `task.ts` follow from
+    the wait, so a stop that lands during the load stays a stop:
+    -   **Hold a Task's payload until its worker has loaded**, and drop it if the task was stopped (or
+        `resetTasks` began) meanwhile. A worker handles messages queued during its load once ready, so
+        a payload posted up front runs a task the app already stopped.
+    -   **Detach a stopped task at once** (`detachTask`: out of `tasks` and the id-keyed buffer maps),
+        then tear it down from that record. A restart of the same Task node (same `threadId`) during
+        the wait must get a fresh worker, not "already running" followed by the old teardown killing
+        it. Messages from a detached worker still deliver prints, but its `TaskData` STOP and
+        `ThreadUpdate`s are dropped, since a new run may own the id.
+    -   **`resetTasks` repeats until no task or teardown is left**: the app worker can still launch a
+        task while the others load.
+
+    Regressions: `test/node/workerLoad.test.js`.
 -   **EXIT must unwind `wait()` loops.** `RoMessagePort.wait` consumes the EXIT command, sets
     `debugMode = EXIT` and _returns_ (it can't throw through the callable boundary);
     `Interpreter.checkDebugger` therefore **throws `BlockEnd("debug-exit")` when already in EXIT mode**

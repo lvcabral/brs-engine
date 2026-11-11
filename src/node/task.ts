@@ -39,6 +39,18 @@ const MAX_TASKS = 30;
 
 // Active Tasks
 const tasks: Map<number, Worker> = new Map();
+/** A stopped task's worker and the per-run resources it held, taken out of the maps for teardown. */
+interface TaskThread {
+    id: number;
+    worker: Worker;
+    background?: number;
+    toTask?: SharedObject;
+    toMain?: SharedObject;
+}
+/** Teardowns in progress (see `endTask`). Their workers still count against `MAX_TASKS`. */
+const stoppingTasks: Set<Promise<void>> = new Set();
+/** Set while `resetTasks` runs: a task launched during it belongs to the app being torn down. */
+let resetting = false;
 /** Each task thread's connection to the background worker (`backgroundHost.ts`). */
 const backgroundThreads: Map<number, number> = new Map();
 /** Task workers that have started running (see `drainWorkerOutput`). */
@@ -121,13 +133,15 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     if (tasks.has(taskData.id) || !taskData.m?.top?.functionname) {
         notifyHost("debug", `[task:host] Task already running or invalid task data: ${taskData.id}, ${taskData.name}`);
         return;
-    } else if (tasks.size >= MAX_TASKS) {
+    } else if (tasks.size + stoppingTasks.size >= MAX_TASKS) {
         if (!pendingTasks.some((pending) => pending.taskData.id === taskData.id)) {
             pendingTasks.push({ taskData, payload: currentPayload });
         }
         notifyHost(
             "warning",
-            `[task:host] Maximum number of tasks reached (${tasks.size}), queued: ${taskData.id}, ${taskData.name}`
+            `[task:host] Maximum number of tasks reached (${tasks.size + stoppingTasks.size}), queued: ${
+                taskData.id
+            }, ${taskData.name}`
         );
         return;
     }
@@ -140,7 +154,7 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     // A leaked task worker must never keep the host process alive after the app ends.
     taskWorker.unref();
     taskWorker.once("online", () => onlineWorkers.add(taskWorker));
-    taskWorker.on("message", taskCallback);
+    taskWorker.on("message", (data: any) => taskCallback(data, taskWorker));
     tasks.set(taskData.id, taskWorker);
     if (isTypeOf(taskData.fanout, "SharedArrayBuffer")) {
         // Phase 3b (direct mode): the render thread owns the render→task fan-out buffer; forward it
@@ -169,7 +183,28 @@ function runTask(taskData: TaskData, currentPayload: AppPayload) {
     notifyHost("debug", `[task:host] Calling Task worker: ${taskData.id}, ${taskData.name}`);
     taskWorker.postMessage(sharedBuffer);
     backgroundThreads.set(taskData.id, connectBackground(taskWorker, workerEntry));
-    taskWorker.postMessage(taskPayload);
+    postPayloadWhenLoaded(taskWorker, taskPayload);
+}
+
+/**
+ * Posts a task's payload once its worker has loaded, unless the task was stopped (or all tasks are
+ * being reset) in the meantime.
+ * A worker handles the messages queued during its load as soon as it's ready, so a payload posted
+ * up front would start a task that has already been stopped.
+ * @param worker Task worker
+ * @param payload Payload that starts the task
+ */
+async function postPayloadWhenLoaded(worker: Worker, payload: TaskPayload) {
+    const { id, name } = payload.taskData;
+    if (!(await waitForWorkerLoad(worker))) {
+        notifyHost(
+            "warning",
+            `[task:host] Task worker did not report it had loaded, starting it anyway: ${id}, ${name}`
+        );
+    }
+    if (tasks.get(id) === worker && !resetting) {
+        worker.postMessage(payload);
+    }
 }
 
 /**
@@ -235,33 +270,74 @@ async function endTask(taskId: number) {
     if (queued >= 0) {
         pendingTasks.splice(queued, 1);
     }
-    const taskWorker = tasks.get(taskId);
-    if (taskWorker) {
-        // A task stopped right after it started may still be loading: terminating it then would
-        // abort the whole process (see workerLoad.ts).
-        await waitForWorkerLoad(taskWorker);
-        // Drain before detaching the real "message" listener: a print in flight when this was
-        // called must still reach taskCallback/notifyHost, not just be waited on.
-        await drainWorkerOutput(taskWorker);
-        taskWorker.removeAllListeners("message");
-        taskWorker.terminate().catch(() => {});
-        tasks.delete(taskId);
-        releaseBackground(backgroundThreads.get(taskId));
-        backgroundThreads.delete(taskId);
-        // Cancel any pending queued writes so an in-flight wait that resolves after the worker is
-        // gone can't surface a stale "dropped update" error against the next app to run.
-        threadSyncToTask.get(taskId)?.dispose();
-        threadSyncToMain.get(taskId)?.dispose();
-        threadSyncToTask.delete(taskId);
-        threadSyncToMain.delete(taskId);
-        notifyHost("debug", `[task:host] Task worker stopped: ${taskId}`);
+    const thread = detachTask(taskId);
+    if (thread) {
+        await stopTaskThread(thread);
     }
     startPendingTasks();
 }
 
+/**
+ * Takes a task out of the broker at once, before its worker is torn down: a new run of the same task
+ * then gets its own worker and buffers, and a second stop of this run finds nothing to stop.
+ * @param taskId ID of the task to detach
+ * @returns The task's worker and resources, or undefined if it isn't running
+ */
+function detachTask(taskId: number): TaskThread | undefined {
+    const worker = tasks.get(taskId);
+    if (!worker) {
+        return undefined;
+    }
+    const thread: TaskThread = {
+        id: taskId,
+        worker,
+        background: backgroundThreads.get(taskId),
+        toTask: threadSyncToTask.get(taskId),
+        toMain: threadSyncToMain.get(taskId),
+    };
+    tasks.delete(taskId);
+    backgroundThreads.delete(taskId);
+    threadSyncToTask.delete(taskId);
+    threadSyncToMain.delete(taskId);
+    return thread;
+}
+
+/**
+ * Tears down a detached task, tracked in `stoppingTasks` until it's done.
+ * @param thread Task detached by `detachTask`
+ */
+async function stopTaskThread(thread: TaskThread) {
+    const stopping = terminateTaskThread(thread);
+    stoppingTasks.add(stopping);
+    await stopping;
+    stoppingTasks.delete(stopping);
+}
+
+/**
+ * Terminates a detached task's worker and releases its resources.
+ * @param thread Task detached by `detachTask`
+ */
+async function terminateTaskThread(thread: TaskThread) {
+    const { id, worker } = thread;
+    // A task stopped right after it started may still be loading: terminating it then would abort
+    // the whole process (see workerLoad.ts).
+    await waitForWorkerLoad(worker);
+    // Drain before detaching the real "message" listener: a print in flight when this was called
+    // must still reach taskCallback/notifyHost, not just be waited on.
+    await drainWorkerOutput(worker);
+    worker.removeAllListeners("message");
+    worker.terminate().catch(() => {});
+    releaseBackground(thread.background);
+    // Cancel any pending queued writes so an in-flight wait that resolves after the worker is gone
+    // can't surface a stale "dropped update" error against the next app to run.
+    thread.toTask?.dispose();
+    thread.toMain?.dispose();
+    notifyHost("debug", `[task:host] Task worker stopped: ${id}`);
+}
+
 /** Starts queued launches, oldest first, while slots are free. */
 function startPendingTasks() {
-    while (pendingTasks.length > 0 && tasks.size < MAX_TASKS) {
+    while (pendingTasks.length > 0 && tasks.size + stoppingTasks.size < MAX_TASKS) {
         const next = pendingTasks.shift()!;
         notifyHost("debug", `[task:host] Starting queued Task: ${next.taskData.id}, ${next.taskData.name}`);
         runTask(next.taskData, next.payload);
@@ -272,35 +348,34 @@ function startPendingTasks() {
  * Resets all tasks by terminating workers and clearing state.
  */
 export async function resetTasks() {
-    const workers = [...tasks.values()];
-    // Drain every worker concurrently, real "message" listener still attached, before tearing any
-    // of them down -- sequential draining would multiply the (usually negligible) quiet-window
-    // wait by the number of still-running tasks.
-    // Each worker must also have finished loading before it's terminated (see workerLoad.ts).
-    await Promise.all(
-        workers.map(async (worker) => {
-            await waitForWorkerLoad(worker);
-            await drainWorkerOutput(worker);
-        })
-    );
-    for (const worker of workers) {
-        worker.removeAllListeners("message");
-        worker.terminate().catch(() => {});
+    // Queued launches belong to the app being torn down; starting them against the next one would
+    // spawn workers with a stale payload.
+    pendingTasks.length = 0;
+    // Tear every task down concurrently, real "message" listener still attached while it drains:
+    // sequential draining would multiply the (usually negligible) quiet-window wait by the number of
+    // still-running tasks. Repeat until none is left, since the app can still launch a task while
+    // the others load and drain, and it must not outlive the app.
+    resetting = true;
+    try {
+        while (tasks.size > 0 || stoppingTasks.size > 0) {
+            for (const taskId of tasks.keys()) {
+                const thread = detachTask(taskId);
+                if (thread) {
+                    stopTaskThread(thread);
+                }
+            }
+            await Promise.all(stoppingTasks);
+        }
+    } finally {
+        resetting = false;
     }
-    for (const thread of backgroundThreads.values()) {
-        releaseBackground(thread);
-    }
-    backgroundThreads.clear();
+    // Buffers of launches that never got a worker (queued, or rejected as invalid)
     for (const shared of threadSyncToTask.values()) {
         shared.dispose();
     }
     for (const shared of threadSyncToMain.values()) {
         shared.dispose();
     }
-    tasks.clear();
-    // Queued launches belong to the app being torn down; starting them against the next one would
-    // spawn workers with a stale payload.
-    pendingTasks.length = 0;
     threadSyncToTask.clear();
     threadSyncToMain.clear();
     directMode = false;
@@ -310,8 +385,9 @@ export async function resetTasks() {
  * Handles messages received from task worker threads.
  * Routes registry updates, task state changes and thread updates.
  * @param data Message posted by the task worker
+ * @param worker Task worker that posted it
  */
-function taskCallback(data: any) {
+function taskCallback(data: any, worker: Worker) {
     if (isWorkerReady(data)) {
         // Handled by workerLoad.ts
         return;
@@ -325,10 +401,15 @@ function taskCallback(data: any) {
         notifyHost("debug", `[task:host] Loaded Extension: ${data.name} (v${data.version}) from ${data.library}\r\n`);
     } else if (isTaskData(data)) {
         notifyHost("debug", `[task:host] Task data received from Task Thread: ${data.name}, ${TaskState[data.state]}`);
-        if (data.state === TaskState.STOP) {
+        // A stopped run's worker, still draining, must not stop a new run of the same task
+        if (data.state === TaskState.STOP && tasks.get(data.id) === worker) {
             endTask(data.id);
         }
     } else if (isThreadUpdate(data)) {
+        if (tasks.get(data.id) !== worker) {
+            // The run that sent it is stopped, and a new run of the same task may already own its id
+            return;
+        }
         notifyHost(
             "debug",
             `[task:host] Update received from Task thread: ${data.id}, "${data.action}" ${data.type}.${data.key}`

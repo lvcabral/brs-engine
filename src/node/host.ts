@@ -225,7 +225,9 @@ async function cleanupApp() {
     terminateTimer = undefined;
     if (worker) {
         // An app that ends right after it started may still be loading (see workerLoad.ts)
-        await waitForWorkerLoad(worker);
+        if (!(await waitForWorkerLoad(worker))) {
+            notifyAll("warning", "[host] App worker did not report it had loaded, terminating it anyway");
+        }
         worker.removeAllListeners();
         await worker.terminate().catch(() => {});
     }

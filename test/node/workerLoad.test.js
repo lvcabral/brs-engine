@@ -6,8 +6,10 @@
 import path from "node:path";
 import { initTaskModule, handleTaskData, resetTasks } from "../../src/node/task.ts";
 import { TaskState } from "../../src/core/common.ts";
+const { pollUntil } = require("../testUtils/pollUntil");
 
 const workerEntry = path.join(__dirname, "resources", "load-canvas-worker.js");
+const slowLoadEntry = path.join(__dirname, "resources", "slow-load-task-worker.js");
 // Each launch hits the window only now and then, so launch many: without the fix, 100 launches
 // aborted the process on every run on a local machine. Tasks start and stop in batches, like an app
 // running several tasks at once, which keeps the run short.
@@ -32,6 +34,14 @@ function runTask(id) {
     );
 }
 
+function stopTask(id) {
+    handleTaskData({ id, name: "LoadCanvasTask", state: TaskState.STOP }, makeAppPayload());
+}
+
+async function delay(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 function batchIds(batch) {
     return Array.from({ length: BATCH_SIZE }, (_, i) => batch * BATCH_SIZE + i + 1);
 }
@@ -51,7 +61,7 @@ describe("stopping a task worker that is still loading", () => {
             for (const id of ids) {
                 runTask(id);
                 // Mirrors a different thread's `task.control = "stop"` the instant the task launched
-                handleTaskData({ id, name: "LoadCanvasTask", state: TaskState.STOP }, makeAppPayload());
+                stopTask(id);
             }
             await allStopped;
         }
@@ -73,4 +83,52 @@ describe("stopping a task worker that is still loading", () => {
         // Reaching this point means the process survived every launch
         expect(launched).toBe(BATCHES * BATCH_SIZE);
     }, 60000);
+});
+
+describe("a task stopped while its worker is loading", () => {
+    let events;
+    const count = (text) => events.filter((event) => event.includes(text)).length;
+
+    beforeEach(() => {
+        events = [];
+        initTaskModule(new SharedArrayBuffer(4), slowLoadEntry, (event, data) => events.push(`${event}: ${data}`));
+    });
+
+    afterEach(async () => {
+        await resetTasks();
+    });
+
+    it("never starts", async () => {
+        runTask(1);
+        stopTask(1);
+        expect(await pollUntil(() => count("Task worker stopped: 1") > 0)).toBe(true);
+        await delay(150);
+        expect(count("PAYLOAD 1")).toBe(0);
+        expect(count("Task worker stopped: 1")).toBe(1);
+    });
+
+    it("lets a new run of the same task start while it is torn down", async () => {
+        runTask(1);
+        stopTask(1);
+        // Mirrors `task.control = "run"` again right after the stop
+        runTask(1);
+        expect(await pollUntil(() => count("Task worker stopped: 1") > 0)).toBe(true);
+        expect(count("already running")).toBe(0);
+        expect(count("PAYLOAD 1")).toBe(1);
+        // The new run outlives the stopped run's teardown
+        const alive = count("ALIVE 1");
+        await delay(300);
+        expect(count("ALIVE 1")).toBeGreaterThan(alive);
+    });
+
+    it("is torn down by resetTasks along with a task launched while it waits", async () => {
+        runTask(1);
+        const reset = resetTasks();
+        // Mirrors the app worker launching a task while the host tears the app down
+        runTask(2);
+        await reset;
+        await delay(300);
+        expect(count("PAYLOAD")).toBe(0);
+        expect(count("Task worker stopped: 2")).toBe(1);
+    });
 });
