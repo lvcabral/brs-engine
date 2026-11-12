@@ -77,6 +77,8 @@ export class DynamicKeyGrid extends Group {
     private readonly font: Font;
     private readonly bmpFocus?: RoBitmap;
     private bmpBackground?: RoBitmap;
+    private bmpKeyCell?: RoBitmap;
+    private keyCells: Rect[] = [];
     private inset: KeyInset = { top: 0, right: 0, bottom: 0, left: 0 };
     private readonly keyFocusDelta: number;
     // Bundled special-key icon assets, shared with the legacy Keyboard/MiniKeyboard/PinPad nodes
@@ -191,11 +193,18 @@ export class DynamicKeyGrid extends Group {
     private rebuild() {
         if (!this.layout) {
             this.renderedKeys = [];
+            this.keyCells = [];
             this.focusIndex = -1;
             return;
         }
         const res = this.resolution === "FHD" ? "FHD" : "HD";
         this.renderedKeys = computeLayout(this.layout, this.mode, res, this.inset);
+        if (this.bmpBackground?.isValid()) {
+            this.keyCells = [];
+        } else {
+            this.keyCells = this.computeKeyCells();
+            this.bmpKeyCell ??= this.loadBitmap("common:/images/keyboard_key.9.png");
+        }
         const [w, h] = keyboardSize(this.layout, res);
         this.setValueSilent("width", new Float(w));
         this.setValueSilent("height", new Float(h));
@@ -565,9 +574,12 @@ export class DynamicKeyGrid extends Group {
         const focusColor = this.getPaletteColor("FocusColor");
 
         // Keyboard background cell artwork (same image as the legacy nodes), at natural size.
+        const keyboardColor = this.getPaletteColor("KeyboardColor");
         if (this.bmpBackground?.isValid() && this.renderedKeys.length > 0) {
             const bgRect = { x: rect.x, y: rect.y, width: 0, height: 0 };
-            this.drawImage(this.bmpBackground, bgRect, 0, opacity, draw2D, this.getPaletteColor("KeyboardColor"));
+            this.drawImage(this.bmpBackground, bgRect, 0, opacity, draw2D, keyboardColor);
+        } else {
+            this.renderKeyCells(rect, keyboardColor, opacity, draw2D);
         }
 
         for (let i = 0; i < this.renderedKeys.length; i++) {
@@ -609,6 +621,44 @@ export class DynamicKeyGrid extends Group {
         this.updateBoundingRects(rect, origin, rotation);
         this.renderChildren(interpreter, drawTrans, rotation, opacity, draw2D);
         this.nodeRenderingDone(origin, angle, opacity, draw2D);
+    }
+
+    /** Draws `keyboard_key.9.png` on each key cell: the background of a layout with no bundled one. */
+    private renderKeyCells(rect: Rect, color: number, opacity: number, draw2D?: IfDraw2D) {
+        if (!this.bmpKeyCell?.isValid()) {
+            return;
+        }
+        for (const cell of this.keyCells) {
+            const cellRect = { ...cell, x: rect.x + cell.x, y: rect.y + cell.y };
+            this.drawImage(this.bmpKeyCell, cellRect, 0, opacity, draw2D, color, undefined, false);
+        }
+    }
+
+    /**
+     * One cell per rendered key (blank keys included; null rows have none), as the device draws.
+     * A cell extends 1px over a key adjoining its right or bottom edge, so the asset's half-weight
+     * borders composite into one full-weight divider; edges facing no key keep the lighter border.
+     */
+    private computeKeyCells(): Rect[] {
+        // Whole-pixel edges: the even-distribution layout yields fractional key cells.
+        const boxes = this.renderedKeys
+            .map((key) => ({
+                x: Math.round(key.x),
+                y: Math.round(key.y),
+                right: Math.round(key.x + key.width),
+                bottom: Math.round(key.y + key.height),
+            }))
+            .filter((box) => box.right > box.x && box.bottom > box.y);
+        return boxes.map((box) => {
+            const hasRight = boxes.some((o) => o.x === box.right && o.y < box.bottom && o.bottom > box.y);
+            const hasBelow = boxes.some((o) => o.y === box.bottom && o.x < box.right && o.right > box.x);
+            return {
+                x: box.x,
+                y: box.y,
+                width: box.right - box.x + (hasRight ? 1 : 0),
+                height: box.bottom - box.y + (hasBelow ? 1 : 0),
+            };
+        });
     }
 
     /**
