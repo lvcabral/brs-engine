@@ -126,9 +126,11 @@ export function selectGrid(section: SectionDef, mode: string): GridDef | undefin
 
 /**
  * Distributes `total` across N slots. Slots with an explicit size keep it; the
- * remaining space is divided evenly among the slots without an explicit size.
+ * remaining space is divided evenly among the slots without an explicit size,
+ * floored to whole pixels when `whole` is set (as the device does: a 447px row of
+ * 6 keys is 6 x 74, so it lines up with a row of explicit 3 x 148 keys).
  */
-function distribute(total: number, explicit: (number | undefined)[]): number[] {
+function distribute(total: number, explicit: (number | undefined)[], whole: boolean): number[] {
     let sumExplicit = 0;
     let autoCount = 0;
     for (const value of explicit) {
@@ -138,7 +140,10 @@ function distribute(total: number, explicit: (number | undefined)[]): number[] {
             sumExplicit += value;
         }
     }
-    const autoSize = autoCount > 0 ? (total - sumExplicit) / autoCount : 0;
+    let autoSize = autoCount > 0 ? (total - sumExplicit) / autoCount : 0;
+    if (whole) {
+        autoSize = Math.floor(autoSize);
+    }
     return explicit.map((value) => value ?? autoSize);
 }
 
@@ -157,20 +162,16 @@ export interface KeyInset {
     left: number;
 }
 
-const NO_INSET: KeyInset = { top: 0, right: 0, bottom: 0, left: 0 };
-
 /**
  * Flattens the layout into absolutely positioned keys for the given mode and
  * resolution. Coordinates are relative to the keyboard's top-left corner. The
  * optional `inset` carves out the margins that surround the key cells in the
- * keyboard background bitmap, so the keys land on the drawn cells.
+ * keyboard background bitmap, so the keys land on the drawn cells; such a layout
+ * keeps exact sizes to match the bitmap, any other is sized in whole pixels.
  */
-export function computeLayout(
-    layout: KeyLayout,
-    mode: string,
-    res: Resolution,
-    inset: KeyInset = NO_INSET
-): RenderedKey[] {
+export function computeLayout(layout: KeyLayout, mode: string, res: Resolution, inset?: KeyInset): RenderedKey[] {
+    const whole = inset === undefined;
+    inset ??= { top: 0, right: 0, bottom: 0, left: 0 };
     const [boardWidth, boardHeight] = keyboardSize(layout, res);
     const contentWidth = boardWidth - inset.left - inset.right;
     const contentHeight = boardHeight - inset.top - inset.bottom;
@@ -178,14 +179,21 @@ export function computeLayout(
 
     const sectionWidths = distribute(
         contentWidth,
-        layout.sections.map((section) => pick(res, section.sectionWidthFHD, section.sectionWidthHD))
+        layout.sections.map((section) => pick(res, section.sectionWidthFHD, section.sectionWidthHD)),
+        whole
     );
 
     // When every section has an explicit width that leaves the keyboard wider than
     // their sum, the leftover space is distributed as equal gaps between sections
     // (this matches Roku's keyboard backgrounds, which separate the sections).
+    const allExplicit = layout.sections.every(
+        (section) => pick(res, section.sectionWidthFHD, section.sectionWidthHD) !== undefined
+    );
     const sumWidths = sectionWidths.reduce((acc, w) => acc + w, 0);
-    const gap = layout.sections.length > 1 ? Math.max(0, (contentWidth - sumWidths) / (layout.sections.length - 1)) : 0;
+    const gap =
+        allExplicit && layout.sections.length > 1
+            ? Math.max(0, (contentWidth - sumWidths) / (layout.sections.length - 1))
+            : 0;
 
     let sectionX = inset.left;
     for (let s = 0; s < layout.sections.length; s++) {
@@ -196,7 +204,8 @@ export function computeLayout(
             const gridHeight = pick(res, grid.gridHeightFHD, grid.gridHeightHD) ?? contentHeight;
             const rowHeights = distribute(
                 gridHeight,
-                grid.rows.map((row) => pick(res, row.rowHeightFHD, row.rowHeightHD))
+                grid.rows.map((row) => pick(res, row.rowHeightFHD, row.rowHeightHD)),
+                whole
             );
             let rowY = inset.top;
             for (let r = 0; r < grid.rows.length; r++) {
@@ -205,7 +214,8 @@ export function computeLayout(
                 const rowHeight = rowHeights[r];
                 const keyWidths = distribute(
                     sectionWidth,
-                    keys.map((key) => pick(res, key.keyWidthFHD, key.keyWidthHD))
+                    keys.map((key) => pick(res, key.keyWidthFHD, key.keyWidthHD)),
+                    whole
                 );
                 let keyX = sectionX;
                 for (let c = 0; c < keys.length; c++) {

@@ -637,6 +637,133 @@ describe("Dynamic voice keyboards", () => {
                 BrsDevice.fileSystem.clearSourceOverlay();
             });
 
+            describe("key-cell background (keyboard_key.9.png)", () => {
+                // A key with content that draws nothing (an unmapped theme icon), so only the cell
+                // background lands on the canvas.
+                const plainKey = (strOut) => ({ icon: "theme:None", strOut });
+
+                // Renders a standalone (unfocused) key grid onto a transparent bitmap of its size and
+                // returns a reader for one RGBA pixel.
+                function paintGrid(grid) {
+                    const bmp = new core.RoBitmap(
+                        core.brsValueOf({
+                            width: grid.getValueJS("width"),
+                            height: grid.getValueJS("height"),
+                            alphaEnable: true,
+                        })
+                    );
+                    grid.renderNode(fakeInterpreter, [0, 0], 0, 1, new core.IfDraw2D(bmp));
+                    return (x, y) => Array.from(bmp.getContext().getImageData(x, y, 1, 1).data);
+                }
+
+                function loadGrid(layout, mode) {
+                    BrsDevice.fileSystem.setSourceOverlay({ [KDF_URI]: JSON.stringify(layout) });
+                    const grid = SGNodeFactory.createNode("DynamicKeyGrid");
+                    grid.setValue("keyDefinitionUri", new BrsString(KDF_URI));
+                    if (mode) {
+                        grid.setValue("mode", new BrsString(mode));
+                    }
+                    return grid;
+                }
+
+                const board = (w, h, sections) => ({
+                    keyboardWidthFHD: w,
+                    keyboardHeightFHD: h,
+                    keyboardWidthHD: w,
+                    keyboardHeightHD: h,
+                    sections,
+                });
+
+                test("draws a cell under every key (blank keys too) but not under a null row", () => {
+                    // 100x60 board: row 0 = a key + a blank key (50px each), row 1 = null row, row 2 = one key.
+                    const grid = loadGrid(
+                        board(100, 60, [
+                            { grids: [{ rows: [{ keys: [plainKey("a"), {}] }, {}, { keys: [plainKey("c")] }] }] },
+                        ])
+                    );
+                    const pixel = paintGrid(grid);
+                    // Cell fill matches the bundled keyboard backgrounds (white at alpha 38).
+                    expect(pixel(25, 10)).toEqual([255, 255, 255, 38]);
+                    expect(pixel(75, 10)).toEqual([255, 255, 255, 38]); // blank key
+                    // Neighboring cells share their border: one 1px divider at full weight (~68).
+                    const divider = pixel(50, 10);
+                    expect(divider.slice(0, 3)).toEqual([0, 0, 0]);
+                    expect(divider[3]).toBeGreaterThanOrEqual(67);
+                    expect(divider[3]).toBeLessThanOrEqual(70);
+                    expect(pixel(49, 10)[3]).toBe(38);
+                    expect(pixel(51, 10)[3]).toBe(38);
+                    // The keyboard's outline keeps the half-weight border and softened corners.
+                    expect(pixel(0, 10)).toEqual([0, 0, 0, 37]);
+                    expect(pixel(99, 10)).toEqual([0, 0, 0, 37]);
+                    expect(pixel(0, 0)).toEqual([0, 0, 0, 19]);
+                    // A cell facing the null row keeps its border inside its own key...
+                    expect(pixel(25, 19)).toEqual([0, 0, 0, 37]);
+                    // ...and the null row shows no key background.
+                    expect(pixel(25, 20)[3]).toBe(0);
+                    expect(pixel(25, 30)[3]).toBe(0);
+                    expect(pixel(25, 40)).toEqual([0, 0, 0, 37]);
+                });
+
+                test("an edge facing a section gap stays inside the key", () => {
+                    // Two 40px sections on a 100px board leave a 20px gap between them.
+                    const section = {
+                        sectionWidthFHD: 40,
+                        sectionWidthHD: 40,
+                        grids: [{ rows: [{ keys: [plainKey("k")] }] }],
+                    };
+                    const pixel = paintGrid(loadGrid(board(100, 20, [section, section])));
+                    expect(pixel(39, 10)).toEqual([0, 0, 0, 37]);
+                    expect(pixel(40, 10)[3]).toBe(0);
+                    expect(pixel(59, 10)[3]).toBe(0);
+                    expect(pixel(60, 10)).toEqual([0, 0, 0, 37]);
+                });
+
+                test("the cells follow mode changes", () => {
+                    // Mode "One" has a single key; mode "Two" splits the row into two keys.
+                    const grid = loadGrid(
+                        board(100, 20, [
+                            {
+                                grids: [
+                                    { modes: "One", rows: [{ keys: [plainKey("a")] }] },
+                                    { modes: "Two", rows: [{ keys: [plainKey("a"), plainKey("b")] }] },
+                                ],
+                            },
+                        ]),
+                        "One"
+                    );
+                    expect(paintGrid(grid)(50, 10)).toEqual([255, 255, 255, 38]);
+                    grid.setValue("mode", new BrsString("Two"));
+                    expect(paintGrid(grid)(50, 10)[3]).toBeGreaterThanOrEqual(67);
+                });
+
+                // Device-observed (probe `test/simulator/probes/custom-kdf-width-probe`, Tubi's search
+                // KDF): evenly divided sizes are floored to whole pixels, so on a 447px board a row of
+                // 6 keys is 6 x 74 = 444 and ends with a row of explicit 3 x 148 keys.
+                test("evenly divided key sizes are whole pixels, aligning with explicit-width rows", () => {
+                    const six = { keys: ["a", "b", "c", "d", "e", "f"].map(plainKey) };
+                    const wide = { ...plainKey("w"), keyWidthFHD: 148, keyWidthHD: 148 };
+                    const grid = loadGrid(
+                        board(447, 148, [{ grids: [{ rows: [six, { keys: [wide, wide, wide] }] }] }])
+                    );
+                    const keys = grid.renderedKeys;
+                    expect(keys.filter((k) => k.row === 0).map((k) => k.width)).toEqual([74, 74, 74, 74, 74, 74]);
+                    expect(keys.map((k) => k.height)).toEqual(Array(9).fill(74));
+                    const pixel = paintGrid(grid);
+                    // Both rows end at the same column: the outline at 443, nothing at 444.
+                    for (const y of [10, 84]) {
+                        expect(pixel(443, y)).toEqual([0, 0, 0, 37]);
+                        expect(pixel(444, y)[3]).toBe(0);
+                    }
+                });
+
+                test("keyboards with a bundled background do not draw key cells", () => {
+                    for (const type of ["DynamicKeyboard", "DynamicMiniKeyboard", "DynamicPinPad"]) {
+                        const names = drawnImageNames(SGNodeFactory.createNode(type));
+                        expect(names.some((n) => n.includes("keyboard_key"))).toBe(false);
+                    }
+                });
+            });
+
             // A labelless key with a real "icon" URI (not the "theme:" special-key convention)
             // must draw that bitmap, per the DynamicCustomKeyboard spec's own worked example
             // ({ "icon": "pkg:/images/Duplicate.png", "strOut": "DuplicateCharacter" }): the icon

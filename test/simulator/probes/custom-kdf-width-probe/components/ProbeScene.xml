@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Two DynamicCustomKeyboards on a 447px board whose last row sets explicit key widths that sum
+     short of the board: 3x148 = 444 (Tubi's search KDF) and 3x120 = 360. Shows whether the device
+     keeps the explicit widths (row ends short) or stretches/fills the row. -->
+<component name="ProbeScene" extends="Scene">
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.backgroundColor = "0x301050FF"
+    m.top.backgroundUri = ""
+    a = m.top.findNode("kbA")
+    a.keyGrid.keyDefinitionUri = "pkg:/data/short3.json"
+    b = m.top.findNode("kbB")
+    b.keyGrid.keyDefinitionUri = "pkg:/data/short87.json"
+    a.setFocus(true)
+end sub
+]]></script>
+<children>
+    <SimpleLabel text="3x148 of 447" translation="[150,60]" />
+    <DynamicCustomKeyboard id="kbA" translation="[150,120]" />
+    <SimpleLabel text="3x120 of 447" translation="[900,60]" />
+    <DynamicCustomKeyboard id="kbB" translation="[900,120]" />
+</children>
+</component>

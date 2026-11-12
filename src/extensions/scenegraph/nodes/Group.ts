@@ -672,6 +672,8 @@ export class Group extends Node {
      * turned by `rotation` around `rect + scale * scaleRotateCenter`. A rotated node must pass a
      * rect at its pivot anchor (`getPivotDrawRect`). Writes the drawn (scaled) size back into `rect`.
      * @param scale The scale to draw at; `contentScale()` when omitted.
+     * @param smooth Whether a stretched draw is filtered; off keeps a small 9-patch's 1px edges from
+     * blending into its stretched center.
      */
     protected drawImage(
         bitmap: RoBitmap | RoAnimatedImage,
@@ -680,12 +682,13 @@ export class Group extends Node {
         opacity: number,
         draw2D?: IfDraw2D,
         rgba?: number,
-        scale?: number[]
+        scale?: number[],
+        smooth: boolean = true
     ) {
         // `RoAnimatedImage` content (animated WebP/Lottie) has no 9-patch marker concept — the
         // `isValid()`/`ninePatch` checks below are `RoBitmap`-only.
         if (!(bitmap instanceof RoBitmap) || bitmap.isValid()) {
-            bitmap.scaleMode = 1;
+            bitmap.scaleMode = smooth ? 1 : 0;
             rgba = normalizeBlendColor(rgba);
             if (opacity < 0 || opacity > 1) {
                 opacity = 1;
