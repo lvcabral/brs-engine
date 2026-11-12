@@ -99,6 +99,7 @@ program
     .option("-z, --log-rendezvous", "Trace SceneGraph cross-thread rendezvous (like Roku's logrendezvous).", false)
     .option("-e, --ecp", "Enable the ECP server for control simulation.", false)
     .option("-n, --no-sg", "Disable the SceneGraph extension.")
+    .option("-t, --no-transitions", "Disable SceneGraph intrinsic UI transitions (panel slides, focus scrolling).")
     .option("-p, --pack <password>", "The password to generate the encrypted package.", "")
     .option("-o, --out <directory>", "The directory to save the encrypted package file.", "./")
     .option("-r, --root <directory>", "The root directory from which `pkg:` paths will be resolved.")
@@ -135,6 +136,8 @@ program
             deviceData.connectionInfo.dns = dns.getServers();
             deviceData.debugOnCrash = program.debug ?? false;
             deviceData.logRendezvous = program.logRendezvous ?? false;
+            // BRS_UI_TRANSITIONS=0 is applied by the SceneGraph extension itself, for every host.
+            deviceData.uiTransitions = program.transitions !== false;
             deviceData.logLevel = program.logLevel;
             if (program.registry) {
                 deviceData.registry = getRegistry();

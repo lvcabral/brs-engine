@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbePanel" extends="Panel">
+    <children>
+        <Rectangle id="bg" width="388" height="400" color="0x204060FF">
+            <Label id="name" translation="[20,20]" width="300" height="40" />
+        </Rectangle>
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.focusable = true
+    end sub
+    ]]>
+    </script>
+</component>

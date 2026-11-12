@@ -25,6 +25,7 @@ import type { RoSGNode } from "./components/RoSGNode";
 import type { RoSGScreen } from "./components/RoSGScreen";
 import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
+import type { UITransition } from "./SGTransition";
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -43,6 +44,10 @@ export class SGRoot {
     private _screen?: RoSGScreen;
     private _scene?: Scene;
     private _focused?: RoSGNode;
+    private _chainOwner?: RoSGNode;
+    private _chainExtension?: RoSGNode;
+    private _lastFocusTarget?: RoSGNode;
+    private _pendingPanelFocus?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
     private readonly _autoSub: { search: string; replace: string };
@@ -51,6 +56,8 @@ export class SGRoot {
     private _walkingTimers: boolean = false;
     private _clockMinute: number = Math.floor(sgClock.now() / 60000);
     private readonly _animations: AnimationBase[];
+    private readonly _transitions: Set<UITransition> = new Set();
+    private _uiTransitionsEnabled: boolean = true;
     private readonly _sfx: (SoundEffect | undefined)[];
     private _audio?: Audio;
     private _video?: Video;
@@ -185,6 +192,34 @@ export class SGRoot {
         return this._focused;
     }
 
+    /** The node whose path the next focus transaction unsets (see `Node.applyFocus`). */
+    get chainOwner(): RoSGNode | undefined {
+        return this._chainOwner;
+    }
+
+    /** The node a nested forward extended the chain owner's chain to (see `Node.applyNestedFocus`). */
+    get chainExtension(): RoSGNode | undefined {
+        return this._chainExtension;
+    }
+
+    /** A panel a PanelSet move is notifying in its first phase (see `Node.announcePanelFocus`). */
+    get pendingPanelFocus(): RoSGNode | undefined {
+        return this._pendingPanelFocus;
+    }
+
+    /**
+     * Records the panel a PanelSet move is notifying in its first phase, or clears it.
+     * @param node That panel, or undefined to clear it
+     */
+    setPendingPanelFocus(node?: RoSGNode) {
+        this._pendingPanelFocus = node;
+    }
+
+    /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
+    get lastFocusTarget(): RoSGNode | undefined {
+        return this._lastFocusTarget;
+    }
+
     get sfx(): (SoundEffect | undefined)[] {
         return this._sfx;
     }
@@ -200,6 +235,24 @@ export class SGRoot {
 
     get animations(): AnimationBase[] {
         return this._animations;
+    }
+
+    /**
+     * Whether nodes play their intrinsic UI motion (PanelSet slides, list/grid focus scrolling).
+     * When false every such motion settles synchronously, exactly as if it had zero duration.
+     * Off through `DeviceInfo.uiTransitions = false` or the `BRS_UI_TRANSITIONS=0` environment variable.
+     */
+    get uiTransitionsEnabled(): boolean {
+        return this._uiTransitionsEnabled;
+    }
+
+    set uiTransitionsEnabled(value: boolean) {
+        this._uiTransitionsEnabled = value;
+    }
+
+    /** Applies the app's DeviceInfo setting at startup; the environment opt-out always wins. */
+    configureUiTransitions(deviceSetting: boolean) {
+        this._uiTransitionsEnabled = deviceSetting && !this.transitionsEnvDisabled;
     }
 
     get audio(): Audio | undefined {
@@ -279,6 +332,8 @@ export class SGRoot {
 
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
+    /** `BRS_UI_TRANSITIONS=0`: intrinsic UI transitions start disabled and DeviceInfo cannot enable them. */
+    private readonly transitionsEnvDisabled: boolean = false;
 
     /**
      * True while `Group.renderNode` has dropped the draw target of a fully transparent subtree, so its
@@ -322,7 +377,9 @@ export class SGRoot {
         // loads in Web Workers, where `process` does not exist.
         if (typeof process !== "undefined" && process.env) {
             this.pruneDisabled = process.env.BRS_PRUNE_DISABLE === "1";
+            this.transitionsEnvDisabled = process.env.BRS_UI_TRANSITIONS === "0";
         }
+        this._uiTransitionsEnabled = !this.transitionsEnvDisabled;
     }
 
     /**
@@ -457,10 +514,39 @@ export class SGRoot {
 
     /**
      * Sets the currently focused node.
-     * @param node Node to set as focused, or undefined to clear focus
+     * @param node Node to set as focused, or undefined to clear focus (which also drops the chain owner:
+     *   with nothing focused there is no path to unset)
      */
     setFocused(node?: RoSGNode) {
         this._focused = node;
+        if (!node) {
+            this.setChainOwner();
+        }
+    }
+
+    /**
+     * Sets the node whose path the next focus transaction unsets.
+     * @param node The chain owner, or undefined to clear it
+     */
+    setChainOwner(node?: RoSGNode) {
+        this._chainOwner = node;
+        this._chainExtension = undefined;
+    }
+
+    /**
+     * Records the node a nested forward extended the chain owner's chain to.
+     * @param node That node, or undefined to clear it
+     */
+    setChainExtension(node?: RoSGNode) {
+        this._chainExtension = node;
+    }
+
+    /**
+     * Records the target of the `setFocus(true)` call that is returning.
+     * @param node The call's target, or undefined to clear it
+     */
+    setLastFocusTarget(node?: RoSGNode) {
+        this._lastFocusTarget = node;
     }
 
     /**
@@ -737,6 +823,39 @@ export class SGRoot {
     }
 
     /**
+     * Runs one render pass's scene updates, in the order that leaves every field final for the paint.
+     * Animations go LAST: an observer anywhere earlier in the pass (a transition's settle, a Task update,
+     * a timer, a media event) may start one, and its first frame must be applied before the scene is
+     * painted. Ticked earlier, the paint shows the animated field's stale value for a frame, e.g. a
+     * cross-faded image drawn at full opacity before its fade-in starts from 0.
+     * @returns True if anything changed and the scene must be redrawn
+     */
+    processScenePass(): boolean {
+        const libsUpdated = this.processComponentLibraries();
+        const timersFired = this.processTimers();
+        const clockUpdated = this.processClock();
+        const transitionsMoved = this.processTransitions();
+        const tasksUpdated = this.processTasks();
+        const queuesDrained = this.processRenderQueues();
+        const audioUpdated = this.processAudio();
+        const sfxUpdated = this.processSFX();
+        const videoUpdated = this.processVideo();
+        const animUpdated = this.processAnimations();
+        return (
+            libsUpdated ||
+            timersFired ||
+            clockUpdated ||
+            transitionsMoved ||
+            tasksUpdated ||
+            queuesDrained ||
+            audioUpdated ||
+            sfxUpdated ||
+            videoUpdated ||
+            animUpdated
+        );
+    }
+
+    /**
      * Updates all application animations.
      * Checks which animations should update and triggers them.
      * @returns True if any animation updated, false otherwise
@@ -749,6 +868,48 @@ export class SGRoot {
             }
         }
         return updated;
+    }
+
+    /** Registers an active intrinsic UI transition so the render loop ticks it every pass. */
+    addTransition(transition: UITransition) {
+        this._transitions.add(transition);
+    }
+
+    /** Drops a transition that settled or was cancelled by its owner. */
+    removeTransition(transition: UITransition) {
+        this._transitions.delete(transition);
+    }
+
+    /** Drops every active transition unticked, so a previous app's motions don't run into the next one. */
+    clearTransitions() {
+        this._transitions.clear();
+    }
+
+    /**
+     * Advances every active intrinsic UI transition to the current clock. A tick that ends its
+     * transition can still start a new one (a settle observer writing `animateToItem`, or appending a
+     * panel): the owner re-registers during the tick, and that registration is kept.
+     * @returns True when a transition moved or settled this pass (the frame must be redrawn)
+     */
+    processTransitions(): boolean {
+        if (this._transitions.size === 0) {
+            return false;
+        }
+        const now = sgClock.perfNow();
+        let redraw = false;
+        for (const transition of Array.from(this._transitions)) {
+            if (!this._transitions.has(transition)) {
+                // Removed by an earlier tick's side effects this pass.
+                continue;
+            }
+            this._transitions.delete(transition);
+            const tick = transition.tickTransition(now);
+            if (tick !== "settled") {
+                this._transitions.add(transition);
+            }
+            redraw ||= tick !== "waiting";
+        }
+        return redraw;
     }
 
     /**

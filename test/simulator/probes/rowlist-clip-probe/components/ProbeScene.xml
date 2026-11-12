@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- RowList at y=200, itemSize 1160x150, itemSpacing 20, numRows 2: the window spans y 200..520
+     (2 x 150 + 20). Thin green bars mark the window's top and bottom edges; they are drawn behind
+     the list. -->
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Rectangle color="0x101820FF" width="1280" height="720" />
+        <Rectangle color="0x30C030FF" translation="[0,196]" width="1280" height="4" />
+        <Rectangle color="0x30C030FF" translation="[0,520]" width="1280" height="4" />
+        <RowList id="rows" translation="[60,200]" itemComponentName="ProbeItem"
+            itemSize="[1160,150]" itemSpacing="[0,20]" numRows="2"
+            rowItemSize="[[160,100]]" rowItemSpacing="[[20,0]]" showRowLabel="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to 5
+            row = root.createChild("ContentNode")
+            for c = 0 to 9
+                item = row.createChild("ContentNode")
+                item.title = "R" + r.toStr() + " I" + c.toStr()
+            end for
+        end for
+        rows = m.top.findNode("rows")
+        rows.content = root
+        rows.setFocus(true)
+    end sub
+
+    ' Play switches the list to floatingFocus, so the focus can rest on the bottom row.
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if press and key = "play"
+            m.top.findNode("rows").vertFocusAnimationStyle = "floatingFocus"
+            print "PROBE|floating"
+            return true
+        end if
+        return false
+    end function
+    ]]>
+    </script>
+</component>

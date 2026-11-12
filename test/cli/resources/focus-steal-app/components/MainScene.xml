@@ -4,21 +4,20 @@
     the content, an "overhang" holding the top menu), where the outlet observes its own
     `focusedChild` and re-grabs focus whenever focus leaves it.
 
-    Device-measured on a Roku Express 4K+ (OS 15.3) with the focus-probe apps:
+    Device-measured on a Roku Express 4K+ (OS 15.3 and 16.0) with the focus-probe apps, and this app on
+    OS 16.0:
 
     1. The whole focus transaction is COMMITTED before any focusedChild observer runs, so an
-       observer reads the finished chain - never a half-rewritten one. Before the fix the outlet's
-       loss observer still saw `sceneFC=outlet` while focus had already moved to the overhang.
+       observer reads the finished chain - never a half-rewritten one.
 
-    2. A `setFocus` raised from a focus-LOSS notification is IGNORED: the chain and the remote stay
-       with the node the in-flight transaction focused. Before the fix the re-grab won `sgRoot.focused`
-       while the outer transaction went on to write its own chain, leaving live focus and
-       `focusedChild` pointing at different nodes - the app kept the remote on the grid while the
-       chain said "tab bar", so the first UP press played the nav sound without moving focus (and a
-       dialog drew unfocused, with up/down/OK falling through to the scene behind it).
+    2. A `setFocus` raised from a focus-LOSS notification writes only the grabber's own link: the chain
+       and the remote stay with the node the in-flight transaction focused, while the grabber reports
+       hasFocus() true (its focusedChild links to itself). Letting the re-grab win the live focus while
+       the outer transaction wrote its own chain left live focus and `focusedChild` pointing at
+       different nodes: the first UP press played the nav sound without moving focus.
 
-    3. The mirror case must keep working: a container that just GAINED focus may hand it onward from
-       its own focusedChild observer (the "forward focus" pattern every custom dialog uses).
+    3. A container that just GAINED focus may hand it onward from its own focusedChild observer (the
+       "forward focus" pattern every custom dialog uses); the node it left keeps its stale links.
 -->
 <component name="MainScene" extends="Scene">
     <interface>

@@ -282,3 +282,12 @@ because each cost a deploy:
    own, but it does **not** fix this bug: A4/A5 show a focus steal is honored regardless, and an in-flight
    animation neither stops nor returns focus on completion. Deploying animation alone made the symptom
    worse — the visuals moved while focus stayed on the overlay.
+
+## OS 16.0 (`device-trace-os16.0.txt`, Roku Express 4K+)
+
+Apart from sequence numbers and the elided fractional `currFocusRow` steps, the OS 16.0 capture is
+identical to the OS 15.3 one, R7 included.
+
+R7's `overlayFocus=T` after the re-grab is the overlay's own `focusedChild` self-link. The re-grab ran
+before the list's `setFocus` call returned, so it wrote only that link, while the chain stayed with the
+list (see `test/simulator/probes/focus-flag-probe`).

@@ -254,6 +254,45 @@ describe("Poster loadDisplayMode limitSize", () => {
         expect(height).toBeCloseTo(400 * (480 / 853), 0);
     });
 
+    /** Paints the poster once into a 400x400 canvas and returns its bounding rect. */
+    function paintedRect(poster) {
+        const target = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(400) },
+                { name: new BrsString("height"), value: new Int32(400) },
+            ])
+        );
+        poster.renderNode(fakeInterpreter, [0, 0], 0, 1, new IfDraw2D(target));
+        return poster.getBoundingRect();
+    }
+
+    test("a set width/height is still filled: only the texture is clamped (device screenshot)", () => {
+        // JellyRock's profile images: a 300x300 Poster with loadDisplayMode="limitSize" draws every image at
+        // 300x300 on a device, whatever its aspect ratio, so the captions a LayoutGroup puts below line up.
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("width", new Float(300));
+        poster.setValue("height", new Float(300));
+        poster.setValue("loadDisplayMode", new BrsString("limitSize"));
+        poster.setValue("loadWidth", new Float(300));
+        poster.setValue("loadHeight", new Float(300));
+        poster.setValue("uri", new BrsString(wideUri));
+        expect(loadedSize(poster).height).toBeLessThan(300);
+        const rect = paintedRect(poster);
+        expect(rect.width).toBe(300);
+        expect(rect.height).toBe(300);
+    });
+
+    test("with no width/height it draws at the clamped texture size", () => {
+        const poster = SGNodeFactory.createNode("Poster");
+        poster.setValue("loadDisplayMode", new BrsString("limitSize"));
+        poster.setValue("loadWidth", new Float(200));
+        poster.setValue("loadHeight", new Float(200));
+        poster.setValue("uri", new BrsString(wideUri));
+        const rect = paintedRect(poster);
+        expect(rect.width).toBe(200);
+        expect(rect.height).toBe(Math.trunc(200 * (480 / 853)));
+    });
+
     test("differs from the noScale distort-stretch at the same loadWidth/loadHeight", () => {
         const stretched = SGNodeFactory.createNode("Poster");
         stretched.setValue("loadDisplayMode", new BrsString("noScale"));

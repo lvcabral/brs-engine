@@ -1718,7 +1718,10 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                return BrsBoolean.from(sgRoot.focused === this);
+                // A node reports focus while its own `focusedChild` links to itself, which a device leaves in
+                // place on nodes the chain moved away from (DEVICE-MEASURED, focus-flag-probe), or while it
+                // holds the live focus.
+                return BrsBoolean.from(this.getValue("focusedchild") === this || sgRoot.focused === this);
             },
         });
     }
@@ -1743,7 +1746,12 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     return remote;
                 }
                 this.location = interpreter.formatLocation();
-                return BrsBoolean.from(this.setNodeFocus(on.toBoolean()));
+                const focusOn = on.toBoolean();
+                const result = this.setNodeFocus(focusOn);
+                if (focusOn) {
+                    sgRoot.setLastFocusTarget(this);
+                }
+                return BrsBoolean.from(result);
             },
         });
     }
@@ -1764,7 +1772,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     return remote;
                 }
                 // loop through all children DFS and check if any children has focus
-                if (sgRoot.focused === this) {
+                if (sgRoot.focused === this || sgRoot.pendingPanelFocus === this) {
                     return BrsBoolean.True;
                 }
                 return BrsBoolean.from(this.isChildrenFocused());

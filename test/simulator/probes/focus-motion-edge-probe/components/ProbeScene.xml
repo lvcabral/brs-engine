@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <script type="text/brightscript" uri="pkg:/components/ProbeScene.brs" />
+    <children>
+        <MarkupList id="list" translation="[60,40]" itemComponentName="ProbeItem" itemSize="[400,50]"
+            itemSpacing="[0,6]" numRows="5" vertFocusAnimationStyle="floatingFocus" />
+        <Rectangle id="other" translation="[600,40]" width="200" height="50" color="0x336699FF" focusable="true" />
+        <!-- limitSize to 200x200 of a 400x200 image (a circle on a 2:1 canvas), each extent set or not. -->
+        <Rectangle translation="[40,380]" width="300" height="300" color="0x303030FF" />
+        <Poster id="pW" translation="[40,380]" width="300" loadWidth="200" loadHeight="200"
+            loadDisplayMode="limitSize" uri="pkg:/images/circle-400x200.png" />
+        <Rectangle translation="[360,380]" width="300" height="300" color="0x303030FF" />
+        <Poster id="pH" translation="[360,380]" height="300" loadWidth="200" loadHeight="200"
+            loadDisplayMode="limitSize" uri="pkg:/images/circle-400x200.png" />
+        <Rectangle translation="[680,380]" width="300" height="300" color="0x303030FF" />
+        <Poster id="pNone" translation="[680,380]" loadWidth="200" loadHeight="200"
+            loadDisplayMode="limitSize" uri="pkg:/images/circle-400x200.png" />
+        <Rectangle translation="[1000,380]" width="250" height="250" color="0x303030FF" />
+        <Poster id="pBoth" translation="[1000,380]" width="250" height="250" loadWidth="200" loadHeight="200"
+            loadDisplayMode="limitSize" uri="pkg:/images/circle-400x200.png" />
+    </children>
+</component>

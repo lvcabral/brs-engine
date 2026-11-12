@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="node" type="string" value="grid" />
+        <field id="style" type="string" onChange="onStyle" />
+    </interface>
+    <children>
+        <Rectangle width="1280" height="720" color="0x202830FF" />
+        <Label id="caption" translation="[80,30]" color="0xFFFFFFFF" />
+        <MarkupGrid id="grid" translation="[100,90]" itemComponentName="ProbeCell" numColumns="2" numRows="4"
+            itemSize="[200,100]" itemSpacing="[20,20]" columnWidths="[120,420]" rowHeights="[60,200,60,200,60,200,60,200]" />
+        <MarkupList id="mlist" translation="[100,90]" itemComponentName="ProbeCell" numRows="4" visible="false"
+            itemSize="[420,100]" itemSpacing="[0,20]" rowHeights="[60,200,60,200,60,200,60,200]" />
+        <LabelList id="llist" translation="[100,90]" numRows="4" visible="false"
+            itemSize="[420,48]" itemSpacing="[0,20]" rowHeights="[40,120,40,120,40,120,40,120]" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        root = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 15
+            root.createChild("ContentNode").title = "I" + i.toStr()
+        end for
+        grid = m.top.findNode("grid")
+        grid.content = root
+        grid.observeField("itemFocused", "onFocused")
+        mlist = m.top.findNode("mlist")
+        mlist.content = root
+        mlist.observeField("itemFocused", "onFocused")
+        labels = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 7
+            labels.createChild("ContentNode").title = "Item " + i.toStr()
+        end for
+        llist = m.top.findNode("llist")
+        llist.content = labels
+        llist.observeField("itemFocused", "onFocused")
+    end sub
+
+    sub onStyle()
+        m.top.findNode("grid").visible = false
+        node = m.top.findNode(m.top.node)
+        node.vertFocusAnimationStyle = m.top.style
+        node.visible = true
+        m.top.findNode("caption").text = node.subtype() + " vertFocusAnimationStyle = " + m.top.style
+        node.setFocus(true)
+    end sub
+
+    sub onFocused()
+        print "PROBE|itemFocused=" + m.top.findNode(m.top.node).itemFocused.toStr()
+    end sub
+    ]]>
+    </script>
+</component>

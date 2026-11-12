@@ -1,4 +1,4 @@
-import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
+import { AAMember, Interpreter, BrsDevice, BrsString, BrsType, Int32, IfDraw2D, Rect } from "brs-engine";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
@@ -17,7 +17,6 @@ export class MarkupList extends ArrayGrid {
     ];
     protected readonly focusUri = "common:/images/focus_list.9.png";
     protected readonly gap: number;
-    protected wrap: boolean;
     private itemComponentErrorLogged = false;
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.MarkupList) {
@@ -29,9 +28,11 @@ export class MarkupList extends ArrayGrid {
 
         this.gap = 0;
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(ArrayGrid.builtinFootprintUri));
         this.setValueSilent("wrapDividerBitmapUri", new BrsString(this.dividerUri));
-        const style = this.getValueJS("vertFocusAnimationStyle") as string;
-        this.wrap = style.toLowerCase() === FocusStyle.FixedFocusWrap.toLowerCase();
+        // Re-derive the cached focus style now that this node's own default (fixedFocusWrap) and any
+        // XML/initialized value are in place — the ArrayGrid constructor cached its floatingFocus default.
+        this.applyVertFocusStyle();
         this.numRows = this.getValueJS("numRows") as number;
         this.numCols = this.getValueJS("numColumns") as number;
         this.hasNinePatch = true;
@@ -54,6 +55,15 @@ export class MarkupList extends ArrayGrid {
         } else if (fieldName === "numrows") {
             this.clampTopRow();
         }
+    }
+
+    /** A list draws its indicator under the items unless `drawFocusFeedbackOnTop` is written true. */
+    protected focusOnTopByDefault(): boolean {
+        return false;
+    }
+
+    protected focusMotionEnabled(): boolean {
+        return true;
     }
 
     protected handleUpDown(key: string) {
@@ -120,24 +130,115 @@ export class MarkupList extends ArrayGrid {
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacings = this.getValueJS("rowSpacings") as number[];
         this.currRow = this.updateListCurrRow();
-        let lastIndex = -1;
-        let sectionIndex = 0;
         const displayRows = Math.min(Math.ceil(this.content.length), this.numRows);
 
         const rowWidth = itemSize[0];
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
-        for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.getRenderRowIndex(r);
+        // Focus in motion: the settled layout scrolled by the rows it passes, plus the rows scrolling in/out.
+        const motion = this.listMotionFrame(displayRows);
+        const heightOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < 0 ? itemSize[1] : rowHeights[index] ?? itemSize[1];
+        };
+        const spanOf = (r: number) => {
+            const index = this.motionRowIndex(r);
+            const gap = index < 0 ? spacing[1] : rowSpacings[index] ?? spacing[1];
+            return heightOf(r) + gap + this.motionDividerSpace(r + 1, spacing[1]);
+        };
+        let firstRow = 0;
+        let lastRow = displayRows;
+        let focusRect: Rect | undefined;
+        const drawFocusOnTop = this.focusFeedbackOnTop();
+        if (motion) {
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
+            focusRect = this.listMotionFocusRect(rect, rows, itemSize[0]);
+            // The moving indicator goes under the items unless it is drawn on top (see focusFeedbackOnTop).
+            if (!drawFocusOnTop) {
+                this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
+            }
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
+        }
+        try {
+            this.renderRows(interpreter, firstRow, lastRow, motion !== undefined, itemRect, rect, {
+                hasSections,
+                spacing,
+                rowHeights,
+                rowSpacings,
+                itemSize,
+                rowWidth,
+                spanOf,
+                screen,
+                rotation,
+                opacity,
+                draw2D,
+            });
+        } finally {
+            if (motion) {
+                draw2D?.popClip();
+            }
+        }
+        if (motion && focusRect && drawFocusOnTop) {
+            this.renderMotionFocus(focusRect, motion.visualIndex, opacity, draw2D);
+        }
+        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
+    }
+
+    /** Draws viewport rows `firstRow`..`lastRow - 1`, advancing `itemRect` down the list. */
+    private renderRows(
+        interpreter: Interpreter,
+        firstRow: number,
+        lastRow: number,
+        moving: boolean,
+        itemRect: Rect,
+        rect: Rect,
+        ctx: {
+            hasSections: boolean;
+            spacing: number[];
+            rowHeights: number[];
+            rowSpacings: number[];
+            itemSize: number[];
+            rowWidth: number;
+            spanOf: (r: number) => number;
+            screen: Rect;
+            rotation: number;
+            opacity: number;
+            draw2D?: IfDraw2D;
+        }
+    ) {
+        const {
+            hasSections,
+            spacing,
+            rowHeights,
+            rowSpacings,
+            itemSize,
+            rowWidth,
+            spanOf,
+            screen,
+            rotation,
+            opacity,
+            draw2D,
+        } = ctx;
+        let lastIndex = -1;
+        let sectionIndex = 0;
+        for (let r = firstRow; r < lastRow; r++) {
+            const rowIndex = moving ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
             if (rowIndex < 0) {
+                if (moving) {
+                    itemRect.y += spanOf(r);
+                    continue;
+                }
                 break;
             }
             itemRect.height = rowHeights[rowIndex] ?? itemSize[1];
-            if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
+            if (!hasSections && this.wrap && rowIndex < lastIndex && r > firstRow) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
                 itemRect.y += divHeight + spacing[1];
-            } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
+            } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > firstRow) {
                 const divRect = { ...itemRect, width: rowWidth };
                 const divText = this.metadata[rowIndex].sectionTitle;
                 const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
@@ -155,11 +256,10 @@ export class MarkupList extends ArrayGrid {
             // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
             // which differs as soon as the list is scrolled (rowHeights above already does this).
             itemRect.y += itemRect.height + (rowSpacings[rowIndex] ?? spacing[1]);
-            if (!RectRect(screen, itemRect)) {
+            if (this.pastVisibleArea(screen, itemRect, moving)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize, { firstRow: Math.max(0, this.getRenderRowIndex(0)) });
     }
 
     protected focusMargins() {

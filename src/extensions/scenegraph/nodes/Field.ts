@@ -80,32 +80,14 @@ export class Field {
     /** True while this field's observers are dispatching, to break re-entrant cascades. */
     private notifying = false;
 
-    // ---- Roku-accurate deferred observer dispatch (per Worker thread) -------------------------
-    // On a real Roku, a DIRECT BrightScript field assignment (`node.field = x`) on the owning
-    // thread fires function-name observers synchronously, even nested inside another observer —
-    // apps rely on set-then-read-back (assign a field, immediately read a value the observer
-    // computed). What Roku dispatches from the message loop are fields changed by a node's
-    // INTERNAL machinery (e.g. `itemFocused` emitted by an ArrayGrid processing `jumpToItem`,
-    // `content`, or a focus move): those observers do not run reentrantly in the middle of another
-    // observer's execution. We reproduce that: when a Callable observer for an engine-initiated
-    // emission (`internalUpdateDepth` > 0) would fire while another Callable observer is already
-    // executing (reentrant) — and the notification is not part of a ContentNode parentField
-    // cascade — we queue it and drain it FIFO once the outermost dispatch unwinds.
-    // Same-field re-notification (`notifying`) and same-ContentNode re-entry (`propagating`) are
-    // still suppressed before reaching this path, so the #904/#905/#943 cascades are unaffected.
-    /** Depth of Callable observers currently executing on this thread (the reentrancy gate). */
+    // ---- Observer dispatch state (per Worker thread) ------------------------------------------
+    // Observers dispatch synchronously, nested inside the write that raised them, including fields a
+    // node's own machinery emits (a list's `itemFocused` from `setFocus` or `jumpToItem`): a device
+    // runs those inline too, even inside another observer (list-focus-dispatch-probe).
+    // Same-field re-notification (`notifying`) and same-ContentNode re-entry (`propagating`) break
+    // the #904/#905/#943 cascades.
+    /** Depth of Callable observers currently executing on this thread. */
     private static observerDepth = 0;
-    /** >0 while inside `ContentNode.notifyParentFields`; disables deferral for cascade observers. */
-    private static parentCascadeDepth = 0;
-    /**
-     * >0 while engine machinery (not app BrightScript) is emitting field changes — grid focus
-     * bookkeeping such as `itemFocused`/`rowItemFocused`. Only those notifications defer; a direct
-     * BrightScript assignment always dispatches synchronously (Roku's set-then-read-back
-     * semantics). Stashed to 0 while an observer callback executes (`invoke`), so a handler
-     * dispatched from inside an engine emission still has its own direct assignments treated as
-     * app-initiated; a nested engine site re-enters and is again marked internal.
-     */
-    private static internalUpdateDepth = 0;
     /**
      * >0 while a component's `init()` is running (the `init` hierarchy walk in `initializeNode`).
      * Focus emissions raised during `init` must defer until the OUTERMOST init unwinds — on Roku a
@@ -122,28 +104,6 @@ export class Field {
      * unaffected and still dispatches synchronously.
      */
     private static focusEmissionDepth = 0;
-    /**
-     * True while draining the deferred queue. Deferral happens only ONCE, at the boundary of the
-     * original top-level handler; once we start draining, the reentrant cascade runs synchronously
-     * (nested, with the normal per-field `notifying` stack) — the pre-existing behavior that
-     * terminates same-field and cross-field observer cascades. Without this, flattening the nested
-     * dispatch into a FIFO loses the guard nesting and two alwaysNotify fields whose observers write
-     * each other (a manual field-alias ping-pong) loop forever.
-     */
-    private static draining = false;
-    /**
-     * Deferred reentrant observer invocations, drained at the outermost unwind.
-     *
-     * `focusNotifyOwner` is the `focusedChild` notification that was dispatching when the emission
-     * was queued, reinstated around the deferred call so a `setFocus` raised from the callback is
-     * still classifiable as a backwards steal — see `Node.runWithFocusNotifyOwner`.
-     */
-    private static readonly deferredQueue: {
-        field: Field;
-        callback: BrsCallback;
-        event: RoSGNodeEvent;
-        focusNotifyOwner?: Node;
-    }[] = [];
     /**
      * Fields whose focus-chain notification was raised during a component's init() and deferred.
      * The observer that reacts is often registered LATER in the same init (after the setFocus call),
@@ -166,10 +126,14 @@ export class Field {
     /** Callbacks queued with `runOnMessageLoop`. */
     private static readonly messageLoopCallbacks: (() => void)[] = [];
 
-    /** True when deferred work may be dispatched: not mid-init, not inside another observer, not
-     *  already draining. */
+    /** True when deferred work may be dispatched: not mid-init, not inside another observer. */
     private static canDeliverDeferred(): boolean {
-        return Field.initDepth === 0 && Field.observerDepth === 0 && !Field.draining;
+        return Field.initDepth === 0 && Field.observerDepth === 0;
+    }
+
+    /** How many observers are running on this thread: app code a node's own handler may have raised. */
+    static currentObserverDepth(): number {
+        return Field.observerDepth;
     }
 
     /** True while inside a component's `init()` hierarchy walk (construction). */
@@ -178,8 +142,8 @@ export class Field {
     }
 
     /**
-     * Queues a callback to run once, after the outermost construction unwinds (same trigger
-     * condition as `deliverPendingInitFocus`).
+     * Queues a callback to run once, after the outermost construction and observer dispatch unwind
+     * (same trigger condition as `deliverPendingInitFocus`).
      */
     static runAfterConstruction(callback: () => void) {
         Field.pendingConstructionCallbacks.push(callback);
@@ -187,8 +151,7 @@ export class Field {
 
     /**
      * Sibling of `deliverPendingInitFocus`, called from the same tick site. Cheap no-op unless
-     * there is pending work and it is safe to dispatch (not mid-init, not inside another observer,
-     * not already draining).
+     * there is pending work and it is safe to dispatch (not mid-init, not inside another observer).
      */
     static deliverPendingConstructionCallbacks() {
         if (Field.pendingConstructionCallbacks.length > 0 && Field.canDeliverDeferred()) {
@@ -224,26 +187,6 @@ export class Field {
         return count > 0;
     }
 
-    /** Marks entry into a ContentNode parentField cascade, so its observers dispatch inline. */
-    static enterParentCascade() {
-        Field.parentCascadeDepth++;
-    }
-
-    /** Marks exit from a ContentNode parentField cascade. */
-    static exitParentCascade() {
-        Field.parentCascadeDepth--;
-    }
-
-    /** Marks entry into an engine-initiated field emission (message-loop dispatch on Roku). */
-    static enterInternalUpdate() {
-        Field.internalUpdateDepth++;
-    }
-
-    /** Marks exit from an engine-initiated field emission. */
-    static exitInternalUpdate() {
-        Field.internalUpdateDepth--;
-    }
-
     /** Marks entry into a component's `init()` (the init hierarchy walk). */
     static enterInit() {
         Field.initDepth++;
@@ -261,7 +204,7 @@ export class Field {
      * Delivers focus notifications deferred during init(), from the message loop (the extension
      * `tick` hook) once the outermost init has fully unwound. Called on every tick; it is a cheap
      * no-op unless there is pending work and it is safe to dispatch (not mid-init, not inside another
-     * observer, not already draining).
+     * observer).
      */
     static deliverPendingInitFocus() {
         if (Field.pendingInitFocusFields.size > 0 && Field.canDeliverDeferred()) {
@@ -303,12 +246,8 @@ export class Field {
     /** Resets deferred-dispatch state between app runs so nothing leaks across setups. */
     static resetDispatch() {
         Field.observerDepth = 0;
-        Field.parentCascadeDepth = 0;
-        Field.internalUpdateDepth = 0;
         Field.initDepth = 0;
         Field.focusEmissionDepth = 0;
-        Field.draining = false;
-        Field.deferredQueue.length = 0;
         Field.pendingInitFocusFields.clear();
         Field.pendingConstructionCallbacks.length = 0;
         Field.messageLoopCallbacks.length = 0;
@@ -470,8 +409,8 @@ export class Field {
         // Focus-chain notification raised during a component's init(): defer to the outermost init
         // unwind and re-notify then, reading observers registered later in the same init. Recording
         // the FIELD (not a callback) is what lets an observer added AFTER the setFocus call still
-        // fire — see pendingInitFocusFields / drainInitFocus. Skipped while draining.
-        if (Field.focusEmissionDepth > 0 && Field.initDepth > 0 && !Field.draining) {
+        // fire — see pendingInitFocusFields / drainInitFocus.
+        if (Field.focusEmissionDepth > 0 && Field.initDepth > 0) {
             Field.pendingInitFocusFields.add(this);
             return;
         }
@@ -873,43 +812,11 @@ export class Field {
         // branch which also builds the event before deferring via pushMessage.
         const event = this.buildEvent(callback);
 
-        // Roku-accurate deferral: if this notification comes from an engine-initiated emission
-        // (grid focus bookkeeping — a direct BrightScript assignment never defers), another
-        // Callable observer is already executing (reentrant), and it is not part of a ContentNode
-        // parentField cascade, queue it and let the outermost dispatch drain it after the current
-        // handler returns.
-        // Defer only while inside the ORIGINAL top-level handler (not while draining). Once draining,
-        // the cascade runs synchronously/nested so the per-field `notifying` guards terminate it.
-        if (
-            Field.internalUpdateDepth > 0 &&
-            Field.observerDepth > 0 &&
-            !Field.draining &&
-            Field.parentCascadeDepth === 0
-        ) {
-            // Carry the in-flight focus notification with the entry: it will have left the stack by
-            // the time this drains, and without it a `setFocus` raised from the callback can no
-            // longer be classified as a backwards steal (see Node.runWithFocusNotifyOwner).
-            Field.deferredQueue.push({
-                field: this,
-                callback,
-                event,
-                focusNotifyOwner: Node.currentFocusNotifyOwner(),
-            });
-            return;
-        }
-
         Field.observerDepth++;
         try {
             this.invoke(callback, event);
-            if (Field.observerDepth === 1 && !Field.draining) {
-                Field.drainDeferred();
-            }
         } finally {
             Field.observerDepth--;
-            if (Field.observerDepth === 0) {
-                // Safety: on an exception unwinding through the drain, don't leave stale work queued.
-                Field.deferredQueue.length = 0;
-            }
         }
     }
 
@@ -934,65 +841,19 @@ export class Field {
         return new RoSGNodeEvent(eventParams.node, eventParams.fieldName, this.value, infoFields);
     }
 
-    /**
-     * Drains deferred reentrant observer invocations FIFO. `observerDepth` stays at 1 for the whole
-     * drain, so a callback that itself triggers a reentrant notification re-enqueues and is picked
-     * up by the loop — iterating until quiescent, in the order the fields changed.
-     */
-    private static drainDeferred() {
-        Field.draining = true;
-        try {
-            let guard = 0;
-            while (Field.deferredQueue.length > 0) {
-                if (++guard > 100000) {
-                    BrsDevice.stderr.write("error,[sg] observer drain exceeded limit; possible observer loop");
-                    Field.deferredQueue.length = 0;
-                    break;
-                }
-                const deferred = Field.deferredQueue.shift()!;
-                const field = deferred.field;
-                // Run the deferred callback synchronously (nested): while it executes, hold the
-                // field's `notifying` guard and count it in `observerDepth`, so any notifications it
-                // triggers dispatch inline with the normal per-field guard stack. This mirrors what
-                // the original synchronous dispatch did before the handler-boundary deferral, and is
-                // what terminates same-field self-writes and cross-field alias ping-pongs.
-                const wasNotifying = field.notifying;
-                field.notifying = true;
-                Field.observerDepth++;
-                try {
-                    // Reinstate the focus notification this emission was raised under, so a nested
-                    // setFocus stays classifiable even though the transaction has left the stack.
-                    Node.runWithFocusNotifyOwner(deferred.focusNotifyOwner, () =>
-                        field.invoke(deferred.callback, deferred.event)
-                    );
-                } finally {
-                    Field.observerDepth--;
-                    field.notifying = wasNotifying;
-                }
-            }
-        } finally {
-            Field.draining = false;
-        }
-    }
-
     /** Runs a single Callable observer callback with the caller's host node / m scope restored. */
     private invoke(callback: BrsCallback, event: RoSGNodeEvent) {
         if (!(callback.observer instanceof Callable)) {
             return;
         }
-        // While the handler's BrightScript executes, its direct field assignments are
-        // app-initiated even when this dispatch happens inside an engine emission site (e.g. a
-        // panel callback fired from ArrayGrid.setFocusedItem, or a focus-chain write). Stash the
-        // internal-update and focus-emission markers and restore them after; a nested engine site
-        // re-enters them on its own.
-        const stashedInternalDepth = Field.internalUpdateDepth;
+        // While the handler's BrightScript executes, its own focus changes are app-initiated even when
+        // this dispatch happens inside a focus-chain write: stash the focus-emission marker and restore
+        // it after; a nested focus write re-enters it on its own.
         const stashedFocusDepth = Field.focusEmissionDepth;
-        Field.internalUpdateDepth = 0;
         Field.focusEmissionDepth = 0;
         try {
             this.invokeCallable(callback, event);
         } finally {
-            Field.internalUpdateDepth = stashedInternalDepth;
             Field.focusEmissionDepth = stashedFocusDepth;
         }
     }

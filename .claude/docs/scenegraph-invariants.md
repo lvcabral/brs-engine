@@ -802,25 +802,31 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    > wins) exists for — it is the field's only route back to its owner's `syncType`/address. Regression:
    > `task-contentcache-app` in `test/cli/`.
 
-   > **Two deferral mechanisms coexist in `Field` — keep them consistent.** Besides the synchronous
-   > dispatch above, `Field` carries *two* separate deferral paths, gated by five interacting statics
-   > (`observerDepth`, `internalUpdateDepth`, `initDepth`, `focusEmissionDepth`, `draining`).
-   > (a) **`deferredQueue`** — *callback-level*, for reentrant engine emissions (grid
-   > `itemFocused`/`rowItemFocused` under `enterInternalUpdate`); queued while another observer runs
-   > (`observerDepth > 0`) and drained when the outermost dispatch unwinds (`observerDepth === 1`).
-   > (b) **`pendingInitFocusFields`** — *field-level*, for `focusedChild` emissions raised during a
-   > component's `init()` (`initDepth > 0 && focusEmissionDepth > 0`); the reacting observer is often
-   > registered *after* the `setFocus` call, so a field (not a callback) is recorded and re-notified from
-   > the extension `tick` hook after init unwinds (`deliverPendingInitFocus`, render-thread only). The
-   > split is intentional (callback-level reentrant-unwind vs. field-level message-loop delivery) — do
-   > **not** naively merge them. A `deferredQueue` entry also carries the `focusedChild` notification it
-   > was raised under (`focusNotifyOwner`), reinstated around the deferred dispatch so a nested `setFocus`
-   > is still classifiable as a focus steal — see the focus-chain section below. `notifyObservers` **consumes** a field from `pendingInitFocusFields` as
-   > it dispatches so an inline re-focus of a still-pending ancestor doesn't double-fire; and `invoke`
-   > stashes/zeroes both `internalUpdateDepth` and `focusEmissionDepth` so a handler's own writes are
-   > treated as app-initiated. Any change to dispatch semantics must be re-checked against *both* paths
-   > and all five counters. Regression: `init-focus-observer-app` (deferred delivery + no double-fire)
-   > plus the cascade apps above.
+   > **Observers a node's own machinery raises dispatch inline too.** A list's `itemFocused` from
+   > `setFocus` or `jumpToItem` runs its observers before the call returns, even inside another observer
+   > (device-measured, Roku Express 4K+ OS 16.0, `test/simulator/probes/list-focus-dispatch-probe`; the
+   > `deferred-observer-app` fixture's unguarded read crashes on the device exactly where inline dispatch
+   > reaches it). The engine once queued these "engine emissions" until the outermost observer
+   > returned (`deferredQueue`, `enterInternalUpdate`), on the belief that a device delivers them from
+   > the message loop. It doesn't, and the queue reordered every focus trace taken from an observer.
+   > Don't bring it back to work around an app that reads state its own handler hasn't assigned yet:
+   > that app crashes on a device too.
+   >
+   > One deferral path remains, gated by `observerDepth`, `initDepth` and `focusEmissionDepth`:
+   > **`pendingInitFocusFields`**, for `focusedChild` emissions raised during a component's `init()`
+   > (`initDepth > 0 && focusEmissionDepth > 0`). The reacting observer is often registered *after* the
+   > `setFocus` call, so a field (not a callback) is recorded and re-notified from the extension `tick`
+   > hook after init unwinds (`deliverPendingInitFocus`, render-thread only). `notifyObservers`
+   > **consumes** a field from `pendingInitFocusFields` as it dispatches so an inline re-focus of a
+   > still-pending ancestor doesn't double-fire, and `invoke` zeroes `focusEmissionDepth` so a handler's
+   > own focus changes are treated as app-initiated. `runAfterConstruction` shares its trigger (no init
+   > and no observer on the stack): AnimatedImage replays its construction-time states through it, and a
+   > list publishes the pending reset of new content (see the `ArrayGrid` focus model below). It drains
+   > from `tick` **and** from `onMessageLoop`: a handler dispatched from the message loop returns there,
+   > and while `Main` blocks in `wait(0)` no statement runs outside an observer, so a tick-only drain never
+   > fires (a menu's content reset then never reached its ListPanel's `createNextPanelIndex`).
+   > Regression: `init-focus-observer-app` (deferred delivery + no double-fire) plus the cascade apps
+   > above; `panelset-content-nextpanel-app` for the message-loop drain.
    >
    > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
    > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
@@ -871,6 +877,250 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    one-shot warning); a container referenced from two sibling paths still serializes both times. Don't
    "simplify" to whole-pass tracking like nodes — that drops diamond-shaped shared data. Regression:
    "circular container references" in `test/extensions/scenegraph/NodeSerialization.test.js`.
+
+## Intrinsic UI transitions (`SGTransition.ts`) — logical state is instant, only presentation is timed
+
+Nodes with built-in motion (today: `PanelSet` slides and list/grid/row-list focus motion) implement `UITransition`
+and register with `sgRoot.addTransition` while moving. `RoSGScreen.getNewEvents` ticks them through
+`sgRoot.processScenePass()`, before painting, and the frame stays dirty only while one is active, so an
+idle scene costs nothing.
+
+**Animations tick last in the pass** (`processScenePass`). A transition's settle publishes focus fields
+(`rowItemFocused`, `itemFocused`) whose observers commonly start an Animation, such as JellyRock's backdrop
+cross-fade. If animations are ticked before transitions, the paint draws the animated field's stale value
+for one frame: the new image at full opacity, then its fade-in from 0. The same holds for anything else in
+the pass that runs observers (Task updates, render queues, media events). Regression: "an animation
+started from a settle observer…" in `RowListFocusMotion.test.js`.
+
+The rules:
+
+1. **Navigation state changes synchronously.** The focus index, the panel list, focus moves and every
+   field a device emits at key time (`isGoingBack`, `numPanels`, `leftPanelIndex`) are still set inside the
+   key handler. A transition only moves the presentation toward that state and emits the in-transit fields
+   (per-frame `translation`, `slidingStatus`, `isOffscreenLeft`). Don't defer a logical change "until the
+   slide ends". The one exception is device-measured: a panel sliding off the right stays a child until
+   `slidingStatus` falls, even though it has already left `panels`/`numPanels` (`PanelSet.exiting`).
+2. **Off means identical to before.** `sgRoot.uiTransitionsEnabled === false` (`DeviceInfo.uiTransitions`,
+   CLI `--no-transitions`, env `BRS_UI_TRANSITIONS=0`), or a non-positive duration, settles synchronously
+   on the same code path. vitest sets `BRS_UI_TRANSITIONS=0` (inherited by the spawned CLI suites), so
+   every existing test runs settled. Transition tests opt in with `sgRoot.uiTransitionsEnabled = true` and a
+   fake `sgClock` source, stepping `sgRoot.processTransitions()` themselves.
+3. **Motion advances in the tick, never in render.** `tickTransition` writes positions; `renderNode` only
+   reads them, so layout passes stay pure and bounding rects report the in-transit geometry, as a device
+   does. `PanelSet.renderChildNodes` does call `reconcileLayout`, which detects target changes. That call
+   snaps a non-navigation change (an app resizing a panel) and starts a navigation slide. It doesn't move
+   anything by elapsed time. With transitions off, a navigation never waits for that paint:
+   `applyInstantSlide` reconciles at the end of `goBack`/`goForward`/`appendChildToParent`, so the jump, the
+   `slidingStatus` pulse and the panel removal happen inside the call, not mid-frame, and also on a
+   PanelSet that isn't drawn. Regression: "with transitions off a navigation settles inside the call" in
+   `PanelSetSlide.test.js`.
+   `BrightScriptExtension.onInit` clears the registry (`sgRoot.clearTransitions`), so a motion left
+   running by one app never ticks into the next one on the same thread.
+4. **Only a navigation slides.** `requestSlide()` (append/back/forward/replace) arms the next reconcile to
+   animate. Any other layout change snaps. Don't make reconcile animate unconditionally: apps that size
+   panels after attaching them would slide on startup.
+5. **A tick reports what it did** (`TransitionTick`). "moving" and "settled" repaint; "waiting" keeps the
+   transition registered with nothing to draw (a key held at the end of a non-wrapping list, a slide with
+   nothing left to move holding `slidingStatus`). Returning "moving" there redraws every frame while the
+   key is held.
+6. **A settle can start the next transition.** `processTransitions` drops a transition *before* ticking
+   it and keeps it only when the tick reports it active or the owner re-registered during the tick. A
+   settle observer writing `animateToItem`, or appending a panel, re-registers; dropping it after the tick
+   froze the list mid-motion with `scrollingStatus` true. On a list, a motion its own settle observer
+   starts is queued (`ArrayGrid.settleFollowUps`) and opens after the settle's last field: started inline
+   (the observer runs inside the settle), the settle's tail wrote `scrollingStatus` false and the
+   direction "none" over the new motion. Regression: "a motion started by a settle
+   observer…" in `ListFocusMotion.test.js`.
+
+PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-slide-probe/README.md`):
+- a per-panel `easeOutQuint` lasting `slideDuration`, which is in **seconds**;
+- fixed role offsets (+5 / +80 / +115 ms) that don't scale with the duration;
+- the slide settles at 0.1 px;
+- a 40 px HD gap;
+- `isGoingBack` is a pulse;
+- a full-screen panel counts twice in `numPanels`;
+- `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
+
+List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid`, via
+`ArrayGrid.focusMotionEnabled()`; device-measured, see the `list-focus-motion-probe` and
+`grid-focus-motion-probe` READMEs under `test/simulator/probes/`):
+- `focusIndex` moves at the key, so the next key navigates from the target. The `itemFocused` *field*
+  keeps the old value until the settle.
+- The motion is two-axis. `motionPos` is the unwrapped row and `motionCol` the column, each with its own
+  segment (`FocusMotion.row`/`.col`). Each step is an `easeOutCubic` taking `motionStepMs(axis)`: lists
+  200 ms; grids 330 ms (315 ms per row when the rows wrap).
+- A step lands when its time is up. Don't snap early: the device lands at u = 1, ~215 ms on a list.
+  `currFocusRow` is `motionPos` modulo the row count, and `currFocusColumn` is `motionCol`.
+- `focusPercent` is the product of the row and column weights (`1 − fraction` on the cell being left,
+  `fraction` on the next). It reads 0 below 0.05 and is rounded to 3 decimals. `itemHasFocus` is false on
+  every item while moving.
+- Directions: `vertFocusDirection` for rows and `horizFocusDirection` (an undocumented grid field) for
+  columns. Each opens when its axis starts moving. An axis that lands first resets its own; the last
+  one resets after the settle.
+- A press mid-step queues one more step (one at most; further presses are consumed). A retarget
+  (`animateToItem`, a held key's repeat) drops the queued step, or the motion would return to it.
+- A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
+  release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
+  list. Without this the list repeats to its end and the scene redraws forever.
+- Focus leaving mid-motion (device-measured, `test/simulator/probes/focus-motion-edge-probe`): the motion
+  runs on and its settle publishes only `scrollingStatus` false. `itemFocused` keeps the item the motion
+  left, not even written silently. `unfocusedSettleIndex` remembers the target, so a later focus gain lands
+  there (`focusGainIndex`).
+- Focus regained mid-motion keeps the motion. `publishMotionRegain` publishes the target item's
+  `itemHasFocus` and then `itemFocused` at once, and the settle publishes `itemFocused` again.
+  `motion.regained` keeps that item's `itemHasFocus` true for the rest of the motion. Don't re-apply the
+  `itemFocused` field on a gain mid-motion: it still holds the item being left, so the cursor snapped back
+  while the motion settled on the target. RowList and ZoomRowList weren't measured and override it to
+  publish at the settle only.
+- Leaving the focus chain drops the focused item's `itemHasFocus` at once, from the list's `focusedChild`
+  write (`ArrayGrid.setValue`), even while the list is hidden and not rendering.
+- Every jump path (`jumpToItem`, `jumpToRowItem`, `jumpToRow`) calls `settleMotion()` first.
+- A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
+  later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
+  out from rest. On release the step in flight eases out; the settle waits for the release.
+- `animateToItem` eases each axis over `cells × step`; `jumpToItem` and `skipFocusAnimations` are instant.
+- Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows (the target window's top is
+  `targetRow − currRow`, which also covers MarkupGrid's `updateCurrRow` scrolling), and places the
+  indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
+  `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
+  reported extent from the settled window's rows only.
+- **List and grid rows move by their own heights, and the indicator resizes on the way** (screenshots in
+  `test/simulator/probes/markupgrid-focus-resize-probe`, MarkupGrid, MarkupList and LabelList): with
+  `rowHeights`/`columnWidths`, a fraction of
+  a row scrolls that fraction of the row's own span (height plus spacing), and the indicator's top-left
+  and size take the same fraction between the two items' rects, so it grows toward a larger item and
+  shrinks toward a smaller one. `motionRowLayout` holds the vertical half (rows to draw, indicator y and
+  height, window height) for MarkupGrid, PosterGrid, MarkupList and LabelList (CheckList and
+  RadioButtonList through it); `gridMotionFocusRect` the horizontal. Never scroll by `itemSize` or one
+  row's pitch: the rows and the ring then jump when the move settles. A wrapping list's wrap and section
+  dividers take room too: each node's `spanOf(r)` adds `motionDividerSpace(r + 1, gap)`, the divider its row
+  loop draws above slot `r + 1`, with the spacing that loop adds after it. Regression: the resize tests in
+  `GridFocusMotion.test.js` and `ListFocusMotion.test.js`, and "rows scrolling across the wrap divider land
+  where they settle" in the latter.
+- **A key's navigation state holds only at the observer depth the key set it at.** `navDirection`,
+  `navAxis` and `animateRequested` are accessors that read 0/""/false inside an observer the move raised
+  (`Field.currentObserverDepth()`), because that observer is app code: a `jumpToItem`/`jumpToRowItem`/
+  `jumpToRow` it writes is an app jump (instant, no direction, no `itemUnfocused`/`itemFocused` on a row
+  list). An opening observer that jumps supersedes the key's motion: `beginMotion` sees the motion it
+  opened is gone and drops the move. A motion a settle observer starts is deferred to `settleFollowUps`
+  and keeps the `animateRequested` it was requested with (ZoomRowList's ~265 ms `animateToRow` step).
+  Regression: "an observer writes during a key move" in `ListFocusMotion.test.js` and
+  `RowListFocusMotion.test.js`, and "an animateToRow written from a settle observer" there.
+- **A row change queued behind a slide along a row draws from the motion, not from `focusIndex`.** The
+  queued press moves the focus cursor (and so the settled window) at once, while the slide on the old row
+  is still in flight. RowList and ZoomRowList therefore:
+  - take the sliding row from `ArrayGrid.slidingRow()`: the motion's own row while its column segment
+    moves, -1 once it lands;
+  - point the indicator column at `motionCol` only while that row slides, or on a row that doesn't wrap;
+    a wrapping row at rest keeps its fixed slot;
+  - offset the rows by the motion frame whenever it differs from the settled window (RowList
+    `frame.shift !== 0`, ZoomRowList rows from `motionPos`), not only once `rowMoved` is set.
+
+  Keyed to `focusIndex`, the new row drew with the old row's moving column and jumped to the top before
+  the rows scrolled, then snapped back (a flicker on a quick Right then Down). Regression: "a row change
+  pressed during a slide along a row never shifts the row it moves to" in `RowListFocusMotion.test.js`.
+- **OK lands a running motion before it selects** (`test/simulator/probes/grid-ok-midmotion-probe`).
+  `ArrayGrid.handleKey` calls `landMotionForSelect` ahead of every `handleOK`: the settle goes out at
+  once, then lists and grids publish `itemFocused` again, and only then `itemSelected`. At rest OK
+  publishes `itemSelected` alone. Without the landing, an app that tracks its focused item from
+  `itemFocused` (Rokanban's team screen) opened the item focused before the move. Regression: "OK during a
+  move lands it before itemSelected" in `GridFocusMotion.test.js`.
+- **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
+  `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
+  opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):
+  - written (XML attribute or BrightScript): honored as is, on every node;
+  - never written: the field **reads false**, yet grids and row lists (MarkupGrid, PosterGrid, RowList,
+    ZoomRowList) draw the indicator **over** their items, while lists (LabelList, MarkupList) draw it
+    **under**.
+
+  `ArrayGrid.focusFeedbackOnTop()` holds the rule (`focusOnTopWritten` + `focusOnTopByDefault()`); every
+  draw site asks it, never the raw field. `focusOnTopWritten` is class state, not a field, so
+  `ArrayGrid.cloneNode` copies it (regression in `GridFocusFeedback.test.js`). Don't make the grid default `true` to get the over-the-items
+  look (MarkupGrid once did): the device reads `false`. A moving indicator drawn over the cells regardless
+  of the field hid the new item's content in an app whose side menu writes it false. RowList computes the
+  in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an
+  under-indicator before the focused row's items, because its item offset depends on the measured title.
+  Regression: the draw-order tests in `GridFocusMotion.test.js` and `RowListFocusMotion.test.js`.
+- **The footprint (an unfocused list's indicator) follows the same layering, but only lists have a
+  built-in one** (screenshots in `test/simulator/probes/focus-footprint-layer-probe`).
+  `focusFootprintBitmapUri` reads `""` on every node. Left unset, LabelList and MarkupList draw a built-in
+  gray footprint on the focused item. MarkupGrid, PosterGrid and RowList draw nothing there, even with
+  `drawFocusFeedbackOnTop` written true. So only LabelList, MarkupList (and TimeGrid, not probed) seed
+  `ArrayGrid.builtinFootprintUri`. Don't seed it in the ArrayGrid base: once grids draw over their items,
+  the translucent footprint shades the item the focus left (a RowList the app moved the focus away from).
+  Regression: "draws %i built-in footprint while unfocused" in `GridFocusFeedback.test.js`.
+
+Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same engine through hooks.
+`startFocusMotion` takes the target cell and an `apply` callback, and `openMotion` /
+`emitMotionFrame` / `publishMotionSettle` / `directionFieldFor` / `onMotionPaused` are overridden.
+`motionRowWeight`, `motionCellPercentIn`, `emitRowMotionFrame` and `settleRowMotionPercents` write
+`rowFocusPercent` (ZoomRowList also `rowHeightPercent`, same values) and `focusPercent` over the
+`rowItemComps` matrix. Device facts that look like bugs but are not:
+- **The settle order differs per node and axis:**
+  - RowList row change: `itemFocused`, `rowHasFocus` swap, `scrollingStatus=false`, `rowItemFocused`.
+  - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
+  - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
+  - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
+- **A row change's column and indicator** (`rowlist-short-row-probe`, `rowlist-hero-grid-probe`):
+  - A `fixedFocusWrap` row whose items all fit floats its focus and is entered at the indicator's screen
+    slot, clamped to its last item, not on its remembered column (`columnAtIndicator`). From a long row
+    (indicator at slot 0) that is the first item; between two such rows (a grid made of 4-item rows) the
+    column is kept. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps the
+    screen slot.
+  - The indicator glides from its old x and size to the target slot and the new row's item size over the
+    row change (`glideIndicator`): a landscape row's ring grows into a portrait row's. It doesn't snap to
+    the target when the move opens. Its y is the target row's item top from the start.
+  - No row counter is drawn while the rows scroll.
+- `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
+  the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
+- An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a
+  later `itemUnfocused` reports the stale value). Key navigation, which routes through `jumpToRowItem`
+  internally, still publishes both. A focus gain therefore lands on `rowItemFocused`'s row, not on the
+  stale `itemFocused` (`focusGainIndex`). `Node.setNodeFocus` returns focusability, not "gained", so
+  `ArrayGrid.setNodeFocus` re-applies the focus only when `focusOn` is true (a blur used to snap a RowList
+  back to the stale row).
+- While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
+  `itemHasFocus`.
+- **Clipping while moving** (screenshots in `test/simulator/probes/rowlist-clip-probe`): a move along a
+  row clips nothing. A row change clips the scrolling rows to the window, which is each visible row's
+  layout height (`rowLayoutHeight`, band included) plus its spacing, **the last spacing included**
+  (`windowLayoutHeight`). Never derive the clip from `itemSize`/a uniform pitch: item components draw
+  captions below the poster, and a row with a label/counter band is taller than `itemSize`. Either way
+  they were cut mid-move. The scroll offset follows the same rule: rows move by the heights of the rows
+  actually scrolled past (`slotOffset`/`slotSpan`), never by `shift × pitch`. With per-row `rowHeights`
+  or `rowSpacings`, a uniform pitch overshoots and then snaps back at the settle (JellyRock's home rows;
+  regression in `RowListFocusMotion.test.js`). The device also clips the focused row to its row height at rest; the engine
+  doesn't (yet).
+- **A ZoomRowList row sliding under the fixed focus is cut at the row's left edge** (Roku's
+  `zoomRowListDefaultLayoutTest` sample; see the `rowlist-clip-probe` README). The item losing the focus
+  slides out of view there; the right side runs to the screen edge, and the focus ring stays outside the
+  clip. `ZoomRowList.renderRow` pushes that clip whenever the row's items start left of the row.
+  Regression: "a row sliding under the fixed focus is cut at the row's left edge" in
+  `RowListFocusMotion.test.js`.
+- A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
+  `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
+  `animateToRow` takes ~265 ms per row against ~330 ms for key steps.
+- RowList's `currRow` is the absolute top row (not a slot, as on ArrayGrid), so it has its own
+  `rowMotionFrame`.
+- Regression: `test/extensions/scenegraph/RowListFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
+  (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
+- **Cached focus style must match the field.** The `ArrayGrid` constructor caches
+  `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, *before* a subclass registers
+  its default. Every subclass with a different default must call `applyVertFocusStyle()` at the end of its
+  constructor: MarkupGrid, PosterGrid, LabelList and MarkupList do. The static layout keys off `wrap` and
+  hid the mismatch, but the motion asks `isFixedFocusMode()`. A default-style list then animated as
+  floating focus, with the indicator walking further down on every press.
+  Regression: `test/extensions/scenegraph/ListFocusMotion.test.js`.
+
+`PanelSet.focusIndex` must follow **where focus actually lands**, not where the PanelSet sent it.
+Going back from a full-screen panel focuses the panel before it, and apps commonly redirect from that
+panel's `focusedChild` observer (SceneGraphTutorial: `if isGoingBack then menuPanel.setFocus(true)`).
+`syncFocusToActual()` runs after every focus move and at the start of each key press. Without it, the
+Overhang title stays on the wrong panel and Right bumps. Regression: "navigation follows focus that an
+app redirects while going back" in `PanelSetFullScreen.test.js`.
+
+Regression: `test/extensions/scenegraph/PanelSetSlide.test.js` (fake clock, notification log, checkpoint
+positions read off the device trace).
 
 ## Animation `control` — containers relay everything, `none` is inert, a pending `delay` reads "stopped"
 
@@ -1268,46 +1518,60 @@ Each needs its own probe and PR; none is fixed:
   in with a test rather than reverting: `SimpleLabel` reports the anchored glyph box (a center/center label
   at `[500,300]` reports `{473,288}`), and `PosterGridItem`'s sub-rect landed on its poster (`sub.y` 4 → 0).
 
-## `ArrayGrid.scrollingStatus` — a lazy pulse, ordered ahead of the focus settle
+## `ArrayGrid.scrollingStatus` — a lazy pulse around the focus settle, in device order
 
 Per `zoomrowlist.md` the field is "set to true whenever the list is scrolling the focus horizontally or
 vertically". It is documented only under `ZoomRowList` but exists on **every** `ArrayGrid`-derived node on
-a device, and apps alias it up from a plain `RowList`. On a device the scroll spans several frames: the
-field goes true, the focus fields pass through in-transit values, and it goes **false before the focus
-finally settles**. Our scroll is instant, so both edges land in one frame — which makes their **order
-relative to the focus fields the entire contract**, and the two rules below easy to get backwards. Both
-were regressed once each while this was being written.
+a device, and apps alias it up from a plain `RowList`. The order of a move is **device-measured**, the same
+on RowList (Roku OS 15.3, `test/simulator/probes/list-refocus-settle-probe`) and LabelList/MarkupList
+(OS 16.0, `test/simulator/probes/list-focus-motion-probe`):
 
-1. **The falling edge must precede the settled focus fields.** Apps depend on the interleave in both
-   directions: the falling edge is where they tear transient scroll state down (hiding a shared
-   overlay/preview container that belongs to the *outgoing* item), and the **settle** emission of the focus
-   fields (`itemFocused`/`rowItemFocused`/`currFocusRow`…) is what rebuilds it at the new position. Put the
-   pulse *after* the settle and the teardown runs last: the app is left with its overlay torn down and
-   nothing to restore it — the symptom is the focused item's poster **and** its preview player both
-   vanishing. The edges are therefore emitted **outside** the `Field.enterInternalUpdate()` bracket on
-   purpose: inside it, a reentrant falling edge would defer past the very settle it must precede.
+```
+key:     scrollingStatus=true → itemUnfocused → vertFocusDirection=down|up
+motion:  currFocusRow 0.10 … 0.99            (instant path: skipped)
+settle:  currFocusRow → itemFocused → scrollingStatus=false → rowItemFocused → vertFocusDirection=none
+```
 
-2. **A key that scrolls nothing must emit NOTHING.** Hence the pulse is *armed* by `handleKey`
-   (`armScrollPulse`) and only *emitted* by the settle paths (`emitScrollPulse`, idempotent per press),
-   rather than opened before the handler and closed after it. A boundary press on a non-wrapping list, or
-   any key while the grid is outside the focus chain, publishes **no** focus fields at all — so a pulse
-   there is a teardown with no settle behind it, the same failure as rule 1. (Reachable in practice:
-   `StandardDialog`/`Dialog`/`PanelSet` forward keys to children without checking focus.) It is not
-   `alwaysNotify`, so a device emits nothing on those paths; don't add `alwaysNotify` — the pulse always
-   changes value, so both edges notify without it, and adding it resurrects the spurious same-value
-   notification that `ZoomRowList`'s old redeclaration produced.
+The rules below are easy to get backwards. An earlier version put **both** edges ahead of every settled
+field. That was half right: it was built for an app that tears its overlay down on the falling edge and
+rebuilds it from `rowItemFocused`, and the device order still serves it.
 
-`handleKey` arms **inside** its `try` and disarms in the `finally`: an exception from either edge's
-observers must not strand the field at `true`, which would silently suppress every later notification.
+1. **The falling edge goes after `itemFocused` and before `rowItemFocused`.** Apps tear transient scroll
+   state down on the falling edge (hiding a shared overlay/preview container that belongs to the
+   *outgoing* item) and rebuild it from the `rowItemFocused` settle. Put the edge after `rowItemFocused`
+   and the teardown runs last: the focused item's poster **and** its preview player both vanish.
+   `openScrollPulse` goes out before `itemUnfocused` and `closeScrollPulse` right after `itemFocused`.
 
-Every path that publishes settled focus fields must call `emitScrollPulse()` first — `ArrayGrid`.
-`setFocusedItem`, `RowList.setFocusedItem` *and* `setRowItemFocused` (the horizontal handlers reach the
-latter directly, bypassing the former), `ZoomRowList.setFocusedItem` *and* its direct `rowItemFocused`
-write in `handleLeftRight`, and `TimeGrid.focusCell` *plus* the three paths that bypass it
-(entering/leaving the channel-info column, moving within it, panning the time window). Adding a new
-navigation path means adding the call. Programmatic focus writes (`jumpToItem`/`jumpToRowItem`/
-`animateToItem`) deliberately do **not** pulse: those are content-loading paths and don't scroll the focus
-on a device.
+2. **A key that scrolls nothing must emit NOTHING.** That is why the pulse is *armed* by `handleKey`
+   (`armScrollPulse`) and only *emitted* by the settle paths (both edges idempotent per press), rather
+   than opened before the handler and closed after it. A boundary press on a non-wrapping list, or any
+   key while the grid is outside the focus chain, publishes **no** focus fields at all. A pulse there is
+   a teardown with no settle behind it. (Reachable in practice: `StandardDialog`/`Dialog`/`PanelSet`
+   forward keys to children without checking focus.)
+   - It is not `alwaysNotify`, so a device emits nothing on those paths.
+   - Don't add `alwaysNotify`: the pulse always changes value, so both edges notify without it. Adding it
+     resurrects the spurious same-value notification that `ZoomRowList`'s old redeclaration produced.
+
+`handleKey` arms **inside** its `try`, and `endScrollPulse` disarms (and closes a stranded pulse) in the
+`finally`. An exception from an observer must not strand the field at `true`, which would silently
+suppress every later notification.
+
+The settle paths are:
+- `ArrayGrid.setFocusedItem`;
+- `RowList.setFocusedItem` *and* `setRowItemFocused`. The horizontal handlers reach the latter directly,
+  so it opens the pulse too and closes it right before `rowItemFocused`;
+- `ZoomRowList.setFocusedItem` (open before `rowUnfocused`, close after `rowFocused`, before
+  `rowItemFocused`) *and* its direct `rowItemFocused` write in `handleLeftRight`;
+- the animated list motion (`moveFocusAnimated`/`settleMotion`), which emits the same order spread over
+  the motion's frames.
+
+**TimeGrid** still uses `emitScrollPulse` (both edges ahead of its settle), because its
+channel/program settle order has not been measured. Probe it before moving its edges. Adding a new
+navigation path means opening and closing the pulse in it.
+
+`jumpToItem`/`jumpToRowItem` deliberately do **not** pulse: those are content-loading paths, and
+device-confirmed not to scroll the focus. `animateToItem` pulses on an animated list (device-measured)
+but not on the instant path.
 
 Related trap in the same area: `ZoomRowList.handleUpDown` must **not** pre-assign `this.focusIndex` before
 calling `setFocusedItem`, which reads it as the *outgoing* row to emit `rowUnfocused` (and assigns it
@@ -1315,7 +1579,7 @@ itself). Pre-assigning made that emission dead, so an app collapsing the outgoin
 callback.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js` (asserts on a merged notification log, so
-values *and* order are pinned — including three no-pulse cases) and the channel-info/time-pan test in
+values *and* order are pinned — including three no-pulse cases), `ListFocusMotion.test.js` and the channel-info/time-pan test in
 `test/extensions/scenegraph/TimeGrid.test.js`.
 
 ### `currFocusRow`/`currFocusColumn` must be current BEFORE `itemFocused` fires
@@ -1323,8 +1587,8 @@ values *and* order are pinned — including three no-pulse cases) and the channe
 Both fields are documented on the base `ArrayGrid` (`arraygrid.md`), not just `RowList`. Apps commonly read
 `currFocusRow`/`currFocusColumn` **synchronously from inside an `itemFocused` observer** — e.g. a header
 that collapses once the focused row leaves index 0 (found via a real app, Jellyfin-Roku's
-`VisualLibraryScene`). Since an engine-initiated, non-reentrant emission dispatches its observer
-synchronously (see the deferred-dispatch section above), whichever field is `super.setValue`'d *first* in
+`VisualLibraryScene`). Since an engine emission dispatches its observers inline (see "Observers a node's
+own machinery raises dispatch inline too" above), whichever field is `super.setValue`'d *first* in
 source order is the one an observer on a *later* field sees as already-settled — and vice versa. Two bugs
 from getting this backwards, both fixed together:
 
@@ -1337,12 +1601,37 @@ from getting this backwards, both fixed together:
    how many rows existed.
 
 Fix: both `ArrayGrid.setFocusedItem` and `RowList.setFocusedItem` now `super.setValue` `currFocusRow`/
-`currFocusColumn` immediately before `itemFocused`, inside the same `enterInternalUpdate`/`exitInternalUpdate`
-bracket. `RowList.setRowItemFocused` still re-applies the same values afterward (a harmless same-value
+`currFocusColumn` immediately before `itemFocused`. `RowList.setRowItemFocused` still re-applies the same values afterward (a harmless same-value
 no-op) before settling `rowItemFocused` last — that ordering is unchanged.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js`, describe block
 `"ArrayGrid currFocusRow/currFocusColumn reflect the new focus before itemFocused fires"`.
+
+### The list focus model: gains, jumps and new content (`ArrayGrid.listFocusModel`)
+
+Device-measured on a Roku Express 4K+ (OS 16.0) with `test/simulator/probes/list-focus-dispatch-probe`, for
+LabelList/MarkupList (and the grids, which share the code). RowList, ZoomRowList and TimeGrid override
+`listFocusModel()` to keep their older behavior until they are measured.
+
+- **A focus gain re-applies the focus where it is.** The item's `itemHasFocus` (if it changes) and then
+  `itemFocused`; never `itemUnfocused`, also not -1 on the first focus. `setNodeFocus` sets `gainingFocus`
+  around its `setFocusedItem` call.
+- **A move** (`jumpToItem`, an instant key): the old item's `itemHasFocus` false, `itemUnfocused`, the
+  direction, then the new item's `itemHasFocus` true, `currFocusRow`/`Column` and `itemFocused`.
+- **An unfocused `jumpToItem`** publishes `itemUnfocused` -1 at once, on every write (the field is
+  alwaysNotify), and records the target silently; the next gain lands there.
+- **New content publishes nothing at the write.** The focus resets to item 0 silently, and `itemFocused` 0
+  goes out once: before the next `jumpToItem`/`animateToItem`, or when the current handler or `init()`
+  returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. Like every
+  other focus landing it calls `itemFocusCallback`, so a ListPanel/GridPanel publishes
+  `createNextPanelIndex` for it. So `init()`
+  assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
+  handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
+  `flushContentFocus()` where a device would have returned from the handler.
+
+Still unmodeled: the device creates the target item's component during `jumpToItem` (its `itemHasFocus`
+lands between `itemUnfocused` and `itemFocused` even when it was off screen); the engine creates item
+components at the next paint.
 
 ## Focus chain consistency (`focusedChild` ↔ live focus)
 
@@ -1356,95 +1645,126 @@ attach**: if live `sgRoot.focused` is within the newly parented subtree, it re-p
 the root down. Each attach extends the chain one level. Don't remove that repair as "redundant".
 Regression: `test/extensions/scenegraph/FocusBeforeAttach.test.js`.
 
-### A focus transaction commits before it notifies, and a focus-loss observer can't re-grab
+### A focus transaction commits before it notifies, and a nested request writes only part of the chain
 
-Two rules, both **device-measured** on a Roku Express 4K+ (OS 15.3) with `test/simulator/probes/focus-probe*`. They exist
-because an app that re-grabs focus from its own `focusedChild` observer (sgRouter's outlet, and the same
-`OnFocusedChildChange` shape in several media apps) behaves on a device and used to corrupt the chain here.
+Device-measured on a Roku Express 4K+, OS 15.3 and 16.0 (identical): `test/simulator/probes/focus-probe`,
+`focus-probe2`, `focus-flag-probe` and `list-refocus-settle-probe`, plus OS 16.0 runs of the
+`focus-steal-app` and `container-redirect-focus-app` CLI fixtures. The engine matches `focus-probe2`,
+`focus-flag-probe` and `focus-steal-app` line for line. These rules exist because apps re-grab focus from
+their own observers (sgRouter's outlet, the `OnFocusedChildChange` shape in media apps, an overlay
+re-shown from `rowItemFocused`).
 
-1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`) and
-   dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first. An observer must
-   therefore read the **finished** chain. Writing-and-notifying node by node — what the code did before —
-   let the losing subtree's observer see a half-rewritten chain (`sceneFC` still pointing at the old
-   subtree). Dispatch is still **synchronous**, inside the `setFocus` call: Roku commits atomically, it
-   does not defer these to the message loop. (Init-time focus emissions are the one exception — see
-   `pendingInitFocusFields` above.) `restoreFocusChainOnAttach` stages its repair the same way.
+1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`)
+   and dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first, so an
+   observer reads the **finished** chain. Dispatch is synchronous, inside the `setFocus` call (init-time
+   focus emissions excepted, see `pendingInitFocusFields`). Staging holds back only the notification:
+   the write still goes through the virtual `setValue`, because `Group.setValue` marks the node dirty and
+   `ScrollableText.setValue` tracks its focused state. Writing the `Field` directly freezes every focus
+   visual.
 
-   Staging holds back only the **notification**: the write itself goes through the regular virtual
-   `setValue` (suppressed via `focusStagingSink`), because subclasses override it — `Group.setValue`
-   marks the node dirty so focus visuals repaint, `ScrollableText.setValue` tracks its focused state.
-   Writing the `Field` directly instead silently freezes every focus visual (a `Button` keeps its
-   unfocused font, a `ScrollableText` its unfocused scrollbar thumb) while `hasFocus()` still reports
-   true.
+2. **`hasFocus()` is "my `focusedChild` links to myself"** (or the node holds the live focus,
+   `sgRoot.focused`, which internal dialog focus moves set without writing links). A device leaves stale
+   links in place, so a node the chain moved away from can keep reporting focus, and two or more nodes
+   can report it at once. That is device behavior; don't "fix" it.
 
-2. **A focus request raised from a focus-LOSS notification is dropped** (`isFocusRequestDropped`, keyed
-   off the `focusNotifyOwners` stack). A Roku honors `setFocus` from a `focusedChild` observer only while
-   the observed node is still in the focus chain — the "forward focus" pattern where a container that
-   just *gained* focus hands it to an inner widget. The mirror case, a node re-grabbing focus as it
-   *loses* it, leaves the chain and the remote with the node the in-flight transaction focused.
+3. **Two pointers drive the writes.** `sgRoot.chainOwner` is the node whose path the next transaction
+   unsets. `sgRoot.lastFocusTarget` is the target of the last BrightScript `setFocus(true)` call to
+   return (set in the `setFocus` callable, after the subclass overrides ran).
+   - **A top-level call** (`applyFocus`) unsets the chain owner's path below their common ancestor,
+     clearing only links that still point along it (`unsetPathBelow`). It then writes the target's whole
+     path, moves `sgRoot.focused`, and becomes the chain owner.
+   - **A call raised while a focus round is dispatching** (`applyNestedFocus`) writes its path only below
+     its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
+     chain owner's path and takes it over. The live focus follows only when the chain from the root now
+     leads to the target.
+     - *Redirecting the owner's link lower down takes the chain over too* (`redirectsOwner`). A nested
+       write that moves a link the chain owner hangs below unsets the owner's path (through
+       `chainExtension`, like a top-level call) and takes the chain. A panel whose gain observer appends
+       the next panel and focuses its grid moves the PanelSet's link off the panel; left the owner, it had
+       the next `setFocus` (an app opening an example screen) unset its stale self-link and notify it again,
+       so the app's gain handler ran twice, re-appending the panel and doubling its item observer. The
+       device shows the same takeover: in `panelset-bounce-focus-probe` `forward`, the panel's forward to its
+       list clears the menu's links. Regression: "a forward into a sibling subtree takes the chain over from
+       the container" in `Focus.test.js`.
+   - **A forward extends the owner's chain** (`test/simulator/probes/nested-forward-focus-probe`). When a
+     nested call moves the live focus onto a node below the chain owner and newly writes that node's
+     self-link, the node becomes `sgRoot.chainExtension`, and the next top-level call unsets the chain
+     through it (`previous = chainExtension ?? chainOwner`). Without it, a list that forwards focus to a
+     button from its own observer left the button's self-link behind: the button kept `hasFocus()` and
+     never collapsed (the Popcorn gallery's ExpandButtonList). Re-writing links that already existed
+     extends nothing (`focus-flag-probe` D keeps them), and a takeover of the Scene's link still unsets
+     only the owner's own path (`focus-flag-probe` A1).
+   - **Focusing a node between the chain owner and the focus keeps the chain.** `holdsLiveFocus`: the owner
+     is a proper ancestor and the live focus a proper descendant. `restageChain` re-notifies the chain
+     from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
+     hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
+     (container-redirect scenario 2).
+   - **PanelSet key navigation is one transaction on the target panel** (`moveFocusToCurrentPanel`,
+     `test/simulator/probes/panelset-bounce-focus-probe`, OS 16.0.4). Never a release of the panel left
+     followed by a focus of the PanelSet itself: that cut a forwarding panel's link mid-chain (the next
+     transaction skipped it, so it never saw it leave), and the transient chain clear notified the screen
+     that it had lost the focus. The target's `setFocus` unsets the old chain through any forward.
+     - *A plain panel takes the focus in two phases.* `Node.announcePanelFocus` writes only its self-link
+       and notifies it while the chain still leads to the panel left; `Node.completePanelFocus` then
+       finishes the move, but only if the panel still links to itself **and** the focus is still on the
+       left panel's chain. So a panel that bounces the focus back on its gain (`setFocus(false)` on itself,
+       `setFocus(true)` on the menu: a details panel with nothing to show while it loads) leaves the menu
+       focused; one that forwards into its own list, or to the grid of a panel it just appended, keeps it
+       there; one whose observer only re-focuses the menu (`noUnfocus`) still takes the focus. While it is
+       notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (`sgRoot.pendingPanelFocus`,
+       the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
+       an `initialFocus` to apply, or a move started inside a focus round (an observer setting `goBack`, where
+       the first phase's notification would only be queued) takes the focus at once (the device's Left back
+       to a ListPanel is one ordinary transaction to its list).
+     - *The target becomes `lastFocusTarget`* when the move completes, a firmware `setFocus` returning
+       after any call nested in it; otherwise a panel forwarding to its grid again after a Left would find
+       that grid as the target and write only its self-link.
+     - Regression: `PanelSetForwardFocus.test.js`, and "navigation follows focus that an app redirects
+       while going back" in `PanelSetFullScreen.test.js` (a real observer, not a `setNodeFocus` stub: the
+       two-phase move never calls `setNodeFocus` on a plain panel).
+   - Still open: within one transaction the device notifies the gaining path from the leaf up and then the
+     losing nodes (the probe's gallery run), while the engine notifies the losing nodes first, from the
+     root down. `focus-probe2` N1 has the device notifying a losing sibling first, so the rule is not yet
+     known.
+   - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
+     `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
+     return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus
+     cell) checks `sgRoot.focused === this` after `super.setNodeFocus`. PanelSet's and ButtonGroup's
+     `refreshFocus` check the chain themselves, so they run when an observer forwarded the focus inside
+     them. Regression: "setFocus(true) returns focusable when an observer forwards the focus" in
+     `Focus.test.js`.
+   - **What this produces:**
+     - *Forward focus* to a sibling or into the container that just gained focus, or a request reaching
+       for an overlay beside it, writes up to the Scene and takes the focus.
+     - *A node re-grabbing the focus it is losing* writes only its own self-link (`focus-probe` S4,
+       `focus-probe2` N3), which leaves the chain where the transaction put it.
+     - *A request raised before a forward's `setFocus` returned* (an `itemFocused` observer inside the
+       forwarded list's call: R7, container-redirect scenario 1) does the same.
+     - *An observer restoring focus during a `setFocus(false)`* restores only the self-link, which leaves
+       nothing focused (`focus-steal-app`).
 
-   **The owner alone is not enough — the TARGET is classified too.** A container that observes its own
-   `focusedChild` and redirects focus into its own child *stays* in the chain, so an owner-only test reads
-   a subsequent re-grab to an unrelated sibling as legal forward focus and strands the app on the node it
-   was navigating away from (device-measured: `list-refocus-settle-probe` R7). Three rules, sharing one
-   bounded ancestor walk (`Node.isAncestorOrSelf`), and the **order** matters:
-   - The owner must still be in the focus chain (the classic backwards steal). `target === focused`
-     (probe2 N4, re-asserting the node that just took focus) is idempotent and falls out of the next rule
-     for free once this one confirms the owner is a proper ancestor — it is not a separate check.
-   - The target-subtree test applies **only when the owner is a proper ancestor** of the focused node. When
-     the owner *is* the focused node, the transaction staged `focusedChild` on the leaf itself, so the
-     redirect is the ordinary "I got focus but nothing to show, pass it on" pattern — which legitimately
-     targets a sibling or the parent.
-   - A target that is **not in the owner's tree** is never a steal, or the subtree walk drops it: a node
-     still unparented (a component focusing itself from `init()`, which runs *before* `appendChild`) and
-     the scene's `dialog` (parented to the Scene via `setNodeParent`, never into the owner). Checked last —
-     it costs an unbounded walk to the scene root, so it only runs once the cheap subtree walk has already
-     failed to place `target` under `owner`.
-   - The mirror case, checked **first**: the *currently-focused* node can be the one that is unparented,
-     not the target. A component's `init()` focusing one of its own not-yet-attached children still runs
-     the ordinary `setNodeFocus` LCA walk, which unsets *every* non-common ancestor of the previously
-     focused chain as a side effect — including ancestors with no relationship whatsoever to the new
-     (detached) subtree. That fires their `focusedChild`-loss observers while nothing has actually left
-     their tree yet: a router outlet observing its own `focusedChild` and re-grabbing focus into its
-     routed content (sgRouter + a `JRDialog`-style overlay that focuses its own button from a field
-     observer *before* `presentOverlayDialog` appends it to the scene) is a real, device-confirmed
-     instance. Testing only "is `owner` still an ancestor of `focused`" reads this as a permanent
-     cross-tree steal and drops it — corrupting the chain exactly the way this whole mechanism exists to
-     prevent: `sgRoot.focused` is left on a node outside the visible tree, and the scene's own
-     `focusedChild` is left cleared instead of re-threaded to the re-grabbed node. Guard: if `owner` and
-     `focused` don't share the same root (`createPath()[0]`), there is no steal to classify yet — honor
-     the request. It resolves itself once the detached subtree is eventually mounted, via
-     `restoreFocusChainOnAttach`.
+4. **A nested call's notifications join the current round.** `notifyStagedFocus` appends them to the
+   dispatching round (each field once per round) and returns, so the forwarded node's observer runs after
+   the forward's `setFocus` returned (`focus-flag-probe` A1). Ordinary field observers stay synchronous.
 
-   **The classification must survive the deferral, not defeat it.** A grid's focus-gain settle is an
-   engine emission, so raised inside another observer it defers — by which point the transaction has left
-   the stack and the steal is unclassifiable. Do **not** fix that by dispatching the settle synchronously:
-   the settle is also what carries an app's reentrant multi-list load, so inline dispatch re-creates the
-   `deferred-observer-app` crash (an earlier list's `content` still `invalid` when a later list's handler
-   runs), and the two shapes are indistinguishable — both are "a container's `focusedChild` observer calls
-   `setFocus` on a list". Instead the deferred entry records the notification it was raised under and
-   `Node.runWithFocusNotifyOwner` reinstates it around the dispatch, leaving *when* observers run alone.
+The engine once dropped a nested request when a classifier judged it a "backwards steal", and kept its own
+flag for `hasFocus()`. The probes contradict both: a container's gain observer can send the focus to an
+overlay beside it (B1), and a loss observer's re-grab still writes the grabber's own link. Don't
+reintroduce a drop rule; the partial writes above are what keeps the chain consistent with the live focus.
+The original bug (live focus on the grabber, `focusedChild` on another node, so the remote drove the old
+subtree) can't happen, because the live focus moves only when the chain leads to the target.
 
-   Scoped to transactions where a node is **taking** focus (`notifyStagedFocus`'s `gaining` flag). The
-   unfocus paths notify without classifying: with no competing target there is nothing to defend, and
-   swallowing an unfocus observer's restore would leave the app with **no focused node at all**. The
-   dropped path returns `false`, not `isFocusable()`, so a subclass override gated on
-   `super.setNodeFocus(...)` skips its own bookkeeping too (an `ArrayGrid` must not move `itemFocused`
-   for a grid that never took focus).
+**Still unmodeled: dialogs.** A device keeps a shown `scene.dialog` out of the scene's chain: `sceneFC` and
+`isInFocusChain()` of the scene subtree are unchanged, and the dialog stays modal even after the app
+re-focuses a node behind it (`focus-probe` S6/S7, container-redirect scenario 2). The engine moves the
+chain to the dialog.
 
-   Don't "simplify" this to dropping all nested focus changes: forward focus is how every custom dialog
-   highlights its buttons (`dialog-buttongroup-focus-app`). And don't drop only the chain writes while
-   letting `sgRoot.focused` move — that hybrid (live focus on one node, `focusedChild` on another) is the
-   original bug: the remote drove the old subtree while the chain said otherwise, so a key handler
-   returned `true` (playing the "handled" navigation sound) without focus visibly moving, and a
-   `scene.dialog` drew unfocused with up/down/OK falling through to the scene behind it.
+**Disconnected trees.** A component's `init()` focusing itself before it is appended has a path rooted at
+the detached node. It writes that path, and the live focus moves there. It doesn't touch the scene's
+chain owner, and `restoreFocusChainOnAttach` threads the chain once the subtree is mounted
+(`FocusBeforeAttach.test.js`, "honors a re-grab when the competing focus lives in a still-detached
+subtree").
 
-   **Deliberately not modeled:** on a device the node that lost the race keeps reporting `hasFocus() =
-   true` until the next focus transaction, so two nodes report focus at once. Reproducing that would make
-   both render focused. We report `hasFocus()` only for the live focus.
-
-   Regression: `focus-steal-app` and `container-redirect-focus-app` in `test/cli/` (the latter drives all
-   four rules plus the deferral through a real app; the `Focus.test.js` unit tests use port observers,
-   which never defer), which must stay green alongside `dialog-buttongroup-focus-app`,
-   `deferred-observer-app` and `init-focus-observer-app`. The disconnected-tree carve-out: "honors a
-   re-grab when the competing focus lives in a still-detached subtree" in `Focus.test.js`.
+Regression: `focus-steal-app`, `container-redirect-focus-app` and `dialog-buttongroup-focus-app` in
+`test/cli/`, and `Focus.test.js` (port observers stand in for BrightScript ones; the tests set
+`sgRoot.setLastFocusTarget` where a BrightScript `setFocus` would).

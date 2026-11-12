@@ -239,9 +239,6 @@ export class ContentNode extends Node {
             return;
         }
         this.propagating = true;
-        // Mark this as a ContentNode parentField cascade so its observers dispatch synchronously
-        // (inline) rather than being deferred — the #904/#905/#943 termination guards rely on it.
-        Field.enterParentCascade();
         try {
             for (const field of this.parentFields) {
                 field.notifyObservers();
@@ -250,7 +247,6 @@ export class ContentNode extends Node {
                 field.getContainer()?.fanOutFieldToObservingTasks(field.getName().toLowerCase());
             }
         } finally {
-            Field.exitParentCascade();
             this.propagating = false;
         }
     }

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="style" type="string" onChange="onStyle" />
+    </interface>
+    <children>
+        <Rectangle width="1280" height="720" color="0x202830FF" />
+        <Label id="caption" translation="[80,40]" color="0xFFFFFFFF" />
+        <RowList id="rows" translation="[80,120]" itemComponentName="ProbeCell" itemSize="[1120,150]"
+            itemSpacing="[0,20]" rowItemSize="[[160,100]]" rowItemSpacing="[[20,0]]" numRows="3"
+            showRowLabel="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        root = CreateObject("roSGNode", "ContentNode")
+        counts = [20, 2, 30, 2]
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            for c = 0 to counts[r] - 1
+                row.createChild("ContentNode").title = "R" + r.toStr() + " I" + c.toStr()
+            end for
+        end for
+        rows = m.top.findNode("rows")
+        rows.content = root
+        rows.observeField("rowItemFocused", "onRowItemFocused")
+        rows.observeField("currFocusColumn", "onColumn")
+    end sub
+
+    sub onStyle()
+        rows = m.top.findNode("rows")
+        rows.rowFocusAnimationStyle = m.top.style
+        m.top.findNode("caption").text = "rowFocusAnimationStyle = " + m.top.style
+        rows.setFocus(true)
+    end sub
+
+    sub onRowItemFocused()
+        f = m.top.findNode("rows").rowItemFocused
+        print "PROBE|rowItemFocused=" + f[0].toStr() + "," + f[1].toStr()
+    end sub
+
+    sub onColumn()
+        print "PROBE|currFocusColumn=" + Str(m.top.findNode("rows").currFocusColumn).trim()
+    end sub
+    ]]>
+    </script>
+</component>

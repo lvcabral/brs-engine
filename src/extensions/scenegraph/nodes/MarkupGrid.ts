@@ -1,14 +1,32 @@
 import { FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
-import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect, RectRect } from "brs-engine";
-import { ArrayGrid, FocusStyle } from "./ArrayGrid";
+import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect } from "brs-engine";
+import { ArrayGrid, FocusStyle, GridHoldDelayMs, GridStepMs, GridWrapRowStepMs } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { customNodeExists } from "../factory/NodeFactory";
+
+/** The row geometry `MarkupGrid.renderGridRows` lays out. */
+interface GridRowsLayout {
+    firstRow: number;
+    lastRow: number;
+    moving: boolean;
+    /** The grid's left edge, where every row starts. */
+    left: number;
+    startCol: number;
+    rowWidth: number;
+    itemSize: number[];
+    spacing: number[];
+    columnWidths: number[];
+    columnSpacings: number[];
+    rowHeights: number[];
+    rowSpacings: number[];
+    spanOf: (r: number) => number;
+    screen: Rect;
+}
 
 export class MarkupGrid extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
         { name: "itemComponentName", type: "string", value: "" },
-        { name: "drawFocusFeedbackOnTop", type: "boolean", value: "true" },
         { name: "vertFocusAnimationStyle", type: "string", value: FocusStyle.FixedFocusWrap },
         { name: "numRows", type: "integer", value: "12" },
         { name: "numColumns", type: "integer", value: "1" },
@@ -61,6 +79,18 @@ export class MarkupGrid extends ArrayGrid {
     /** A grid lays its columns out from columnWidths/columnSpacings; per the reference, lists do not. */
     protected usesColumnWidths(): boolean {
         return true;
+    }
+
+    protected focusMotionEnabled(): boolean {
+        return true;
+    }
+
+    protected motionStepMs(axis: "row" | "col"): number {
+        return axis === "row" && this.wrap ? GridWrapRowStepMs : GridStepMs;
+    }
+
+    protected motionHoldDelayMs(): number {
+        return GridHoldDelayMs;
     }
 
     protected handleUpDown(key: string) {
@@ -184,14 +214,7 @@ export class MarkupGrid extends ArrayGrid {
         } else if (this.focusIndex < 0) {
             this.focusIndex = 0;
         }
-        const hasSections = this.metadata.length > 0;
-        const itemCompName = this.getValueJS("itemComponentName") as string;
-        if (!customNodeExists(itemCompName)) {
-            if (!this.itemComponentErrorLogged) {
-                const name = itemCompName.trim() || "missing 'itemComponentName'";
-                BrsDevice.stderr.write(`error,[sg.markupgrid.create.fail] Failed to create item: ${name}`);
-                this.itemComponentErrorLogged = true;
-            }
+        if (!this.itemComponentExists()) {
             return;
         }
         const itemSize = this.getValueJS("itemSize") as number[];
@@ -205,36 +228,125 @@ export class MarkupGrid extends ArrayGrid {
         const rowHeights = this.getValueJS("rowHeights") as number[];
         const rowSpacings = this.getValueJS("rowSpacings") as number[];
         this.currRow = this.updateCurrRow();
-        let lastIndex = -1;
         const displayRows = Math.min(Math.ceil(this.content.length / this.numCols), this.numRows);
-        let sectionIndex = 0;
         const rowWidth = this.numCols * itemSize[0] + (this.numCols - 1) * spacing[0];
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
-        for (let r = 0; r < displayRows; r++) {
-            const rowIndex = this.getRenderRowIndex(r);
+        // Start at the horizontal scroll window's left column (clamped in case numColumns
+        // shrank at runtime) so the focused/visible columns lay out from the grid's left edge.
+        const startCol = Math.min(this.scrollCol, Math.max(0, this.numCols - 1));
+        // Focus in motion: the settled layout drawn `shift` rows lower, plus the rows scrolling in/out.
+        const motion = this.listMotionFrame(displayRows);
+        const motionRow = (r: number) => {
+            const index = this.motionRowIndex(r);
+            return index < 0 ? -1 : Math.floor(index / this.numCols);
+        };
+        const heightOf = (r: number) => {
+            const row = motionRow(r);
+            return row < 0 ? itemSize[1] : rowHeights[row] ?? itemSize[1];
+        };
+        const spanOf = (r: number) => {
+            const row = motionRow(r);
+            const gap = row < 0 ? spacing[1] : rowSpacings[row] ?? spacing[1];
+            return heightOf(r) + gap + this.motionDividerSpace(r + 1, spacing[1]);
+        };
+        let firstRow = 0;
+        let lastRow = displayRows;
+        let motionFocus: Rect | undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
+        if (motion) {
+            const rows = this.motionRowLayout(motion, displayRows, spanOf, heightOf);
+            firstRow = rows.firstRow;
+            lastRow = rows.lastRow;
+            itemRect.y = rect.y + rows.firstY;
+            motionFocus = this.gridMotionFocusRect(
+                rect,
+                rect.y + rows.focusY,
+                rows.focusHeight,
+                motion.focusCol,
+                startCol,
+                (c) => columnWidths[c] ?? itemSize[0],
+                (c) => columnSpacings[c] ?? spacing[0]
+            );
+            if (!focusOnTop) {
+                this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
+            }
+            this.pushMotionClip(rect, rows.viewportHeight, draw2D);
+        }
+        try {
+            const layout: GridRowsLayout = {
+                firstRow,
+                lastRow,
+                moving: motion !== undefined,
+                left: rect.x,
+                startCol,
+                rowWidth,
+                itemSize,
+                spacing,
+                columnWidths,
+                columnSpacings,
+                rowHeights,
+                rowSpacings,
+                spanOf,
+                screen,
+            };
+            this.renderGridRows(interpreter, layout, itemRect, rotation, opacity, draw2D);
+        } finally {
+            if (motion) {
+                draw2D?.popClip();
+            }
+        }
+        if (motionFocus && motion && focusOnTop) {
+            // Over every cell, as at rest (see focusFeedbackOnTop).
+            this.renderMotionFocus(motionFocus, motion.visualIndex, opacity, draw2D);
+        }
+        this.updateRect(rect, displayRows, itemSize, {
+            firstRow: Math.max(0, Math.floor(this.getRenderRowIndex(0) / this.numCols)),
+        });
+    }
+
+    /** Whether `itemComponentName` names a component; logs the failure once when it doesn't. */
+    private itemComponentExists(): boolean {
+        const itemCompName = this.getValueJS("itemComponentName") as string;
+        if (customNodeExists(itemCompName)) {
+            return true;
+        }
+        if (!this.itemComponentErrorLogged) {
+            const name = itemCompName.trim() || "missing 'itemComponentName'";
+            BrsDevice.stderr.write(`error,[sg.markupgrid.create.fail] Failed to create item: ${name}`);
+            this.itemComponentErrorLogged = true;
+        }
+        return false;
+    }
+
+    /** Draws viewport rows `firstRow`..`lastRow - 1`, advancing `itemRect` down the grid. */
+    private renderGridRows(
+        interpreter: Interpreter,
+        layout: GridRowsLayout,
+        itemRect: Rect,
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const { firstRow, lastRow, moving, itemSize, spacing, columnWidths, columnSpacings, screen } = layout;
+        const state = { lastIndex: -1, sectionIndex: 0 };
+        for (let r = firstRow; r < lastRow; r++) {
+            const rowIndex = moving ? this.motionRowIndex(r) : this.getRenderRowIndex(r);
             if (rowIndex < 0) {
+                if (moving) {
+                    itemRect.y += layout.spanOf(r);
+                    continue;
+                }
                 break;
             }
             // Per-row overrides are indexed by ABSOLUTE row, top to bottom — not by the display slot,
             // which differs as soon as the grid is scrolled.
             const absoluteRow = Math.floor(rowIndex / this.numCols);
-            itemRect.height = rowHeights[absoluteRow] ?? itemSize[1];
-            if (!hasSections && this.wrap && rowIndex < lastIndex && r > 0) {
-                const divRect = { ...itemRect, width: rowWidth };
-                const divHeight = this.renderWrapDivider(divRect, opacity, draw2D);
-                itemRect.y += divHeight + spacing[1];
-            } else if (hasSections && this.wrap && this.metadata[rowIndex]?.divider && r > 0) {
-                const divRect = { ...itemRect, width: rowWidth };
-                const divText = this.metadata[rowIndex].sectionTitle;
-                const divHeight = this.renderSectionDivider(divText, divRect, opacity, sectionIndex, draw2D);
-                sectionIndex++;
-                itemRect.y += divHeight + spacing[1];
+            itemRect.height = layout.rowHeights[absoluteRow] ?? itemSize[1];
+            if (r > firstRow) {
+                itemRect.y += this.renderRowDivider(rowIndex, layout, itemRect, state, opacity, draw2D);
             }
-            // Start at the horizontal scroll window's left column (clamped in case numColumns
-            // shrank at runtime) so the focused/visible columns lay out from the grid's left edge.
-            const startCol = Math.min(this.scrollCol, Math.max(0, this.numCols - 1));
-            for (let c = startCol; c < this.numCols; c++) {
+            for (let c = layout.startCol; c < this.numCols; c++) {
                 itemRect.width = columnWidths[c] ?? itemSize[0];
                 const index = rowIndex + c;
                 if (index >= this.content.length) {
@@ -242,19 +354,45 @@ export class MarkupGrid extends ArrayGrid {
                 }
                 this.renderItemComponent(interpreter, index, itemRect, rotation, opacity, draw2D);
                 itemRect.x += itemRect.width + (columnSpacings[c] ?? spacing[0]);
-                lastIndex = index;
-                if (!RectRect(screen, itemRect)) {
+                state.lastIndex = index;
+                if (this.pastVisibleArea(screen, itemRect, moving)) {
                     break;
                 }
             }
-            itemRect.x = rect.x;
-            itemRect.y += itemRect.height + (rowSpacings[absoluteRow] ?? spacing[1]);
-            if (!RectRect(screen, itemRect)) {
+            itemRect.x = layout.left;
+            itemRect.y += itemRect.height + (layout.rowSpacings[absoluteRow] ?? spacing[1]);
+            if (this.pastVisibleArea(screen, itemRect, moving)) {
                 break;
             }
         }
-        this.updateRect(rect, displayRows, itemSize, {
-            firstRow: Math.max(0, Math.floor(this.getRenderRowIndex(0) / this.numCols)),
-        });
+    }
+
+    /**
+     * Draws the wrap or section divider above a row when one goes there, and returns the height it takes
+     * (0 when there is none).
+     */
+    private renderRowDivider(
+        rowIndex: number,
+        layout: GridRowsLayout,
+        itemRect: Rect,
+        state: { lastIndex: number; sectionIndex: number },
+        opacity: number,
+        draw2D?: IfDraw2D
+    ): number {
+        if (!this.wrap) {
+            return 0;
+        }
+        const divRect = { ...itemRect, width: layout.rowWidth };
+        const hasSections = this.metadata.length > 0;
+        if (!hasSections && rowIndex < state.lastIndex) {
+            return this.renderWrapDivider(divRect, opacity, draw2D) + layout.spacing[1];
+        }
+        if (hasSections && this.metadata[rowIndex]?.divider) {
+            const divText = this.metadata[rowIndex].sectionTitle;
+            const divHeight = this.renderSectionDivider(divText, divRect, opacity, state.sectionIndex, draw2D);
+            state.sectionIndex++;
+            return divHeight + layout.spacing[1];
+        }
+        return 0;
     }
 }

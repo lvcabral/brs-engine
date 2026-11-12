@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A focusable container whose own focusedChild observer forwards the focus to its first child. -->
+<component name="FwdContainer" extends="Group">
+    <interface><field id="forward" type="boolean" value="true" /></interface>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.focusable = true
+        m.top.observeFieldScoped("focusedChild", "onFocus")
+    end sub
+
+    sub onFocus()
+        if m.top.forward and m.top.hasFocus() then m.top.getChild(0).setFocus(true)
+    end sub
+    ]]>
+    </script>
+</component>

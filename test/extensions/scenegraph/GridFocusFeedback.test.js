@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsDevice, BrsString, Float, Int32, Interpreter, RoArray } = core;
+const { BrsBoolean, BrsDevice, BrsString, Float, Int32, Interpreter, RoArray } = core;
 
 describe("ArrayGrid focus feedback rendering", () => {
     let interpreter;
@@ -56,6 +56,8 @@ describe("ArrayGrid focus feedback rendering", () => {
         ["unfocused", false, "focusFootprintBlendColor"],
     ])("PosterGrid honors the %s blend color through the shared renderFocus", (_label, nodeFocus, blendField) => {
         const grid = SGNodeFactory.createNode("PosterGrid");
+        // A grid has no built-in footprint; the app sets one.
+        grid.setValue("focusFootprintBitmapUri", new BrsString("common:/images/focus_footprint.9.png"));
         const purple = 0x7b2ff7ff | 0;
         grid.setValue(blendField, new Int32(purple));
 
@@ -68,6 +70,25 @@ describe("ArrayGrid focus feedback rendering", () => {
 
         expect(calls).toHaveLength(1);
         expect(calls[0].rgba).toBe(purple);
+    });
+
+    // DEVICE-MEASURED (focus-footprint-layer-probe): focusFootprintBitmapUri reads "" on every node. Unset,
+    // a list draws a built-in footprint on its focused item while unfocused; a grid or row list draws none.
+    test.each([
+        ["MarkupGrid", 0],
+        ["PosterGrid", 0],
+        ["RowList", 0],
+        ["ZoomRowList", 0],
+        ["LabelList", 1],
+        ["MarkupList", 1],
+    ])("%s draws %i built-in footprint while unfocused", (type, expected) => {
+        const grid = SGNodeFactory.createNode(type);
+        const calls = [];
+        const draw2D = { drawNinePatch: () => calls.push(1), doDrawScaledObject: () => calls.push(1) };
+
+        grid.renderFocus({ x: 100, y: 100, width: 300, height: 100 }, 1, false, draw2D);
+
+        expect(calls).toHaveLength(expected);
     });
 
     test("PosterGrid records hasNinePatch from the drawn frame, like every other grid", () => {
@@ -110,6 +131,8 @@ describe("ArrayGrid focus feedback rendering", () => {
         grid.setValue("basePosterSize", new RoArray([new Float(120), new Float(120)]));
         grid.setValue("caption1NumLines", new Int32(1));
         grid.setValue("numColumns", new Int32(1));
+        // The grid is painted unfocused, and a grid has no built-in footprint.
+        grid.setValue("focusFootprintBitmapUri", new BrsString("common:/images/focus_footprint.9.png"));
         const content = SGNodeFactory.createNode("ContentNode");
         for (const title of ["A", "B"]) {
             const item = SGNodeFactory.createNode("ContentNode");
@@ -120,7 +143,7 @@ describe("ArrayGrid focus feedback rendering", () => {
 
         const frames = [];
         const draw2D = {
-            drawNinePatch: (bmp, rect) => frames.push({ ...rect }),
+            drawNinePatch: (bmp, rect) => inFocus && frames.push({ ...rect }),
             doDrawRotatedRect: () => {},
             doDrawRotatedText: () => {},
             doDrawScaledObject: () => {},
@@ -128,6 +151,18 @@ describe("ArrayGrid focus feedback rendering", () => {
             doDrawCroppedBitmap: () => {},
             pushClip: () => {},
             popClip: () => {},
+        };
+        // Only the focus frame (the captions draw 9-patches too, and an unwritten drawFocusFeedbackOnTop
+        // draws the frame after them).
+        let inFocus = false;
+        const renderFocus = grid.renderFocus.bind(grid);
+        grid.renderFocus = (...args) => {
+            inFocus = true;
+            try {
+                return renderFocus(...args);
+            } finally {
+                inFocus = false;
+            }
         };
         grid.paintNode(interpreter, [0, 0], 0, 1, draw2D);
 
@@ -138,5 +173,14 @@ describe("ArrayGrid focus feedback rendering", () => {
         // The caption band is inside the frame's height, so it is taller than the poster: that asymmetry
         // is deliberate, and asserting it here stops a refactor from "fixing" it silently.
         expect(frames[0].height).toBeGreaterThan(120);
+    });
+
+    test.each(["MarkupGrid", "LabelList"])("a %s clone keeps a written drawFocusFeedbackOnTop", (type) => {
+        const grid = SGNodeFactory.createNode(type);
+        const unwritten = grid.focusFeedbackOnTop();
+        grid.setValue("drawFocusFeedbackOnTop", BrsBoolean.from(!unwritten));
+        const clone = grid.cloneNode(false);
+        expect(clone.focusFeedbackOnTop()).toBe(!unwritten);
+        expect(SGNodeFactory.createNode(type).cloneNode(false).focusFeedbackOnTop()).toBe(unwritten);
     });
 });

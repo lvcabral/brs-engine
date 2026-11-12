@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Every node uses the solid orange pkg:/images/solid.png as its focus bitmap. -->
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="target" type="string" onChange="onTarget" />
+        <field id="bitmap" type="string" onChange="onBitmap" />
+        <field id="onTop" type="string" onChange="onOnTop" />
+    </interface>
+    <children>
+        <Rectangle width="1280" height="720" color="0x202830FF" />
+        <Label translation="[40,20]" text="MarkupGrid float" color="0xFFFFFFFF" />
+        <MarkupGrid id="side" translation="[40,60]" itemComponentName="ProbeText" itemSize="[220,56]" itemSpacing="[0,8]"
+            numColumns="1" numRows="6" vertFocusAnimationStyle="floatingFocus" focusBitmapUri="pkg:/images/solid.png" />
+        <Label translation="[300,20]" text="MarkupGrid wrap (XML false)" color="0xFFFFFFFF" />
+        <MarkupGrid id="side2" translation="[300,60]" itemComponentName="ProbeText" itemSize="[220,56]" itemSpacing="[0,8]"
+            numColumns="1" numRows="6" focusBitmapUri="pkg:/images/solid.png" drawFocusFeedbackOnTop="false" />
+        <Label translation="[560,20]" text="MarkupList float" color="0xFFFFFFFF" />
+        <MarkupList id="mlist" translation="[560,60]" itemComponentName="ProbeText" itemSize="[220,56]" itemSpacing="[0,8]"
+            numRows="6" vertFocusAnimationStyle="floatingFocus" focusBitmapUri="pkg:/images/solid.png" />
+        <Label translation="[820,20]" text="LabelList float" color="0xFFFFFFFF" />
+        <LabelList id="list" translation="[820,60]" itemSize="[220,56]" itemSpacing="[0,8]"
+            numRows="6" vertFocusAnimationStyle="floatingFocus" focusBitmapUri="pkg:/images/solid.png" />
+        <RowList id="rows" translation="[40,480]" itemComponentName="ProbeText" itemSize="[1200,80]" rowItemSize="[[160,70]]"
+            rowItemSpacing="[[16,0]]" numRows="1" showRowLabel="false" rowFocusAnimationStyle="floatingFocus"
+            focusBitmapUri="pkg:/images/solid.png" />
+        <Label translation="[40,600]" text="PosterGrid float (captions)" color="0xFFFFFFFF" />
+        <PosterGrid id="pgrid" translation="[400,590]" basePosterSize="[120,40]" itemSpacing="[16,0]" numColumns="6" numRows="1"
+            caption1NumLines="1" posterDisplayMode="scaleToFit" focusBitmapUri="pkg:/images/solid.png" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        names = ["Home", "Movies", "Shows", "Music", "Search", "Settings", "Profile", "Help"]
+        for each id in ["side", "side2", "mlist", "list", "pgrid"]
+            root = CreateObject("roSGNode", "ContentNode")
+            for each name in names
+                item = root.createChild("ContentNode")
+                item.title = name
+                item.shortDescriptionLine1 = name
+            end for
+            m.top.findNode(id).content = root
+        end for
+        rowRoot = CreateObject("roSGNode", "ContentNode")
+        row = rowRoot.createChild("ContentNode")
+        for each name in names
+            row.createChild("ContentNode").title = name
+        end for
+        m.top.findNode("rows").content = rowRoot
+    end sub
+
+    ' Launch parameter bitmap=9 swaps every node to an opaque 9-patch focus bitmap.
+    sub onBitmap()
+        for each id in ["side", "side2", "mlist", "list", "rows", "pgrid"]
+            m.top.findNode(id).focusBitmapUri = m.top.bitmap
+        end for
+    end sub
+
+    ' Launch parameter ontop=false|true writes drawFocusFeedbackOnTop on every node.
+    sub onOnTop()
+        for each id in ["side", "side2", "mlist", "list", "rows", "pgrid"]
+            m.top.findNode(id).drawFocusFeedbackOnTop = (m.top.onTop = "true")
+        end for
+    end sub
+
+    sub onTarget()
+        for each id in ["side", "side2", "mlist", "list", "rows", "pgrid"]
+            node = m.top.findNode(id)
+            print "PROBE|" + id + " drawFocusFeedbackOnTop=" + node.drawFocusFeedbackOnTop.toStr() + " drawFocusFeedback=" + node.drawFocusFeedback.toStr()
+        end for
+        m.top.findNode(m.top.target).setFocus(true)
+    end sub
+    ]]>
+    </script>
+</component>

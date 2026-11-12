@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Cases, each printing the return of setFocus(true) and where the focus ended:
+  A  a plain leaf
+  B  the same leaf again (already focused)
+  C  a container whose focusedChild observer forwards the focus to its child
+  D  a container whose observer moves the focus to a node outside it
+  E  a leaf whose own focusedChild observer moves the focus away
+  F  a ButtonGroup (forwards to its button internally)
+  G  a non-focusable node (focusable=false)
+  Then A2-E2: the same cases with focusable="true" nodes, to tell "returns focusable" from "returns
+  whether the focus landed on the node".
+-->
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Group id="leaf" />
+        <Group id="fwdIn"><Group id="fwdInChild" /></Group>
+        <Group id="fwdOut" />
+        <Group id="outside" />
+        <Group id="selfAway" />
+        <ButtonGroup id="buttons" buttons="[&quot;One&quot;, &quot;Two&quot;]" />
+        <Group id="nope" focusable="false" />
+        <Group id="leaf2" focusable="true" />
+        <Group id="fwdIn2" focusable="true"><Group id="fwdInChild2" focusable="true" /></Group>
+        <Group id="fwdOut2" focusable="true" />
+        <Group id="selfAway2" focusable="true" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.fwdIn = m.top.findNode("fwdIn")
+        m.fwdOut = m.top.findNode("fwdOut")
+        m.selfAway = m.top.findNode("selfAway")
+        m.fwdIn.observeField("focusedChild", "onFwdIn")
+        m.fwdOut.observeField("focusedChild", "onFwdOut")
+        m.selfAway.observeField("focusedChild", "onSelfAway")
+        m.top.findNode("fwdIn2").observeField("focusedChild", "onFwdIn2")
+        m.top.findNode("fwdOut2").observeField("focusedChild", "onFwdOut2")
+        m.top.findNode("selfAway2").observeField("focusedChild", "onSelfAway2")
+        m.timer = CreateObject("roSGNode", "Timer")
+        m.timer.duration = 0.5
+        m.timer.observeField("fire", "runCases")
+        m.timer.control = "start"
+    end sub
+
+    sub onFwdIn()
+        if m.fwdIn.focusedChild <> invalid and m.fwdIn.focusedChild.isSameNode(m.fwdIn) then m.top.findNode("fwdInChild").setFocus(true)
+    end sub
+
+    sub onFwdOut()
+        if m.fwdOut.focusedChild <> invalid and m.fwdOut.focusedChild.isSameNode(m.fwdOut) then m.top.findNode("outside").setFocus(true)
+    end sub
+
+    sub onSelfAway()
+        if m.selfAway.focusedChild <> invalid and m.selfAway.focusedChild.isSameNode(m.selfAway) then m.top.findNode("leaf").setFocus(true)
+    end sub
+
+    function focusedSelf(id as string) as boolean
+        node = m.top.findNode(id)
+        return node.focusedChild <> invalid and node.focusedChild.isSameNode(node)
+    end function
+
+    sub onFwdIn2()
+        if focusedSelf("fwdIn2") then m.top.findNode("fwdInChild2").setFocus(true)
+    end sub
+
+    sub onFwdOut2()
+        if focusedSelf("fwdOut2") then m.top.findNode("outside").setFocus(true)
+    end sub
+
+    sub onSelfAway2()
+        if focusedSelf("selfAway2") then m.top.findNode("leaf").setFocus(true)
+    end sub
+
+    function where() as string
+        f = m.top.focusedChild
+        path = ""
+        while f <> invalid
+            path = path + "/" + f.id
+            if f.focusedChild = invalid or f.focusedChild.isSameNode(f) then exit while
+            f = f.focusedChild
+        end while
+        return path
+    end function
+
+    sub probe(label as string, id as string)
+        node = m.top.findNode(id)
+        r = node.setFocus(true)
+        print "PROBE|" + label + "|ret=" + r.toStr() + " hasFocus=" + node.hasFocus().toStr() + " inChain=" + node.isInFocusChain().toStr() + " chain=" + where()
+    end sub
+
+    sub runCases()
+        probe("A", "leaf")
+        probe("B", "leaf")
+        probe("C", "fwdIn")
+        probe("D", "fwdOut")
+        probe("E", "selfAway")
+        probe("F", "buttons")
+        probe("G", "nope")
+        probe("A2", "leaf2")
+        probe("B2", "leaf2")
+        probe("C2", "fwdIn2")
+        probe("D2", "fwdOut2")
+        probe("E2", "selfAway2")
+        print "PROBE|done"
+    end sub
+    ]]>
+    </script>
+</component>

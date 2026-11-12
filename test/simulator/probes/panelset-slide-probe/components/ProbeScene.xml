@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <PanelSet id="panelSet" />
+        <Timer id="sampler" duration="0.001" repeat="true" />
+        <Timer id="stepTimer" duration="3" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.clock = CreateObject("roTimespan")
+        m.seq = 0
+        m.samples = 0
+        m.lastState = ""
+        m.maxPanels = 4
+        m.names = ["A", "B", "C", "D"]
+        m.sizes = ["narrow", "wide", "narrow", "wide"]
+        m.colors = ["0x603020FF", "0x206030FF", "0x203060FF", "0x606020FF"]
+        m.ps = m.top.findNode("panelSet")
+        m.steps = [
+            "key:Right", "key:Right", "key:Left", "key:Left",
+            "key:Right", "key:Right2", "key:Left", "key:Left", "key:Left",
+            "key:Right_Left", "key:Left",
+            "key:Play", "key:Left",
+            "key:Fwd", "key:Left",
+            "dur:1.5", "key:Right", "key:Left",
+            "dur:0", "key:Right", "key:Left",
+            "done"
+        ]
+        m.step = -1
+        rec("info", "psFields " + fieldList(m.ps, ["slideDuration", "numPanels", "isGoingBack", "slidingStatus", "leftPanelIndex", "goBack"]))
+        rec("info", "psChildren(before) " + childList(m.ps))
+        m.ps.observeField("isGoingBack", "onPsField")
+        m.ps.observeField("numPanels", "onPsField")
+        if m.ps.hasField("slidingStatus") then m.ps.observeField("slidingStatus", "onPsField")
+        if m.ps.hasField("leftPanelIndex") then m.ps.observeField("leftPanelIndex", "onPsField")
+        m.top.findNode("sampler").observeField("fire", "onSample")
+        m.top.findNode("stepTimer").observeField("fire", "onStep")
+
+        m.panelA = makePanel(0)
+        m.ps.appendChild(m.panelA)
+        rec("act", "appended A numPanels=" + StrI(m.ps.numPanels).trim())
+        m.panelA.setFocus(true)
+        rec("info", "psChildren(after A) " + childList(m.ps))
+        m.top.findNode("sampler").control = "start"
+        m.top.findNode("stepTimer").control = "start"
+    end sub
+
+    function now() as string
+        return StrI(m.clock.TotalMilliseconds()).trim()
+    end function
+
+    sub rec(kind as string, body as string)
+        m.seq = m.seq + 1
+        s = StrI(m.seq).trim()
+        while len(s) < 4
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + now() + "|" + kind + "|" + body
+    end sub
+
+    function num(v as dynamic) as string
+        return Str(Int(v * 10 + 0.5) / 10).trim()
+    end function
+
+    function fieldList(node as object, keys as object) as string
+        out = ""
+        for each k in keys
+            if node.hasField(k)
+                v = node.getField(k)
+                out = out + k + "=" + valStr(v) + " "
+            else
+                out = out + k + "=<absent> "
+            end if
+        end for
+        return out
+    end function
+
+    function valStr(v as dynamic) as string
+        t = type(v)
+        if t = "roBoolean" or t = "Boolean"
+            if v then return "true" else return "false"
+        else if t = "roInt" or t = "Integer" or t = "roFloat" or t = "Float" or t = "roDouble" or t = "Double"
+            return num(v)
+        else if t = "roArray"
+            out = "["
+            for each e in v
+                out = out + valStr(e) + ","
+            end for
+            return out + "]"
+        else if t = "roString" or t = "String"
+            return chr(34) + v + chr(34)
+        end if
+        return "<" + t + ">"
+    end function
+
+    function childList(node as object) as string
+        out = ""
+        for i = 0 to node.getChildCount() - 1
+            c = node.getChild(i)
+            out = out + c.subtype() + "#" + c.id + " "
+        end for
+        return "count=" + StrI(node.getChildCount()).trim() + " " + out
+    end function
+
+    function makePanel(index as integer) as object
+        p = CreateObject("roSGNode", "ProbePanel")
+        p.id = m.names[index]
+        p.panelSize = m.sizes[index]
+        p.hasNextPanel = index < m.maxPanels - 1
+        bg = p.findNode("bg")
+        bg.width = p.width
+        bg.color = m.colors[index]
+        p.findNode("name").text = "Panel " + p.id + " (" + p.panelSize + ")"
+        rec("info", "made " + p.id + " " + fieldList(p, ["panelSize", "leftPosition", "width", "height", "translation"]))
+        p.observeField("focusedChild", "onPanelFocus")
+        p.observeField("translation", "onPanelTranslation")
+        p.observeField("isOffscreenLeft", "onPanelField")
+        p.observeField("leftOrientation", "onPanelField")
+        p.observeField("height", "onPanelField")
+        return p
+    end function
+
+    ' The PanelSet's first children are its two internal arrow Posters, so panels are filtered by type.
+    function panelChildren() as object
+        out = []
+        for i = 0 to m.ps.getChildCount() - 1
+            c = m.ps.getChild(i)
+            if c.hasField("leftPosition") then out.push(c)
+        end for
+        return out
+    end function
+
+    function lastPanel() as object
+        panels = panelChildren()
+        if panels.count() = 0 then return invalid
+        return panels[panels.count() - 1]
+    end function
+
+    sub onPanelFocus(ev as object)
+        p = ev.getRoSGNode()
+        if p.hasFocus()
+            rec("focus", p.id + " hasFocus numPanels=" + StrI(m.ps.numPanels).trim())
+        else if p.isInFocusChain()
+            rec("focus", p.id + " inChain child=" + p.focusedChild.id)
+        else
+            rec("focus", p.id + " lost")
+            return
+        end if
+        ' Typical app pattern: focusing the last panel creates and appends the next one.
+        last = lastPanel()
+        count = panelChildren().count()
+        if last <> invalid and last.isSameNode(p) and count < m.maxPanels and p.id <> "F"
+            nextIndex = count
+            nxt = makePanel(nextIndex)
+            m.ps.appendChild(nxt)
+            rec("act", "appended " + nxt.id + " numPanels=" + StrI(m.ps.numPanels).trim() + " isGoingBack=" + valStr(m.ps.isGoingBack))
+        end if
+    end sub
+
+    sub onPanelTranslation(ev as object)
+        p = ev.getRoSGNode()
+        tr = ev.getData()
+        rec("tr", p.id + " " + num(tr[0]) + "," + num(tr[1]))
+    end sub
+
+    sub onPanelField(ev as object)
+        rec("pf", ev.getRoSGNode().id + "." + ev.getField() + "=" + valStr(ev.getData()))
+    end sub
+
+    sub onPsField(ev as object)
+        rec("ps", ev.getField() + "=" + valStr(ev.getData()))
+    end sub
+
+    sub onSample()
+        m.samples = m.samples + 1
+        state = ""
+        for i = 0 to m.ps.getChildCount() - 1
+            c = m.ps.getChild(i)
+            if c.hasField("leftPosition")
+                r = c.boundingRect()
+                state = state + c.id + "@" + num(c.translation[0]) + "/br" + num(r.x) + "w" + num(r.width) + " "
+            else
+                state = state + c.subtype() + "@" + num(c.translation[0]) + "v" + valStr(c.visible) + "o" + num(c.opacity) + " "
+            end if
+        end for
+        if state <> m.lastState
+            m.lastState = state
+            rec("frame", "n=" + StrI(m.samples).trim() + " " + state)
+        end if
+    end sub
+
+    sub onStep()
+        m.step = m.step + 1
+        action = m.steps[m.step]
+        rec("step", StrI(m.step).trim() + " " + action + " psChildren " + childList(m.ps) + " " + fieldList(m.ps, ["slideDuration", "numPanels", "isGoingBack"]))
+        if action = "done"
+            rec("info", "samples=" + StrI(m.samples).trim())
+            print "PROBE|done"
+            m.top.probeExit = true
+            return
+        end if
+        parts = action.split(":")
+        if parts[0] = "key"
+            print "PROBE|await|" + parts[1]
+        else if parts[0] = "dur"
+            m.ps.slideDuration = parts[1].toFloat()
+            rec("act", "slideDuration=" + valStr(m.ps.slideDuration))
+            ' No key to wait for: advance immediately.
+            m.top.findNode("stepTimer").duration = 0.1
+        end if
+        if parts[0] = "key"
+            m.top.findNode("stepTimer").duration = 3
+        end if
+        m.top.findNode("stepTimer").control = "start"
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        rec("key", "scene " + key + " press=" + valStr(press))
+        if not press then return false
+        if key = "play"
+            f = CreateObject("roSGNode", "ProbePanel")
+            f.id = "F"
+            f.panelSize = "full"
+            f.isFullScreen = true
+            f.hasNextPanel = false
+            f.findNode("bg").width = f.width
+            f.findNode("name").text = "Panel F (full)"
+            rec("info", "made F " + fieldList(f, ["panelSize", "leftPosition", "width", "height", "translation"]))
+            f.observeField("focusedChild", "onPanelFocus")
+            f.observeField("translation", "onPanelTranslation")
+            f.observeField("isOffscreenLeft", "onPanelField")
+            m.ps.appendChild(f)
+            rec("act", "appended F numPanels=" + StrI(m.ps.numPanels).trim())
+            f.setFocus(true)
+            return true
+        else if key = "fastforward"
+            b2 = makePanel(1)
+            b2.id = "B2"
+            old = m.ps.getChild(1)
+            m.ps.replaceChild(b2, 1)
+            rec("act", "replaced " + old.id + " with B2 numPanels=" + StrI(m.ps.numPanels).trim())
+            return true
+        end if
+        return false
+    end function
+    ]]>
+    </script>
+</component>

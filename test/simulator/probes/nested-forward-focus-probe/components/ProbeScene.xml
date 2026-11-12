@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Like the gallery channel's ComponentModal opening a gallery: the body is created, appended, then
+  `body.setFocus(true)` and `body.callFunc("focusFirstCell")` (handFocusToBody). The host then sends
+  Right, Right (horizontal list), Down (to the vertical list), Down, Down, Up.
+-->
+<component name="ProbeScene" extends="Scene">
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.timer = CreateObject("roSGNode", "Timer")
+        m.timer.duration = 0.5
+        m.timer.observeField("fire", "openGallery")
+        m.timer.control = "start"
+    end sub
+
+    sub openGallery()
+        m.body = CreateObject("roSGNode", "ProbeGallery")
+        m.body.id = "body"
+        m.top.appendChild(m.body)
+        print "PROBE|open: body.setFocus"
+        m.body.setFocus(true)
+        print "PROBE|open: focusFirstCell"
+        m.body.callFunc("focusFirstCell")
+        dump("open")
+        print "PROBE|0|MANUAL|keys"
+    end sub
+
+    sub dump(label as string)
+        line = "PROBE|state " + label
+        for each id in ["h0", "h1", "h2", "v0", "v1", "v2"]
+            line = line + " " + id + "=" + m.top.findNode(id).hasFocus().toStr()
+        end for
+        print line
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        if press then dump("after-" + key)
+        return false
+    end function
+    ]]>
+    </script>
+</component>

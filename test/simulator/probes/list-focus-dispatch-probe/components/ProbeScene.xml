@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="wantTrigger" type="string" />
+        <field id="trigger" type="string" onChange="onTrigger" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeScene.brs" />
+    <children>
+        <MarkupList id="list" translation="[60,40]" itemComponentName="ProbeItem" itemSize="[400,50]"
+            itemSpacing="[0,6]" numRows="5" vertFocusAnimationStyle="floatingFocus" />
+        <Rectangle id="other" translation="[600,40]" width="200" height="50" color="0x336699FF" focusable="true" />
+    </children>
+</component>

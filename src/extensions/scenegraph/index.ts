@@ -59,9 +59,11 @@ export class BrightScriptExtension implements BrsExtension {
         // Reset per-thread deferred observer-dispatch state so nothing leaks across app runs.
         Field.resetDispatch();
         Node.resetFocusDispatch();
+        sgRoot.clearTransitions();
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;
+        sgRoot.configureUiTransitions(BrsDevice.deviceInfo.uiTransitions !== false);
         // Register SceneGraph components with BrsObjects so they can be created with CreateObject()
         BrsObjects.set("roSGScreen", () => new RoSGScreen(), 0);
         BrsObjects.set(
@@ -177,20 +179,23 @@ export class BrightScriptExtension implements BrsExtension {
         if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
             task?.processThreadUpdate();
-            Field.deliverPendingConstructionCallbacks();
         } else {
             // Deliver focus notifications deferred during a component's init() from the message loop
             // (once init has fully unwound), matching Roku dispatching them after init returns rather
             // than synchronously at the end of init. Render-thread only — focus is a render-thread
             // concern and Task threads never establish it. No-op unless there is pending work.
             Field.deliverPendingInitFocus();
-            // Sibling drain for construction-time state replays (e.g. AnimatedImage.setState) —
-            // see Field.runAfterConstruction/deliverPendingConstructionCallbacks.
-            Field.deliverPendingConstructionCallbacks();
         }
+        // Sibling drain for construction-time state replays (e.g. AnimatedImage.setState) —
+        // see Field.runAfterConstruction/deliverPendingConstructionCallbacks.
+        Field.deliverPendingConstructionCallbacks();
     }
 
     onMessageLoop(_: Interpreter) {
+        // Work deferred until the current handler returns (e.g. a list's content-reset itemFocused).
+        // A handler dispatched from the message loop returns HERE: while Main blocks in wait(), no
+        // statement runs outside an observer, so the tick drain above would never see depth 0.
+        Field.deliverPendingConstructionCallbacks();
         // Results of operations that are asynchronous on a device (see Field.runOnMessageLoop).
         Field.deliverMessageLoopCallbacks();
     }

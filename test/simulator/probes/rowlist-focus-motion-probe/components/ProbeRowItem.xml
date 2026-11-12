@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeRowItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+        <field id="index" type="integer" />
+        <field id="rowIndex" type="integer" />
+        <field id="aspectRatio" type="float" />
+        <field id="focusPercent" type="float" onChange="onFocusPercent" />
+        <field id="rowFocusPercent" type="float" onChange="onRowFocusPercent" />
+        <field id="rowHeightPercent" type="float" onChange="onRowHeightPercent" />
+        <field id="itemHasFocus" type="boolean" onChange="onHasFocus" />
+        <field id="rowHasFocus" type="boolean" onChange="onRowHasFocus" />
+        <field id="rowListHasFocus" type="boolean" />
+    </interface>
+    <children>
+        <Rectangle id="fill" width="160" height="100" color="0x3060C0FF">
+            <Label id="title" width="160" height="100" horizAlign="center" vertAlign="center" />
+        </Rectangle>
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.name = "?"
+    end sub
+
+    sub onContent()
+        m.name = m.top.itemContent.title
+        m.top.findNode("title").text = m.name
+    end sub
+
+    function fmt(v as float) as string
+        return Str(Int(v * 1000 + 0.5) / 1000).trim()
+    end function
+
+    sub logField(field as string, value as string)
+        m.top.getScene().callFunc("itemLog", m.name + "." + field + "=" + value)
+    end sub
+
+    sub onFocusPercent()
+        logField("focusPercent", fmt(m.top.focusPercent))
+    end sub
+
+    sub onRowFocusPercent()
+        ' Only the first column, so a row's ramp shows once rather than per item.
+        if m.name.instr("I0") > 0 then logField("rowFocusPercent", fmt(m.top.rowFocusPercent))
+    end sub
+
+    sub onRowHeightPercent()
+        if m.name.instr("I0") > 0 then logField("rowHeightPercent", fmt(m.top.rowHeightPercent))
+    end sub
+
+    sub onHasFocus()
+        v = "false"
+        if m.top.itemHasFocus then v = "true"
+        logField("itemHasFocus", v)
+    end sub
+
+    sub onRowHasFocus()
+        v = "false"
+        if m.top.rowHasFocus then v = "true"
+        if m.name.instr("I0") > 0 then logField("rowHasFocus", v)
+    end sub
+    ]]>
+    </script>
+</component>

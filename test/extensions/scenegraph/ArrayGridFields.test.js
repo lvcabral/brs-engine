@@ -46,13 +46,13 @@ describe("ArrayGrid scrollingStatus field", () => {
  * instant, so both edges land in the same frame — which makes their ORDER relative to the focus
  * fields the whole contract.
  *
- * On a device the scroll spans several frames: the field goes true, the focus fields pass through
- * in-transit values, and it goes false BEFORE the focus finally settles. Apps depend on that
- * interleave in both directions — the falling edge is where they tear transient scroll state down
- * (hiding a shared overlay/preview container that belongs to the outgoing item) and the *settle*
- * emission of the focus fields is what rebuilds it at the new position. So the falling edge must be
- * emitted BEFORE the settled focus fields; emitting it afterwards leaves such an app with its
- * overlay torn down and nothing left to restore it.
+ * DEVICE-MEASURED order (RowList, Roku OS 15.3, test/simulator/probes/list-refocus-settle-probe;
+ * LabelList/MarkupList, OS 16.0, test/simulator/probes/list-focus-motion-probe): scrollingStatus
+ * true, itemUnfocused (and vertFocusDirection), the in-transit currFocusRow values, then the settle —
+ * currFocusRow, itemFocused, scrollingStatus FALSE, and only then rowItemFocused. Apps depend on the
+ * last step: the falling edge is where they tear transient scroll state down (hiding a shared
+ * overlay/preview container that belongs to the outgoing item) and the rowItemFocused settle is what
+ * rebuilds it at the new position, so rowItemFocused must follow the falling edge.
  *
  * By the same reasoning the pulse must NOT be emitted when nothing scrolls — a boundary press on a
  * non-wrapping list, or any key while the list is outside the focus chain. Those paths publish no
@@ -97,11 +97,13 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         list.setValue("content", buildContent(rows));
         if (focused) {
             list.setNodeFocus(true);
+            // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+            list.flushContentFocus();
         }
         return list;
     }
 
-    test("vertical navigation closes the pulse BEFORE the settled focus fields", () => {
+    test("vertical navigation follows the device order around the settle", () => {
         const list = makeList("RowList", [["A", "B"], ["C", "D"], ["E"]]);
         const log = observe(list, [
             "scrollingStatus",
@@ -109,18 +111,24 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
             "itemFocused",
             "currFocusRow",
             "rowItemFocused",
+            "vertFocusDirection",
         ]);
 
         expect(list.handleKey("down", true)).toBe(true);
 
-        // Both edges come first, then EVERY settled focus field — itemUnfocused included, so the
-        // ordering matches ArrayGrid.setFocusedItem. An app that tears its transient scroll state
-        // down on the falling edge still gets the focus notifications afterwards to rebuild from.
-        expect(log[0]).toBe("scrollingStatus=true");
-        expect(log[1]).toBe("scrollingStatus=false");
-        expect(log.indexOf("itemUnfocused=0")).toBeGreaterThan(1);
-        expect(log.indexOf("currFocusRow=1")).toBeGreaterThan(1);
-        expect(log.lastIndexOf("rowItemFocused=[...]")).toBeGreaterThan(log.indexOf("currFocusRow=1"));
+        // Device trace (list-refocus-settle-probe, R2): scrollingStatus=T, itemUnfocused=0, currFocusRow
+        // ... 1, itemFocused=1, scrollingStatus=F, rowItemFocused=[1,0]. vertFocusDirection follows
+        // itemUnfocused and resets after the settle (list-focus-motion-probe).
+        expect(log).toEqual([
+            "scrollingStatus=true",
+            "itemUnfocused=0",
+            "vertFocusDirection=down",
+            "currFocusRow=1",
+            "itemFocused=1",
+            "scrollingStatus=false",
+            "rowItemFocused=[...]",
+            "vertFocusDirection=none",
+        ]);
         // Exactly one pulse per key press (no duplicate same-value notifications).
         expect(log.filter((e) => e === "scrollingStatus=true").length).toBe(1);
         expect(log.filter((e) => e === "scrollingStatus=false").length).toBe(1);
@@ -128,15 +136,14 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         expect(list.getValueJS("scrollingStatus")).toBe(false);
     });
 
-    test("horizontal navigation also closes the pulse before the settle", () => {
+    test("horizontal navigation settles rowItemFocused before the pulse closes (device order)", () => {
+        // rowlist-focus-motion-probe: a move along a RowList row publishes rowItemFocused, then
+        // scrollingStatus=false (the reverse of a row change, where the edge precedes rowItemFocused).
         const list = makeList("RowList", [["A", "B", "C"]]);
         const log = observe(list, ["scrollingStatus", "rowItemFocused"]);
 
         expect(list.handleKey("right", true)).toBe(true);
-        expect(log[0]).toBe("scrollingStatus=true");
-        expect(log[1]).toBe("scrollingStatus=false");
-        expect(log).toContain("rowItemFocused=[...]");
-        expect(log.lastIndexOf("rowItemFocused=[...]")).toBeGreaterThan(1);
+        expect(log).toEqual(["scrollingStatus=true", "rowItemFocused=[...]", "scrollingStatus=false"]);
         expect(list.getValueJS("scrollingStatus")).toBe(false);
     });
 
@@ -189,11 +196,11 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         expect(log).toEqual([]);
     });
 
-    test("ZoomRowList pulses once per edge, ahead of its settle, on both axes", () => {
+    test("ZoomRowList pulses once per edge around its settle, on both axes", () => {
         // ZoomRowList used to emit the field manually and redeclare it with alwaysNotify, which
         // produced a spurious same-value notification; both are gone and the base pulse covers it.
         // Its vertical and horizontal handlers emit the settle by different routes (setFocusedItem
-        // vs. a direct rowItemFocused write), so both have to close the pulse first.
+        // vs. a direct rowItemFocused write); both close the pulse before rowFocused/rowItemFocused.
         const list = makeList("ZoomRowList", [
             ["A", "B"],
             ["C", "D"],
@@ -202,9 +209,14 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         const log = observe(list, ["scrollingStatus", "rowUnfocused", "rowFocused", "rowItemFocused"]);
 
         expect(list.handleKey("down", true)).toBe(true);
-        expect(log[0]).toBe("scrollingStatus=true");
-        expect(log[1]).toBe("scrollingStatus=false");
-        expect(log.lastIndexOf("rowItemFocused=[...]")).toBeGreaterThan(1);
+        // rowlist-focus-motion-probe: a ZoomRowList drops scrollingStatus AHEAD of rowFocused.
+        expect(log).toEqual([
+            "scrollingStatus=true",
+            "rowUnfocused=0",
+            "scrollingStatus=false",
+            "rowFocused=1",
+            "rowItemFocused=[...]",
+        ]);
         // handleUpDown must not pre-assign focusIndex: setFocusedItem reads it as the OUTGOING row,
         // so doing so made rowUnfocused dead and an app collapsing that row never heard about it.
         expect(log).toContain("rowUnfocused=0");
@@ -223,12 +235,13 @@ describe("ArrayGrid scrollingStatus pulses on key navigation", () => {
         grid.setValue("numColumns", new Int32(4));
         grid.setValue("content", buildContent([["A", "B", "C", "D"]]).getNodeChildren()[0]);
         grid.setNodeFocus(true);
+        // The handler's return publishes the new content's reset to item 0 (list-focus-dispatch-probe).
+        grid.flushContentFocus();
         const log = observe(grid, ["scrollingStatus", "itemFocused"]);
 
         grid.handleKey("right", true);
-        expect(log[0]).toBe("scrollingStatus=true");
-        expect(log[1]).toBe("scrollingStatus=false");
-        expect(log.lastIndexOf("itemFocused=1")).toBeGreaterThan(1);
+        // The falling edge follows itemFocused (no rowItemFocused on a grid).
+        expect(log).toEqual(["scrollingStatus=true", "itemFocused=1", "scrollingStatus=false"]);
     });
 });
 

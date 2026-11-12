@@ -21,9 +21,9 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { Font } from "./Font";
 import { Group } from "./Group";
 import { Node } from "./Node";
-import { ArrayGrid, FocusStyle } from "./ArrayGrid";
+import { ArrayGrid, FocusMotion, FocusStyle, GridHoldDelayMs, GridStepMs, MotionAxis } from "./ArrayGrid";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
-import { resolveRowItemSubpart } from "../SGUtil";
+import { positiveMod, resolveRowItemSubpart } from "../SGUtil";
 import { SGNodeType } from ".";
 
 interface RowMetrics {
@@ -37,6 +37,11 @@ interface RowMetrics {
 }
 
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
+
+/** DEVICE-MEASURED: `animateToRow` moves ~265 ms per row (key steps take ~330 ms). */
+const ZoomAnimateRowMs = 265;
+/** Row-level percents a ZoomRowList's item components carry; the device drives both alike. */
+const ZoomRowFields = ["rowFocusPercent", "rowHeightPercent"];
 
 export class ZoomRowList extends ArrayGrid {
     readonly defaultFields: FieldModel[] = [
@@ -88,6 +93,13 @@ export class ZoomRowList extends ArrayGrid {
     protected readonly marginY: number;
     protected readonly gap: number;
     protected readonly rowItemComps: Group[][] = [[]];
+    /** The row whose items report `rowHasFocus`: it changes only when a motion settles (DEVICE-MEASURED). */
+    private flaggedRow = 0;
+    /** The in-transit indicator for this paint, recorded while the focused row is drawn. */
+    private motionIndicator?: Rect;
+    private indicatorRowTop = 0;
+    /** This paint draws the in-transit indicator under the focused row's items, at the list top `y`. */
+    private indicatorUnder?: { listTop: number; opacity: number; draw2D?: IfDraw2D };
     protected readonly rowFocus: number[] = [];
     private readonly defaultAspectRatio = 16 / 9;
     private readonly defaultRowHeight: number;
@@ -154,11 +166,21 @@ export class ZoomRowList extends ArrayGrid {
         } else if (["jumptorow", "animatetorow"].includes(fieldName) && isNumberComp(value)) {
             const next = jsValueOf(value) as number;
             if (Number.isFinite(next) && next >= 0) {
-                this.setFocusedRow(Math.floor(next));
+                const animate = fieldName === "animatetorow";
+                if (!animate) {
+                    this.settleMotion();
+                }
+                this.animateRequested = animate;
+                try {
+                    this.setFocusedRow(Math.floor(next));
+                } finally {
+                    this.animateRequested = false;
+                }
             }
         } else if (fieldName === "jumptorowitem" && value instanceof RoArray) {
             const coords = jsValueOf(value) as any[];
             if (typeof coords[0] === "number" && typeof coords[1] === "number") {
+                this.settleMotion();
                 this.setFocusedItem(coords[0], coords[1]);
             }
         } else if (fieldName === "rowfocusanimationstyle" && isBrsString(value)) {
@@ -199,9 +221,15 @@ export class ZoomRowList extends ArrayGrid {
         } else {
             colIndex = 0;
         }
-        // Emit the scroll pulse BEFORE the settled focus fields go out — the falling edge precedes
-        // the settle on a device, and apps rely on that order (see ArrayGrid.armScrollPulse).
-        this.emitScrollPulse();
+        const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
+        if (inFocusChain && rowIndex !== this.focusIndex && this.zoomMotionWanted()) {
+            this.animateZoomRow(rowIndex, colIndex);
+            return;
+        }
+        // DEVICE-MEASURED order (rowlist-focus-motion-probe): scrollingStatus true, rowUnfocused,
+        // currFocusRow, scrollingStatus false, rowFocused, rowItemFocused — the falling edge goes AHEAD
+        // of rowFocused on a ZoomRowList (unlike RowList, where itemFocused precedes it).
+        this.openScrollPulse();
         const previousRow = this.focusIndex;
         if (previousRow !== rowIndex) {
             super.setValue("rowUnfocused", new Int32(previousRow));
@@ -209,9 +237,13 @@ export class ZoomRowList extends ArrayGrid {
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
         this.currRow = rowIndex;
+        this.flaggedRow = rowIndex;
+        this.motionPos = rowIndex;
+        this.motionCol = colIndex;
+        super.setValue("currFocusRow", new Float(rowIndex));
+        this.closeScrollPulse();
         super.setValue("rowFocused", new Int32(rowIndex));
         super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
-        super.setValue("currFocusRow", new Float(rowIndex));
     }
 
     /**
@@ -221,6 +253,161 @@ export class ZoomRowList extends ArrayGrid {
      */
     private isWrapEnabled(): boolean {
         return jsValueOf(this.getValue("wrap")) === true;
+    }
+
+    // ---- Focus motion (DEVICE-MEASURED, rowlist-focus-motion-probe) ----
+
+    protected focusMotionEnabled(): boolean {
+        return true;
+    }
+
+    /** ~330 ms per step; `animateToRow` runs faster, ~265 ms per row. */
+    protected motionStepMs(_axis: MotionAxis): number {
+        return this.animateRequested ? ZoomAnimateRowMs : GridStepMs;
+    }
+
+    protected motionHoldDelayMs(): number {
+        return GridHoldDelayMs;
+    }
+
+    protected motionRows(): number {
+        return Math.max(1, this.content.length);
+    }
+
+    /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
+    protected listFocusModel(): boolean {
+        return false;
+    }
+
+    /** Focus regained mid-motion: unmeasured on a row list, so the settle alone publishes the landing. */
+    protected publishMotionRegain(_motion: FocusMotion) {
+        // The motion runs on; publishMotionSettle publishes the focus fields.
+    }
+
+    /** A device ZoomRowList has no vertFocusDirection/horizFocusDirection fields to report. */
+    protected directionFieldFor(_axis: MotionAxis): string {
+        return "";
+    }
+
+    private zoomMotionWanted(): boolean {
+        return sgRoot.uiTransitionsEnabled && (this.navDirection !== 0 || this.animateRequested);
+    }
+
+    private animateZoomRow(rowIndex: number, colIndex: number) {
+        const rows = this.motionRows();
+        const motion = this.motion;
+        const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
+        const delta = this.motionDelta(rowIndex, baseRow, rows, this.isWrapEnabled(), this.rowKeyBackward());
+        if (delta === 0) {
+            return;
+        }
+        if (!motion) {
+            this.motionCol = colIndex;
+        }
+        const target = { row: baseRow + delta, col: motion ? motion.queued?.col ?? motion.col.to : colIndex };
+        this.startFocusMotion(rowIndex, { row: baseRow, col: colIndex }, target, () => {
+            this.focusIndex = rowIndex;
+            this.rowFocus[rowIndex] = colIndex;
+            this.currRow = rowIndex;
+        });
+    }
+
+    private animateZoomCol(rowIndex: number, colIndex: number, numCols: number, wraps: boolean) {
+        const motion = this.motion;
+        const baseCol = motion ? motion.queued?.col ?? motion.col.to : this.motionCol;
+        const baseRow = motion ? motion.queued?.row ?? motion.row.to : this.focusIndex;
+        const delta = this.motionDelta(colIndex, baseCol, numCols, wraps, this.navDirection < 0);
+        if (delta === 0) {
+            return;
+        }
+        const target = { row: baseRow, col: Math.round(baseCol) + delta };
+        this.startFocusMotion(rowIndex, { row: baseRow, col: baseCol }, target, () => {
+            // handleLeftRight already moved rowFocus.
+        });
+    }
+
+    protected canStepPast(target: { row: number; col: number }): boolean {
+        const colsWrap = (row: number) =>
+            this.canWrapItems(this.rowColumnCount(row), this.getRowMetrics(row), this.nodeWidth);
+        return this.rowListCanStepPast(target, colsWrap, this.isWrapEnabled());
+    }
+
+    /**
+     * Opening (DEVICE-MEASURED): `scrollingStatus` true; a row change then drops the old row's
+     * `rowHasFocus`; the old item's `itemHasFocus` goes false; a row change publishes `rowUnfocused`.
+     */
+    protected openMotion(target: { row: number; col: number }) {
+        const oldRow = this.focusIndex;
+        const oldCol = this.rowFocus[oldRow] ?? 0;
+        const rowChange = target.row !== this.motionPos;
+        super.setValue("scrollingStatus", BrsBoolean.True);
+        this.beginRowMotionTracking(oldRow, oldCol);
+        if (rowChange) {
+            for (const comp of this.rowItemComps[oldRow] ?? []) {
+                comp?.setValue("rowHasFocus", BrsBoolean.False, false);
+            }
+            this.flaggedRow = -1;
+        }
+        this.rowItemComps[oldRow]?.[oldCol]?.setValue("itemHasFocus", BrsBoolean.False, false);
+        if (rowChange) {
+            super.setValue("rowUnfocused", new Int32(oldRow));
+        }
+    }
+
+    protected emitMotionFrame() {
+        const motion = this.motion;
+        if (!motion) {
+            return;
+        }
+        if (motion.rowMoved) {
+            const rows = this.motionRows();
+            super.setValue("currFocusRow", new Float(positiveMod(this.motionPos, rows)));
+        }
+        this.emitRowMotionFrame(this.rowItemComps, this.rowFocus, (row) => this.rowColumnCount(row), ZoomRowFields);
+    }
+
+    /**
+     * Settle (DEVICE-MEASURED). A row change: `currFocusRow`, `scrollingStatus` false, the new row's
+     * `rowHasFocus` and item's `itemHasFocus`, `rowFocused`, `rowItemFocused`. A move along the row:
+     * `scrollingStatus` false, `rowItemFocused`, `itemHasFocus`.
+     */
+    protected publishMotionSettle(motion: FocusMotion) {
+        const rowIndex = this.focusIndex;
+        const colIndex = this.rowFocus[rowIndex] ?? 0;
+        this.motionPos = rowIndex;
+        this.motionCol = colIndex;
+        const nodeFocus = sgRoot.focused === this;
+        this.settleRowMotionPercents(this.rowItemComps, rowIndex, colIndex, ZoomRowFields);
+        const focusedComp = this.rowItemComps[rowIndex]?.[colIndex];
+        const rowItem = new RoArray([new Int32(rowIndex), new Int32(colIndex)]);
+        super.setValue("currFocusRow", new Float(rowIndex));
+        super.setValue("scrollingStatus", BrsBoolean.False);
+        if (motion.rowMoved) {
+            this.flaggedRow = rowIndex;
+            for (const comp of this.rowItemComps[rowIndex] ?? []) {
+                comp?.setValue("rowHasFocus", BrsBoolean.True, false);
+            }
+            focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
+            super.setValue("rowFocused", new Int32(rowIndex));
+            super.setValue("rowItemFocused", rowItem);
+        } else {
+            super.setValue("rowItemFocused", rowItem);
+            focusedComp?.setValue("itemHasFocus", BrsBoolean.from(nodeFocus), false);
+        }
+    }
+
+    /** The recorded indicator at its in-transit slot: a row change keeps it at the list top. */
+    private motionIndicatorAt(indicator: Rect, listTop: number): Rect {
+        const y = this.motion?.rowMoved ? listTop + (indicator.y - this.indicatorRowTop) : indicator.y;
+        return { ...indicator, y };
+    }
+
+    /**
+     * The indicator `renderRows` recorded. Read through a call because `renderContent` cleared the field
+     * before drawing the rows, and TypeScript would otherwise keep it narrowed to `undefined`.
+     */
+    private recordedMotionIndicator() {
+        return this.motionIndicator;
     }
 
     protected handleUpDown(key: string) {
@@ -282,8 +469,13 @@ export class ZoomRowList extends ArrayGrid {
         }
         if (nextCol !== this.rowFocus[currentRow]) {
             this.rowFocus[currentRow] = nextCol;
-            // This path emits the settle directly (it does not go through setFocusedItem), so the
-            // pulse is emitted here — see ArrayGrid.armScrollPulse for why the order matters.
+            const inFocusChain = sgRoot.focused === this || this.isChildrenFocused();
+            if (inFocusChain && this.zoomMotionWanted()) {
+                this.animateZoomCol(currentRow, nextCol, numCols, canWrapItems);
+                return true;
+            }
+            this.motionCol = nextCol;
+            // DEVICE-MEASURED: a move along the row drops scrollingStatus before rowItemFocused.
             this.emitScrollPulse();
             super.setValue("rowItemFocused", new RoArray([new Int32(currentRow), new Int32(nextCol)]));
             return true;
@@ -328,14 +520,74 @@ export class ZoomRowList extends ArrayGrid {
 
         this.currRow = startRow;
         let currentY = rect.y;
+        // In transit, the rows are laid out from the motion's row (a row change scrolls them by the moving
+        // fraction, clipped at the list top) and the indicator is drawn once over the cells.
+        const motion = this.motion;
+        let firstRow = startRow;
+        this.motionIndicator = undefined;
+        const focusOnTop = this.focusFeedbackOnTop();
+        this.indicatorUnder =
+            motion && !focusOnTop && this.getValueJS("drawFocusFeedback")
+                ? { listTop: rect.y, opacity, draw2D }
+                : undefined;
+        if (motion) {
+            // From the motion's row, not focusIndex: a row change queued behind a slide along a row has
+            // already moved the focus cursor, but the rows stay put until it starts moving them.
+            const base = Math.floor(this.motionPos);
+            const fraction = this.motionPos - base;
+            firstRow = canWrap ? this.normalizeRowIndex(base) : this.clampRowIndex(base);
+            const firstMetrics = this.getRowMetrics(firstRow);
+            currentY = rect.y - fraction * (firstMetrics.rowHeight + firstMetrics.spacingY);
+        }
+        // Only a row change clips (the rows scrolling off the top); a move along a row draws like the
+        // settled list (DEVICE-MEASURED on RowList, rowlist-clip-probe).
+        const scrolling = motion?.rowMoved === true;
+        if (scrolling) {
+            this.pushMotionClip(rect, 100000, draw2D);
+        }
+        let rendered: { firstRenderedRow: number; lastRenderedRow: number; rowItemsRendered: Int32[] };
+        try {
+            rendered = this.renderRows(interpreter, rect, { firstRow, currentY, canWrap }, rotation, opacity, draw2D);
+        } finally {
+            if (scrolling) {
+                draw2D?.popClip();
+            }
+        }
+        const { firstRenderedRow, lastRenderedRow, rowItemsRendered } = rendered;
+        const indicator = this.recordedMotionIndicator();
+        this.indicatorUnder = undefined;
+        if (motion && indicator && focusOnTop && this.getValueJS("drawFocusFeedback")) {
+            this.renderFocus(this.motionIndicatorAt(indicator, rect.y), opacity, sgRoot.focused === this, draw2D);
+        }
+
+        if (firstRenderedRow !== -1) {
+            const rowsRendered = new RoArray([new Int32(firstRenderedRow), new Int32(lastRenderedRow)]);
+            this.setValueSilent("rowsRendered", rowsRendered);
+        }
+        if (rowItemsRendered.length) {
+            this.setValueSilent("rowItemsRendered", new RoArray(rowItemsRendered));
+        }
+    }
+
+    /** Draws the rows from `firstRow` down, starting at `currentY`, until they pass the screen bottom. */
+    private renderRows(
+        interpreter: Interpreter,
+        rect: Rect,
+        start: { firstRow: number; currentY: number; canWrap: boolean },
+        rotation: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const totalRows = this.content.length;
+        const { firstRow, canWrap } = start;
+        let currentY = start.currentY;
         let firstRenderedRow = -1;
         let lastRenderedRow = -1;
         const rowItemsRendered: Int32[] = [];
-
         // Culling bound for the loop below; the scene map does not change inside it.
         const screen = this.visibleSceneRect();
         for (let displayIndex = 0; displayIndex < totalRows; displayIndex++) {
-            let rowIndex = canWrap ? this.normalizeRowIndex(startRow + displayIndex) : startRow + displayIndex;
+            let rowIndex = canWrap ? this.normalizeRowIndex(firstRow + displayIndex) : firstRow + displayIndex;
 
             if (!canWrap && rowIndex >= totalRows) {
                 break;
@@ -380,14 +632,7 @@ export class ZoomRowList extends ArrayGrid {
                 break;
             }
         }
-
-        if (firstRenderedRow !== -1) {
-            const rowsRendered = new RoArray([new Int32(firstRenderedRow), new Int32(lastRenderedRow)]);
-            this.setValueSilent("rowsRendered", rowsRendered);
-        }
-        if (rowItemsRendered.length) {
-            this.setValueSilent("rowItemsRendered", new RoArray(rowItemsRendered));
-        }
+        return { firstRenderedRow, lastRenderedRow, rowItemsRendered };
     }
 
     private validateRenderPrerequisites(): boolean {
@@ -470,37 +715,55 @@ export class ZoomRowList extends ArrayGrid {
 
         const canWrapItems = this.canWrapItems(rowContent.length, metrics, this.nodeWidth);
         let startCol = canWrapItems ? this.rowFocus[rowIndex] ?? 0 : 0;
+        if (this.motion && rowIndex === this.stepRow()) {
+            const wrapCount = canWrapItems ? rowContent.length : 0;
+            startCol = this.placeMotionRow(rect, itemRect, metrics, rowIndex, wrapCount, startCol);
+        }
         const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
 
         let firstCol = -1;
         let lastCol = -1;
 
-        for (let c = 0; c < (canWrapItems ? rowContent.length : endCol - startCol); c++) {
-            let colIndex = startCol + c;
-            if (canWrapItems && colIndex >= rowContent.length) {
-                colIndex = colIndex % rowContent.length;
+        // A row sliding under the fixed focus cuts the item leaving it at the row's left edge
+        // (DEVICE-MEASURED, see rowlist-clip-probe). The focus ring is drawn outside this clip.
+        const clipLeft = itemRect.x < rect.x;
+        if (clipLeft) {
+            const screen = this.visibleSceneRect();
+            const right = Math.max(screen.x + screen.width, rect.x + this.nodeWidth);
+            draw2D?.pushClip({ x: rect.x, y: screen.y, width: right - rect.x, height: screen.height });
+        }
+        try {
+            for (let c = 0; c < (canWrapItems ? rowContent.length : endCol - startCol); c++) {
+                let colIndex = startCol + c;
+                if (canWrapItems && colIndex >= rowContent.length) {
+                    colIndex = colIndex % rowContent.length;
+                }
+                if (colIndex >= rowContent.length) {
+                    break;
+                }
+
+                this.renderRowItemComponent(
+                    interpreter,
+                    [rowIndex, colIndex],
+                    rowContent,
+                    itemRect,
+                    rotation,
+                    opacity,
+                    draw2D
+                );
+
+                firstCol = firstCol === -1 ? colIndex : firstCol;
+                lastCol = colIndex;
+
+                itemRect.x += itemRect.width + metrics.spacingX;
+                if (itemRect.x > rect.x + this.nodeWidth) {
+                    break;
+                }
             }
-            if (colIndex >= rowContent.length) {
-                break;
-            }
-
-            this.renderRowItemComponent(
-                interpreter,
-                [rowIndex, colIndex],
-                rowContent,
-                itemRect,
-                rotation,
-                opacity,
-                draw2D
-            );
-
-            firstCol = firstCol === -1 ? colIndex : firstCol;
-            lastCol = colIndex;
-
-            itemRect.x += itemRect.width + metrics.spacingX;
-            if (itemRect.x > rect.x + this.nodeWidth) {
-                break;
+        } finally {
+            if (clipLeft) {
+                draw2D?.popClip();
             }
         }
 
@@ -508,6 +771,44 @@ export class ZoomRowList extends ArrayGrid {
             return [rowIndex, firstCol, lastCol] as [number, number, number];
         }
         return undefined;
+    }
+
+    /**
+     * Lays out the row the motion is on: while it slides, a wrapping row (`wrapCount` items, 0 when it
+     * doesn't wrap) moves under the fixed focus, otherwise the indicator glides. Records the in-transit
+     * indicator, draws it now when it goes under the cells, and returns the first column to draw.
+     */
+    private placeMotionRow(
+        rect: Rect,
+        itemRect: Rect,
+        metrics: RowMetrics,
+        rowIndex: number,
+        wrapCount: number,
+        startCol: number
+    ) {
+        const pitchX = metrics.itemWidth + metrics.spacingX;
+        const focusCol = this.motionIndicatorCol(rowIndex, this.rowFocus[rowIndex] ?? 0, wrapCount > 0);
+        let visualStart = startCol;
+        if (wrapCount > 0 && rowIndex === this.slidingRow()) {
+            visualStart = this.motionCol;
+            const whole = Math.floor(visualStart);
+            itemRect.x -= (visualStart - whole) * pitchX;
+            startCol = positiveMod(whole, wrapCount);
+        }
+        this.indicatorRowTop = rect.y;
+        this.motionIndicator = {
+            x: rect.x + (focusCol - visualStart) * pitchX,
+            y: itemRect.y,
+            width: metrics.itemWidth,
+            height: metrics.itemHeight,
+        };
+        const under = this.indicatorUnder;
+        if (under) {
+            // Under the cells: drawn now, before this row's items (see focusFeedbackOnTop).
+            const focusRect = this.motionIndicatorAt(this.motionIndicator, under.listTop);
+            this.renderFocus(focusRect, under.opacity, sgRoot.focused === this, under.draw2D);
+        }
+        return startCol;
     }
 
     private getRowContent(rowIndex: number) {
@@ -593,7 +894,8 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     private getRowMetrics(rowIndex: number): RowMetrics {
-        const focusPercent = this.focusIndex === rowIndex ? 1 : 0;
+        // The zoom follows the motion: the row being left shrinks as the next one grows.
+        const focusPercent = this.motionRowWeight(rowIndex);
         const baseRowHeight = this.resolveNumber(this.getValueJS("rowHeight"), rowIndex, this.defaultRowHeight);
         const zoomRowHeight = this.resolveNumber(this.getValueJS("rowZoomHeight"), rowIndex, this.defaultRowZoomHeight);
         const rowHeight = this.lerp(baseRowHeight, zoomRowHeight, focusPercent);
@@ -676,16 +978,25 @@ export class ZoomRowList extends ArrayGrid {
         if (itemComp) {
             itemComp.setValue("width", brsValueOf(itemRect.width), false);
             itemComp.setValue("height", brsValueOf(itemRect.height), false);
-            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.focusIndex === rowIndex), false);
+            // rowHasFocus moves only when a motion settles; while moving no item has focus and the percents
+            // follow the motion (DEVICE-MEASURED).
+            itemComp.setValue("rowHasFocus", BrsBoolean.from(this.flaggedRow === rowIndex), false);
             itemComp.setValue(this.focusField, BrsBoolean.from(nodeFocus), false);
             // Only the focused item of a focused list reports itemHasFocus=true (see RowList).
-            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused && nodeFocus), false);
-            itemComp.setValue("focusPercent", new Float(focused ? 1 : 0), false);
-            itemComp.setValue("rowFocusPercent", new Float(this.focusIndex === rowIndex ? 1 : 0), false);
+            itemComp.setValue("itemHasFocus", BrsBoolean.from(focused && nodeFocus && !this.motion), false);
+            const rowPercent = this.publishedPercent(this.motionRowWeight(rowIndex));
+            let percent = focused ? 1 : 0;
+            if (this.motion) {
+                percent = this.motionCellPercentIn(rowIndex, colIndex, this.rowFocus[rowIndex] ?? 0, cols.length);
+            }
+            itemComp.setValue("focusPercent", new Float(percent), false);
+            itemComp.setValue("rowFocusPercent", new Float(rowPercent), false);
+            itemComp.setValue("rowHeightPercent", new Float(rowPercent), false);
         }
 
-        const drawFocus = this.getValueJS("drawFocusFeedback");
-        const drawFocusOnTop = this.getValueJS("drawFocusFeedbackOnTop");
+        // While the focus moves, the indicator is drawn once at its in-transit rect instead (renderContent).
+        const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
+        const drawFocusOnTop = this.focusFeedbackOnTop();
         if (focused && drawFocus && !drawFocusOnTop) {
             this.renderFocus(itemRect, opacity, nodeFocus, draw2D);
         }
@@ -735,7 +1046,7 @@ export class ZoomRowList extends ArrayGrid {
         const show = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         const row = this.content[rowIndex];
         const items = row.getNodeChildren().length;
-        if (!show || items === 0 || rowIndex !== this.focusIndex) {
+        if (!show || items === 0 || rowIndex !== this.stepRow()) {
             return 0;
         }
         const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;

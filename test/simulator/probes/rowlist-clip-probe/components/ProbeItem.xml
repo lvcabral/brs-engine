@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A 160x100 poster stand-in, a caption below it (outside rowItemSize) and an orange marker that
+     crosses the bottom of the row (row height 150). -->
+<component name="ProbeItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+    </interface>
+    <children>
+        <Rectangle id="fill" width="160" height="100" color="0x3060C0FF" />
+        <Label id="caption" translation="[0,104]" width="160" height="30" horizAlign="center" color="0xFFFFFFFF" />
+        <Rectangle id="marker" translation="[60,140]" width="40" height="30" color="0xFF8000FF" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub onContent()
+        m.top.findNode("caption").text = m.top.itemContent.title
+    end sub
+    ]]>
+    </script>
+</component>

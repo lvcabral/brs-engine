@@ -1,0 +1,10 @@
+PROBE|S1 C.setFocus fwd a|s1C=F/s1a s1a=T/self s1b=F/- s1other=F/- sceneFC=s1C
+PROBE|S1 b.setFocus|s1C=F/s1b s1a=F/- s1b=T/self s1other=F/- sceneFC=s1C
+PROBE|S2 C.setFocus fwd a|s2C=F/s2a s2a=T/self s2b=F/- s2other=F/- sceneFC=s2C
+PROBE|S2 other.setFocus|s2C=F/- s2a=F/- s2b=F/- s2other=T/self sceneFC=s2other
+PROBE|S3 a.setFocus|s3C=F/s3a s3a=T/self s3b=F/- s3other=F/- sceneFC=s3C
+PROBE|S3 b.setFocus|s3C=F/s3b s3a=F/- s3b=T/self s3other=F/- sceneFC=s3C
+PROBE|S4 C.setFocus fwd a|s4C=F/s4a s4a=T/self s4b=F/- s4other=F/- sceneFC=s4C
+PROBE|S4 C.setFocus again|s4C=F/s4a s4a=T/self s4b=F/- s4other=F/- sceneFC=s4C
+PROBE|S4 b.setFocus|s4C=F/s4b s4a=F/- s4b=T/self s4other=F/- sceneFC=s4C
+PROBE|done

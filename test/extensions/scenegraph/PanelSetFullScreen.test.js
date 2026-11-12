@@ -4,7 +4,11 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
-const { BrsBoolean, BrsDevice, Float, Interpreter } = core;
+const { BrsBoolean, BrsDevice, Float, Interpreter, RoMessagePort } = core;
+
+/** Minimal fake interpreter accepted by Field.addObserver for a port observer. */
+const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+const focusedChildFieldArg = { getValue: () => "focusedChild", toString: () => "focusedChild" };
 
 /**
  * Regression: a Panel with isFullScreen=true assigned as a menu panel's nextPanel (the
@@ -53,10 +57,10 @@ describe("PanelSet full-screen panel as a nextPanel preview", () => {
 
         panelSet.renderNode(interpreter, [0, 0], 0, 1);
 
-        // 0 (menu leftPosition) + 437 (menu width) + 30 (HD gap) — NOT the panel's own
-        // leftPosition (narrow default 105), and the menu stays where it was.
+        // 0 (menu leftPosition) + 437 (menu width) + 40 (HD gap) — NOT the panel's own
+        // leftPosition (narrow default 104), and the menu stays where it was.
         expect(menuPanel.getValueJS("translation")[0]).toBe(0);
-        expect(fullPanel.getValueJS("translation")[0]).toBe(467);
+        expect(fullPanel.getValueJS("translation")[0]).toBe(477);
     });
 
     test("appending the preview keeps focus on the menu panel", () => {
@@ -73,7 +77,7 @@ describe("PanelSet full-screen panel as a nextPanel preview", () => {
 
         expect(sgRoot.focused).toBe(fullPanel);
         // Focused full-screen panel keeps the existing behavior: its own leftPosition.
-        expect(fullPanel.getValueJS("translation")[0]).toBe(105);
+        expect(fullPanel.getValueJS("translation")[0]).toBe(104);
     });
 
     test("appending a next panel keeps focus inside the already-focused panel", () => {
@@ -143,6 +147,51 @@ describe("PanelSet full-screen panel as a nextPanel preview", () => {
         expect(fullPanel.getNodeParent()).toBe(panelSet);
     });
 
+    test("navigation follows focus that an app redirects while going back", () => {
+        // SceneGraphTutorial pattern: [menu, info] and a full-screen examples panel appended when the
+        // info panel gains focus. Going back from the full-screen panel lands on the info panel, whose
+        // focusedChild observer sees isGoingBack and focuses the menu panel instead. The PanelSet must
+        // track where focus ended up: the Overhang title comes from the menu panel, and a right press
+        // moves forward again (it used to stay pinned to the info panel and bump).
+        const panelSet = SGNodeFactory.createNode("PanelSet");
+        const menuPanel = SGNodeFactory.createNode("ListPanel");
+        const infoPanel = SGNodeFactory.createNode("Panel");
+        panelSet.appendChildToParent(menuPanel);
+        panelSet.appendChildToParent(infoPanel);
+        menuPanel.setNodeFocus(true);
+        const reported = [];
+        panelSet.focusedPanelCallback = (panel) => reported.push(panel);
+        const examplesPanel = SGNodeFactory.createNode("Panel");
+        examplesPanel.setValue("isFullScreen", BrsBoolean.True);
+        // The app's focusedChild observer on the info panel: on a gain it appends the examples panel, or,
+        // while going back, sends the focus to the menu panel.
+        const port = new RoMessagePort();
+        port.pushMessage = () => {
+            if (infoPanel.getValue("focusedchild") !== infoPanel) {
+                return;
+            }
+            if (panelSet.getValueJS("isGoingBack")) {
+                menuPanel.setNodeFocus(true);
+            } else if (examplesPanel.getNodeParent() !== panelSet) {
+                panelSet.appendChildToParent(examplesPanel);
+            }
+        };
+        infoPanel.fields
+            .get("focusedchild")
+            .addObserver("permanent", fakeInterpreter, port, infoPanel, focusedChildFieldArg);
+
+        panelSet.handleKey("right", true);
+        expect(sgRoot.focused).toBe(examplesPanel);
+
+        panelSet.handleKey("left", true);
+        expect(sgRoot.focused).toBe(menuPanel);
+        expect(reported.at(-1)).toBe(menuPanel);
+        expect(panelSet.getValueJS("leftPanelIndex")).toBe(0);
+
+        expect(panelSet.handleKey("right", true)).toBe(true);
+        expect(sgRoot.focused).toBe(examplesPanel);
+    });
+
     test("a full-screen panel added via direct appendChild still takes over immediately", () => {
         const panelSet = SGNodeFactory.createNode("PanelSet");
         const menuPanel = SGNodeFactory.createNode("ListPanel");
@@ -156,6 +205,6 @@ describe("PanelSet full-screen panel as a nextPanel preview", () => {
         panelSet.renderNode(interpreter, [0, 0], 0, 1);
 
         expect(sgRoot.focused).toBe(fullPanel);
-        expect(fullPanel.getValueJS("translation")[0]).toBe(105);
+        expect(fullPanel.getValueJS("translation")[0]).toBe(104);
     });
 });

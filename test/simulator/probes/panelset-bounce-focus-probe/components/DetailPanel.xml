@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- The detail panel the menu's createNextPanelIndex builds. Its own focusedChild observer reacts to a
+     gain the way the case asks: forward to its inner list, or bounce the focus back to the menu (an app
+     whose panel is still loading has nothing to focus). -->
+<component name="DetailPanel" extends="Panel">
+    <interface>
+        <field id="probeCase" type="string" />
+        <field id="backPressed" type="boolean" alwaysNotify="true" />
+        <field id="menuRef" type="node" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/ProbeLog.brs" />
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.panelSize = "wide"
+        m.top.focusable = true
+        m.inner = m.top.findNode("inner")
+        c = CreateObject("roSGNode", "ContentNode")
+        for i = 0 to 2
+            c.createChild("ContentNode").title = "detail " + i.toStr()
+        end for
+        m.inner.content = c
+        m.top.observeField("focusedChild", "onFocus")
+    end sub
+
+    sub onFocus()
+        pc = m.global.probeCase
+        if pc = "chainGate"
+            ' Gates the forward on isInFocusChain() instead of hasFocus(), a common app pattern.
+            plog("act", "details notified hasFocus=" + m.top.hasFocus().toStr() + " inChain=" + m.top.isInFocusChain().toStr())
+            if m.top.isInFocusChain() and m.top.focusedChild <> invalid and m.top.focusedChild.isSameNode(m.top)
+                m.inner.setFocus(true)
+            end if
+            return
+        end if
+        if not m.top.hasFocus() then return
+        plog("act", "details gained -> " + pc + " inChain=" + m.top.isInFocusChain().toStr())
+        if pc = "forward"
+            m.inner.setFocus(true)
+        else if pc = "bounce"
+            ' Signal the screen, which unfocuses this panel and refocuses the menu (field observer).
+            m.top.backPressed = true
+        else if pc = "bounceDirect"
+            m.top.setFocus(false)
+            r = m.top.menuRef.setFocus(true)
+            plog("act", "menu.setFocus returned " + r.toStr())
+        else if pc = "noUnfocus"
+            r = m.top.menuRef.setFocus(true)
+            plog("act", "menu.setFocus returned " + r.toStr())
+        end if
+    end sub
+    ]]></script>
+    <children>
+        <Group id="wrap">
+            <LabelList id="inner" translation="[20,80]" itemSize="[500,60]" />
+        </Group>
+    </children>
+</component>

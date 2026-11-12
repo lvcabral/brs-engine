@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <children>
+        <Rectangle width="1280" height="720" color="0x202830FF" />
+        <Label translation="[80,40]" text="drawFocusFeedbackOnTop = false (default)" color="0xFFFFFFFF" />
+        <MarkupGrid id="under" translation="[80,90]" itemComponentName="ProbeCell" itemSize="[120,120]" itemSpacing="[16,16]" numColumns="8" numRows="1" />
+        <Label translation="[80,330]" text="drawFocusFeedbackOnTop = true" color="0xFFFFFFFF" />
+        <MarkupGrid id="over" translation="[80,380]" itemComponentName="ProbeCell" itemSize="[120,120]" itemSpacing="[16,16]" numColumns="8" numRows="1" drawFocusFeedbackOnTop="true" />
+        <RowList id="rows" translation="[80,232]" itemComponentName="ProbeCell" itemSize="[1120,100]" rowItemSize="[[120,90]]" rowItemSpacing="[[16,0]]" numRows="1" showRowLabel="false" />
+        <LabelList id="list" translation="[80,540]" itemSize="[400,40]" numRows="4" vertFocusAnimationStyle="floatingFocus" />
+        <MarkupList id="mlist" translation="[640,540]" itemComponentName="ProbeCell" itemSize="[120,36]" itemSpacing="[0,4]" numRows="4" vertFocusAnimationStyle="floatingFocus" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        rowRoot = CreateObject("roSGNode", "ContentNode")
+        rowNode = rowRoot.createChild("ContentNode")
+        for i = 0 to 7
+            rowNode.createChild("ContentNode").title = StrI(i).trim()
+        end for
+        m.top.findNode("rows").content = rowRoot
+        for each id in ["under", "over", "list", "mlist"]
+            root = CreateObject("roSGNode", "ContentNode")
+            for i = 0 to 7
+                root.createChild("ContentNode").title = StrI(i).trim()
+            end for
+            m.top.findNode(id).content = root
+        end for
+        m.top.findNode("under").setFocus(true)
+    end sub
+
+    function onKeyEvent(key as string, press as boolean) as boolean
+        ' Down/Up swap focus between the two grids.
+        ' Play focuses the LabelList, Options the MarkupList, InstantReplay the RowList, Down/Up the two grids.
+        if press and key = "replay"
+            m.top.findNode("rows").setFocus(true)
+            return true
+        else if press and key = "play"
+            m.top.findNode("list").setFocus(true)
+            return true
+        else if press and key = "options"
+            m.top.findNode("mlist").setFocus(true)
+            return true
+        else if press and key = "down"
+            m.top.findNode("over").setFocus(true)
+            return true
+        else if press and key = "up"
+            m.top.findNode("under").setFocus(true)
+            return true
+        end if
+        return false
+    end function
+    ]]>
+    </script>
+</component>

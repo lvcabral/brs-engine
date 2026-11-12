@@ -106,6 +106,43 @@ export class Poster extends Group {
         super.setValue(index, value, alwaysNotify, kind);
     }
 
+    /**
+     * Resolves the size `rect` draws `bitmap` at for display `mode`, before the effect clip is pushed from
+     * it. `size` is the Poster's own width and height (0 when unset).
+     */
+    private resolveDrawSize(bitmap: RoBitmap, mode: string, rect: Rect, size: { width: number; height: number }) {
+        if (mode === "limitsize") {
+            // Resolved BEFORE `applyNodeEffect` runs, not inside its draw callback: the effect's
+            // rounded clip is pushed from `rect` up front, so the clamped size has to be known
+            // by then too — discovering it only while drawing left the clip sized to the
+            // pre-clamp rect while the gradient/border (read after) used the clamped one.
+            // The clamp limits the texture, not the Poster: a set width/height is still filled
+            // (DEVICE-MEASURED, JellyRock's 300x300 limitSize profile images); only a 0 extent
+            // draws at the clamped texture size.
+            const loadWidth = this.getValueJS("loadWidth") as number;
+            const loadHeight = this.getValueJS("loadHeight") as number;
+            if (loadWidth > 0 && loadHeight > 0) {
+                const clamped = this.clampLoadSize(bitmap.width, bitmap.height, loadWidth, loadHeight);
+                if (size.width <= 0) {
+                    rect.width = clamped.width;
+                }
+                if (size.height <= 0) {
+                    rect.height = clamped.height;
+                }
+            }
+        }
+        if (!bitmap.ninePatch && mode !== "scaletofit" && mode !== "scaletozoom") {
+            // `drawImage` draws a 0 extent at the bitmap's own size. Resolved here so the bounding
+            // rects get that size too, in local units (`drawImage` writes back the scaled one).
+            if (rect.width === 0) {
+                rect.width = bitmap.width;
+            }
+            if (rect.height === 0) {
+                rect.height = bitmap.height;
+            }
+        }
+    }
+
     protected renderNodeContent(
         interpreter: Interpreter,
         origin: number[],
@@ -139,29 +176,7 @@ export class Poster extends Group {
             // (scaleToZoom) slices through the markers. Same rationale as loadUri skipping
             // loadWidth/loadHeight for 9-patches: the bitmap must reach drawNinePatch intact.
             const mode = bitmap.ninePatch ? "noscale" : displayMode.trim().toLowerCase();
-            if (mode === "limitsize") {
-                // Resolved BEFORE `applyNodeEffect` runs, not inside its draw callback: the effect's
-                // rounded clip is pushed from `rect` up front, so the clamped size has to be known
-                // by then too — discovering it only while drawing left the clip sized to the
-                // pre-clamp rect while the gradient/border (read after) used the clamped one.
-                const loadWidth = this.getValueJS("loadWidth") as number;
-                const loadHeight = this.getValueJS("loadHeight") as number;
-                if (loadWidth > 0 && loadHeight > 0) {
-                    const clamped = this.clampLoadSize(bitmap.width, bitmap.height, loadWidth, loadHeight);
-                    rect.width = clamped.width;
-                    rect.height = clamped.height;
-                }
-            }
-            if (!bitmap.ninePatch && mode !== "scaletofit" && mode !== "scaletozoom") {
-                // `drawImage` draws a 0 extent at the bitmap's own size. Resolved here so the bounding
-                // rects get that size too, in local units (`drawImage` writes back the scaled one).
-                if (rect.width === 0) {
-                    rect.width = bitmap.width;
-                }
-                if (rect.height === 0) {
-                    rect.height = bitmap.height;
-                }
-            }
+            this.resolveDrawSize(bitmap, mode, rect, size);
             applyNodeEffect(
                 this,
                 this.getPivotDrawRect(rect, angle, scale, center),

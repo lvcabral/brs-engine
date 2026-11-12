@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+  Scripted link scenarios (launch with mode=links). Each starts from a fresh container C (children a, b)
+  beside a node `other`, and prints every node's focusedChild link and hasFocus() after each step.
+  S1: C.setFocus (C's observer forwards to a), then b.setFocus (a sibling inside C).
+  S2: C.setFocus (forward to a), then other.setFocus (outside C).
+  S3: C.setFocus with no forward, a.setFocus, then b.setFocus (no nesting at all).
+  S4: C.setFocus (forward to a), then C.setFocus again, then b.setFocus.
+-->
+<component name="LinksScene" extends="Scene">
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.timer = CreateObject("roSGNode", "Timer")
+        m.timer.duration = 0.5
+        m.timer.observeField("fire", "runCases")
+        m.timer.control = "start"
+    end sub
+
+    function makeCase(name as string, forward as boolean) as object
+        c = CreateObject("roSGNode", "FwdContainer")
+        c.id = name + "C"
+        c.forward = forward
+        for each id in ["a", "b"]
+            n = CreateObject("roSGNode", "Group")
+            n.id = name + id
+            n.focusable = true
+            c.appendChild(n)
+        end for
+        other = CreateObject("roSGNode", "Group")
+        other.id = name + "other"
+        other.focusable = true
+        m.top.appendChildren([c, other])
+        return { c: c, a: c.getChild(0), b: c.getChild(1), other: other }
+    end function
+
+    function link(n as object) as string
+        fc = n.focusedChild
+        s = "-"
+        if fc <> invalid
+            if fc.isSameNode(n) then s = "self" else s = fc.id
+        end if
+        hf = "F"
+        if n.hasFocus() then hf = "T"
+        return n.id + "=" + hf + "/" + s
+    end function
+
+    sub dump(label as string, k as object)
+        sfc = "-"
+        if m.top.focusedChild <> invalid then sfc = m.top.focusedChild.id
+        print "PROBE|" + label + "|" + link(k.c) + " " + link(k.a) + " " + link(k.b) + " " + link(k.other) + " sceneFC=" + sfc
+    end sub
+
+    sub runCases()
+        k = makeCase("s1", true)
+        k.c.setFocus(true)
+        dump("S1 C.setFocus fwd a", k)
+        k.b.setFocus(true)
+        dump("S1 b.setFocus", k)
+
+        k = makeCase("s2", true)
+        k.c.setFocus(true)
+        dump("S2 C.setFocus fwd a", k)
+        k.other.setFocus(true)
+        dump("S2 other.setFocus", k)
+
+        k = makeCase("s3", false)
+        k.c.setFocus(true)
+        k.a.setFocus(true)
+        dump("S3 a.setFocus", k)
+        k.b.setFocus(true)
+        dump("S3 b.setFocus", k)
+
+        k = makeCase("s4", true)
+        k.c.setFocus(true)
+        dump("S4 C.setFocus fwd a", k)
+        k.c.setFocus(true)
+        dump("S4 C.setFocus again", k)
+        k.b.setFocus(true)
+        dump("S4 b.setFocus", k)
+        print "PROBE|done"
+    end sub
+    ]]>
+    </script>
+</component>

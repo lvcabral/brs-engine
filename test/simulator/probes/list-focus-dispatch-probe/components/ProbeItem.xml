@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="itemHasFocus" type="boolean" onChange="onHasFocus" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.label = CreateObject("roSGNode", "Label")
+            m.label.translation = [10, 15]
+            m.top.appendChild(m.label)
+        end sub
+
+        sub onContent()
+            m.label.text = m.top.itemContent.title
+        end sub
+
+        sub onHasFocus()
+            title = "?"
+            if m.top.itemContent <> invalid then title = m.top.itemContent.title
+            print "PROBE|item|" + title + ".itemHasFocus=" + m.top.itemHasFocus.toStr()
+        end sub
+        ]]>
+    </script>
+</component>

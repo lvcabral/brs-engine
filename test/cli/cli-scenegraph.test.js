@@ -356,28 +356,28 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
-    it("Reentrant field observers are deferred until the current handler returns", async () => {
+    it("Runs a list's focus observers inline, even inside another observer", async () => {
         let command = ["node", brsCliPath, "-r deferred-observer-app", "source/main.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
-        // onSelected focuses two lists and moves focus via jumpToItem (firing their itemFocused
-        // observers) BEFORE it assigns dayList.content. On Roku those observers run from the message
-        // loop after the handler returns, so they see the assigned dayList.content. With
-        // synchronous/inline dispatch they ran reentrantly while dayList.content was still invalid
-        // -> crash. The deferred dispatch drains them after onSelected unwinds: "onSelected done"
-        // prints before any "onDateFocused", and each reads the valid 31-child dayList content.
-        // Each focused list fires itemFocused twice (on focus-gain, then on the jumpToItem move).
+        // onSelected focuses two lists and moves their focus with jumpToItem BEFORE it assigns
+        // dayList.content. Device output (Roku Express 4K+, OS 16.0), matched line for line: each
+        // list's itemFocused observer runs inline, inside onSelected, while dayList.content is still
+        // invalid. Per list: the focus gain (0), the new content's pending reset to item 0 published
+        // before the jump (0), then the jump (3 / 5). See test/simulator/probes/list-focus-dispatch-probe.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Deferred Observer Repro ===",
             "onSelected",
+            "onDateFocused index= 0 dayList content invalid",
+            "onDateFocused index= 0 dayList content invalid",
+            "onDateFocused index= 3 dayList content invalid",
+            "onDateFocused index= 0 dayList content invalid",
+            "onDateFocused index= 0 dayList content invalid",
+            "onDateFocused index= 5 dayList content invalid",
             "Setting dayList content",
             "onSelected done",
-            "onDateFocused dayCount= 31",
-            "onDateFocused dayCount= 31",
-            "onDateFocused dayCount= 31",
-            "onDateFocused dayCount= 31",
             "=== Deferred Observer Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
@@ -1572,39 +1572,35 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
-    it("Ignores a focus re-grab raised from a focus-loss observer, but honors a forward one", async () => {
+    it("Applies a focus request raised from a focus notification the way a device does", async () => {
         let command = ["node", brsCliPath, "-r focus-steal-app", "source/main.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
-        // Repro of the sgRouter/JellyRock shape, pinned against a Roku Express 4K+ (OS 15.3) capture
-        // from the focus-probe apps. Two invariants, both device-measured:
+        // Repro of the sgRouter/JellyRock shape. Every focus line matches a Roku Express 4K+ (OS 16.0)
+        // run of this app (the OS 15.3 focus-probe captures agree):
         //   1. A focusedChild observer reads the COMMITTED chain - the whole focus transaction lands
         //      before any notification goes out ("outlet lost focus" already sees sceneFC = overhang).
-        //   2. A setFocus raised from a focus-LOSS notification is dropped, so the chain and the
-        //      remote stay with the node the in-flight transaction focused; the mirror-image FORWARD
-        //      case (a container handing focus onward after gaining it) is still honored.
-        // Before the fix the re-grab won live focus while the outer transaction wrote its own chain,
-        // so sgRoot.focused and focusedChild disagreed: the app kept the remote on the grid while the
-        // chain said "menu".
-        // Two further guards on the mechanism itself: the drop applies only while a node is TAKING
-        // focus (an unfocus observer's restore has no competing target, and swallowing it would
-        // leave nothing focused at all), and staging the chain must still run the subclass setValue
-        // overrides - a Button that bypasses Group.setValue never marks itself dirty, so its focused
-        // font is never applied and the button stays at its unfocused width.
+        //   2. A node re-grabbing the focus it is losing writes only its own link: the chain stays with
+        //      the node the transaction focused, while the grabber reports hasFocus() (its focusedChild
+        //      links to itself). The same holds when the restore comes from a setFocus(false)
+        //      notification, which leaves nothing focused. A forward to a sibling takes the focus, and
+        //      the node it left keeps its stale links (overhangFC stays menuB after the recover).
+        // The Button widths are the engine's (the device's Button is 246 wide focused or not): they
+        // guard that staging the chain still runs the subclass setValue overrides, so the focused font
+        // is applied.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Focus Steal Repro ===",
             "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
-            "after steal: menuA = true, gridA = false",
+            "after steal: menuA = true, gridA = true",
             "after steal: sceneFC = overhang, outletFC = invalid, overhangFC = menuA",
             "  outlet lost focus: sceneFC = overhang, overhangFC = menuA",
             "after forward: menuB = true, overhangFC = menuB",
             "after recover: gridB = true, pageFC = gridB, sceneFC = outlet",
-            "  outlet lost focus: sceneFC = invalid, overhangFC = invalid",
-            "after unfocus restore: gridB = true, sceneFC = outlet",
+            "  outlet lost focus: sceneFC = invalid, overhangFC = menuB",
+            "after unfocus restore: gridB = true, sceneFC = invalid",
             "button width before:  180",
-            "  outlet lost focus: sceneFC = btn, overhangFC = invalid",
             "button width after:  252",
             "=== Focus Steal Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
@@ -1630,32 +1626,37 @@ describe.concurrent("cli scenegraph", () => {
         //   3. a focus-LOSS observer re-asserting the node that is TAKING focus is still dropped, so
         //      the transaction is not re-run and itemFocused fires exactly once (a second fire
         //      re-triggers app side effects like starting preview playback).
-        //   4. the settle still DEFERS. This is `deferred-observer-app`'s crash shape re-triggered
-        //      from a focusedChild notification: each list's settle observer reads a third list whose
-        //      content is assigned last, so dispatching them inline crashes on dot-of-invalid.
-        // (4) is why the classification travels with the queued entry
-        // (Node.runWithFocusNotifyOwner) instead of the settle being forced to dispatch synchronously
-        // - buying (1) that way re-creates the very reentrancy the deferral exists to prevent.
+        //   4. the settle observers run inline inside the container's focusedChild observer, while the
+        //      third list's content is still invalid (device output, OS 16.0, matched line for line).
+        // Every line but one matches a Roku Express 4K+ (OS 16.0) run: scenario 1's overlay request,
+        // raised before the list's setFocus returned, writes only the overlay's own link (it reports
+        // hasFocus() while the list keeps the chain); scenario 3's re-assert of the node taking focus
+        // is applied, so itemFocused fires twice. The exception is scenario 2's last line: the device
+        // keeps a shown dialog out of the scene's chain (listInChain=true overlayFocus=false), which
+        // the engine does not model yet.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Container Redirect Focus Repro ===",
             "-- scenario 1",
-            "   after setFocus: listInChain=true overlayFocus=false",
             "   onItemFocused index= 0 fireCount= 1",
-            "   steal: listInChain=true overlayFocus=false",
+            "   steal: listInChain=true overlayFocus=true",
+            "   after setFocus: listInChain=true overlayFocus=true",
             "-- scenario 2",
-            "   after setFocus: listInChain=true overlayFocus=false",
             "   onItemFocused index= 0 fireCount= 1",
             "   selfFocusingPage hasFocus=true",
             "   dialog inFocusChain=true",
+            "   after setFocus: listInChain=false overlayFocus=true",
             "-- scenario 3",
             "   onItemFocused index= 0 fireCount= 1",
+            "   onItemFocused index= 0 fireCount= 2",
             "-- scenario 4",
             "   loader: start",
+            "   loader: observer sees loaderC content invalid",
+            "   loader: observer sees loaderC content invalid",
+            "   loader: observer sees loaderC content invalid",
+            "   loader: observer sees loaderC content invalid",
+            "   loader: observer sees loaderC content invalid",
+            "   loader: observer sees loaderC content invalid",
             "   loader: done",
-            "   loader: observer sees loaderC count= 31",
-            "   loader: observer sees loaderC count= 31",
-            "   loader: observer sees loaderC count= 31",
-            "   loader: observer sees loaderC count= 31",
             "=== Container Redirect Focus Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
@@ -1711,6 +1712,30 @@ describe.concurrent("cli scenegraph", () => {
             "created right panel for index  0",
             "after focus numPanels =  2",
             "=== PanelSet NextPanel Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("PanelSet creates the right panel when a focused menu receives its content later", async () => {
+        let command = ["node", brsCliPath, "-r panelset-content-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // The menu ListPanel is focused while empty; a Timer handler assigns its content, and Main
+        // blocks in wait(0). The content's reset to item 0 is deferred until the handler returns, so it
+        // must be delivered from the message loop (no statement runs outside an observer there) AND
+        // reach the ListPanel's createNextPanelIndex. Before the fix neither happened: the deferred
+        // itemFocused 0 never went out, and even when flushed it bypassed the panel, so numPanels
+        // stayed 1 and the detail panel never appeared.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== PanelSet Content NextPanel Repro ===",
+            "content assigned, numPanels =  1",
+            "created right panel for index  0",
+            "numPanels after content =  2",
+            "=== PanelSet Content NextPanel Repro Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

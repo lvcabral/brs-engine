@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- An item that is only white text on a transparent background. -->
+<component name="ProbeText" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="width" type="float" onChange="onSize" />
+        <field id="height" type="float" onChange="onSize" />
+    </interface>
+    <children>
+        <Label id="title" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub onContent()
+        m.top.findNode("title").text = m.top.itemContent.title
+    end sub
+
+    sub onSize()
+        title = m.top.findNode("title")
+        title.width = m.top.width
+        title.height = m.top.height
+    end sub
+    ]]>
+    </script>
+</component>

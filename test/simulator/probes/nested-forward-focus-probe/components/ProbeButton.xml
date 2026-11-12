@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Like PopcornExpandButton: re-renders (logs) on every focusedChild change, reads hasFocus(). -->
+<component name="ProbeButton" extends="Group">
+    <script type="text/brightscript">
+    <![CDATA[
+    sub init()
+        m.top.focusable = true
+        m.top.observeFieldScoped("focusedChild", "onFocusedChildChange")
+    end sub
+
+    sub onFocusedChildChange()
+        fc = "invalid"
+        if m.top.focusedChild <> invalid then fc = m.top.focusedChild.id
+        print "PROBE|" + m.top.id + " focusedChild=" + fc + " hasFocus=" + m.top.hasFocus().toStr()
+    end sub
+    ]]>
+    </script>
+</component>

@@ -1,0 +1,60 @@
+PROBE|2|start
+PROBE|3|L.itemFocused=0
+PROBE|item|?.itemHasFocus=true
+PROBE|35|poster|pBoth|bitmap=200x100 size=250x250 rect=250x250
+PROBE|35|poster|pNone|bitmap=200x100 size=0x0 rect=200x100
+PROBE|35|poster|pH|bitmap=200x100 size=0x300 rect=200x300
+PROBE|36|poster|pW|bitmap=200x100 size=300x0 rect=300x100
+PROBE|1003|case|A focus taken mid-motion
+PROBE|1003|A1 pre|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|1003|L.scrollingStatus=true
+PROBE|item|I0.itemHasFocus=false
+PROBE|1004|L.itemUnfocused=0
+PROBE|1170|A2 pre|itemFocused=0 currFocusRow=1.71429 scrolling=true listFocus=true otherFocus=false
+PROBE|1170|A2 post|itemFocused=0 currFocusRow=1.71429 scrolling=true listFocus=false otherFocus=true
+PROBE|1620|L.scrollingStatus=false
+PROBE|2372|A3 end|itemFocused=0 currFocusRow=3 scrolling=false listFocus=false otherFocus=true
+PROBE|item|I3.itemHasFocus=true
+PROBE|2373|L.itemFocused=3
+PROBE|2373|A3 regained|itemFocused=3 currFocusRow=3 scrolling=false listFocus=true otherFocus=false
+PROBE|3374|A4 settled|itemFocused=3 currFocusRow=3 scrolling=false listFocus=true otherFocus=false
+PROBE|item|I3.itemHasFocus=false
+PROBE|3374|L.itemUnfocused=3
+PROBE|item|I0.itemHasFocus=true
+PROBE|3377|L.itemFocused=0
+PROBE|3377|A4 reset|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|4378|case|B focus taken and regained mid-motion
+PROBE|4379|B1 pre|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|4379|L.scrollingStatus=true
+PROBE|item|I0.itemHasFocus=false
+PROBE|4379|L.itemUnfocused=0
+PROBE|4540|B2 post|itemFocused=0 currFocusRow=1.66071 scrolling=true listFocus=false otherFocus=true
+PROBE|item|I3.itemHasFocus=true
+PROBE|4657|L.itemFocused=3
+PROBE|4657|B3 post|itemFocused=3 currFocusRow=2.44643 scrolling=true listFocus=true otherFocus=false
+PROBE|5008|L.itemFocused=3
+PROBE|5008|L.scrollingStatus=false
+PROBE|5858|B4 end|itemFocused=3 currFocusRow=3 scrolling=false listFocus=true otherFocus=false
+PROBE|item|I3.itemHasFocus=false
+PROBE|5858|L.itemUnfocused=3
+PROBE|item|I0.itemHasFocus=true
+PROBE|5860|L.itemFocused=0
+PROBE|5861|B4 reset|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|6861|case|C hidden list loses focus to another node
+PROBE|6861|C1 pre|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|item|I0.itemHasFocus=false
+PROBE|6862|C1 post|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=true
+PROBE|7662|C2 hidden|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=true
+PROBE|8463|C3 shown|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=true
+PROBE|item|I0.itemHasFocus=true
+PROBE|8464|L.itemFocused=0
+PROBE|8465|C3 refocused|itemFocused=0 currFocusRow=0 scrolling=false listFocus=true otherFocus=false
+PROBE|9265|case|D hidden list setFocus(false)
+PROBE|item|I0.itemHasFocus=false
+PROBE|9266|D1 post|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=false
+PROBE|10067|D2 hidden|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=false
+PROBE|10868|D3 shown|itemFocused=0 currFocusRow=0 scrolling=false listFocus=false otherFocus=false
+PROBE|item|I0.itemHasFocus=true
+PROBE|10869|L.itemFocused=0
+PROBE|10869|shot
+PROBE|13869|done

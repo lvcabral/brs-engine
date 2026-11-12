@@ -20,5 +20,9 @@ export default defineConfig({
         // test/cli spawns one `node brs.cli.js` child process per test; uncapped concurrency
         // would thrash.
         maxConcurrency: 8,
+        // Intrinsic UI transitions (PanelSet slides, list focus scrolling) make rendering
+        // time-dependent; suites run them settled-instantly and opt in per test with a fake sgClock.
+        // Inherited by the spawned CLI processes too.
+        env: { BRS_UI_TRANSITIONS: "0" },
     },
 });

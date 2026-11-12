@@ -185,6 +185,7 @@ export class TimeGrid extends ArrayGrid {
             this.setValueSilent("nowBarWidth", new Float(2));
         }
         this.setValueSilent("focusBitmapUri", new BrsString(this.focusUri));
+        this.setValueSilent("focusFootprintBitmapUri", new BrsString(ArrayGrid.builtinFootprintUri));
         // Initialize to a valid AA so reads never return invalid (matches Roku, which keeps
         // this field populated alongside channelFocused/programFocused).
         this.setValueSilent("programFocusedDetails", brsValueOf({ focusChannelIndex: 0, focusIndex: 0 }));
@@ -208,7 +209,8 @@ export class TimeGrid extends ArrayGrid {
      */
     setNodeFocus(focusOn: boolean): boolean {
         const focus = super.setNodeFocus(focusOn);
-        if (focus) {
+        // An observer may have moved the focus on before setNodeFocus returned.
+        if (focus && (!focusOn || sgRoot.focused === this)) {
             const ch = this.channelIndex;
             const prog = this.programIndexByChannel[ch] ?? 0;
             if (this.channels.length > 0) {
@@ -475,6 +477,11 @@ export class TimeGrid extends ArrayGrid {
         return end <= cst;
     }
 
+    /** Unmeasured against the list focus model: keeps its own (see `ArrayGrid.listFocusModel`). */
+    protected listFocusModel(): boolean {
+        return false;
+    }
+
     /** Initial focus when content is (re)assigned — `index` is treated as a channel index. */
     protected setFocusedItem(index: number) {
         if (this.channels.length === 0) {
@@ -504,8 +511,8 @@ export class TimeGrid extends ArrayGrid {
         // Re-derived every call so it always reflects whichever channel the grid is looking at
         // RIGHT NOW — never a stale channel navigated away from (see the field's own doc comment).
         this.focusedChannelPendingIndex = this.isChannelPlaceholder(newChannel) ? newChannel : -1;
-        // Emit the scroll pulse before the settled focus fields go out (see
-        // ArrayGrid.armScrollPulse): the falling edge precedes the settle on a device.
+        // Both pulse edges go out ahead of the settled focus fields: TimeGrid's own settle order has not
+        // been measured on a device yet (see ArrayGrid.emitScrollPulse).
         this.emitScrollPulse();
         const oldChannel = this.channelIndex;
         const oldProgram = this.programIndexByChannel[oldChannel] ?? 0;
@@ -732,7 +739,7 @@ export class TimeGrid extends ArrayGrid {
     protected enterChannelInfo() {
         this.inChannelInfoColumn = true;
         // Crossing into the channel-info column is a horizontal focus move that bypasses focusCell
-        // (see ArrayGrid.armScrollPulse for why the pulse precedes the settle).
+        // (see ArrayGrid.emitScrollPulse).
         this.emitScrollPulse();
         super.setValue("channelInfoFocused", new Int32(this.channelIndex));
         this.isDirty = true;
