@@ -1,0 +1,162 @@
+{
+ "keyboardWidthFHD": 447,
+ "keyboardHeightFHD": 522,
+ "sections": [
+  {
+   "grids": [
+    {
+     "rows": [
+      {
+       "keys": [
+        {
+         "label": "a"
+        },
+        {
+         "label": "b"
+        },
+        {
+         "label": "c"
+        },
+        {
+         "label": "d"
+        },
+        {
+         "label": "e"
+        },
+        {
+         "label": "f"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "g"
+        },
+        {
+         "label": "h"
+        },
+        {
+         "label": "i"
+        },
+        {
+         "label": "j"
+        },
+        {
+         "label": "k"
+        },
+        {
+         "label": "l"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "m"
+        },
+        {
+         "label": "n"
+        },
+        {
+         "label": "o"
+        },
+        {
+         "label": "p"
+        },
+        {
+         "label": "q"
+        },
+        {
+         "label": "r"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "s"
+        },
+        {
+         "label": "t"
+        },
+        {
+         "label": "u"
+        },
+        {
+         "label": "v"
+        },
+        {
+         "label": "w"
+        },
+        {
+         "label": "x"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "y"
+        },
+        {
+         "label": "z"
+        },
+        {
+         "label": "1"
+        },
+        {
+         "label": "2"
+        },
+        {
+         "label": "3"
+        },
+        {
+         "label": "4"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "5"
+        },
+        {
+         "label": "6"
+        },
+        {
+         "label": "7"
+        },
+        {
+         "label": "8"
+        },
+        {
+         "label": "9"
+        },
+        {
+         "label": "0"
+        }
+       ]
+      },
+      {
+       "keys": [
+        {
+         "label": "Clr",
+         "keyWidthFHD": 120
+        },
+        {
+         "label": "Spc",
+         "keyWidthFHD": 120
+        },
+        {
+         "label": "Del",
+         "keyWidthFHD": 120
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

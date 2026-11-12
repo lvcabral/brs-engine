@@ -736,6 +736,26 @@ describe("Dynamic voice keyboards", () => {
                     expect(paintGrid(grid)(50, 10)[3]).toBeGreaterThanOrEqual(67);
                 });
 
+                // Device-observed (probe `test/simulator/probes/custom-kdf-width-probe`, Tubi's search
+                // KDF): evenly divided sizes are floored to whole pixels, so on a 447px board a row of
+                // 6 keys is 6 x 74 = 444 and ends with a row of explicit 3 x 148 keys.
+                test("evenly divided key sizes are whole pixels, aligning with explicit-width rows", () => {
+                    const six = { keys: ["a", "b", "c", "d", "e", "f"].map(plainKey) };
+                    const wide = { ...plainKey("w"), keyWidthFHD: 148, keyWidthHD: 148 };
+                    const grid = loadGrid(
+                        board(447, 148, [{ grids: [{ rows: [six, { keys: [wide, wide, wide] }] }] }])
+                    );
+                    const keys = grid.renderedKeys;
+                    expect(keys.filter((k) => k.row === 0).map((k) => k.width)).toEqual([74, 74, 74, 74, 74, 74]);
+                    expect(keys.map((k) => k.height)).toEqual(Array(9).fill(74));
+                    const pixel = paintGrid(grid);
+                    // Both rows end at the same column: the outline at 443, nothing at 444.
+                    for (const y of [10, 84]) {
+                        expect(pixel(443, y)).toEqual([0, 0, 0, 37]);
+                        expect(pixel(444, y)[3]).toBe(0);
+                    }
+                });
+
                 test("keyboards with a bundled background do not draw key cells", () => {
                     for (const type of ["DynamicKeyboard", "DynamicMiniKeyboard", "DynamicPinPad"]) {
                         const names = drawnImageNames(SGNodeFactory.createNode(type));

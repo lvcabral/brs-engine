@@ -79,7 +79,7 @@ export class DynamicKeyGrid extends Group {
     private bmpBackground?: RoBitmap;
     private bmpKeyCell?: RoBitmap;
     private keyCells: Rect[] = [];
-    private inset: KeyInset = { top: 0, right: 0, bottom: 0, left: 0 };
+    private inset?: KeyInset;
     private readonly keyFocusDelta: number;
     // Bundled special-key icon assets, shared with the legacy Keyboard/MiniKeyboard/PinPad nodes
     // and addressed from a KDF's `icon`/`focusIcon` via a `theme:` URI (see resolveIcon()).
