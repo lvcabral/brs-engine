@@ -43,7 +43,7 @@ import {
     isTaskLike,
     MethodCallPayload,
 } from "../SGTypes";
-import { RoSGNode } from "../components/RoSGNode";
+import { RoSGNode, SubRectSpace } from "../components/RoSGNode";
 import { createFlatNode, createNode, getBrsValueFromFieldType, subtypeHierarchy } from "../factory/NodeFactory";
 import { Field } from "../nodes/Field";
 import { toAssociativeArray, jsValueOf, fromSGNode } from "../factory/Serializer";
@@ -1075,7 +1075,7 @@ export class Node extends RoSGNode implements BrsValue {
      * applies around frame renders, extended to refreshes initiated by a bounding-rect query.
      * Nested queries return the rects this pass computes. Callers must first check `!sgRoot.rendering`.
      */
-    private refreshLayoutFromRoot(interpreter: Interpreter) {
+    protected refreshLayoutFromRoot(interpreter: Interpreter) {
         const root = this.createPath()[0];
         sgRoot.rendering = true;
         try {
@@ -1090,19 +1090,6 @@ export class Node extends RoSGNode implements BrsValue {
         } finally {
             sgRoot.rendering = false;
         }
-    }
-
-    /**
-     * Whether a `subBoundingRect` query must refresh layout before reading the cached sub-part rect.
-     * Overridden by ArrayGrid-derived nodes: after a focus/scroll change the newly focused item's
-     * cached rect is stale (it still sits at its previous, pre-scroll position) until the next frame
-     * re-lays-out the grid — but an app's `rowItemFocused` observer measures it synchronously before
-     * that frame. Refreshing then makes the query report the settled focus-band position, matching a
-     * real device (where the observer fires after the render thread laid out the new focus). Default
-     * false so non-grid nodes keep returning their cached, at-most-one-frame-old sub-part rects.
-     */
-    protected needsSubBoundingRectRefresh(): boolean {
-        return false;
     }
 
     /**
@@ -1191,82 +1178,15 @@ export class Node extends RoSGNode implements BrsValue {
 
     /**
      * Returns the bounding rectangle of an identified sub part (ifSGNodeBoundingRect's
-     * subBoundingRect/localSubBoundingRect/sceneSubBoundingRect). Sub parts (`itemX`, `itemX_Y`,
-     * `focusItem`, `focusIndicator`) only exist on ArrayGrid-derived nodes, which override
-     * `resolveSubpart`. A missing sub part is answered by `missingSubpartRect`.
-     *
-     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/subrect-space-probe`), for every grid type:
-     *  - `toScene`: the sub part in scene coordinates.
-     *  - `toParent`: the sub part in THIS node's coordinate system, measured from its translation
-     *    origin (item 1 of a grid with 20px spacing is `{120,0}` wherever the grid sits), in unscaled
-     *    units. Despite the spec's wording it is not the grid's parent space.
-     *  - `local`: the sub part in its own coordinate system, `{0,0,w,h}`.
-     * `ancestor` is internal: the sub part in this node's parent space, which `ancestorSubBoundingRect`
-     * walks up from.
-     * @param type Rectangle type: `local`, `toScene`, `ancestor`, or any other value for `toParent`.
-     * @param itemNumber Sub part identifier (e.g. "item3", "item4_11", "focusItem").
+     * subBoundingRect/localSubBoundingRect/sceneSubBoundingRect). Sub parts only exist on grids
+     * (`ArrayGrid.getSubBoundingRect`); for any other node the sub part is missing, and per the spec
+     * (DEVICE-MEASURED, `subrect-space-probe`) the node's own bounding rect is returned.
+     * @param type Coordinate space; the internal `ancestor` is parent space.
+     * @param _itemNumber Sub part identifier (e.g. "item3", "item4_11", "focusItem").
      * @param interpreter Interpreter used to refresh layout before measuring.
-     * @returns Bounding rectangle of the sub part in the requested coordinate space.
+     * @returns Bounding rectangle in the requested coordinate space.
      */
-    getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect {
-        // A pending focus/scroll change leaves the cached item rects at their pre-scroll positions, so
-        // refresh layout first (only when needed and never inside a render), the way getBoundingRect does.
-        if (interpreter && !sgRoot.rendering && this.needsSubBoundingRectRefresh()) {
-            this.refreshLayoutFromRoot(interpreter);
-        }
-        const rect = this.resolveSubpart(itemNumber)?.rectToScene;
-        if (!rect) {
-            return this.missingSubpartRect(type, interpreter);
-        }
-        // Sub part rects are the components' cached scene rects from the last frame: re-rendering the
-        // scene per query would be too slow and could catch a transient mid-layout size.
-        if (type === "toScene") {
-            return { ...rect };
-        }
-        const ancestor = type === "ancestor";
-        const [kx, ky] = this.sceneUnitsTo(!ancestor);
-        const size = { width: rect.width * Math.abs(kx), height: rect.height * Math.abs(ky) };
-        if (type === "local") {
-            return { x: 0, y: 0, ...size };
-        }
-        // `rectLocal`/`rectToParent` and `rectToScene` carry this node's own outset identically, so it
-        // cancels out of the offset below.
-        const base = ancestor ? this.rectToParent : this.rectLocal;
-        return {
-            x: base.x + (rect.x - this.rectToScene.x) * kx,
-            y: base.y + (rect.y - this.rectToScene.y) * ky,
-            ...size,
-        };
-    }
-
-    /**
-     * How many units of this node's local (or parent) space one scene unit spans. A plain node
-     * applies no scale; a Group overrides it with its ancestors' and own scale.
-     * @param _local Whether the target is this node's local space rather than its parent's.
-     * @returns The x and y factors.
-     */
-    protected sceneUnitsTo(_local: boolean): [number, number] {
-        return [1, 1];
-    }
-
-    /**
-     * Resolves a bounding-rect sub part identifier to a node. Only ArrayGrid-derived nodes
-     * have sub parts; the base implementation reports "no such sub part".
-     * @param _itemNumber Sub part identifier.
-     * @returns The sub part node, or undefined when the node has no such sub part.
-     */
-    protected resolveSubpart(_itemNumber: string): Node | undefined {
-        return undefined;
-    }
-
-    /**
-     * The rect reported for a sub part this node does not have. Per the spec, and DEVICE-MEASURED for a
-     * non-grid node (`subrect-space-probe`), that is the node's own bounding rect.
-     * @param type Rectangle type, as for `getSubBoundingRect`.
-     * @param interpreter Interpreter used to refresh layout before measuring.
-     * @returns The rect to report.
-     */
-    protected missingSubpartRect(type: string, interpreter?: Interpreter): Rect {
+    getSubBoundingRect(type: SubRectSpace, _itemNumber: string, interpreter?: Interpreter): Rect {
         return this.getBoundingRect(type === "ancestor" ? "toParent" : type, interpreter);
     }
 

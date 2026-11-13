@@ -126,7 +126,7 @@ export class RowList extends ArrayGrid {
             // the drawn focus frame: the focus RING uses the focus 9-patch's own declared content
             // margins (ArrayGrid.focusMargins prefers them over this value).
             //
-            // It does NOT reach an item subBoundingRect: Node.getSubBoundingRect re-expresses the item
+            // It does NOT reach an item subBoundingRect: ArrayGrid.getSubBoundingRect re-expresses the item
             // rect against this node's rectLocal/rectToScene, both of which carry the outset
             // identically, so it cancels. See resolveSubpart below — that cancellation is the whole
             // reason the footprint outset that used to live here was wrong.
@@ -299,7 +299,7 @@ export class RowList extends ArrayGrid {
         // longer match it (the newly focused row/column has not been re-laid-out yet). Mark layout
         // dirty BEFORE firing the focus fields below: an app's rowItemFocused observer measures the
         // focused item synchronously via subBoundingRect, and the dirty flag makes that query refresh
-        // layout first so it reports the settled focus-band position (see needsSubBoundingRectRefresh).
+        // layout first so it reports the settled focus-band position (see ArrayGrid.getSubBoundingRect).
         this.focusLayoutDirty = true;
         // The horizontal handlers reach this method directly, without setFocusedItem, so the pulse
         // opens here too; both edges are idempotent per key press, so the vertical path (which
@@ -731,7 +731,7 @@ export class RowList extends ArrayGrid {
      * cannot track the row's item layout. See `resolveRowItemSubpart` for the id mapping.
      *
      * Resolution is ALL this node contributes: there is intentionally no `getSubBoundingRect` override.
-     * `Node.getSubBoundingRect` re-expresses the resolved item component's own rect, and a device reports
+     * `ArrayGrid.getSubBoundingRect` re-expresses the resolved item component's own rect, and a device reports
      * exactly that — the bare poster — for both the focused and the unfocused cells. Three separate
      * outsets are easy to conflate here, so keep them apart:
      *
@@ -739,7 +739,7 @@ export class RowList extends ArrayGrid {
      *    declared content margins). Only `focusIndicator` may report it (a device does; the engine
      *    still resolves it to the focused item), never an item sub-rect.
      *  - THIS NODE's own reported rect is outset (`rectMargins` -> `ArrayGrid.updateRect`, `marginX`/
-     *    `marginY`). It does not reach an item sub-rect: `Node.getSubBoundingRect` computes
+     *    `marginY`). It does not reach an item sub-rect: `ArrayGrid.getSubBoundingRect` computes
      *    `base.y + (subScene.y - this.rectToScene.y)`, and `base` (`rectLocal`, or `rectToParent` for
      *    `ancestorSubBoundingRect`) and `rectToScene` carry that outset identically, so it cancels.
      *  - an ITEM sub-rect is outset by nothing at all.

@@ -938,7 +938,7 @@ describe.concurrent("cli scenegraph", () => {
         // subBoundingRect is measured from the grid's translation origin (device-measured,
         // subrect-space-probe), so the band is y=0; sceneSubBoundingRect is at the translation, 120.
         // An item sub-rect carries NO outset: not the grid's own reported outset (RowList marginY,
-        // applied by ArrayGrid.updateRect and cancelled in Node.getSubBoundingRect because rectLocal
+        // applied by ArrayGrid.updateRect and cancelled in ArrayGrid.getSubBoundingRect because rectLocal
         // and rectToScene both carry it), and not the drawn focus 9-patch frame. The printed booleans
         // derive from the fixture's declared translation/rowItemSize, so nothing here can drift.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([

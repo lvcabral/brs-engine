@@ -1291,7 +1291,7 @@ a consumer-side correction whose magnitude happens to match the producer's error
 
 **All three coordinate spaces have to move together.** `rectLocal` stayed at `{0,0}` in the first cut,
 so `localBoundingRect()`/`localSubBoundingRect()` disagreed with the parent and scene rects by the
-margin (`Node.getSubBoundingRect` bases its `"local"` variant on `rectLocal`). Local is parent-space
+margin (`ArrayGrid.getSubBoundingRect` bases its `"toParent"` variant on `rectLocal`). Local is parent-space
 minus the node's own translation; fixing two of three spaces is worse than fixing none, because the
 disagreement is silent.
 
@@ -1510,10 +1510,11 @@ internal `"ancestor"` type for it. It has no device measurement yet.
 RowList) is a **zero-size rect at the grid's translation origin**: `{0,0,0,0}` in parent/local, and the
 origin's scene point in scene space. It is *not* the grid's own rect, despite the spec. A **non-grid**
 node (a Rectangle in the same probe) does return its own rect, as the spec says. So
-`ArrayGrid.missingSubpartRect` overrides `Node`'s own-rect fallback. It returns a literal `{0,0,0,0}`
-for parent/local; converting the origin through scene space and back leaves a `1e-14` residue under a
-fractional scale, which breaks `r.x = 0` in an app. It still refreshes layout through
-`getBoundingRect` before reading the origin for scene/ancestor.
+`Node.getSubBoundingRect` is only that own-rect fallback, and every sub-part rule lives in
+`ArrayGrid.getSubBoundingRect`. A missing part returns a literal `{0,0,0,0}` for parent/local;
+converting the origin through scene space and back leaves a `1e-14` residue under a fractional scale,
+which breaks `r.x = 0` in an app. For scene/ancestor it reads the own rect first (which refreshes
+layout), then steps back to the origin by `rectLocal × scale`.
 
 Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), by
 `RowListItemSubRect.test.js` over {HD,FHD} × {`RowList`,`ZoomRowList`} × translations (which asserts the
@@ -1532,7 +1533,7 @@ its own expectation from its declared `translation`/`rowItemSize`, so no pixel c
   device reports them at their laid-out position, e.g. row 0 at y=-120 after focusing row 1.
 
 **The grid's own outset does not leak into an item sub-rect only because it cancels.**
-`Node.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
+`ArrayGrid.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
 where `base` is `rectLocal` (or `rectToParent` for the internal `"ancestor"` type). That subtraction cancels
 the outset **only if `base` and `rectToScene` carry it identically**. Any future per-space adjustment must
 therefore be applied to all three spaces, or it reappears as a residue in every sub-rect.
@@ -1559,7 +1560,7 @@ a device either.
 Two facts settled which side was wrong: `sceneSubBoundingRect` was *already* `poster − top` before the
 producer fix (the three spaces silently disagreed by `marginY`, and the fix only made `toParent`/`local`
 agree with the space that already leaked), and `PosterGridItem`'s sub-rect independently moved onto its
-poster. The consumer-side subtraction was deleted; `RowList` now inherits `Node.getSubBoundingRect`
+poster. The consumer-side subtraction was deleted; `RowList` now inherits `ArrayGrid.getSubBoundingRect`
 verbatim, like `MarkupGrid`, `MarkupList`, `LabelList` and `ZoomRowList`. Its `resolveSubpart` override
 stays — mapping `item<row>_<col>` into the 2-D `rowItemComps[row][col]` is what makes the API work at all
 (the flat `itemComps[]` stays empty on row lists) — and carries a negative comment recording that the

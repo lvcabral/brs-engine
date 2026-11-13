@@ -17,9 +17,9 @@ const { BrsDevice, BrsBoolean, BrsString, Int32, Interpreter } = core;
  *      bitmap's declared content margins. Paint only — nothing reports it.
  *   3. An ITEM sub-rect gets NEITHER.
  *
- * (1) does not leak into (3) only because `Node.getSubBoundingRect` computes
+ * (1) does not leak into (3) only because `ArrayGrid.getSubBoundingRect` computes
  * `rectLocal.y + (subScene.y - this.rectToScene.y)` and `rectLocal` and `rectToScene` carry the
- * outset identically, so it cancels. A `rectToParent` bug used to drop it from `base`,
+ * outset identically, so it cancels. A `rectToParent` bug used to drop it from that base,
  * leaving a `+marginY` residue — which in turn hid a `-focusMargins().top` subtraction that had been
  * added to `RowList.getSubBoundingRect`. The two cancelled for one particular focus bitmap and read
  * as correct; fixing the residue surfaced the double subtraction as a focused-item overlay drawn one
