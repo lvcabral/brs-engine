@@ -27,6 +27,12 @@ import { toAssociativeArray } from "../factory/Serializer";
 import { FieldKind, isContentNode, ObserverScope } from "../SGTypes";
 import type { Scene, SGNodeType } from "../nodes";
 
+/**
+ * Coordinate space of a sub-rect query: the three ifSGNodeBoundingRect spaces, plus the internal
+ * `ancestor` (the sub part in the node's parent space, which `ancestorSubBoundingRect` walks up from).
+ */
+export type SubRectSpace = "local" | "toParent" | "toScene" | "ancestor";
+
 export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode {
     readonly kind = ValueKind.Object;
     readonly nodeType: SGNodeType;
@@ -243,7 +249,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     protected abstract findRootNode(start?: RoSGNode): RoSGNode;
 
     protected abstract getBoundingRect(type: string, interpreter?: Interpreter): Rect;
-    protected abstract getSubBoundingRect(type: string, itemNumber: string, interpreter?: Interpreter): Rect;
+    protected abstract getSubBoundingRect(type: SubRectSpace, itemNumber: string, interpreter?: Interpreter): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
@@ -1592,7 +1598,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         });
     }
 
-    /* Returns the bounding rectangle of an identified sub part, in the parent's coordinate system. */
+    /* Returns the bounding rectangle of an identified sub part, in this node's coordinate system (see ArrayGrid.getSubBoundingRect). */
     protected get subBoundingRect(): Callable {
         return new Callable("subBoundingRect", {
             signature: {
@@ -1609,7 +1615,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         });
     }
 
-    /* Returns the bounding rectangle of an identified sub part, in the node's local coordinate system. */
+    /* Returns the bounding rectangle of an identified sub part, in the sub part's own coordinate system. */
     protected get localSubBoundingRect(): Callable {
         return new Callable("localSubBoundingRect", {
             signature: {
@@ -1688,7 +1694,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                const subRect = this.getSubBoundingRect("toParent", itemNumber.getValue(), interpreter);
+                const subRect = this.getSubBoundingRect("ancestor", itemNumber.getValue(), interpreter);
                 const ancestorRect = { ...subRect };
                 let ancestorFound = false;
                 const path = this.createPath(this, false).slice(1);

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SubRectScene" extends="Scene">
+    <interface>
+        <function name="measure" />
+        <function name="jump" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/SubRectScene.brs" />
+    <children>
+        <!-- Grids directly under the Scene: parent space == scene space. -->
+        <PosterGrid id="pgScene" translation="[100,80]" basePosterSize="[100,100]"
+                    numColumns="3" numRows="1" itemSpacing="[20,0]" />
+        <!-- Grids under an offset Group: parent space != scene space, and both != the grid's own. -->
+        <Group id="holder" translation="[700,40]">
+            <PosterGrid id="pgHolder" translation="[100,40]" basePosterSize="[100,100]"
+                        numColumns="3" numRows="1" itemSpacing="[20,0]" />
+            <MarkupGrid id="mgHolder" translation="[100,300]" itemComponentName="ProbeItem"
+                        itemSize="[100,100]" numColumns="3" numRows="1" itemSpacing="[20,0]" />
+            <RowList id="rlHolder" translation="[100,560]" itemComponentName="ProbeItem"
+                     itemSize="[600,100]" rowItemSize="[[100,100]]" rowItemSpacing="[[20,0]]"
+                     numRows="1" showRowLabel="[false]" showRowCounter="[false]" />
+            <!-- Not a grid: it has no sub parts at all. -->
+            <Rectangle id="rectNode" translation="[900,560]" width="80" height="60" color="0x404040FF" />
+            <!-- Scaled grid: does the parent-space variant carry the grid's own scale? -->
+            <PosterGrid id="pgScaled" translation="[500,40]" scale="[0.5,0.5]" basePosterSize="[100,100]"
+                        numColumns="3" numRows="1" itemSpacing="[20,0]" />
+        </Group>
+        <!-- Two rows: row offset inside the grid, and what `itemX` means on a RowList. -->
+        <RowList id="rl2" translation="[100,780]" itemComponentName="ProbeItem"
+                 itemSize="[600,100]" itemSpacing="[0,20]" rowItemSize="[[100,100]]" rowItemSpacing="[[20,0]]"
+                 numRows="2" showRowLabel="[false]" showRowCounter="[false]" />
+    </children>
+</component>

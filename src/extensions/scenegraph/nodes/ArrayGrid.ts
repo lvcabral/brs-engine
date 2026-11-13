@@ -17,7 +17,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { Poster, SGNodeType } from ".";
 import { Group } from "./Group";
 import { Node } from "./Node";
-import type { RoSGNode } from "../components/RoSGNode";
+import type { RoSGNode, SubRectSpace } from "../components/RoSGNode";
 import { Field } from "./Field";
 import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
@@ -202,7 +202,7 @@ export class ArrayGrid extends Group implements UITransition {
     // Set when the focus/scroll position changes and cleared once renderNode re-lays-out the grid.
     // While set, a subBoundingRect query refreshes layout first so it reports the settled focus-band
     // position instead of the newly focused item's stale, pre-scroll cached rect (see
-    // needsSubBoundingRectRefresh / Node.getSubBoundingRect).
+    // getSubBoundingRect).
     protected focusLayoutDirty: boolean = false;
     protected wrap: boolean = false;
     protected lastPressHandled: string;
@@ -1607,17 +1607,69 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
-     * Resolves an ifSGNodeBoundingRect sub part identifier to the matching item component:
-     * `itemX` (data-model index X), `itemX_Y` (row X — list nodes hold one component per row),
-     * `focusItem` and `focusIndicator` (the focused item; the indicator hugs the item rect).
-     * Item components are created lazily during rendering, so an off-screen item resolves to
-     * undefined and the caller falls back to the node's own bounding rect (matching Roku's
-     * "if the subpart does not exist" behavior).
+     * Returns the bounding rect of an identified sub part (`itemX`, `itemX_Y`, `focusItem`,
+     * `focusIndicator`), resolved by `resolveSubpart`.
+     *
+     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/subrect-space-probe`), for every grid type:
+     *  - `toScene`: the sub part in scene coordinates.
+     *  - `toParent`: the sub part in THIS grid's coordinate system, measured from its translation
+     *    origin (item 1 of a grid with 20px spacing is `{120,0}` wherever the grid sits), in unscaled
+     *    units. Despite the spec's wording it is not the grid's parent space.
+     *  - `local`: the sub part in its own coordinate system, `{0,0,w,h}`.
+     *  - A missing sub part is a zero-size rect at the grid's translation origin: exactly `{0,0,0,0}`
+     *    in parent/local space, and the origin's position in scene space (not the grid's own rect).
+     * `ancestor` is the sub part in the grid's parent space.
      */
-    protected needsSubBoundingRectRefresh(): boolean {
-        return this.focusLayoutDirty;
+    getSubBoundingRect(type: SubRectSpace, itemNumber: string, interpreter?: Interpreter): Rect {
+        // A pending focus/scroll change leaves the cached item rects at their pre-scroll positions, so
+        // refresh layout first (only when needed and never inside a render), the way getBoundingRect does.
+        if (interpreter && !sgRoot.rendering && this.focusLayoutDirty) {
+            this.refreshLayoutFromRoot(interpreter);
+        }
+        const rect = this.resolveSubpart(itemNumber)?.rectToScene;
+        if (!rect) {
+            return this.missingSubpartRect(type, interpreter);
+        }
+        // Sub part rects are the components' cached scene rects from the last frame: re-rendering the
+        // scene per query would be too slow and could catch a transient mid-layout size.
+        if (type === "toScene") {
+            return { ...rect };
+        }
+        const ancestor = type === "ancestor";
+        const [kx, ky] = this.sceneUnitsTo(!ancestor);
+        const size = { width: rect.width * Math.abs(kx), height: rect.height * Math.abs(ky) };
+        if (type === "local") {
+            return { x: 0, y: 0, ...size };
+        }
+        // `rectLocal`/`rectToParent` and `rectToScene` carry the grid's own outset identically, so it
+        // cancels out of the offset below.
+        const base = ancestor ? this.rectToParent : this.rectLocal;
+        return {
+            x: base.x + (rect.x - this.rectToScene.x) * kx,
+            y: base.y + (rect.y - this.rectToScene.y) * ky,
+            ...size,
+        };
     }
 
+    /** The zero-size rect at the grid's translation origin reported for a missing sub part. */
+    private missingSubpartRect(type: SubRectSpace, interpreter?: Interpreter): Rect {
+        if (type === "local" || type === "toParent") {
+            return { x: 0, y: 0, width: 0, height: 0 };
+        }
+        // The own rect refreshes layout, so the origin reflects pending field writes.
+        const own = super.getSubBoundingRect(type, "", interpreter);
+        // The translation origin sits `-rectLocal` local units from the rect's corner.
+        const [sx, sy] = this.getValueJS("scale") as number[];
+        const [mx, my] = type === "toScene" ? [this.sceneMap.sx, this.sceneMap.sy] : [1, 1];
+        return { x: own.x - this.rectLocal.x * sx * mx, y: own.y - this.rectLocal.y * sy * my, width: 0, height: 0 };
+    }
+
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part identifier to the matching item component:
+     * `itemX` (data-model index X), `itemX_Y` (row X — list nodes hold one component per row),
+     * `focusItem` and `focusIndicator` (both the focused item). Item components are created lazily
+     * during rendering, so an off-screen item resolves to undefined.
+     */
     protected resolveSubpart(itemNumber: string): Node | undefined {
         const name = itemNumber.trim().toLowerCase();
         let compIndex = -1;

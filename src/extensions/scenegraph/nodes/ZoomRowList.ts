@@ -497,8 +497,8 @@ export class ZoomRowList extends ArrayGrid {
     /**
      * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. Like RowList,
      * a ZoomRowList holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid
-     * `itemComps[]`), so the base resolver never matches and every query falls back to the whole-list
-     * rect. See `resolveRowItemSubpart` for the id mapping.
+     * `itemComps[]`), so the base resolver never matches and every query would miss. See
+     * `resolveRowItemSubpart` for the id mapping.
      */
     protected resolveSubpart(itemNumber: string): Node | undefined {
         return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus);

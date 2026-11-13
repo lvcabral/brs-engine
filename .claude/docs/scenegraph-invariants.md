@@ -1291,7 +1291,7 @@ a consumer-side correction whose magnitude happens to match the producer's error
 
 **All three coordinate spaces have to move together.** `rectLocal` stayed at `{0,0}` in the first cut,
 so `localBoundingRect()`/`localSubBoundingRect()` disagreed with the parent and scene rects by the
-margin (`Node.getSubBoundingRect` bases its `"local"` variant on `rectLocal`). Local is parent-space
+margin (`ArrayGrid.getSubBoundingRect` bases its `"toParent"` variant on `rectLocal`). Local is parent-space
 minus the node's own translation; fixing two of three spaces is worse than fixing none, because the
 disagreement is silent.
 
@@ -1463,7 +1463,7 @@ Three outsets meet on `subBoundingRect("item<r>_<c>")` and only two of them exis
 | outset | applied by | shows up in |
 | --- | --- | --- |
 | `rectMargins()` → `marginX`/`marginY` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
-| `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.focusFrameRect` | the **drawn** focus frame — paint only, nothing reports it |
+| `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.focusFrameRect` | the **drawn** focus frame — paint only (a device's `focusIndicator` reports a frame, see below) |
 | *(none)* | — | an **item sub-rect** |
 
 **Override `focusFrameRect`, never `renderFocus`.** `renderFocus` is a template like
@@ -1487,18 +1487,56 @@ against the same object, so the scaled size the draw computes is what the item i
 override returning a fresh object severs that link — which is what every override wants, but do it
 knowingly.
 
-The calibrated invariant is **`subBoundingRect("item<r>_<c>")` == the item component's own rect** — the
-bare poster, in all three coordinate spaces, focused cell included. `PosterGridItem` corroborates it
-independently (its sub-rect lands exactly on its poster). Pinned end-to-end over
-{HD,FHD} × {`RowList`,`ZoomRowList`} × translations by `RowListItemSubRect.test.js`, which asserts the
-*composition* rather than either mechanism, plus the CLI fixture `rowlist-subrect-app` (which derives its
-own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
+The calibrated invariant is **an item sub-rect is the item component's own rect, the bare poster,
+focused cell included**. Neither the grid's outset nor the focus frame reaches it. Each of the three
+methods reports that rect in its own space. DEVICE-MEASURED on OS 16.0 over PosterGrid, MarkupGrid and
+RowList, under an offset parent, with the grid's own scale and with two rows
+(`test/simulator/probes/subrect-space-probe`, `device-trace-os16.0.txt`):
+
+| method | space | item 1 of a grid at [100,40] in a Group at [700,40], 100x100 items 20 apart |
+| --- | --- | --- |
+| `sceneSubBoundingRect` | scene | `{920,80,100,100}` |
+| `subBoundingRect` | **the grid's own**, from its translation origin, unscaled | `{120,0,100,100}` |
+| `localSubBoundingRect` | the item's own | `{0,0,100,100}` |
+
+`subBoundingRect` is **not** the grid's parent space, whatever `ifsgnodeboundingrect.md` says ("in its
+parent node's coordinate system"). Read "parent" as the item's parent, the grid. Under the grid's own
+`scale="[0.5,0.5]"` it still reports `{120,0,100,100}` (scene `{…,50,50}`). `list-focus-motion-probe`
+corroborates `local` independently: every `localSubBoundingRect("itemN").y` is 0 on the device.
+`ancestorSubBoundingRect` walks up from the grid's **parent** space, so `getSubBoundingRect` keeps an
+internal `"ancestor"` type for it. It has no device measurement yet.
+
+**A sub part the grid does not have** (`"bogus"`, `item9` past the content, or `item2` on a 2-row
+RowList) is a **zero-size rect at the grid's translation origin**: `{0,0,0,0}` in parent/local, and the
+origin's scene point in scene space. It is *not* the grid's own rect, despite the spec. A **non-grid**
+node (a Rectangle in the same probe) does return its own rect, as the spec says. So
+`Node.getSubBoundingRect` is only that own-rect fallback, and every sub-part rule lives in
+`ArrayGrid.getSubBoundingRect`. A missing part returns a literal `{0,0,0,0}` for parent/local;
+converting the origin through scene space and back leaves a `1e-14` residue under a fractional scale,
+which breaks `r.x = 0` in an app. For scene/ancestor it reads the own rect first (which refreshes
+layout), then steps back to the origin by `rectLocal × scale`.
+
+Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), by
+`RowListItemSubRect.test.js` over {HD,FHD} × {`RowList`,`ZoomRowList`} × translations (which asserts the
+*composition* rather than either mechanism), and by the CLI fixture `rowlist-subrect-app` (which derives
+its own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
+
+**Still divergent from the probe, not fixed:**
+
+- `focusIndicator` on a device is the focus frame: the focused item outset by 21 (PosterGrid) or 22
+  (MarkupGrid/RowList) at FHD, reported even while the grid is unfocused. `local` is the outset itself
+  (`{-21,-21,142,142}`). The engine resolves it to the focused item. Those outsets match neither
+  `focus_grid.9.png`'s declared 19px margins nor PosterGrid's drawn frame, so this needs HD data too.
+- On a RowList, `itemX` is **row X** (`{focusX, rowY, itemSize.x, rowHeight}`, where `x` follows the
+  focused column), not that row's focused item.
+- RowList rows that are scrolled off or beyond `numRows` keep a stale rect, or none, in the engine. The
+  device reports them at their laid-out position, e.g. row 0 at y=-120 after focusing row 1.
 
 **The grid's own outset does not leak into an item sub-rect only because it cancels.**
-`Node.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
-where `base` is `rectToParent`/`rectLocal`. That subtraction cancels the outset **only if `base` and
-`rectToScene` carry it identically** (`Node.ts:1219-1226`). Any future per-space adjustment must therefore
-be applied to all three spaces, or it reappears as a residue in every sub-rect.
+`ArrayGrid.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
+where `base` is `rectLocal` (or `rectToParent` for the internal `"ancestor"` type). That subtraction cancels
+the outset **only if `base` and `rectToScene` carry it identically**. Any future per-space adjustment must
+therefore be applied to all three spaces, or it reappears as a residue in every sub-rect.
 
 ### Worked example: two compensating errors that read as correct
 
@@ -1522,7 +1560,7 @@ a device either.
 Two facts settled which side was wrong: `sceneSubBoundingRect` was *already* `poster − top` before the
 producer fix (the three spaces silently disagreed by `marginY`, and the fix only made `toParent`/`local`
 agree with the space that already leaked), and `PosterGridItem`'s sub-rect independently moved onto its
-poster. The consumer-side subtraction was deleted; `RowList` now inherits `Node.getSubBoundingRect`
+poster. The consumer-side subtraction was deleted; `RowList` now inherits `ArrayGrid.getSubBoundingRect`
 verbatim, like `MarkupGrid`, `MarkupList`, `LabelList` and `ZoomRowList`. Its `resolveSubpart` override
 stays — mapping `item<row>_<col>` into the 2-D `rowItemComps[row][col]` is what makes the API work at all
 (the flat `itemComps[]` stays empty on row lists) — and carries a negative comment recording that the
