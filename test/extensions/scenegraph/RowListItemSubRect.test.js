@@ -18,8 +18,8 @@ const { BrsDevice, BrsBoolean, BrsString, Int32, Interpreter } = core;
  *   3. An ITEM sub-rect gets NEITHER.
  *
  * (1) does not leak into (3) only because `Node.getSubBoundingRect` computes
- * `base.y + (subScene.y - this.rectToScene.y)` and `base` (rectToParent/rectLocal) and `rectToScene`
- * carry the outset identically, so it cancels. A `rectToParent` bug used to drop it from `base`,
+ * `rectLocal.y + (subScene.y - this.rectToScene.y)` and `rectLocal` and `rectToScene` carry the
+ * outset identically, so it cancels. A `rectToParent` bug used to drop it from `base`,
  * leaving a `+marginY` residue — which in turn hid a `-focusMargins().top` subtraction that had been
  * added to `RowList.getSubBoundingRect`. The two cancelled for one particular focus bitmap and read
  * as correct; fixing the residue surfaced the double subtraction as a focused-item overlay drawn one
@@ -147,12 +147,17 @@ describe("row grids report an item sub-rect as the bare item component", () => {
                         expect(poster.width).toBeGreaterThan(0);
                         expect(poster.height).toBeGreaterThan(0);
                         expect(round(grid.getSubBoundingRect("toScene", id, interpreter))).toEqual(poster);
-                        expect(round(grid.getSubBoundingRect("toParent", id, interpreter))).toEqual(poster);
-                        // Local space is parent space minus the node's own translation.
-                        expect(round(grid.getSubBoundingRect("local", id, interpreter))).toEqual({
+                        // DEVICE-MEASURED (subrect-space-probe): subBoundingRect is measured from the
+                        // grid's translation origin, and localSubBoundingRect is the item's own space.
+                        expect(round(grid.getSubBoundingRect("toParent", id, interpreter))).toEqual({
                             ...poster,
                             x: poster.x - translation[0],
                             y: poster.y - translation[1],
+                        });
+                        expect(round(grid.getSubBoundingRect("local", id, interpreter))).toEqual({
+                            ...poster,
+                            x: 0,
+                            y: 0,
                         });
                     }
                 });

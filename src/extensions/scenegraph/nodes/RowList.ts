@@ -127,7 +127,7 @@ export class RowList extends ArrayGrid {
             // margins (ArrayGrid.focusMargins prefers them over this value).
             //
             // It does NOT reach an item subBoundingRect: Node.getSubBoundingRect re-expresses the item
-            // rect against this node's rectToParent/rectToScene, both of which now carry the outset
+            // rect against this node's rectLocal/rectToScene, both of which carry the outset
             // identically, so it cancels. See resolveSubpart below — that cancellation is the whole
             // reason the footprint outset that used to live here was wrong.
             this.marginY = 6;
@@ -736,11 +736,12 @@ export class RowList extends ArrayGrid {
      * outsets are easy to conflate here, so keep them apart:
      *
      *  - the DRAWN focus frame is outset (`ArrayGrid.renderFocus` -> `focusMargins`, the 9-patch's own
-     *    declared content margins). That is paint only; nothing reports it.
+     *    declared content margins). Only `focusIndicator` may report it (a device does; the engine
+     *    still resolves it to the focused item), never an item sub-rect.
      *  - THIS NODE's own reported rect is outset (`rectMargins` -> `ArrayGrid.updateRect`, `marginX`/
      *    `marginY`). It does not reach an item sub-rect: `Node.getSubBoundingRect` computes
-     *    `base.y + (subScene.y - this.rectToScene.y)`, and `base` (`rectToParent`/`rectLocal`) and
-     *    `rectToScene` carry that outset identically, so it cancels.
+     *    `base.y + (subScene.y - this.rectToScene.y)`, and `base` (`rectLocal`, or `rectToParent` for
+     *    `ancestorSubBoundingRect`) and `rectToScene` carry that outset identically, so it cancels.
      *  - an ITEM sub-rect is outset by nothing at all.
      *
      * Do NOT re-add a focus-footprint outset here. One was added once (subtracting the 9-patch top

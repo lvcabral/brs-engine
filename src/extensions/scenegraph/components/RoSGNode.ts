@@ -1688,7 +1688,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                const subRect = this.getSubBoundingRect("toParent", itemNumber.getValue(), interpreter);
+                const subRect = this.getSubBoundingRect("ancestor", itemNumber.getValue(), interpreter);
                 const ancestorRect = { ...subRect };
                 let ancestorFound = false;
                 const path = this.createPath(this, false).slice(1);

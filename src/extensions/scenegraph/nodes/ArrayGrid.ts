@@ -1606,18 +1606,16 @@ export class ArrayGrid extends Group implements UITransition {
         return index;
     }
 
-    /**
-     * Resolves an ifSGNodeBoundingRect sub part identifier to the matching item component:
-     * `itemX` (data-model index X), `itemX_Y` (row X — list nodes hold one component per row),
-     * `focusItem` and `focusIndicator` (the focused item; the indicator hugs the item rect).
-     * Item components are created lazily during rendering, so an off-screen item resolves to
-     * undefined and the caller falls back to the node's own bounding rect (matching Roku's
-     * "if the subpart does not exist" behavior).
-     */
     protected needsSubBoundingRectRefresh(): boolean {
         return this.focusLayoutDirty;
     }
 
+    /**
+     * Resolves an ifSGNodeBoundingRect sub part identifier to the matching item component:
+     * `itemX` (data-model index X), `itemX_Y` (row X — list nodes hold one component per row),
+     * `focusItem` and `focusIndicator` (both the focused item). Item components are created lazily
+     * during rendering, so an off-screen item resolves to undefined.
+     */
     protected resolveSubpart(itemNumber: string): Node | undefined {
         const name = itemNumber.trim().toLowerCase();
         let compIndex = -1;
@@ -1630,6 +1628,25 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         return compIndex >= 0 ? this.itemComps[compIndex] : undefined;
+    }
+
+    /**
+     * DEVICE-MEASURED (OS 16.0, `subrect-space-probe`, PosterGrid/MarkupGrid/RowList): a sub part the
+     * grid does not have is a zero-size rect at the grid's translation origin, not the grid's own rect
+     * (which a non-grid node returns).
+     */
+    protected resolveSubpartRect(itemNumber: string): Rect {
+        const item = this.resolveSubpart(itemNumber)?.rectToScene;
+        if (item) {
+            return item;
+        }
+        const [kx, ky] = this.sceneUnitsTo(true);
+        return {
+            x: kx === 0 ? this.rectToScene.x : this.rectToScene.x - this.rectLocal.x / kx,
+            y: ky === 0 ? this.rectToScene.y : this.rectToScene.y - this.rectLocal.y / ky,
+            width: 0,
+            height: 0,
+        };
     }
 
     protected updateItemFocus(index: number, focus: boolean, nodeFocus: boolean) {

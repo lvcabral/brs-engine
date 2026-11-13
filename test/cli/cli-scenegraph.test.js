@@ -874,7 +874,7 @@ describe.concurrent("cli scenegraph", () => {
         // Group rotated 180 degrees about [32, 32] lands on the far side of the pivot, not of [0, 0]; a
         // node rotated about its own center inside a rotated Group turns its children about it too.
         // A LayoutGroup under a scaled Group spaces its items in unscaled units (device: [0, 120]), and
-        // a grid item's subBoundingRect stays in parent units (device: 100x100, scene 50x50).
+        // a grid item's subBoundingRect stays in unscaled units (device: 100x100, scene 50x50).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Group Scale Repro ===",
             "scaled child =  416, 316  32x 32",
@@ -935,16 +935,18 @@ describe.concurrent("cli scenegraph", () => {
         // reports the settled band position — matching a real device where the observer fires
         // post-layout. Without the refresh, row 1 reads its stacked y (band + one row height).
         //
-        // The reported y is the item component's own position — the grid's translation, here 120.
+        // subBoundingRect is measured from the grid's translation origin (device-measured,
+        // subrect-space-probe), so the band is y=0; sceneSubBoundingRect is at the translation, 120.
         // An item sub-rect carries NO outset: not the grid's own reported outset (RowList marginY,
-        // applied by ArrayGrid.updateRect and cancelled in Node.getSubBoundingRect because base and
-        // rectToScene both carry it), and not the drawn focus 9-patch frame. Both printed booleans
+        // applied by ArrayGrid.updateRect and cancelled in Node.getSubBoundingRect because rectLocal
+        // and rectToScene both carry it), and not the drawn focus 9-patch frame. The printed booleans
         // derive from the fixture's declared translation/rowItemSize, so nothing here can drift.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== RowList SubRect Repro ===",
-            "band row0 y =  120",
-            "focused row1 y =  120",
+            "band row0 y =  0",
+            "focused row1 y =  0",
             "SAME BAND: true",
+            "AT GRID ORIGIN: true",
             "ON POSTER: true",
             "SIZE IS POSTER: true",
             "=== RowList SubRect Repro Complete ===",

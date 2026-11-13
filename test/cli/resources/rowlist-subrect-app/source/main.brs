@@ -37,9 +37,12 @@ sub Main()
     print "SAME BAND: "; same
 
     ' The reported item rect is the bare item component, so it derives entirely from the
-    ' fixture's own declared inputs: it sits at the grid's translation and is exactly one
-    ' row item tall. Neither the grid's own rect outset nor the focus 9-patch reaches it.
-    print "ON POSTER: "; rect1.y = grid.translation[1]
-    print "SIZE IS POSTER: "; rect1.height = grid.rowItemSize[0][1]
+    ' fixture's own declared inputs: subBoundingRect is measured from the grid's translation
+    ' origin, sceneSubBoundingRect sits at the translation, and both are exactly one row item
+    ' tall. Neither the grid's own rect outset nor the focus 9-patch reaches them.
+    scene1 = grid.sceneSubBoundingRect("item1_0")
+    print "AT GRID ORIGIN: "; rect1.y = 0
+    print "ON POSTER: "; scene1.y = grid.translation[1]
+    print "SIZE IS POSTER: "; rect1.height = grid.rowItemSize[0][1] and scene1.height = rect1.height
     print "=== RowList SubRect Repro Complete ==="
 end sub

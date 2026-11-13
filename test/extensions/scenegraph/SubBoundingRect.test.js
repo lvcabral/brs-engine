@@ -37,11 +37,16 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         expect(node.getSubBoundingRect("toScene", "item1_2")).toEqual(node.rectToScene);
     });
 
+    // DEVICE-MEASURED (Roku OS 16.0, probe `subrect-space-probe`): subBoundingRect is measured from the
+    // grid's own translation origin (not its parent's), localSubBoundingRect is the item's own space,
+    // and a sub part the grid does not have is a zero-size rect at the grid's origin.
     test("resolves itemX and focusItem on an ArrayGrid-derived node", () => {
         const grid = new MarkupGrid();
-        grid.rectToParent = { x: 10, y: 20, width: 438, height: 800 };
-        grid.rectLocal = { x: 0, y: 0, width: 438, height: 800 };
-        grid.rectToScene = { x: 100, y: 200, width: 438, height: 800 };
+        // Translation [10,20] under a parent at scene [90,180], with the grid's own rect outset by
+        // [10,12]: the outset must cancel out of every sub part rect.
+        grid.rectToParent = { x: 0, y: 8, width: 458, height: 824 };
+        grid.rectLocal = { x: -10, y: -12, width: 458, height: 824 };
+        grid.rectToScene = { x: 90, y: 188, width: 458, height: 824 };
 
         // Simulate two rendered item components (itemComps are created during rendering).
         const item0 = new Group([], "Group");
@@ -53,28 +58,37 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         grid.content.push(new ContentNode(), new ContentNode());
         grid.focusIndex = 1;
 
-        // itemX in the parent's coordinate system: grid position + offset within the grid.
-        expect(grid.getSubBoundingRect("toParent", "item1")).toEqual({ x: 10, y: 104, width: 438, height: 72 });
-        // itemX in the grid's local coordinate system.
-        expect(grid.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 84, width: 438, height: 72 });
+        // itemX relative to the grid's translation origin.
+        expect(grid.getSubBoundingRect("toParent", "item1")).toEqual({ x: 0, y: 84, width: 438, height: 72 });
+        expect(grid.getSubBoundingRect("toParent", "item0")).toEqual({ x: 0, y: 0, width: 438, height: 72 });
+        // itemX in its own coordinate system.
+        expect(grid.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 0, width: 438, height: 72 });
         // itemX in scene coordinates is the tracked rect itself.
         expect(grid.getSubBoundingRect("toScene", "item0")).toEqual(item0.rectToScene);
         // focusItem/focusIndicator resolve to the focused item component.
-        expect(grid.getSubBoundingRect("toParent", "focusItem")).toEqual({ x: 10, y: 104, width: 438, height: 72 });
+        expect(grid.getSubBoundingRect("toParent", "focusItem")).toEqual({ x: 0, y: 84, width: 438, height: 72 });
         expect(grid.getSubBoundingRect("toParent", "focusIndicator")).toEqual({
-            x: 10,
-            y: 104,
+            x: 0,
+            y: 84,
             width: 438,
             height: 72,
         });
-        // An item that was never rendered (no component yet) falls back to the grid's rect.
-        expect(grid.getSubBoundingRect("toParent", "item7")).toEqual(grid.rectToParent);
+        // ancestorSubBoundingRect walks up from the grid's parent space.
+        expect(grid.getSubBoundingRect("ancestor", "item1")).toEqual({ x: 10, y: 104, width: 438, height: 72 });
+        // An item with no component (never rendered, or out of range) is a zero rect at the grid's origin.
+        for (const id of ["item7", "bogus"]) {
+            expect(grid.getSubBoundingRect("toParent", id)).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+            expect(grid.getSubBoundingRect("local", id)).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+            expect(grid.getSubBoundingRect("toScene", id)).toEqual({ x: 100, y: 200, width: 0, height: 0 });
+            expect(grid.getSubBoundingRect("ancestor", id)).toEqual({ x: 10, y: 20, width: 0, height: 0 });
+        }
     });
 
     // DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe` S4): under a scaled ancestor the
-    // parent and local sub part rects stay in those spaces' units (a 100x100 PosterGrid item under
-    // a Group scaled 0.5 reports subBoundingRect 100x100 and sceneSubBoundingRect 50x50).
-    test("re-expresses an itemX scene rect in parent and local units under ancestor and own scale", () => {
+    // parent and local sub part rects are in the grid's unscaled units (a 100x100 PosterGrid item under
+    // a Group scaled 0.5 reports subBoundingRect 100x100 and sceneSubBoundingRect 50x50; the same under
+    // the grid's own scale 0.5 in `subrect-space-probe`).
+    test("re-expresses an itemX scene rect in unscaled units under ancestor and own scale", () => {
         const grid = new MarkupGrid();
         grid.setValue("scale", new RoArray([new Float(0.5), new Float(0.5)]));
         // Ancestors scale by 0.5 and the grid by another 0.5: one parent unit is 0.5 scene units,
@@ -89,8 +103,9 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         grid.itemComps[1] = item1;
         grid.content.push(new ContentNode(), new ContentNode());
 
-        expect(grid.getSubBoundingRect("toParent", "item1")).toEqual({ x: 10, y: 62, width: 220, height: 36 });
-        expect(grid.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 84, width: 440, height: 72 });
+        expect(grid.getSubBoundingRect("toParent", "item1")).toEqual({ x: 0, y: 84, width: 440, height: 72 });
+        expect(grid.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 0, width: 440, height: 72 });
+        expect(grid.getSubBoundingRect("ancestor", "item1")).toEqual({ x: 10, y: 62, width: 220, height: 36 });
         expect(grid.getSubBoundingRect("toScene", "item1")).toEqual(item1.rectToScene);
     });
 
@@ -129,8 +144,8 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
             expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
             // item<row> (no underscore) resolves to that row's focused column (non-focused row 0 → col 1).
             expect(list.getSubBoundingRect("toScene", "item0")).toEqual(list.rowItemComps[0][1].rectToScene);
-            // An unrendered cell falls back to the list's own rect.
-            expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual(list.rectToScene);
+            // An unrendered cell is a zero rect at the list's origin.
+            expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
         });
     }
 
@@ -222,7 +237,7 @@ describe("ancestorSubBoundingRect", () => {
         sgRoot.rendering = true;
         try {
             const result = grid.getMethod("ancestorSubBoundingRect").call(interpreter, new BrsString("item1"), scene);
-            // subBoundingRect("item1") is {10,104} in the grid's parent (group) space; adding the
+            // item1 is {10,104} in the grid's parent (group) space; adding the
             // group's own parent-space offset {50,60} re-expresses it in the scene's coordinate system.
             expect(readRect(result)).toEqual({ x: 60, y: 164, width: 438, height: 72 });
         } finally {
@@ -239,7 +254,7 @@ describe("ancestorSubBoundingRect", () => {
             const result = grid
                 .getMethod("ancestorSubBoundingRect")
                 .call(interpreter, new BrsString("item1"), stranger);
-            // Not an ancestor: returns subBoundingRect("item1") unchanged (grid's parent space).
+            // Not an ancestor: returns item1 in the grid's parent space.
             expect(readRect(result)).toEqual({ x: 10, y: 104, width: 438, height: 72 });
         } finally {
             sgRoot.rendering = false;
