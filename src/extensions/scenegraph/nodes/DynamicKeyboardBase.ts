@@ -10,9 +10,10 @@ import { sgRoot } from "../SGRoot";
 /** A key grid mode split into its character set and case, e.g. "SymbolsShift". */
 interface ModeParts {
     set: string;
-    caps: boolean;
-    shift: boolean;
+    suffix: CaseSuffix;
 }
+
+type CaseSuffix = "Lower" | "Upper" | "Shift";
 
 /** The character-set keys' strOut (lowercased) → the mode's set name. */
 const CHAR_SET_KEYS = new Map([
@@ -42,8 +43,7 @@ export class DynamicKeyboardBase extends Group {
     private readonly textBoxHeight: number;
     private readonly gap: number;
     private lastHideTextBox = false; // matches the hideTextBox default / textEditBox visible default
-    // A shift that shows <Set>Upper for one key: under caps lock (back to Upper after it), or in a
-    // layout without <Set>Shift grids (back to Lower). Only valid while the mode is the one it set.
+    // A pending one-shot shift shown as <Set>Upper (see toggleShift); valid only while mode === `mode`.
     private armedShift?: { mode: string; restore: "Upper" | "Lower" };
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicKeyboardBase) {
@@ -161,11 +161,11 @@ export class DynamicKeyboardBase extends Group {
             return;
         }
         // The case to return to once this key consumes a pending shift (undefined: not shifted).
-        const restore = this.takeArmedShift()?.restore ?? (parts?.shift ? "Lower" : undefined);
-        const caps = restore ? restore === "Upper" : parts?.caps === true;
+        const restore = this.takeArmedShift()?.restore ?? (parts?.suffix === "Shift" ? "Lower" : undefined);
         const charSet = CHAR_SET_KEYS.get(key);
         if (charSet || key === "capslock") {
             // Character-set keys keep caps lock and drop shift; caps lock toggles it.
+            const caps = (restore ?? parts?.suffix) === "Upper";
             const upper = charSet ? caps : !caps;
             this.writeMode(parts, upper ? "Upper" : "Lower", charSet);
             return;
@@ -227,23 +227,23 @@ export class DynamicKeyboardBase extends Group {
 
     /**
      * Splits the key grid's mode into its character set and case, e.g. "SymbolsShift" →
-     * { set: "Symbols", shift: true }; undefined for a layout without modes.
+     * { set: "Symbols", suffix: "Shift" } (no suffix reads as Lower); undefined for a layout without modes.
      */
     private modeParts(): ModeParts | undefined {
-        const mode = this.keyGrid.getValueJS("mode") as string;
+        const mode = this.keyGrid.mode;
         if (!mode) {
             return undefined;
         }
         const match = /^(.*?)(Lower|Upper|Shift)$/.exec(mode);
         const set = match ? match[1] : mode;
-        return { set, caps: match?.[2] === "Upper", shift: match?.[2] === "Shift" };
+        return { set, suffix: (match?.[2] as CaseSuffix | undefined) ?? "Lower" };
     }
 
     /**
      * Writes `<set><suffix>` to the key grid's mode (`set` defaults to the current one); a no-op for a
      * layout without modes. The device rewrites the mode even when unchanged, so observers fire.
      */
-    private writeMode(parts: ModeParts | undefined, suffix: "Lower" | "Upper" | "Shift", set?: string) {
+    private writeMode(parts: ModeParts | undefined, suffix: CaseSuffix, set?: string) {
         if (parts) {
             this.keyGrid.setValue("mode", new BrsString((set ?? parts.set) + suffix));
         }
@@ -259,11 +259,11 @@ export class DynamicKeyboardBase extends Group {
             return;
         } else if (armed) {
             this.writeMode(parts, armed.restore);
-        } else if (parts.shift) {
+        } else if (parts.suffix === "Shift") {
             this.writeMode(parts, "Lower");
-        } else if (parts.caps || !this.keyGrid.hasMode(`${parts.set}Shift`)) {
+        } else if (parts.suffix === "Upper" || !this.keyGrid.hasMode(`${parts.set}Shift`)) {
             this.writeMode(parts, "Upper");
-            this.armedShift = { mode: `${parts.set}Upper`, restore: parts.caps ? "Upper" : "Lower" };
+            this.armedShift = { mode: `${parts.set}Upper`, restore: parts.suffix === "Upper" ? "Upper" : "Lower" };
         } else {
             this.writeMode(parts, "Shift");
         }
@@ -273,7 +273,7 @@ export class DynamicKeyboardBase extends Group {
     private takeArmedShift() {
         const armed = this.armedShift;
         this.armedShift = undefined;
-        return armed?.mode === this.keyGrid.getValueJS("mode") ? armed : undefined;
+        return armed?.mode === this.keyGrid.mode ? armed : undefined;
     }
 
     // -------------------------------------------------------------------------

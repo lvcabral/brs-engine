@@ -8,7 +8,7 @@
  * bitmap (`DynamicKeyGrid.THEME_ICON_ALIASES`/`resolveIcon()`) since it doesn't ship Roku's
  * actual system theme graphics.
  */
-import { KeyLayout, RowDef } from "./KeyDefinition";
+import { KeyLayout } from "./KeyDefinition";
 
 const clearKey = { icon: "theme:DKB_ClearKeyBitmap", focusIcon: "theme:DKB_ClearKeyFocusBitmap", strOut: "clear" };
 const spaceKey = { icon: "theme:DKB_SpaceKeyBitmap", focusIcon: "theme:DKB_SpaceKeyFocusBitmap", strOut: "space" };
@@ -72,8 +72,8 @@ const lblRow = (chars: string) => ({ keys: chars.split("").map((label) => ({ lab
 const rowOf = (labels: string[]) => ({ keys: labels.map((label) => ({ label })) });
 // A row of single-character labels padded with blank keys (drawn as empty, unfocusable cells) up
 // to `count` keys, as Roku's reference KDF does, so a short row keeps the grid's column widths.
-const padRow = (chars: string, count: number): RowDef => ({
-    keys: [...chars.split("").map((label) => ({ label })), ...Array.from({ length: count - chars.length }, () => ({}))],
+const padRow = (chars: string, count: number) => ({
+    keys: [...lblRow(chars).keys, ...Array.from({ length: count - chars.length }, () => ({}))],
 });
 // A mode-toggle sidebar key (caps/abc123/symbols/accents), themed with Roku's DKB_*Mod{On,Off}
 // icon pair for the given on/off state.

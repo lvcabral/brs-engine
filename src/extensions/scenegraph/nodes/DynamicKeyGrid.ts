@@ -187,7 +187,7 @@ export class DynamicKeyGrid extends Group {
         this.focusActive = active;
     }
 
-    private get mode(): string {
+    get mode(): string {
         return (this.getValueJS("mode") as string) ?? "";
     }
 
@@ -372,7 +372,7 @@ export class DynamicKeyGrid extends Group {
             if (!wrap) {
                 return false; // propagate to ancestors
             }
-            next = this.findWrap(dir);
+            next = this.findNeighbor(dir, true);
         }
         if (next === undefined || next < 0) {
             return false;
@@ -384,19 +384,24 @@ export class DynamicKeyGrid extends Group {
     }
 
     /**
-     * Extra score for moving left/right from `cur` to `key`, or undefined when not allowed: within a
-     * section left/right stay in the current row; in another section a key spanning the row (`cy`)
-     * is preferred, but any is allowed so uneven sections stay reachable.
+     * Ranks moving left/right from `cur` to `key`: 0 for the same row, 1 for a key in another section
+     * that doesn't span the row (`cy`), so uneven sections stay reachable; undefined (not allowed) for
+     * another row of the same section. Up/down are always tier 0.
      */
-    private rowPenalty(key: RenderedKey, cur: RenderedKey, cy: number): number | undefined {
-        if (key.section === cur.section) {
+    private rowTier(dir: NavKeys, key: RenderedKey, cur: RenderedKey, cy: number): number | undefined {
+        if (dir === "up" || dir === "down") {
+            return 0;
+        } else if (key.section === cur.section) {
             return key.row === cur.row ? 0 : undefined;
         }
-        return key.y <= cy && cy < key.y + key.height ? 0 : 100_000;
+        return key.y <= cy && cy < key.y + key.height ? 0 : 1;
     }
 
-    /** Finds the nearest focusable key in a direction (left/right: see rowPenalty), or undefined if none. */
-    private findNeighbor(dir: NavKeys): number | undefined {
+    /**
+     * Finds the nearest focusable key in a direction, or with `wrap` the one at the opposite edge,
+     * aligned to the current key (left/right: see rowTier); undefined if none.
+     */
+    private findNeighbor(dir: NavKeys, wrap = false): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
             return undefined;
@@ -404,86 +409,28 @@ export class DynamicKeyGrid extends Group {
         const cx = cur.x + cur.width / 2;
         const cy = cur.y + cur.height / 2;
         let best: number | undefined;
+        let bestTier = Infinity;
         let bestScore = Infinity;
         for (let i = 0; i < this.renderedKeys.length; i++) {
-            if (i === this.focusIndex || !this.keyFocusable(this.renderedKeys[i])) {
-                continue;
-            }
             const k = this.renderedKeys[i];
-            const penalty = dir === "left" || dir === "right" ? this.rowPenalty(k, cur, cy) : 0;
-            if (penalty === undefined) {
+            const tier = this.rowTier(dir, k, cur, cy);
+            if (i === this.focusIndex || !this.keyFocusable(k) || tier === undefined) {
                 continue;
             }
             const dx = k.x + k.width / 2 - cx;
             const dy = k.y + k.height / 2 - cy;
-            let primary: number;
-            let secondary: number;
-            if (dir === "right") {
-                if (dx <= 1) continue;
-                primary = dx;
-                secondary = Math.abs(dy);
-            } else if (dir === "left") {
-                if (dx >= -1) continue;
-                primary = -dx;
-                secondary = Math.abs(dy);
-            } else if (dir === "down") {
-                if (dy <= 1) continue;
-                primary = dy;
-                secondary = Math.abs(dx);
-            } else {
-                if (dy >= -1) continue;
-                primary = -dy;
-                secondary = Math.abs(dx);
-            }
-            const score = primary + secondary * 4 + penalty; // weight cross-axis to keep alignment
-            if (score < bestScore) {
-                bestScore = score;
-                best = i;
-            }
-        }
-        return best;
-    }
-
-    /** Wraps focus to the opposite edge of the grid: the row's far key for left/right (see rowPenalty). */
-    private findWrap(dir: NavKeys): number | undefined {
-        const cur = this.renderedKeys[this.focusIndex];
-        if (!cur) {
-            return undefined;
-        }
-        const cx = cur.x + cur.width / 2;
-        const cy = cur.y + cur.height / 2;
-        let best: number | undefined;
-        let bestScore = Infinity;
-        for (let i = 0; i < this.renderedKeys.length; i++) {
-            if (i === this.focusIndex || !this.keyFocusable(this.renderedKeys[i])) {
+            // Distance along the direction (negative behind the current key) and across it. Without
+            // `wrap` only keys ahead count; with it the smallest `along` is the far edge behind.
+            const along = { right: dx, left: -dx, down: dy, up: -dy }[dir];
+            const across = dir === "left" || dir === "right" ? Math.abs(dy) : Math.abs(dx);
+            if (!wrap && along <= 1) {
                 continue;
             }
-            const k = this.renderedKeys[i];
-            const penalty = dir === "left" || dir === "right" ? this.rowPenalty(k, cur, cy) : 0;
-            if (penalty === undefined) {
-                continue;
-            }
-            const kx = k.x + k.width / 2;
-            const ky = k.y + k.height / 2;
-            let primary: number;
-            let secondary: number;
-            if (dir === "right") {
-                primary = kx; // leftmost
-                secondary = Math.abs(ky - cy);
-            } else if (dir === "left") {
-                primary = -kx; // rightmost
-                secondary = Math.abs(ky - cy);
-            } else if (dir === "down") {
-                primary = ky; // topmost
-                secondary = Math.abs(kx - cx);
-            } else {
-                primary = -ky; // bottommost
-                secondary = Math.abs(kx - cx);
-            }
-            const score = primary + secondary * 4 + penalty;
-            if (score < bestScore) {
-                bestScore = score;
+            const score = along + across * 4; // weight the cross-axis to keep alignment
+            if (tier < bestTier || (tier === bestTier && score < bestScore)) {
                 best = i;
+                bestTier = tier;
+                bestScore = score;
             }
         }
         return best;
