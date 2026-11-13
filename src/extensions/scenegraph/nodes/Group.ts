@@ -24,6 +24,7 @@ import type { Poster } from "./Poster";
 import type { Rectangle } from "./Rectangle";
 import type { ScrollingLabel } from "./ScrollingLabel";
 import { Node } from "./Node";
+import { Field } from "./Field";
 import { FieldKind, FieldModel, isFont } from "../SGTypes";
 import { SGNodeType } from ".";
 import {
@@ -47,6 +48,12 @@ import { jsValueOf } from "../factory/Serializer";
 
 /** The pivot of a node that neither rotates nor inherits a rotation: never read. */
 const NO_CENTER: number[] = [0, 0];
+
+/** The origin a node with `inheritParentTransform` false draws from. Never mutated. */
+const SCENE_ORIGIN: number[] = [0, 0];
+
+/** What a detached node with nothing measured reports. Never mutated. */
+const EMPTY_RECT: Rect = Object.freeze({ x: 0, y: 0, width: 0, height: 0 });
 
 /** `origin + R(angle) * translation`: where a node at `translation` sits under `origin`. */
 function drawTranslationOf(translation: number[], origin: number[], angle: number): number[] {
@@ -110,6 +117,12 @@ export class Group extends Node {
     private placedScale: number[] = UNIT_SCALE;
     private placedRotation = 0;
     private placedCenter: number[] = NO_CENTER;
+    /** Where `placeLocalRect` anchored this node in its scene units; current while `placedTrans` is. */
+    private placedAnchor: number[] = SCENE_ORIGIN;
+    /** `isTransformDetached()` as of this node's current render, read once by the `renderNode` template. */
+    private detached = false;
+    /** The origin, angle and scene map a detached node would have drawn under, from its last render. */
+    private detachedFrom: { origin: number[]; angle: number; sceneMap: SceneMap } | undefined = undefined;
     /** @internal Number of non-skipped render passes this node has run; exposed for pruning tests. */
     layoutPassCount = 0;
 
@@ -791,6 +804,7 @@ export class Group extends Node {
         this.placedRotation = ownRotation;
         this.placedCenter = center;
         const anchor = pivotAnchor(drawTrans, angle, scale, center);
+        this.placedAnchor = anchor;
         this.rectToScene = mapRectToScene(
             this.sceneMap,
             transformLocalRect(this.rectLocal, anchor, scale, rotation, center)
@@ -807,7 +821,10 @@ export class Group extends Node {
             return;
         }
         const parent = this.parent;
-        parent.rectLocal = unionRect(parent.rectLocal, this.rectToParent);
+        // A detached node reports its local rect as its parent rect (see `getBoundingRect`), and its
+        // parent unions that.
+        const toParent = this.detached ? this.detachedRect() : this.rectToParent;
+        parent.rectLocal = unionRect(parent.rectLocal, toParent);
         if (parent.rederivesBounds) {
             // A container mid-pass re-derives both from rectLocal once its children are done.
             return;
@@ -823,9 +840,62 @@ export class Group extends Node {
             parentRotation = parent.getRotation();
             parentCenter = parentRotation === 0 ? NO_CENTER : parent.getScaleRotateCenter();
         }
-        const inParent = transformLocalRect(this.rectToParent, parentTrans, parentScale, parentRotation, parentCenter);
+        const inParent = transformLocalRect(toParent, parentTrans, parentScale, parentRotation, parentCenter);
         parent.rectToParent = unionRect(parent.rectToParent, inParent);
-        parent.rectToScene = unionRect(parent.rectToScene, this.rectToScene);
+        if (!this.detached) {
+            parent.rectToScene = unionRect(parent.rectToScene, this.rectToScene);
+        } else if (parent.placedTrans !== undefined) {
+            const sceneRotation = parent.inheritedAngle + parent.placedRotation;
+            const inScene = transformLocalRect(toParent, parent.placedAnchor, parentScale, sceneRotation, parentCenter);
+            parent.rectToScene = unionRect(parent.rectToScene, mapRectToScene(parent.sceneMap, inScene));
+        }
+    }
+
+    /**
+     * DEVICE-MEASURED (Roku OS 16, probe `test/simulator/probes/group-scale-probe` page 3): a node
+     * with `inheritParentTransform` false reports its local rect as its parent and scene rects,
+     * whatever its own translation, scale or rotation; and a node under such an ancestor reports its
+     * scene rect as if no ancestor were detached. The rects the node is drawn with stay in
+     * `rectToParent`/`rectToScene`, which layout and `renderTracking` keep using.
+     */
+    getBoundingRect(type: string, interpreter?: Interpreter): Rect {
+        const rect = super.getBoundingRect(type, interpreter);
+        if (type === "local" || !Field.transformDetachUsed) {
+            return rect;
+        }
+        if (this.isTransformDetached()) {
+            return this.detachedRect();
+        }
+        if (type === "toScene") {
+            return this.sceneRectThroughDetachedAncestors() ?? rect;
+        }
+        return rect;
+    }
+
+    /**
+     * This node's drawn scene rect taken through the context each detached ancestor was entered with,
+     * innermost first; `undefined` without a detached ancestor, as `rectToScene` already holds that.
+     */
+    private sceneRectThroughDetachedAncestors(): Rect | undefined {
+        let rect: Rect | undefined;
+        for (let node = this.getNodeParent(); node instanceof Node; node = node.getNodeParent()) {
+            if (!(node instanceof Group) || node.detachedFrom === undefined || !node.isTransformDetached()) {
+                continue;
+            }
+            const context = node.detachedFrom;
+            rect ??= this.rectToScene;
+            if (!Number.isFinite(rect.x)) {
+                return undefined;
+            }
+            const inParent = transformLocalRect(rect, context.origin, UNIT_SCALE, context.angle, NO_CENTER);
+            rect = mapRectToScene(context.sceneMap, inParent);
+        }
+        return rect;
+    }
+
+    /** The rect a detached node reports and its parent unions: its local rect, empty at its origin if unset. */
+    private detachedRect(): Rect {
+        return Number.isFinite(this.rectLocal.x) ? this.rectLocal : EMPTY_RECT;
     }
 
     handleKey(key: string, press: boolean) {
@@ -849,6 +919,64 @@ export class Group extends Node {
      * Measurement/layout passes stay unclipped: `pushClippingRect` no-ops without a `draw2D`.
      */
     renderNode(interpreter: Interpreter, origin: number[], angle: number, opacity: number, draw2D?: IfDraw2D) {
+        this.detached = Field.transformDetachUsed && this.isTransformDetached();
+        if (this.detached) {
+            this.renderDetached(interpreter, origin, angle, opacity, draw2D);
+            return;
+        }
+        this.renderInContext(interpreter, origin, angle, opacity, draw2D);
+    }
+
+    /**
+     * Whether `inheritParentTransform` is false. DEVICE-MEASURED (Roku OS 16, probe
+     * `test/simulator/probes/group-scale-probe` S7 and page 3): the node then draws in scene space
+     * with only its own translation, scale, rotation and `clippingRect`, and its children draw
+     * relative to it. An ancestor's `clippingRect` still applies, and opacity is still inherited.
+     */
+    protected isTransformDetached(): boolean {
+        if (!Field.transformDetachUsed) {
+            return false;
+        }
+        return this.getValueJS("inheritParentTransform") === false;
+    }
+
+    /** Renders this node as if it were the root of the scene: no inherited translation, angle or scale. */
+    private renderDetached(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
+        const outerMap = sgRoot.sceneMap;
+        if (this.detachedFrom === undefined) {
+            this.detachedFrom = { origin: [origin[0], origin[1]], angle, sceneMap: outerMap };
+        } else {
+            this.detachedFrom.origin[0] = origin[0];
+            this.detachedFrom.origin[1] = origin[1];
+            this.detachedFrom.angle = angle;
+            this.detachedFrom.sceneMap = outerMap;
+        }
+        // The canvas carries exactly the scale frames `sgRoot.sceneMap` records, so there is nothing
+        // to undo under the identity map.
+        const depth = draw2D && outerMap !== IDENTITY_SCENE_MAP ? draw2D.pushTransformReset() : -1;
+        sgRoot.sceneMap = IDENTITY_SCENE_MAP;
+        try {
+            this.renderInContext(interpreter, SCENE_ORIGIN, 0, opacity, draw2D);
+        } finally {
+            sgRoot.sceneMap = outerMap;
+            draw2D?.popScaleFrame(depth);
+        }
+    }
+
+    /** The body of the `renderNode` template, under the transform context the node draws in. */
+    private renderInContext(
+        interpreter: Interpreter,
+        origin: number[],
+        angle: number,
+        opacity: number,
+        draw2D?: IfDraw2D
+    ) {
         this.sceneMap = sgRoot.sceneMap;
         this.inheritedAngle = angle;
         this.placedTrans = undefined;

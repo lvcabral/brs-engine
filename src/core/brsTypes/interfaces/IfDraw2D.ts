@@ -561,12 +561,35 @@ export class IfDraw2D {
         if (!this.pushScale(pivotX, pivotY, scaleX, scaleY)) {
             return -1;
         }
+        return this.enterFrame();
+    }
+
+    /**
+     * Opens a frame that draws in the canvas's untransformed (screen) coordinates, discarding every
+     * enclosing scale frame: a SceneGraph node with `inheritParentTransform` false. Clips already
+     * pushed stay in force, since a canvas clip is fixed in device space when it is set. Same clip-stack
+     * entry as `pushScaleFrame`; close it with `popScaleFrame`.
+     *
+     * @returns The depth to hand back to `popScaleFrame`.
+     */
+    pushTransformReset(): number {
+        const ctx = this.component.getContext();
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        return this.enterFrame();
+    }
+
+    /** Records a frame just saved on the context as a clip-stack entry; returns its depth. */
+    private enterFrame(): number {
         const depth = this.clipDepth;
         this.clipDepth++;
         return depth;
     }
 
-    /** Closes the frame `pushScaleFrame` returned `depth` for, with every clip still open inside it. */
+    /**
+     * Closes the frame `pushScaleFrame` or `pushTransformReset` returned `depth` for, with every clip
+     * still open inside it.
+     */
     popScaleFrame(depth: number): void {
         if (depth < 0) {
             return;

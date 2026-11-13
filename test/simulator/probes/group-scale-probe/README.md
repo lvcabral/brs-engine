@@ -2,11 +2,13 @@
 
 Checks how a Group's `scale` / `rotation` / `scaleRotateCenter` reach descendants against a real device,
 read back through `localBoundingRect()` / `boundingRect()` / `sceneBoundingRect()`, plus a screenshot for
-the cases that can only be checked visually. Two pages:
+the cases that can only be checked visually. Three pages:
 
 - **Page 1** (`GroupScaleScene`, default): the review findings on PR #1257, cases S1-S9.
 - **Page 2** (`GroupScaleReviewScene`, launch param `scene=review`): the review findings on PR #1291,
   cases R1-R4.
+- **Page 3** (`GroupScaleDetachScene`, launch param `scene=detach`): `inheritParentTransform="false"`
+  (issue #1261), cases D0-D11.
 
 ## Run
 
@@ -19,6 +21,8 @@ curl --digest -u "rokudev:<devpassword>" -F mysubmit=Install -F "archive=@../gro
 telnet <roku-ip> 8085
 # page 2 (pass any run=<nonce> to tell this run's lines from console replays):
 curl -d '' "http://<roku-ip>:8060/launch/dev?scene=review&run=1"
+# page 3:
+curl -d '' "http://<roku-ip>:8060/launch/dev?scene=detach&run=1"
 ```
 
 Engine:
@@ -26,6 +30,7 @@ Engine:
 ```bash
 node packages/node/bin/brs.cli.js --root test/simulator/probes/group-scale-probe
 node packages/node/bin/brs.cli.js --root test/simulator/probes/group-scale-probe --deep-link scene=review
+node packages/node/bin/brs.cli.js --root test/simulator/probes/group-scale-probe --deep-link scene=detach
 ```
 
 The trace prints after a settle Timer (1 s on page 1, 1.5 s on page 2). The scene then stays up for 8 s so
@@ -43,6 +48,8 @@ Captured files (screenshots are of the FHD scene):
 | `device-trace-review.txt` / `device-screenshot-review.jpg` | 2 | Streaming Stick+, Roku OS 15.3.4 |
 | `engine-trace-review-pr1291.txt` / `engine-screenshot-review-pr1291.png` | 2 | PR #1291 head `52d59cb` |
 | `engine-trace-review.txt` / `engine-screenshot-review.png` | 2 | PR #1291 with the review fixes |
+| `device-trace-detach.txt` / `device-screenshot-detach.jpg` | 3 | Roku Express 4K+, Roku OS 16.0.4 |
+| `engine-trace-detach.txt` / `engine-screenshot-detach.png` | 3 | the #1261 fix |
 
 ## Output format
 
@@ -70,8 +77,17 @@ PROBE|<seq>|<case>|<node>|local={...} parent={...} scene={...}
   items gives translations `0, 60, 120`.
 - A node type that places its own content (TargetGroup items, LabelList rows, PanelSet panels) scales all
   of it around its translation (R4): a LabelList scaled 0.5 draws 300x50 rows at 150x25, 25 apart.
-- `inheritParentTransform=false` detaches the node completely. It draws at its own `translation` in
-  scene space, unscaled, and its `boundingRect()` / `sceneBoundingRect()` report `{0,0,64,64}`.
+- `inheritParentTransform=false` detaches the node from every ancestor's transform (page 3):
+  - It draws in scene space with only its own translation, scale, rotation and `clippingRect`, and its
+    children draw relative to it (D0-D4, D7, D9). An ancestor's `clippingRect` still clips it (D6).
+  - Its `boundingRect()` and `sceneBoundingRect()` both equal its `localBoundingRect()`, even with its own
+    scale or rotation (`d1` `{0,0,200,100}`, `d2` `{0,0,100,100}`, `d3b` `{40,40,100,100}`). Its parent
+    unions that rect through the parent's transform as usual.
+  - Its descendants report `sceneBoundingRect()` as if no ancestor were detached (`c3` `{1060,765,40,30}`
+    through `g3`'s scale 0.5), and their `boundingRect()` normally.
+  - `renderTracking` follows where it is drawn: off-screen `none`, over an edge `partial` (D5).
+  - A LayoutGroup still gives it a slot and sets its `translation` (`b11` `[0,60]`), and it is drawn at
+    that translation in scene space (D11).
 - A MaskGroup under `scale=0.5`: the content is scaled, but the mask keeps its unscaled `maskSize`,
   anchored at the scaled origin. The visible result is a quarter circle.
 
@@ -93,7 +109,7 @@ PROBE|<seq>|<case>|<node>|local={...} parent={...} scene={...}
 | PR's own rotation pivot | S9 `chip` | `{1332,832}` | `{1268,768}` ✗ | ✓ | PR fix is correct |
 
 With the PR #1291 review fixes (`engine-trace.txt`), page 1 differs from the device only in the gaps
-below: S4 sub rects, S5 font metrics and S7.
+below: S4 sub rects, S5 font metrics and S7 (S7 now matches too: see page 3).
 
 ## Page 2: results vs. PR #1291 review findings
 
@@ -114,10 +130,17 @@ engine-internal and have no device-visible case; they are pinned by unit tests
 Also found on page 2: a grid drawn inside a scale frame stopped placing rows at the UNSCALED screen
 edge, so a scaled list near the bottom of the screen lost rows the device shows. Fixed with the rest.
 
+## Page 3: `inheritParentTransform="false"` (issue #1261)
+
+With the fix, `engine-trace-detach.txt` matches the device on every rect, `renderTracking` and LayoutGroup
+line, and `engine-screenshot-detach.png` matches the device screenshot. The one difference is the D9 Label
+width (150 vs. 156), which is font metrics.
+
 ## Gaps outside these PRs (wrong on master too)
 
-- A rotated Group's own `boundingRect()` ignores its rotation. Device: `spun` parent `{1332,832}`,
-  `g6` parent `y=-21`. Engine: `{1300,800}` / `y=79`.
+- ~~A rotated Group's own `boundingRect()` ignores its rotation~~ (issue #1260). Fixed on master by PR #1291:
+  `spun` parent `{1332,832}` and `g6` parent `y=-21` now match the device. Pinned by
+  `test/extensions/scenegraph/InheritParentTransform.test.js`.
 - `PosterGrid.subBoundingRect("itemR_C")` returns scene coordinates (`{100,560,...}`); the device returns
   `{0,0,100,100}`. On the device, every item also reports the same rect. Same for LabelList
   `sceneSubBoundingRect("itemN")` (device `{500,820,150,25}`, engine the whole list rect).
@@ -130,4 +153,4 @@ edge, so a scaled list near the bottom of the screen lost rows the device shows.
   rect leaves out its arrows/header area (device local `{97,0,1726,300}`).
 - On Roku OS 15.3 the `Effect` node exists but its `borderRadius` shows no rounded corners (R2 `p2e`); the
   engine rounds them.
-- `inheritParentTransform=false` (S7) is not implemented.
+- ~~`inheritParentTransform=false` (S7) is not implemented~~ (issue #1261). Implemented; see page 3.

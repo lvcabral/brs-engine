@@ -46,11 +46,10 @@ parent above them. Regression: `ClippingRect.test.js`.
   two behaviors are identical whenever the inherited angle is 0, which is why the split survived so
   long. Regression: `RotatedTranslation.test.js`.
 
-  **Still open, and NOT the same bug:** a *container's* reported extent under rotation is off. With the
-  translation fixed, a `Group` wrapping a 20×20 marker under a 90°-rotated host reports scene y = 220
-  where the device says 200 — the container's union of a rotated child's *extent* (`updateParentRects`
-  → `rotateRect`) does not account for the child's own rotated bounding box. Only the translation half
-  was fixed; this residual needs its own measurement before anyone touches the union math.
+  A *container's* extent under rotation (a `Group` wrapping a 20×20 marker under a 90°-rotated host:
+  device scene y = 200) and a rotated Group's own `boundingRect()` (issue #1260) are right since PR #1291
+  re-derived container rects from `rectLocal`. Regression: the #1260 cases in
+  `InheritParentTransform.test.js`.
 - **The visibility gates stay inside each `renderNodeContent`.** They differ per node type (soft skip for
   containers, hard skip for renderables, hidden-extent measurement for grids) — see the
   visibility-vs-measurement rule below. Only the cheap `isVisible()` guard on the *push* lives in the
@@ -109,6 +108,38 @@ translation. How the engine composes that, each part of which broke something du
   transform is reused from its own `placeLocalRect` (`placedTrans`/`placedScale`/...) rather than read
   again per child. Regressions: `ScaleRotateFrame.test.js`, `Rectangle.test.js` ("Group scale…"),
   `IfDraw2D.test.js` (`pushScaleFrame`).
+
+### `inheritParentTransform = false` — detached drawing, quirky reporting
+
+Device rules (probe `group-scale-probe` page 3, Roku OS 16): the node draws in scene space with only its
+own translation/scale/rotation/`clippingRect`; an **ancestor's clip still applies**; opacity is still
+inherited. But it **reports** `boundingRect()` = `sceneBoundingRect()` = its `localBoundingRect()`
+(ignoring even its own transform), its parent unions that local rect, and its **descendants** report
+`sceneBoundingRect()` as if nothing were detached. `renderTracking` follows the drawn position. How the
+engine does it, and what must not be "simplified":
+
+- **Drawing is reset in the `renderNode` template** (`renderDetached`): origin `[0,0]`, angle 0,
+  `sgRoot.sceneMap` identity, and the canvas transform reset with `IfDraw2D.pushTransformReset` (a
+  clip-stack frame, popped with `popScaleFrame`). That is sound because the canvas transform is
+  always exactly `sceneMap` over an identity base — on the screen and on MaskGroup's offscreen bitmap —
+  so no reset is pushed under the identity map, and clips survive because canvas clips are fixed in
+  device space.
+- **The quirks are reporting-only.** `rectToParent`/`rectToScene` keep the rects the node is *drawn* with:
+  `renderTracking`, LayoutGroup sizing (`chooseActiveRect`) and pruning read them, and the device lays out
+  and tracks a detached node by where it is. Only `Group.getBoundingRect` (the BrightScript surface) and
+  the parent's union in `updateParentRects` apply the device's reporting. Swapping the stored rects
+  instead breaks tracking (D5) and LayoutGroup placement (D11). A descendant's reported scene rect is
+  its drawn `rectToScene` taken through the origin/angle/scene map each detached ancestor was entered
+  with (`detachedFrom`) — never re-derived from ancestors' `translation` fields, which misplaces
+  children a container positions itself (grid items, TargetGroup). An empty detached node reports
+  `{0,0,0,0}`, not its unset `{Inf,...}` local rect.
+- **The per-node read is gated by `Field.transformDetachUsed`**, raised by any `inheritParentTransform`
+  field that ever holds false (both `Field` value assignments — so clones, aliases and cross-thread
+  writes are covered). Until then the render path pays one static boolean read per node; reading the
+  field on every node measured ~4% on a 2.5k-node pass. The template caches the flag per pass in
+  `detached` for `updateParentRects`.
+
+Regressions: `InheritParentTransform.test.js`, `IfDraw2D.test.js` (`pushTransformReset`).
 
 **Layout passes are pure (docs/scenegraph-layout-passes.md).** `Node.layoutNode` /
 `Node.paintNode` wrap `renderNode`, setting `sgRoot.renderPass`; `Node.isPaintPass(draw2D)` is the
