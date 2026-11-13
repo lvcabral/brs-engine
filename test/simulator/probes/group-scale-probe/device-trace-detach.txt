@@ -1,0 +1,40 @@
+PROBE|000|boot|start|scene=GroupScaleDetachScene run=9050
+PROBE|000|boot|device|model=Roku Express 4K+ os=16.0
+PROBE|001|D0|d0|local={x=0 y=0 w=40 h=40} parent={x=0 y=0 w=40 h=40} scene={x=0 y=0 w=40 h=40}
+PROBE|002|D1|g1|local={x=0 y=0 w=200 h=100} parent={x=100 y=600 w=100 h=50} scene={x=100 y=600 w=100 h=50}
+PROBE|003|D1|d1|local={x=0 y=0 w=200 h=100} parent={x=0 y=0 w=200 h=100} scene={x=0 y=0 w=200 h=100}
+PROBE|004|D2|g2|local={x=0 y=0 w=100 h=100} parent={x=400 y=652 w=136 h=136} scene={x=400 y=652 w=136 h=136}
+PROBE|005|D2|d2|local={x=0 y=0 w=100 h=100} parent={x=0 y=0 w=100 h=100} scene={x=0 y=0 w=100 h=100}
+PROBE|006|D3|g3|local={x=0 y=0 w=100 h=100} parent={x=700 y=700 w=50 h=50} scene={x=700 y=700 w=50 h=50}
+PROBE|007|D3|d3|local={x=20 y=30 w=80 h=60} parent={x=20 y=30 w=80 h=60} scene={x=20 y=30 w=80 h=60}
+PROBE|008|D3|c3|local={x=0 y=0 w=80 h=60} parent={x=20 y=30 w=80 h=60} scene={x=1060 y=765 w=40 h=30}
+PROBE|009|D3|cc3|local={x=0 y=0 w=20 h=20} parent={x=10 y=10 w=20 h=20} scene={x=1065 y=770 w=10 h=10}
+PROBE|010|D3b|g3b|local={x=0 y=0 w=140 h=140} parent={x=900 y=700 w=70 h=70} scene={x=900 y=700 w=70 h=70}
+PROBE|011|D3b|d3b|local={x=40 y=40 w=100 h=100} parent={x=40 y=40 w=100 h=100} scene={x=40 y=40 w=100 h=100}
+PROBE|012|D3b|c3b|local={x=0 y=0 w=100 h=100} parent={x=40 y=40 w=100 h=100} scene={x=1360 y=760 w=25 h=25}
+PROBE|013|D4|g4|local={x=0 y=-110 w=210 h=160} parent={x=1100 y=540 w=210 h=160} scene={x=1100 y=540 w=210 h=160}
+PROBE|014|D4|g4b|local={x=0 y=0 w=80 h=80} parent={x=50 y=-110 w=160 h=160} scene={x=1150 y=540 w=160 h=160}
+PROBE|015|D4|d4|local={x=0 y=0 w=80 h=80} parent={x=0 y=0 w=80 h=80} scene={x=0 y=0 w=80 h=80}
+PROBE|016|D5|g5|local={x=0 y=0 w=164 h=200} parent={x=800 y=500 w=164 h=200} scene={x=800 y=500 w=164 h=200}
+PROBE|017|D5|d5|local={x=0 y=0 w=64 h=64} parent={x=0 y=0 w=64 h=64} scene={x=0 y=0 w=64 h=64}
+PROBE|018|D5|d5c|local={x=0 y=0 w=64 h=200} parent={x=0 y=0 w=64 h=200} scene={x=0 y=0 w=64 h=200}
+PROBE|019|D5|d5n|local={x=0 y=0 w=64 h=64} parent={x=100 y=0 w=64 h=64} scene={x=900 y=500 w=64 h=64}
+PROBE|020|D5|d5|renderTracking=none
+PROBE|021|D5|d5c|renderTracking=partial
+PROBE|022|D5|d5n|renderTracking=full
+PROBE|023|D6|g6|local={x=0 y=0 w=100 h=100} parent={x=1300 y=700 w=100 h=100} scene={x=1300 y=700 w=100 h=100}
+PROBE|024|D6|d6|local={x=0 y=0 w=100 h=100} parent={x=0 y=0 w=100 h=100} scene={x=0 y=0 w=100 h=100}
+PROBE|025|D7|g7|local={x=0 y=0 w=100 h=100} parent={x=1500 y=700 w=50 h=50} scene={x=1500 y=700 w=50 h=50}
+PROBE|026|D7|d7|local={x=0 y=0 w=100 h=100} parent={x=0 y=0 w=100 h=100} scene={x=0 y=0 w=100 h=100}
+PROBE|027|D7|c7|local={x=0 y=0 w=100 h=100} parent={x=0 y=0 w=100 h=100} scene={x=2250 y=750 w=50 h=50}
+PROBE|028|D9|g9|local={x=0 y=0 w=150 h=100} parent={x=1650 y=700 w=75 h=50} scene={x=1650 y=700 w=75 h=50}
+PROBE|029|D9|d9|local={x=0 y=0 w=150 h=36} parent={x=0 y=0 w=150 h=36} scene={x=0 y=0 w=150 h=36}
+PROBE|030|D11|lg11|local={x=0 y=0 w=100 h=170} parent={x=100 y=250 w=100 h=170} scene={x=100 y=250 w=100 h=170}
+PROBE|031|D11|a11|local={x=0 y=0 w=100 h=50} parent={x=0 y=0 w=100 h=50} scene={x=100 y=250 w=100 h=50}
+PROBE|032|D11|b11|local={x=0 y=0 w=100 h=50} parent={x=0 y=0 w=100 h=50} scene={x=0 y=0 w=100 h=50}
+PROBE|033|D11|c11|local={x=0 y=0 w=100 h=50} parent={x=0 y=120 w=100 h=50} scene={x=100 y=370 w=100 h=50}
+PROBE|034|D11|a11|translation=[0,0]
+PROBE|035|D11|b11|translation=[0,60]
+PROBE|036|D11|c11|translation=[0,120]
+PROBE|037|all|done|
+PROBE|999|boot|end|

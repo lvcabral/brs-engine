@@ -14,13 +14,15 @@
 ' Capture in the engine with:
 '     node packages/node/bin/brs.cli.js --root test/simulator/probes/group-scale-probe
 '
-' Launch param `scene=review` runs page 2 (GroupScaleReviewScene, the PR #1291 review cases);
+' Launch param `scene=review` runs page 2 (GroupScaleReviewScene, the PR #1291 review cases) and
+' `scene=detach` page 3 (GroupScaleDetachScene, inheritParentTransform="false" for issue #1261);
 ' `run=<nonce>` is echoed on the start line to tell a fresh device run from console replays.
 sub Main(args as dynamic)
     sceneName = "GroupScaleScene"
     runId = ""
     if type(args) = "roAssociativeArray"
         if args.scene = "review" then sceneName = "GroupScaleReviewScene"
+        if args.scene = "detach" then sceneName = "GroupScaleDetachScene"
         if args.run <> invalid then runId = args.run
     end if
     print "PROBE|000|boot|start|scene=" + sceneName + " run=" + runId

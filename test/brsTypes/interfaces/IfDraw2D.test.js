@@ -452,6 +452,42 @@ describe("IfDraw2D", () => {
         });
     });
 
+    describe("pushTransformReset", () => {
+        it("draws unscaled inside an enclosing scale frame, and restores it when popped", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            const outer = ifd.pushScaleFrame(0, 0, 0.5, 0.5);
+            const depth = ifd.pushTransformReset();
+            expect(ifd.getClipDepth()).toBe(2);
+            ifd.doDrawRotatedRect({ x: 8, y: 8, width: 2, height: 2 }, 0x00ff00ff | 0, 0);
+            ifd.popScaleFrame(depth);
+            // Scaled again: a 4x4 rect at [12,12] lands on [6,6]-[8,8].
+            ifd.doDrawRotatedRect({ x: 12, y: 12, width: 4, height: 4 }, 0xff0000ff | 0, 0);
+            ifd.popScaleFrame(outer);
+
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 9, 9)).toEqual([0, 255, 0, 255]);
+            expect(pixelAt(ctx, 10, 7, 7)).toEqual([255, 0, 0, 255]);
+            expect(ifd.getClipDepth()).toBe(0);
+        });
+
+        it("keeps the clips pushed before it", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const ifd = new IfDraw2D(bmp);
+            ifd.pushClip({ x: 0, y: 0, width: 5, height: 5 });
+            const outer = ifd.pushScaleFrame(0, 0, 2, 2);
+            const depth = ifd.pushTransformReset();
+            ifd.doDrawRotatedRect({ x: 0, y: 0, width: 10, height: 10 }, 0x00ff00ff | 0, 0);
+            ifd.popScaleFrame(depth);
+            ifd.popScaleFrame(outer);
+            ifd.popClip();
+
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 4, 4)).toEqual([0, 255, 0, 255]);
+            expect(pixelAt(ctx, 10, 6, 6)[3]).toBe(0);
+        });
+    });
+
     describe("do* drawing primitives", () => {
         it("doClearCanvas fills the whole canvas", () => {
             const bmp = makeBitmap(5, 5, true);

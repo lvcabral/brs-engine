@@ -243,6 +243,12 @@ export class Field {
         Field.focusEmissionDepth--;
     }
 
+    /**
+     * Set once any `inheritParentTransform` field holds false, cleared only between app runs, so the render path
+     * reads that field on every node only after some node has detached (`Group.isTransformDetached`).
+     */
+    static transformDetachUsed = false;
+
     /** Resets deferred-dispatch state between app runs so nothing leaks across setups. */
     static resetDispatch() {
         Field.observerDepth = 0;
@@ -251,6 +257,7 @@ export class Field {
         Field.pendingInitFocusFields.clear();
         Field.pendingConstructionCallbacks.length = 0;
         Field.messageLoopCallbacks.length = 0;
+        Field.transformDetachUsed = false;
     }
 
     constructor(
@@ -263,6 +270,7 @@ export class Field {
         private valueRef: boolean = false
     ) {
         this.value = this.convertValue(value);
+        this.noteTransformDetach();
     }
 
     toString(parent?: BrsType): string {
@@ -387,6 +395,7 @@ export class Field {
         }
         // Update field value and notify changes
         this.value = value;
+        this.noteTransformDetach();
         if (notify && (this.alwaysNotify || !this.isEqual(oldValue, value))) {
             this.notifyObservers();
             return true;
@@ -633,6 +642,19 @@ export class Field {
      */
     hasRemotePortObserver(threadId: number) {
         return this.remotePortObservers?.has(threadId) ?? false;
+    }
+
+    /** Raises `transformDetachUsed` when this is an `inheritParentTransform` field set to false. */
+    private noteTransformDetach() {
+        if (
+            !Field.transformDetachUsed &&
+            this.type === FieldKind.Boolean &&
+            this.name.length === 22 &&
+            this.name.toLowerCase() === "inheritparenttransform" &&
+            jsValueOf(this.value) === false
+        ) {
+            Field.transformDetachUsed = true;
+        }
     }
 
     private convertValue(value: BrsType) {

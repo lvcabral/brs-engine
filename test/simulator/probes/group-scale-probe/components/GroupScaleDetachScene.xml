@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    Group Scale Probe, page 3 (issue #1261: inheritParentTransform="false"). Launch with `scene=detach`.
+
+    Every detached node draws in the top band (y < 520) when it is really detached from its parent,
+    and its parent (with a translucent marker child that keeps the default) sits in the bottom band,
+    so the screenshot tells which transform each one was drawn with.
+
+    D0 scene-child      detached child of the Scene itself (no ancestor transform to drop)
+    D1 own-scale        detached Rectangle with its own scale 0.5, under a parent scaled 0.5
+    D2 own-rotation     detached Rectangle rotated 45deg around [50,50], under a rotated parent
+    D3 detached-group   detached Group (no own transform) with a child and a grandchild
+    D3b scaled-group    detached Group with its own scale 0.5 and a child
+    D4 deep-chain       detached Rectangle under translated > rotated + scaled ancestors
+    D5 tracking         renderTracking of detached nodes drawn off-screen / partly off-screen
+    D6 parent-clip      detached child of a Group with a clippingRect (is the ancestor clip applied?)
+    D7 own-clip         detached Group with its own clippingRect
+    D9 label            detached Label under a scaled parent
+    D11 layout-group    detached middle item of a vertical LayoutGroup
+-->
+<component name="GroupScaleDetachScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="bg" width="1920" height="1080" color="0x202020FF" />
+
+        <!-- D0 -->
+        <Rectangle id="d0" translation="[40,40]" width="40" height="40" color="0xFFFFFFFF" inheritParentTransform="false" />
+
+        <!-- D1: expect a 100x50 red box at (100,100) if the own scale applies -->
+        <Group id="g1" translation="[100,600]" scale="[0.5,0.5]">
+            <Rectangle id="m1" width="100" height="100" color="0xE0404060" />
+            <Rectangle id="d1" translation="[100,100]" width="200" height="100" scale="[0.5,0.5]" color="0xE04040FF" inheritParentTransform="false" />
+        </Group>
+
+        <!-- D2: expect a blue diamond centered on (450,150) -->
+        <Group id="g2" translation="[400,700]" rotation="0.5">
+            <Rectangle id="m2" width="100" height="100" color="0x4040E060" />
+            <Rectangle id="d2" translation="[400,100]" width="100" height="100" rotation="0.7853982" scaleRotateCenter="[50,50]" color="0x4040E0FF" inheritParentTransform="false" />
+        </Group>
+
+        <!-- D3: expect a yellow 80x60 box at (720,130) with a 20x20 black square at (730,140) -->
+        <Group id="g3" translation="[700,700]" scale="[0.5,0.5]">
+            <Rectangle id="m3" width="100" height="100" color="0xE0E04060" />
+            <Group id="d3" translation="[700,100]" inheritParentTransform="false">
+                <Rectangle id="c3" translation="[20,30]" width="80" height="60" color="0xE0E040FF">
+                    <Rectangle id="cc3" translation="[10,10]" width="20" height="20" color="0x000000FF" />
+                </Rectangle>
+            </Group>
+        </Group>
+
+        <!-- D3b: expect a 50x50 cyan box at (920,120) -->
+        <Group id="g3b" translation="[900,700]" scale="[0.5,0.5]">
+            <Rectangle id="m3b" width="100" height="100" color="0x40E0E060" />
+            <Group id="d3b" translation="[900,100]" scale="[0.5,0.5]" inheritParentTransform="false">
+                <Rectangle id="c3b" translation="[40,40]" width="100" height="100" color="0x40E0E0FF" />
+            </Group>
+        </Group>
+
+        <!-- D4: expect an unrotated 80x80 magenta box at (1100,100) -->
+        <Group id="g4" translation="[1100,650]">
+            <Rectangle id="m4" width="50" height="50" color="0xE040E060" />
+            <Group id="g4b" translation="[50,50]" rotation="1.5707963" scale="[2,2]">
+                <Rectangle id="m4b" width="40" height="20" color="0xE040E060" />
+                <Rectangle id="d4" translation="[1100,100]" width="80" height="80" color="0xE040E0FF" inheritParentTransform="false" />
+            </Group>
+        </Group>
+
+        <!-- D5: d5 is drawn fully off-screen to the left, d5c hangs off the bottom edge -->
+        <Group id="g5" translation="[800,500]">
+            <Rectangle id="m5" width="30" height="30" color="0xFFFFFF60" />
+            <Rectangle id="d5" translation="[-500,300]" width="64" height="64" color="0xFFFFFFFF" enableRenderTracking="true" inheritParentTransform="false" />
+            <Rectangle id="d5c" translation="[1300,1000]" width="64" height="200" color="0xFFFFFFFF" enableRenderTracking="true" inheritParentTransform="false" />
+            <Rectangle id="d5n" translation="[100,0]" width="64" height="64" color="0xFFFFFF60" enableRenderTracking="true" />
+        </Group>
+
+        <!-- D6: the parent clips to 50x50; is the detached green 100x100 at (1300,100) clipped away? -->
+        <Group id="g6" translation="[1300,700]" clippingRect="[0,0,50,50]">
+            <Rectangle id="m6" width="100" height="100" color="0x40E04080" />
+            <Rectangle id="d6" translation="[1300,100]" width="100" height="100" color="0x40E040FF" inheritParentTransform="false" />
+        </Group>
+
+        <!-- D7: own clip; expect a 40x40 orange box at (1500,100) -->
+        <Group id="g7" translation="[1500,700]" scale="[0.5,0.5]">
+            <Rectangle id="m7" width="100" height="100" color="0xE0904060" />
+            <Group id="d7" translation="[1500,100]" clippingRect="[0,0,40,40]" inheritParentTransform="false">
+                <Rectangle id="c7" width="100" height="100" color="0xE09040FF" />
+            </Group>
+        </Group>
+
+        <!-- D9: expect full-size label text at (1650,100) -->
+        <Group id="g9" translation="[1650,700]" scale="[0.5,0.5]">
+            <Rectangle id="m9" width="100" height="100" color="0xFFFFFF60" />
+            <Label id="d9" translation="[1650,100]" text="Detached" color="0xFFFFFFFF" inheritParentTransform="false" />
+        </Group>
+
+        <!-- D11: a vertical LayoutGroup with its middle item detached -->
+        <LayoutGroup id="lg11" translation="[100,250]" layoutDirection="vert" itemSpacings="[10]">
+            <Rectangle id="a11" width="100" height="50" color="0x8080FFFF" />
+            <Rectangle id="b11" translation="[400,250]" width="100" height="50" color="0xFF8080FF" inheritParentTransform="false" />
+            <Rectangle id="c11" width="100" height="50" color="0x80FF80FF" />
+        </LayoutGroup>
+
+        <Timer id="settleTimer" duration="1.5" repeat="false" />
+    </children>
+    <script type="text/brightscript"><![CDATA[
+
+        sub init()
+            m.seq = 0
+            m.settleTimer = m.top.findNode("settleTimer")
+            m.settleTimer.observeField("fire", "onSettled")
+            m.settleTimer.control = "start"
+        end sub
+
+        sub onSettled()
+            rects("D0", ["d0"])
+            rects("D1", ["g1", "d1"])
+            rects("D2", ["g2", "d2"])
+            rects("D3", ["g3", "d3", "c3", "cc3"])
+            rects("D3b", ["g3b", "d3b", "c3b"])
+            rects("D4", ["g4", "g4b", "d4"])
+            rects("D5", ["g5", "d5", "d5c", "d5n"])
+            for each id in ["d5", "d5c", "d5n"]
+                p("D5", id, "renderTracking=" + m.top.findNode(id).renderTracking)
+            end for
+            rects("D6", ["g6", "d6"])
+            rects("D7", ["g7", "d7", "c7"])
+            rects("D9", ["g9", "d9"])
+            rects("D11", ["lg11", "a11", "b11", "c11"])
+            for each id in ["a11", "b11", "c11"]
+                t = m.top.findNode(id).translation
+                p("D11", id, "translation=[" + n(t[0]) + "," + n(t[1]) + "]")
+            end for
+            p("all", "done", "")
+            m.top.probeExit = true
+        end sub
+
+        sub rects(caseId as string, ids as object)
+            for each id in ids
+                node = m.top.findNode(id)
+                if node = invalid
+                    p(caseId, id, "<not found>")
+                else
+                    p(caseId, id, "local=" + r(node.localBoundingRect()) + " parent=" + r(node.boundingRect()) + " scene=" + r(node.sceneBoundingRect()))
+                end if
+            end for
+        end sub
+
+        function r(rect as object) as string
+            if rect = invalid then return "<invalid>"
+            out = "{x=" + n(rect.x)
+            out = out + " y=" + n(rect.y)
+            out = out + " w=" + n(rect.width)
+            out = out + " h=" + n(rect.height)
+            return out + "}"
+        end function
+
+        function n(v as dynamic) as string
+            if v = invalid then return "?"
+            if v >= 0 then return itos(int(v + 0.5))
+            return itos(-int(-v + 0.5))
+        end function
+
+        function itos(i as integer) as string
+            return str(i).trim()
+        end function
+
+        sub p(caseId as string, nodeId as string, detail as string)
+            m.seq = m.seq + 1
+            s = itos(m.seq)
+            while s.len() < 3
+                s = "0" + s
+            end while
+            print "PROBE|" + s + "|" + caseId + "|" + nodeId + "|" + detail
+        end sub
+    ]]></script>
+</component>
