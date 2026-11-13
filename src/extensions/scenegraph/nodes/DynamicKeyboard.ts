@@ -1,4 +1,4 @@
-import { AAMember } from "brs-engine";
+import { AAMember, BrsBoolean } from "brs-engine";
 import { SGNodeType } from ".";
 import { DynamicKeyboardBase } from "./DynamicKeyboardBase";
 import { dynamicKeyboardKDF } from "./kdf/builtinKDFs";
@@ -14,6 +14,8 @@ export class DynamicKeyboard extends DynamicKeyboardBase {
         this.registerInitializedFields(initializedFields);
 
         this.configureVoiceBox({ voiceEntryType: "alphanumeric", voiceEnabled: true, maxTextLength: 75 });
+        // Device default for this keyboard only: left/right wrap within the row, up/down do not.
+        this.keyGrid.setValueSilent("horizWrap", BrsBoolean.True);
         this.setKeyDefinition(dynamicKeyboardKDF, "ABC123Lower", {
             name: "keyboard_full",
             insetFHD: { top: 15, right: 13, bottom: 15, left: 11 },

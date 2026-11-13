@@ -19,7 +19,7 @@ import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { sgClock } from "../SGClock";
 import { jsValueOf } from "../factory/Serializer";
-import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey } from "./kdf/KeyDefinition";
+import { computeLayout, KeyInset, keyboardSize, KeyLayout, modesOf, RenderedKey } from "./kdf/KeyDefinition";
 
 /**
  * Default keyboard palette colors used when no RSGPalette is found in the scene graph (the gray
@@ -49,7 +49,8 @@ type NavKeys = "up" | "down" | "left" | "right";
 export class DynamicKeyGrid extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "keyDefinitionUri", type: "uri", value: "" },
-        { name: "mode", type: "string", value: "" },
+        // Device: rewriting the same mode still fires observers (e.g. shift under caps lock).
+        { name: "mode", type: "string", value: "", alwaysNotify: true },
         { name: "focusVisible", type: "boolean", value: "true" },
         { name: "horizWrap", type: "boolean", value: "false" },
         { name: "vertWrap", type: "boolean", value: "false" },
@@ -186,7 +187,7 @@ export class DynamicKeyGrid extends Group {
         this.focusActive = active;
     }
 
-    private get mode(): string {
+    get mode(): string {
         return (this.getValueJS("mode") as string) ?? "";
     }
 
@@ -208,24 +209,35 @@ export class DynamicKeyGrid extends Group {
         const [w, h] = keyboardSize(this.layout, res);
         this.setValueSilent("width", new Float(w));
         this.setValueSilent("height", new Float(h));
+        const prevFocus = this.focusIndex;
         if (this.focusIndex < 0 || !this.keyFocusable(this.renderedKeys[this.focusIndex])) {
             this.focusIndex = this.renderedKeys.findIndex((k) => this.keyFocusable(k));
         }
-        this.updateKeyFocused();
+        this.updateKeyFocused(this.focusIndex !== prevFocus);
         this.isDirty = true;
+    }
+
+    /** Whether some grid of the layout lists `mode` among its `modes`. */
+    hasMode(mode: string): boolean {
+        return !!this.layout?.sections.some((section) => section.grids.some((grid) => modesOf(grid).includes(mode)));
     }
 
     private keyFocusable(key?: RenderedKey): boolean {
         return !!key && key.focusable && !this.disabledSet.has(key.out);
     }
 
-    private updateKeyFocused() {
+    /**
+     * Publishes the focused key. When focus `moved` to another key, also restarts the hover dwell
+     * timer and clears any pop-up suppression, so the timer applies again on the new key; a relayout
+     * that keeps the same key (a mode change) leaves them alone.
+     */
+    private updateKeyFocused(moved = true) {
         const key = this.renderedKeys[this.focusIndex];
         super.setValue("keyFocused", new BrsString(key?.out ?? ""));
-        // Focus moved to a (possibly) different key: restart the hover dwell timer and
-        // clear any pop-up suppression, so the timer applies again on the newly focused key.
-        this.lastFocusTime = sgClock.now();
-        this.popupSuppressed = false;
+        if (moved) {
+            this.lastFocusTime = sgClock.now();
+            this.popupSuppressed = false;
+        }
     }
 
     private selectKey(out: string) {
@@ -244,8 +256,11 @@ export class DynamicKeyGrid extends Group {
             this.loadKeyDefinition(jsValueOf(value) as string);
             return;
         } else if (fieldName === "mode") {
+            const changed = jsValueOf(value) !== this.mode;
             super.setValue(index, value, alwaysNotify, kind, sync);
-            this.rebuild();
+            if (changed) {
+                this.rebuild();
+            }
             return;
         } else if (fieldName === "jumptokey" && value instanceof RoArray) {
             this.jumpToKey(value.getElements().map((e) => (jsValueOf(e) as number) ?? -1));
@@ -357,7 +372,7 @@ export class DynamicKeyGrid extends Group {
             if (!wrap) {
                 return false; // propagate to ancestors
             }
-            next = this.findWrap(dir);
+            next = this.findNeighbor(dir, true);
         }
         if (next === undefined || next < 0) {
             return false;
@@ -368,53 +383,25 @@ export class DynamicKeyGrid extends Group {
         return true;
     }
 
-    /** Finds the nearest focusable key in a direction, or undefined if none. */
-    private findNeighbor(dir: NavKeys): number | undefined {
-        const cur = this.renderedKeys[this.focusIndex];
-        if (!cur) {
-            return undefined;
+    /**
+     * Ranks moving left/right from `cur` to `key`: 0 for the same row, 1 for a key in another section
+     * that doesn't span the row (`cy`), so uneven sections stay reachable; undefined (not allowed) for
+     * another row of the same section. Up/down are always tier 0.
+     */
+    private rowTier(dir: NavKeys, key: RenderedKey, cur: RenderedKey, cy: number): number | undefined {
+        if (dir === "up" || dir === "down") {
+            return 0;
+        } else if (key.section === cur.section) {
+            return key.row === cur.row ? 0 : undefined;
         }
-        const cx = cur.x + cur.width / 2;
-        const cy = cur.y + cur.height / 2;
-        let best: number | undefined;
-        let bestScore = Infinity;
-        for (let i = 0; i < this.renderedKeys.length; i++) {
-            if (i === this.focusIndex || !this.keyFocusable(this.renderedKeys[i])) {
-                continue;
-            }
-            const k = this.renderedKeys[i];
-            const dx = k.x + k.width / 2 - cx;
-            const dy = k.y + k.height / 2 - cy;
-            let primary: number;
-            let secondary: number;
-            if (dir === "right") {
-                if (dx <= 1) continue;
-                primary = dx;
-                secondary = Math.abs(dy);
-            } else if (dir === "left") {
-                if (dx >= -1) continue;
-                primary = -dx;
-                secondary = Math.abs(dy);
-            } else if (dir === "down") {
-                if (dy <= 1) continue;
-                primary = dy;
-                secondary = Math.abs(dx);
-            } else {
-                if (dy >= -1) continue;
-                primary = -dy;
-                secondary = Math.abs(dx);
-            }
-            const score = primary + secondary * 4; // weight cross-axis to keep alignment
-            if (score < bestScore) {
-                bestScore = score;
-                best = i;
-            }
-        }
-        return best;
+        return key.y <= cy && cy < key.y + key.height ? 0 : 1;
     }
 
-    /** Wraps focus to the opposite edge of the grid, aligned to the current key. */
-    private findWrap(dir: NavKeys): number | undefined {
+    /**
+     * Finds the nearest focusable key in a direction, or with `wrap` the one at the opposite edge,
+     * aligned to the current key (left/right: see rowTier); undefined if none.
+     */
+    private findNeighbor(dir: NavKeys, wrap = false): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
             return undefined;
@@ -422,33 +409,28 @@ export class DynamicKeyGrid extends Group {
         const cx = cur.x + cur.width / 2;
         const cy = cur.y + cur.height / 2;
         let best: number | undefined;
+        let bestTier = Infinity;
         let bestScore = Infinity;
         for (let i = 0; i < this.renderedKeys.length; i++) {
-            if (i === this.focusIndex || !this.keyFocusable(this.renderedKeys[i])) {
+            const k = this.renderedKeys[i];
+            const tier = this.rowTier(dir, k, cur, cy);
+            if (i === this.focusIndex || !this.keyFocusable(k) || tier === undefined) {
                 continue;
             }
-            const k = this.renderedKeys[i];
-            const kx = k.x + k.width / 2;
-            const ky = k.y + k.height / 2;
-            let primary: number;
-            let secondary: number;
-            if (dir === "right") {
-                primary = kx; // leftmost
-                secondary = Math.abs(ky - cy);
-            } else if (dir === "left") {
-                primary = -kx; // rightmost
-                secondary = Math.abs(ky - cy);
-            } else if (dir === "down") {
-                primary = ky; // topmost
-                secondary = Math.abs(kx - cx);
-            } else {
-                primary = -ky; // bottommost
-                secondary = Math.abs(kx - cx);
+            const dx = k.x + k.width / 2 - cx;
+            const dy = k.y + k.height / 2 - cy;
+            // Distance along the direction (negative behind the current key) and across it. Without
+            // `wrap` only keys ahead count; with it the smallest `along` is the far edge behind.
+            const along = { right: dx, left: -dx, down: dy, up: -dy }[dir];
+            const across = dir === "left" || dir === "right" ? Math.abs(dy) : Math.abs(dx);
+            if (!wrap && along <= 1) {
+                continue;
             }
-            const score = primary + secondary * 4;
-            if (score < bestScore) {
-                bestScore = score;
+            const score = along + across * 4; // weight the cross-axis to keep alignment
+            if (tier < bestTier || (tier === bestTier && score < bestScore)) {
                 best = i;
+                bestTier = tier;
+                bestScore = score;
             }
         }
         return best;

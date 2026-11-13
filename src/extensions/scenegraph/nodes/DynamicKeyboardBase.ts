@@ -7,6 +7,21 @@ import { DynamicKeyGrid, DEFAULT_KEYBOARD_PALETTE } from "./DynamicKeyGrid";
 import { KeyInset, KeyLayout } from "./kdf/KeyDefinition";
 import { sgRoot } from "../SGRoot";
 
+/** A key grid mode split into its character set and case, e.g. "SymbolsShift". */
+interface ModeParts {
+    set: string;
+    suffix: CaseSuffix;
+}
+
+type CaseSuffix = "Lower" | "Upper" | "Shift";
+
+/** The character-set keys' strOut (lowercased) → the mode's set name. */
+const CHAR_SET_KEYS = new Map([
+    ["abc123", "ABC123"],
+    ["symbols", "Symbols"],
+    ["accents", "Accents"],
+]);
+
 /**
  * Abstract base for the Dynamic voice keyboards. Combines a DynamicKeyGrid (the
  * keys) and a VoiceTextEditBox (the display), wiring key selection to text edits
@@ -28,6 +43,8 @@ export class DynamicKeyboardBase extends Group {
     private readonly textBoxHeight: number;
     private readonly gap: number;
     private lastHideTextBox = false; // matches the hideTextBox default / textEditBox visible default
+    // A pending one-shot shift shown as <Set>Upper (see toggleShift); valid only while mode === `mode`.
+    private armedShift?: { mode: string; restore: "Upper" | "Lower" };
 
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.DynamicKeyboardBase) {
         super([], name);
@@ -132,40 +149,50 @@ export class DynamicKeyboardBase extends Group {
         this.applyKey(out);
     }
 
-    /** Applies a selected key (its strOut or label) to the text and keyboard mode. */
+    /**
+     * Applies a selected key (its strOut or label) to the text and keyboard mode. Shift is one-shot
+     * (device-observed): it toggles `<Set>Shift`, and the next key of any other kind clears it.
+     */
     protected applyKey(out: string) {
-        switch (out.toLowerCase()) {
+        const key = out.toLowerCase();
+        const parts = this.modeParts();
+        if (key === "shift") {
+            this.toggleShift(parts);
+            return;
+        }
+        // The case to return to once this key consumes a pending shift (undefined: not shifted).
+        const restore = this.takeArmedShift()?.restore ?? (parts?.suffix === "Shift" ? "Lower" : undefined);
+        const charSet = CHAR_SET_KEYS.get(key);
+        if (charSet || key === "capslock") {
+            // Character-set keys keep caps lock and drop shift; caps lock toggles it.
+            const caps = (restore ?? parts?.suffix) === "Upper";
+            const upper = charSet ? caps : !caps;
+            this.writeMode(parts, upper ? "Upper" : "Lower", charSet);
+            return;
+        }
+        switch (key) {
             case "clear":
                 this.textEditBox.setValue("text", new BrsString(""));
                 this.textEditBox.moveCursor(0);
-                return;
+                break;
             case "backspace":
                 this.backspace();
-                return;
+                break;
             case "space":
                 this.insertText(" ");
-                return;
+                break;
             case "left":
                 this.textEditBox.moveCursor(-1);
-                return;
+                break;
             case "right":
                 this.textEditBox.moveCursor(1);
-                return;
-            case "shift":
-            case "capslock":
-                this.toggleCase();
-                return;
-            case "abc123":
-                this.setBaseMode("ABC123");
-                return;
-            case "symbols":
-                this.setBaseMode("Symbols");
-                return;
-            case "accents":
-                this.setBaseMode("Accents");
-                return;
+                break;
             default:
                 this.insertText(out);
+        }
+        if (restore) {
+            // Re-read the mode: an observer of the edit above may have changed it.
+            this.writeMode(this.modeParts(), restore);
         }
     }
 
@@ -198,28 +225,55 @@ export class DynamicKeyboardBase extends Group {
         this.textEditBox.setValue("cursorPosition", new Float(pos));
     }
 
-    private parseMode(mode: string): { base: string; upper: boolean } {
-        const base = mode.startsWith("Symbols") ? "Symbols" : mode.startsWith("Accents") ? "Accents" : "ABC123";
-        const upper = mode.endsWith("Upper") || mode.endsWith("Shift");
-        return { base, upper };
+    /**
+     * Splits the key grid's mode into its character set and case, e.g. "SymbolsShift" →
+     * { set: "Symbols", suffix: "Shift" } (no suffix reads as Lower); undefined for a layout without modes.
+     */
+    private modeParts(): ModeParts | undefined {
+        const mode = this.keyGrid.mode;
+        if (!mode) {
+            return undefined;
+        }
+        const match = /^(.*?)(Lower|Upper|Shift)$/.exec(mode);
+        const set = match ? match[1] : mode;
+        return { set, suffix: (match?.[2] as CaseSuffix | undefined) ?? "Lower" };
     }
 
-    private toggleCase() {
-        const mode = this.keyGrid.getValueJS("mode") as string;
-        if (!mode) {
-            return;
+    /**
+     * Writes `<set><suffix>` to the key grid's mode (`set` defaults to the current one); a no-op for a
+     * layout without modes. The device rewrites the mode even when unchanged, so observers fire.
+     */
+    private writeMode(parts: ModeParts | undefined, suffix: CaseSuffix, set?: string) {
+        if (parts) {
+            this.keyGrid.setValue("mode", new BrsString((set ?? parts.set) + suffix));
         }
-        const { base, upper } = this.parseMode(mode);
-        this.keyGrid.setValue("mode", new BrsString(base + (upper ? "Lower" : "Upper")));
     }
 
-    private setBaseMode(base: string) {
-        const mode = this.keyGrid.getValueJS("mode") as string;
-        if (!mode) {
+    /**
+     * Toggles the one-shot shift: `<Set>Shift` in lower case, or `<Set>Upper` for one key under caps
+     * lock (the mode stays Upper) or when the layout has no `<Set>Shift` grid.
+     */
+    private toggleShift(parts: ModeParts | undefined) {
+        const armed = this.takeArmedShift();
+        if (!parts) {
             return;
+        } else if (armed) {
+            this.writeMode(parts, armed.restore);
+        } else if (parts.suffix === "Shift") {
+            this.writeMode(parts, "Lower");
+        } else if (parts.suffix === "Upper" || !this.keyGrid.hasMode(`${parts.set}Shift`)) {
+            this.writeMode(parts, "Upper");
+            this.armedShift = { mode: `${parts.set}Upper`, restore: parts.suffix === "Upper" ? "Upper" : "Lower" };
+        } else {
+            this.writeMode(parts, "Shift");
         }
-        const { upper } = this.parseMode(mode);
-        this.keyGrid.setValue("mode", new BrsString(base + (upper ? "Upper" : "Lower")));
+    }
+
+    /** Clears and returns the pending shift, unless the mode changed since it was set (then just clears). */
+    private takeArmedShift() {
+        const armed = this.armedShift;
+        this.armedShift = undefined;
+        return armed?.mode === this.keyGrid.mode ? armed : undefined;
     }
 
     // -------------------------------------------------------------------------

@@ -70,6 +70,11 @@ export const dynamicMiniKeyboardKDF: KeyLayout = {
 const lblRow = (chars: string) => ({ keys: chars.split("").map((label) => ({ label })) });
 // Same, but from an explicit array (for rows containing quotes/backslashes).
 const rowOf = (labels: string[]) => ({ keys: labels.map((label) => ({ label })) });
+// A row of single-character labels padded with blank keys (drawn as empty, unfocusable cells) up
+// to `count` keys, as Roku's reference KDF does, so a short row keeps the grid's column widths.
+const padRow = (chars: string, count: number) => ({
+    keys: [...lblRow(chars).keys, ...Array.from({ length: count - chars.length }, () => ({}))],
+});
 // A mode-toggle sidebar key (caps/abc123/symbols/accents), themed with Roku's DKB_*Mod{On,Off}
 // icon pair for the given on/off state.
 const modKey = (base: string, on: boolean, strOut: string) => {
@@ -158,7 +163,7 @@ export const dynamicKeyboardKDF: KeyLayout = {
                 },
                 {
                     modes: ["SymbolsUpper", "SymbolsShift"],
-                    rows: [lblRow("•·¢£¥€§"), lblRow("®©™«»‹›"), lblRow("†‡ƒ¶¹²³"), lblRow("º°ª…")],
+                    rows: [lblRow("•·¢£¥€§"), lblRow("®©™«»‹›"), lblRow("†‡ƒ¶¹²³"), padRow("º°ª…", 7)],
                 },
                 {
                     modes: "AccentsLower",
@@ -209,15 +214,15 @@ export const dynamicKeyboardKDF: KeyLayout = {
                 },
                 {
                     modes: ["SymbolsUpper", "SymbolsShift"],
-                    rows: [lblRow("¼½¾"), lblRow("“”„"), lblRow("‘’‚"), lblRow("–—")],
+                    rows: [lblRow("¼½¾"), lblRow("“”„"), lblRow("‘’‚"), padRow("–—", 3)],
                 },
                 {
                     modes: "AccentsLower",
-                    rows: [lblRow("ýÿš"), lblRow("žðþ"), lblRow("ß")],
+                    rows: [lblRow("ýÿš"), lblRow("žðþ"), padRow("ß", 3), padRow("", 3)],
                 },
                 {
                     modes: ["AccentsUpper", "AccentsShift"],
-                    rows: [lblRow("ÝŸŠ"), lblRow("ŽÐÞ")],
+                    rows: [lblRow("ÝŸŠ"), lblRow("ŽÐÞ"), padRow("", 3), padRow("", 3)],
                 },
             ],
         },
