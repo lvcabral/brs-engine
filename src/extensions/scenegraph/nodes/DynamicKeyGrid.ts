@@ -19,7 +19,7 @@ import { Font } from "./Font";
 import { sgRoot } from "../SGRoot";
 import { sgClock } from "../SGClock";
 import { jsValueOf } from "../factory/Serializer";
-import { computeLayout, KeyInset, keyboardSize, KeyLayout, RenderedKey } from "./kdf/KeyDefinition";
+import { computeLayout, KeyInset, keyboardSize, KeyLayout, modesOf, RenderedKey } from "./kdf/KeyDefinition";
 
 /**
  * Default keyboard palette colors used when no RSGPalette is found in the scene graph (the gray
@@ -49,7 +49,8 @@ type NavKeys = "up" | "down" | "left" | "right";
 export class DynamicKeyGrid extends Group {
     readonly defaultFields: FieldModel[] = [
         { name: "keyDefinitionUri", type: "uri", value: "" },
-        { name: "mode", type: "string", value: "" },
+        // Device: rewriting the same mode still fires observers (e.g. shift under caps lock).
+        { name: "mode", type: "string", value: "", alwaysNotify: true },
         { name: "focusVisible", type: "boolean", value: "true" },
         { name: "horizWrap", type: "boolean", value: "false" },
         { name: "vertWrap", type: "boolean", value: "false" },
@@ -208,24 +209,35 @@ export class DynamicKeyGrid extends Group {
         const [w, h] = keyboardSize(this.layout, res);
         this.setValueSilent("width", new Float(w));
         this.setValueSilent("height", new Float(h));
+        const prevFocus = this.focusIndex;
         if (this.focusIndex < 0 || !this.keyFocusable(this.renderedKeys[this.focusIndex])) {
             this.focusIndex = this.renderedKeys.findIndex((k) => this.keyFocusable(k));
         }
-        this.updateKeyFocused();
+        this.updateKeyFocused(this.focusIndex !== prevFocus);
         this.isDirty = true;
+    }
+
+    /** Whether some grid of the layout lists `mode` among its `modes`. */
+    hasMode(mode: string): boolean {
+        return !!this.layout?.sections.some((section) => section.grids.some((grid) => modesOf(grid).includes(mode)));
     }
 
     private keyFocusable(key?: RenderedKey): boolean {
         return !!key && key.focusable && !this.disabledSet.has(key.out);
     }
 
-    private updateKeyFocused() {
+    /**
+     * Publishes the focused key. When focus `moved` to another key, also restarts the hover dwell
+     * timer and clears any pop-up suppression, so the timer applies again on the new key; a relayout
+     * that keeps the same key (a mode change) leaves them alone.
+     */
+    private updateKeyFocused(moved = true) {
         const key = this.renderedKeys[this.focusIndex];
         super.setValue("keyFocused", new BrsString(key?.out ?? ""));
-        // Focus moved to a (possibly) different key: restart the hover dwell timer and
-        // clear any pop-up suppression, so the timer applies again on the newly focused key.
-        this.lastFocusTime = sgClock.now();
-        this.popupSuppressed = false;
+        if (moved) {
+            this.lastFocusTime = sgClock.now();
+            this.popupSuppressed = false;
+        }
     }
 
     private selectKey(out: string) {
@@ -244,8 +256,11 @@ export class DynamicKeyGrid extends Group {
             this.loadKeyDefinition(jsValueOf(value) as string);
             return;
         } else if (fieldName === "mode") {
+            const changed = jsValueOf(value) !== this.mode;
             super.setValue(index, value, alwaysNotify, kind, sync);
-            this.rebuild();
+            if (changed) {
+                this.rebuild();
+            }
             return;
         } else if (fieldName === "jumptokey" && value instanceof RoArray) {
             this.jumpToKey(value.getElements().map((e) => (jsValueOf(e) as number) ?? -1));
@@ -368,7 +383,19 @@ export class DynamicKeyGrid extends Group {
         return true;
     }
 
-    /** Finds the nearest focusable key in a direction, or undefined if none. */
+    /**
+     * Extra score for moving left/right from `cur` to `key`, or undefined when not allowed: within a
+     * section left/right stay in the current row; in another section a key spanning the row (`cy`)
+     * is preferred, but any is allowed so uneven sections stay reachable.
+     */
+    private rowPenalty(key: RenderedKey, cur: RenderedKey, cy: number): number | undefined {
+        if (key.section === cur.section) {
+            return key.row === cur.row ? 0 : undefined;
+        }
+        return key.y <= cy && cy < key.y + key.height ? 0 : 100_000;
+    }
+
+    /** Finds the nearest focusable key in a direction (left/right: see rowPenalty), or undefined if none. */
     private findNeighbor(dir: NavKeys): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
@@ -383,6 +410,10 @@ export class DynamicKeyGrid extends Group {
                 continue;
             }
             const k = this.renderedKeys[i];
+            const penalty = dir === "left" || dir === "right" ? this.rowPenalty(k, cur, cy) : 0;
+            if (penalty === undefined) {
+                continue;
+            }
             const dx = k.x + k.width / 2 - cx;
             const dy = k.y + k.height / 2 - cy;
             let primary: number;
@@ -404,7 +435,7 @@ export class DynamicKeyGrid extends Group {
                 primary = -dy;
                 secondary = Math.abs(dx);
             }
-            const score = primary + secondary * 4; // weight cross-axis to keep alignment
+            const score = primary + secondary * 4 + penalty; // weight cross-axis to keep alignment
             if (score < bestScore) {
                 bestScore = score;
                 best = i;
@@ -413,7 +444,7 @@ export class DynamicKeyGrid extends Group {
         return best;
     }
 
-    /** Wraps focus to the opposite edge of the grid, aligned to the current key. */
+    /** Wraps focus to the opposite edge of the grid: the row's far key for left/right (see rowPenalty). */
     private findWrap(dir: NavKeys): number | undefined {
         const cur = this.renderedKeys[this.focusIndex];
         if (!cur) {
@@ -428,6 +459,10 @@ export class DynamicKeyGrid extends Group {
                 continue;
             }
             const k = this.renderedKeys[i];
+            const penalty = dir === "left" || dir === "right" ? this.rowPenalty(k, cur, cy) : 0;
+            if (penalty === undefined) {
+                continue;
+            }
             const kx = k.x + k.width / 2;
             const ky = k.y + k.height / 2;
             let primary: number;
@@ -445,7 +480,7 @@ export class DynamicKeyGrid extends Group {
                 primary = -ky; // bottommost
                 secondary = Math.abs(kx - cx);
             }
-            const score = primary + secondary * 4;
+            const score = primary + secondary * 4 + penalty;
             if (score < bestScore) {
                 bestScore = score;
                 best = i;

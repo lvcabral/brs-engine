@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Drives a DynamicKeyboard through shift / caps lock / character-set keys and logs the
+     keyGrid mode and text after each selection. Each "Play" press moves focus (jumpToKey) to the
+     next step's key and prints PROBE|ready; the host then sends "Select" and takes a screenshot. -->
+<component name="ProbeScene" extends="Scene">
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.backgroundColor = "0x201040FF"
+    m.top.backgroundUri = ""
+    m.kb = m.top.findNode("kb")
+    m.kb.keyGrid.observeField("mode", "onMode")
+    m.kb.observeField("text", "onText")
+    ' [section, row, key] of the key each step selects, and a label for the log
+    m.steps = [
+        { key: [0, 0, 0], name: "shift" }
+        { key: [1, 0, 0], name: "type-a" }
+        { key: [3, 0, 0], name: "capslock" }
+        { key: [1, 0, 1], name: "type-b" }
+        { key: [0, 0, 0], name: "shift-in-caps" }
+        { key: [1, 0, 2], name: "type-c" }
+        { key: [0, 0, 0], name: "shift-in-caps-again" }
+        { key: [0, 0, 0], name: "shift-twice" }
+        { key: [3, 0, 0], name: "capslock-off" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [3, 0, 0], name: "capslock-after-shift" }
+        { key: [3, 0, 0], name: "capslock-off2" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [0, 2, 0], name: "delete-after-shift" }
+        { key: [3, 2, 0], name: "symbols" }
+        { key: [0, 0, 0], name: "shift-in-symbols" }
+        { key: [1, 0, 0], name: "type-symbol" }
+        { key: [3, 0, 0], name: "capslock-in-symbols" }
+        { key: [3, 3, 0], name: "accents" }
+        { key: [3, 0, 0], name: "capslock-in-accents" }
+        { key: [0, 0, 0], name: "shift-in-accents" }
+        { key: [3, 1, 0], name: "abc123" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [3, 2, 0], name: "symbols-after-shift" }
+        { key: [3, 1, 0], name: "abc123" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [0, 0, 0], name: "shift-twice-in-lower" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [0, 1, 0], name: "space-after-shift" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [0, 3, 0], name: "cursor-left-after-shift" }
+        { key: [0, 0, 0], name: "shift-then" }
+        { key: [2, 0, 0], name: "digit-after-shift" }
+    ]
+    m.step = -1
+    for each name in ["DynamicKeyboard", "DynamicMiniKeyboard", "DynamicPinPad", "DynamicCustomKeyboard"]
+        grid = CreateObject("roSGNode", name).keyGrid
+        print "PROBE|wrap|" + name + "|horizWrap=" + grid.horizWrap.ToStr() + "|vertWrap=" + grid.vertWrap.ToStr()
+    end for
+    m.kb.setFocus(true)
+    print "PROBE|start|mode=" + m.kb.keyGrid.mode
+end sub
+
+sub onMode()
+    print "PROBE|mode|" + m.kb.keyGrid.mode
+end sub
+
+sub onText()
+    print "PROBE|text|" + m.kb.text
+end sub
+
+function onKeyEvent(key as String, press as Boolean) as Boolean
+    if press and key = "play"
+        m.step = m.step + 1
+        if m.step < m.steps.Count()
+            s = m.steps[m.step]
+            m.kb.keyGrid.jumpToKey = s.key
+            print "PROBE|ready|" + m.step.ToStr() + "|" + s.name + "|focused=" + m.kb.keyGrid.keyFocused + "|mode=" + m.kb.keyGrid.mode
+        else
+            print "PROBE|done"
+        end if
+        return true
+    end if
+    return false
+end function
+]]></script>
+<children>
+    <DynamicKeyboard id="kb" translation="[100,300]" />
+</children>
+</component>

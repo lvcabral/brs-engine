@@ -92,7 +92,7 @@ function pick(res: Resolution, fhd: number | undefined, hd: number | undefined):
 }
 
 /** Normalizes a Grid's `modes` (string | string[] | undefined) to a string array. */
-function modesOf(grid: GridDef): string[] {
+export function modesOf(grid: GridDef): string[] {
     if (grid.modes === undefined) {
         return [];
     }

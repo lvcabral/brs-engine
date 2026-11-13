@@ -350,6 +350,231 @@ describe("Dynamic voice keyboards", () => {
             expect(kbd.keyGrid.getValueJS("mode")).toBe("SymbolsLower");
         });
 
+        // Device-observed shift / caps-lock semantics (probe `test/simulator/probes/dynamic-keyboard-modes-probe`).
+        describe("shift and caps lock", () => {
+            const SHIFT = coords(0, 0, 0);
+            const SPACE = coords(0, 1, 0);
+            const DELETE = coords(0, 2, 0);
+            const LEFT = coords(0, 3, 0);
+            const CAPS = coords(3, 0, 0);
+            const SYMBOLS = coords(3, 2, 0);
+            const ACCENTS = coords(3, 3, 0);
+            const press = (kbd, at) => {
+                kbd.keyGrid.setValue("jumpToKey", at);
+                kbd.handleKey("OK", true);
+            };
+            const modeOf = (kbd) => kbd.keyGrid.getValueJS("mode");
+
+            test("shift is one-shot: it types one uppercase letter, then returns to lowercase", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                press(kbd, SHIFT);
+                expect(modeOf(kbd)).toBe("ABC123Shift");
+                press(kbd, coords(1, 0, 0));
+                expect(textOf(kbd)).toBe("A");
+                expect(modeOf(kbd)).toBe("ABC123Lower");
+                press(kbd, coords(1, 0, 1));
+                expect(textOf(kbd)).toBe("Ab");
+            });
+
+            test("shift toggles, and space, delete, cursor and digit keys also clear it", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                press(kbd, SHIFT);
+                press(kbd, SHIFT);
+                expect(modeOf(kbd)).toBe("ABC123Lower");
+                for (const key of [SPACE, DELETE, LEFT, coords(2, 0, 0)]) {
+                    press(kbd, SHIFT);
+                    expect(modeOf(kbd)).toBe("ABC123Shift");
+                    press(kbd, key);
+                    expect(modeOf(kbd)).toBe("ABC123Lower");
+                }
+            });
+
+            test("caps lock is independent of shift", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                press(kbd, SHIFT);
+                press(kbd, CAPS);
+                expect(modeOf(kbd)).toBe("ABC123Upper");
+                // Shift under caps lock keeps uppercase, before and after the next key.
+                press(kbd, SHIFT);
+                expect(modeOf(kbd)).toBe("ABC123Upper");
+                press(kbd, coords(1, 0, 2));
+                expect(textOf(kbd)).toBe("C");
+                expect(modeOf(kbd)).toBe("ABC123Upper");
+                press(kbd, CAPS);
+                expect(modeOf(kbd)).toBe("ABC123Lower");
+            });
+
+            test("character-set keys keep caps lock and drop shift", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                press(kbd, SHIFT);
+                press(kbd, SYMBOLS);
+                expect(modeOf(kbd)).toBe("SymbolsLower");
+                press(kbd, CAPS);
+                press(kbd, ACCENTS);
+                expect(modeOf(kbd)).toBe("AccentsUpper");
+            });
+
+            test("mode notifies on an unchanged rewrite without rebuilding the layout", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                expect(kbd.keyGrid.getNodeFields().get("mode").isAlwaysNotify()).toBe(true);
+                press(kbd, CAPS);
+                const keys = kbd.keyGrid.renderedKeys;
+                press(kbd, SHIFT); // under caps lock: rewrites ABC123Upper
+                expect(modeOf(kbd)).toBe("ABC123Upper");
+                expect(kbd.keyGrid.renderedKeys).toBe(keys);
+            });
+
+            test("picking a suggestion while shifted keeps the pop-up closed", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                press(kbd, SHIFT);
+                press(kbd, coords(2, 3, 0)); // "@": OK opens its suggestions
+                kbd.handleKey("OK", true); // picks the first one
+                expect(textOf(kbd)).toBe("@gmail.com");
+                expect(modeOf(kbd)).toBe("ABC123Lower");
+                // The mode change relaid out the same key: the hover pop-up must stay suppressed.
+                expect(kbd.keyGrid.popupSuppressed).toBe(true);
+            });
+
+            test("the caps-lock key stays off while shifted", () => {
+                const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+                sgRoot.setFocused(kbd);
+                press(kbd, SHIFT);
+                const names = [];
+                const record = (...args) => {
+                    const bmp = args.find((a) => a && typeof a.getImageName === "function");
+                    if (bmp) names.push(bmp.getImageName());
+                };
+                kbd.renderNode(fakeInterpreter, [0, 0], 0, 1, {
+                    doDrawRotatedText() {},
+                    doDrawRotatedRect() {},
+                    doDrawScaledObject: record,
+                    doDrawRotatedBitmap: record,
+                    drawNinePatch: record,
+                });
+                expect(names.some((n) => n.includes("icon_caps_off"))).toBe(true);
+                expect(names.some((n) => n.includes("icon_caps_on"))).toBe(false);
+            });
+        });
+
+        describe("shift in a custom layout without <Set>Shift grids", () => {
+            const KDF = "pkg:/resources/keyboards/cases.json";
+            afterEach(() => BrsDevice.fileSystem.clearSourceOverlay());
+
+            test("shows Upper for one key, then returns to Lower", () => {
+                const row = (labels) => ({ keys: labels.map((label) => ({ label })) });
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF]: JSON.stringify({
+                        keyboardWidthFHD: 200,
+                        keyboardHeightFHD: 100,
+                        keyboardWidthHD: 200,
+                        keyboardHeightHD: 100,
+                        sections: [
+                            {
+                                grids: [
+                                    {
+                                        modes: "NameLower",
+                                        rows: [row(["a", "b"]), { keys: [{ label: "Aa", strOut: "shift" }] }],
+                                    },
+                                    {
+                                        modes: "NameUpper",
+                                        rows: [row(["A", "B"]), { keys: [{ label: "Aa", strOut: "shift" }] }],
+                                    },
+                                ],
+                            },
+                        ],
+                    }),
+                });
+                const kbd = SGNodeFactory.createNode("DynamicCustomKeyboard");
+                kbd.keyGrid.setValue("mode", new BrsString("NameLower"));
+                kbd.keyGrid.setValue("keyDefinitionUri", new BrsString(KDF));
+                const press = (at) => {
+                    kbd.keyGrid.setValue("jumpToKey", at);
+                    kbd.handleKey("OK", true);
+                };
+                press(coords(0, 1, 0)); // shift
+                expect(kbd.keyGrid.getValueJS("mode")).toBe("NameUpper");
+                press(coords(0, 0, 1));
+                expect(textOf(kbd)).toBe("B");
+                expect(kbd.keyGrid.getValueJS("mode")).toBe("NameLower");
+            });
+        });
+
+        describe("left/right across sections", () => {
+            const KDF = "pkg:/resources/keyboards/uneven.json";
+            afterEach(() => BrsDevice.fileSystem.clearSourceOverlay());
+
+            test("a shorter section stays reachable from rows it does not span", () => {
+                // Section 0: 4 rows over 100px; section 1: one row over the top 25px only.
+                const keys = (labels) => ({ keys: labels.map((label) => ({ label })) });
+                BrsDevice.fileSystem.setSourceOverlay({
+                    [KDF]: JSON.stringify({
+                        keyboardWidthFHD: 200,
+                        keyboardHeightFHD: 100,
+                        keyboardWidthHD: 200,
+                        keyboardHeightHD: 100,
+                        sections: [
+                            { grids: [{ rows: [keys(["a"]), keys(["b"]), keys(["c"]), keys(["d"])] }] },
+                            { grids: [{ gridHeightFHD: 25, gridHeightHD: 25, rows: [keys(["x"])] }] },
+                        ],
+                    }),
+                });
+                const grid = SGNodeFactory.createNode("DynamicKeyGrid");
+                grid.setValue("keyDefinitionUri", new BrsString(KDF));
+                grid.setValue("jumpToKey", coords(0, 3, 0)); // "d"
+                expect(grid.handleKey("right", true)).toBe(true);
+                expect(grid.getValueJS("keyFocused")).toBe("x");
+            });
+        });
+
+        // Device-observed (probe `test/simulator/probes/dynamic-keyboard-modes-probe` and Roku's
+        // dynamic-voice-enabled-keyboards sample): only DynamicKeyboard turns on horizWrap.
+        test("left/right wrap within the row; up/down at the edges propagate", () => {
+            const wrapOf = (type) => {
+                const grid = SGNodeFactory.createNode(type).keyGrid;
+                return [grid.getValueJS("horizWrap"), grid.getValueJS("vertWrap")];
+            };
+            expect(wrapOf("DynamicKeyboard")).toEqual([true, false]);
+            for (const type of ["DynamicMiniKeyboard", "DynamicPinPad", "DynamicCustomKeyboard"]) {
+                expect(wrapOf(type)).toEqual([false, false]);
+            }
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            const focused = () => kbd.keyGrid.getValueJS("keyFocused");
+            expect(focused()).toBe("shift");
+            expect(kbd.handleKey("left", true)).toBe(true);
+            expect(focused()).toBe("capslock");
+            expect(kbd.handleKey("right", true)).toBe(true);
+            expect(focused()).toBe("shift");
+            // Bottom row: the left column holds two cursor keys; the wrap stays in the row.
+            kbd.keyGrid.setValue("jumpToKey", coords(0, 3, 0));
+            kbd.handleKey("left", true);
+            expect(focused()).toBe("accents");
+            kbd.handleKey("right", true);
+            expect(focused()).toBe("left");
+            kbd.keyGrid.setValue("jumpToKey", coords(3, 2, 0)); // symbols (right edge, row 3)
+            kbd.handleKey("right", true);
+            expect(focused()).toBe("backspace"); // delete key, left edge of row 3
+            expect(kbd.handleKey("up", true)).toBe(true); // space, above delete
+            kbd.keyGrid.setValue("jumpToKey", coords(0, 0, 0));
+            expect(kbd.handleKey("up", true)).toBe(false);
+        });
+
+        // Roku's reference KDF pads short rows with blank keys, so every mode keeps the full grid
+        // of the keyboard_full background (device: an empty cell stays an empty cell).
+        test("every mode lays out each section as a full grid", () => {
+            const kbd = SGNodeFactory.createNode("DynamicKeyboard");
+            const shapeOf = (mode) => {
+                kbd.keyGrid.setValue("mode", new BrsString(mode));
+                const keys = kbd.keyGrid.renderedKeys.filter((k) => k.section === 1 || k.section === 2);
+                return keys.map((k) => `${k.section}:${k.x},${k.y},${k.width},${k.height}`).join(" ");
+            };
+            const reference = shapeOf("ABC123Lower");
+            for (const set of ["ABC123", "Symbols", "Accents"]) {
+                for (const kind of ["Lower", "Upper", "Shift"]) {
+                    expect(shapeOf(set + kind)).toBe(reference);
+                }
+            }
+        });
+
         test("the @ key opens a suggestions pop-up that can be selected", () => {
             const kbd = SGNodeFactory.createNode("DynamicKeyboard");
             kbd.keyGrid.setValue("jumpToKey", coords(2, 3, 0)); // "@" with suggestions
