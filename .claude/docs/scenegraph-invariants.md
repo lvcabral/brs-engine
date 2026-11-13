@@ -1510,7 +1510,10 @@ internal `"ancestor"` type for it. It has no device measurement yet.
 RowList) is a **zero-size rect at the grid's translation origin**: `{0,0,0,0}` in parent/local, and the
 origin's scene point in scene space. It is *not* the grid's own rect, despite the spec. A **non-grid**
 node (a Rectangle in the same probe) does return its own rect, as the spec says. So
-`ArrayGrid.resolveSubpartRect` owns the zero rect and `Node` keeps the fallback.
+`ArrayGrid.missingSubpartRect` overrides `Node`'s own-rect fallback. It returns a literal `{0,0,0,0}`
+for parent/local; converting the origin through scene space and back leaves a `1e-14` residue under a
+fractional scale, which breaks `r.x = 0` in an app. It still refreshes layout through
+`getBoundingRect` before reading the origin for scene/ancestor.
 
 Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), by
 `RowListItemSubRect.test.js` over {HD,FHD} × {`RowList`,`ZoomRowList`} × translations (which asserts the

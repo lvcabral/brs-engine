@@ -84,6 +84,45 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         }
     });
 
+    test("a missing sub part is exactly zero in parent/local space under a fractional scale", () => {
+        const grid = new MarkupGrid();
+        grid.setValue("scale", new RoArray([new Float(0.6), new Float(0.6)]));
+        grid.sceneMap = { sx: 0.6, sy: 0.6, bx: 0, by: 0 };
+        grid.rectLocal = { x: -33, y: -6, width: 666, height: 112 };
+        grid.rectToParent = { x: 80.2, y: 296.4, width: 399.6, height: 67.2 };
+        grid.rectToScene = { x: 108.12, y: 177.84, width: 239.76, height: 40.32 };
+
+        for (const type of ["toParent", "local"]) {
+            expect(grid.getSubBoundingRect(type, "bogus")).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+        }
+        // The origin: the rect's corner moved back by the outset, in scene (x0.36) and parent (x0.6) units.
+        const scene = grid.getSubBoundingRect("toScene", "bogus");
+        expect(scene.x).toBeCloseTo(108.12 + 33 * 0.36, 5);
+        expect(scene.y).toBeCloseTo(177.84 + 6 * 0.36, 5);
+        const ancestor = grid.getSubBoundingRect("ancestor", "bogus");
+        expect(ancestor.x).toBeCloseTo(80.2 + 33 * 0.6, 5);
+        expect(ancestor.y).toBeCloseTo(296.4 + 6 * 0.6, 5);
+    });
+
+    test("a missing sub part refreshes layout before reading the grid's origin", () => {
+        const grid = new MarkupGrid();
+        grid.rectLocal = { x: 0, y: 0, width: 100, height: 100 };
+        grid.rectToScene = { x: 0, y: 0, width: 100, height: 100 };
+        const interpreter = new Interpreter();
+        // Stands in for a refresh that lays the grid out at its newly written translation.
+        grid.getBoundingRect = (type, interp) => {
+            expect(interp).toBe(interpreter);
+            grid.rectToScene = { x: 500, y: 40, width: 100, height: 100 };
+            return grid.rectToScene;
+        };
+        expect(grid.getSubBoundingRect("toScene", "bogus", interpreter)).toEqual({
+            x: 500,
+            y: 40,
+            width: 0,
+            height: 0,
+        });
+    });
+
     // DEVICE-MEASURED (Roku OS 16, probe `group-scale-probe` S4): under a scaled ancestor the
     // parent and local sub part rects are in the grid's unscaled units (a 100x100 PosterGrid item under
     // a Group scaled 0.5 reports subBoundingRect 100x100 and sceneSubBoundingRect 50x50; the same under

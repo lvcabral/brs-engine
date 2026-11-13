@@ -1193,7 +1193,7 @@ export class Node extends RoSGNode implements BrsValue {
      * Returns the bounding rectangle of an identified sub part (ifSGNodeBoundingRect's
      * subBoundingRect/localSubBoundingRect/sceneSubBoundingRect). Sub parts (`itemX`, `itemX_Y`,
      * `focusItem`, `focusIndicator`) only exist on ArrayGrid-derived nodes, which override
-     * `resolveSubpart`/`resolveSubpartRect`. A node without the sub part returns its own bounding rect.
+     * `resolveSubpart`. A missing sub part is answered by `missingSubpartRect`.
      *
      * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/subrect-space-probe`), for every grid type:
      *  - `toScene`: the sub part in scene coordinates.
@@ -1214,9 +1214,9 @@ export class Node extends RoSGNode implements BrsValue {
         if (interpreter && !sgRoot.rendering && this.needsSubBoundingRectRefresh()) {
             this.refreshLayoutFromRoot(interpreter);
         }
-        const rect = this.resolveSubpartRect(itemNumber);
+        const rect = this.resolveSubpart(itemNumber)?.rectToScene;
         if (!rect) {
-            return this.getBoundingRect(type === "ancestor" ? "toParent" : type, interpreter);
+            return this.missingSubpartRect(type, interpreter);
         }
         // Sub part rects are the components' cached scene rects from the last frame: re-rendering the
         // scene per query would be too slow and could catch a transient mid-layout size.
@@ -1260,12 +1260,14 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Resolves a bounding-rect sub part identifier to its scene rect.
-     * @param itemNumber Sub part identifier.
-     * @returns The sub part's scene rect, or undefined when the node has no such sub part.
+     * The rect reported for a sub part this node does not have. Per the spec, and DEVICE-MEASURED for a
+     * non-grid node (`subrect-space-probe`), that is the node's own bounding rect.
+     * @param type Rectangle type, as for `getSubBoundingRect`.
+     * @param interpreter Interpreter used to refresh layout before measuring.
+     * @returns The rect to report.
      */
-    protected resolveSubpartRect(itemNumber: string): Rect | undefined {
-        return this.resolveSubpart(itemNumber)?.rectToScene;
+    protected missingSubpartRect(type: string, interpreter?: Interpreter): Rect {
+        return this.getBoundingRect(type === "ancestor" ? "toParent" : type, interpreter);
     }
 
     /**

@@ -65,7 +65,7 @@ sub Main()
     printRect("layout item", item.sceneBoundingRect())
     print "layout item translation = "; item.translation[0]; ","; item.translation[1]
 
-    ' A grid item's subBoundingRect stays in the grid's parent units under a scaled
+    ' A grid item's subBoundingRect stays in the grid's unscaled units under a scaled
     ' ancestor: on a device a 100x100 PosterGrid item under a 0.5 Group reports
     ' 100x100, while its sceneSubBoundingRect covers 50x50.
     shelf = root.createChild("Group")

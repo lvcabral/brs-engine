@@ -1632,18 +1632,22 @@ export class ArrayGrid extends Group implements UITransition {
 
     /**
      * DEVICE-MEASURED (OS 16.0, `subrect-space-probe`, PosterGrid/MarkupGrid/RowList): a sub part the
-     * grid does not have is a zero-size rect at the grid's translation origin, not the grid's own rect
-     * (which a non-grid node returns).
+     * grid does not have is a zero-size rect at the grid's translation origin, not the grid's own rect:
+     * exactly `{0,0,0,0}` in parent/local space, and the origin's position in scene space.
      */
-    protected resolveSubpartRect(itemNumber: string): Rect {
-        const item = this.resolveSubpart(itemNumber)?.rectToScene;
-        if (item) {
-            return item;
+    protected missingSubpartRect(type: string, interpreter?: Interpreter): Rect {
+        if (type !== "toScene" && type !== "ancestor") {
+            return { x: 0, y: 0, width: 0, height: 0 };
         }
+        // Refreshes layout (as the own-rect fallback does), so the origin reflects pending field writes.
+        const own = this.getBoundingRect(type === "ancestor" ? "toParent" : "toScene", interpreter);
         const [kx, ky] = this.sceneUnitsTo(true);
+        const [px, py] = type === "ancestor" ? this.sceneUnitsTo(false) : [1, 1];
+        // The local origin sits `-rectLocal` local units from the rect's corner, converted to the target space.
+        const offset = (local: number, k: number, target: number) => (k === 0 ? 0 : (local / k) * target);
         return {
-            x: kx === 0 ? this.rectToScene.x : this.rectToScene.x - this.rectLocal.x / kx,
-            y: ky === 0 ? this.rectToScene.y : this.rectToScene.y - this.rectLocal.y / ky,
+            x: own.x - offset(this.rectLocal.x, kx, px),
+            y: own.y - offset(this.rectLocal.y, ky, py),
             width: 0,
             height: 0,
         };

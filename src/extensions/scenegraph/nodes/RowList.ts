@@ -725,8 +725,8 @@ export class RowList extends ArrayGrid {
     /**
      * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. A RowList
      * holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid `itemComps[]`,
-     * which stays empty here), so the base resolver never matches and every query falls back to the
-     * whole-list rect. On a real device `subBoundingRect("item<row>_<col>")` returns the focused
+     * which stays empty here), so the base resolver never matches and every query would miss. On a
+     * real device `subBoundingRect("item<row>_<col>")` returns the focused
      * poster's rect, which apps use to place a focused-item overlay; without this override the overlay
      * cannot track the row's item layout. See `resolveRowItemSubpart` for the id mapping.
      *

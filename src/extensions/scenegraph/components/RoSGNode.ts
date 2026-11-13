@@ -1592,7 +1592,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         });
     }
 
-    /* Returns the bounding rectangle of an identified sub part, in the parent's coordinate system. */
+    /* Returns the bounding rectangle of an identified sub part, in this node's coordinate system (see Node.getSubBoundingRect). */
     protected get subBoundingRect(): Callable {
         return new Callable("subBoundingRect", {
             signature: {
@@ -1609,7 +1609,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         });
     }
 
-    /* Returns the bounding rectangle of an identified sub part, in the node's local coordinate system. */
+    /* Returns the bounding rectangle of an identified sub part, in the sub part's own coordinate system. */
     protected get localSubBoundingRect(): Callable {
         return new Callable("localSubBoundingRect", {
             signature: {
