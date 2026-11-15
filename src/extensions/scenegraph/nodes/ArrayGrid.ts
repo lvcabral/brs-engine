@@ -1018,7 +1018,12 @@ export class ArrayGrid extends Group implements UITransition {
 
     /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
     protected rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
+        return Math.max(1, this.rowItemCount(rowIndex));
+    }
+
+    /** The row's item count, 0 for a row with no items. */
+    protected rowItemCount(rowIndex: number): number {
+        return this.content[rowIndex]?.getNodeChildren().length ?? 0;
     }
 
     /**
@@ -1593,13 +1598,20 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /** Clips scrolling rows to the viewport (horizontally unbounded). */
-    protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D) {
-        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: viewportHeight });
+    protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D, cutTop = true) {
+        // Without `cutTop` only the bottom is cut, leaving room above the viewport for the focus ring.
+        const slack = cutTop ? 0 : 100000;
+        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y - slack, width: 200000, height: slack + viewportHeight });
     }
 
-    /** Like `pushMotionClip`, but cuts only below the viewport, leaving room above it for the focus ring. */
-    protected pushViewportBottomClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D) {
-        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y - 100000, width: 200000, height: 100000 + viewportHeight });
+    /**
+     * Draws the focus ring in the first item slot of focused row `rowIndex` when it has no items, as a
+     * device does (DEVICE-MEASURED, rowlist-empty-row-probe, zoomrowlist-empty-row-probe).
+     */
+    protected renderEmptyRowFocus(rowIndex: number, slot: Rect, opacity: number, draw2D?: IfDraw2D) {
+        if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
+            this.renderFocus(slot, opacity, sgRoot.focused === this, draw2D);
+        }
     }
 
     protected findContentIndex(index: number) {
@@ -2230,6 +2242,10 @@ export class ArrayGrid extends Group implements UITransition {
         }
         // The item components are cached by position, and a re-parse can change the data index at a
         // position (a section's placeholders come and go) even when its content node stays the same.
+        // Without sections the data index is the position, which cannot change.
+        if (this.metadata.length === 0) {
+            return;
+        }
         for (const [position, itemComp] of this.itemComps.entries()) {
             if (itemComp) {
                 this.setItemIndexes(itemComp, { index: this.dataIndexAt(position) });

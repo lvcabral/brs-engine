@@ -79,8 +79,10 @@ export class RowList extends ArrayGrid {
     protected readonly marginY: number;
     protected readonly gap: number;
     protected readonly rowItemComps: Group[][] = [[]];
-    /** The `rowTitleComponentName` instance of each row, by row index; `null` when it could not be created. */
-    private readonly rowTitleComps: (Group | null)[] = [];
+    /** The `rowTitleComponentName` instance of each row, by row index. */
+    private readonly rowTitleComps: Group[] = [];
+    /** Set once `rowTitleComponentName` failed to create (logged once); cleared when the name changes. */
+    private titleCompFailed = false;
     protected readonly rowFocus: number[];
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
     // Identity of the content node last parsed by refreshContent. Used to reset per-row horizontal
@@ -190,7 +192,7 @@ export class RowList extends ArrayGrid {
             return;
         } else if (fieldName === "rowtitlecomponentname" && value.toString() !== this.getValueJS(index)) {
             this.rowTitleComps.length = 0;
-            this.titleCompFailureLogged = false;
+            this.titleCompFailed = false;
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
@@ -271,7 +273,7 @@ export class RowList extends ArrayGrid {
             // values are re-applied (as a same-value no-op) by setRowItemFocused below, which
             // still settles rowItemFocused last — see its own ordering comment.
             super.setValue("currFocusRow", new Float(rowIndex));
-            super.setValue("currFocusColumn", new Float(this.publishedColumn(rowIndex, colIndex)));
+            super.setValue("currFocusColumn", this.publishedFocus(rowIndex, colIndex).column);
             if (!this.jumpingToRowItem) {
                 super.setValue("itemFocused", new Int32(rowIndex));
             }
@@ -283,15 +285,21 @@ export class RowList extends ArrayGrid {
             this.focusLayoutDirty = true;
             this.setValueSilent("itemFocused", new Int32(rowIndex));
             this.setValueSilent("currFocusRow", new Float(rowIndex));
-            const published = this.publishedColumn(rowIndex, colIndex);
-            this.setValueSilent("currFocusColumn", new Float(published));
-            this.setValueSilent("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
+            const published = this.publishedFocus(rowIndex, colIndex);
+            this.setValueSilent("currFocusColumn", published.column);
+            this.setValueSilent("rowItemFocused", published.rowItem);
         }
     }
 
     /** The focused column as published: -1 on a row with no items (DEVICE-MEASURED, rowlist-empty-row-probe). */
     private publishedColumn(rowIndex: number, colIndex: number): number {
-        return (this.content[rowIndex]?.getNodeChildren().length ?? 0) === 0 ? -1 : colIndex;
+        return this.rowItemCount(rowIndex) === 0 ? -1 : colIndex;
+    }
+
+    /** `currFocusColumn` and `rowItemFocused` values for the focus at [row, col], with the published column. */
+    private publishedFocus(rowIndex: number, colIndex: number): { column: Float; rowItem: RoArray } {
+        const column = this.publishedColumn(rowIndex, colIndex);
+        return { column: new Float(column), rowItem: new RoArray([new Int32(rowIndex), new Int32(column)]) };
     }
 
     /**
@@ -324,10 +332,10 @@ export class RowList extends ArrayGrid {
         // instant, honoring that ordering — the settle notification fires last — keeps such an app from
         // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
         // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
-        const published = this.publishedColumn(rowIndex, colIndex);
+        const published = this.publishedFocus(rowIndex, colIndex);
         super.setValue("currFocusRow", new Float(rowIndex));
-        super.setValue("currFocusColumn", new Float(published));
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
+        super.setValue("currFocusColumn", published.column);
+        super.setValue("rowItemFocused", published.rowItem);
         // DEVICE-MEASURED: a move along the row settles rowItemFocused BEFORE scrollingStatus falls
         // (a row change already closed the pulse after itemFocused, so this is a no-op there).
         this.closeScrollPulse();
@@ -537,10 +545,9 @@ export class RowList extends ArrayGrid {
         const inFocusChain = nodeFocus || this.isChildrenFocused();
         this.settleRowMotionPercents(this.rowItemComps, rowIndex, colIndex, ["rowFocusPercent"]);
         const focusedComp = this.rowItemComps[rowIndex]?.[colIndex];
-        const published = this.publishedColumn(rowIndex, colIndex);
+        const { column, rowItem } = this.publishedFocus(rowIndex, colIndex);
         super.setValue("currFocusRow", new Float(rowIndex));
-        super.setValue("currFocusColumn", new Float(published));
-        const rowItem = new RoArray([new Int32(rowIndex), new Int32(published)]);
+        super.setValue("currFocusColumn", column);
         if (motion.rowMoved) {
             if (inFocusChain) {
                 super.setValue("itemFocused", new Int32(rowIndex));
@@ -596,8 +603,7 @@ export class RowList extends ArrayGrid {
     protected onMotionPaused() {
         const rowIndex = this.focusIndex;
         const colIndex = this.rowFocus[rowIndex] ?? 0;
-        const published = this.publishedColumn(rowIndex, colIndex);
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
+        super.setValue("rowItemFocused", this.publishedFocus(rowIndex, colIndex).rowItem);
         this.rowItemComps[rowIndex]?.[colIndex]?.setValue(
             "itemHasFocus",
             BrsBoolean.from(sgRoot.focused === this),
@@ -1012,11 +1018,8 @@ export class RowList extends ArrayGrid {
         // The rows are cut at the window's bottom (numRows rows and their spacings, the last one included),
         // at rest too. Only a row change also cuts its top: at rest the top row's focus ring pokes above the
         // list (DEVICE-MEASURED, rowlist-window-clip-probe).
-        const viewportHeight = this.windowLayoutHeight(context, pitch);
-        if (scrolling) {
-            this.pushMotionClip(rect, viewportHeight, draw2D);
-        } else {
-            this.pushViewportBottomClip(rect, viewportHeight, draw2D);
+        if (draw2D) {
+            this.pushMotionClip(rect, this.windowLayoutHeight(context, pitch), draw2D, scrolling);
         }
         let window: { windowHeight: number; renderedRows: number; trailingSpacing: number };
         try {
@@ -1080,12 +1083,16 @@ export class RowList extends ArrayGrid {
         let height = 0;
         for (let r = 0; r < this.numRows; r++) {
             height += this.slotSpan(r, context, fallback);
-            // The wrap divider drawn above row 0 when the list wraps around (see renderSingleRow).
-            if (this.wrap && r > 0 && this.calculateActualRowIndex(r) === 0) {
+            if (this.wrapDividerAbove(this.calculateActualRowIndex(r), r)) {
                 height += this.getValueJS("wrapDividerHeight") as number;
             }
         }
         return height;
+    }
+
+    /** Whether the wrap divider is drawn above row `rowIndex` at window slot `slot`: above row 0, when it wraps around. */
+    private wrapDividerAbove(rowIndex: number, slot: number): boolean {
+        return this.wrap && rowIndex === 0 && slot > 0;
     }
 
     /** Height plus spacing of the row at settled-window slot `slot`; `fallback` for a slot with no row. */
@@ -1094,10 +1101,8 @@ export class RowList extends ArrayGrid {
         if (rowIndex < 0) {
             return fallback;
         }
-        return (
-            this.rowLayoutHeight(rowIndex, context) +
-            this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing)
-        );
+        const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
+        return rowHeight + this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
     }
 
     /** Pixels from the top of slot `from` down to the fractional slot position `to` (`to >= from`). */
@@ -1182,8 +1187,7 @@ export class RowList extends ArrayGrid {
         context.itemRect.height = context.rowItemHeight;
         const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? context.rowItemHeight;
 
-        // Render wrap divider if needed
-        if (this.wrap && rowIndex === 0 && displayRowIndex > 0) {
+        if (this.wrapDividerAbove(rowIndex, displayRowIndex)) {
             context.itemRect.y = context.itemRect.y - spacing[1];
             const divRect = { ...context.itemRect, width: rowWidth };
             const divHeight = this.renderWrapDivider(divRect, context.opacity, context.draw2D);
@@ -1286,11 +1290,6 @@ export class RowList extends ArrayGrid {
         }
         const bottom = titleComp.rectLocal.y + titleComp.rectLocal.height;
         return Number.isFinite(bottom) ? Math.max(0, bottom) : 0;
-    }
-
-    /** The height a row takes in the layout, without its spacing. */
-    private rowLayoutHeight(rowIndex: number, context: RowListRenderContext): number {
-        return context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
     }
 
     /**
@@ -1502,12 +1501,7 @@ export class RowList extends ArrayGrid {
     ): void {
         const numCols = cols.length;
         if (numCols === 0) {
-            // A focused row with no items still shows the ring, in its first item's slot (DEVICE-MEASURED,
-            // rowlist-empty-row-probe).
-            if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
-                const slot = { ...itemRect, width: rowItemWidth };
-                this.renderFocus(slot, context.opacity, sgRoot.focused === this, context.draw2D);
-            }
+            this.renderEmptyRowFocus(rowIndex, { ...itemRect, width: rowItemWidth }, context.opacity, context.draw2D);
             return;
         }
 
@@ -1809,35 +1803,27 @@ export class RowList extends ArrayGrid {
      */
     private rowTitleComp(row: ContentNode, rowIndex: number, interpreter: Interpreter): Group | undefined {
         const compName = (this.getValueJS("rowTitleComponentName") as string) ?? "";
-        if (compName.length === 0) {
+        if (compName.length === 0 || this.titleCompFailed) {
             return undefined;
         }
         let titleComp = this.rowTitleComps[rowIndex];
-        if (titleComp === undefined) {
+        if (!titleComp) {
             const node = createNode(compName, interpreter, this);
-            titleComp = node instanceof Group ? node : null;
-            this.rowTitleComps[rowIndex] = titleComp;
-            if (titleComp) {
-                titleComp.setNodeParent(this);
-            } else {
-                this.logTitleCompFailure(compName);
+            if (!(node instanceof Group)) {
+                this.titleCompFailed = true;
+                BrsDevice.stderr.write(
+                    `error,[sg.rowlist.create.fail] Failed to create row title component: ${compName}`
+                );
+                return undefined;
             }
+            titleComp = node;
+            titleComp.setNodeParent(this);
+            this.rowTitleComps[rowIndex] = titleComp;
         }
-        if (titleComp?.hasNodeField("content") && titleComp.getValue("content") !== row) {
+        if (titleComp.hasNodeField("content") && titleComp.getValue("content") !== row) {
             titleComp.setValue("content", row, true);
         }
-        return titleComp ?? undefined;
-    }
-
-    private titleCompFailureLogged = false;
-
-    /** Writes a single error (not one per row/frame) when the row title component cannot be created. */
-    private logTitleCompFailure(compName: string) {
-        if (this.titleCompFailureLogged) {
-            return;
-        }
-        this.titleCompFailureLogged = true;
-        BrsDevice.stderr.write(`error,[sg.rowlist.create.fail] Failed to create row title component: ${compName}`);
+        return titleComp;
     }
 
     protected renderRowDivider(title: string, itemRect: Rect, opacity: number, rowIndex: number, draw2D?: IfDraw2D) {

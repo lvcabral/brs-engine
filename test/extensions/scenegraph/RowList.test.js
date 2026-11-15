@@ -24,6 +24,33 @@ function buildContent(rows) {
     return root;
 }
 
+/** A draw2D that draws nothing, so a render runs its paint-only paths. */
+const noopDraw2D = new Proxy({}, { get: () => () => undefined });
+
+/** A no-op draw2D that records every `pushClip` rect into `clips`. */
+function recordingDraw2D(clips) {
+    return new Proxy(
+        {},
+        { get: (_t, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined) }
+    );
+}
+
+/** Records the render origin y (rounded) of each item component, keyed by its content title. */
+function itemTops(list) {
+    const tops = {};
+    const original = list.createItemComponent.bind(list);
+    list.createItemComponent = (interp, itemRect, content, position) => {
+        const comp = original(interp, itemRect, content, position);
+        const render = comp.renderNode.bind(comp);
+        comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+            tops[content.getValueJS("title")] = Math.round(origin[1]);
+            return render(i2, origin, angle, opacity, draw2D);
+        };
+        return comp;
+    };
+    return tops;
+}
+
 describe("RowList key handling", () => {
     beforeAll(() => {
         // RowList resolves fonts/focus bitmap from the common: volume; mount it once.
@@ -781,7 +808,6 @@ describe("RowList vertical scrolling honors vertFocusAnimationStyle", () => {
 
 describe("RowList row titles, label bands and item indexes (rowlist-internals-probe)", () => {
     const { Group } = scenegraph;
-    const noopDraw2D = new Proxy({}, { get: () => () => undefined });
 
     beforeAll(() => {
         const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
@@ -806,22 +832,6 @@ describe("RowList row titles, label bands and item indexes (rowlist-internals-pr
     afterEach(() => {
         sgRoot.setFocused();
     });
-
-    /** Records each item's render origin (rounded) and the content title it shows, per row. */
-    function trackItems(list) {
-        const items = [];
-        const original = list.createItemComponent.bind(list);
-        list.createItemComponent = (interp, itemRect, content, position) => {
-            const comp = original(interp, itemRect, content, position);
-            const render = comp.renderNode.bind(comp);
-            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
-                items.push({ title: content.getValueJS("title"), y: Math.round(origin[1]) });
-                return render(i2, origin, angle, opacity, draw2D);
-            };
-            return comp;
-        };
-        return items;
-    }
 
     /** A list shaped like the probe: rows on a 230px pitch, 8px below the label band. */
     function probeList(rowCount, rowItemSize) {
@@ -848,23 +858,22 @@ describe("RowList row titles, label bands and item indexes (rowlist-internals-pr
         // Device (case A after Down): 225px posters in 230px rows, a 44px band; rows stay 230px apart and
         // the next row's label overlaps the poster above it.
         const { list } = probeList(3, [400, 225]);
-        const items = trackItems(list);
+        const tops = itemTops(list);
         list.renderNode({}, [0, 0], 0, 1);
         const band = Math.round(list.titleHeight) + 8;
-        const y = (title) => items.find((i) => i.title === title).y;
-        expect(y("R0C0")).toBe(band);
-        expect(y("R1C0")).toBe(230 + band);
-        expect(y("R2C0")).toBe(460 + band);
+        expect(tops.R0C0).toBe(band);
+        expect(tops.R1C0).toBe(230 + band);
+        expect(tops.R2C0).toBe(460 + band);
     });
 
     test("a shown label reserves its band even when the row title is empty", () => {
         const { list, content } = probeList(2, [300, 170]);
         content.getNodeChildren()[1].setValue("title", new BrsString(""));
         list.setValue("showRowCounter", new RoArray([core.BrsBoolean.False]));
-        const items = trackItems(list);
+        const tops = itemTops(list);
         list.renderNode({}, [0, 0], 0, 1);
         const band = Math.round(list.titleHeight) + 8;
-        expect(items.find((i) => i.title === "R1C0").y).toBe(230 + band);
+        expect(tops.R1C0).toBe(230 + band);
     });
 
     test("rowTitleComponentName: one title per row with the row's content, sizing the label band", () => {
@@ -875,7 +884,7 @@ describe("RowList row titles, label bands and item indexes (rowlist-internals-pr
         content.getNodeChildren()[2].setValue("title", new BrsString(""));
         list.setValue("rowTitleComponentName", new BrsString("TestTallTitle"));
         list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True, core.BrsBoolean.False, core.BrsBoolean.True]));
-        const items = trackItems(list);
+        const tops = itemTops(list);
         list.renderNode({}, [0, 0], 0, 1, noopDraw2D);
 
         const rows = content.getNodeChildren();
@@ -885,10 +894,9 @@ describe("RowList row titles, label bands and item indexes (rowlist-internals-pr
             expect(title.nodeSubtype).toBe("TestTallTitle");
             expect(title.getValue("content")).toBe(rows[r]);
         });
-        const y = (title) => items.find((i) => i.title === title).y;
-        expect(y("R0C0")).toBe(88);
-        expect(y("R1C0")).toBe(230 + 88);
-        expect(y("R2C0")).toBe(460 + 88);
+        expect(tops.R0C0).toBe(88);
+        expect(tops.R1C0).toBe(230 + 88);
+        expect(tops.R2C0).toBe(460 + 88);
     });
 
     test("only rows with showRowLabel draw their title component, at the band top", () => {
@@ -924,11 +932,11 @@ describe("RowList row titles, label bands and item indexes (rowlist-internals-pr
         const write = BrsDevice.stderr.write;
         BrsDevice.stderr.write = (text) => writes.push(text);
         try {
-            const items = trackItems(list);
+            const tops = itemTops(list);
             const interpreter = { formatLocation: () => "" };
             list.renderNode(interpreter, [0, 0], 0, 1);
             list.renderNode(interpreter, [0, 0], 0, 1);
-            expect(items.find((i) => i.title === "R0C0").y).toBe(Math.round(list.titleHeight) + 8);
+            expect(tops.R0C0).toBe(Math.round(list.titleHeight) + 8);
         } finally {
             BrsDevice.stderr.write = write;
         }
@@ -996,13 +1004,7 @@ describe("RowList window clip at rest (rowlist-window-clip-probe)", () => {
         list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(300), new Int32(190)])]));
         list.setValue("vertFocusAnimationStyle", new BrsString("floatingFocus"));
         const clips = [];
-        const draw2D = new Proxy(
-            {},
-            {
-                get: (_target, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined),
-            }
-        );
-        list.renderNode({}, [100, 100], 0, 1, draw2D);
+        list.renderNode({}, [100, 100], 0, 1, recordingDraw2D(clips));
         const window = clips.find((c) => Math.round(c.y + c.height) === 580);
         expect(window).toBeDefined();
         expect(window.y).toBeLessThan(100);
@@ -1027,13 +1029,7 @@ describe("RowList window clip at rest (rowlist-window-clip-probe)", () => {
         list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
         list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
         const clips = [];
-        const draw2D = new Proxy(
-            {},
-            {
-                get: (_target, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined),
-            }
-        );
-        list.renderNode({}, [0, 155], 0, 1, draw2D);
+        list.renderNode({}, [0, 155], 0, 1, recordingDraw2D(clips));
         const windowClip = clips.find((c) => c.width >= 200000);
         expect(windowClip).toBeDefined();
         // The whole 9-slot viewport: 155 + 9 x 220.
@@ -1043,11 +1039,6 @@ describe("RowList window clip at rest (rowlist-window-clip-probe)", () => {
 
 describe("RowList title edge cases, wrap window and empty rows", () => {
     const { Group } = scenegraph;
-    const recordingDraw2D = (clips) =>
-        new Proxy(
-            {},
-            { get: (_t, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined) }
-        );
 
     beforeAll(() => {
         const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
@@ -1088,21 +1079,6 @@ describe("RowList title edge cases, wrap window and empty rows", () => {
         list.setValue("rowLabelOffset", new RoArray([new RoArray([new Int32(0), new Int32(8)])]));
         list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
         return list;
-    }
-
-    function itemTops(list) {
-        const tops = {};
-        const original = list.createItemComponent.bind(list);
-        list.createItemComponent = (interp, itemRect, content, position) => {
-            const comp = original(interp, itemRect, content, position);
-            const render = comp.renderNode.bind(comp);
-            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
-                tops[content.getValueJS("title")] = Math.round(origin[1]);
-                return render(i2, origin, angle, opacity, draw2D);
-            };
-            return comp;
-        };
-        return tops;
     }
 
     test("a title component that draws nothing gives a zero-height label (no infinite band)", () => {

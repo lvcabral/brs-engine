@@ -485,8 +485,7 @@ export class ZoomRowList extends ArrayGrid {
 
     protected handleOK(press: boolean) {
         // A row with no items has nothing to select.
-        const hasItems = (this.content[this.focusIndex]?.getNodeChildren().length ?? 0) > 0;
-        if (press && hasItems && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
+        if (press && this.rowItemCount(this.focusIndex) > 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
             super.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
@@ -711,11 +710,7 @@ export class ZoomRowList extends ArrayGrid {
         };
 
         if (rowContent.length === 0) {
-            // A focused row with no items still shows the ring, in its first item's slot (DEVICE-MEASURED,
-            // zoomrowlist-empty-row-probe).
-            if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
-                this.renderFocus(itemRect, opacity, sgRoot.focused === this, draw2D);
-            }
+            this.renderEmptyRowFocus(rowIndex, itemRect, opacity, draw2D);
             return undefined;
         }
 
