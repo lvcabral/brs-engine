@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RowItem" extends="Group">
+    <interface>
+        <field id="width" type="float" onChange="onSize" />
+        <field id="height" type="float" onChange="onSize" />
+        <field id="index" type="integer" value="-1" />
+        <field id="rowIndex" type="integer" value="-1" />
+        <field id="itemContent" type="node" onChange="onContent" />
+    </interface>
+    <children>
+        <Rectangle id="fill" color="0x3060C0FF">
+            <Label id="title" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+        </Rectangle>
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub onContent()
+        c = m.top.itemContent
+        if c = invalid then return
+        m.top.findNode("title").text = c.title
+        print "PROBE|item|content|content=" + c.title + " rowIndex=" + m.top.rowIndex.toStr() + " index=" + m.top.index.toStr()
+    end sub
+
+    sub onSize()
+        fill = m.top.findNode("fill")
+        fill.width = m.top.width
+        fill.height = m.top.height
+        title = m.top.findNode("title")
+        title.width = m.top.width
+        title.height = m.top.height
+    end sub
+    ]]>
+    </script>
+</component>

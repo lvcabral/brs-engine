@@ -484,7 +484,9 @@ export class ZoomRowList extends ArrayGrid {
     }
 
     protected handleOK(press: boolean) {
-        if (press && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
+        // A row with no items has nothing to select.
+        const hasItems = (this.content[this.focusIndex]?.getNodeChildren().length ?? 0) > 0;
+        if (press && hasItems && this.focusIndex >= 0 && this.focusIndex < this.rowFocus.length) {
             const currentRow = this.focusIndex;
             const currentCol = this.rowFocus[currentRow] ?? 0;
             super.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
@@ -660,11 +662,10 @@ export class ZoomRowList extends ArrayGrid {
         if (!(content instanceof ContentNode)) {
             return;
         }
+        // A row with no items is still a row: it takes its slot, shows its title and can hold the focus
+        // (DEVICE-MEASURED, zoomrowlist-empty-row-probe), so row indexes are the content's own.
         const rows = this.getContentChildren(content);
         for (const [index, row] of rows.entries()) {
-            if (!row || row.getNodeChildren().length === 0) {
-                continue;
-            }
             this.rowFocus[index] ??= 0;
             this.content.push(row);
         }
@@ -693,10 +694,6 @@ export class ZoomRowList extends ArrayGrid {
         draw2D?: IfDraw2D
     ): [number, number, number] | undefined {
         const rowContent = this.getRowContent(rowIndex);
-        if (rowContent.length === 0) {
-            return undefined;
-        }
-
         const titleHeight = this.renderRowTitle(rowIndex, rect, this.nodeWidth, opacity, draw2D);
         const counterHeight = this.renderRowCounter(rowIndex, rect, metrics, this.nodeWidth, opacity, draw2D);
         // `rowItemYOffset` positions the item row relative to the row top, independently of the
@@ -712,6 +709,15 @@ export class ZoomRowList extends ArrayGrid {
             width: metrics.itemWidth,
             height: metrics.itemHeight,
         };
+
+        if (rowContent.length === 0) {
+            // A focused row with no items still shows the ring, in its first item's slot (DEVICE-MEASURED,
+            // zoomrowlist-empty-row-probe).
+            if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
+                this.renderFocus(itemRect, opacity, sgRoot.focused === this, draw2D);
+            }
+            return undefined;
+        }
 
         const canWrapItems = this.canWrapItems(rowContent.length, metrics, this.nodeWidth);
         let startCol = canWrapItems ? this.rowFocus[rowIndex] ?? 0 : 0;

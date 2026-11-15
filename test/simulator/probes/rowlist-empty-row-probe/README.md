@@ -37,4 +37,4 @@ The engine used to drop empty rows from its row model, which shifted every later
 `rowItemFocused` and `jumpToRowItem`. It now matches the trace above record for record.
 
 Not measured: OK on a focused empty row. The engine leaves the key unhandled, since there is no item to
-select. ZoomRowList still drops empty rows; it has not been probed.
+select. ZoomRowList: see `../zoomrowlist-empty-row-probe` (the same, except an empty row's column is 0).

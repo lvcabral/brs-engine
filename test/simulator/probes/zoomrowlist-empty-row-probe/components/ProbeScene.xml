@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <ZoomRowList id="rows" itemComponentName="RowItem" translation="[100,100]" rowWidth="1720" rowHeight="[200]"
+            rowZoomHeight="[200]" rowItemHeight="[140]" rowItemZoomHeight="[140]" rowItemAspectRatio="[2.142857]"
+            spacingAfterRowItem="[20]" showRowTitle="[true]" showRowCounter="[true]" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Content rows: 0 "empty0" (no items), 1 "row1" (3 items), 2 "empty2" (no items), 3 "row3" (2 items), 4 "row4"
+    ' (3 items). Items are titled with their CONTENT row index (R1C0 is child 0 of content row 1).
+    sub init()
+        m.seq = 0
+        counts = [0, 3, 0, 2, 3]
+        titles = ["empty0", "row1", "empty2", "row3", "row4"]
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            row.title = titles[r]
+            for c = 0 to counts[r] - 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + r.toStr() + "C" + c.toStr()
+            end for
+        end for
+        m.rows = m.top.findNode("rows")
+        m.rows.content = root
+        m.rows.observeField("rowItemFocused", "onFocused")
+        m.rows.setFocus(true)
+        m.steps = [
+            { op: "mark", phase: "rest" }, { op: "shot", name: "rest" },
+            { op: "key", key: "Down" }, { op: "mark", phase: "down1" },
+            { op: "key", key: "Down" }, { op: "mark", phase: "down2" }, { op: "shot", name: "down2" },
+            { op: "jump", to: [3, 1] }, { op: "mark", phase: "jump31" },
+            { op: "jump", to: [1, 1] }, { op: "mark", phase: "jump11" },
+            { op: "done" }
+        ]
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        m.timer.duration = 2
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, kase as string, body as string)
+        m.seq = m.seq + 1
+        s = m.seq.toStr()
+        while len(s) < 3
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + phase + "|" + kase + "|" + body
+    end sub
+
+    function pair(v as object) as string
+        if v = invalid or v.count() < 2 then return "[]"
+        return "[" + v[0].toStr() + "," + v[1].toStr() + "]"
+    end function
+
+    sub onFocused()
+        rec("event", "rowItemFocused", "value=" + pair(m.rows.rowItemFocused))
+    end sub
+
+    sub runSteps()
+        while m.steps.count() > 0
+            s = m.steps.shift()
+            if s.op = "mark"
+                rec(s.phase, "state", "rowItemFocused=" + pair(m.rows.rowItemFocused))
+            else if s.op = "jump"
+                rec("jump", "to", "value=" + pair(s.to))
+                m.rows.jumpToRowItem = s.to
+            else if s.op = "shot"
+                rec("await", "shot", "name=" + s.name)
+                m.timer.duration = 4
+                m.timer.control = "start"
+                return
+            else if s.op = "key"
+                rec("await", s.key, "rowItemFocused=" + pair(m.rows.rowItemFocused))
+                m.timer.duration = 2
+                m.timer.control = "start"
+                return
+            else if s.op = "done"
+                rec("done", "end", "rowItemFocused=" + pair(m.rows.rowItemFocused))
+                m.top.probeExit = true
+                return
+            end if
+        end while
+    end sub
+    ]]>
+    </script>
+</component>

@@ -1,0 +1,28 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=16.0
+PROBE|001|event|rowItemFocused|value=[0,0]
+PROBE|item|content|content=R1C0 rowIndex=1 index=0
+PROBE|item|content|content=R1C1 rowIndex=1 index=1
+PROBE|item|content|content=R1C2 rowIndex=1 index=2
+PROBE|item|content|content=R3C0 rowIndex=3 index=0
+PROBE|item|content|content=R3C1 rowIndex=3 index=1
+PROBE|002|rest|state|rowItemFocused=[0,0]
+PROBE|003|await|shot|name=rest
+PROBE|004|await|Down|rowItemFocused=[0,0]
+PROBE|item|content|content=R4C0 rowIndex=4 index=0
+PROBE|item|content|content=R4C1 rowIndex=4 index=1
+PROBE|item|content|content=R4C2 rowIndex=4 index=2
+PROBE|005|event|rowItemFocused|value=[1,0]
+PROBE|006|down1|state|rowItemFocused=[1,0]
+PROBE|007|await|Down|rowItemFocused=[1,0]
+PROBE|008|event|rowItemFocused|value=[2,0]
+PROBE|009|down2|state|rowItemFocused=[2,0]
+PROBE|010|await|shot|name=down2
+PROBE|011|jump|to|value=[3,1]
+PROBE|012|event|rowItemFocused|value=[3,1]
+PROBE|013|jump31|state|rowItemFocused=[3,1]
+PROBE|014|jump|to|value=[1,1]
+PROBE|015|event|rowItemFocused|value=[1,1]
+PROBE|016|jump11|state|rowItemFocused=[1,1]
+PROBE|017|done|end|rowItemFocused=[1,1]
+PROBE|999|boot|end|

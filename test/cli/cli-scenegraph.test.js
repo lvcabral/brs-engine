@@ -1557,7 +1557,8 @@ describe.concurrent("cli scenegraph", () => {
         });
         // DEVICE-MEASURED (test/simulator/probes/rowlist-internals-probe, markupgrid-item-index-probe): an
         // item's index (and a RowList/ZoomRowList item's rowIndex) is already set when its first itemContent
-        // arrives, a MarkupGrid's index counts across sections, and a RowList creates one
+        // arrives (a ZoomRowList's empty row still counts, zoomrowlist-empty-row-probe), a MarkupGrid's index
+        // counts across sections, and a RowList creates one
         // rowTitleComponentName instance per row whose content field holds the row's ContentNode.
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== List Item Index Repro ===",
@@ -1572,9 +1573,9 @@ describe.concurrent("cli scenegraph", () => {
             "item ZR0C0 rowIndex=0 index=0",
             "item ZR0C1 rowIndex=0 index=1",
             "item ZR0C2 rowIndex=0 index=2",
-            "item ZR1C0 rowIndex=1 index=0",
-            "item ZR1C1 rowIndex=1 index=1",
-            "item ZR1C2 rowIndex=1 index=2",
+            "item ZR2C0 rowIndex=2 index=0",
+            "item ZR2C1 rowIndex=2 index=1",
+            "item ZR2C2 rowIndex=2 index=2",
             "item G0.0 rowIndex=-1 index=0",
             "item G0.1 rowIndex=-1 index=1",
             "item G1.0 rowIndex=-1 index=2",

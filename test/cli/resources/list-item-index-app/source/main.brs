@@ -12,9 +12,10 @@ sub Main()
     screen.show()
 
     rows = scene.findNode("rows")
-    rows.content = buildContent("L")
+    rows.content = buildContent("L", [3, 3])
     zoom = scene.findNode("zoom")
-    zoom.content = buildContent("Z")
+    ' An empty middle row is still row 1: the next row's items report rowIndex 2.
+    zoom.content = buildContent("Z", [3, 0, 3])
 
     grid = scene.findNode("grid")
     grid.content = buildSections()
@@ -30,12 +31,12 @@ sub Main()
     print "=== List Item Index Repro Complete ==="
 end sub
 
-function buildContent(prefix as string) as object
+function buildContent(prefix as string, counts as object) as object
     root = CreateObject("roSGNode", "ContentNode")
-    for r = 0 to 1
+    for r = 0 to counts.count() - 1
         row = root.createChild("ContentNode")
         row.title = prefix + "row" + r.toStr()
-        for c = 0 to 2
+        for c = 0 to counts[r] - 1
             item = row.createChild("ContentNode")
             item.title = prefix + "R" + r.toStr() + "C" + c.toStr()
         end for
