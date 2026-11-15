@@ -1549,6 +1549,46 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Sets list item indexes before itemContent and creates RowList row title components", async () => {
+        let command = ["node", brsCliPath, "-r list-item-index-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // DEVICE-MEASURED (test/simulator/probes/rowlist-internals-probe, markupgrid-item-index-probe): an
+        // item's index (and a RowList/ZoomRowList item's rowIndex) is already set when its first itemContent
+        // arrives, a MarkupGrid's index counts across sections, and a RowList creates one
+        // rowTitleComponentName instance per row whose content field holds the row's ContentNode.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== List Item Index Repro ===",
+            "title Lrow0",
+            "item LR0C0 rowIndex=0 index=0",
+            "item LR0C1 rowIndex=0 index=1",
+            "item LR0C2 rowIndex=0 index=2",
+            "title Lrow1",
+            "item LR1C0 rowIndex=1 index=0",
+            "item LR1C1 rowIndex=1 index=1",
+            "item LR1C2 rowIndex=1 index=2",
+            "item ZR0C0 rowIndex=0 index=0",
+            "item ZR0C1 rowIndex=0 index=1",
+            "item ZR0C2 rowIndex=0 index=2",
+            "item ZR1C0 rowIndex=1 index=0",
+            "item ZR1C1 rowIndex=1 index=1",
+            "item ZR1C2 rowIndex=1 index=2",
+            "item G0.0 rowIndex=-1 index=0",
+            "item G0.1 rowIndex=-1 index=1",
+            "item G1.0 rowIndex=-1 index=2",
+            "item G1.1 rowIndex=-1 index=3",
+            "item M0 rowIndex=-1 index=0",
+            "item M1 rowIndex=-1 index=1",
+            "item M2 rowIndex=-1 index=2",
+            "=== List Item Index Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("StandardDialog forwards focus to a custom component's nested button group", async () => {
         let command = ["node", brsCliPath, "-r dialog-buttongroup-focus-app", "source/main.brs", "-c 0"].join(" ");
 

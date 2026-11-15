@@ -30,7 +30,7 @@ The same technique as `../grid-focus-layer-probe/README.md`: relaunch, hold the 
 
 ## Engine
 
-- A move along a row pushes no clip. A row change clips the scrolling rows to the window: each visible row's layout height (the row height, grown by the label/counter band when the band doesn't fit) plus its spacing, the last one included (`RowList.windowLayoutHeight`). ZoomRowList also clips only on a row change.
+- A row change clips the scrolling rows to the window: each visible row's height plus its spacing, the last one included (`RowList.windowLayoutHeight`). At rest and while moving along a row, the same window cuts only the bottom (`../rowlist-window-clip-probe`). ZoomRowList clips only on a row change.
 - Known difference: the engine doesn't clip the focused row to its row height, at rest or while moving along it. Drawing that clip needs the focus ring moved out of the row's item pass.
 
 ## ZoomRowList sliding along a row (OS 16.0)

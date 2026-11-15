@@ -314,12 +314,16 @@ describe("RowList focus motion", () => {
         return list;
     }
 
-    test("a move along a row clips nothing (device screenshot)", () => {
-        // rowlist-clip-probe: mid-move, captions below the posters stay visible on every row.
+    test("a move along a row clips only the window's bottom, like the list at rest (device screenshot)", () => {
+        // rowlist-clip-probe: mid-move, captions below the posters stay visible on every row; the rows are only cut
+        // at the window bottom, top + 2 x (150 + 20) (rowlist-window-clip-probe).
         const list = makeClipList();
         tap(list, "right");
         advance(100);
-        expect(paintClips(list).filter((clip) => clip.width >= 200000)).toEqual([]);
+        const clips = paintClips(list).filter((clip) => clip.width >= 200000);
+        expect(clips).toHaveLength(1);
+        expect(clips[0].y).toBeLessThan(0);
+        expect(clips[0].y + clips[0].height).toBe(340);
     });
 
     test("a row change clips to the window plus the last row's spacing (device screenshot)", () => {

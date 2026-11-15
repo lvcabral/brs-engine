@@ -963,7 +963,7 @@ export class ZoomRowList extends ArrayGrid {
         const focused = this.focusIndex === rowIndex && this.rowFocus[rowIndex] === colIndex;
 
         if (!this.rowItemComps[rowIndex]?.[colIndex]) {
-            const itemComp = this.createItemComponent(interpreter, itemRect, content);
+            const itemComp = this.createItemComponent(interpreter, itemRect, content, { index: colIndex, rowIndex });
             this.rowItemComps[rowIndex] ??= [];
             if (itemComp instanceof Group) {
                 this.rowItemComps[rowIndex][colIndex] = itemComp;

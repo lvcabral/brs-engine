@@ -16,6 +16,7 @@ import {
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
+import { createNode } from "../factory/NodeFactory";
 import { Font } from "./Font";
 import { Group } from "./Group";
 import { Node } from "./Node";
@@ -78,6 +79,8 @@ export class RowList extends ArrayGrid {
     protected readonly marginY: number;
     protected readonly gap: number;
     protected readonly rowItemComps: Group[][] = [[]];
+    /** The `rowTitleComponentName` instance of each row, by row index; `null` when it could not be created. */
+    private readonly rowTitleComps: (Group | null)[] = [];
     protected readonly rowFocus: number[];
     protected readonly rowScrollOffset: number[] = []; // Track scroll offset per row for floating focus
     // Identity of the content node last parsed by refreshContent. Used to reset per-row horizontal
@@ -185,6 +188,9 @@ export class RowList extends ArrayGrid {
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for RowList
             return;
+        } else if (fieldName === "rowtitlecomponentname") {
+            this.rowTitleComps.length = 0;
+            this.titleCompFailureLogged = false;
         }
         super.setValue(index, value, alwaysNotify, kind);
     }
@@ -960,10 +966,9 @@ export class RowList extends ArrayGrid {
             this.currRow = this.topRow;
         }
 
-        // Rows advance by their own height plus, when the label/counter band does not fit in the row's
-        // slack, that band's height (see renderSingleRow). No arithmetic in updateRect can reproduce
-        // that without re-measuring the label, so accumulate the extent the loop actually laid out and
-        // hand it over. `itemRect.y` ends one rowSpacing past the last row, which is dropped below.
+        // Rows advance by their own height and spacing (see renderSingleRow). The loop accumulates the
+        // extent it actually laid out and hands it to updateRect. `itemRect.y` ends one rowSpacing past
+        // the last row, which is dropped below.
         // Focus in motion: the settled window drawn `shift` rows lower plus the rows scrolling in/out, clipped
         // to the viewport, and the indicator drawn once at its in-transit slot.
         const frame = this.rowMotionFrame(context.displayRows);
@@ -995,16 +1000,25 @@ export class RowList extends ArrayGrid {
         if (indicatorRect && !focusOnTop) {
             this.renderFocus(indicatorRect, opacity, sgRoot.focused === this, draw2D);
         }
+        // The rows are cut at the window's bottom (numRows rows and their spacings, the last one included),
+        // at rest too. Only a row change also cuts its top: at rest the top row's focus ring pokes above the
+        // list (DEVICE-MEASURED, rowlist-window-clip-probe).
+        const viewportHeight = this.windowLayoutHeight(context);
         if (scrolling) {
-            this.pushMotionClip(rect, this.windowLayoutHeight(context), draw2D);
+            this.pushMotionClip(rect, viewportHeight, draw2D);
+        } else {
+            draw2D?.pushClip({
+                x: rect.x - 100000,
+                y: rect.y - 100000,
+                width: 200000,
+                height: 100000 + viewportHeight,
+            });
         }
         let window: { windowHeight: number; renderedRows: number; trailingSpacing: number };
         try {
             window = this.renderWindowRows(firstRow, lastRow, frame !== undefined, pitch, context);
         } finally {
-            if (scrolling) {
-                draw2D?.popClip();
-            }
+            draw2D?.popClip();
         }
         const { windowHeight, renderedRows, trailingSpacing } = window;
         if (indicatorRect && focusOnTop) {
@@ -1171,24 +1185,18 @@ export class RowList extends ArrayGrid {
             context.itemRect.y += divHeight + spacing[1];
         }
 
-        // The row label (left) and the "N of M" counter (right) sit in a band at the TOP of the row,
-        // and the poster items are pushed down below it. When the band fits within the row's natural
-        // slack (rowHeight - posterHeight), the row keeps its height (hero/standard rows). When it does
-        // NOT fit — a dense grid row whose rowHeight falls back to itemSize.y — the row is grown by the
-        // band height (see the advance below) so the pushed-down poster still never spills into the next
-        // row, while the label/counter stay at the row top with the row's normal spacing above them.
-        const title = row.getValueJS("title") ?? "";
+        // The row label (or the row's title component) on the left and the "N of M" counter on the right
+        // sit in a band at the TOP of the row, and the items are pushed down below it. The row keeps its
+        // own height whether or not the band fits: a tall band makes the items overlap the next row
+        // (DEVICE-MEASURED, rowlist-internals-probe).
         const rowTopY = context.itemRect.y;
         const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
         context.showRowLabel = showLabel;
-        const hasLabel = showLabel && title.length !== 0;
-        const bandHeight = this.rowBandHeight(rowIndex, hasLabel, showCounter);
-        const bandFits = bandHeight <= Math.max(0, rowHeight - context.rowItemHeight);
-        if (hasLabel) {
-            const divRect = { ...context.itemRect, y: rowTopY, width: rowWidth };
-            this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
+        if (showLabel || showCounter) {
+            this.renderRowTitle(row, rowIndex, rowTopY, rowWidth, showLabel, context);
         }
+        const bandHeight = this.rowBandHeight(rowIndex, showLabel, showCounter);
         context.itemRect.y = rowTopY + bandHeight;
 
         // Apply horizontal offset and render items
@@ -1226,12 +1234,10 @@ export class RowList extends ArrayGrid {
         // Render the "N of M" row counter in the label band at the row top, AFTER the items.
         this.renderRowCounter(rowIndex, numCols, rowTopY, context);
 
-        // Prepare for next row: advance by the ROW height (not the poster height) from the row top,
-        // grown by the band height when the band did not fit in the row's slack so a labeled short row
-        // (e.g. the first "The Grid" row) does not overlap the next.
+        // Prepare for next row: advance by the ROW height (not the poster height) from the row top.
         context.itemRect.x = context.rect.x;
         const rowSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
-        context.itemRect.y = rowTopY + rowHeight + (bandFits ? 0 : bandHeight) + rowSpacing;
+        context.itemRect.y = rowTopY + rowHeight + rowSpacing;
 
         // Stop only once the next row starts BELOW the viewport — everything after it is off screen.
         // A row entirely ABOVE the viewport must not end the pass: this used to test the next row for
@@ -1246,30 +1252,33 @@ export class RowList extends ArrayGrid {
 
     /** `rowBandHeight` for a row whose label and counter flags the caller hasn't resolved yet. */
     private rowBandHeightOf(rowIndex: number): number {
-        const title = (this.content[rowIndex]?.getValueJS("title") as string) ?? "";
-        const hasLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false) && title.length !== 0;
+        const showLabel = this.resolveBoolean(this.getValueJS("showRowLabel"), rowIndex, false);
         const showCounter = this.resolveBoolean(this.getValueJS("showRowCounter"), rowIndex, false);
-        return this.rowBandHeight(rowIndex, hasLabel, showCounter);
-    }
-
-    /** Height of the label/counter band at the top of a row (0 when it shows neither). */
-    private rowBandHeight(rowIndex: number, hasLabel: boolean, showCounter: boolean): number {
-        if (!hasLabel && !showCounter) {
-            return 0;
-        }
-        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
-        return this.titleHeight + (labelOffset[1] ?? 0);
+        return this.rowBandHeight(rowIndex, showLabel, showCounter);
     }
 
     /**
-     * The height a row takes in the layout, without its spacing: the row height, grown by the band when
-     * the band does not fit in the row's slack (the advance in renderSingleRow).
+     * Height of the label/counter band at the top of a row, 0 when it shows neither. A shown label takes
+     * its space even when the row's title is empty, and a hidden one keeps it while the counter shows
+     * (DEVICE-MEASURED, rowlist-internals-probe and rowlist-hero-grid-probe).
      */
+    private rowBandHeight(rowIndex: number, showLabel: boolean, showCounter: boolean): number {
+        if (!showLabel && !showCounter) {
+            return 0;
+        }
+        const labelOffset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+        return this.rowLabelHeight(rowIndex) + (labelOffset[1] ?? 0);
+    }
+
+    /** The label's height: the row's title component's measured height when it has one, else the font's. */
+    private rowLabelHeight(rowIndex: number): number {
+        const titleComp = this.rowTitleComps[rowIndex];
+        return titleComp ? titleComp.rectLocal.height : this.titleHeight;
+    }
+
+    /** The height a row takes in the layout, without its spacing. */
     private rowLayoutHeight(rowIndex: number, context: RowListRenderContext): number {
-        const rowHeight = context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
-        const bandHeight = this.rowBandHeightOf(rowIndex);
-        const posterHeight = this.getRowItemSize(rowIndex)[1];
-        return rowHeight + (bandHeight <= Math.max(0, rowHeight - posterHeight) ? 0 : bandHeight);
+        return context.rowHeights[rowIndex] ?? context.itemSize[1] ?? 0;
     }
 
     /**
@@ -1611,7 +1620,7 @@ export class RowList extends ArrayGrid {
         }
 
         if (!this.rowItemComps[rowIndex]?.[colIndex]) {
-            const itemComp = this.createItemComponent(interpreter, itemRect, content);
+            const itemComp = this.createItemComponent(interpreter, itemRect, content, { index: colIndex, rowIndex });
             this.rowItemComps[rowIndex] ??= [];
             if (itemComp instanceof Group) {
                 this.rowItemComps[rowIndex][colIndex] = itemComp;
@@ -1712,8 +1721,25 @@ export class RowList extends ArrayGrid {
         // column moves, so it must be re-measured every frame, not cached.
         const measured = drawFont.measureText(counterText);
         const textX = rightEdge - measured.width;
-        const textY = topY + Math.max(0, (this.titleHeight - measured.height) / 2);
+        const textY = topY + this.counterAlignOffset(rowIndex) + Math.max(0, (this.titleHeight - measured.height) / 2);
         context.draw2D?.doDrawRotatedText(counterText, textX, textY, color, context.opacity, drawFont, 0);
+    }
+
+    /**
+     * How far the counter sits below the band top: a title component declaring `rowCounterVertAlign`
+     * ("top", "center" or "bottom") aligns the counter to itself; otherwise the counter is at the top.
+     */
+    private counterAlignOffset(rowIndex: number): number {
+        const titleComp = this.rowTitleComps[rowIndex];
+        if (!titleComp?.hasNodeField("rowCounterVertAlign")) {
+            return 0;
+        }
+        const align = String(titleComp.getValueJS("rowCounterVertAlign") ?? "").toLowerCase();
+        const room = titleComp.rectLocal.height - this.titleHeight;
+        if (align === "center") {
+            return room / 2;
+        }
+        return align === "bottom" ? room : 0;
     }
 
     private get titleHeight() {
@@ -1726,6 +1752,71 @@ export class RowList extends ArrayGrid {
             this.labelFont = { drawFont, height: drawFont instanceof RoFont ? drawFont.measureTextHeight() : 0 };
         }
         return this.labelFont;
+    }
+
+    /**
+     * Draws the row's label at the band top: the `rowTitleComponentName` component when there is one,
+     * else the row title text. A hidden title component is still measured, as its height sizes the band
+     * the counter keeps (DEVICE-MEASURED, rowlist-internals-probe).
+     */
+    private renderRowTitle(
+        row: ContentNode,
+        rowIndex: number,
+        topY: number,
+        rowWidth: number,
+        showLabel: boolean,
+        context: RowListRenderContext
+    ) {
+        const titleComp = this.rowTitleComp(row, rowIndex, context.interpreter);
+        if (titleComp) {
+            const offset = this.resolveVector(this.getValueJS("rowLabelOffset"), rowIndex, [0, 0]);
+            const origin = [context.rect.x + (offset[0] ?? 0), topY];
+            const draw2D = showLabel ? context.draw2D : undefined;
+            titleComp.renderNode(context.interpreter, origin, context.rotation, context.opacity, draw2D);
+            return;
+        }
+        const title = (row.getValueJS("title") as string) ?? "";
+        if (showLabel && title.length !== 0) {
+            const divRect = { ...context.itemRect, y: topY, width: rowWidth };
+            this.renderRowDivider(title, divRect, context.opacity, rowIndex, context.draw2D);
+        }
+    }
+
+    /**
+     * The row's `rowTitleComponentName` instance, created on first use; `undefined` without one. Its
+     * `content` field, when the component declares one, holds the row's own ContentNode.
+     */
+    private rowTitleComp(row: ContentNode, rowIndex: number, interpreter: Interpreter): Group | undefined {
+        const compName = (this.getValueJS("rowTitleComponentName") as string) ?? "";
+        if (compName.length === 0) {
+            return undefined;
+        }
+        let titleComp = this.rowTitleComps[rowIndex];
+        if (titleComp === undefined) {
+            const node = createNode(compName, interpreter, this);
+            titleComp = node instanceof Group ? node : null;
+            this.rowTitleComps[rowIndex] = titleComp;
+            if (titleComp) {
+                titleComp.setNodeParent(this);
+            } else {
+                this.logTitleCompFailure(compName);
+            }
+        }
+        if (titleComp?.hasNodeField("content") && titleComp.getValue("content") !== row) {
+            titleComp.setValue("content", row, true);
+        }
+        return titleComp ?? undefined;
+    }
+
+    private titleCompFailureLogged = false;
+
+    /** Writes a single error (not one per row/frame) when the row title component cannot be created. */
+    private logTitleCompFailure(compName: string) {
+        if (this.titleCompFailureLogged) {
+            return;
+        }
+        this.titleCompFailureLogged = true;
+        BrsDevice.stderr.write(`error,[sg.rowlist.create.fail] Failed to create row title component: ${compName}`);
     }
 
     protected renderRowDivider(title: string, itemRect: Rect, opacity: number, rowIndex: number, draw2D?: IfDraw2D) {

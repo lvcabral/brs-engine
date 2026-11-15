@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Cases: G (flat MarkupGrid, 3x2 window over 30 items), S (MarkupGrid with two sections), L (MarkupList, which
+    ' does not document `index`). Each scrolls with Down so recycled item components show.
+    sub init()
+        m.seq = 0
+        m.list = invalid
+        m.global.addFields({ serial: 0, probeCase: "" })
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        downs = []
+        for i = 1 to 4
+            downs.push({ op: "key", key: "Down" })
+        end for
+        m.steps = []
+        for each kase in ["G", "S", "L"]
+            m.steps.push({ op: "create", kase: kase })
+            m.steps.push({ op: "wait", secs: 2 })
+            m.steps.push({ op: "mark", phase: "idle" })
+            m.steps.append(downs)
+            m.steps.push({ op: "mark", phase: "down" })
+        end for
+        m.steps.push({ op: "done" })
+        m.timer.duration = 1
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, kase as string, body as string)
+        m.seq = m.seq + 1
+        s = m.seq.toStr()
+        while len(s) < 3
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + phase + "|" + kase + "|" + body
+    end sub
+
+    sub runSteps()
+        while m.steps.count() > 0
+            s = m.steps.shift()
+            if s.op = "create"
+                createList(s.kase)
+            else if s.op = "wait"
+                m.timer.duration = s.secs
+                m.timer.control = "start"
+                return
+            else if s.op = "key"
+                rec("await", s.key, "case=" + m.global.probeCase)
+                m.timer.duration = 2
+                m.timer.control = "start"
+                return
+            else if s.op = "mark"
+                rec(s.phase, m.global.probeCase, "itemFocused=" + m.list.itemFocused.toStr() + " serial=" + m.global.serial.toStr())
+            else if s.op = "done"
+                rec("done", "end", "serial=" + m.global.serial.toStr())
+                m.top.probeExit = true
+                return
+            end if
+        end while
+    end sub
+
+    sub createList(kase as string)
+        if m.list <> invalid then m.top.removeChild(m.list)
+        m.global.probeCase = kase
+        root = CreateObject("roSGNode", "ContentNode")
+        if kase = "S"
+            for sec = 0 to 1
+                section = root.createChild("ContentNode")
+                section.contentType = "SECTION"
+                section.title = "Section " + sec.toStr()
+                for i = 0 to 3
+                    item = section.createChild("ContentNode")
+                    item.title = kase + sec.toStr() + "." + i.toStr()
+                end for
+            end for
+        else
+            for i = 0 to 29
+                item = root.createChild("ContentNode")
+                item.title = kase + i.toStr()
+            end for
+        end if
+        if kase = "L"
+            l = CreateObject("roSGNode", "MarkupList")
+            l.itemSize = [600, 120]
+            l.itemSpacing = [0, 20]
+            l.numRows = 3
+        else
+            l = CreateObject("roSGNode", "MarkupGrid")
+            l.itemSize = [300, 150]
+            l.itemSpacing = [20, 20]
+            l.numColumns = 3
+            l.numRows = 2
+        end if
+        m.list = l
+        l.translation = [100, 160]
+        l.itemComponentName = "IndexItem"
+        l.content = root
+        m.top.appendChild(l)
+        l.setFocus(true)
+        rec("create", kase, "subtype=" + l.subtype())
+    end sub
+    ]]>
+    </script>
+</component>

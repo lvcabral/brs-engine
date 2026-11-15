@@ -2001,7 +2001,10 @@ export class ArrayGrid extends Group implements UITransition {
         const nodeFocus = sgRoot.focused === this;
         const focused = index === this.focusIndex;
         if (!this.itemComps[index]) {
-            const itemComp = this.createItemComponent(interpreter, itemRect, content);
+            // `index` is the item's position in the data, across sections (DEVICE-MEASURED,
+            // markupgrid-item-index-probe; MarkupList sets it too although it does not document it).
+            const dataIndex = this.metadata[index]?.index ?? index;
+            const itemComp = this.createItemComponent(interpreter, itemRect, content, { index: dataIndex });
             if (itemComp instanceof Group) {
                 this.itemComps[index] = itemComp;
             }
@@ -2252,7 +2255,16 @@ export class ArrayGrid extends Group implements UITransition {
         return itemIndex;
     }
 
-    protected createItemComponent(interpreter: Interpreter, itemRect: Rect, content: ContentNode) {
+    /**
+     * Creates the item component for `content`. `position`, when given, sets the documented `index` /
+     * `rowIndex` item fields, which (like a device) are in place before the first `itemContent` change.
+     */
+    protected createItemComponent(
+        interpreter: Interpreter,
+        itemRect: Rect,
+        content: ContentNode,
+        position?: { index: number; rowIndex?: number }
+    ) {
         if (content.name === "_placeholder_") {
             return new Group();
         }
@@ -2262,6 +2274,12 @@ export class ArrayGrid extends Group implements UITransition {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", brsValueOf(itemRect.width), false);
             itemComp.setValue("height", brsValueOf(itemRect.height), false);
+            if (position) {
+                itemComp.setValue("index", new Int32(position.index), false);
+                if (position.rowIndex !== undefined) {
+                    itemComp.setValue("rowIndex", new Int32(position.rowIndex), false);
+                }
+            }
             itemComp.setValue("itemContent", content, false);
         }
         return itemComp;

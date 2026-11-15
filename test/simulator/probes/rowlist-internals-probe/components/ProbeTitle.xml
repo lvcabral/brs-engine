@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeTitle" extends="Group">
+    <interface>
+        <field id="content" type="node" onChange="onContent" />
+    </interface>
+    <children>
+        <Label id="label" color="0xFFD040FF" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' The rowTitleComponentName component (case B); registers itself like ProbeItem.
+    sub onContent()
+        c = m.top.content
+        if c = invalid then return
+        m.top.findNode("label").text = "Title " + c.title
+        if m.serial = invalid
+            m.serial = m.global.serial + 1
+            m.global.serial = m.serial
+            m.top.id = "title" + m.serial.toStr()
+            nodes = m.global.probeNodes
+            nodes.push(m.top)
+            m.global.probeNodes = nodes
+            p = m.top.getParent()
+            ps = "invalid"
+            if p <> invalid then ps = p.subtype()
+            print "PROBE|life|" + m.top.id + "|first-content|content=" + c.title + " parent=" + ps
+        end if
+    end sub
+    ]]>
+    </script>
+</component>

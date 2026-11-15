@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <children>
+        <RowList id="rows" itemComponentName="IndexItem" rowTitleComponentName="IndexTitle" itemSize="[1720,230]"
+            numRows="2" rowItemSize="[[300,170]]" rowItemSpacing="[[20,0]]" showRowLabel="[true]" />
+        <ZoomRowList id="zoom" itemComponentName="IndexItem" translation="[0,600]" rowWidth="1720"
+            rowHeight="[200]" rowItemHeight="[170]" rowItemAspectRatio="[1.7647]" spacingAfterRowItem="[20]" />
+        <MarkupGrid id="grid" itemComponentName="IndexItem" translation="[0,900]" itemSize="[200,50]" numColumns="2"
+            numRows="4" />
+        <MarkupList id="list" itemComponentName="IndexItem" translation="[1000,900]" itemSize="[200,40]" numRows="3" />
+    </children>
+</component>
