@@ -37,3 +37,8 @@ trailing spacing), magenta 580 (with it).
 
 The engine cuts the window bottom at rest too (`RowList.renderContent`, `windowLayoutHeight`). It still doesn't
 cut the focused row at its row height.
+
+Not measured: a window slot with no row, e.g. below the last row of a `fixedFocus` list (hero-grid-channel's
+`numRows=9` grid on its last row). The engine counts such a slot at the default pitch (`itemSize.y` + row
+spacing), so the window still spans all `numRows` slots and the last row's posters and focus ring are not cut at
+the row's own height.

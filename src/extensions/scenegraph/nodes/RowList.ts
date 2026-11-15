@@ -1003,7 +1003,7 @@ export class RowList extends ArrayGrid {
         // The rows are cut at the window's bottom (numRows rows and their spacings, the last one included),
         // at rest too. Only a row change also cuts its top: at rest the top row's focus ring pokes above the
         // list (DEVICE-MEASURED, rowlist-window-clip-probe).
-        const viewportHeight = this.windowLayoutHeight(context);
+        const viewportHeight = this.windowLayoutHeight(context, pitch);
         if (scrolling) {
             this.pushMotionClip(rect, viewportHeight, draw2D);
         } else {
@@ -1067,18 +1067,16 @@ export class RowList extends ArrayGrid {
     }
 
     /**
-     * The settled window's height, each row's layout height plus its spacing (the last one included): a
-     * device clips the scrolling rows there (DEVICE-MEASURED, rowlist-clip-probe), so captions drawn below
-     * a poster stay visible.
+     * The settled window's height: each of its `numRows` slots' row height plus spacing (the last one
+     * included), where a device clips the rows (DEVICE-MEASURED, rowlist-clip-probe and
+     * rowlist-window-clip-probe). A slot with no row (past the last row of a fixedFocus list) still belongs
+     * to the window and takes `fallback`, so the last row is not cut at its own height.
      */
-    private windowLayoutHeight(context: RowListRenderContext): number {
+    private windowLayoutHeight(context: RowListRenderContext, fallback: number): number {
         let height = 0;
-        for (let r = 0; r < context.displayRows; r++) {
-            const rowIndex = this.calculateActualRowIndex(r);
-            if (rowIndex < 0) {
-                break;
-            }
-            height += this.slotSpan(r, context, 0);
+        const slots = Math.max(context.displayRows, this.numRows || 0);
+        for (let r = 0; r < slots; r++) {
+            height += this.slotSpan(r, context, fallback);
         }
         return height;
     }

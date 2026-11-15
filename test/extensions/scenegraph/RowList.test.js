@@ -1007,4 +1007,36 @@ describe("RowList window clip at rest (rowlist-window-clip-probe)", () => {
         expect(window).toBeDefined();
         expect(window.y).toBeLessThan(100);
     });
+
+    test("a fixedFocus list on its last row keeps the empty slots below it in the window (hero-grid regression)", () => {
+        // hero-grid-channel's last "The Grid" row: numRows=9, fixedFocus pins the focused last row at the top and
+        // leaves 8 slots with no row. Its 44px label band + 197px posters overflow the 220px row; cutting the
+        // window at that one row's height cut the posters and the focus ring at their bottom.
+        const list = SGNodeFactory.createNode("RowList");
+        const content = buildContent([
+            ["A", "B"],
+            ["C", "D"],
+            ["E", "F"],
+        ]);
+        content.getNodeChildren().forEach((row, r) => row.setValue("title", new BrsString(`row${r}`)));
+        list.setValue("content", content);
+        list.setValue("numRows", new Int32(9));
+        list.setValue("itemSize", new RoArray([new Int32(1920), new Int32(220)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(375), new Int32(197)])]));
+        list.setValue("rowLabelOffset", new RoArray([new RoArray([new Int32(165), new Int32(8)])]));
+        list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+        const clips = [];
+        const draw2D = new Proxy(
+            {},
+            {
+                get: (_target, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined),
+            }
+        );
+        list.renderNode({}, [0, 155], 0, 1, draw2D);
+        const windowClip = clips.find((c) => c.width >= 200000);
+        expect(windowClip).toBeDefined();
+        // The whole 9-slot viewport: 155 + 9 x 220.
+        expect(Math.round(windowClip.y + windowClip.height)).toBe(155 + 9 * 220);
+    });
 });
