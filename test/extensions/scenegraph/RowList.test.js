@@ -1040,3 +1040,171 @@ describe("RowList window clip at rest (rowlist-window-clip-probe)", () => {
         expect(Math.round(windowClip.y + windowClip.height)).toBe(155 + 9 * 220);
     });
 });
+
+describe("RowList title edge cases, wrap window and empty rows", () => {
+    const { Group } = scenegraph;
+    const recordingDraw2D = (clips) =>
+        new Proxy(
+            {},
+            { get: (_t, name) => (name === "pushClip" ? (rect) => clips.push({ ...rect }) : () => undefined) }
+        );
+
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+        SGNodeFactory.addNodeTypes([
+            // A title component that draws nothing (its rect stays unmeasured).
+            ["testemptytitle", (name) => new Group([], name)],
+            // A 20px title shorter than the label font, aligning the counter to its center.
+            [
+                "testshorttitle",
+                (name) => {
+                    const title = new Group([], name);
+                    const box = SGNodeFactory.createNode("Rectangle");
+                    box.setValue("width", new Float(100));
+                    box.setValue("height", new Float(20));
+                    title.appendChildToParent(box);
+                    title.addNodeField("rowCounterVertAlign", "string", false);
+                    title.setValue("rowCounterVertAlign", new BrsString("center"));
+                    return title;
+                },
+            ],
+            // An item component that declares none of the item interface fields.
+            ["testplainitem", (name) => new Group([], name)],
+        ]);
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    function makeList(rows) {
+        const list = SGNodeFactory.createNode("RowList");
+        const content = buildContent(rows);
+        content.getNodeChildren().forEach((row, r) => row.setValue("title", new BrsString(`row${r}`)));
+        list.setValue("content", content);
+        list.setValue("itemSize", new RoArray([new Int32(1720), new Int32(230)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Int32(300), new Int32(170)])]));
+        list.setValue("rowLabelOffset", new RoArray([new RoArray([new Int32(0), new Int32(8)])]));
+        list.setValue("showRowLabel", new RoArray([core.BrsBoolean.True]));
+        return list;
+    }
+
+    function itemTops(list) {
+        const tops = {};
+        const original = list.createItemComponent.bind(list);
+        list.createItemComponent = (interp, itemRect, content, position) => {
+            const comp = original(interp, itemRect, content, position);
+            const render = comp.renderNode.bind(comp);
+            comp.renderNode = (i2, origin, angle, opacity, draw2D) => {
+                tops[content.getValueJS("title")] = Math.round(origin[1]);
+                return render(i2, origin, angle, opacity, draw2D);
+            };
+            return comp;
+        };
+        return tops;
+    }
+
+    test("a title component that draws nothing gives a zero-height label (no infinite band)", () => {
+        const list = makeList([["A"], ["B"]]);
+        list.setValue("numRows", new Int32(2));
+        list.setValue("rowTitleComponentName", new BrsString("TestEmptyTitle"));
+        const tops = itemTops(list);
+        list.renderNode({}, [0, 0], 0, 1, recordingDraw2D([]));
+        expect(tops.A).toBe(8);
+        expect(tops.B).toBe(230 + 8);
+    });
+
+    test("a title component shorter than the label font never lifts the counter above the band", () => {
+        const list = makeList([["A", "B"]]);
+        list.setValue("rowTitleComponentName", new BrsString("TestShortTitle"));
+        list.renderNode({}, [0, 0], 0, 1, recordingDraw2D([]));
+        expect(list.rowTitleComps[0]).toBeTruthy();
+        expect(list.counterAlignOffset(0)).toBe(0);
+    });
+
+    test("re-assigning the same rowTitleComponentName keeps the row title components", () => {
+        const list = makeList([["A"], ["B"]]);
+        list.setValue("numRows", new Int32(2));
+        list.setValue("rowTitleComponentName", new BrsString("TestEmptyTitle"));
+        list.renderNode({}, [0, 0], 0, 1);
+        const first = list.rowTitleComps[0];
+        list.setValue("rowTitleComponentName", new BrsString("TestEmptyTitle"));
+        list.renderNode({}, [0, 0], 0, 1);
+        expect(list.rowTitleComps[0]).toBe(first);
+        list.setValue("rowTitleComponentName", new BrsString("TestShortTitle"));
+        list.renderNode({}, [0, 0], 0, 1);
+        expect(list.rowTitleComps[0]).not.toBe(first);
+    });
+
+    test("the window clip of a wrapping list includes the wrap divider on screen", () => {
+        // fixedFocusWrap, 4 rows, numRows 3, focus on row 2: the window shows rows 2, 3, the divider and row 0.
+        const list = makeList([["A"], ["B"], ["C"], ["D"]]);
+        list.setValue("numRows", new Int32(3));
+        list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocusWrap"));
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+        const clips = [];
+        list.renderNode({}, [0, 0], 0, 1, recordingDraw2D(clips));
+        const window = clips.find((c) => c.width >= 200000);
+        const divider = list.getValueJS("wrapDividerHeight");
+        expect(divider).toBeGreaterThan(0);
+        expect(Math.round(window.y + window.height)).toBe(3 * 230 + divider);
+    });
+
+    test("index and rowIndex are only set on an item component that declares them", () => {
+        const list = makeList([["A", "B"]]);
+        list.setValue("itemComponentName", new BrsString("TestPlainItem"));
+        list.renderNode({}, [0, 0], 0, 1);
+        const comp = list.rowItemComps[0][0];
+        expect(comp.nodeSubtype).toBe("TestPlainItem");
+        expect(comp.hasNodeField("index")).toBe(false);
+        expect(comp.hasNodeField("rowIndex")).toBe(false);
+    });
+
+    describe("empty rows (rowlist-empty-row-probe)", () => {
+        // Content rows: 0 empty, 1 with 3 items, 2 empty, 3 with 2 items.
+        function emptyRowList() {
+            const list = makeList([[], ["R1C0", "R1C1", "R1C2"], [], ["R3C0", "R3C1"]]);
+            list.setValue("numRows", new Int32(4));
+            return list;
+        }
+
+        test("keep their slot, and items report their content row as rowIndex", () => {
+            const list = emptyRowList();
+            const tops = itemTops(list);
+            list.renderNode({}, [0, 0], 0, 1);
+            expect(tops.R1C0).toBe(230 + Math.round(list.titleHeight) + 8);
+            expect(tops.R3C0).toBe(3 * 230 + Math.round(list.titleHeight) + 8);
+            expect(list.rowItemComps[1][2].getValueJS("rowIndex")).toBe(1);
+            expect(list.rowItemComps[3][1].getValueJS("rowIndex")).toBe(3);
+            expect(list.rowItemComps[3][1].getValueJS("index")).toBe(1);
+        });
+
+        test("take the focus with column -1, and jumpToRowItem uses content row indexes", () => {
+            const list = emptyRowList();
+            list.setNodeFocus(true);
+            expect(list.getValueJS("rowItemFocused")).toEqual([0, -1]);
+            list.setValue("jumpToRowItem", new RoArray([new Int32(3), new Int32(1)]));
+            expect(list.getValueJS("rowItemFocused")).toEqual([3, 1]);
+            list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+            expect(list.getValueJS("rowItemFocused")).toEqual([2, -1]);
+        });
+
+        test("a focused empty row draws the ring in its first slot and does not select on OK", () => {
+            const list = emptyRowList();
+            list.setNodeFocus(true);
+            const rings = [];
+            const renderFocus = list.renderFocus.bind(list);
+            list.renderFocus = (rect, ...rest) => {
+                rings.push({ y: Math.round(rect.y), width: rect.width });
+                return renderFocus(rect, ...rest);
+            };
+            list.renderNode({}, [0, 0], 0, 1, recordingDraw2D([]));
+            expect(rings).toEqual([{ y: Math.round(list.titleHeight) + 8, width: 300 }]);
+            expect(list.handleKey("OK", true)).toBe(false);
+            list.setValue("jumpToRowItem", new RoArray([new Int32(1), new Int32(2)]));
+            expect(list.handleKey("OK", true)).toBe(true);
+            expect(list.getValueJS("rowItemSelected")).toEqual([1, 2]);
+        });
+    });
+});

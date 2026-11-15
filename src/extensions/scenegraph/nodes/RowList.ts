@@ -188,7 +188,7 @@ export class RowList extends ArrayGrid {
         } else if (["horizfocusanimationstyle", "numcolumns"].includes(fieldName)) {
             // Invalid fields for RowList
             return;
-        } else if (fieldName === "rowtitlecomponentname") {
+        } else if (fieldName === "rowtitlecomponentname" && value.toString() !== this.getValueJS(index)) {
             this.rowTitleComps.length = 0;
             this.titleCompFailureLogged = false;
         }
@@ -271,7 +271,7 @@ export class RowList extends ArrayGrid {
             // values are re-applied (as a same-value no-op) by setRowItemFocused below, which
             // still settles rowItemFocused last — see its own ordering comment.
             super.setValue("currFocusRow", new Float(rowIndex));
-            super.setValue("currFocusColumn", new Float(colIndex));
+            super.setValue("currFocusColumn", new Float(this.publishedColumn(rowIndex, colIndex)));
             if (!this.jumpingToRowItem) {
                 super.setValue("itemFocused", new Int32(rowIndex));
             }
@@ -283,9 +283,15 @@ export class RowList extends ArrayGrid {
             this.focusLayoutDirty = true;
             this.setValueSilent("itemFocused", new Int32(rowIndex));
             this.setValueSilent("currFocusRow", new Float(rowIndex));
-            this.setValueSilent("currFocusColumn", new Float(colIndex));
-            this.setValueSilent("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+            const published = this.publishedColumn(rowIndex, colIndex);
+            this.setValueSilent("currFocusColumn", new Float(published));
+            this.setValueSilent("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
         }
+    }
+
+    /** The focused column as published: -1 on a row with no items (DEVICE-MEASURED, rowlist-empty-row-probe). */
+    private publishedColumn(rowIndex: number, colIndex: number): number {
+        return (this.content[rowIndex]?.getNodeChildren().length ?? 0) === 0 ? -1 : colIndex;
     }
 
     /**
@@ -318,9 +324,10 @@ export class RowList extends ArrayGrid {
         // instant, honoring that ordering — the settle notification fires last — keeps such an app from
         // being stranded in its transient state (an observer on currFocusRow that computes an in-transit
         // row from the scroll direction would otherwise run last and win). Regression: RowList.test.js.
+        const published = this.publishedColumn(rowIndex, colIndex);
         super.setValue("currFocusRow", new Float(rowIndex));
-        super.setValue("currFocusColumn", new Float(colIndex));
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        super.setValue("currFocusColumn", new Float(published));
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
         // DEVICE-MEASURED: a move along the row settles rowItemFocused BEFORE scrollingStatus falls
         // (a row change already closed the pulse after itemFocused, so this is a no-op there).
         this.closeScrollPulse();
@@ -530,9 +537,10 @@ export class RowList extends ArrayGrid {
         const inFocusChain = nodeFocus || this.isChildrenFocused();
         this.settleRowMotionPercents(this.rowItemComps, rowIndex, colIndex, ["rowFocusPercent"]);
         const focusedComp = this.rowItemComps[rowIndex]?.[colIndex];
+        const published = this.publishedColumn(rowIndex, colIndex);
         super.setValue("currFocusRow", new Float(rowIndex));
-        super.setValue("currFocusColumn", new Float(colIndex));
-        const rowItem = new RoArray([new Int32(rowIndex), new Int32(colIndex)]);
+        super.setValue("currFocusColumn", new Float(published));
+        const rowItem = new RoArray([new Int32(rowIndex), new Int32(published)]);
         if (motion.rowMoved) {
             if (inFocusChain) {
                 super.setValue("itemFocused", new Int32(rowIndex));
@@ -588,7 +596,8 @@ export class RowList extends ArrayGrid {
     protected onMotionPaused() {
         const rowIndex = this.focusIndex;
         const colIndex = this.rowFocus[rowIndex] ?? 0;
-        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(colIndex)]));
+        const published = this.publishedColumn(rowIndex, colIndex);
+        super.setValue("rowItemFocused", new RoArray([new Int32(rowIndex), new Int32(published)]));
         this.rowItemComps[rowIndex]?.[colIndex]?.setValue(
             "itemHasFocus",
             BrsBoolean.from(sgRoot.focused === this),
@@ -718,7 +727,7 @@ export class RowList extends ArrayGrid {
         // With no content there is no item to select, so the key stays unhandled (device behavior).
         if (press && this.focusIndex >= 0 && this.focusIndex < this.content.length) {
             const currentRow = this.focusIndex;
-            const currentCol = this.rowFocus[currentRow];
+            const currentCol = this.publishedColumn(currentRow, this.rowFocus[currentRow] ?? 0);
             if (currentCol >= 0) {
                 this.setValue("rowItemSelected", brsValueOf([currentRow, currentCol]));
                 this.setValue("itemSelected", new Int32(currentRow));
@@ -1007,12 +1016,7 @@ export class RowList extends ArrayGrid {
         if (scrolling) {
             this.pushMotionClip(rect, viewportHeight, draw2D);
         } else {
-            draw2D?.pushClip({
-                x: rect.x - 100000,
-                y: rect.y - 100000,
-                width: 200000,
-                height: 100000 + viewportHeight,
-            });
+            this.pushViewportBottomClip(rect, viewportHeight, draw2D);
         }
         let window: { windowHeight: number; renderedRows: number; trailingSpacing: number };
         try {
@@ -1074,9 +1078,12 @@ export class RowList extends ArrayGrid {
      */
     private windowLayoutHeight(context: RowListRenderContext, fallback: number): number {
         let height = 0;
-        const slots = Math.max(context.displayRows, this.numRows || 0);
-        for (let r = 0; r < slots; r++) {
+        for (let r = 0; r < this.numRows; r++) {
             height += this.slotSpan(r, context, fallback);
+            // The wrap divider drawn above row 0 when the list wraps around (see renderSingleRow).
+            if (this.wrap && r > 0 && this.calculateActualRowIndex(r) === 0) {
+                height += this.getValueJS("wrapDividerHeight") as number;
+            }
         }
         return height;
     }
@@ -1268,10 +1275,17 @@ export class RowList extends ArrayGrid {
         return this.rowLabelHeight(rowIndex) + (labelOffset[1] ?? 0);
     }
 
-    /** The label's height: the row's title component's measured height when it has one, else the font's. */
+    /**
+     * The label's height: the bottom of the row's title component's measured content when it has one (0 when
+     * it draws nothing), else the font's line height.
+     */
     private rowLabelHeight(rowIndex: number): number {
         const titleComp = this.rowTitleComps[rowIndex];
-        return titleComp ? titleComp.rectLocal.height : this.titleHeight;
+        if (!titleComp) {
+            return this.titleHeight;
+        }
+        const bottom = titleComp.rectLocal.y + titleComp.rectLocal.height;
+        return Number.isFinite(bottom) ? Math.max(0, bottom) : 0;
     }
 
     /** The height a row takes in the layout, without its spacing. */
@@ -1487,6 +1501,15 @@ export class RowList extends ArrayGrid {
         context: RowListRenderContext
     ): void {
         const numCols = cols.length;
+        if (numCols === 0) {
+            // A focused row with no items still shows the ring, in its first item's slot (DEVICE-MEASURED,
+            // rowlist-empty-row-probe).
+            if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
+                const slot = { ...itemRect, width: rowItemWidth };
+                this.renderFocus(slot, context.opacity, sgRoot.focused === this, context.draw2D);
+            }
+            return;
+        }
 
         const window = this.rowColumnWindow(rowIndex, renderMode);
         let startCol = window.startCol;
@@ -1733,7 +1756,7 @@ export class RowList extends ArrayGrid {
             return 0;
         }
         const align = String(titleComp.getValueJS("rowCounterVertAlign") ?? "").toLowerCase();
-        const room = titleComp.rectLocal.height - this.titleHeight;
+        const room = Math.max(0, this.rowLabelHeight(rowIndex) - this.titleHeight);
         if (align === "center") {
             return room / 2;
         }
@@ -1860,16 +1883,12 @@ export class RowList extends ArrayGrid {
             this.rowFocus.length = 0;
             this.rowScrollOffset.length = 0;
         }
+        // A row with no items is still a row: it takes its slot, shows its label and can hold the focus
+        // (DEVICE-MEASURED, rowlist-empty-row-probe), so row indexes are the content's own.
         const rows = this.getContentChildren(content);
-        let itemIndex = 0;
-        for (const row of rows) {
-            const content = row.getNodeChildren();
-            if (content.length === 0) {
-                continue;
-            }
-            this.rowFocus[itemIndex] ??= 0;
-            this.rowScrollOffset[itemIndex] ??= 0; // Initialize scroll offset (preserve existing)
-            itemIndex++;
+        for (const [rowIndex, row] of rows.entries()) {
+            this.rowFocus[rowIndex] ??= 0;
+            this.rowScrollOffset[rowIndex] ??= 0; // Initialize scroll offset (preserve existing)
             this.content.push(row);
         }
     }
