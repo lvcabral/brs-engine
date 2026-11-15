@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="IndexTitle" extends="Group">
+    <interface>
+        <field id="content" type="node" onChange="onContent" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub onContent()
+        if m.top.content <> invalid then print "title " + m.top.content.title
+    end sub
+    ]]>
+    </script>
+</component>

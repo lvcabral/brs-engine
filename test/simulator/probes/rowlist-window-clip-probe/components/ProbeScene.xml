@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <!-- Guides at the candidate cut heights (list at y=100, rows 200 tall, 40 apart). -->
+        <Rectangle translation="[0,300]" width="1920" height="2" color="0x40C040FF" />
+        <Rectangle translation="[0,500]" width="1920" height="2" color="0xC0C040FF" />
+        <Rectangle translation="[0,540]" width="1920" height="2" color="0x40C0C0FF" />
+        <Rectangle translation="[0,580]" width="1920" height="2" color="0xC040C0FF" />
+        <RowList id="rows" itemComponentName="ClipItem" translation="[100,100]" itemSize="[1720,200]"
+            itemSpacing="[0,40]" numRows="2" rowItemSize="[[300,190]]" rowItemSpacing="[[20,0]]"
+            rowFocusAnimationStyle="floatingFocus" vertFocusAnimationStyle="floatingFocus" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Rows: 0 at 100..300, 1 at 340..540, 2 at 580..780 (outside the 2-row window). Guides: green 300 (row 0
+    ' bottom), yellow 500 (2 x rowHeight), cyan 540 (window without the trailing spacing), magenta 580 (with it).
+    ' Shots: "rest" (focus on row 0), "row1" (focus moved to the bottom row without scrolling).
+    sub init()
+        m.seq = 0
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to 3
+            row = root.createChild("ContentNode")
+            for c = 0 to 7
+                item = row.createChild("ContentNode")
+                item.title = "R" + r.toStr() + "C" + c.toStr()
+            end for
+        end for
+        m.rows = m.top.findNode("rows")
+        m.rows.content = root
+        m.rows.setFocus(true)
+        m.steps = [{ op: "shot", name: "rest" }, { op: "key", key: "Down" }, { op: "shot", name: "row1" }, { op: "done" }]
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        m.timer.duration = 2
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, kase as string, body as string)
+        m.seq = m.seq + 1
+        s = m.seq.toStr()
+        while len(s) < 3
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + phase + "|" + kase + "|" + body
+    end sub
+
+    sub runSteps()
+        if m.steps.count() = 0 then return
+        s = m.steps.shift()
+        if s.op = "shot"
+            rec("await", "shot", "name=" + s.name)
+            m.timer.duration = 4
+            m.timer.control = "start"
+        else if s.op = "key"
+            rec("await", s.key, "rowItemFocused=" + m.rows.rowItemFocused[0].toStr())
+            m.timer.duration = 2
+            m.timer.control = "start"
+        else if s.op = "done"
+            rec("done", "end", "rowItemFocused=" + m.rows.rowItemFocused[0].toStr())
+            m.top.probeExit = true
+        end if
+    end sub
+    ]]>
+    </script>
+</component>

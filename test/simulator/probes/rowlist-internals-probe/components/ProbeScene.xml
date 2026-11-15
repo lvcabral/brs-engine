@@ -1,0 +1,381 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Fields read from every dumped node when it exists (hasField-guarded, so one list serves all subtypes).
+    function probeKeys() as object
+        return [
+            "translation", "width", "height", "visible", "opacity", "clippingRect", "focusable",
+            "numRows", "numColumns", "itemSize", "itemSpacing", "rowHeights", "columnWidths", "rowSpacings",
+            "columnSpacings", "fixedLayout", "numRenderPasses", "basePosterSize", "posterDisplayMode",
+            "caption1NumLines", "caption2NumLines", "captionVertAlignment", "itemComponentName",
+            "rowTitleComponentName", "vertFocusAnimationStyle", "horizFocusAnimationStyle",
+            "rowFocusAnimationStyle", "drawFocusFeedback", "drawFocusFeedbackOnTop", "focusBitmapUri",
+            "wrapDividerBitmapUri", "itemFocused", "itemSelected", "itemUnfocused", "currFocusRow",
+            "currFocusColumn", "currFocusSection", "scrollingStatus", "rowItemFocused", "rowIndex", "index",
+            "rowHasFocus", "rowListHasFocus", "itemHasFocus", "gridHasFocus", "listHasFocus", "focusPercent",
+            "rowFocusPercent", "content", "itemContent", "text", "color", "uri"
+        ]
+    end function
+
+    sub init()
+        m.seq = 0
+        m.list = invalid
+        m.kase = ""
+        m.anc = []
+        m.dumped = {}
+        m.global.addFields({ serial: 0, probeNodes: [] })
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        keys3 = [{ op: "key", key: "Right" }, { op: "key", key: "Right" }, { op: "key", key: "Right" }]
+        m.steps = []
+        ' Case A: floatingFocus RowList.
+        m.steps.push({ op: "create", kase: "A" })
+        m.steps.push({ op: "wait", secs: 2 })
+        m.steps.push({ op: "dump", phase: "idle" })
+        m.steps.push({ op: "meta" })
+        m.steps.push({ op: "sgnodes", name: "A-idle" })
+        m.steps.append(keys3)
+        m.steps.push({ op: "dump", phase: "right" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "dump", phase: "down" })
+        m.steps.push({ op: "sgnodes", name: "A-down" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "dump", phase: "down-short" })
+        ' Case B: fixedFocusWrap RowList with a rowTitleComponentName.
+        m.steps.push({ op: "create", kase: "B" })
+        m.steps.push({ op: "wait", secs: 2 })
+        m.steps.push({ op: "dump", phase: "idle" })
+        m.steps.push({ op: "sgnodes", name: "B-idle" })
+        m.steps.push({ op: "key", key: "Right" })
+        m.steps.push({ op: "dump", phase: "right" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "dump", phase: "down" })
+        ' Case D: an 80 px rowTitleComponentName, a row with showRowLabel false and a row with an empty title.
+        m.steps.push({ op: "create", kase: "D" })
+        m.steps.push({ op: "wait", secs: 2 })
+        m.steps.push({ op: "dump", phase: "idle" })
+        m.steps.push({ op: "sgnodes", name: "D-idle" })
+        ' Case C: ZoomRowList, for comparison.
+        m.steps.push({ op: "create", kase: "C" })
+        m.steps.push({ op: "wait", secs: 2 })
+        m.steps.push({ op: "dump", phase: "idle" })
+        m.steps.push({ op: "sgnodes", name: "C-idle" })
+        m.steps.push({ op: "key", key: "Down" })
+        m.steps.push({ op: "dump", phase: "down" })
+        m.steps.push({ op: "done" })
+        m.timer.duration = 1
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, kase as string, body as string)
+        m.seq = m.seq + 1
+        s = m.seq.toStr()
+        while len(s) < 3
+            s = "0" + s
+        end while
+        print "PROBE|" + s + "|" + phase + "|" + kase + "|" + body
+    end sub
+
+    ' Runs steps until one has to wait (a key press, an ECP capture or a settle delay).
+    sub runSteps()
+        while m.steps.count() > 0
+            s = m.steps.shift()
+            if s.op = "create"
+                createList(s.kase)
+            else if s.op = "wait"
+                m.timer.duration = s.secs
+                m.timer.control = "start"
+                return
+            else if s.op = "key"
+                rec("await", s.key, "case=" + m.kase)
+                m.timer.duration = 2.5
+                m.timer.control = "start"
+                return
+            else if s.op = "sgnodes"
+                rec("await", "sgnodes", "name=" + s.name)
+                m.timer.duration = 3
+                m.timer.control = "start"
+                return
+            else if s.op = "dump"
+                dumpPhase(s.phase)
+            else if s.op = "meta"
+                dumpMeta()
+            else if s.op = "done"
+                rec("done", "end", "serial=" + m.global.serial.toStr())
+                m.top.probeExit = true
+                return
+            end if
+        end while
+    end sub
+
+    function buildContent() as object
+        colors = ["0x3060C0FF", "0xC03060FF", "0x30A060FF", "0xA08020FF", "0x8040C0FF"]
+        counts = [10, 10, 10, 3, 10]
+        root = CreateObject("roSGNode", "ContentNode")
+        root.title = "root"
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            row.title = "row" + r.toStr()
+            for c = 0 to counts[r] - 1
+                item = row.createChild("ContentNode")
+                item.title = "R" + r.toStr() + "C" + c.toStr()
+                item.hdPosterUrl = colors[c mod colors.count()]
+            end for
+        end for
+        return root
+    end function
+
+    sub createList(kase as string)
+        if m.list <> invalid then m.top.removeChild(m.list)
+        m.list = invalid
+        m.kase = kase
+        m.anc = []
+        m.global.probeNodes = []
+        if kase = "C"
+            l = CreateObject("roSGNode", "ZoomRowList")
+            l.rowWidth = 1720
+            l.rowHeight = [200]
+            l.rowZoomHeight = [260]
+            l.rowItemHeight = [170]
+            l.rowItemZoomHeight = [230]
+            l.rowItemAspectRatio = [1.7647]
+            l.spacingAfterRow = 30
+            l.spacingAfterRowItem = [20]
+            l.showRowTitle = [true]
+            l.showRowCounter = [true]
+        else
+            l = CreateObject("roSGNode", "RowList")
+            l.itemSize = [1720, 230]
+            l.numRows = 3
+            l.rowItemSize = [[300, 170], [240, 135], [400, 225], [300, 170], [240, 135]]
+            l.rowItemSpacing = [[20, 0]]
+            l.showRowLabel = [true]
+            l.showRowCounter = [true]
+            l.rowLabelOffset = [[0, 8]]
+            if kase = "B"
+                l.rowFocusAnimationStyle = "fixedFocusWrap"
+                l.rowTitleComponentName = "ProbeTitle"
+            else if kase = "D"
+                l.rowFocusAnimationStyle = "floatingFocus"
+                l.rowTitleComponentName = "ProbeTallTitle"
+                l.showRowLabel = [true, false, true]
+            else
+                l.rowFocusAnimationStyle = "floatingFocus"
+            end if
+        end if
+        m.list = l
+        l.id = "list" + kase
+        l.itemComponentName = "ProbeItem"
+        l.translation = [100, 160]
+        content = buildContent()
+        if kase = "D" then content.getChild(2).title = ""
+        l.content = content
+        l.observeField("rowItemFocused", "onRowItemFocused")
+        m.top.appendChild(l)
+        l.setFocus(true)
+        rec("create", kase, "subtype=" + l.subtype() + " children=" + l.getChildCount().toStr())
+    end sub
+
+    sub onRowItemFocused()
+        rec("event", m.kase + ".rowItemFocused", "value=" + fmt(m.list.rowItemFocused))
+    end sub
+
+    function fmt(v as dynamic) as string
+        t = type(v)
+        if t = "roString" or t = "String" then return chr(34) + v + chr(34)
+        if t = "roInt" or t = "Integer" or t = "roInteger" or t = "LongInteger" then return v.toStr()
+        if t = "roFloat" or t = "Float" or t = "Double" or t = "roDouble" then return Str(v).trim()
+        if t = "roBoolean" or t = "Boolean" then
+            if v then return "true"
+            return "false"
+        end if
+        if t = "roArray" then
+            out = []
+            for each e in v
+                out.push(fmt(e))
+            end for
+            return "[" + out.join(",") + "]"
+        end if
+        if t = "roAssociativeArray" then
+            return "{x=" + Str(Int(v.x)).trim() + " y=" + Str(Int(v.y)).trim() + " w=" + Str(Int(v.width)).trim() + " h=" + Str(Int(v.height)).trim() + "}"
+        end if
+        if t = "roSGNode" then return "node:" + v.subtype()
+        if v = invalid then return "invalid"
+        return "<" + t + ">"
+    end function
+
+    ' Names a content node by its title, flagging whether it is the list's own row/item node or a copy.
+    function contentId(c as dynamic) as string
+        if c = invalid or type(c) <> "roSGNode" then return "invalid"
+        lc = m.list.content
+        if c.isSameNode(lc) then return "root(same)"
+        for r = 0 to lc.getChildCount() - 1
+            row = lc.getChild(r)
+            if c.isSameNode(row) then return "row" + r.toStr() + "(same)"
+            for k = 0 to row.getChildCount() - 1
+                if c.isSameNode(row.getChild(k)) then return row.getChild(k).title + "(same)"
+            end for
+        end for
+        return chr(34) + c.title + chr(34) + "(other:" + c.subtype() + "/" + c.getChildCount().toStr() + ")"
+    end function
+
+    ' The probe's stable label for a node: its id for probe components, "a<k>" for internal nodes.
+    function labelOf(n as dynamic) as string
+        if n = invalid then return "invalid"
+        if m.list <> invalid and n.isSameNode(m.list) then return "LIST"
+        if n.isSameNode(m.top) then return "SCENE"
+        st = n.subtype()
+        if st = "ProbeItem" or st = "ProbeTitle" or st = "ProbeTallTitle" then return n.id
+        for k = 0 to m.anc.count() - 1
+            if n.isSameNode(m.anc[k]) then return "a" + k.toStr()
+        end for
+        m.anc.push(n)
+        return "a" + (m.anc.count() - 1).toStr()
+    end function
+
+    function indexInParent(n as object) as integer
+        p = n.getParent()
+        if p = invalid then return -1
+        for i = 0 to p.getChildCount() - 1
+            if p.getChild(i).isSameNode(n) then return i
+        end for
+        return -2
+    end function
+
+    ' The node's type hierarchy, e.g. PosterGrid>ArrayGrid>Group>Node.
+    function hierarchy(n as object) as string
+        out = n.subtype()
+        t = n.subtype()
+        for i = 1 to 10
+            p = n.parentSubtype(t)
+            if p = invalid or p = "" then exit for
+            out = out + ">" + p
+            t = p
+        end for
+        return out
+    end function
+
+    sub dumpNode(phase as string, kase as string, node as object, depth as integer)
+        body = "node=" + labelOf(node) + " subtype=" + node.subtype() + " types=" + hierarchy(node) + " id=" + chr(34) + node.id + chr(34)
+        body = body + " parent=" + labelOf(node.getParent()) + " idx=" + indexInParent(node).toStr() + " children=" + node.getChildCount().toStr()
+        for each t in ["PosterGrid", "MarkupGrid", "ArrayGrid", "RowList", "Group"]
+            if node.isSubtype(t) then body = body + " is" + t + "=true"
+        end for
+        body = body + " hasFocus=" + fmt(node.hasFocus()) + " inFocusChain=" + fmt(node.isInFocusChain())
+        for each k in probeKeys()
+            if node.hasField(k)
+                v = node.getField(k)
+                if k = "content" or k = "itemContent"
+                    body = body + " " + k + "=" + contentId(v)
+                else
+                    body = body + " " + k + "=" + fmt(v)
+                end if
+            end if
+        end for
+        body = body + " bounds=" + fmt(node.boundingRect()) + " sceneBounds=" + fmt(node.sceneBoundingRect())
+        kids = []
+        st = node.subtype()
+        for i = 0 to node.getChildCount() - 1
+            if st = "ProbeItem" or st = "ProbeTitle" or st = "ProbeTallTitle"
+                kids.push(node.getChild(i).subtype())
+            else
+                kids.push(labelOf(node.getChild(i)) + ":" + node.getChild(i).subtype())
+            end if
+        end for
+        body = body + " kids=[" + kids.join(",") + "]"
+        rec(phase, kase, body)
+
+        ' Field name list, once per subtype and case.
+        sig = m.kase + "/" + node.subtype()
+        if not m.dumped.doesExist(sig)
+            m.dumped[sig] = true
+            names = []
+            for each kv in node.getFields().keys()
+                names.push(kv)
+            end for
+            names.sort()
+            rec(phase, kase + ".fields", "subtype=" + node.subtype() + " count=" + names.count().toStr() + " names=" + names.join(","))
+        end if
+
+        if depth > 0
+            for i = 0 to node.getChildCount() - 1
+                dumpNode(phase, kase, node.getChild(i), depth - 1)
+            end for
+        end if
+    end sub
+
+    sub dumpPhase(phase as string)
+        l = m.list
+        kase = m.kase
+        nodes = m.global.probeNodes
+        rec(phase, kase + ".list", "subtype=" + l.subtype() + " types=" + hierarchy(l) + " children=" + l.getChildCount().toStr() + " focusedChild=" + labelOf(l.focusedChild) + " hasFocus=" + fmt(l.hasFocus()) + " rowItemFocused=" + fmt(l.rowItemFocused) + " registered=" + nodes.count().toStr() + " serial=" + m.global.serial.toStr())
+
+        ' Top-down: whatever the list exposes as children.
+        for i = 0 to l.getChildCount() - 1
+            dumpNode(phase, kase + ".tree", l.getChild(i), 2)
+        end for
+
+        ' Bottom-up: each registered item/title component's parent chain up to the list.
+        ancestors = []
+        for each n in nodes
+            chain = ""
+            p = n.getParent()
+            guard = 0
+            while p <> invalid and not p.isSameNode(l) and not p.isSameNode(m.top) and guard < 12
+                found = false
+                for each a in ancestors
+                    if a.isSameNode(p) then found = true
+                end for
+                if not found then ancestors.push(p)
+                chain = chain + "<" + labelOf(p) + ":" + p.subtype() + "#" + indexInParent(p).toStr()
+                p = p.getParent()
+                guard = guard + 1
+            end while
+            chain = chain + "<" + labelOf(p)
+            rec(phase, kase + ".chain", "node=" + n.id + " idx=" + indexInParent(n).toStr() + " chain=" + chain)
+        end for
+        for each n in nodes
+            dumpNode(phase, kase + ".item", n, 0)
+        end for
+        for each a in ancestors
+            dumpNode(phase, kase + ".anc", a, 0)
+        end for
+        rec(phase, kase + ".summary", "ancestors=" + ancestors.count().toStr() + " knownInternal=" + m.anc.count().toStr() + " registered=" + nodes.count().toStr())
+    end sub
+
+    ' getAllMeta() is a device debug API the engine lacks; printed in chunks so console lines stay short.
+    sub dumpMeta()
+        s = invalid
+        try
+            s = m.list.getAllMeta()
+        catch e
+            rec("meta", m.kase, "unsupported=" + chr(34) + e.message + chr(34))
+            return
+        end try
+        if type(s) <> "roString" and type(s) <> "String"
+            rec("meta", m.kase, "type=" + type(s))
+            return
+        end if
+        n = len(s)
+        rec("meta", m.kase, "length=" + n.toStr())
+        i = 1
+        k = 0
+        while i <= n
+            rec("meta", m.kase + ".chunk" + k.toStr(), mid(s, i, 800).replace(chr(10), " "))
+            i = i + 800
+            k = k + 1
+        end while
+    end sub
+    ]]>
+    </script>
+</component>

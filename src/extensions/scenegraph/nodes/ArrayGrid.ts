@@ -1018,7 +1018,12 @@ export class ArrayGrid extends Group implements UITransition {
 
     /** The row's item count (at least 1), read without building its content list: it runs per cell per frame. */
     protected rowColumnCount(rowIndex: number): number {
-        return Math.max(1, this.content[rowIndex]?.getNodeChildren().length ?? 0);
+        return Math.max(1, this.rowItemCount(rowIndex));
+    }
+
+    /** The row's item count, 0 for a row with no items. */
+    protected rowItemCount(rowIndex: number): number {
+        return this.content[rowIndex]?.getNodeChildren().length ?? 0;
     }
 
     /**
@@ -1593,8 +1598,20 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /** Clips scrolling rows to the viewport (horizontally unbounded). */
-    protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D) {
-        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y, width: 200000, height: viewportHeight });
+    protected pushMotionClip(rect: Rect, viewportHeight: number, draw2D?: IfDraw2D, cutTop = true) {
+        // Without `cutTop` only the bottom is cut, leaving room above the viewport for the focus ring.
+        const slack = cutTop ? 0 : 100000;
+        draw2D?.pushClip({ x: rect.x - 100000, y: rect.y - slack, width: 200000, height: slack + viewportHeight });
+    }
+
+    /**
+     * Draws the focus ring in the first item slot of focused row `rowIndex` when it has no items, as a
+     * device does (DEVICE-MEASURED, rowlist-empty-row-probe, zoomrowlist-empty-row-probe).
+     */
+    protected renderEmptyRowFocus(rowIndex: number, slot: Rect, opacity: number, draw2D?: IfDraw2D) {
+        if (rowIndex === this.focusIndex && this.getValueJS("drawFocusFeedback") && !this.motion) {
+            this.renderFocus(slot, opacity, sgRoot.focused === this, draw2D);
+        }
     }
 
     protected findContentIndex(index: number) {
@@ -2001,7 +2018,9 @@ export class ArrayGrid extends Group implements UITransition {
         const nodeFocus = sgRoot.focused === this;
         const focused = index === this.focusIndex;
         if (!this.itemComps[index]) {
-            const itemComp = this.createItemComponent(interpreter, itemRect, content);
+            const itemComp = this.createItemComponent(interpreter, itemRect, content, {
+                index: this.dataIndexAt(index),
+            });
             if (itemComp instanceof Group) {
                 this.itemComps[index] = itemComp;
             }
@@ -2221,6 +2240,17 @@ export class ArrayGrid extends Group implements UITransition {
         if (this.content.length === 0 && sections.length > 0) {
             this.content.push(...sections);
         }
+        // The item components are cached by position, and a re-parse can change the data index at a
+        // position (a section's placeholders come and go) even when its content node stays the same.
+        // Without sections the data index is the position, which cannot change.
+        if (this.metadata.length === 0) {
+            return;
+        }
+        for (const [position, itemComp] of this.itemComps.entries()) {
+            if (itemComp) {
+                this.setItemIndexes(itemComp, { index: this.dataIndexAt(position) });
+            }
+        }
     }
 
     protected processSection(section: ContentNode, itemIndex: number) {
@@ -2252,7 +2282,16 @@ export class ArrayGrid extends Group implements UITransition {
         return itemIndex;
     }
 
-    protected createItemComponent(interpreter: Interpreter, itemRect: Rect, content: ContentNode) {
+    /**
+     * Creates the item component for `content`. `position`, when given, sets the documented `index` /
+     * `rowIndex` item fields, which (like a device) are in place before the first `itemContent` change.
+     */
+    protected createItemComponent(
+        interpreter: Interpreter,
+        itemRect: Rect,
+        content: ContentNode,
+        position?: { index: number; rowIndex?: number }
+    ) {
         if (content.name === "_placeholder_") {
             return new Group();
         }
@@ -2262,9 +2301,30 @@ export class ArrayGrid extends Group implements UITransition {
             itemComp.setNodeParent(this);
             itemComp.setValue("width", brsValueOf(itemRect.width), false);
             itemComp.setValue("height", brsValueOf(itemRect.height), false);
+            if (position) {
+                this.setItemIndexes(itemComp, position);
+            }
             itemComp.setValue("itemContent", content, false);
         }
         return itemComp;
+    }
+
+    /**
+     * The item at content position `position`'s index in the data, counted across sections
+     * (DEVICE-MEASURED, markupgrid-item-index-probe; MarkupList sets it too although it does not document it).
+     */
+    protected dataIndexAt(position: number): number {
+        return this.metadata[position]?.index ?? position;
+    }
+
+    /** Sets the item's `index` / `rowIndex`, each only when the component declares it (as a device does). */
+    protected setItemIndexes(itemComp: Group, position: { index: number; rowIndex?: number }) {
+        if (itemComp.hasNodeField("index")) {
+            itemComp.setValue("index", new Int32(position.index), false);
+        }
+        if (position.rowIndex !== undefined && itemComp.hasNodeField("rowIndex")) {
+            itemComp.setValue("rowIndex", new Int32(position.rowIndex), false);
+        }
     }
 
     protected isFixedFocusMode() {

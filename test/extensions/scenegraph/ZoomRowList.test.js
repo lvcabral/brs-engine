@@ -107,3 +107,33 @@ describe("ZoomRowList up/down propagation", () => {
         expect(list.focusIndex).toBe(0);
     });
 });
+
+describe("ZoomRowList empty rows (zoomrowlist-empty-row-probe)", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    test("are kept as rows: they take the focus with column 0 and jumps use content row indexes", () => {
+        const { Int32, RoArray } = core;
+        const list = SGNodeFactory.createNode("ZoomRowList");
+        // Content rows: 0 empty, 1 with 3 items, 2 empty, 3 with 2 items.
+        list.setValue("content", buildContent([[], ["A", "B", "C"], [], ["D", "E"]]));
+        list.setNodeFocus(true);
+        expect(list.getValueJS("rowItemFocused")).toEqual([0, 0]);
+        // No item to select on an empty row.
+        expect(list.handleKey("OK", true)).toBe(false);
+
+        list.setValue("jumpToRowItem", new RoArray([new Int32(3), new Int32(1)]));
+        expect(list.getValueJS("rowItemFocused")).toEqual([3, 1]);
+        expect(list.handleKey("OK", true)).toBe(true);
+        expect(list.getValueJS("rowItemSelected")).toEqual([3, 1]);
+
+        list.setValue("jumpToRowItem", new RoArray([new Int32(2), new Int32(0)]));
+        expect(list.getValueJS("rowItemFocused")).toEqual([2, 0]);
+    });
+});

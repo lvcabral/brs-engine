@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="IndexItem" extends="Group">
+    <interface>
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+        <field id="index" type="integer" value="-1" />
+        <field id="rowIndex" type="integer" value="-1" />
+        <field id="itemContent" type="node" onChange="onContent" />
+    </interface>
+    <script type="text/brightscript">
+    <![CDATA[
+    sub onContent()
+        if m.printed = invalid and m.top.itemContent <> invalid
+            m.printed = true
+            print "item " + m.top.itemContent.title + " rowIndex=" + m.top.rowIndex.toStr() + " index=" + m.top.index.toStr()
+        end if
+    end sub
+    ]]>
+    </script>
+</component>

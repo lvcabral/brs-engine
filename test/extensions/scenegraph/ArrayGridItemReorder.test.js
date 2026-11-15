@@ -4,7 +4,7 @@ const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory } = scenegraph;
-const { BrsDevice, BrsString, Float, RoArray } = core;
+const { BrsDevice, BrsString, Float, Int32, RoArray } = core;
 
 /** Builds a flat root → items ContentNode tree (no sections), e.g. ["A", "B", "C"]. */
 function buildFlatContent(titles) {
@@ -104,5 +104,42 @@ describe("ArrayGrid/RowList item component reuse invalidates on content reorder,
         expect(list.rowItemComps[0][0]).toBe(item0);
         // ...but now showing what actually occupies column 0 (B), not the stale A.
         expect(item0.getValue("itemContent").getValueJS("title")).toBe("B");
+    });
+
+    test("MarkupGrid: a cached item's index follows a re-parse that shifts its data index (sections)", () => {
+        // Two columns, sections of 4 and 2 items: G1.0 sits at position 4 with data index 4. Removing G0.3
+        // pads section 0 with a placeholder, so position 4 still holds G1.0 but its data index is now 3
+        // (markupgrid-item-index-probe: index counts items across sections, not placeholders).
+        const grid = SGNodeFactory.createNode("MarkupGrid");
+        grid.setValue("numColumns", new Int32(2));
+        const root = SGNodeFactory.createNode("ContentNode");
+        const sections = [];
+        for (const [sec, count] of [4, 2].entries()) {
+            const section = SGNodeFactory.createNode("ContentNode");
+            section.setValue("contentType", new BrsString("SECTION"));
+            for (let i = 0; i < count; i++) {
+                const item = SGNodeFactory.createNode("ContentNode");
+                item.setValue("title", new BrsString(`G${sec}.${i}`));
+                section.appendChildToParent(item);
+            }
+            root.appendChildToParent(section);
+            sections.push(section);
+        }
+        grid.setValue("content", root);
+        grid.refreshContent();
+        const itemRect = { x: 0, y: 0, width: 100, height: 40 };
+        for (let i = 0; i < 6; i++) {
+            grid.renderItemComponent({}, i, itemRect, 0, 1);
+        }
+        const item4 = grid.itemComps[4];
+        expect(item4.getValue("itemContent").getValueJS("title")).toBe("G1.0");
+        expect(item4.getValueJS("index")).toBe(4);
+
+        sections[0].removeChildrenAtIndex(3, 1);
+        grid.refreshContent();
+
+        expect(grid.itemComps[4]).toBe(item4);
+        expect(grid.content[4].getValueJS("title")).toBe("G1.0");
+        expect(item4.getValueJS("index")).toBe(3);
     });
 });

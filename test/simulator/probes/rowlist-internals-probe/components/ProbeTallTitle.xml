@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeTallTitle" extends="Group">
+    <interface>
+        <field id="content" type="node" onChange="onContent" />
+        <field id="width" type="float" value="-1" />
+        <field id="height" type="float" value="-1" />
+    </interface>
+    <children>
+        <Rectangle id="box" width="400" height="80" color="0x606060FF">
+            <Label id="label" width="400" height="80" vertAlign="center" color="0xFFD040FF" />
+        </Rectangle>
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' The 80 px tall rowTitleComponentName component of case D; registers itself like ProbeItem.
+    sub onContent()
+        c = m.top.content
+        if c = invalid then return
+        m.top.findNode("label").text = "Tall [" + c.title + "]"
+        if m.serial = invalid
+            m.serial = m.global.serial + 1
+            m.global.serial = m.serial
+            m.top.id = "title" + m.serial.toStr()
+            nodes = m.global.probeNodes
+            nodes.push(m.top)
+            m.global.probeNodes = nodes
+            p = m.top.getParent()
+            ps = "invalid"
+            if p <> invalid then ps = p.subtype()
+            print "PROBE|life|" + m.top.id + "|first-content|content=" + c.title + " parent=" + ps + " width=" + m.top.width.toStr() + " height=" + m.top.height.toStr()
+        end if
+    end sub
+    ]]>
+    </script>
+</component>
