@@ -20,14 +20,21 @@ export class IfSetMessagePort {
 
     /** Sets the roMessagePort to be used for all events from the component */
     private set(port: RoMessagePort) {
-        port.addReference();
+        // Roku devices accept a non-port argument (e.g. an unset `m.x`, which is invalid) without
+        // crashing; the component is then left with no message port. Detach instead of throwing.
+        const valid = port instanceof RoMessagePort;
+        if (valid) {
+            port.addReference();
+        }
         this.component.port?.removeReference();
         if (this.callback) {
             const component = this.component.getComponentName();
             this.component.port?.unregisterCallback(component, this.key);
-            port.registerCallback(component, this.callback, this.key);
+            if (valid) {
+                port.registerCallback(component, this.callback, this.key);
+            }
         }
-        this.component.port = port;
+        this.component.port = valid ? port : undefined;
         return BrsInvalid.Instance;
     }
 

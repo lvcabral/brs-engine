@@ -9,6 +9,17 @@ describe("RoURLTransfer", () => {
         interpreter = new Interpreter();
     });
 
+    describe("setPort", () => {
+        it("accepts invalid without throwing and leaves the transfer without a port, as on device", () => {
+            const transfer = new RoURLTransfer();
+            expect(() => transfer.getMethod("setPort").call(interpreter, BrsInvalid.Instance)).not.toThrow();
+            expect(transfer.getMethod("getMessagePort").call(interpreter)).toEqual(BrsInvalid.Instance);
+            const port = new RoMessagePort();
+            transfer.getMethod("setPort").call(interpreter, port);
+            expect(transfer.getMethod("getMessagePort").call(interpreter)).toBe(port);
+        });
+    });
+
     describe("escape", () => {
         it("percent-encodes reserved URI characters, matching Roku device behavior", () => {
             let transfer = new RoURLTransfer();
