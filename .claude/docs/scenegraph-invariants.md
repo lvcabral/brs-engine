@@ -1531,7 +1531,7 @@ Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), 
 *composition* rather than either mechanism), and by the CLI fixture `rowlist-subrect-app` (which derives
 its own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
 
-**Row lists compute their sub parts from layout** (`subpartsFromLayout`, DEVICE-MEASURED in
+**Row lists compute their sub parts from layout** (`layoutSubpartRect`, DEVICE-MEASURED in
 `test/simulator/probes/grid-rect-probe`, HD and FHD). A device reports every cell, including rows scrolled
 off or past `numRows`, at its laid-out position. A motion in flight doesn't move it
 (`list-focus-motion-probe`). So `RowList.layoutSubpartRect` derives each rect from the focus state, with

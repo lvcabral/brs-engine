@@ -230,6 +230,35 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         expect(list.getSubBoundingRect("toParent", "item0_0")).toEqual({ x: -120, y: 0, width: 100, height: 100 });
     });
 
+    function floatingRow(listWidth, itemWidth, spacing, count) {
+        const list = new RowList();
+        list.setValue("itemSize", vector([listWidth, 100]));
+        list.setValue("rowItemSize", vector([[itemWidth, 100]]));
+        list.setValue("rowItemSpacing", vector([[spacing, 0]]));
+        const row = new ContentNode();
+        for (let c = 0; c < count; c++) {
+            row.appendChildToParent(new ContentNode());
+        }
+        list.content.push(row);
+        return list;
+    }
+
+    test("a RowList's floating focus doesn't count spacing after the last visible item", () => {
+        // Five 100px items 20 apart end at x 580, so all five fit a 580px list.
+        const list = floatingRow(580, 100, 20, 10);
+        list.setValue("jumpToRowItem", vector([0, 4]));
+
+        expect(list.getSubBoundingRect("toParent", "focusItem")).toEqual({ x: 480, y: 0, width: 100, height: 100 });
+        expect(list.getSubBoundingRect("toParent", "item0_0")).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+    });
+
+    test("a RowList's floating focus keeps an item as wide as the list visible", () => {
+        const list = floatingRow(600, 600, 20, 5);
+        list.setValue("jumpToRowItem", vector([0, 3]));
+
+        expect(list.getSubBoundingRect("toParent", "focusItem")).toEqual({ x: 0, y: 0, width: 600, height: 100 });
+    });
+
     test("a ZoomRowList resolves cells from cached rects and rows from the last frame", () => {
         const list = new ZoomRowList();
         list.rectLocal = { x: 0, y: 0, width: 1000, height: 400 };
@@ -253,6 +282,14 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         // An unrendered cell or row is a zero rect at the list's origin.
         expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
         expect(list.getSubBoundingRect("toScene", "item1")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
+    });
+
+    test("a ZoomRowList forgets its rows once its content is emptied", () => {
+        const list = new ZoomRowList();
+        list.renderedRowRects.set(0, { x: 0, y: 0, width: 600, height: 120 });
+        list.renderContent(new Interpreter(), { x: 0, y: 0, width: 0, height: 0 }, 0, 1);
+
+        expect(list.getSubBoundingRect("toParent", "item0")).toEqual({ x: 0, y: 0, width: 0, height: 0 });
     });
 });
 
