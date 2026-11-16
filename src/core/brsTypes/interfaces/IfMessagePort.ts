@@ -2,6 +2,8 @@ import { BrsInvalid, ValueKind } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoMessagePort } from "../components/RoMessagePort";
+import { BrsDevice } from "../../device/BrsDevice";
+import { getNow } from "../../common";
 
 /**
  * BrightScript Interface ifSetMessagePort
@@ -23,6 +25,10 @@ export class IfSetMessagePort {
         // Roku devices accept a non-port argument (e.g. an unset `m.x`, which is invalid) without
         // crashing; the component is then left with no message port. Detach instead of throwing.
         const valid = port instanceof RoMessagePort;
+        if (!valid) {
+            // Not logged on device; logged here to surface the bug.
+            BrsDevice.stderr.write(`warning,${getNow()} [msgport.set.bad] message port set to invalid value`);
+        }
         if (valid) {
             port.addReference();
         }

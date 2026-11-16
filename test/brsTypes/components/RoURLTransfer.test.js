@@ -1,5 +1,5 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Interpreter } = brs;
+const { Interpreter, BrsDevice } = brs;
 const { BrsString, BrsInvalid, RoURLTransfer, RoMessagePort, RoURLEvent, Callable } = brs.types;
 
 describe("RoURLTransfer", () => {
@@ -17,6 +17,18 @@ describe("RoURLTransfer", () => {
             const port = new RoMessagePort();
             transfer.getMethod("setPort").call(interpreter, port);
             expect(transfer.getMethod("getMessagePort").call(interpreter)).toBe(port);
+        });
+
+        it("warns on the debug console when given a non-port argument, and not for a port", () => {
+            const messages = [];
+            vi.spyOn(BrsDevice.stderr, "write").mockImplementation((msg) => messages.push(msg));
+            const transfer = new RoURLTransfer();
+            transfer.getMethod("setPort").call(interpreter, BrsInvalid.Instance);
+            transfer.getMethod("setPort").call(interpreter, new RoMessagePort());
+            const warnings = messages.filter((msg) => msg.includes("[msgport.set.bad]"));
+            expect(warnings).toHaveLength(1);
+            expect(warnings[0].startsWith("warning,")).toBe(true);
+            vi.restoreAllMocks();
         });
     });
 
