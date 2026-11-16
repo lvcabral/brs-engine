@@ -283,7 +283,7 @@ export class MarkupList extends ArrayGrid {
      */
     protected reportedExtent(numRows: number, itemSize: number[], firstRow: number): { width: number; height: number } {
         const margin = this.rectMargins();
-        const height = margin.y * 6 + this.rowsWithSpacingHeight(numRows, itemSize, firstRow);
+        const height = margin.y * 6 + this.rowsWithSpacingHeight(numRows, itemSize, firstRow, this.content.length);
         return { width: itemSize[0] + margin.x * 2, height };
     }
 }

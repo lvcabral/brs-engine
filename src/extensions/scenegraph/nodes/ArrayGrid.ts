@@ -2671,14 +2671,28 @@ export class ArrayGrid extends Group implements UITransition {
     }
 
     /**
-     * The height of `numRows` laid-out rows from `firstRow`, each with the spacing after it (the last one
-     * included), from `rowHeights`/`rowSpacings`. A wrapping grid's window resumes at the top.
+     * How many `itemWidth` items, `spacing` apart, fit in `width` (the screen's when unset): only whole
+     * ones, at least one, or with `partial` also the one cut off at the edge.
      */
-    protected rowsWithSpacingHeight(numRows: number, itemSize: number[], firstRow: number): number {
+    protected itemsInWidth(width: number, itemWidth: number, spacing: number, partial: boolean = false): number {
+        const available = width > 0 ? width : this.sceneRect.width;
+        if (itemWidth <= 0 || available <= 0) {
+            return 1;
+        }
+        const count = (available + spacing) / (itemWidth + spacing);
+        return partial ? Math.ceil(count) : Math.max(1, Math.floor(count));
+    }
+
+    /**
+     * The height of `numRows` laid-out rows from `firstRow`, each with the spacing after it (the last one
+     * included), from `rowHeights`/`rowSpacings`. A wrapping grid's window resumes at the top of its
+     * `totalRows`.
+     */
+    protected rowsWithSpacingHeight(numRows: number, itemSize: number[], firstRow: number, totalRows: number): number {
         const spacing = this.getValueJS("itemSpacing") as number[];
         const rowHeights = this.getValueJS("rowHeights");
         const rowSpacings = this.getValueJS("rowSpacings");
-        const totalRows = Math.max(1, Math.ceil(this.content.length / (this.numCols || 1)));
+        totalRows = Math.max(1, totalRows);
         let height = 0;
         for (let r = 0; r < numRows; r++) {
             const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;

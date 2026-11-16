@@ -498,9 +498,6 @@ export class ZoomRowList extends ArrayGrid {
 
     /** A cell (`item<r>_<c>`, `focusItem`, `focusIndicator`) is its rendered item component's rect. */
     protected subpartSceneRect(itemNumber: string): Rect | undefined {
-        if (parseRowSubpart(itemNumber)?.kind === "row") {
-            return undefined;
-        }
         return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus)?.rectToScene;
     }
 
@@ -730,7 +727,7 @@ export class ZoomRowList extends ArrayGrid {
             const wrapCount = canWrapItems ? rowContent.length : 0;
             startCol = this.placeMotionRow(rect, itemRect, metrics, rowIndex, wrapCount, startCol);
         }
-        const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
+        const maxVisibleItems = this.itemsInWidth(this.nodeWidth, metrics.itemWidth, metrics.spacingX, true);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
 
         let firstCol = -1;
@@ -830,20 +827,6 @@ export class ZoomRowList extends ArrayGrid {
         return this.getContentChildren(rowNode);
     }
 
-    private getMaxVisibleItems(itemWidth: number, spacing: number, availableWidth: number, ceil: boolean = true) {
-        if (itemWidth <= 0) {
-            return 1;
-        }
-        const width = availableWidth > 0 ? availableWidth : this.sceneRect.width;
-        if (width <= 0) {
-            return 1;
-        }
-        if (ceil) {
-            return Math.ceil((width + spacing) / (itemWidth + spacing));
-        }
-        return Math.floor((width + spacing) / (itemWidth + spacing));
-    }
-
     private canWrapRows(displayRows: number): boolean {
         return this.isWrapEnabled() && displayRows > 0 && this.content.length >= displayRows;
     }
@@ -899,7 +882,7 @@ export class ZoomRowList extends ArrayGrid {
         const aspectRatio = this.resolveNumber(this.getValueJS("rowItemAspectRatio"), 0, this.defaultAspectRatio);
         const itemWidth = itemHeight * aspectRatio;
         const spacingX = this.getRowItemSpacing(0);
-        const maxVisibleItems = this.getMaxVisibleItems(itemWidth, spacingX, interiorWidth, false);
+        const maxVisibleItems = this.itemsInWidth(interiorWidth, itemWidth, spacingX);
         this.rowWidth = (itemWidth + spacingX) * maxVisibleItems;
         return this.rowWidth;
     }

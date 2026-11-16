@@ -95,10 +95,9 @@ export class MarkupGrid extends ArrayGrid {
                 width += this.resolveTrackValue(columnSpacings, c, spacing[0] ?? 0);
             }
         }
-        let height = margin.y * 2 + this.rowsWithSpacingHeight(numRows, itemSize, firstRow);
-        if (!this.isHorizontalStrip()) {
-            height += this.gridBottomAllowance();
-        }
+        const totalRows = Math.ceil(this.content.length / numCols);
+        const rows = this.rowsWithSpacingHeight(numRows, itemSize, firstRow, totalRows);
+        const height = margin.y * 2 + rows + (this.isHorizontalStrip() ? 0 : this.gridBottomAllowance());
         return { width, height };
     }
 
