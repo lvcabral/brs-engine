@@ -1652,6 +1652,41 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Republishes a grid's focus after in-place content changes and notifies an unfocus from the leaf up", async () => {
+        let command = ["node", brsCliPath, "-r inplace-focus-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Both shapes come from JellyRock and match a Roku Express 4K+ (OS 16.0) run of
+        // test/simulator/probes/focus-populate-buttons-probe:
+        //   1. A focus gain on an empty grid publishes itemFocused -1. Children added to or removed from the
+        //      content node publish nothing at the write; once the handler returns, a focused grid publishes
+        //      itemFocused again for the item it is on (0 after the first fill, 3 after an append).
+        //   2. setFocus(false) notifies the chain from the focused button up, so the outlet's restore of the
+        //      row (a nested setFocus) finds the row already notified: it doesn't forward back to the button,
+        //      and only one button keeps its border.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== In-place Focus Repro ===",
+            "  itemFocused = -1 count =  0",
+            "populate returned: itemFocused = -1",
+            "  itemFocused =  0 count =  6",
+            "populated: itemFocused =  0",
+            "  itemFocused =  3 count =  6",
+            "append returned: itemFocused =  3",
+            "  itemFocused =  3 count =  8",
+            "appended: itemFocused =  3",
+            "setup: b0=true/true b1=false/invalid b2=false/invalid b3=false/invalid",
+            "right: b0=false/false b1=true/true b2=false/invalid b3=false/invalid",
+            "right: b0=false/false b1=false/false b2=true/true b3=false/invalid",
+            "left: b0=false/false b1=true/true b2=false/false b3=false/invalid",
+            "=== In-place Focus Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Classifies a focus request raised from a container's redirect settle", async () => {
         let command = ["node", brsCliPath, "-r container-redirect-focus-app", "source/main.brs", "-c 0"].join(" ");
 

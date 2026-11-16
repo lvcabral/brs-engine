@@ -311,7 +311,7 @@ export class PanelSet extends Group implements UITransition {
         if (childIndex < 0 || oldPanel === newPanel) {
             return childIndex >= 0;
         }
-        const hadFocus = this.isFocusWithin(oldPanel, sgRoot.focused);
+        const hadFocus = oldPanel.isFocusWithin(sgRoot.focused);
         if (!super.replaceChildAtIndex(newPanel, childIndex)) {
             return false;
         }
@@ -461,7 +461,7 @@ export class PanelSet extends Group implements UITransition {
                 // that list's itemFocused observer appended the next detail panel (re-entering
                 // here). Re-focusing the panel would pull focus off the inner list, and the app's
                 // observer cannot repair it mid-dispatch (Field re-entrancy guard).
-                if (!this.isFocusWithin(focusedPanel, currentFocus)) {
+                if (!focusedPanel.isFocusWithin(currentFocus)) {
                     focusedPanel.setNodeFocus(true);
                 }
             }
@@ -496,7 +496,7 @@ export class PanelSet extends Group implements UITransition {
      */
     private syncFocusToActual() {
         const focused = sgRoot.focused;
-        const index = this.panels.findIndex((panel) => this.isFocusWithin(panel, focused));
+        const index = this.panels.findIndex((panel) => panel.isFocusWithin(focused));
         if (index < 0 || index === this.focusIndex) {
             return;
         }
@@ -546,12 +546,11 @@ export class PanelSet extends Group implements UITransition {
         }
         this.publishFocusedPanel(target);
         this.wasFocused = true;
-        const twoPhase =
-            from !== undefined && !(target instanceof GridPanel) && this.isFocusWithin(from, sgRoot.focused);
+        const twoPhase = from !== undefined && !(target instanceof GridPanel) && from.isFocusWithin(sgRoot.focused);
         if (twoPhase && target.announcePanelFocus()) {
             // Complete only if the panel still links to itself and its observers left the focus where it was
             // (on `from`'s chain): a bounce clears the self-link, and a forward elsewhere moves the focus.
-            if (target.getValue("focusedchild") === target && this.isFocusWithin(from, sgRoot.focused)) {
+            if (target.getValue("focusedchild") === target && from.isFocusWithin(sgRoot.focused)) {
                 target.completePanelFocus();
                 sgRoot.setLastFocusTarget(target);
             }
@@ -559,18 +558,6 @@ export class PanelSet extends Group implements UITransition {
         }
         target.setNodeFocus(true);
         sgRoot.setLastFocusTarget(target);
-    }
-
-    /** Whether `focused` is the panel itself or a node inside the panel's subtree. */
-    private isFocusWithin(panel: Panel, focused: unknown): boolean {
-        let node: unknown = focused;
-        while (node instanceof Node) {
-            if (node === panel) {
-                return true;
-            }
-            node = node.getNodeParent();
-        }
-        return false;
     }
 
     // ---- Slide layout ----

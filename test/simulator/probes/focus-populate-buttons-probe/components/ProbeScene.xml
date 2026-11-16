@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle id="other" width="100" height="60" translation="[1700,40]" color="0x884444FF" focusable="true" />
+        <MarkupGrid id="grid" translation="[100,80]" itemComponentName="ProbeCell" numColumns="6" numRows="2"
+            itemSize="[200,120]" itemSpacing="[20,20]" vertFocusAnimationStyle="fixed" />
+        <Group id="screenA" translation="[100,500]" focusable="true">
+            <ProbeButtonGroup id="grpA" caseName="B1" visible="false" />
+        </Group>
+        <Group id="screenB" translation="[100,750]" focusable="true">
+            <ProbeButtonGroup id="grpB" caseName="B2" visible="false" />
+        </Group>
+        <Group id="outlet" translation="[900,500]">
+            <Group id="view" focusable="true">
+                <ProbeButtonGroup id="grpC" caseName="B3" visible="false" />
+            </Group>
+        </Group>
+        <Group id="outlet2" translation="[900,750]">
+            <Group id="view2" focusable="true">
+                <ProbeButtonGroup id="grpD" caseName="B4" visible="false" />
+            </Group>
+        </Group>
+        <Timer id="stepTimer" duration="0.6" repeat="false" />
+    </children>
+    <script type="text/brightscript" uri="ProbeLog.brs" />
+    <script type="text/brightscript">
+        <![CDATA[
+' Part A: a focused MarkupGrid whose (empty) content node is populated in place, the way JellyRock's
+' BaseGridView loads a library. Part B: a JRButtonGroup replica navigated with Left/Right.
+sub init()
+    m.other = m.top.findNode("other")
+    m.grid = m.top.findNode("grid")
+    m.timer = m.top.findNode("stepTimer")
+    m.case = "A0"
+    m.grid.content = CreateObject("roSGNode", "ContentNode")
+    m.grid.observeField("itemFocused", "onItemFocused")
+    m.grid.observeField("itemUnfocused", "onItemUnfocused")
+    m.other.setFocus(true)
+    m.step = 0
+    m.keys = []
+    m.timer.observeField("fire", "onStep")
+    m.timer.control = "start"
+end sub
+
+sub onItemFocused()
+    plog(m.case, "itemFocused", "v=" + m.grid.itemFocused.toStr() + " count=" + m.grid.content.getChildCount().toStr() + " inChain=" + m.grid.isInFocusChain().toStr())
+end sub
+
+sub onItemUnfocused()
+    plog(m.case, "itemUnfocused", "v=" + m.grid.itemUnfocused.toStr())
+end sub
+
+sub fill(count as integer)
+    content = m.grid.content
+    base = content.getChildCount()
+    for i = 0 to count - 1
+        item = CreateObject("roSGNode", "ContentNode")
+        item.title = "item " + (base + i).toStr()
+        content.appendChild(item)
+    end for
+end sub
+
+sub settled()
+    plog(m.case, "settled", "itemFocused=" + m.grid.itemFocused.toStr() + " count=" + m.grid.content.getChildCount().toStr())
+end sub
+
+sub freshEmpty()
+    m.other.setFocus(true)
+    m.grid.content = CreateObject("roSGNode", "ContentNode")
+end sub
+
+sub onStep()
+    m.step = m.step + 1
+    if m.step = 1
+        ' A1: BaseGridView.onItemDataLoaded - focus the empty grid, jumpToItem 0, then append.
+        m.case = "A1"
+        plog(m.case, "begin", "")
+        m.grid.setFocus(true)
+        plog(m.case, "focused", "")
+        m.grid.jumpToItem = 0
+        plog(m.case, "jumped", "")
+        fill(8)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 2
+        settled()
+        ' A2: same, without the jumpToItem.
+        freshEmpty()
+        m.case = "A2"
+        plog(m.case, "begin", "")
+        m.grid.setFocus(true)
+        fill(8)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 3
+        settled()
+        ' A3: focus the empty grid now, append in a later handler.
+        freshEmpty()
+        m.case = "A3"
+        plog(m.case, "begin", "")
+        m.grid.setFocus(true)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 4
+        settled()
+        plog(m.case, "fill", "")
+        fill(8)
+        plog(m.case, "filled", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 5
+        settled()
+        ' A4: append while unfocused, then focus.
+        freshEmpty()
+        m.case = "A4"
+        plog(m.case, "begin", "")
+        fill(8)
+        plog(m.case, "filled", "itemFocused=" + m.grid.itemFocused.toStr())
+        m.grid.setFocus(true)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 6
+        settled()
+        ' A5: in-place append to a focused, already populated grid away from item 0.
+        m.case = "A5"
+        plog(m.case, "begin", "")
+        m.grid.jumpToItem = 3
+        plog(m.case, "jumped", "")
+        fill(4)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 7
+        settled()
+        ' A6: remove every child of the focused grid's content, then append again (a re-sort/refresh).
+        m.case = "A6"
+        plog(m.case, "begin", "")
+        m.grid.content.removeChildrenIndex(m.grid.content.getChildCount(), 0)
+        plog(m.case, "cleared", "itemFocused=" + m.grid.itemFocused.toStr())
+        fill(8)
+        plog(m.case, "returned", "itemFocused=" + m.grid.itemFocused.toStr())
+    else if m.step = 8
+        settled()
+        startB1()
+    else if m.step = 9
+        nextKey()
+    end if
+    if m.step < 8 then m.timer.control = "start"
+end sub
+
+sub buildButtons(grp as object, caseName as string)
+    labels = ["Play All", "Shuffle", "Watched", "Favorite", "Refresh"]
+    while grp.getChildCount() > 0
+        grp.removeChild(grp.getChild(0))
+    end while
+    for i = 0 to labels.count() - 1
+        b = CreateObject("roSGNode", "ProbeIconButton")
+        b.id = "b" + i.toStr()
+        b.caseName = caseName
+        b.text = labels[i]
+        grp.appendChild(b)
+    end for
+end sub
+
+function stateOf(grp as object) as string
+    s = "grpFocus=" + grp.hasFocus().toStr() + " grpFC=" + idOf(grp.focusedChild)
+    for i = 0 to grp.getChildCount() - 1
+        b = grp.getChild(i)
+        flag = "-"
+        if b.hasFocus() then flag = "F"
+        border = "-"
+        if b.findNode("border").visible then border = "B"
+        s = s + " " + b.id + "=" + flag + border
+    end for
+    return s
+end function
+
+function idOf(node as object) as string
+    if node = invalid then return "invalid"
+    return node.id
+end function
+
+sub logState()
+    plog(m.case, "state", stateOf(m.grp))
+end sub
+
+' B1: ItemDetails order - the screen holds focus, the hidden empty group is focused (onScreenShown), then
+' setupButtons builds the row and focuses the first button directly (focusButtonGroupChild).
+sub startB1()
+    m.case = "B1"
+    m.grp = m.top.findNode("grpA")
+    m.top.findNode("screenA").setFocus(true)
+    plog(m.case, "groupFocus", "")
+    m.grp.setFocus(true)
+    buildButtons(m.grp, m.case)
+    m.grp.visible = true
+    m.grp.buttonFocused = 0
+    plog(m.case, "childFocus", "")
+    m.grp.getChild(0).setFocus(true)
+    logState()
+    m.grp.observeField("moved", "onMoved")
+    m.keys = ["Right", "Right", "Right", "Right", "Left", "Left", "Left", "Left"]
+    m.timer.control = "start"
+end sub
+
+' B2: the screen re-shown after the row was built - the group is focused again, forwarding to its button.
+sub startB2()
+    m.case = "B2"
+    m.grp.unobserveField("moved")
+    m.grp = m.top.findNode("grpB")
+    m.top.findNode("screenB").setFocus(true)
+    buildButtons(m.grp, m.case)
+    m.grp.visible = true
+    m.grp.buttonFocused = 0
+    plog(m.case, "childFocus", "")
+    m.grp.getChild(0).setFocus(true)
+    logState()
+    plog(m.case, "groupFocus", "")
+    m.grp.setFocus(true)
+    logState()
+    m.grp.observeField("moved", "onMoved")
+    m.keys = ["Right", "Right", "Right", "Right", "Left", "Left", "Left", "Left"]
+    m.timer.control = "start"
+end sub
+
+' B3/B4: sgRouter's outlet. Losing the focus chain (focusedChild invalid) while it last had it, it asks the
+' active view to take the focus again, and the view re-focuses its saved node: JellyRock's restoreFocus on
+' lastFocus = the button group. Both run inside the transaction that took the focus away.
+sub onOutletFocus(event as object)
+    inChain = event.getData() <> invalid
+    node = event.getRoSGNode()
+    plog(m.case, "outletFC", "id=" + node.id + " inChain=" + inChain.toStr())
+    if not inChain and m.focusRequestMade <> inChain
+        plog(m.case, "restore", "to=" + m.viewLastFocus.id)
+        m.viewLastFocus.setFocus(true)
+        plog(m.case, "restored", "")
+    end if
+    m.focusRequestMade = inChain
+end sub
+
+sub startRouted(caseName as string, outletId as string, viewId as string, grpId as string, viaGroup as boolean)
+    m.grp.unobserveField("moved")
+    m.case = caseName
+    m.grp = m.top.findNode(grpId)
+    outlet = m.top.findNode(outletId)
+    m.focusRequestMade = false
+    outlet.observeField("focusedChild", "onOutletFocus")
+    m.top.findNode(viewId).setFocus(true)
+    buildButtons(m.grp, m.case)
+    m.grp.visible = true
+    m.grp.buttonFocused = 0
+    m.viewLastFocus = m.grp
+    if viaGroup
+        plog(m.case, "groupFocus", "")
+        m.grp.setFocus(true)
+    else
+        plog(m.case, "childFocus", "")
+        m.grp.getChild(0).setFocus(true)
+    end if
+    logState()
+    m.grp.observeField("moved", "onMoved")
+    m.keys = ["Right", "Right", "Right", "Right", "Left", "Left", "Left", "Left"]
+    m.timer.control = "start"
+end sub
+
+sub onMoved()
+    logState()
+    m.timer.control = "start"
+end sub
+
+sub nextKey()
+    m.step = 8
+    if m.keys.count() = 0
+        if m.case = "B1"
+            startB2()
+            return
+        else if m.case = "B2"
+            startRouted("B3", "outlet", "view", "grpC", true)
+            return
+        else if m.case = "B3"
+            m.top.findNode("outlet").unobserveField("focusedChild")
+            startRouted("B4", "outlet2", "view2", "grpD", false)
+            return
+        end if
+        plog("done", "", "")
+        m.top.probeExit = true
+        return
+    end if
+    key = m.keys.shift()
+    plog("await", key, "case=" + m.case)
+end sub
+        ]]>
+    </script>
+</component>

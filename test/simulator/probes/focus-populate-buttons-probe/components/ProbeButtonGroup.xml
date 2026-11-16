@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors JellyRock's JRButtonGroup: a ButtonGroup of custom Group buttons that moves focus itself. -->
+<component name="ProbeButtonGroup" extends="ButtonGroup">
+    <interface>
+        <field id="caseName" type="string" />
+        <field id="moved" type="string" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript" uri="ProbeLog.brs" />
+    <script type="text/brightscript">
+        <![CDATA[
+sub init()
+    m.top.layoutDirection = "horiz"
+    m.top.itemSpacings = 18
+    m.top.buttonFocused = 0
+    m.top.observeField("focusedChild", "onGroupFocusChanged")
+end sub
+
+sub onGroupFocusChanged()
+    plog(m.top.caseName, "grpFC", "hasFocus=" + m.top.hasFocus().toStr() + " inChain=" + m.top.isInFocusChain().toStr())
+    if m.top.hasFocus()
+        button = m.top.getChild(m.top.buttonFocused)
+        if button <> invalid
+            plog(m.top.caseName, "grpForward", "to=" + button.id)
+            button.setFocus(true)
+        end if
+    end if
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if not press then return false
+    currentFocus = m.top.buttonFocused
+    currentFocusButton = m.top.getChild(currentFocus)
+    target = -1
+    if key = "right"
+        for i = currentFocus + 1 to m.top.getChildCount() - 1
+            b = m.top.getChild(i)
+            if b <> invalid and b.hasField("isEnabled") and b.isEnabled
+                target = i
+                exit for
+            end if
+        end for
+    else if key = "left"
+        for i = currentFocus - 1 to 0 step -1
+            b = m.top.getChild(i)
+            if b <> invalid and b.hasField("isEnabled") and b.isEnabled
+                target = i
+                exit for
+            end if
+        end for
+    end if
+    if target < 0 then return false
+    plog(m.top.caseName, "key", "key=" + key + " from=" + currentFocus.toStr() + " to=" + target.toStr())
+    currentFocusButton.setFocus(false)
+    m.top.buttonFocused = target
+    m.top.getChild(target).setFocus(true)
+    m.top.moved = key
+    return true
+end function
+        ]]>
+    </script>
+</component>

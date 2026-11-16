@@ -271,6 +271,8 @@ export class ArrayGrid extends Group implements UITransition {
     private unfocusedSettleIndex: number | undefined;
     /** New content reset the focus to item 0; its `itemFocused` goes out later (see `resetFocusForNewContent`). */
     private pendingContentFocus = false;
+    /** The content node's children changed in place since the internal content view was last rebuilt. */
+    private contentDirty = false;
     /** `setNodeFocus` is re-applying the focus on a gain (see `setFocusedItem`). */
     private gainingFocus = false;
 
@@ -429,15 +431,28 @@ export class ArrayGrid extends Group implements UITransition {
         if (gained && this.motion) {
             this.publishMotionRegain(this.motion);
         } else if (gained) {
+            // Items added in place (e.g. via ContentNode.update() after the content node was assigned empty)
+            // must count. A deeper change can hide behind a `changed` flag another consumer of the shared
+            // content node already cleared, so a target the view doesn't hold rebuilds it too.
+            const refreshed = this.refreshContentIfChanged();
             let focusIndex = this.focusGainIndex();
-            if (focusIndex < 0) {
-                // No item has been focused yet: default to the first item (Roku's itemFocused
-                // default is 0). Rebuild the internal content view first so items added in place
-                // (e.g. via ContentNode.update() after the content node was assigned empty) count.
-                this.refreshContent();
-                if (this.content.length > 0) {
+            if (this.findContentIndex(focusIndex) < 0) {
+                if (!refreshed) {
+                    this.refreshContent();
+                }
+                if (focusIndex >= 0 && this.findContentIndex(focusIndex) < 0) {
+                    // The item was removed while the list was unfocused: land on the last one left.
+                    focusIndex = this.dataIndexAt(this.lastItemPosition(this.content.length - 1));
+                } else if (focusIndex < 0 && this.content.length > 0) {
+                    // No item has been focused yet: default to the first item (Roku's itemFocused
+                    // default is 0).
                     focusIndex = 0;
                 }
+            }
+            if (focusIndex < 0 && this.listFocusModel()) {
+                // A gain on an empty list publishes that no item has the focus (DEVICE-MEASURED,
+                // focus-populate-buttons-probe A1-A3).
+                super.setValue("itemFocused", new Int32(-1));
             }
             if (focusIndex >= 0) {
                 this.gainingFocus = true;
@@ -469,18 +484,116 @@ export class ArrayGrid extends Group implements UITransition {
         return true;
     }
 
-    /** Publishes the reset to item 0 that new content left pending, when the list is in the focus chain. */
+    /**
+     * Publishes the focus that new content left pending (the reset to item 0, or the current item after an
+     * in-place change), when the list is in the focus chain. A running focus motion publishes its own
+     * settle instead.
+     */
     protected flushContentFocus() {
         if (!this.pendingContentFocus) {
             return;
         }
         this.pendingContentFocus = false;
-        if ((sgRoot.focused === this || this.isChildrenFocused()) && this.content.length > 0) {
-            super.setValue("itemFocused", new Int32(0));
-            // The owning ListPanel/GridPanel creates its next panel from this focus, as on any other
-            // focus landing (setFocusedItem, the motion settle).
-            this.itemFocusCallback?.(0);
+        if (this.motion || !this.isFocusWithin()) {
+            return;
         }
+        const position = this.currentItemPosition();
+        if (position < 0) {
+            return;
+        }
+        const index = this.dataIndexAt(position);
+        if (position !== this.focusIndex) {
+            // Items below the focus were removed: the focus moves to the last item left.
+            const nodeFocus = sgRoot.focused === this;
+            this.updateItemFocus(this.focusIndex, false, nodeFocus);
+            this.placeFocusCursor(position, nodeFocus);
+        }
+        this.publishFocusPosition(position);
+        super.setValue("itemFocused", new Int32(index));
+        // The owning ListPanel/GridPanel creates its next panel from this focus, as on any other
+        // focus landing (setFocusedItem, the motion settle).
+        this.itemFocusCallback?.(index);
+    }
+
+    /**
+     * Children added to, removed from or replaced in the content node (DEVICE-MEASURED,
+     * focus-populate-buttons-probe A1-A6): nothing is published at the write. A list that had no item to
+     * focus takes item 0 at once, silently, and once the current handler returns a list in the focus chain
+     * publishes `itemFocused` again for the item it is on, as new content does. Render thread only: a Task's
+     * copy of the list follows the render thread's.
+     */
+    contentChildrenChanged(field: Field) {
+        if (field !== this.fields.get("content") || !this.listFocusModel() || sgRoot.inTaskThread()) {
+            return;
+        }
+        this.contentDirty = true;
+        if (!this.pendingContentFocus) {
+            this.pendingContentFocus = true;
+            Field.runAfterConstruction(() => this.flushContentFocus());
+        }
+        if ((this.getValueJS("itemFocused") as number) >= 0 || this.isFocusWithin()) {
+            return;
+        }
+        const position = this.currentItemPosition();
+        if (position >= 0) {
+            this.setValueSilent("itemFocused", new Int32(this.dataIndexAt(position)));
+        }
+    }
+
+    /**
+     * Rebuilds the internal content view when its children changed in place (`contentChildrenChanged`) or the
+     * content node reports a change, and clears both marks.
+     * @returns Whether it rebuilt the view.
+     */
+    private refreshContentIfChanged(): boolean {
+        const content = this.getValue("content");
+        const changed = content instanceof ContentNode && content.changed;
+        if (!this.contentDirty && !changed) {
+            return false;
+        }
+        this.contentDirty = false;
+        this.refreshContent();
+        if (changed) {
+            content.changed = false;
+        }
+        return true;
+    }
+
+    /** The item the focus is on in the current content, or the last one left; -1 when there is none. */
+    private currentItemPosition(): number {
+        this.refreshContentIfChanged();
+        return this.lastItemPosition(Math.min(this.focusIndex, this.content.length - 1));
+    }
+
+    /**
+     * The last content position at or before `position` that holds an item (sections pad their last row with
+     * placeholders), or -1 when there is none.
+     */
+    private lastItemPosition(position: number): number {
+        let current = position;
+        while (current >= 0 && this.dataIndexAt(current) < 0) {
+            current--;
+        }
+        return current;
+    }
+
+    /** Moves the focus cursor to content `position`, and gives that item its focus. */
+    private placeFocusCursor(position: number, nodeFocus: boolean) {
+        this.focusIndex = position;
+        this.focusLayoutDirty = true;
+        this.updateHorizScroll(position);
+        this.updateItemFocus(position, true, nodeFocus);
+    }
+
+    /**
+     * Publishes `currFocusRow`/`currFocusColumn` for content `position`. They must already reflect it before
+     * `itemFocused` fires: apps read them synchronously from an `itemFocused` observer (see
+     * RowList.setFocusedItem for the same ordering requirement).
+     */
+    private publishFocusPosition(position: number) {
+        const numCols = this.motionColumns();
+        super.setValue("currFocusRow", new Float(Math.floor(position / numCols)));
+        super.setValue("currFocusColumn", new Float(position % numCols));
     }
 
     /**
@@ -591,17 +704,9 @@ export class ArrayGrid extends Group implements UITransition {
             }
         }
         // The new item gains its focus after itemUnfocused (DEVICE-MEASURED, list-focus-dispatch-probe D1).
-        this.focusIndex = newFocus;
-        this.focusLayoutDirty = true;
-        this.updateHorizScroll(newFocus);
-        this.updateItemFocus(this.focusIndex, true, nodeFocus);
+        this.placeFocusCursor(newFocus, nodeFocus);
         if (inFocusChain) {
-            // currFocusRow/currFocusColumn must already reflect the new position before
-            // itemFocused fires: apps commonly read them synchronously from an itemFocused
-            // observer (see RowList.setFocusedItem for the same ordering requirement).
-            const numCols = Math.max(1, this.numCols || 1);
-            super.setValue("currFocusRow", new Float(Math.floor(newFocus / numCols)));
-            super.setValue("currFocusColumn", new Float(newFocus % numCols));
+            this.publishFocusPosition(newFocus);
             super.setValue("itemFocused", new Int32(index));
             this.closeScrollPulse();
             if (direction) {
@@ -1940,11 +2045,7 @@ export class ArrayGrid extends Group implements UITransition {
         const rect = { x: drawTrans[0], y: drawTrans[1], ...size };
         const rotation = angle + this.getRotation();
         opacity = opacity * this.getOpacity();
-        const content = this.getValue("content");
-        if (content instanceof ContentNode && content.changed) {
-            this.refreshContent();
-            content.changed = false;
-        }
+        this.refreshContentIfChanged();
         // The clippingRect bracket lives in the renderNode template, so it wraps this whole body.
         // Items, focus feedback and every other part are laid out in local units from drawTrans, so
         // the grid's own scale applies to all of them as one frame (`contentScale` keeps the draw
@@ -1990,11 +2091,7 @@ export class ArrayGrid extends Group implements UITransition {
      * returns before nodeRenderingDone, so the hidden grid does not union into its parent's bounds.
      */
     protected measureHiddenExtent(origin: number[], angle: number) {
-        const contentNode = this.getValue("content");
-        if (contentNode instanceof ContentNode && contentNode.changed) {
-            this.refreshContent();
-            contentNode.changed = false;
-        }
+        this.refreshContentIfChanged();
         const itemSize = this.getValueJS("itemSize") as number[];
         if (this.content.length === 0 || !itemSize?.[0] || !itemSize?.[1] || !this.numRows || !this.numCols) {
             return;

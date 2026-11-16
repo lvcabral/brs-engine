@@ -10,7 +10,7 @@ import {
     BrsBoolean,
     BrsInvalid,
 } from "brs-engine";
-import { Node } from "./Node";
+import { ChangeOperation, Node } from "./Node";
 import { Field } from "./Field";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -130,6 +130,7 @@ export class ContentNode extends Node {
         { name: "userStarRating", type: "integer", hidden: true },
         { name: "videoDisableUI", type: "boolean", hidden: true },
         { name: "watched", type: "boolean", hidden: true },
+        { name: "hdSmallIconUrl", type: "string", hidden: true },
     ];
 
     /**
@@ -248,6 +249,14 @@ export class ContentNode extends Node {
             }
         } finally {
             this.propagating = false;
+        }
+    }
+
+    /** @override Also tells each node holding this content that its children changed. */
+    protected recordChildChange(operation: ChangeOperation, index1: number, index2?: number) {
+        super.recordChildChange(operation, index1, index2);
+        for (const field of this.parentFields) {
+            field.getContainer()?.contentChildrenChanged(field);
         }
     }
 
