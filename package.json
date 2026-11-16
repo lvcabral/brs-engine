@@ -1,6 +1,6 @@
 {
   "name": "brs-engine-workspace",
-  "version": "2.6.2",
+  "version": "2.7.0",
   "private": true,
   "title": "BrightScript Simulation Engine",
   "description": "BrightScript Simulation Engine - Run Roku apps on Browsers and Node.js",
@@ -121,7 +121,8 @@
     "zip-webpack-plugin": "^4.0.3"
   },
   "overrides": {
-    "minimatch": "^10.2.2"
+    "minimatch": "^11.0.1",
+    "zod": "^4.6.6"
   },
   "prettier": {
     "trailingComma": "es5",

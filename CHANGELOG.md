@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.7.0"></a>
+
+## [v2.7.0 - UI Transitions, Background Worker and Device-faithful Layout](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.0) - 15 November 2026
+
+This release makes the engine move, load and measure more like a Roku device. Every change was checked against a real device with a probe app now committed under `test/simulator/probes/`. In the **SceneGraph** extension, built-in UI motion is now animated as on a device: `PanelSet` slides its panels, and lists, grids, `RowList` and `ZoomRowList` ease each focus move, while `focusPercent`, `rowFocusPercent`, `currFocusRow`/`currFocusColumn` and `scrollingStatus` change frame by frame. Transitions are on by default; turn them off with `DeviceInfo.uiTransitions = false`, the CLI `--no-transitions` flag or `BRS_UI_TRANSITIONS=0`. A `Group`'s `scale` and rotation pivot now apply to its whole subtree, including its `clippingRect`, `inheritParentTransform = false` is implemented, and bounding rects of grids, `RowList` sub-parts and ancestors are reported in the device's coordinate spaces. `RowList` gains `rowTitleComponentName`, item `index`/`rowIndex` and device row layout, `DynamicKeyboard` gets device shift and caps lock behavior, and `Video.trickPlayBar` has the device's 12 internal children. In the **core engine**, `roTextureManager` and the `roUrlTransfer` `Async*` methods now run on a background worker so the app keeps running while images and transfers load, and `cachefs:` keeps its contents across app launches for the session. Numbers follow the device more closely: a `Float` keeps its exact float32 value, `print`, `Str()` and `FormatJson()` format numbers like the device, and `^` has the device's result types and binds tighter than unary minus (`-2 ^ 2` is now `-4`). `roRegex` translates many more PCRE-only constructs. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) `roTextureManager` and the `roUrlTransfer` `Async*` methods now run on a background worker thread, so the app keeps running while images decode and transfers complete by [@lvcabral](https://github.com/lvcabral) in [#1302](https://github.com/lvcabral/brs-engine/pull/1302)
+* (brs) `cachefs:` now keeps its contents across app launches for the session, with device-like eviction when it gets full by [@lvcabral](https://github.com/lvcabral) in [#1301](https://github.com/lvcabral/brs-engine/pull/1301)
+* (brs) A `Float` now keeps its exact float32 value, and `print`, `Str()` and `FormatJson()` format `Float`/`Double` values like the device by [@lvcabral](https://github.com/lvcabral) in [#1287](https://github.com/lvcabral/brs-engine/pull/1287)
+* (brs) `^` now picks its result type like the device, binds tighter than unary minus and is right-associative by [@lvcabral](https://github.com/lvcabral) in [#1285](https://github.com/lvcabral/brs-engine/pull/1285)
+* (brs) Upgraded to `@lvcabral/sprintf` 1.3.1: `nan`/`inf`/`-0` and rounding now match the device in `ToStr()` and `Format()`, and specifiers the device rejects raise its errors by [@lvcabral](https://github.com/lvcabral) in [#1284](https://github.com/lvcabral/brs-engine/pull/1284)
+* (brs) Matched the device's `roArray`/`roByteArray` enumeration when the array changes during the loop, and array holes now enumerate as `invalid` by [@lvcabral](https://github.com/lvcabral) in [#1288](https://github.com/lvcabral/brs-engine/pull/1288)
+* (brs) `roRegex` now translates PCRE-only constructs JavaScript rejects or reads differently: inline options, possessive quantifiers, atomic groups, POSIX classes and more by [@lvcabral](https://github.com/lvcabral) in [#1304](https://github.com/lvcabral/brs-engine/pull/1304)
+* (brs) `Integer` coercion now follows the device rule: a `Float`/`Double` is truncated (NaN becomes 0) and a `LongInteger` keeps its low 32 bits by [@lvcabral](https://github.com/lvcabral) in [#1305](https://github.com/lvcabral/brs-engine/pull/1305)
+* (draw2d) `roScreen.GetByteArray()` now returns `invalid`, as on real devices by [@lvcabral](https://github.com/lvcabral) in [#1303](https://github.com/lvcabral/brs-engine/pull/1303)
+* (node) Fixed `brs-cli` aborting with a native `napi_throw` error when a Task was stopped while its worker was still loading by [@slheavner](https://github.com/slheavner) in [#1310](https://github.com/lvcabral/brs-engine/pull/1310)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.7.0)
+
+* (rsg) Added device-faithful intrinsic UI transitions: `PanelSet` slides, and animated focus moves in lists, grids, `RowList` and `ZoomRowList` by [@lvcabral](https://github.com/lvcabral) in [#1308](https://github.com/lvcabral/brs-engine/pull/1308)
+* (rsg) A `Group`'s `scale` and rotation pivot now apply to its descendants and their `clippingRect` by [@quan7794](https://github.com/quan7794) in [#1291](https://github.com/lvcabral/brs-engine/pull/1291)
+* (rsg) Implemented `Group.inheritParentTransform = false` and pinned rotated `Group` bounding rects by [@lvcabral](https://github.com/lvcabral) in [#1314](https://github.com/lvcabral/brs-engine/pull/1314)
+* (rsg) Grid sub-rects are now reported in the device's coordinate spaces by [@lvcabral](https://github.com/lvcabral) in [#1316](https://github.com/lvcabral/brs-engine/pull/1316)
+* (rsg) Device-faithful grid bounding rects, `RowList` sub-parts and ancestor rects, and `RowList` horizontal scrolling measured against the list's own width by [@lvcabral](https://github.com/lvcabral) in [#1324](https://github.com/lvcabral/brs-engine/pull/1324) and [#1325](https://github.com/lvcabral/brs-engine/pull/1325)
+* (rsg) List and grid items now get `index`/`rowIndex`, added `RowList.rowTitleComponentName`, and `RowList` row layout and empty rows now match the device by [@lvcabral](https://github.com/lvcabral) in [#1322](https://github.com/lvcabral/brs-engine/pull/1322)
+* (rsg) A focused list now republishes `itemFocused` after an in-place content change, and `setFocus(false)` notifies the focus chain from the leaf up by [@lvcabral](https://github.com/lvcabral) in [#1323](https://github.com/lvcabral/brs-engine/pull/1323)
+* (rsg) Device-faithful `DynamicKeyboard` shift and caps lock, Symbols/Accents layouts and key navigation by [@lvcabral](https://github.com/lvcabral) in [#1312](https://github.com/lvcabral/brs-engine/pull/1312)
+* (rsg) Custom keyboard layouts now draw a key-cell background, and evenly split key sizes are rounded to whole pixels as on the device by [@lvcabral](https://github.com/lvcabral) in [#1311](https://github.com/lvcabral/brs-engine/pull/1311)
+* (rsg) `Video.trickPlayBar` is now built with the device's 12 internal children by [@lvcabral](https://github.com/lvcabral) in [#1306](https://github.com/lvcabral/brs-engine/pull/1306)
+* (rsg) Interface field aliases and `findNode()` now resolve to the scope's own node before another component's internals by [@lvcabral](https://github.com/lvcabral) in [#1300](https://github.com/lvcabral/brs-engine/pull/1300)
+* (rsg) A `ComponentLibrary` now loads from its `uri` alone, without an `id` by [@lvcabral](https://github.com/lvcabral) in [#1298](https://github.com/lvcabral/brs-engine/pull/1298)
+* (rsg) Fixed a crash when a `font` field is set to a value that is not a Font: the node draws no text, as on the device by [@lvcabral](https://github.com/lvcabral) in [#1296](https://github.com/lvcabral/brs-engine/pull/1296)
+* (rsg) Timers are now released when they stop, and `Timer.control` matches the device by [@mcaustin](https://github.com/mcaustin) in [#1293](https://github.com/lvcabral/brs-engine/pull/1293)
+* (rsg) `ChannelStore` results are now delivered asynchronously, and the channel credential store is shared across threads and persisted by the hosts by [@lvcabral](https://github.com/lvcabral) in [#1295](https://github.com/lvcabral/brs-engine/pull/1295)
+
+#### Chores, Build and Dependencies
+
+* Documented the API's `deviceData` and its non-serializable fields by [@lvcabral](https://github.com/lvcabral) in [#1315](https://github.com/lvcabral/brs-engine/pull/1315)
+* Moved the `dev-doc` submodule to GitLab and updated it to the latest `v2.0` by [@lvcabral](https://github.com/lvcabral) in [#1297](https://github.com/lvcabral/brs-engine/pull/1297)
+* Gave the CLI Task fixture apps a longer time budget to stop CI flakes by [@lvcabral](https://github.com/lvcabral) in [#1307](https://github.com/lvcabral/brs-engine/pull/1307)
+* Updated dependencies with security fixes (`vite`, `vitest`, and overrides for `minimatch` and `zod`) by [@lvcabral](https://github.com/lvcabral) in [#1326](https://github.com/lvcabral/brs-engine/pull/1326)
+* build(deps-dev): bump `fast-uri` from 3.1.7 to 3.1.9 by @dependabot in [#1280](https://github.com/lvcabral/brs-engine/pull/1280)
+* build(deps): bump `serialize-javascript` from 7.0.5 to 7.1.4 by @dependabot in [#1281](https://github.com/lvcabral/brs-engine/pull/1281)
+
+### New Contributors
+
+* @mcaustin made their first contribution in [#1293](https://github.com/lvcabral/brs-engine/pull/1293) - welcome to the project!
+* @slheavner made their first contribution in [#1310](https://github.com/lvcabral/brs-engine/pull/1310) - welcome to the project!
+
+[Full Changelog][v2.7.0]
+
 <a name="v2.6.2"></a>
 
 ## [v2.6.2 - Device-accurate Collections, Numbers and Task Fan-out](https://github.com/lvcabral/brs-engine/releases/tag/v2.6.2) - 23 October 2026
@@ -1982,6 +2037,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.7.0]: https://github.com/lvcabral/brs-engine/compare/v2.6.2...v2.7.0
 [v2.6.2]: https://github.com/lvcabral/brs-engine/compare/v2.6.1...v2.6.2
 [v2.6.1]: https://github.com/lvcabral/brs-engine/compare/v2.6.0...v2.6.1
 [v2.6.0]: https://github.com/lvcabral/brs-engine/compare/v2.5.4...v2.6.0

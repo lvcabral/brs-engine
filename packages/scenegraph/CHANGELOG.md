@@ -2,6 +2,32 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.7.0"></a>
+
+## [v0.7.0 (beta) - UI Transitions and Device-faithful Layout](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.0) - 15 November 2026
+
+This release animates the built-in UI motion a Roku device animates, instead of snapping to the final state: `PanelSet` slides its panels, and lists (`LabelList`, `MarkupList`, `CheckList`, `RadioButtonList`), grids (`MarkupGrid`, `PosterGrid`), `RowList` and `ZoomRowList` ease each focus move, with the in-transit fields (`focusPercent`, `rowFocusPercent`, `currFocusRow`/`currFocusColumn`, `scrollingStatus`) changing frame by frame. Transitions are on by default and can be turned off with `DeviceInfo.uiTransitions = false`, the CLI `--no-transitions` flag or `BRS_UI_TRANSITIONS=0`. Layout and measurement are also closer to the device: a `Group`'s `scale` and rotation pivot apply to its whole subtree and its `clippingRect`, `inheritParentTransform = false` is implemented, and grid, `RowList` sub-part and ancestor bounding rects are reported in the device's coordinate spaces. `RowList` gains `rowTitleComponentName`, item `index`/`rowIndex`, device row layout and empty rows; `DynamicKeyboard` gets device shift, caps lock and navigation; `Video.trickPlayBar` has the device's 12 internal children; and `ChannelStore` delivers its results asynchronously. Every change was checked against a real device with a probe app under `test/simulator/probes/`. Requires `brs-engine` v2.7.0 or newer. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) Added device-faithful intrinsic UI transitions: `PanelSet` slides, and animated focus moves in lists, grids, `RowList` and `ZoomRowList` by [@lvcabral](https://github.com/lvcabral) in [#1308](https://github.com/lvcabral/brs-engine/pull/1308)
+* (rsg) A `Group`'s `scale` and rotation pivot now apply to its descendants and their `clippingRect` by [@quan7794](https://github.com/quan7794) in [#1291](https://github.com/lvcabral/brs-engine/pull/1291)
+* (rsg) Implemented `Group.inheritParentTransform = false` and pinned rotated `Group` bounding rects by [@lvcabral](https://github.com/lvcabral) in [#1314](https://github.com/lvcabral/brs-engine/pull/1314)
+* (rsg) Grid sub-rects are now reported in the device's coordinate spaces by [@lvcabral](https://github.com/lvcabral) in [#1316](https://github.com/lvcabral/brs-engine/pull/1316)
+* (rsg) Device-faithful grid bounding rects, `RowList` sub-parts and ancestor rects, and `RowList` horizontal scrolling measured against the list's own width by [@lvcabral](https://github.com/lvcabral) in [#1324](https://github.com/lvcabral/brs-engine/pull/1324) and [#1325](https://github.com/lvcabral/brs-engine/pull/1325)
+* (rsg) List and grid items now get `index`/`rowIndex`, added `RowList.rowTitleComponentName`, and `RowList` row layout and empty rows now match the device by [@lvcabral](https://github.com/lvcabral) in [#1322](https://github.com/lvcabral/brs-engine/pull/1322)
+* (rsg) A focused list now republishes `itemFocused` after an in-place content change, and `setFocus(false)` notifies the focus chain from the leaf up by [@lvcabral](https://github.com/lvcabral) in [#1323](https://github.com/lvcabral/brs-engine/pull/1323)
+* (rsg) Device-faithful `DynamicKeyboard` shift and caps lock, Symbols/Accents layouts and key navigation by [@lvcabral](https://github.com/lvcabral) in [#1312](https://github.com/lvcabral/brs-engine/pull/1312)
+* (rsg) Custom keyboard layouts now draw a key-cell background, and evenly split key sizes are rounded to whole pixels as on the device by [@lvcabral](https://github.com/lvcabral) in [#1311](https://github.com/lvcabral/brs-engine/pull/1311)
+* (rsg) `Video.trickPlayBar` is now built with the device's 12 internal children by [@lvcabral](https://github.com/lvcabral) in [#1306](https://github.com/lvcabral/brs-engine/pull/1306)
+* (rsg) Interface field aliases and `findNode()` now resolve to the scope's own node before another component's internals by [@lvcabral](https://github.com/lvcabral) in [#1300](https://github.com/lvcabral/brs-engine/pull/1300)
+* (rsg) A `ComponentLibrary` now loads from its `uri` alone, without an `id` by [@lvcabral](https://github.com/lvcabral) in [#1298](https://github.com/lvcabral/brs-engine/pull/1298)
+* (rsg) Fixed a crash when a `font` field is set to a value that is not a Font: the node draws no text, as on the device by [@lvcabral](https://github.com/lvcabral) in [#1296](https://github.com/lvcabral/brs-engine/pull/1296)
+* (rsg) Timers are now released when they stop, and `Timer.control` matches the device by [@mcaustin](https://github.com/mcaustin) in [#1293](https://github.com/lvcabral/brs-engine/pull/1293)
+* (rsg) `ChannelStore` results are now delivered asynchronously, and the channel credential store is shared across threads and persisted by the hosts by [@lvcabral](https://github.com/lvcabral) in [#1295](https://github.com/lvcabral/brs-engine/pull/1295)
+
+[Full Changelog][v0.7.0]
+
 <a name="v0.6.2"></a>
 
 ## [v0.6.2 (beta) - Task Fan-out Batching and Render-thread onChange](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.6.2) - 23 October 2026
@@ -469,6 +495,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.7.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.2...brs-sg-v0.7.0
 [v0.6.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.1...brs-sg-v0.6.2
 [v0.6.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.0...brs-sg-v0.6.1
 [v0.6.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.5.4...brs-sg-v0.6.0
