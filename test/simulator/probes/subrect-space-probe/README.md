@@ -48,13 +48,10 @@ after the fix.
   as the spec says.
 - `itemX_Y` on a PosterGrid or MarkupGrid parses as `itemX`, so `item0_1` is item 0.
 
-Engine and device now agree on everything above. These differences are still open:
+Engine and device now agree on everything above. The RowList rows, the off-window rows and the own rects
+listed here before are fixed (see [`grid-rect-probe`](../grid-rect-probe/README.md)). This difference is
+still open:
 
 - **`focusIndicator`** is the focus frame on a device: the focused item outset by 21 (PosterGrid) or
   22 (MarkupGrid/RowList). It is reported even when the grid is unfocused, and its `local` rect is the
   outset (`{-21,-21,142,142}`). The engine returns the focused item.
-- **RowList `itemX`** is row X on a device (`{focusX, rowY, 600, 100}`), not that row's focused item.
-- **RowList rows outside the visible window**: the device reports `rlHolder` row 1 (beyond
-  `numRows=1`) and `rl2` row 0 after scrolling (y=-120). The engine has no rect, or a stale one.
-- **Own rects**: the device outsets MarkupGrid by 22 on every side (engine: none), and RowList by 22
-  (engine: 33/6). `rl2` keeps its height after scrolling (284). The engine's shrinks from 232 to 112.

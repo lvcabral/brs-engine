@@ -19,10 +19,9 @@ import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { createNode } from "../factory/NodeFactory";
 import { Font } from "./Font";
 import { Group } from "./Group";
-import { Node } from "./Node";
 import { ArrayGrid, FocusMotion, FocusStyle, GridHoldDelayMs, GridStepMs, MotionAxis } from "./ArrayGrid";
 import { FieldKind, FieldModel } from "../SGTypes";
-import { positiveMod, resolveRowItemSubpart } from "../SGUtil";
+import { parseRowSubpart, positiveMod } from "../SGUtil";
 import { SGNodeType } from ".";
 
 const ValidFocusStyles = new Set(Object.values(FocusStyle).map((style) => style.toLowerCase()));
@@ -123,18 +122,10 @@ export class RowList extends ArrayGrid {
         this.registerDefaultFields(this.defaultFields);
         this.registerInitializedFields(initializedFields);
 
+        // Paint margins: the row clip's focus allowance and the focus frame's fallback when the 9-patch
+        // declares none. The reported rect's outset is `rectMargins`.
         if (this.resolution === "FHD") {
             this.marginX = 33;
-            // Vertical outset of THIS NODE's own reported rect (rectMargins -> ArrayGrid.updateRect).
-            // A real device reports a RowList's boundingRect outset by only ~6px on the Y axis, where
-            // the square 33 this used to hold was far too tall. It affects ONLY the reported rect, not
-            // the drawn focus frame: the focus RING uses the focus 9-patch's own declared content
-            // margins (ArrayGrid.focusMargins prefers them over this value).
-            //
-            // It does NOT reach an item subBoundingRect: ArrayGrid.getSubBoundingRect re-expresses the item
-            // rect against this node's rectLocal/rectToScene, both of which carry the outset
-            // identically, so it cancels. See resolveSubpart below — that cancellation is the whole
-            // reason the footprint outset that used to live here was wrong.
             this.marginY = 6;
         } else {
             this.marginX = 22;
@@ -261,7 +252,7 @@ export class RowList extends ArrayGrid {
             }
         }
 
-        this.applyRowFocus(rowIndex, colIndex, isChangingRow);
+        this.applyRowFocus(rowIndex, colIndex);
         this.flaggedRow = rowIndex;
         this.motionPos = rowIndex;
         this.motionCol = colIndex;
@@ -342,26 +333,21 @@ export class RowList extends ArrayGrid {
     }
 
     /** Moves the focus cursor and the row's horizontal scroll state to [row, col] — no notifications. */
-    private applyRowFocus(rowIndex: number, colIndex: number, isChangingRow: boolean) {
+    private applyRowFocus(rowIndex: number, colIndex: number) {
         this.focusIndex = rowIndex;
         this.rowFocus[rowIndex] = colIndex;
 
         // Get the row focus animation style to determine scrolling behavior
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
-
-        // Initialize scroll offset if not set - ensure it starts at 0 for first visit
-        const isFirstVisit = this.rowScrollOffset[rowIndex] === undefined || this.rowScrollOffset[rowIndex] === null;
-        if (isFirstVisit) {
-            this.rowScrollOffset[rowIndex] = 0;
-        }
+        this.rowScrollOffset[rowIndex] ??= 0;
 
         const spacing = this.getRowItemSpacing(rowIndex); // Use the actual row's spacing
         const rowItemWidth = this.getRowItemWidth(rowIndex);
         const cols = this.getContentChildren(this.content[rowIndex]);
-        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
+        const allItemsFitInRow = this.allItemsFitInRow(rowIndex, cols);
 
         // Adjust scroll offset based on animation style
-        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
+        if (allItemsFitInRow && rowFocusStyle !== RowFocusStyle.Fixed) {
             // All items fit, no scrolling needed - always use floating focus behavior
             this.rowScrollOffset[rowIndex] = 0;
         } else if (rowFocusStyle === RowFocusStyle.Wrap) {
@@ -373,24 +359,12 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] = colIndex;
         } else if (rowFocusStyle === RowFocusStyle.Floating) {
             // floatingFocus: ensure focused item is fully visible
-            // Calculate max items that fit completely on screen (use floor, not ceil)
-            const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
+            // Calculate max items that fit completely in the list (use floor, not ceil)
+            const maxVisibleItems = Math.floor(this.listWidth() / (rowItemWidth + spacing[0]));
 
-            if (isChangingRow && isFirstVisit) {
-                // First time visiting this row - calculate initial scroll position
-                if (colIndex === 0) {
-                    // Explicitly focusing first item - start from beginning
-                    this.rowScrollOffset[rowIndex] = 0;
-                } else if (colIndex < maxVisibleItems) {
-                    // Focused item fits in the "floating" visible area - no scroll needed
-                    this.rowScrollOffset[rowIndex] = 0;
-                } else {
-                    // Focused item is beyond floating area - scroll to show it fully at right edge
-                    this.rowScrollOffset[rowIndex] = Math.max(0, colIndex - maxVisibleItems + 1);
-                }
-            } else if (isChangingRow) {
-                // Keep scroll offset unchanged - row maintains its scroll state
-            } else if (colIndex < this.rowScrollOffset[rowIndex]) {
+            // The row keeps its scroll state unless the focused item is outside it (DEVICE-MEASURED,
+            // grid-rect-probe: jumpToRowItem [3,7] scrolls row 3 by 3 items).
+            if (colIndex < this.rowScrollOffset[rowIndex]) {
                 // Focused item is before visible area, scroll left to show it fully
                 this.rowScrollOffset[rowIndex] = colIndex;
             } else if (colIndex >= this.rowScrollOffset[rowIndex] + maxVisibleItems) {
@@ -451,7 +425,7 @@ export class RowList extends ArrayGrid {
         this.motionCol = motion ? this.motionCol : colIndex;
         const target = { row: baseRow + delta, col: motion ? motion.queued?.col ?? motion.col.to : colIndex };
         this.startFocusMotion(rowIndex, { row: baseRow, col: colIndex }, target, () => {
-            this.applyRowFocus(rowIndex, colIndex, true);
+            this.applyRowFocus(rowIndex, colIndex);
             this.focusLayoutDirty = true;
         });
     }
@@ -713,10 +687,10 @@ export class RowList extends ArrayGrid {
         this.rowScrollOffset[currentRow] ??= 0;
 
         const rowItemWidth = this.getRowItemWidth(currentRow);
-        const allItemsFitOnScreen = this.allItemsFitOnScreen(currentRow, cols);
+        const allItemsFitInRow = this.allItemsFitInRow(currentRow, cols);
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
+        if (allItemsFitInRow && rowFocusStyle !== RowFocusStyle.Fixed) {
             return this.handleAllItemsFit(currentRow, numCols, offset);
         } else if (rowFocusStyle === RowFocusStyle.Wrap) {
             return this.handleFixedFocusWrap(currentRow, numCols, offset);
@@ -744,37 +718,128 @@ export class RowList extends ArrayGrid {
     }
 
     /**
-     * Resolves an ifSGNodeBoundingRect sub part to the matching rendered item component. A RowList
-     * holds a 2-D grid of components in `rowItemComps[row][col]` (not the flat ArrayGrid `itemComps[]`,
-     * which stays empty here), so the base resolver never matches and every query would miss. On a
-     * real device `subBoundingRect("item<row>_<col>")` returns the focused
-     * poster's rect, which apps use to place a focused-item overlay; without this override the overlay
-     * cannot track the row's item layout. See `resolveRowItemSubpart` for the id mapping.
-     *
-     * Resolution is ALL this node contributes: there is intentionally no `getSubBoundingRect` override.
-     * `ArrayGrid.getSubBoundingRect` re-expresses the resolved item component's own rect, and a device reports
-     * exactly that — the bare poster — for both the focused and the unfocused cells. Three separate
-     * outsets are easy to conflate here, so keep them apart:
-     *
-     *  - the DRAWN focus frame is outset (`ArrayGrid.renderFocus` -> `focusMargins`, the 9-patch's own
-     *    declared content margins). Only `focusIndicator` may report it (a device does; the engine
-     *    still resolves it to the focused item), never an item sub-rect.
-     *  - THIS NODE's own reported rect is outset (`rectMargins` -> `ArrayGrid.updateRect`, `marginX`/
-     *    `marginY`). It does not reach an item sub-rect: `ArrayGrid.getSubBoundingRect` computes
-     *    `base.y + (subScene.y - this.rectToScene.y)`, and `base` (`rectLocal`, or `rectToParent` for
-     *    `ancestorSubBoundingRect`) and `rectToScene` carry that outset identically, so it cancels.
-     *  - an ITEM sub-rect is outset by nothing at all.
-     *
-     * Do NOT re-add a focus-footprint outset here. One was added once (subtracting the 9-patch top
-     * margin from the focused cell) to make an overlay land on the poster; it was double-counting from
-     * the day it landed, silently cancelled by a `rectToParent` bug that dropped the `rectMargins`
-     * outset from `base` and left a `+marginY` residue in the expression above. Fixing that bug — so
-     * the outset cancels as it should — surfaced the double subtraction as an overlay drawn one focus
-     * margin too HIGH. If a focused-item overlay looks misplaced, the paint path or the app's own
-     * offset is the suspect, not this rect.
+     * Outset of the reported rect on every side: 22 at both resolutions, whatever the focus bitmap or
+     * `drawFocusFeedback`. DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe`).
      */
-    protected resolveSubpart(itemNumber: string): Node | undefined {
-        return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus);
+    protected rectMargins(): { x: number; y: number } {
+        return { x: 22, y: 22 };
+    }
+
+    /**
+     * DEVICE-MEASURED (OS 16.0, `grid-rect-probe`, HD and FHD): `itemSize.x` wide, and the first
+     * `min(numRows, rows)` rows plus the spacing after each (the last one included) tall, wherever the
+     * list has scrolled.
+     */
+    protected reportedExtent(_numRows: number, itemSize: number[], _firstRow: number) {
+        const margin = this.rectMargins();
+        const rows = Math.min(this.numRows, this.content.length);
+        let height = margin.y * 2;
+        for (let r = 0; r < rows; r++) {
+            height += this.rowHeightOf(r) + this.rowSpacingOf(r);
+        }
+        return { width: itemSize[0] + margin.x * 2, height };
+    }
+
+    protected subpartsFromLayout(): boolean {
+        return true;
+    }
+
+    /**
+     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe`, HD and FHD), in this list's own
+     * space, from the settled layout (a motion in flight does not move them):
+     *  - `item<r>_<c>` / `focusItem`: the cell's slot (`rowItemSize`), for every row and column, including
+     *    rows scrolled off or past `numRows`. A column past the row's end is a zero-size rect at the row's
+     *    left edge.
+     *  - `item<r>`: row r, `{focusX, itemsY, itemSize.x, rowHeight}`, where `focusX` is the focused item's
+     *    x, the same in every row.
+     *  - a row past the content is missing.
+     * `focusIndicator` is the focused item here; a device reports the focus frame.
+     */
+    protected layoutSubpartRect(itemNumber: string): Rect | undefined {
+        const part = parseRowSubpart(itemNumber);
+        if (!part) {
+            return undefined;
+        }
+        const focusCol = this.rowFocus[this.focusIndex] ?? 0;
+        const row = part.kind === "focus" ? this.focusIndex : part.row;
+        if (row < 0 || row >= this.content.length) {
+            return undefined;
+        }
+        const y = this.rowTopOffset(row) + this.rowBandHeightOf(row);
+        if (part.kind === "row") {
+            const width = (this.getValueJS("itemSize") as number[])[0];
+            return { x: this.cellX(this.focusIndex, focusCol), y, width, height: this.rowHeightOf(row) };
+        }
+        const col = part.kind === "focus" ? focusCol : part.col;
+        const cols = this.getContentChildren(this.content[row]);
+        if (col < 0 || col >= cols.length) {
+            return { x: 0, y, width: 0, height: 0 };
+        }
+        const [itemWidth, itemHeight] = this.getRowItemSize(row);
+        const width = this.getItemWidth(row, col, cols, itemWidth);
+        return { x: this.cellX(row, col, cols), y, width, height: itemHeight };
+    }
+
+    /** The settled x of column `colIndex` of a row, from the list's left edge; linear past either end. */
+    private cellX(rowIndex: number, colIndex: number, cols = this.getContentChildren(this.content[rowIndex])): number {
+        const style = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
+        const renderMode = this.determineRenderMode(this.allItemsFitInRow(rowIndex, cols), style);
+        const { startCol } = this.rowColumnWindow(rowIndex, renderMode);
+        const spacing = this.getRowItemSpacing(rowIndex)[0];
+        const rowItemWidth = this.getRowItemWidth(rowIndex);
+        let x = this.getRowXOffset(rowIndex);
+        for (let c = startCol; c < colIndex; c++) {
+            x += this.getItemWidth(rowIndex, c, cols, rowItemWidth) + spacing;
+        }
+        for (let c = colIndex; c < startCol; c++) {
+            x -= this.getItemWidth(rowIndex, c, cols, rowItemWidth) + spacing;
+        }
+        return x;
+    }
+
+    /**
+     * The settled top of row `rowIndex`, from the list's origin: rows stack from the window's first row
+     * (the focused one in fixedFocus), those above it at negative offsets. A wrapping list stacks every
+     * row below it, past the wrap divider.
+     */
+    private rowTopOffset(rowIndex: number): number {
+        let anchor = this.focusIndex;
+        if (!this.isFixedFocusMode()) {
+            this.updateListCurrRow();
+            anchor = this.topRow;
+        }
+        const span = (r: number) => this.rowHeightOf(r) + this.rowSpacingOf(r);
+        let y = 0;
+        if (this.wrap) {
+            const rows = this.content.length;
+            const distance = positiveMod(rowIndex - anchor, rows);
+            for (let d = 0; d < distance; d++) {
+                y += span((anchor + d) % rows);
+            }
+            if (distance > 0 && anchor + distance >= rows) {
+                y += this.getValueJS("wrapDividerHeight") as number;
+            }
+            return y;
+        }
+        for (let r = anchor; r < rowIndex; r++) {
+            y += span(r);
+        }
+        for (let r = rowIndex; r < anchor; r++) {
+            y -= span(r);
+        }
+        return y;
+    }
+
+    /** Height of row `rowIndex`: `rowHeights`, falling back to `itemSize.y`. */
+    private rowHeightOf(rowIndex: number): number {
+        const rowHeights = this.getValueJS("rowHeights") as number[];
+        return rowHeights[rowIndex] ?? (this.getValueJS("itemSize") as number[])[1];
+    }
+
+    /** Spacing after row `rowIndex` (see `calculateRowSpacing`). */
+    private rowSpacingOf(rowIndex: number): number {
+        const rowSpacings = this.getValueJS("rowSpacings") as number[];
+        return this.calculateRowSpacing(rowIndex, rowSpacings, this.getValueJS("itemSpacing") as number[]);
     }
 
     private getRowItemSize(rowIndex: number): number[] {
@@ -837,8 +902,18 @@ export class RowList extends ArrayGrid {
         return total;
     }
 
-    private allItemsFitOnScreen(rowIndex: number, cols: ContentNode[]): boolean {
-        return this.getTotalRowWidth(rowIndex, cols) <= this.sceneRect.width;
+    /**
+     * The width a row's items fit in or scroll within: the list's own (`itemSize.x`), not the screen's.
+     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe`, cases `x_*`): ten 100px items 20
+     * apart in a 600px list scroll so the floating focus stays inside it.
+     */
+    private listWidth(): number {
+        const itemSize = this.getValueJS("itemSize") as number[];
+        return itemSize[0] > 0 ? itemSize[0] : this.sceneRect.width;
+    }
+
+    private allItemsFitInRow(rowIndex: number, cols: ContentNode[]): boolean {
+        return this.getTotalRowWidth(rowIndex, cols) <= this.listWidth();
     }
 
     private handleAllItemsFit(currentRow: number, numCols: number, offset: number): boolean {
@@ -883,7 +958,7 @@ export class RowList extends ArrayGrid {
     private handleFloatingFocus(currentRow: number, numCols: number, rowItemWidth: number, offset: number): boolean {
         // currentRow is the absolute focused row index
         const spacing = this.getRowItemSpacing(currentRow);
-        const maxVisibleItems = Math.floor(this.sceneRect.width / (rowItemWidth + spacing[0]));
+        const maxVisibleItems = Math.floor(this.listWidth() / (rowItemWidth + spacing[0]));
         const currentFocusedCol = this.rowFocus[currentRow];
         const currentScrollOffset = this.rowScrollOffset[currentRow];
         const focusScreenPosition = currentFocusedCol - currentScrollOffset;
@@ -1021,35 +1096,25 @@ export class RowList extends ArrayGrid {
         if (draw2D) {
             this.pushMotionClip(rect, this.windowLayoutHeight(context, pitch), draw2D, scrolling);
         }
-        let window: { windowHeight: number; renderedRows: number; trailingSpacing: number };
         try {
-            window = this.renderWindowRows(firstRow, lastRow, frame !== undefined, pitch, context);
+            this.renderWindowRows(firstRow, lastRow, frame !== undefined, pitch, context);
         } finally {
             draw2D?.popClip();
         }
-        const { windowHeight, renderedRows, trailingSpacing } = window;
         if (indicatorRect && focusOnTop) {
             this.renderFocus(indicatorRect, opacity, sgRoot.focused === this, draw2D);
         }
-        const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : windowHeight - trailingSpacing + margin.y * 2;
-        this.updateRect(rect, context.displayRows, context.itemSize, { height, firstRow: this.currRow });
+        this.updateRect(rect, context.displayRows, context.itemSize);
     }
 
-    /**
-     * Draws rows `firstRow`..`lastRow - 1` and measures the settled window's rows among them, which alone
-     * make up the reported extent. While moving, a slot with no row (past either end) advances by `pitch`.
-     */
+    /** Draws rows `firstRow`..`lastRow - 1`. While moving, a slot with no row (past either end) advances by `pitch`. */
     private renderWindowRows(
         firstRow: number,
         lastRow: number,
         moving: boolean,
         pitch: number,
         context: RowListRenderContext
-    ): { windowHeight: number; renderedRows: number; trailingSpacing: number } {
-        let windowHeight = 0;
-        let renderedRows = 0;
-        let trailingSpacing = 0;
+    ) {
         for (let r = firstRow; r < lastRow; r++) {
             const rowIndex = this.calculateActualRowIndex(r);
             if (rowIndex === -1) {
@@ -1059,18 +1124,11 @@ export class RowList extends ArrayGrid {
                 }
                 break;
             }
-            const rowStartY = context.itemRect.y;
             const fits = this.renderSingleRow(rowIndex, r - firstRow, context);
-            if (r >= 0 && r < context.displayRows) {
-                windowHeight += context.itemRect.y - rowStartY;
-                renderedRows++;
-                trailingSpacing = this.calculateRowSpacing(rowIndex, context.rowSpacings, context.globalSpacing);
-            }
             if (!fits && !moving) {
                 break;
             }
         }
-        return { windowHeight, renderedRows, trailingSpacing };
     }
 
     /**
@@ -1363,7 +1421,7 @@ export class RowList extends ArrayGrid {
     private rowItemsFit(rowIndex: number): boolean {
         const motion = this.motion;
         if (!motion) {
-            return this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+            return this.allItemsFitInRow(rowIndex, this.getContentChildren(this.content[rowIndex]));
         }
         // Asked on every frame of a motion: measured once per motion, without rebuilding the row's items.
         if (this.fitCache?.motion !== motion) {
@@ -1371,7 +1429,7 @@ export class RowList extends ArrayGrid {
         }
         let fits = this.fitCache.fits.get(rowIndex);
         if (fits === undefined) {
-            fits = this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]));
+            fits = this.allItemsFitInRow(rowIndex, this.getContentChildren(this.content[rowIndex]));
             this.fitCache.fits.set(rowIndex, fits);
         }
         return fits;
@@ -1447,12 +1505,12 @@ export class RowList extends ArrayGrid {
         itemRect: Rect,
         context: RowListRenderContext
     ): void {
-        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
+        const allItemsFitInRow = this.allItemsFitInRow(rowIndex, cols);
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
         this.rowScrollOffset[rowIndex] ??= 0;
 
-        const renderMode = this.determineRenderMode(allItemsFitOnScreen, rowFocusStyle);
+        const renderMode = this.determineRenderMode(allItemsFitInRow, rowFocusStyle);
 
         this.renderRowItems(rowIndex, cols, itemRect, spacing, rowItemWidth, renderMode, context);
     }
@@ -1480,8 +1538,8 @@ export class RowList extends ArrayGrid {
         return rowIndex;
     }
 
-    private determineRenderMode(allItemsFitOnScreen: boolean, rowFocusStyle: string): string {
-        if (allItemsFitOnScreen && rowFocusStyle !== RowFocusStyle.Fixed) {
+    private determineRenderMode(allItemsFitInRow: boolean, rowFocusStyle: string): string {
+        if (allItemsFitInRow && rowFocusStyle !== RowFocusStyle.Fixed) {
             return "allItemsFit";
         } else if (rowFocusStyle === RowFocusStyle.Wrap) {
             return "wrapMode";
@@ -1620,13 +1678,13 @@ export class RowList extends ArrayGrid {
         const nodeFocus = sgRoot.focused === this;
 
         // Sum the row's actual (possibly variable) item widths to decide whether it all fits.
-        const allItemsFitOnScreen = this.allItemsFitOnScreen(rowIndex, cols);
+        const allItemsFitInRow = this.allItemsFitInRow(rowIndex, cols);
 
         // Determine focus behavior based on animation style and screen fit
         let focused = false;
         const rowFocusStyle = (this.getValueJS("rowFocusAnimationStyle") as string).toLowerCase();
 
-        if (rowFocusStyle === RowFocusStyle.Wrap && !allItemsFitOnScreen) {
+        if (rowFocusStyle === RowFocusStyle.Wrap && !allItemsFitInRow) {
             // Items don't fit and we're using fixedFocusWrap - focus stays on first visible item
             focused = this.focusIndex === rowIndex && colIndex === this.rowFocus[rowIndex];
         } else {
@@ -1715,7 +1773,7 @@ export class RowList extends ArrayGrid {
             return;
         }
         const showShortRows = (this.getValueJS("showRowCounterForShortRows") as boolean) ?? true;
-        if (!showShortRows && this.allItemsFitOnScreen(rowIndex, this.getContentChildren(this.content[rowIndex]))) {
+        if (!showShortRows && this.allItemsFitInRow(rowIndex, this.getContentChildren(this.content[rowIndex]))) {
             return;
         }
         const color = this.getValueJS("rowLabelColor");

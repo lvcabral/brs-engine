@@ -3,6 +3,7 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { customNodeExists } from "../factory/NodeFactory";
+import { positiveMod } from "../SGUtil";
 
 const ValidFocusStyles = new Set(
     [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
@@ -269,15 +270,30 @@ export class MarkupList extends ArrayGrid {
     }
 
     /**
-     * Like MarkupGrid, a real device reports a MarkupList's bounding rect as exactly the laid-out
-     * item extent (rows of itemSize plus spacing) with NO focus-bitmap outset. The outset would
-     * also be unstable: renderFocus re-derives hasNinePatch from whichever bitmap was drawn last,
-     * so a list whose focus bitmap is a 9-patch but whose footprint is a plain image would grow
-     * when focused and shrink when not — visibly shifting siblings a LayoutGroup places below it.
-     * The marginX/marginY outset still drives the drawn focus frame (focusMargins), just not the
-     * reported rects.
+     * Outset of the reported rect on the left, right and top: 24/6 HD and 36/9 FHD, whatever the focus
+     * bitmap. The bottom one is in `reportedExtent`. DEVICE-MEASURED (OS 16.0,
+     * `test/simulator/probes/grid-rect-probe`). The drawn focus frame uses `marginX`/`marginY` instead.
      */
     protected rectMargins(): { x: number; y: number } {
-        return { x: 0, y: 0 };
+        return this.resolution === "FHD" ? { x: 36, y: 9 } : { x: 24, y: 6 };
+    }
+
+    /**
+     * DEVICE-MEASURED (OS 16.0, `grid-rect-probe`, HD and FHD): every laid-out row plus the spacing after
+     * it, the last one included, outset once per list: `rectMargins().y` above, five times that below.
+     */
+    protected reportedExtent(numRows: number, itemSize: number[], firstRow: number): { width: number; height: number } {
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const rowHeights = this.getValueJS("rowHeights");
+        const rowSpacings = this.getValueJS("rowSpacings");
+        const margin = this.rectMargins();
+        const totalRows = Math.max(1, this.content.length);
+        let height = margin.y * 6;
+        for (let r = 0; r < numRows; r++) {
+            const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
+            height += this.resolveTrackValue(rowHeights, row, itemSize[1]);
+            height += this.resolveTrackValue(rowSpacings, row, spacing[1] ?? 0);
+        }
+        return { width: itemSize[0] + margin.x * 2, height };
     }
 }

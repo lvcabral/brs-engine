@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="GridRectScene" extends="Scene">
+    <interface>
+        <function name="caseNames" />
+        <function name="setup" />
+        <function name="act" />
+        <function name="measure" />
+        <function name="teardown" />
+    </interface>
+    <script type="text/brightscript" uri="pkg:/components/GridRectScene.brs" />
+</component>

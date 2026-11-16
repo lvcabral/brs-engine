@@ -250,6 +250,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
 
     protected abstract getBoundingRect(type: string, interpreter?: Interpreter): Rect;
     protected abstract getSubBoundingRect(type: SubRectSpace, itemNumber: string, interpreter?: Interpreter): Rect;
+    protected abstract localRectToParent(rect: Rect): Rect;
     protected abstract compareNodes(other: RoSGNode): boolean;
     protected abstract getThreadInfo(): RoAssociativeArray;
 
@@ -1662,19 +1663,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                     return remote;
                 }
                 const boundingRect = this.getBoundingRect("toParent", interpreter);
-                const ancestorRect = { ...boundingRect };
-                let ancestorFound = false;
-                const path = this.createPath(this, false).slice(1);
-                for (const node of path) {
-                    if (ancestor === node) {
-                        ancestorFound = true;
-                        break;
-                    }
-                    const nodeRect = node.getBoundingRect("toParent", interpreter);
-                    ancestorRect.x += nodeRect.x;
-                    ancestorRect.y += nodeRect.y;
-                }
-                return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(boundingRect);
+                return toAssociativeArray(this.rectInAncestor(boundingRect, ancestor) ?? boundingRect);
             },
         });
     }
@@ -1694,22 +1683,28 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                const subRect = this.getSubBoundingRect("ancestor", itemNumber.getValue(), interpreter);
-                const ancestorRect = { ...subRect };
-                let ancestorFound = false;
-                const path = this.createPath(this, false).slice(1);
-                for (const node of path) {
-                    if (ancestor === node) {
-                        ancestorFound = true;
-                        break;
-                    }
-                    const nodeRect = node.getBoundingRect("toParent", interpreter);
-                    ancestorRect.x += nodeRect.x;
-                    ancestorRect.y += nodeRect.y;
-                }
-                return ancestorFound ? toAssociativeArray(ancestorRect) : toAssociativeArray(subRect);
+                const inParent = this.getSubBoundingRect("ancestor", itemNumber.getValue(), interpreter);
+                const inAncestor = this.rectInAncestor(inParent, ancestor);
+                return toAssociativeArray(inAncestor ?? this.getSubBoundingRect("toParent", itemNumber.getValue()));
             },
         });
+    }
+
+    /**
+     * `rect`, in this node's parent space, in `ancestor`'s own coordinates: through the translation,
+     * scale and rotation of every node in between. Undefined when `ancestor` is not an ancestor.
+     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe`, case `a_chain`).
+     */
+    private rectInAncestor(rect: Rect, ancestor: BrsType): Rect | undefined {
+        let node = this.getNodeParent();
+        while (node instanceof RoSGNode) {
+            if (node === ancestor) {
+                return rect;
+            }
+            rect = node.localRectToParent(rect);
+            node = node.getNodeParent();
+        }
+        return undefined;
     }
 
     /* Returns true if the subject node has the remote control focus, and false otherwise */

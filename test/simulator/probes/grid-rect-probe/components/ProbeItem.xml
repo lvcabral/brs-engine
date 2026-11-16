@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" />
+    </interface>
+    <children>
+        <Rectangle width="100" height="100" color="0x808080FF" />
+    </children>
+</component>

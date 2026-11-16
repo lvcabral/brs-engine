@@ -4,6 +4,7 @@ import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect } fr
 import { ArrayGrid, FocusStyle, GridHoldDelayMs, GridStepMs, GridWrapRowStepMs } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { customNodeExists } from "../factory/NodeFactory";
+import { positiveMod } from "../SGUtil";
 
 /** The row geometry `MarkupGrid.renderGridRows` lays out. */
 interface GridRowsLayout {
@@ -66,14 +67,48 @@ export class MarkupGrid extends ArrayGrid {
     }
 
     /**
-     * A real device reports a MarkupGrid's bounding rect as exactly the laid-out item extent
-     * (rows/columns of itemSize plus spacing) with NO focus-bitmap outset: apps size sibling
-     * backgrounds from boundingRect() and on device they align flush with the items. The
-     * marginX/marginY outset still drives the drawn focus frame (focusMargins), just not the
-     * reported rects.
+     * Outset of the reported rect on the left, right and top: 22 at both resolutions, whatever the focus
+     * bitmap or `drawFocusFeedback`, and also while hidden. The bottom one is in `reportedExtent`.
+     * DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe`). The drawn focus frame uses
+     * `marginX`/`marginY` (focusMargins) instead.
      */
     protected rectMargins(): { x: number; y: number } {
-        return { x: 0, y: 0 };
+        return { x: 22, y: 22 };
+    }
+
+    /**
+     * DEVICE-MEASURED (OS 16.0, `grid-rect-probe`, HD and FHD):
+     *  - width: every column plus the spacing after it, except a single column's.
+     *  - height: every laid-out row plus the spacing after it, the last one included.
+     *  - the bottom outset is PosterGrid's: the top one plus `gridBottomAllowance`, unless the grid is a
+     *    horizontal strip (`isHorizontalStrip`).
+     */
+    protected reportedExtent(numRows: number, itemSize: number[], firstRow: number): { width: number; height: number } {
+        const numCols = this.numCols || 1;
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const columnWidths = this.getValueJS("columnWidths");
+        const columnSpacings = this.getValueJS("columnSpacings");
+        const rowHeights = this.getValueJS("rowHeights");
+        const rowSpacings = this.getValueJS("rowSpacings");
+        const margin = this.rectMargins();
+        let width = margin.x * 2;
+        for (let c = 0; c < numCols; c++) {
+            width += this.resolveTrackValue(columnWidths, c, itemSize[0]);
+            if (numCols > 1) {
+                width += this.resolveTrackValue(columnSpacings, c, spacing[0] ?? 0);
+            }
+        }
+        const totalRows = Math.max(1, Math.ceil(this.content.length / numCols));
+        let height = margin.y * 2;
+        for (let r = 0; r < numRows; r++) {
+            const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
+            height += this.resolveTrackValue(rowHeights, row, itemSize[1]);
+            height += this.resolveTrackValue(rowSpacings, row, spacing[1] ?? 0);
+        }
+        if (!this.isHorizontalStrip()) {
+            height += this.gridBottomAllowance();
+        }
+        return { width, height };
     }
 
     /** A grid lays its columns out from columnWidths/columnSpacings; per the reference, lists do not. */

@@ -7,13 +7,12 @@ const { MarkupList } = scenegraph;
 const { BrsDevice, Int32, Float, RoArray } = core;
 
 /**
- * Regression: a MarkupList's reported bounding rect must be exactly the laid-out item extent
- * (rows of itemSize plus spacing), with NO focus-bitmap outset, and must not depend on the
- * list's focus state. renderFocus re-derives hasNinePatch from whichever bitmap was drawn last
- * (focus vs. footprint), so a list with a 9-patch focus bitmap but a plain-image footprint
- * (e.g. a transparent placeholder) reported a rect that grew by the margin outset while focused
- * and shrank when focus left — a LayoutGroup stacking siblings below the list (a label/button
- * section) visibly jumped as focus moved between the list and the section below it.
+ * Regression: a MarkupList's reported bounding rect must not depend on the list's focus state.
+ * renderFocus re-derives hasNinePatch from whichever bitmap was drawn last (focus vs. footprint), so a
+ * list with a 9-patch focus bitmap but a plain-image footprint reported a rect that grew while focused
+ * and shrank when focus left — a LayoutGroup stacking siblings below the list visibly jumped as focus
+ * moved. The outset is constant: 24/6 above and to the sides, 30 below at HD (DEVICE-MEASURED,
+ * `test/simulator/probes/grid-rect-probe`, cases `ml_*`).
  */
 describe("MarkupList measured extent is focus-independent", () => {
     beforeAll(() => {
@@ -33,13 +32,13 @@ describe("MarkupList measured extent is focus-independent", () => {
         return rect;
     }
 
-    test("the extent has no focus-bitmap outset regardless of hasNinePatch", () => {
+    test("the extent's outset does not depend on hasNinePatch", () => {
         // Mirrors a settings ratings menu: 6 rows of 560x80 with 8px between rows.
         const list = new MarkupList();
         list.setValue("numRows", new Int32(12));
         list.setValue("itemSpacing", vector([0, 8]));
         const itemSize = [560, 80];
-        const expected = { width: 560, height: 6 * 80 + 5 * 8 };
+        const expected = { width: 24 + 560 + 24, height: 6 + 6 * (80 + 8) + 30 };
 
         // Focused state: the 9-patch focus bitmap was drawn last (hasNinePatch = true).
         list.hasNinePatch = true;
@@ -49,7 +48,7 @@ describe("MarkupList measured extent is focus-independent", () => {
         list.hasNinePatch = false;
         const unfocusedRect = measure(list, 6, itemSize);
 
-        expect(focusedRect).toEqual({ x: 0, y: 0, ...expected });
+        expect(focusedRect).toEqual({ x: -24, y: -6, ...expected });
         expect(unfocusedRect).toEqual(focusedRect);
     });
 });

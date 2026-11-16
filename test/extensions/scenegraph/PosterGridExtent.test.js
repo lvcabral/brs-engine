@@ -85,6 +85,20 @@ describe("PosterGrid reports the extent a device reports", () => {
         expect(Math.round(rect.y)).toBe(-14);
     });
 
+    test.each([
+        ["HD", 14, 50],
+        ["FHD", 21, 75],
+    ])("%s: a 3-row grid holding one row of content keeps the bottom allowance", (resolution, top, bottom) => {
+        // DEVICE-MEASURED (grid-rect-probe case pg_3rows_1content): the strip gate reads the DECLARED
+        // numRows, so only `numRows == 1` drops the allowance.
+        atResolution(resolution, () => {
+            const rect = rectOf(
+                makeGrid(3, { numColumns: new Int32(3), numRows: new Int32(3), itemSpacing: vector([20, 20]) })
+            );
+            expect(Math.round(rect.height)).toBe(top + 100 + 20 + bottom);
+        });
+    });
+
     test("columnWidths is ignored — the cell width comes from basePosterSize", () => {
         // Device P2: identical to P1 despite columnWidths=[200].
         const grid = makeGrid(1, {

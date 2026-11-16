@@ -23,7 +23,7 @@ import { createNode, SGNodeFactory } from "../factory/NodeFactory";
 import { brsValueOf, jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { ContentNode } from "./ContentNode";
-import { positiveMod, UNIT_SCALE } from "../SGUtil";
+import { normalizedRect, positiveMod, UNIT_SCALE } from "../SGUtil";
 import { sgClock } from "../SGClock";
 import { easeOutCubic, TransitionTick, UITransition } from "../SGTransition";
 
@@ -1741,49 +1741,90 @@ export class ArrayGrid extends Group implements UITransition {
      *  - A missing sub part is a zero-size rect at the grid's translation origin: exactly `{0,0,0,0}`
      *    in parent/local space, and the origin's position in scene space (not the grid's own rect).
      * `ancestor` is the sub part in the grid's parent space.
+     *
+     * Grids whose `subpartsFromLayout()` is true compute the rect from their layout; the others read
+     * their item components' cached scene rects from the last frame.
      */
     getSubBoundingRect(type: SubRectSpace, itemNumber: string, interpreter?: Interpreter): Rect {
-        // A pending focus/scroll change leaves the cached item rects at their pre-scroll positions, so
+        // A pending focus/scroll change leaves the cached rects at their pre-scroll positions, so
         // refresh layout first (only when needed and never inside a render), the way getBoundingRect does.
         if (interpreter && !sgRoot.rendering && this.focusLayoutDirty) {
             this.refreshLayoutFromRoot(interpreter);
         }
-        const rect = this.resolveSubpart(itemNumber)?.rectToScene;
-        if (!rect) {
+        let own: Rect | undefined;
+        if (this.subpartsFromLayout()) {
+            own = this.layoutSubpartRect(itemNumber);
+        } else {
+            const scene = this.resolveSubpart(itemNumber)?.rectToScene;
+            if (scene && type === "toScene") {
+                return { ...scene };
+            }
+            own = scene ? this.sceneRectToOwn(scene) : undefined;
+        }
+        if (!own) {
             return this.missingSubpartRect(type, interpreter);
         }
-        // Sub part rects are the components' cached scene rects from the last frame: re-rendering the
-        // scene per query would be too slow and could catch a transient mid-layout size.
-        if (type === "toScene") {
-            return { ...rect };
+        switch (type) {
+            case "local":
+                return { x: 0, y: 0, width: own.width, height: own.height };
+            case "toParent":
+                return own;
+            case "ancestor":
+                return this.localRectToParent(own);
+            default:
+                return this.ownRectToScene(own);
         }
-        const ancestor = type === "ancestor";
-        const [kx, ky] = this.sceneUnitsTo(!ancestor);
-        const size = { width: rect.width * Math.abs(kx), height: rect.height * Math.abs(ky) };
-        if (type === "local") {
-            return { x: 0, y: 0, ...size };
-        }
-        // `rectLocal`/`rectToParent` and `rectToScene` carry the grid's own outset identically, so it
-        // cancels out of the offset below.
-        const base = ancestor ? this.rectToParent : this.rectLocal;
-        return {
-            x: base.x + (rect.x - this.rectToScene.x) * kx,
-            y: base.y + (rect.y - this.rectToScene.y) * ky,
-            ...size,
-        };
     }
 
     /** The zero-size rect at the grid's translation origin reported for a missing sub part. */
     private missingSubpartRect(type: SubRectSpace, interpreter?: Interpreter): Rect {
+        const origin = { x: 0, y: 0, width: 0, height: 0 };
         if (type === "local" || type === "toParent") {
-            return { x: 0, y: 0, width: 0, height: 0 };
+            return origin;
+        } else if (type === "ancestor") {
+            return this.localRectToParent(origin);
         }
         // The own rect refreshes layout, so the origin reflects pending field writes.
-        const own = super.getSubBoundingRect(type, "", interpreter);
+        super.getSubBoundingRect(type, "", interpreter);
+        return this.ownRectToScene(origin);
+    }
+
+    /** Whether this grid's sub-part rects come from `layoutSubpartRect` rather than its item components. */
+    protected subpartsFromLayout(): boolean {
+        return false;
+    }
+
+    /**
+     * The sub part's rect in this grid's own space (from its translation origin, unscaled), computed from
+     * its layout; undefined for a sub part it does not have. Used when `subpartsFromLayout()` is true.
+     */
+    protected layoutSubpartRect(_itemNumber: string): Rect | undefined {
+        return undefined;
+    }
+
+    /**
+     * A scene rect in this grid's own space. `rectLocal` and `rectToScene` carry the grid's own outset
+     * identically, so it cancels out of the offset.
+     */
+    protected sceneRectToOwn(scene: Rect): Rect {
+        const [kx, ky] = this.sceneUnitsTo(true);
+        return {
+            x: this.rectLocal.x + (scene.x - this.rectToScene.x) * kx,
+            y: this.rectLocal.y + (scene.y - this.rectToScene.y) * ky,
+            width: scene.width * Math.abs(kx),
+            height: scene.height * Math.abs(ky),
+        };
+    }
+
+    /** A rect in this grid's own space, in scene space. Rotation is ignored, as in `sceneUnitsTo`. */
+    private ownRectToScene(own: Rect): Rect {
+        const [scaleX, scaleY] = this.getValueJS("scale") as number[];
+        const sx = this.sceneMap.sx * scaleX;
+        const sy = this.sceneMap.sy * scaleY;
         // The translation origin sits `-rectLocal` local units from the rect's corner.
-        const [sx, sy] = this.getValueJS("scale") as number[];
-        const [mx, my] = type === "toScene" ? [this.sceneMap.sx, this.sceneMap.sy] : [1, 1];
-        return { x: own.x - this.rectLocal.x * sx * mx, y: own.y - this.rectLocal.y * sy * my, width: 0, height: 0 };
+        const originX = this.rectToScene.x - this.rectLocal.x * sx;
+        const originY = this.rectToScene.y - this.rectLocal.y * sy;
+        return normalizedRect(originX + own.x * sx, originY + own.y * sy, own.width * sx, own.height * sy);
     }
 
     /**
@@ -2548,14 +2589,30 @@ export class ArrayGrid extends Group implements UITransition {
     /**
      * Per-axis outset the reported bounding rect adds around the item extent when the focus
      * bitmap is a 9-patch. This affects ONLY the rects reported by boundingRect() and friends,
-     * never the drawn focus frame (see focusMargins). Node types whose device-reported rect is
-     * exactly the laid-out item extent override this to zero (MarkupGrid).
+     * never the drawn focus frame (see focusMargins).
      */
     protected rectMargins(): { x: number; y: number } {
         if (this.hasNinePatch) {
             return { x: this.marginX, y: this.marginY };
         }
         return { x: 0, y: 0 };
+    }
+
+    /**
+     * What a grid's reported rect adds below its last row on top of its top outset: 36 HD / 54 FHD
+     * (DEVICE-MEASURED on PosterGrid and MarkupGrid). See `isHorizontalStrip`.
+     */
+    protected gridBottomAllowance(): number {
+        return this.resolution === "FHD" ? 54 : 36;
+    }
+
+    /**
+     * Whether the grid is a horizontal strip, which has no bottom allowance: `numRows` 1 with more than
+     * one column. The DECLARED `numRows`: a 3-row grid holding one row of content keeps the allowance
+     * (DEVICE-MEASURED, `grid-rect-probe` cases `pg_3rows_1content` and `mg_3rows_1content`).
+     */
+    protected isHorizontalStrip(): boolean {
+        return this.numRows === 1 && this.numCols > 1;
     }
 
     /**
@@ -2596,9 +2653,8 @@ export class ArrayGrid extends Group implements UITransition {
      * @param layout.firstRow Absolute index of the first RENDERED row — a scrolled list starts its
      *   window at `topRow`, not 0, so the per-row overrides have to be indexed from there.
      * @param layout.width/height An extent the caller already accumulated while laying out, which
-     *   wins over the arithmetic below. RowList and PosterGrid need this: their rows grow by amounts
-     *   (a label/counter band, a caption zone) that cannot be re-derived here without duplicating the
-     *   measurement.
+     *   wins over `reportedExtent`. PosterGrid needs this: its rows grow by a caption zone that cannot
+     *   be re-derived there without duplicating the measurement.
      */
     protected updateRect(
         rect: Rect,
@@ -2606,39 +2662,46 @@ export class ArrayGrid extends Group implements UITransition {
         itemSize: number[],
         layout?: { firstRow?: number; width?: number; height?: number }
     ) {
+        const margin = this.rectMargins();
+        rect.x = rect.x - margin.x;
+        rect.y = rect.y - margin.y;
+        if (typeof layout?.width === "number" && typeof layout?.height === "number") {
+            rect.width = layout.width;
+            rect.height = layout.height;
+            return;
+        }
+        const extent = this.reportedExtent(numRows, itemSize, layout?.firstRow ?? 0);
+        rect.width = layout?.width ?? extent.width;
+        rect.height = layout?.height ?? extent.height;
+    }
+
+    /**
+     * The reported rect's size for `numRows` laid-out rows from `firstRow`, outsets included:
+     * `rectMargins` on both sides of every row and column.
+     */
+    protected reportedExtent(numRows: number, itemSize: number[], firstRow: number): { width: number; height: number } {
         const numCols = this.numCols || 1;
         const spacing = this.getValueJS("itemSpacing") as number[];
         const colSpacing = Array.isArray(spacing) ? spacing[0] ?? 0 : 0;
         const rowSpacing = Array.isArray(spacing) ? spacing[1] ?? 0 : 0;
         const margin = this.rectMargins();
-        rect.x = rect.x - margin.x;
-        rect.y = rect.y - margin.y;
-
-        if (typeof layout?.width === "number") {
-            rect.width = layout.width;
-        } else if (this.usesColumnWidths()) {
+        let width: number;
+        if (this.usesColumnWidths()) {
             const columnWidths = this.getValueJS("columnWidths");
             const columnSpacings = this.getValueJS("columnSpacings");
-            let width = 0;
+            width = 0;
             for (let c = 0; c < numCols; c++) {
                 width += this.resolveTrackValue(columnWidths, c, itemSize[0]) + margin.x * 2;
                 if (c < numCols - 1) {
                     width += this.resolveTrackValue(columnSpacings, c, colSpacing);
                 }
             }
-            rect.width = width;
         } else {
-            rect.width = numCols * (itemSize[0] + margin.x * 2) + Math.max(0, numCols - 1) * colSpacing;
-        }
-
-        if (typeof layout?.height === "number") {
-            rect.height = layout.height;
-            return;
+            width = numCols * (itemSize[0] + margin.x * 2) + Math.max(0, numCols - 1) * colSpacing;
         }
         const rowHeights = this.getValueJS("rowHeights");
         const rowSpacings = this.getValueJS("rowSpacings");
         const totalRows = Math.max(1, Math.ceil(this.content.length / numCols));
-        const firstRow = layout?.firstRow ?? 0;
         let height = 0;
         for (let r = 0; r < numRows; r++) {
             // A wrapping list renders a contiguous window that can run past the last row and resume
@@ -2651,7 +2714,7 @@ export class ArrayGrid extends Group implements UITransition {
                 height += this.resolveTrackValue(rowSpacings, absolute, rowSpacing);
             }
         }
-        rect.height = height;
+        return { width, height };
     }
 
     protected getIndex(offset: number = 0, currIndex?: number) {
