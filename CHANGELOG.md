@@ -46,7 +46,7 @@ This release makes the engine move, load and measure more like a Roku device. Ev
 * Documented the API's `deviceData` and its non-serializable fields by [@lvcabral](https://github.com/lvcabral) in [#1315](https://github.com/lvcabral/brs-engine/pull/1315)
 * Moved the `dev-doc` submodule to GitLab and updated it to the latest `v2.0` by [@lvcabral](https://github.com/lvcabral) in [#1297](https://github.com/lvcabral/brs-engine/pull/1297)
 * Gave the CLI Task fixture apps a longer time budget to stop CI flakes by [@lvcabral](https://github.com/lvcabral) in [#1307](https://github.com/lvcabral/brs-engine/pull/1307)
-* Updated dependencies with security fixes (`vite`, `vitest`, and overrides for `minimatch` and `zod`) by [@lvcabral](https://github.com/lvcabral)
+* Updated dependencies with security fixes (`vite`, `vitest`, and overrides for `minimatch` and `zod`) by [@lvcabral](https://github.com/lvcabral) in [#1326](https://github.com/lvcabral/brs-engine/pull/1326)
 * build(deps-dev): bump `fast-uri` from 3.1.7 to 3.1.9 by @dependabot in [#1280](https://github.com/lvcabral/brs-engine/pull/1280)
 * build(deps): bump `serialize-javascript` from 7.0.5 to 7.1.4 by @dependabot in [#1281](https://github.com/lvcabral/brs-engine/pull/1281)
 
