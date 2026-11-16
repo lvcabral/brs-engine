@@ -3,19 +3,14 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { MarkupGrid, MarkupList } = scenegraph;
+const { MarkupGrid, MarkupList, RowList, ContentNode } = scenegraph;
 const { BrsDevice, Int32, Float, RoArray } = core;
 
 /**
- * Regression: a grid's reported bounding rectangle must include the inter-item spacing.
- * The render loop lays each row/column out at `itemSize + itemSpacing` steps, so N rows span
- * `N*itemHeight + (N-1)*rowSpacing`. `updateRect` previously reported only `N*itemHeight`,
- * omitting the gaps — so an app that vertically centers a menu via
- * `(screenHeight - boundingRect().height) / 2` placed it too low by the total gap height.
- *
- * These tests drive `updateRect` directly with `hasNinePatch = false` to isolate the spacing
- * contribution from the (unchanged) 9-patch focus-margin term — matching a menu grid whose focus
- * highlight is a sibling Poster rather than the grid's built-in focus feedback.
+ * A grid's reported bounding rect: its laid-out extent, spacing after every row included, plus the
+ * outsets a device adds. Every expectation is a DEVICE-MEASURED HD case of
+ * `test/simulator/probes/grid-rect-probe` (`device-trace-hd.txt`), named after it. `updateRect` is
+ * driven directly; the outsets do not depend on the focus bitmap, so `hasNinePatch` is irrelevant.
  */
 describe("grid boundingRect includes inter-item spacing", () => {
     beforeAll(() => {
@@ -28,58 +23,61 @@ describe("grid boundingRect includes inter-item spacing", () => {
         return new RoArray(values.map((v) => new Float(v)));
     }
 
-    /** Calls the protected updateRect with a fresh rect and returns the computed size. */
+    /** Calls the protected updateRect with a fresh rect at the origin and returns it. */
     function measure(grid, numRows, itemSize) {
-        grid.hasNinePatch = false;
         const rect = { x: 0, y: 0, width: 0, height: 0 };
         grid.updateRect(rect, numRows, itemSize);
         return rect;
     }
 
-    test("MarkupGrid vertical extent adds (numRows - 1) * rowSpacing", () => {
-        // Mirrors a side-menu grid: 11 rows of 72px with 12px between rows.
-        // 11*72 + 10*12 = 912 (not the old 11*72 = 792).
+    function markupGrid(numRows, numColumns, spacing) {
         const grid = new MarkupGrid();
-        grid.setValue("numRows", new Int32(11));
-        grid.setValue("numColumns", new Int32(1));
-        grid.setValue("itemSpacing", vector([0, 12]));
+        grid.setValue("numRows", new Int32(numRows));
+        grid.setValue("numColumns", new Int32(numColumns));
+        grid.setValue("itemSpacing", vector(spacing));
+        grid.numCols = numColumns;
+        return grid;
+    }
 
-        const rect = measure(grid, 11, [438, 72]);
-        expect(rect.height).toBe(912);
-        expect(rect.width).toBe(438);
-        // The app-side vertical centering is now correct: (1080 - 912) / 2 = 84.
-        expect((1080 - rect.height) / 2).toBe(84);
+    test("MarkupGrid counts the spacing after every row and column (mg_2x2)", () => {
+        const rect = measure(markupGrid(2, 2, [10, 10]), 2, [200, 50]);
+        // 22 + 2 * (200 + 10) + 22 wide; 22 + 2 * (50 + 10) + 22 + 36 tall.
+        expect(rect).toEqual({ x: -22, y: -22, width: 464, height: 200 });
     });
 
-    test("MarkupGrid horizontal extent adds (numColumns - 1) * columnSpacing", () => {
-        const grid = new MarkupGrid();
-        grid.setValue("numRows", new Int32(1));
-        grid.setValue("numColumns", new Int32(3));
-        grid.setValue("itemSpacing", vector([20, 0]));
-        grid.numCols = 3;
-
-        const rect = measure(grid, 1, [100, 72]);
-        // 3*100 + 2*20 = 340.
-        expect(rect.width).toBe(340);
+    test("a single-row MarkupGrid strip has no bottom allowance (mg_base)", () => {
+        const rect = measure(markupGrid(1, 3, [20, 0]), 1, [100, 100]);
+        expect(rect).toEqual({ x: -22, y: -22, width: 404, height: 144 });
     });
 
-    test("no spacing (default itemSpacing) leaves the extent unchanged", () => {
-        const grid = new MarkupList();
-        grid.setValue("numRows", new Int32(5));
-
-        const rect = measure(grid, 5, [438, 72]);
-        // 5 rows, no gap: 5*72 = 360.
-        expect(rect.height).toBe(360);
+    test("a single-column MarkupGrid adds no column spacing and keeps the allowance (mg_1x1)", () => {
+        const rect = measure(markupGrid(1, 1, [20, 0]), 1, [100, 100]);
+        expect(rect).toEqual({ x: -22, y: -22, width: 144, height: 180 });
     });
 
-    test("a single row/column contributes no spacing", () => {
-        const grid = new MarkupGrid();
-        grid.setValue("numRows", new Int32(1));
-        grid.setValue("numColumns", new Int32(1));
-        grid.setValue("itemSpacing", vector([50, 50]));
+    test("the allowance follows the declared numRows, not the rows of content (mg_3rows_1content)", () => {
+        const rect = measure(markupGrid(3, 3, [20, 20]), 1, [100, 100]);
+        expect(rect).toEqual({ x: -22, y: -22, width: 404, height: 200 });
+    });
 
-        const rect = measure(grid, 1, [438, 72]);
-        expect(rect.height).toBe(72);
-        expect(rect.width).toBe(438);
+    test("MarkupList is outset once, 6 above and 30 below (ml_2rows, ml_base)", () => {
+        const list = new MarkupList();
+        list.setValue("itemSpacing", vector([0, 10]));
+        expect(measure(list, 2, [300, 60])).toEqual({ x: -24, y: -6, width: 348, height: 176 });
+        expect(measure(list, 3, [300, 60])).toEqual({ x: -24, y: -6, width: 348, height: 246 });
+    });
+
+    test("a RowList measures its numRows window whatever its scroll (rl_scrolled)", () => {
+        const list = new RowList();
+        list.setValue("itemSize", vector([600, 100]));
+        list.setValue("itemSpacing", vector([0, 20]));
+        list.setValue("numRows", new Int32(2));
+        for (let r = 0; r < 5; r++) {
+            list.content.push(new ContentNode());
+        }
+        const expected = { x: -22, y: -22, width: 644, height: 22 + 2 * (100 + 20) + 22 };
+        expect(measure(list, 2, [600, 100])).toEqual(expected);
+        list.focusIndex = 4;
+        expect(measure(list, 1, [600, 100])).toEqual(expected);
     });
 });

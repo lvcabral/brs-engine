@@ -1201,6 +1201,11 @@ export class Node extends RoSGNode implements BrsValue {
         return this.getBoundingRect(type === "ancestor" ? "toParent" : type, interpreter);
     }
 
+    /** `rect`, in this node's own coordinates, in its parent's. A node without a transform maps it as is. */
+    protected localRectToParent(rect: Rect): Rect {
+        return rect;
+    }
+
     /**
      * Registers a field observer callback or message port.
      * @param interpreter Active interpreter owning the observer.

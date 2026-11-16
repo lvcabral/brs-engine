@@ -62,12 +62,12 @@ describe("hidden grid bounding rect measurement", () => {
 
         const rect = grid.getBoundingRect("toParent", interpreter);
 
-        // A device reports a MarkupGrid's rect as exactly the laid-out item extent — no
-        // focus-bitmap outset (an app-sized background poster must align flush with the items).
-        expect(rect.width).toBe(438);
-        expect(rect.height).toBe(4 * 100);
-        expect(rect.x).toBe(33);
-        expect(rect.y).toBe(91);
+        // A hidden MarkupGrid is outset like a visible one: 22 on the left, right and top, 22 + 36 below
+        // (DEVICE-MEASURED, grid-rect-probe case mg_hidden, HD).
+        expect(rect.width).toBe(22 + 438 + 22);
+        expect(rect.height).toBe(22 + 4 * 100 + 22 + 36);
+        expect(rect.x).toBe(33 - 22);
+        expect(rect.y).toBe(91 - 22);
     });
 
     test("the measurement creates no item components", () => {
@@ -84,7 +84,8 @@ describe("hidden grid bounding rect measurement", () => {
 
         const rect = grid.getBoundingRect("toParent", interpreter);
 
-        expect(rect.height).toBe(8 * 100 + 7 * 12);
+        // The spacing after the last row counts (DEVICE-MEASURED, grid-rect-probe case mg_scrolled).
+        expect(rect.height).toBe(8 * (100 + 12) + 22 + 22 + 36);
     });
 
     test("a hidden grid with no content still reports a zero rect", () => {

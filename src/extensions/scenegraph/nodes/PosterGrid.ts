@@ -151,26 +151,18 @@ export class PosterGrid extends ArrayGrid {
     }
 
     /**
-     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, not the 14/21 added above it.
-     * A PosterGrid's vertical outset is asymmetric, which is why this is separate from
-     * {@link rectMargins} (one value per axis cannot express "14 above, 50 below").
+     * Outset the reported rect adds BELOW the last row — 50 HD / 75 FHD, not the 14/21 added above it:
+     * the top outset plus `gridBottomAllowance`, charged once per grid rather than per row.
      *
-     * DEVICE-MEASURED, including the gate: the allowance is charged once per grid rather than per row,
-     * and is absent exactly when the grid is a horizontal strip — `rows == 1 && numColumns > 1`. That
+     * DEVICE-MEASURED, including the gate: the allowance is absent exactly when the grid is a horizontal
+     * strip (`isHorizontalStrip`: `numRows == 1 && numColumns > 1`, the declared `numRows`). That
      * CONJUNCTION is load-bearing; every single-variable rule (column count, content shape, width
      * threshold, drawn item count) was measured and rejected, so do not simplify the condition. See
      * the `PosterGrid` extent section in `.claude/docs/scenegraph-invariants.md`.
-     *
-     * `rows` is the count actually DISPLAYED, so the hidden and visible passes agree and because the
-     * outset is a property of the laid-out extent. No probe case separates that from the declared
-     * `numRows` (every case set them equal), so a grid with `numRows = 12`, several columns and one
-     * row's worth of content is a GUESS.
      */
-    protected rectMarginBottom(displayRows: number): number {
-        if (displayRows === 1 && this.numCols > 1) {
-            return this.rectMargins().y;
-        }
-        return this.resolution === "FHD" ? 75 : 50;
+    protected rectMarginBottom(): number {
+        const top = this.rectMargins().y;
+        return this.isHorizontalStrip() ? top : top + this.gridBottomAllowance();
     }
 
     /**
@@ -238,7 +230,7 @@ export class PosterGrid extends ArrayGrid {
             width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             // Both terms take the rows actually covered, not the rows requested — the same count the
             // visible pass reports, which is what the bottom allowance is gated on.
-            height: renderedRows === 0 ? 0 : extent + margin.y + this.rectMarginBottom(renderedRows),
+            height: renderedRows === 0 ? 0 : extent + margin.y + this.rectMarginBottom(),
         });
         this.updateBoundingRects(rect, origin, angle + this.getRotation());
     }
@@ -568,7 +560,7 @@ export class PosterGrid extends ArrayGrid {
         // count `itemRect.y` accumulated over. The requested count would disagree with the extent
         // whenever the scene edge cut the loop short.
         const margin = this.rectMargins();
-        const height = renderedRows === 0 ? 0 : windowHeight + margin.y + this.rectMarginBottom(renderedRows);
+        const height = renderedRows === 0 ? 0 : windowHeight + margin.y + this.rectMarginBottom();
         this.updateRect(rect, displayRows, [Math.max(...columnWidths), maxCellHeight || baseSize[1]], {
             width: this.computeReportedWidth(columnWidths, columnSpacings, displayRows),
             height,

@@ -358,20 +358,38 @@ export function normalizeBlendColor(rgba: unknown): number | undefined {
     return rgba >>> 0 === 0xffffffff ? undefined : rgba;
 }
 
+/** A row-based grid's ifSGNodeBoundingRect sub part: the focused item, a row, or one cell. */
+export type RowSubpart = { kind: "focus" } | { kind: "row"; row: number } | { kind: "cell"; row: number; col: number };
+
 /**
- * Maps an ifSGNodeBoundingRect sub-part id to a rendered item component in a row-based grid's
- * `rowItemComps[row][col]` store. Shared by RowList and ZoomRowList, which both hold a 2-D grid of
- * components (unlike the flat ArrayGrid `itemComps[]` the base resolver assumes), so
- * `subBoundingRect("item<row>_<col>")` can resolve the item's own rect.
- *
- *   - `focusItem` / `focusIndicator` → the focused row's focused column.
- *   - `item<row>_<col>` → that exact cell (split on `_` before parsing — a plain `parseInt` drops the
- *     `_col`).
- *   - `item<row>` (no underscore) → the row's currently focused column, matching Roku's single-index
- *     addressing of a row-list row.
- *
- * Generic over the element type to avoid a Group/Node import here (SGUtil is dependency-free). Returns
- * undefined for an out-of-range or not-yet-rendered cell, which the caller reports as a missing sub part.
+ * Parses a row-based grid's (RowList, ZoomRowList) sub-part id: `focusItem` / `focusIndicator`, `item<row>`
+ * (the row) and `item<row>_<col>` (one cell, split on `_` before parsing). Undefined for any other id.
+ */
+export function parseRowSubpart(itemNumber: string): RowSubpart | undefined {
+    const name = itemNumber.trim().toLowerCase();
+    if (name === "focusitem" || name === "focusindicator") {
+        return { kind: "focus" };
+    }
+    if (!name.startsWith("item")) {
+        return undefined;
+    }
+    const parts = name.slice(4).split("_");
+    const row = Number.parseInt(parts[0], 10);
+    if (!Number.isInteger(row)) {
+        return undefined;
+    }
+    if (parts.length === 1) {
+        return { kind: "row", row };
+    }
+    const col = Number.parseInt(parts[1], 10);
+    return Number.isInteger(col) ? { kind: "cell", row, col } : undefined;
+}
+
+/**
+ * Maps a row-based grid's cell sub part (`focusItem` / `focusIndicator` or `item<row>_<col>`) to its
+ * rendered item component in `rowItemComps[row][col]`. Generic over the element type to avoid a
+ * Group/Node import here (SGUtil is dependency-free). Undefined for a row, an out-of-range or a
+ * not-yet-rendered cell.
  * @param itemNumber The sub-part identifier.
  * @param rowItemComps The grid's per-row component arrays.
  * @param focusIndex The focused row index.
@@ -383,28 +401,11 @@ export function resolveRowItemSubpart<T>(
     focusIndex: number,
     rowFocus: number[]
 ): T | undefined {
-    const name = itemNumber.trim().toLowerCase();
-    if (name === "focusitem" || name === "focusindicator") {
+    const part = parseRowSubpart(itemNumber);
+    if (part?.kind === "focus") {
         return rowItemComps[focusIndex]?.[rowFocus[focusIndex] ?? 0];
     }
-    if (!name.startsWith("item")) {
-        return undefined;
-    }
-    const parts = name.slice(4).split("_");
-    const row = Number.parseInt(parts[0], 10);
-    if (!Number.isInteger(row)) {
-        return undefined;
-    }
-    let col: number;
-    if (parts.length > 1) {
-        col = Number.parseInt(parts[1], 10);
-        if (!Number.isInteger(col)) {
-            return undefined;
-        }
-    } else {
-        col = rowFocus[row] ?? 0;
-    }
-    return rowItemComps[row]?.[col];
+    return part?.kind === "cell" ? rowItemComps[part.row]?.[part.col] : undefined;
 }
 
 /**

@@ -1264,11 +1264,9 @@ Seven rules, each of which the engine had wrong:
    zone-present/allowance-absent and zone-absent/allowance-present both give 196. Run both resolutions —
    they cross-check each other.
 
-   The one thing no case separates: whether `rows` means the declared `numRows` or the rows actually
-   displayed. Every case set them equal. The implementation uses the **displayed** count, so that the
-   hidden and visible passes agree and because the outset is a property of the laid-out extent — but a
-   grid with `numRows = 12`, several columns and one row of content is a **guess**, flagged as such in
-   `rectMarginBottom`'s docstring.
+   `rows` is the **declared** `numRows`, not the rows displayed: a 3-row, 3-column grid holding one row
+   of content keeps the allowance (`grid-rect-probe` case `pg_3rows_1content`, OS 16.0). MarkupGrid has
+   the same allowance and gate (`ArrayGrid.gridBottomAllowance`/`isHorizontalStrip`).
 7. **Width counts the columns actually drawn; the allowance gate counts the columns declared.** A grid
    with `numColumns = 3` holding only 2 items reports a rect **two** cells wide (HD 228) — yet the
    allowance is still absent, which only a gate reading the declared `numColumns` produces. Two different
@@ -1462,9 +1460,21 @@ Three outsets meet on `subBoundingRect("item<r>_<c>")` and only two of them exis
 
 | outset | applied by | shows up in |
 | --- | --- | --- |
-| `rectMargins()` → `marginX`/`marginY` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
+| `rectMargins()` + `reportedExtent()` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
 | `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.focusFrameRect` | the **drawn** focus frame — paint only (a device's `focusIndicator` reports a frame, see below) |
 | *(none)* | — | an **item sub-rect** |
+
+**The own rects, DEVICE-MEASURED** (OS 16.0, `test/simulator/probes/grid-rect-probe`, HD and FHD). The
+outsets don't depend on the focus bitmap, `drawFocusFeedback`, focus or visibility, and they count the
+spacing after the last row. `reportedExtent` holds each rule, so the visible and hidden passes can't
+drift:
+
+| node | sides / top | bottom | extent |
+| --- | --- | --- | --- |
+| MarkupGrid | 22 (both resolutions) | 22, plus `gridBottomAllowance` (36 HD / 54 FHD) unless `isHorizontalStrip` | columns plus the spacing after each (none for one column), rows plus spacing |
+| MarkupList | 24 / 6 HD, 36 / 9 FHD | 5 × top | rows plus spacing, outset once per list |
+| RowList | 22 (both resolutions) | 22 | `itemSize.x`, and the first `min(numRows, rows)` rows plus spacing, whatever the scroll |
+| PosterGrid | see the `PosterGrid` extent section | | |
 
 **Override `focusFrameRect`, never `renderFocus`.** `renderFocus` is a template like
 `renderNode`/`renderNodeContent`: it owns which uri and blend field the focus state selects, the validity
@@ -1487,8 +1497,8 @@ against the same object, so the scaled size the draw computes is what the item i
 override returning a fresh object severs that link — which is what every override wants, but do it
 knowingly.
 
-The calibrated invariant is **an item sub-rect is the item component's own rect, the bare poster,
-focused cell included**. Neither the grid's outset nor the focus frame reaches it. Each of the three
+The calibrated invariant is **an item sub-rect is the bare item slot, focused cell included**. Neither the
+grid's outset nor the focus frame reaches it. Each of the three
 methods reports that rect in its own space. DEVICE-MEASURED on OS 16.0 over PosterGrid, MarkupGrid and
 RowList, under an offset parent, with the grid's own scale and with two rows
 (`test/simulator/probes/subrect-space-probe`, `device-trace-os16.0.txt`):
@@ -1503,8 +1513,8 @@ RowList, under an offset parent, with the grid's own scale and with two rows
 parent node's coordinate system"). Read "parent" as the item's parent, the grid. Under the grid's own
 `scale="[0.5,0.5]"` it still reports `{120,0,100,100}` (scene `{…,50,50}`). `list-focus-motion-probe`
 corroborates `local` independently: every `localSubBoundingRect("itemN").y` is 0 on the device.
-`ancestorSubBoundingRect` walks up from the grid's **parent** space, so `getSubBoundingRect` keeps an
-internal `"ancestor"` type for it. It has no device measurement yet.
+`ancestorSubBoundingRect` walks up from the grid's **parent** space (the sub part through the grid's own
+transform), so `getSubBoundingRect` keeps an internal `"ancestor"` type for it. See the ancestor rule below.
 
 **A sub part the grid does not have** (`"bogus"`, `item9` past the content, or `item2` on a 2-row
 RowList) is a **zero-size rect at the grid's translation origin**: `{0,0,0,0}` in parent/local, and the
@@ -1513,30 +1523,50 @@ node (a Rectangle in the same probe) does return its own rect, as the spec says.
 `Node.getSubBoundingRect` is only that own-rect fallback, and every sub-part rule lives in
 `ArrayGrid.getSubBoundingRect`. A missing part returns a literal `{0,0,0,0}` for parent/local;
 converting the origin through scene space and back leaves a `1e-14` residue under a fractional scale,
-which breaks `r.x = 0` in an app. For scene/ancestor it reads the own rect first (which refreshes
-layout), then steps back to the origin by `rectLocal × scale`.
+which breaks `r.x = 0` in an app. For scene it reads the own rect first (which refreshes layout), then
+steps back to the origin by `rectLocal × scale`. For ancestor it is the grid's translation.
 
 Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), by
 `RowListItemSubRect.test.js` over {HD,FHD} × {`RowList`,`ZoomRowList`} × translations (which asserts the
 *composition* rather than either mechanism), and by the CLI fixture `rowlist-subrect-app` (which derives
 its own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
 
+**Row lists compute their sub parts from layout** (`subpartsFromLayout`, DEVICE-MEASURED in
+`test/simulator/probes/grid-rect-probe`, HD and FHD). A device reports every cell, including rows scrolled
+off or past `numRows`, at its laid-out position. A motion in flight doesn't move it
+(`list-focus-motion-probe`). So `RowList.layoutSubpartRect` derives each rect from the focus state, with
+no item component involved:
+- `item<r>_<c>` is the cell's `rowItemSize` slot, not the item component's drawn box. A column past the
+  row's end is a zero-size rect at the row's left edge.
+- `item<r>` is **row r**: `{focusX, itemsY, itemSize.x, rowHeight}`. `focusX` is the focused item's x,
+  the same in every row. ZoomRowList reports `{0, rowTop, rowWidth, rowHeight}` and keeps its cells
+  component-based, so its off-window rows are still missing.
+- Each row keeps its own horizontal scroll. Fit and floating-focus scrolling are measured against the
+  **list's** width (`itemSize.x`), not the screen's (`RowList.listWidth`). fixedFocusWrap reports
+  linear positions, like fixedFocus.
+
+Flat grids (MarkupGrid, MarkupList, PosterGrid) still read their item components. That diverges from the
+same probe in three ways: a device reports the slot size (`itemSize`), reports a hidden grid's items, and
+reports items past the window at their layout positions (`mg_scrolled`).
+
 **Still divergent from the probe, not fixed:**
 
 - `focusIndicator` on a device is the focus frame: the focused item outset by 21 (PosterGrid) or 22
   (MarkupGrid/RowList) at FHD, reported even while the grid is unfocused. `local` is the outset itself
-  (`{-21,-21,142,142}`). The engine resolves it to the focused item. Those outsets match neither
-  `focus_grid.9.png`'s declared 19px margins nor PosterGrid's drawn frame, so this needs HD data too.
-- On a RowList, `itemX` is **row X** (`{focusX, rowY, itemSize.x, rowHeight}`, where `x` follows the
-  focused column), not that row's focused item.
-- RowList rows that are scrolled off or beyond `numRows` keep a stale rect, or none, in the engine. The
-  device reports them at their laid-out position, e.g. row 0 at y=-120 after focusing row 1.
+  (`{-21,-21,142,142}`). The engine resolves it to the focused item. Those outsets equal each grid's own
+  `rectMargins` at FHD, but there is no HD data yet.
 
-**The grid's own outset does not leak into an item sub-rect only because it cancels.**
-`ArrayGrid.getSubBoundingRect` re-expresses the item rect as `base.y + (subScene.y - this.rectToScene.y)`,
-where `base` is `rectLocal` (or `rectToParent` for the internal `"ancestor"` type). That subtraction cancels
-the outset **only if `base` and `rectToScene` carry it identically**. Any future per-space adjustment must
-therefore be applied to all three spaces, or it reappears as a residue in every sub-rect.
+**`ancestorBoundingRect(A)` / `ancestorSubBoundingRect(id, A)`** are the rect in A's own coordinates.
+Each node in between applies its translation, scale and rotation around `scaleRotateCenter`
+(`localRectToParent`, `RoSGNode.rectInAncestor`), and A's own transform is not applied. A node that isn't
+an ancestor (or is the node itself) gets `boundingRect()` / `subBoundingRect(id)` (DEVICE-MEASURED,
+`grid-rect-probe` case `a_chain`). The walk reads fields, so it refreshes layout once, not once per hop.
+
+**On component-based grids the grid's own outset doesn't leak into an item sub-rect only because it
+cancels.** `ArrayGrid.sceneRectToOwn` re-expresses the item rect as `rectLocal.y + (subScene.y -
+this.rectToScene.y)`. That cancels the outset **only if `rectLocal` and `rectToScene` carry it
+identically**. `ownRectToScene` relies on the same identity in reverse. Any future per-space adjustment
+must therefore be applied to all three spaces, or it reappears as a residue in every sub-rect.
 
 ### Worked example: two compensating errors that read as correct
 
@@ -1560,25 +1590,19 @@ a device either.
 Two facts settled which side was wrong: `sceneSubBoundingRect` was *already* `poster − top` before the
 producer fix (the three spaces silently disagreed by `marginY`, and the fix only made `toParent`/`local`
 agree with the space that already leaked), and `PosterGridItem`'s sub-rect independently moved onto its
-poster. The consumer-side subtraction was deleted; `RowList` now inherits `ArrayGrid.getSubBoundingRect`
-verbatim, like `MarkupGrid`, `MarkupList`, `LabelList` and `ZoomRowList`. Its `resolveSubpart` override
-stays — mapping `item<row>_<col>` into the 2-D `rowItemComps[row][col]` is what makes the API work at all
-(the flat `itemComps[]` stays empty on row lists) — and carries a negative comment recording that the
-outset must not come back.
+poster. The consumer-side subtraction was deleted. RowList's sub parts are now computed from its layout
+(above), which has no outset term at all.
 
 Do not "fix" a misplaced focused-item overlay by adjusting this rect: the painted frame legitimately sits
 outside the reported rect, and that asymmetry is what makes the wrong fix look right.
 
-### Known fallout from the `updateBoundingRects` fix, still awaiting device measurements
+### Known fallout from the `updateBoundingRects` fix
 
-Each needs its own probe and PR; none is fixed:
-
-- **`LayoutGroup` displaces grid children.** `chooseActiveRect` (`LayoutGroup.ts:521-522`) prefers
-  `child.rectToParent` and `measureChild` derives `primaryStart`/`crossStart` from it, so a child now
-  measured with its outset gets *positioned* by it. Measured: a `LabelList` in a vertical LayoutGroup moved
-  from `translation [0,50]` to `[24,54]` — exactly `(marginX, marginY)`, and **stable**, so
-  `LayoutConvergence.test.js` does not catch it. A LayoutGroup positions by *paint* geometry, so the fix is
-  a paint-rect hook subtracted in `measureChild`, not a revert.
+- **A `LayoutGroup` positions a grid by its outset rect, as a device does.** `chooseActiveRect` prefers
+  `child.rectToParent`, so the outset rect lands in the layout slot. DEVICE-MEASURED (`grid-rect-probe`
+  cases `lg_*`): a MarkupGrid or RowList after a 40px Rectangle in a vertical LayoutGroup with spacing 10
+  gets translation `[22,72]`, a PosterGrid `[21,71]` at FHD, and the next sibling follows the outset
+  rect. Don't add a paint-rect hook.
 - **`renderTracking` flips on the ancestor.** `updateParentRects` (`Group.ts:674-696`) unions the moved
   `rectToParent` into the parent: a plain `Group` wrapping a `LabelList` went `{0,0,348,216}`/`"full"` →
   `{-24,-4,348,216}`/`"partial"`. Apps gating viewable-impression work on `renderTracking == "full"`

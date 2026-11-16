@@ -9,6 +9,7 @@ const {
     convertHexColor,
     normalizeBlendColor,
     resolveRowItemSubpart,
+    parseRowSubpart,
 } = scenegraph;
 const Long = require("long");
 
@@ -599,9 +600,10 @@ describe("SGUtil", () => {
             expect(resolveRowItemSubpart("item0_0", grid, focusIndex, rowFocus)).toBe("0_0");
         });
 
-        test("item<row> with no underscore resolves the row's focused column", () => {
-            expect(resolveRowItemSubpart("item0", grid, focusIndex, rowFocus)).toBe("0_1");
-            expect(resolveRowItemSubpart("item1", grid, focusIndex, rowFocus)).toBe("1_2");
+        test("item<row> with no underscore is the row, not one of its cells", () => {
+            // A device reports `item<row>` as the whole row (DEVICE-MEASURED, grid-rect-probe).
+            expect(resolveRowItemSubpart("item0", grid, focusIndex, rowFocus)).toBeUndefined();
+            expect(parseRowSubpart("item1")).toEqual({ kind: "row", row: 1 });
         });
 
         test("focusItem/focusIndicator resolve the focused row's focused column", () => {
@@ -621,8 +623,15 @@ describe("SGUtil", () => {
             expect(resolveRowItemSubpart("item1_X", grid, focusIndex, rowFocus)).toBeUndefined();
         });
 
-        test("falls back to column 0 when the row has no recorded focus", () => {
-            expect(resolveRowItemSubpart("item0", grid, focusIndex, [])).toBe("0_0");
+        test("falls back to column 0 when the focused row has no recorded focus", () => {
+            expect(resolveRowItemSubpart("focusItem", grid, 0, [])).toBe("0_0");
+        });
+
+        test("parseRowSubpart splits cells, rows and the focused item", () => {
+            expect(parseRowSubpart(" ITEM4_11 ")).toEqual({ kind: "cell", row: 4, col: 11 });
+            expect(parseRowSubpart("focusIndicator")).toEqual({ kind: "focus" });
+            expect(parseRowSubpart("item1_X")).toBeUndefined();
+            expect(parseRowSubpart("bogus")).toBeUndefined();
         });
     });
 

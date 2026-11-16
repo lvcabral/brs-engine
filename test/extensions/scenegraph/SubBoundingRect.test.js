@@ -6,6 +6,10 @@ const core = require("../../../packages/node/bin/brs.node.js");
 const { Node, Group, MarkupGrid, RowList, ZoomRowList, ContentNode, sgRoot } = scenegraph;
 const { BrsDevice, Interpreter, BrsString, Float, RoArray } = core;
 
+function vector(values) {
+    return new RoArray(values.map((v) => (Array.isArray(v) ? vector(v) : new Float(v))));
+}
+
 describe("ifSGNodeBoundingRect sub-part methods", () => {
     beforeAll(() => {
         // MarkupGrid's font-typed defaults need the common: fonts; mount the common volume once.
@@ -44,6 +48,7 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         const grid = new MarkupGrid();
         // Translation [10,20] under a parent at scene [90,180], with the grid's own rect outset by
         // [10,12]: the outset must cancel out of every sub part rect.
+        grid.setValue("translation", vector([10, 20]));
         grid.rectToParent = { x: 0, y: 8, width: 458, height: 824 };
         grid.rectLocal = { x: -10, y: -12, width: 458, height: 824 };
         grid.rectToScene = { x: 90, y: 188, width: 458, height: 824 };
@@ -73,7 +78,7 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
             width: 438,
             height: 72,
         });
-        // ancestorSubBoundingRect walks up from the grid's parent space.
+        // ancestorSubBoundingRect walks up from the grid's parent space: through its translation.
         expect(grid.getSubBoundingRect("ancestor", "item1")).toEqual({ x: 10, y: 104, width: 438, height: 72 });
         // An item with no component (never rendered, or out of range) is a zero rect at the grid's origin.
         for (const id of ["item7", "bogus"]) {
@@ -87,6 +92,7 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
     test("a missing sub part is exactly zero in parent/local space under a fractional scale", () => {
         const grid = new MarkupGrid();
         grid.setValue("scale", new RoArray([new Float(0.6), new Float(0.6)]));
+        grid.setValue("translation", vector([100, 300]));
         grid.sceneMap = { sx: 0.6, sy: 0.6, bx: 0, by: 0 };
         grid.rectLocal = { x: -33, y: -6, width: 666, height: 112 };
         grid.rectToParent = { x: 80.2, y: 296.4, width: 399.6, height: 67.2 };
@@ -95,13 +101,12 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         for (const type of ["toParent", "local"]) {
             expect(grid.getSubBoundingRect(type, "bogus")).toEqual({ x: 0, y: 0, width: 0, height: 0 });
         }
-        // The origin: the rect's corner moved back by the outset, in scene (x0.36) and parent (x0.6) units.
+        // The origin: the rect's corner moved back by the outset, in scene (x0.36) units, and the grid's
+        // translation in its parent's.
         const scene = grid.getSubBoundingRect("toScene", "bogus");
         expect(scene.x).toBeCloseTo(108.12 + 33 * 0.36, 5);
         expect(scene.y).toBeCloseTo(177.84 + 6 * 0.36, 5);
-        const ancestor = grid.getSubBoundingRect("ancestor", "bogus");
-        expect(ancestor.x).toBeCloseTo(80.2 + 33 * 0.6, 5);
-        expect(ancestor.y).toBeCloseTo(296.4 + 6 * 0.6, 5);
+        expect(grid.getSubBoundingRect("ancestor", "bogus")).toEqual({ x: 100, y: 300, width: 0, height: 0 });
     });
 
     test("a missing sub part refreshes layout before reading the grid's origin", () => {
@@ -130,6 +135,7 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
     test("re-expresses an itemX scene rect in unscaled units under ancestor and own scale", () => {
         const grid = new MarkupGrid();
         grid.setValue("scale", new RoArray([new Float(0.5), new Float(0.5)]));
+        grid.setValue("translation", vector([10, 20]));
         // Ancestors scale by 0.5 and the grid by another 0.5: one parent unit is 0.5 scene units,
         // one local unit 0.25.
         grid.sceneMap = { sx: 0.5, sy: 0.5, bx: 50, by: 100 };
@@ -148,14 +154,84 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         expect(grid.getSubBoundingRect("toScene", "item1")).toEqual(item1.rectToScene);
     });
 
-    // RowList (and ZoomRowList) hold a 2-D grid of item components in rowItemComps[row][col], not the
-    // flat itemComps[] array, so they need their own resolveSubpart. Apps place a focused-item overlay
-    // from subBoundingRect("item<row>_<col>"); before the override every query fell back to the
-    // whole-list rect (verified against a real device, which returns the focused item's rect). The
-    // resolved path also must NOT force a re-render — it reads the item's cached last-frame rect.
-    // Shared fixture: two rows of three poster-sized cells, row 1 / col 2 focused.
-    const buildRowGrid = (list) => {
-        list.rectToParent = { x: 10, y: 20, width: 1000, height: 400 };
+    // A RowList's sub parts come from its layout (DEVICE-MEASURED, OS 16.0, `grid-rect-probe` cases
+    // `rl_*` and `x_*`): a cell is its `rowItemSize` slot at its laid-out position, `item<row>` is the
+    // whole row at the focused item's x, and rows outside the window are reported too.
+    // Two rows of three 200x120 cells 20 apart in 1000x140 rows 20 apart; row 1 / col 2 focused, so
+    // fixedFocus puts row 1 at the top and row 0 above it.
+    const buildRowList = () => {
+        const list = new RowList();
+        list.setValue("itemSize", vector([1000, 140]));
+        list.setValue("itemSpacing", vector([0, 20]));
+        list.setValue("rowItemSize", vector([[200, 120]]));
+        list.setValue("rowItemSpacing", vector([[20, 0]]));
+        for (let r = 0; r < 2; r++) {
+            const row = new ContentNode();
+            for (let c = 0; c < 3; c++) {
+                row.appendChildToParent(new ContentNode());
+            }
+            list.content.push(row);
+        }
+        list.focusIndex = 1;
+        list.rowFocus[0] = 1;
+        list.rowFocus[1] = 2;
+        // At translation [100,200], outset by 22.
+        list.rectLocal = { x: -22, y: -22, width: 1044, height: 344 };
+        list.rectToScene = { x: 78, y: 178, width: 1044, height: 344 };
+        return list;
+    };
+
+    test("a RowList reports cells and rows from its layout, including rows above the window", () => {
+        const list = buildRowList();
+
+        expect(list.getSubBoundingRect("toParent", "item1_2")).toEqual({ x: 440, y: 0, width: 200, height: 120 });
+        expect(list.getSubBoundingRect("toParent", "item0_0")).toEqual({ x: 0, y: -160, width: 200, height: 120 });
+        // A row: the focused item's x in every row, the list's width and the row's height.
+        expect(list.getSubBoundingRect("toParent", "item0")).toEqual({ x: 440, y: -160, width: 1000, height: 140 });
+        expect(list.getSubBoundingRect("local", "item1")).toEqual({ x: 0, y: 0, width: 1000, height: 140 });
+        // A column past the row's end is a zero rect at the row's left edge; a row past the content is missing.
+        expect(list.getSubBoundingRect("toParent", "item0_7")).toEqual({ x: 0, y: -160, width: 0, height: 0 });
+        expect(list.getSubBoundingRect("toParent", "item9_9")).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+        expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual({ x: 540, y: 200, width: 200, height: 120 });
+        expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
+    });
+
+    // The focused cell reports its bare slot, like any other cell: neither the drawn focus frame nor the
+    // list's own outset reaches an item sub-rect.
+    test("RowList reports the focused item's bare slot, not the focus-feedback footprint", () => {
+        const list = buildRowList();
+        const slot = { x: 440, y: 0, width: 200, height: 120 };
+
+        for (const id of ["item1_2", "focusItem", "focusIndicator"]) {
+            expect(list.getSubBoundingRect("toParent", id)).toEqual(slot);
+        }
+        list.setValue("drawFocusFeedback", core.BrsBoolean.False);
+        expect(list.getSubBoundingRect("toParent", "item1_2")).toEqual(slot);
+        list.setValue("focusBitmapUri", new core.BrsString(""));
+        list.setValue("focusFootprintBitmapUri", new core.BrsString(""));
+        expect(list.getSubBoundingRect("toParent", "item1_2")).toEqual(slot);
+    });
+
+    test("a RowList's floating focus scrolls a row longer than the list to keep the focus inside it", () => {
+        // DEVICE-MEASURED (grid-rect-probe case x_float): ten 100px items 20 apart in a 600px list; a jump
+        // to column 5 scrolls the row by one item, so the focus sits at x 480.
+        const list = new RowList();
+        list.setValue("itemSize", vector([600, 100]));
+        list.setValue("rowItemSize", vector([[100, 100]]));
+        list.setValue("rowItemSpacing", vector([[20, 0]]));
+        const row = new ContentNode();
+        for (let c = 0; c < 10; c++) {
+            row.appendChildToParent(new ContentNode());
+        }
+        list.content.push(row);
+        list.setValue("jumpToRowItem", vector([0, 5]));
+
+        expect(list.getSubBoundingRect("toParent", "focusItem")).toEqual({ x: 480, y: 0, width: 100, height: 100 });
+        expect(list.getSubBoundingRect("toParent", "item0_0")).toEqual({ x: -120, y: 0, width: 100, height: 100 });
+    });
+
+    test("a ZoomRowList resolves cells from cached rects and rows from the last frame", () => {
+        const list = new ZoomRowList();
         list.rectLocal = { x: 0, y: 0, width: 1000, height: 400 };
         list.rectToScene = { x: 100, y: 200, width: 1000, height: 400 };
         const cell = (x, y) => {
@@ -167,53 +243,16 @@ describe("ifSGNodeBoundingRect sub-part methods", () => {
         list.rowItemComps[1] = [cell(100, 340), cell(320, 340), cell(540, 340)];
         list.content.push(new ContentNode(), new ContentNode());
         list.focusIndex = 1;
-        list.rowFocus[0] = 1;
         list.rowFocus[1] = 2;
-    };
+        list.renderedRowRects.set(0, { x: 0, y: 0, width: 600, height: 120 });
 
-    for (const { label, make } of [
-        { label: "RowList", make: () => new RowList() },
-        { label: "ZoomRowList", make: () => new ZoomRowList() },
-    ]) {
-        test(`resolves item<row>_<col>/item<row>/focusItem on a ${label} from cached rects`, () => {
-            const list = make();
-            buildRowGrid(list);
-
-            // A NON-focused cell resolves to its exact poster rect (the base parseInt would drop the _col).
-            expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
-            // item<row> (no underscore) resolves to that row's focused column (non-focused row 0 → col 1).
-            expect(list.getSubBoundingRect("toScene", "item0")).toEqual(list.rowItemComps[0][1].rectToScene);
-            // An unrendered cell is a zero rect at the list's origin.
-            expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
-        });
-    }
-
-    // A device reports the FOCUSED cell's sub-rect as the bare poster — the same rect it reports for a
-    // non-focused cell. The focus 9-patch frame is drawn outset around the poster, and the list's OWN
-    // boundingRect is outset by rectMargins, but neither reaches an item sub-rect. An outset used to be
-    // subtracted here (the 9-patch's top margin, to make an overlay land on the poster); it was double
-    // counting, silently cancelled by a rectToParent bug that dropped the rectMargins outset from the
-    // base rect. This pins the un-outset result so the subtraction is not re-introduced.
-    test("RowList reports the focused item's bare poster rect, not the focus-feedback footprint", () => {
-        const list = new RowList();
-        buildRowGrid(list);
-        const focusedPoster = list.rowItemComps[1][2].rectToScene;
-
-        for (const id of ["item1_2", "item1", "focusItem", "focusIndicator"]) {
-            expect(list.getSubBoundingRect("toScene", id)).toEqual(focusedPoster);
-        }
-
-        // A non-focused cell reports its bare poster rect too — focus makes no difference.
         expect(list.getSubBoundingRect("toScene", "item0_0")).toEqual(list.rowItemComps[0][0].rectToScene);
-
-        // Nothing about the focus feedback influences the reported rect: neither suppressing the drawn
-        // frame nor clearing both focus bitmaps changes it.
-        list.setValue("drawFocusFeedback", core.BrsBoolean.False);
-        expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(focusedPoster);
-
-        list.setValue("focusBitmapUri", new core.BrsString(""));
-        list.setValue("focusFootprintBitmapUri", new core.BrsString(""));
-        expect(list.getSubBoundingRect("toScene", "item1_2")).toEqual(focusedPoster);
+        expect(list.getSubBoundingRect("toScene", "focusItem")).toEqual(list.rowItemComps[1][2].rectToScene);
+        // DEVICE-MEASURED (grid-rect-probe case zr_base): `item<row>` is the row, at x 0, rowWidth wide.
+        expect(list.getSubBoundingRect("toParent", "item0")).toEqual({ x: 0, y: 0, width: 600, height: 120 });
+        // An unrendered cell or row is a zero rect at the list's origin.
+        expect(list.getSubBoundingRect("toScene", "item9_9")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
+        expect(list.getSubBoundingRect("toScene", "item1")).toEqual({ x: 100, y: 200, width: 0, height: 0 });
     });
 });
 
@@ -249,6 +288,8 @@ describe("ancestorSubBoundingRect", () => {
         // Inject a non-zero local rect on every ancestor so getBoundingRect treats them as already
         // laid out and returns these values as-is (a zero-sized local rect signals an unmeasured
         // node, which getBoundingRect re-measures with a local render even while `rendering`).
+        group.setValue("translation", vector([50, 60]));
+        grid.setValue("translation", vector([10, 20]));
         group.rectLocal = { x: 0, y: 0, width: 500, height: 900 };
         group.rectToParent = { x: 50, y: 60, width: 500, height: 900 };
         grid.rectToParent = { x: 10, y: 20, width: 438, height: 800 };
@@ -276,8 +317,8 @@ describe("ancestorSubBoundingRect", () => {
         sgRoot.rendering = true;
         try {
             const result = grid.getMethod("ancestorSubBoundingRect").call(interpreter, new BrsString("item1"), scene);
-            // item1 is {10,104} in the grid's parent (group) space; adding the
-            // group's own parent-space offset {50,60} re-expresses it in the scene's coordinate system.
+            // item1 is {10,104} in the grid's parent (group) space; the group's translation {50,60}
+            // re-expresses it in the scene's coordinate system.
             expect(readRect(result)).toEqual({ x: 60, y: 164, width: 438, height: 72 });
         } finally {
             sgRoot.rendering = false;
@@ -293,10 +334,74 @@ describe("ancestorSubBoundingRect", () => {
             const result = grid
                 .getMethod("ancestorSubBoundingRect")
                 .call(interpreter, new BrsString("item1"), stranger);
-            // Not an ancestor: returns item1 in the grid's parent space.
-            expect(readRect(result)).toEqual({ x: 10, y: 104, width: 438, height: 72 });
+            // Not an ancestor: returns subBoundingRect, item1 in the grid's own space (DEVICE-MEASURED,
+            // grid-rect-probe case a_chain).
+            expect(readRect(result)).toEqual({ x: 0, y: 84, width: 438, height: 72 });
         } finally {
             sgRoot.rendering = false;
         }
+    });
+});
+
+// DEVICE-MEASURED (OS 16.0, `test/simulator/probes/grid-rect-probe` case `a_chain`, HD and FHD): the rect
+// in the ancestor's own coordinates, through each node in between's translation, scale and rotation.
+describe("ancestorBoundingRect", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    function readRect(aa) {
+        return ["x", "y", "width", "height"].map((k) => aa.get(new BrsString(k)).getValue());
+    }
+
+    function group(parent, fields) {
+        const node = new Group([], "Group");
+        for (const [name, value] of Object.entries(fields)) {
+            node.setValue(name, Array.isArray(value) ? vector(value) : new Float(value));
+        }
+        parent?.appendChildToParent(node);
+        return node;
+    }
+
+    function ancestorRect(node, ancestor) {
+        node.rectLocal = { x: 0, y: 0, width: 40, height: 30 };
+        node.measureStale = false;
+        // Skip the layout-refresh render so the injected rect is measured as-is.
+        sgRoot.rendering = true;
+        try {
+            return readRect(node.getMethod("ancestorBoundingRect").call(new Interpreter(), ancestor));
+        } finally {
+            sgRoot.rendering = false;
+        }
+    }
+
+    test("applies the scale of every node in between", () => {
+        const scene = group(undefined, {});
+        const g1 = group(scene, { translation: [100, 50] });
+        const g2 = group(g1, { translation: [50, 60], scale: [0.5, 0.5] });
+        const g3 = group(g2, { translation: [30, 40] });
+        const r = group(g3, { translation: [5, 5] });
+        r.rectToParent = { x: 5, y: 5, width: 40, height: 30 };
+
+        expect(ancestorRect(r, g3)).toEqual([5, 5, 40, 30]);
+        expect(ancestorRect(r, g2)).toEqual([35, 45, 40, 30]);
+        expect(ancestorRect(r, g1)).toEqual([67.5, 82.5, 20, 15]);
+        expect(ancestorRect(r, scene)).toEqual([167.5, 132.5, 20, 15]);
+        // Not an ancestor (itself, or a stranger): boundingRect.
+        expect(ancestorRect(r, r)).toEqual([5, 5, 40, 30]);
+        expect(ancestorRect(r, group(undefined, {}))).toEqual([5, 5, 40, 30]);
+    });
+
+    test("applies the rotation of every node in between", () => {
+        const scene = group(undefined, {});
+        const h1 = group(scene, { translation: [600, 300], rotation: Math.PI / 2 });
+        const h2 = group(h1, { translation: [20, 0] });
+        const rr = group(h2, { translation: [10, 0] });
+        rr.rectToParent = { x: 10, y: 0, width: 40, height: 20 };
+
+        expect(ancestorRect(rr, h1)).toEqual([30, 0, 40, 20]);
+        const [x, y, width, height] = ancestorRect(rr, scene);
+        expect([x, y, width, height].map((v) => Math.round(v))).toEqual([600, 230, 20, 40]);
     });
 });

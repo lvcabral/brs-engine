@@ -88,6 +88,8 @@ describe("row grids report an item sub-rect as the bare item component", () => {
             grid.setValue("itemSize", getBrsValueFromFieldType("vector2d", "[300,200]"));
             grid.setValue("itemSpacing", getBrsValueFromFieldType("vector2d", "[0,0]"));
             if (type === "RowList") {
+                // Wide enough for the whole row: a row wider than the list scrolls its first cells out.
+                grid.setValue("itemSize", getBrsValueFromFieldType("vector2d", "[1000,200]"));
                 grid.setValue("rowItemSize", getBrsValueFromFieldType("vector2darray", "[[300,200]]"));
             }
             for (const [name, value] of Object.entries(options)) {
@@ -184,19 +186,18 @@ describe("row grids report an item sub-rect as the bare item component", () => {
                 });
 
                 // Only RowList reports its own extent (renderContent -> updateRect). ZoomRowList never
-                // calls updateRect, so its own rect stays zero-sized — a separate, pre-existing gap.
+                // calls updateRect, so its own rect stays zero-sized; a device reports the translation
+                // plus the screen size (grid-rect-probe case zr_base).
                 const ownRectTest = type === "RowList" ? test : test.skip;
-                ownRectTest(`${label}: the grid's OWN rect stays outset by marginX/marginY`, () => {
-                    // The counterpart of the assertion above: the grid's own reported rect IS outset
-                    // (device-measured), so "the item rect carries no outset" must not be achieved by
-                    // dropping the grid's outset — which is how a revert of that fix would look.
+                ownRectTest(`${label}: the grid's OWN rect stays outset`, () => {
+                    // The counterpart of the assertion above: the grid's own reported rect IS outset, by
+                    // 22 at both resolutions (DEVICE-MEASURED, grid-rect-probe), so "the item rect carries
+                    // no outset" must not be achieved by dropping the grid's outset.
                     const { grid } = renderGrid(type, resolution, translation);
                     const own = round(grid.getBoundingRect("toParent", interpreter));
                     const firstItem = round(grid.rowItemComps[0][0].rectToScene);
-                    expect(grid.marginX).toBeGreaterThan(0);
-                    expect(grid.marginY).toBeGreaterThan(0);
-                    expect(own.x).toBe(firstItem.x - grid.marginX);
-                    expect(own.y).toBe(firstItem.y - grid.marginY);
+                    expect(own.x).toBe(firstItem.x - 22);
+                    expect(own.y).toBe(firstItem.y - 22);
                 });
 
                 test(`${label}: the DRAWN focus frame is outset even though the reported rect is not`, () => {

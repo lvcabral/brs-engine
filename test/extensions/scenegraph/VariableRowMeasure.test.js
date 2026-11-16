@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { SGNodeFactory, MarkupGrid, MarkupList } = scenegraph;
+const { SGNodeFactory, MarkupGrid } = scenegraph;
 const { BrsDevice, BrsString, Int32, Float, RoArray } = core;
 
 /**
@@ -35,9 +35,12 @@ describe("boundingRect honors per-row and per-column overrides", () => {
         return rect;
     }
 
-    /** A MarkupList with `count` rows of content, so absolute row indices resolve. */
-    function listWithRows(count) {
-        const list = new MarkupList();
+    /**
+     * A LabelList with `count` rows of content, so absolute row indices resolve. It measures through the
+     * generic ArrayGrid arithmetic; MarkupList and MarkupGrid have their own device rules (below).
+     */
+    function listWithRows(count, type = "LabelList") {
+        const list = SGNodeFactory.createNode(type);
         const root = SGNodeFactory.createNode("ContentNode");
         for (let i = 0; i < count; i++) {
             const item = SGNodeFactory.createNode("ContentNode");
@@ -99,15 +102,16 @@ describe("boundingRect honors per-row and per-column overrides", () => {
         expect(measure(list, 2, [400, 72], { firstRow: 0 }).height).toBe(600);
     });
 
-    test("a grid sums columnWidths and columnSpacings", () => {
-        // 100 + 200 + 300 widths, 10 + 20 gaps = 630.
+    test("a MarkupGrid sums columnWidths and the spacing after each column", () => {
+        // 22 + (100 + 10) + (200 + 20) + (300 + itemSpacing.x 0) + 22 (DEVICE-MEASURED, grid-rect-probe
+        // case mg_tracks: the spacing after the last column counts).
         const grid = new MarkupGrid();
         grid.setValue("numRows", new Int32(1));
         grid.setValue("numColumns", new Int32(3));
         grid.setValue("columnWidths", vector([100, 200, 300]));
         grid.setValue("columnSpacings", vector([10, 20]));
 
-        expect(measure(grid, 1, [150, 72]).width).toBe(630);
+        expect(measure(grid, 1, [150, 72]).width).toBe(674);
     });
 
     test("a list ignores columnWidths (per the reference, they are not used by lists)", () => {
@@ -118,9 +122,20 @@ describe("boundingRect honors per-row and per-column overrides", () => {
         expect(measure(list, 1, [400, 72]).width).toBe(400);
     });
 
+    test("a MarkupList sums rowHeights and the spacing after each row, outset once", () => {
+        // 6 + (100 + 10) + (50 + 20) + (200 + 30) + 30 at HD (DEVICE-MEASURED, grid-rect-probe cases ml_*:
+        // the spacing after the last row counts).
+        const list = listWithRows(3, "MarkupList");
+        list.setValue("itemSize", vector([400, 72]));
+        list.setValue("rowHeights", vector([100, 50, 200]));
+        list.setValue("rowSpacings", vector([10, 20, 30]));
+
+        expect(measure(list, 3, [400, 72])).toEqual({ x: -24, y: -6, width: 448, height: 446 });
+    });
+
     test("an explicit accumulated extent overrides the arithmetic", () => {
-        // RowList and PosterGrid pass the extent their loop actually laid out, because a label band /
-        // caption zone grows a row by an amount updateRect cannot re-derive from rowHeights.
+        // PosterGrid passes the extent its loop actually laid out, because a caption zone grows a row by
+        // an amount updateRect cannot re-derive from rowHeights.
         const list = listWithRows(2);
         list.setValue("itemSize", vector([400, 72]));
         list.setValue("rowHeights", vector([100, 100]));

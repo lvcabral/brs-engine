@@ -1021,6 +1021,20 @@ export class Group extends Node {
         // override in derived classes
     }
 
+    /**
+     * `rect`, in this node's own coordinates, in its parent's: through its translation, scale and
+     * rotation around `scaleRotateCenter`. A detached node reports its own coordinates as its parent's.
+     */
+    protected localRectToParent(rect: Rect): Rect {
+        if (this.isTransformDetached()) {
+            return rect;
+        }
+        const scale = this.getValueJS("scale") as number[];
+        const rotation = this.getRotation();
+        const center = rotation === 0 ? NO_CENTER : this.getScaleRotateCenter();
+        return transformLocalRect(rect, this.getTranslation(scale), scale, rotation, center);
+    }
+
     /** Rotation is ignored, as the sub part rects are re-expressed by translation only. */
     protected sceneUnitsTo(local: boolean): [number, number] {
         let sx = this.sceneMap.sx;
