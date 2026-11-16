@@ -496,22 +496,18 @@ export class ZoomRowList extends ArrayGrid {
         return false;
     }
 
-    protected subpartsFromLayout(): boolean {
-        return true;
+    /** A cell (`item<r>_<c>`, `focusItem`, `focusIndicator`) is its rendered item component's rect. */
+    protected subpartSceneRect(itemNumber: string): Rect | undefined {
+        return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus)?.rectToScene;
     }
 
     /**
      * `item<r>` is row r, `{0, rowTop, rowWidth, rowHeight}` (DEVICE-MEASURED, OS 16.0,
-     * `test/simulator/probes/grid-rect-probe` case `zr_base`), for the rows drawn in the last frame. A cell
-     * (`item<r>_<c>`, `focusItem`, `focusIndicator`) is its rendered item component's rect.
+     * `test/simulator/probes/grid-rect-probe` case `zr_base`), for the rows drawn in the last frame.
      */
     protected layoutSubpartRect(itemNumber: string): Rect | undefined {
         const part = parseRowSubpart(itemNumber);
-        if (part?.kind === "row") {
-            return this.renderedRowRects.get(part.row);
-        }
-        const scene = resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus)?.rectToScene;
-        return scene ? this.sceneRectToOwn(scene) : undefined;
+        return part?.kind === "row" ? this.renderedRowRects.get(part.row) : undefined;
     }
 
     protected renderContent(
@@ -521,6 +517,7 @@ export class ZoomRowList extends ArrayGrid {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
+        this.renderedRowRects.clear();
         if (!this.validateRenderPrerequisites()) {
             return;
         }
@@ -529,7 +526,6 @@ export class ZoomRowList extends ArrayGrid {
         const startRow = canWrap ? this.normalizeRowIndex(this.focusIndex) : this.clampRowIndex(this.focusIndex);
 
         this.currRow = startRow;
-        this.renderedRowRects.clear();
         let currentY = rect.y;
         // In transit, the rows are laid out from the motion's row (a row change scrolls them by the moving
         // fraction, clipped at the list top) and the indicator is drawn once over the cells.
@@ -731,7 +727,7 @@ export class ZoomRowList extends ArrayGrid {
             const wrapCount = canWrapItems ? rowContent.length : 0;
             startCol = this.placeMotionRow(rect, itemRect, metrics, rowIndex, wrapCount, startCol);
         }
-        const maxVisibleItems = this.getMaxVisibleItems(metrics.itemWidth, metrics.spacingX, this.nodeWidth);
+        const maxVisibleItems = this.itemsInWidth(this.nodeWidth, metrics.itemWidth, metrics.spacingX, true);
         const endCol = canWrapItems ? rowContent.length : Math.min(startCol + maxVisibleItems, rowContent.length);
 
         let firstCol = -1;
@@ -831,20 +827,6 @@ export class ZoomRowList extends ArrayGrid {
         return this.getContentChildren(rowNode);
     }
 
-    private getMaxVisibleItems(itemWidth: number, spacing: number, availableWidth: number, ceil: boolean = true) {
-        if (itemWidth <= 0) {
-            return 1;
-        }
-        const width = availableWidth > 0 ? availableWidth : this.sceneRect.width;
-        if (width <= 0) {
-            return 1;
-        }
-        if (ceil) {
-            return Math.ceil((width + spacing) / (itemWidth + spacing));
-        }
-        return Math.floor((width + spacing) / (itemWidth + spacing));
-    }
-
     private canWrapRows(displayRows: number): boolean {
         return this.isWrapEnabled() && displayRows > 0 && this.content.length >= displayRows;
     }
@@ -900,7 +882,7 @@ export class ZoomRowList extends ArrayGrid {
         const aspectRatio = this.resolveNumber(this.getValueJS("rowItemAspectRatio"), 0, this.defaultAspectRatio);
         const itemWidth = itemHeight * aspectRatio;
         const spacingX = this.getRowItemSpacing(0);
-        const maxVisibleItems = this.getMaxVisibleItems(itemWidth, spacingX, interiorWidth, false);
+        const maxVisibleItems = this.itemsInWidth(interiorWidth, itemWidth, spacingX);
         this.rowWidth = (itemWidth + spacingX) * maxVisibleItems;
         return this.rowWidth;
     }

@@ -359,8 +359,7 @@ export class RowList extends ArrayGrid {
             this.rowScrollOffset[rowIndex] = colIndex;
         } else if (rowFocusStyle === RowFocusStyle.Floating) {
             // floatingFocus: ensure focused item is fully visible
-            // Calculate max items that fit completely in the list (use floor, not ceil)
-            const maxVisibleItems = Math.floor(this.listWidth() / (rowItemWidth + spacing[0]));
+            const maxVisibleItems = this.itemsInWidth(this.listWidth(), rowItemWidth, spacing[0]);
 
             // The row keeps its scroll state unless the focused item is outside it (DEVICE-MEASURED,
             // grid-rect-probe: jumpToRowItem [3,7] scrolls row 3 by 3 items).
@@ -740,8 +739,8 @@ export class RowList extends ArrayGrid {
         return { width: itemSize[0] + margin.x * 2, height };
     }
 
-    protected subpartsFromLayout(): boolean {
-        return true;
+    protected subpartSceneRect(_itemNumber: string): Rect | undefined {
+        return undefined;
     }
 
     /**
@@ -958,7 +957,7 @@ export class RowList extends ArrayGrid {
     private handleFloatingFocus(currentRow: number, numCols: number, rowItemWidth: number, offset: number): boolean {
         // currentRow is the absolute focused row index
         const spacing = this.getRowItemSpacing(currentRow);
-        const maxVisibleItems = Math.floor(this.listWidth() / (rowItemWidth + spacing[0]));
+        const maxVisibleItems = this.itemsInWidth(this.listWidth(), rowItemWidth, spacing[0]);
         const currentFocusedCol = this.rowFocus[currentRow];
         const currentScrollOffset = this.rowScrollOffset[currentRow];
         const focusScreenPosition = currentFocusedCol - currentScrollOffset;
