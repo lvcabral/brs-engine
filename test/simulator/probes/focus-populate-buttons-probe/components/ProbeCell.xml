@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="ProbeCell" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onContent" />
+    </interface>
+    <children>
+        <Rectangle id="bg" width="200" height="120" color="0x334455FF" />
+        <Label id="lbl" width="200" height="120" horizAlign="center" vertAlign="center" />
+    </children>
+    <script type="text/brightscript">
+        <![CDATA[
+sub onContent()
+    m.top.findNode("lbl").text = m.top.itemContent.title
+end sub
+        ]]>
+    </script>
+</component>

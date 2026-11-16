@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Mirrors JellyRock's IconButton: the border follows a focusedChild observer reading hasFocus(). -->
+<component name="ProbeIconButton" extends="Group">
+    <interface>
+        <field id="text" type="string" />
+        <field id="isEnabled" type="boolean" value="true" />
+        <field id="caseName" type="string" />
+    </interface>
+    <children>
+        <Rectangle id="border" width="150" height="100" color="0xFFFFFFFF" visible="false" />
+        <Rectangle id="bg" width="138" height="88" translation="[6,6]" color="0x222222FF" />
+        <Label id="lbl" width="150" translation="[0,104]" horizAlign="center" />
+    </children>
+    <script type="text/brightscript" uri="ProbeLog.brs" />
+    <script type="text/brightscript">
+        <![CDATA[
+sub init()
+    m.border = m.top.findNode("border")
+    m.top.observeField("text", "onText")
+    m.top.observeField("focusedChild", "onFocusChanged")
+end sub
+
+sub onText()
+    m.top.findNode("lbl").text = m.top.text
+end sub
+
+sub onFocusChanged()
+    m.border.visible = m.top.hasFocus()
+    plog(m.top.caseName, "btnFC", "id=" + m.top.id + " hasFocus=" + m.top.hasFocus().toStr() + " inChain=" + m.top.isInFocusChain().toStr())
+end sub
+        ]]>
+    </script>
+</component>

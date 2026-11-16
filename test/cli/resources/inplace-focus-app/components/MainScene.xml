@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="step" type="string" alwaysNotify="true" onChange="onStep" />
+        <function name="logGrid" />
+    </interface>
+    <children>
+        <MarkupGrid id="grid" itemComponentName="GridCell" numColumns="4" numRows="2" itemSize="[200,120]" />
+        <Group id="outlet" translation="[0,600]">
+            <Group id="view" focusable="true">
+                <LayoutGroup id="buttons" layoutDirection="horiz" itemSpacings="[18]" />
+            </Group>
+        </Group>
+    </children>
+    <script type="text/brightscript">
+        <![CDATA[
+sub init()
+    m.grid = m.top.findNode("grid")
+    m.grid.content = CreateObject("roSGNode", "ContentNode")
+    m.grid.observeField("itemFocused", "onItemFocused")
+    m.buttons = m.top.findNode("buttons")
+    m.focused = 0
+end sub
+
+sub onStep()
+    action = m.top.step
+    if action = "populateGrid"
+        populateGrid()
+    else if action = "appendGrid"
+        appendGrid()
+    else if action = "setupButtons"
+        setupButtons()
+    else
+        moveButtons(action)
+    end if
+end sub
+
+sub onItemFocused()
+    print "  itemFocused = "; m.grid.itemFocused; " count = "; m.grid.content.getChildCount()
+end sub
+
+sub fill(count as integer)
+    for i = 1 to count
+        m.grid.content.createChild("ContentNode")
+    end for
+end sub
+
+sub populateGrid()
+    m.grid.setFocus(true)
+    m.grid.jumpToItem = 0
+    fill(6)
+    print "populate returned: itemFocused = "; m.grid.itemFocused
+end sub
+
+sub appendGrid()
+    m.grid.jumpToItem = 3
+    fill(2)
+    print "append returned: itemFocused = "; m.grid.itemFocused
+end sub
+
+sub logGrid(label as string)
+    print label; ": itemFocused = "; m.grid.itemFocused
+end sub
+
+sub setupButtons()
+    for i = 0 to 3
+        button = m.buttons.createChild("Group")
+        button.id = "b" + i.toStr()
+        button.focusable = true
+        button.observeField("focusedChild", "onButtonFocus")
+    end for
+    m.buttons.observeField("focusedChild", "onRowFocus")
+    m.top.findNode("outlet").observeField("focusedChild", "onOutletFocus")
+    m.restoreArmed = false
+    m.buttons.getChild(0).setFocus(true)
+    logButtons("setup")
+end sub
+
+' Paints a button's focus border the way JellyRock's IconButton does: from hasFocus().
+sub onButtonFocus(event as object)
+    button = event.getRoSGNode()
+    button.addFields({ border: button.hasFocus() })
+    button.border = button.hasFocus()
+end sub
+
+' JRButtonGroup: holding the focus itself, it forwards it to the current button.
+sub onRowFocus()
+    if m.buttons.hasFocus() then m.buttons.getChild(m.focused).setFocus(true)
+end sub
+
+' sgRouter's outlet: losing the chain it last had, it re-focuses the view's saved node (the row).
+sub onOutletFocus(event as object)
+    inChain = event.getData() <> invalid
+    if not inChain and m.restoreArmed then m.buttons.setFocus(true)
+    m.restoreArmed = inChain
+end sub
+
+sub moveButtons(key as string)
+    target = m.focused + 1
+    if key = "left" then target = m.focused - 1
+    m.buttons.getChild(m.focused).setFocus(false)
+    m.focused = target
+    m.buttons.getChild(target).setFocus(true)
+    logButtons(key)
+end sub
+
+sub logButtons(label as string)
+    line = label + ":"
+    for i = 0 to m.buttons.getChildCount() - 1
+        button = m.buttons.getChild(i)
+        line = line + " " + button.id + "=" + button.hasFocus().toStr() + "/" + button.border.toStr()
+    end for
+    print line
+end sub
+        ]]>
+    </script>
+</component>

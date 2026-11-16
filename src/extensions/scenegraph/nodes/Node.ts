@@ -53,7 +53,7 @@ import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor, IDENTITY_SCENE_MAP } from "../SGUtil";
 import type { Task } from "./Task";
 
-type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
+export type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
 /** The field of a `focusedChild` write held back until its focus transaction is fully committed. */
 type StagedFocus = Field;
@@ -891,6 +891,21 @@ export class Node extends RoSGNode implements BrsValue {
      * Assigns a new parent reference.
      * @param parent Node that is adopting this node.
      */
+    /**
+     * Whether `focused` (the live focus by default) is this node or one of its descendants, walking up from
+     * it: cheaper than searching the subtree.
+     */
+    isFocusWithin(focused: unknown = sgRoot.focused): boolean {
+        let node = focused;
+        while (node instanceof Node) {
+            if (node === this) {
+                return true;
+            }
+            node = node.getNodeParent();
+        }
+        return false;
+    }
+
     setNodeParent(parent: Node) {
         this.parent = parent;
         this.restoreFocusChainOnAttach();
@@ -911,12 +926,8 @@ export class Node extends RoSGNode implements BrsValue {
         if (!(focused instanceof Node)) {
             return;
         }
-        // Only act when the live focus is this node or one of its descendants (cheap upward walk).
-        let ancestor: BrsType = focused;
-        while (ancestor instanceof Node && ancestor !== this) {
-            ancestor = ancestor.parent;
-        }
-        if (ancestor !== this) {
+        // Only act when the live focus is this node or one of its descendants.
+        if (!this.isFocusWithin(focused)) {
             return;
         }
         const chain = this.createPath(focused); // [root, ..., focused]
@@ -1292,8 +1303,10 @@ export class Node extends RoSGNode implements BrsValue {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
             sgRoot.setFocused();
-            // Get the focus chain, with root-most ancestor first.
-            let currFocusChain = this.createPath(currFocusedNode as Node);
+            // The chain is notified from the focused node up (DEVICE-MEASURED, focus-populate-buttons-probe B3):
+            // an ancestor's observer that re-focuses the subtree (sgRouter's outlet) runs after the nodes below
+            // it were notified, and those aren't notified again in this round.
+            const currFocusChain = this.createPath(currFocusedNode as Node, false);
             const staged: StagedFocus[] = [];
             for (const node of currFocusChain) {
                 node.stageFocusedChild(BrsInvalid.Instance, staged);
@@ -1545,10 +1558,11 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Dispatches the staged `focusedChild` notifications for a committed focus transaction, in
-     * chain order (the subtree losing focus first, then the one gaining it). A transaction raised from
-     * one of them appends its own notifications to this round, each field once per round, and returns
-     * before they dispatch (DEVICE-MEASURED, focus-flag-probe A1: the forwarded node's observer runs after
+     * Dispatches the staged `focusedChild` notifications for a committed focus transaction, in the order
+     * they were staged: the subtree losing focus first, then the one gaining it. A `setFocus(false)` stages
+     * its chain from the focused node up (DEVICE-MEASURED, focus-populate-buttons-probe B1-B4). A transaction
+     * raised from one of them appends its own notifications to this round, each field once per round, and
+     * returns before they dispatch (DEVICE-MEASURED, focus-flag-probe A1: the forwarded node's observer runs after
      * the forward's `setFocus` call returned).
      * @param staged Fields staged by `stageFocusedChild`.
      */
@@ -2394,6 +2408,15 @@ export class Node extends RoSGNode implements BrsValue {
      */
     protected compareNodes(other: Node): boolean {
         return this.nodeSubtype === other.nodeSubtype && this.address === other.address;
+    }
+
+    /**
+     * Called when the children of a ContentNode held by one of this node's fields are added, removed or
+     * replaced in place. Lists and grids override it to republish their focus.
+     * @param _field The field holding the ContentNode.
+     */
+    contentChildrenChanged(_field: Field) {
+        // Only nodes that present content react.
     }
 
     /**

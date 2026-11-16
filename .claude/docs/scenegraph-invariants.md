@@ -1697,6 +1697,35 @@ LabelList/MarkupList (and the grids, which share the code). RowList, ZoomRowList
   assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
   handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
   `flushContentFocus()` where a device would have returned from the handler.
+- **Children added to, removed from or replaced in the content node** (`test/simulator/probes/focus-populate-buttons-probe`
+  A1–A6) work the same way: nothing at the write, then `itemFocused` for the item the list is on (clamped
+  to the new count) once the handler returns, if the list is in the focus chain. `ContentNode.recordChildChange`
+  calls `contentChildrenChanged` on the node holding the content field. This is what an app that assigns an
+  empty content node and appends pages to it from a Task observer relies on (JellyRock's library grid
+  sets its backdrop from that `itemFocused` 0). An append that keeps the focus on item 3 publishes 3 again. An
+  unfocused list that had no item (`itemFocused` -1) takes 0 silently at the write.
+  - Only the children of the content node itself count; a change deeper in the tree (a section's
+    items) doesn't trigger it. The publish keeps the focus where it is, unless items at and below it
+    were removed: then it lands on the last item left, and the cursor, `currFocusRow`/`Column` and the item
+    focus move with it. An earlier render-time version called `setFocusedItem(0)` and broke vertical
+    navigation past row one (#1040). Don't go back to that.
+  - It publishes the **data index** (`dataIndexAt`), like every other focus landing. In a sectioned grid
+    the position differs, because placeholders pad each section's last row.
+  - During a focus motion the flush publishes nothing; the settle publishes `itemFocused` once.
+  - Render thread only (`sgRoot.inTaskThread()`): a Task's copy of the list must not move its own
+    `itemFocused`.
+  - The hook sets the grid's own `contentDirty`, and `refreshContentIfChanged()` (used by render, measure,
+    gain and flush) rebuilds the view on it or on the content node's `changed`. `changed` alone isn't
+    enough: every consumer of the node shares it, another list's render may already have cleared it, and
+    some mutators record the child change before they set it. A gain whose target still isn't in the view
+    rebuilds once more, for a deeper change behind a cleared flag. Without this, a list whose `itemFocused` became 0 silently would gain onto a
+    stale empty view. Regressions: `panelset-nextpanel-app`, `ListInPlaceContent.test.js`.
+- **A gain on an empty list publishes `itemFocused` -1** (same probe, A1–A3).
+- Still unmodeled: a `callFunc` body or an `onKeyEvent` isn't a handler to `Field.canDeliverDeferred`
+  (only `init()` and observers are), so a publish deferred from there goes out at the next statement.
+
+Regression for the in-place rules: "Republishes a grid's focus after in-place content changes…" in
+`test/cli/cli-scenegraph.test.js` (`inplace-focus-app`, driven from a field observer).
 
 Still unmodeled: the device creates the target item's component during `jumpToItem` (its `itemHasFocus`
 lands between `itemUnfocused` and `itemFocused` even when it was off screen); the engine creates item
@@ -1791,10 +1820,22 @@ re-shown from `rowItemFocused`).
      - Regression: `PanelSetForwardFocus.test.js`, and "navigation follows focus that an app redirects
        while going back" in `PanelSetFullScreen.test.js` (a real observer, not a `setNodeFocus` stub: the
        two-phase move never calls `setNodeFocus` on a plain panel).
-   - Still open: within one transaction the device notifies the gaining path from the leaf up and then the
-     losing nodes (the probe's gallery run), while the engine notifies the losing nodes first, from the
-     root down. `focus-probe2` N1 has the device notifying a losing sibling first, so the rule is not yet
-     known.
+   - **`setFocus(false)` on the focused node notifies the chain from that node up**
+     (`test/simulator/probes/focus-populate-buttons-probe` B1–B4). This is the sgRouter shape: the
+     outlet's `focusedChild` observer sees the chain go and makes the view re-focus its saved node (a
+     button row) inside the same transaction. On the device the row and its button were already notified
+     in this round, so the row's nested `setFocus` writes its self-link without notifying it again, and
+     its gain observer never forwards back to the button. Root-down, the outlet ran first and the row
+     forwarded to the button it had just lost. That re-wrote the button's self-link, which the next
+     `setFocus` didn't unset, so every button the user passed kept `hasFocus()` and its border (JellyRock's
+     detail screen). Regression: `inplace-focus-app`.
+   - Still open: within a `setFocus(true)` transaction the device notifies the gaining path from the leaf
+     up and then the losing nodes (the gallery run of the probe above; the same probe shows the gain alone
+     leaf-up), while the engine notifies the losing nodes first, from the root down. `focus-probe2` N1 has
+     the device notifying a losing sibling first, so the rule is not yet known.
+   - Also open (same probe, B2): `setFocus(true)` on an ancestor of the focused node, where the focused
+     node is the chain owner, keeps the focus on that node and notifies it and the ancestor again. The
+     engine moves the focus to the ancestor, whose forward then writes only the button's self-link.
    - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
      `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
      return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus

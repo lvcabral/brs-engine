@@ -1,0 +1,363 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=16.0
+PROBE|001|A1|begin|
+PROBE|002|A1|itemFocused|v=-1 count=0 inChain=true
+PROBE|003|A1|focused|
+PROBE|004|A1|jumped|
+PROBE|005|A1|returned|itemFocused=-1
+PROBE|006|A1|itemFocused|v=0 count=8 inChain=true
+PROBE|007|A1|settled|itemFocused=0 count=8
+PROBE|008|A2|begin|
+PROBE|009|A2|itemFocused|v=-1 count=0 inChain=true
+PROBE|010|A2|returned|itemFocused=-1
+PROBE|011|A2|itemFocused|v=0 count=8 inChain=true
+PROBE|012|A2|settled|itemFocused=0 count=8
+PROBE|013|A3|begin|
+PROBE|014|A3|itemFocused|v=-1 count=0 inChain=true
+PROBE|015|A3|returned|itemFocused=-1
+PROBE|016|A3|settled|itemFocused=-1 count=0
+PROBE|017|A3|fill|
+PROBE|018|A3|filled|itemFocused=-1
+PROBE|019|A3|itemFocused|v=0 count=8 inChain=true
+PROBE|020|A3|settled|itemFocused=0 count=8
+PROBE|021|A4|begin|
+PROBE|022|A4|filled|itemFocused=0
+PROBE|023|A4|itemFocused|v=0 count=8 inChain=true
+PROBE|024|A4|returned|itemFocused=0
+PROBE|025|A4|itemFocused|v=0 count=8 inChain=true
+PROBE|026|A4|settled|itemFocused=0 count=8
+PROBE|027|A5|begin|
+PROBE|028|A5|itemUnfocused|v=0
+PROBE|029|A5|itemFocused|v=3 count=8 inChain=true
+PROBE|030|A5|jumped|
+PROBE|031|A5|returned|itemFocused=3
+PROBE|032|A5|itemFocused|v=3 count=12 inChain=true
+PROBE|033|A5|settled|itemFocused=3 count=12
+PROBE|034|A6|begin|
+PROBE|035|A6|cleared|itemFocused=3
+PROBE|036|A6|returned|itemFocused=3
+PROBE|037|A6|itemFocused|v=3 count=8 inChain=true
+PROBE|038|A6|settled|itemFocused=3 count=8
+PROBE|039|B1|groupFocus|
+PROBE|040|B1|grpFC|hasFocus=true inChain=true
+PROBE|041|B1|childFocus|
+PROBE|042|B1|grpFC|hasFocus=false inChain=true
+PROBE|043|B1|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|044|B1|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|045|await|Right|case=B1
+PROBE|046|B1|key|key=right from=0 to=1
+PROBE|047|B1|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|048|B1|grpFC|hasFocus=false inChain=false
+PROBE|049|B1|grpFC|hasFocus=false inChain=true
+PROBE|050|B1|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|051|B1|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|052|await|Right|case=B1
+PROBE|053|B1|key|key=right from=1 to=2
+PROBE|054|B1|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|055|B1|grpFC|hasFocus=false inChain=false
+PROBE|056|B1|grpFC|hasFocus=false inChain=true
+PROBE|057|B1|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|058|B1|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|059|await|Right|case=B1
+PROBE|060|B1|key|key=right from=2 to=3
+PROBE|061|B1|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|062|B1|grpFC|hasFocus=false inChain=false
+PROBE|063|B1|grpFC|hasFocus=false inChain=true
+PROBE|064|B1|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|065|B1|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|066|await|Right|case=B1
+PROBE|067|B1|key|key=right from=3 to=4
+PROBE|068|B1|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|069|B1|grpFC|hasFocus=false inChain=false
+PROBE|070|B1|grpFC|hasFocus=false inChain=true
+PROBE|071|B1|btnFC|id=b4 hasFocus=true inChain=true
+PROBE|072|B1|state|grpFocus=false grpFC=b4 b0=-- b1=-- b2=-- b3=-- b4=FB
+PROBE|073|await|Left|case=B1
+PROBE|074|B1|key|key=left from=4 to=3
+PROBE|075|B1|btnFC|id=b4 hasFocus=false inChain=false
+PROBE|076|B1|grpFC|hasFocus=false inChain=false
+PROBE|077|B1|grpFC|hasFocus=false inChain=true
+PROBE|078|B1|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|079|B1|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|080|await|Left|case=B1
+PROBE|081|B1|key|key=left from=3 to=2
+PROBE|082|B1|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|083|B1|grpFC|hasFocus=false inChain=false
+PROBE|084|B1|grpFC|hasFocus=false inChain=true
+PROBE|085|B1|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|086|B1|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|087|await|Left|case=B1
+PROBE|088|B1|key|key=left from=2 to=1
+PROBE|089|B1|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|090|B1|grpFC|hasFocus=false inChain=false
+PROBE|091|B1|grpFC|hasFocus=false inChain=true
+PROBE|092|B1|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|093|B1|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|094|await|Left|case=B1
+PROBE|095|B1|key|key=left from=1 to=0
+PROBE|096|B1|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|097|B1|grpFC|hasFocus=false inChain=false
+PROBE|098|B1|grpFC|hasFocus=false inChain=true
+PROBE|099|B1|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|100|B1|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|101|B1|grpFC|hasFocus=false inChain=false
+PROBE|102|B1|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|103|B2|childFocus|
+PROBE|104|B2|grpFC|hasFocus=false inChain=true
+PROBE|105|B2|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|106|B2|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|107|B2|groupFocus|
+PROBE|108|B2|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|109|B2|grpFC|hasFocus=true inChain=true
+PROBE|110|B2|grpForward|to=b0
+PROBE|111|B2|state|grpFocus=true grpFC=grpB b0=F- b1=-- b2=-- b3=-- b4=--
+PROBE|112|await|Right|case=B2
+PROBE|113|B2|key|key=right from=0 to=1
+PROBE|114|B2|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|115|B2|grpFC|hasFocus=false inChain=true
+PROBE|116|B2|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|117|B2|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|118|await|Right|case=B2
+PROBE|119|B2|key|key=right from=1 to=2
+PROBE|120|B2|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|121|B2|grpFC|hasFocus=false inChain=false
+PROBE|122|B2|grpFC|hasFocus=false inChain=true
+PROBE|123|B2|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|124|B2|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|125|await|Right|case=B2
+PROBE|126|B2|key|key=right from=2 to=3
+PROBE|127|B2|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|128|B2|grpFC|hasFocus=false inChain=false
+PROBE|129|B2|grpFC|hasFocus=false inChain=true
+PROBE|130|B2|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|131|B2|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|132|await|Right|case=B2
+PROBE|133|B2|key|key=right from=3 to=4
+PROBE|134|B2|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|135|B2|grpFC|hasFocus=false inChain=false
+PROBE|136|B2|grpFC|hasFocus=false inChain=true
+PROBE|137|B2|btnFC|id=b4 hasFocus=true inChain=true
+PROBE|138|B2|state|grpFocus=false grpFC=b4 b0=-- b1=-- b2=-- b3=-- b4=FB
+PROBE|139|await|Left|case=B2
+PROBE|140|B2|key|key=left from=4 to=3
+PROBE|141|B2|btnFC|id=b4 hasFocus=false inChain=false
+PROBE|142|B2|grpFC|hasFocus=false inChain=false
+PROBE|143|B2|grpFC|hasFocus=false inChain=true
+PROBE|144|B2|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|145|B2|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|146|await|Left|case=B2
+PROBE|147|B2|key|key=left from=3 to=2
+PROBE|148|B2|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|149|B2|grpFC|hasFocus=false inChain=false
+PROBE|150|B2|grpFC|hasFocus=false inChain=true
+PROBE|151|B2|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|152|B2|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|153|await|Left|case=B2
+PROBE|154|B2|key|key=left from=2 to=1
+PROBE|155|B2|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|156|B2|grpFC|hasFocus=false inChain=false
+PROBE|157|B2|grpFC|hasFocus=false inChain=true
+PROBE|158|B2|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|159|B2|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|160|await|Left|case=B2
+PROBE|161|B2|key|key=left from=1 to=0
+PROBE|162|B2|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|163|B2|grpFC|hasFocus=false inChain=false
+PROBE|164|B2|grpFC|hasFocus=false inChain=true
+PROBE|165|B2|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|166|B2|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|167|B2|grpFC|hasFocus=false inChain=false
+PROBE|168|B2|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|169|B3|outletFC|id=outlet inChain=true
+PROBE|170|B3|groupFocus|
+PROBE|171|B3|outletFC|id=outlet inChain=true
+PROBE|172|B3|grpFC|hasFocus=true inChain=true
+PROBE|173|B3|grpForward|to=b0
+PROBE|174|B3|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|175|B3|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|176|await|Right|case=B3
+PROBE|177|B3|key|key=right from=0 to=1
+PROBE|178|B3|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|179|B3|grpFC|hasFocus=false inChain=false
+PROBE|180|B3|outletFC|id=outlet inChain=false
+PROBE|181|B3|restore|to=grpC
+PROBE|182|B3|restored|
+PROBE|183|B3|outletFC|id=outlet inChain=true
+PROBE|184|B3|grpFC|hasFocus=false inChain=true
+PROBE|185|B3|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|186|B3|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|187|await|Right|case=B3
+PROBE|188|B3|key|key=right from=1 to=2
+PROBE|189|B3|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|190|B3|grpFC|hasFocus=false inChain=false
+PROBE|191|B3|outletFC|id=outlet inChain=false
+PROBE|192|B3|restore|to=grpC
+PROBE|193|B3|restored|
+PROBE|194|B3|outletFC|id=outlet inChain=true
+PROBE|195|B3|grpFC|hasFocus=false inChain=true
+PROBE|196|B3|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|197|B3|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|198|await|Right|case=B3
+PROBE|199|B3|key|key=right from=2 to=3
+PROBE|200|B3|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|201|B3|grpFC|hasFocus=false inChain=false
+PROBE|202|B3|outletFC|id=outlet inChain=false
+PROBE|203|B3|restore|to=grpC
+PROBE|204|B3|restored|
+PROBE|205|B3|outletFC|id=outlet inChain=true
+PROBE|206|B3|grpFC|hasFocus=false inChain=true
+PROBE|207|B3|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|208|B3|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|209|await|Right|case=B3
+PROBE|210|B3|key|key=right from=3 to=4
+PROBE|211|B3|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|212|B3|grpFC|hasFocus=false inChain=false
+PROBE|213|B3|outletFC|id=outlet inChain=false
+PROBE|214|B3|restore|to=grpC
+PROBE|215|B3|restored|
+PROBE|216|B3|outletFC|id=outlet inChain=true
+PROBE|217|B3|grpFC|hasFocus=false inChain=true
+PROBE|218|B3|btnFC|id=b4 hasFocus=true inChain=true
+PROBE|219|B3|state|grpFocus=false grpFC=b4 b0=-- b1=-- b2=-- b3=-- b4=FB
+PROBE|220|await|Left|case=B3
+PROBE|221|B3|key|key=left from=4 to=3
+PROBE|222|B3|btnFC|id=b4 hasFocus=false inChain=false
+PROBE|223|B3|grpFC|hasFocus=false inChain=false
+PROBE|224|B3|outletFC|id=outlet inChain=false
+PROBE|225|B3|restore|to=grpC
+PROBE|226|B3|restored|
+PROBE|227|B3|outletFC|id=outlet inChain=true
+PROBE|228|B3|grpFC|hasFocus=false inChain=true
+PROBE|229|B3|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|230|B3|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|231|await|Left|case=B3
+PROBE|232|B3|key|key=left from=3 to=2
+PROBE|233|B3|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|234|B3|grpFC|hasFocus=false inChain=false
+PROBE|235|B3|outletFC|id=outlet inChain=false
+PROBE|236|B3|restore|to=grpC
+PROBE|237|B3|restored|
+PROBE|238|B3|outletFC|id=outlet inChain=true
+PROBE|239|B3|grpFC|hasFocus=false inChain=true
+PROBE|240|B3|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|241|B3|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|242|await|Left|case=B3
+PROBE|243|B3|key|key=left from=2 to=1
+PROBE|244|B3|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|245|B3|grpFC|hasFocus=false inChain=false
+PROBE|246|B3|outletFC|id=outlet inChain=false
+PROBE|247|B3|restore|to=grpC
+PROBE|248|B3|restored|
+PROBE|249|B3|outletFC|id=outlet inChain=true
+PROBE|250|B3|grpFC|hasFocus=false inChain=true
+PROBE|251|B3|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|252|B3|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|253|await|Left|case=B3
+PROBE|254|B3|key|key=left from=1 to=0
+PROBE|255|B3|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|256|B3|grpFC|hasFocus=false inChain=false
+PROBE|257|B3|outletFC|id=outlet inChain=false
+PROBE|258|B3|restore|to=grpC
+PROBE|259|B3|restored|
+PROBE|260|B3|outletFC|id=outlet inChain=true
+PROBE|261|B3|grpFC|hasFocus=false inChain=true
+PROBE|262|B3|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|263|B3|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|264|B3|grpFC|hasFocus=false inChain=false
+PROBE|265|B3|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|266|B4|outletFC|id=outlet2 inChain=true
+PROBE|267|B4|childFocus|
+PROBE|268|B4|outletFC|id=outlet2 inChain=true
+PROBE|269|B4|grpFC|hasFocus=false inChain=true
+PROBE|270|B4|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|271|B4|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|272|await|Right|case=B4
+PROBE|273|B4|key|key=right from=0 to=1
+PROBE|274|B4|btnFC|id=b0 hasFocus=false inChain=false
+PROBE|275|B4|grpFC|hasFocus=false inChain=false
+PROBE|276|B4|outletFC|id=outlet2 inChain=false
+PROBE|277|B4|restore|to=grpD
+PROBE|278|B4|restored|
+PROBE|279|B4|outletFC|id=outlet2 inChain=true
+PROBE|280|B4|grpFC|hasFocus=false inChain=true
+PROBE|281|B4|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|282|B4|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|283|await|Right|case=B4
+PROBE|284|B4|key|key=right from=1 to=2
+PROBE|285|B4|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|286|B4|grpFC|hasFocus=false inChain=false
+PROBE|287|B4|outletFC|id=outlet2 inChain=false
+PROBE|288|B4|restore|to=grpD
+PROBE|289|B4|restored|
+PROBE|290|B4|outletFC|id=outlet2 inChain=true
+PROBE|291|B4|grpFC|hasFocus=false inChain=true
+PROBE|292|B4|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|293|B4|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|294|await|Right|case=B4
+PROBE|295|B4|key|key=right from=2 to=3
+PROBE|296|B4|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|297|B4|grpFC|hasFocus=false inChain=false
+PROBE|298|B4|outletFC|id=outlet2 inChain=false
+PROBE|299|B4|restore|to=grpD
+PROBE|300|B4|restored|
+PROBE|301|B4|outletFC|id=outlet2 inChain=true
+PROBE|302|B4|grpFC|hasFocus=false inChain=true
+PROBE|303|B4|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|304|B4|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|305|await|Right|case=B4
+PROBE|306|B4|key|key=right from=3 to=4
+PROBE|307|B4|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|308|B4|grpFC|hasFocus=false inChain=false
+PROBE|309|B4|outletFC|id=outlet2 inChain=false
+PROBE|310|B4|restore|to=grpD
+PROBE|311|B4|restored|
+PROBE|312|B4|outletFC|id=outlet2 inChain=true
+PROBE|313|B4|grpFC|hasFocus=false inChain=true
+PROBE|314|B4|btnFC|id=b4 hasFocus=true inChain=true
+PROBE|315|B4|state|grpFocus=false grpFC=b4 b0=-- b1=-- b2=-- b3=-- b4=FB
+PROBE|316|await|Left|case=B4
+PROBE|317|B4|key|key=left from=4 to=3
+PROBE|318|B4|btnFC|id=b4 hasFocus=false inChain=false
+PROBE|319|B4|grpFC|hasFocus=false inChain=false
+PROBE|320|B4|outletFC|id=outlet2 inChain=false
+PROBE|321|B4|restore|to=grpD
+PROBE|322|B4|restored|
+PROBE|323|B4|outletFC|id=outlet2 inChain=true
+PROBE|324|B4|grpFC|hasFocus=false inChain=true
+PROBE|325|B4|btnFC|id=b3 hasFocus=true inChain=true
+PROBE|326|B4|state|grpFocus=false grpFC=b3 b0=-- b1=-- b2=-- b3=FB b4=--
+PROBE|327|await|Left|case=B4
+PROBE|328|B4|key|key=left from=3 to=2
+PROBE|329|B4|btnFC|id=b3 hasFocus=false inChain=false
+PROBE|330|B4|grpFC|hasFocus=false inChain=false
+PROBE|331|B4|outletFC|id=outlet2 inChain=false
+PROBE|332|B4|restore|to=grpD
+PROBE|333|B4|restored|
+PROBE|334|B4|outletFC|id=outlet2 inChain=true
+PROBE|335|B4|grpFC|hasFocus=false inChain=true
+PROBE|336|B4|btnFC|id=b2 hasFocus=true inChain=true
+PROBE|337|B4|state|grpFocus=false grpFC=b2 b0=-- b1=-- b2=FB b3=-- b4=--
+PROBE|338|await|Left|case=B4
+PROBE|339|B4|key|key=left from=2 to=1
+PROBE|340|B4|btnFC|id=b2 hasFocus=false inChain=false
+PROBE|341|B4|grpFC|hasFocus=false inChain=false
+PROBE|342|B4|outletFC|id=outlet2 inChain=false
+PROBE|343|B4|restore|to=grpD
+PROBE|344|B4|restored|
+PROBE|345|B4|outletFC|id=outlet2 inChain=true
+PROBE|346|B4|grpFC|hasFocus=false inChain=true
+PROBE|347|B4|btnFC|id=b1 hasFocus=true inChain=true
+PROBE|348|B4|state|grpFocus=false grpFC=b1 b0=-- b1=FB b2=-- b3=-- b4=--
+PROBE|349|await|Left|case=B4
+PROBE|350|B4|key|key=left from=1 to=0
+PROBE|351|B4|btnFC|id=b1 hasFocus=false inChain=false
+PROBE|352|B4|grpFC|hasFocus=false inChain=false
+PROBE|353|B4|outletFC|id=outlet2 inChain=false
+PROBE|354|B4|restore|to=grpD
+PROBE|355|B4|restored|
+PROBE|356|B4|outletFC|id=outlet2 inChain=true
+PROBE|357|B4|grpFC|hasFocus=false inChain=true
+PROBE|358|B4|btnFC|id=b0 hasFocus=true inChain=true
+PROBE|359|B4|state|grpFocus=false grpFC=b0 b0=FB b1=-- b2=-- b3=-- b4=--
+PROBE|360|done||
+PROBE|999|boot|end|
