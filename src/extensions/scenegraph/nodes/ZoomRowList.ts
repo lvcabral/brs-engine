@@ -496,22 +496,21 @@ export class ZoomRowList extends ArrayGrid {
         return false;
     }
 
-    protected subpartsFromLayout(): boolean {
-        return true;
+    /** A cell (`item<r>_<c>`, `focusItem`, `focusIndicator`) is its rendered item component's rect. */
+    protected subpartSceneRect(itemNumber: string): Rect | undefined {
+        if (parseRowSubpart(itemNumber)?.kind === "row") {
+            return undefined;
+        }
+        return resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus)?.rectToScene;
     }
 
     /**
      * `item<r>` is row r, `{0, rowTop, rowWidth, rowHeight}` (DEVICE-MEASURED, OS 16.0,
-     * `test/simulator/probes/grid-rect-probe` case `zr_base`), for the rows drawn in the last frame. A cell
-     * (`item<r>_<c>`, `focusItem`, `focusIndicator`) is its rendered item component's rect.
+     * `test/simulator/probes/grid-rect-probe` case `zr_base`), for the rows drawn in the last frame.
      */
     protected layoutSubpartRect(itemNumber: string): Rect | undefined {
         const part = parseRowSubpart(itemNumber);
-        if (part?.kind === "row") {
-            return this.renderedRowRects.get(part.row);
-        }
-        const scene = resolveRowItemSubpart(itemNumber, this.rowItemComps, this.focusIndex, this.rowFocus)?.rectToScene;
-        return scene ? this.sceneRectToOwn(scene) : undefined;
+        return part?.kind === "row" ? this.renderedRowRects.get(part.row) : undefined;
     }
 
     protected renderContent(
@@ -521,6 +520,7 @@ export class ZoomRowList extends ArrayGrid {
         opacity: number,
         draw2D?: IfDraw2D
     ) {
+        this.renderedRowRects.clear();
         if (!this.validateRenderPrerequisites()) {
             return;
         }
@@ -529,7 +529,6 @@ export class ZoomRowList extends ArrayGrid {
         const startRow = canWrap ? this.normalizeRowIndex(this.focusIndex) : this.clampRowIndex(this.focusIndex);
 
         this.currRow = startRow;
-        this.renderedRowRects.clear();
         let currentY = rect.y;
         // In transit, the rows are laid out from the motion's row (a row change scrolls them by the moving
         // fraction, clipped at the list top) and the indicator is drawn once over the cells.

@@ -1742,8 +1742,8 @@ export class ArrayGrid extends Group implements UITransition {
      *    in parent/local space, and the origin's position in scene space (not the grid's own rect).
      * `ancestor` is the sub part in the grid's parent space.
      *
-     * Grids whose `subpartsFromLayout()` is true compute the rect from their layout; the others read
-     * their item components' cached scene rects from the last frame.
+     * A sub part with an item component (`subpartSceneRect`) reports its cached scene rect from the last
+     * frame; any other comes from the grid's layout (`layoutSubpartRect`).
      */
     getSubBoundingRect(type: SubRectSpace, itemNumber: string, interpreter?: Interpreter): Rect {
         // A pending focus/scroll change leaves the cached rects at their pre-scroll positions, so
@@ -1751,16 +1751,11 @@ export class ArrayGrid extends Group implements UITransition {
         if (interpreter && !sgRoot.rendering && this.focusLayoutDirty) {
             this.refreshLayoutFromRoot(interpreter);
         }
-        let own: Rect | undefined;
-        if (this.subpartsFromLayout()) {
-            own = this.layoutSubpartRect(itemNumber);
-        } else {
-            const scene = this.resolveSubpart(itemNumber)?.rectToScene;
-            if (scene && type === "toScene") {
-                return { ...scene };
-            }
-            own = scene ? this.sceneRectToOwn(scene) : undefined;
+        const scene = this.subpartSceneRect(itemNumber);
+        if (scene && type === "toScene") {
+            return { ...scene };
         }
+        const own = scene ? this.sceneRectToOwn(scene) : this.layoutSubpartRect(itemNumber);
         if (!own) {
             return this.missingSubpartRect(type, interpreter);
         }
@@ -1789,14 +1784,14 @@ export class ArrayGrid extends Group implements UITransition {
         return this.ownRectToScene(origin);
     }
 
-    /** Whether this grid's sub-part rects come from `layoutSubpartRect` rather than its item components. */
-    protected subpartsFromLayout(): boolean {
-        return false;
+    /** The scene rect of the item component drawn for a sub part, if it has one. */
+    protected subpartSceneRect(itemNumber: string): Rect | undefined {
+        return this.resolveSubpart(itemNumber)?.rectToScene;
     }
 
     /**
      * The sub part's rect in this grid's own space (from its translation origin, unscaled), computed from
-     * its layout; undefined for a sub part it does not have. Used when `subpartsFromLayout()` is true.
+     * its layout; undefined for a sub part it does not have. Used when `subpartSceneRect` has none.
      */
     protected layoutSubpartRect(_itemNumber: string): Rect | undefined {
         return undefined;
@@ -2673,6 +2668,24 @@ export class ArrayGrid extends Group implements UITransition {
         const extent = this.reportedExtent(numRows, itemSize, layout?.firstRow ?? 0);
         rect.width = layout?.width ?? extent.width;
         rect.height = layout?.height ?? extent.height;
+    }
+
+    /**
+     * The height of `numRows` laid-out rows from `firstRow`, each with the spacing after it (the last one
+     * included), from `rowHeights`/`rowSpacings`. A wrapping grid's window resumes at the top.
+     */
+    protected rowsWithSpacingHeight(numRows: number, itemSize: number[], firstRow: number): number {
+        const spacing = this.getValueJS("itemSpacing") as number[];
+        const rowHeights = this.getValueJS("rowHeights");
+        const rowSpacings = this.getValueJS("rowSpacings");
+        const totalRows = Math.max(1, Math.ceil(this.content.length / (this.numCols || 1)));
+        let height = 0;
+        for (let r = 0; r < numRows; r++) {
+            const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
+            height += this.resolveTrackValue(rowHeights, row, itemSize[1]);
+            height += this.resolveTrackValue(rowSpacings, row, spacing[1] ?? 0);
+        }
+        return height;
     }
 
     /**

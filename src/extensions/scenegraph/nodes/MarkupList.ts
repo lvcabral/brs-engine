@@ -3,7 +3,6 @@ import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
 import { ArrayGrid, FocusStyle } from "./ArrayGrid";
 import { customNodeExists } from "../factory/NodeFactory";
-import { positiveMod } from "../SGUtil";
 
 const ValidFocusStyles = new Set(
     [FocusStyle.FixedFocusWrap, FocusStyle.FloatingFocus].map((style) => style.toLowerCase())
@@ -283,17 +282,8 @@ export class MarkupList extends ArrayGrid {
      * it, the last one included, outset once per list: `rectMargins().y` above, five times that below.
      */
     protected reportedExtent(numRows: number, itemSize: number[], firstRow: number): { width: number; height: number } {
-        const spacing = this.getValueJS("itemSpacing") as number[];
-        const rowHeights = this.getValueJS("rowHeights");
-        const rowSpacings = this.getValueJS("rowSpacings");
         const margin = this.rectMargins();
-        const totalRows = Math.max(1, this.content.length);
-        let height = margin.y * 6;
-        for (let r = 0; r < numRows; r++) {
-            const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
-            height += this.resolveTrackValue(rowHeights, row, itemSize[1]);
-            height += this.resolveTrackValue(rowSpacings, row, spacing[1] ?? 0);
-        }
+        const height = margin.y * 6 + this.rowsWithSpacingHeight(numRows, itemSize, firstRow);
         return { width: itemSize[0] + margin.x * 2, height };
     }
 }

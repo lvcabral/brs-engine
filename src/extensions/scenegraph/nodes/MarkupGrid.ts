@@ -4,7 +4,6 @@ import { AAMember, Interpreter, BrsDevice, BrsString, Int32, IfDraw2D, Rect } fr
 import { ArrayGrid, FocusStyle, GridHoldDelayMs, GridStepMs, GridWrapRowStepMs } from "./ArrayGrid";
 import { ContentNode } from "./ContentNode";
 import { customNodeExists } from "../factory/NodeFactory";
-import { positiveMod } from "../SGUtil";
 
 /** The row geometry `MarkupGrid.renderGridRows` lays out. */
 interface GridRowsLayout {
@@ -88,8 +87,6 @@ export class MarkupGrid extends ArrayGrid {
         const spacing = this.getValueJS("itemSpacing") as number[];
         const columnWidths = this.getValueJS("columnWidths");
         const columnSpacings = this.getValueJS("columnSpacings");
-        const rowHeights = this.getValueJS("rowHeights");
-        const rowSpacings = this.getValueJS("rowSpacings");
         const margin = this.rectMargins();
         let width = margin.x * 2;
         for (let c = 0; c < numCols; c++) {
@@ -98,13 +95,7 @@ export class MarkupGrid extends ArrayGrid {
                 width += this.resolveTrackValue(columnSpacings, c, spacing[0] ?? 0);
             }
         }
-        const totalRows = Math.max(1, Math.ceil(this.content.length / numCols));
-        let height = margin.y * 2;
-        for (let r = 0; r < numRows; r++) {
-            const row = this.wrap ? positiveMod(firstRow + r, totalRows) : firstRow + r;
-            height += this.resolveTrackValue(rowHeights, row, itemSize[1]);
-            height += this.resolveTrackValue(rowSpacings, row, spacing[1] ?? 0);
-        }
+        let height = margin.y * 2 + this.rowsWithSpacingHeight(numRows, itemSize, firstRow);
         if (!this.isHorizontalStrip()) {
             height += this.gridBottomAllowance();
         }
