@@ -21,6 +21,7 @@ sub sceneStep(name as string, scene as object, port as object)
     ticks = scene.ticks
     for i = 1 to 15
         wait(100, port)
+        if scene.ticks > ticks then exit for
     end for
     state = "frozen"
     if scene.ticks > ticks then state = "advancing"

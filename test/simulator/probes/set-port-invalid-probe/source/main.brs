@@ -3,12 +3,10 @@
 sub Main(args as object)
     ' The device console drops its clients when the app launches; give the driver time to reconnect.
     sleep(6000)
-    start = 0
-    if args.start <> invalid then start = args.start.toInt()
     print "PROBE|start|run=" + toText(args.run)
     m.url = "http://127.0.0.1:8060/query/device-info"
 
-    argCases(start)
+    argCases()
     urlEvents()
     sceneGraph()
     print "PROBE|done"
@@ -16,7 +14,7 @@ end sub
 
 ' --- Section 1: argument kinds, per component and method --------------------------------------------
 
-sub argCases(start as integer)
+sub argCases()
     comps = [
         ["roUrlTransfer", "SetMessagePort"],
         ["roUrlTransfer", "SetPort"],
@@ -27,23 +25,18 @@ sub argCases(start as integer)
         ["roInput", "SetMessagePort"]
     ]
     kinds = ["invalid", "unset", "roInvalid", "int", "string", "aa", "array", "timespan"]
-    index = 0
     for each comp in comps
         ' No port attached before the call.
         obj = CreateObject(comp[0])
         res = callSet(obj, comp[1], invalid)
         print "PROBE|arg|" + comp[0] + "." + comp[1] + "|fresh|invalid|" + res + "|after=" + portType(obj)
         for each kind in kinds
-            if index >= start
-                obj = CreateObject(comp[0])
-                port = CreateObject("roMessagePort")
-                obj.SetMessagePort(port)
-                before = portType(obj)
-                print "PROBE|try|" + index.toStr() + "|" + comp[0] + "." + comp[1] + "|" + kind
-                res = callSet(obj, comp[1], argOf(kind))
-                print "PROBE|arg|" + comp[0] + "." + comp[1] + "|attached|" + kind + "|" + res + "|before=" + before + "|after=" + portType(obj)
-            end if
-            index++
+            obj = CreateObject(comp[0])
+            port = CreateObject("roMessagePort")
+            obj.SetMessagePort(port)
+            before = portType(obj)
+            res = callSet(obj, comp[1], argOf(kind))
+            print "PROBE|arg|" + comp[0] + "." + comp[1] + "|attached|" + kind + "|" + res + "|before=" + before + "|after=" + portType(obj)
         end for
     end for
 end sub
@@ -113,7 +106,6 @@ end function
 
 function eventOf(msg as dynamic) as string
     if msg = invalid then return "msg=invalid"
-    if type(msg) = "roUrlEvent" then return "msg=roUrlEvent"
     return "msg=" + type(msg)
 end function
 

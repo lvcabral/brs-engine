@@ -1,6 +1,7 @@
 const brs = require("../../../packages/node/bin/brs.node");
 const { Interpreter, BrsDevice } = brs;
-const { BrsString, BrsInvalid, RoURLTransfer, RoMessagePort, RoURLEvent, Callable } = brs.types;
+const { BrsString, BrsInvalid, Int32, RoAssociativeArray, RoURLTransfer, RoMessagePort, RoURLEvent, Callable } =
+    brs.types;
 
 describe("RoURLTransfer", () => {
     let interpreter;
@@ -10,7 +11,6 @@ describe("RoURLTransfer", () => {
     });
 
     describe("setPort", () => {
-        const { Int32, RoAssociativeArray } = brs.types;
         let tracking;
 
         beforeEach(() => {
@@ -25,16 +25,7 @@ describe("RoURLTransfer", () => {
         const setPort = (transfer, value) => transfer.getMethod("setPort").call(interpreter, value);
         const getPort = (transfer) => transfer.getMethod("getMessagePort").call(interpreter);
 
-        it("accepts invalid without throwing and leaves the transfer without a port, as on device", () => {
-            const transfer = new RoURLTransfer();
-            expect(() => setPort(transfer, BrsInvalid.Instance)).not.toThrow();
-            expect(getPort(transfer)).toEqual(BrsInvalid.Instance);
-            const port = new RoMessagePort();
-            setPort(transfer, port);
-            expect(getPort(transfer)).toBe(port);
-        });
-
-        it("detaches an attached port when given any non-port value, as on device", () => {
+        it("detaches an attached port when given any non-port value, and re-attaches a later port, as on device", () => {
             for (const value of [
                 BrsInvalid.Instance,
                 new Int32(5),
@@ -48,6 +39,8 @@ describe("RoURLTransfer", () => {
                 setPort(transfer, value);
                 expect(getPort(transfer)).toEqual(BrsInvalid.Instance);
                 expect(port.getReferenceCount()).toBe(0);
+                setPort(transfer, port);
+                expect(getPort(transfer)).toBe(port);
             }
         });
 
@@ -63,7 +56,7 @@ describe("RoURLTransfer", () => {
             setPort(transfer, new RoMessagePort());
             const warnings = messages.filter((msg) => msg.includes("[msgport.set.bad]"));
             expect(warnings).toHaveLength(1);
-            expect(warnings[0]).toMatch(/^warning,.*roUrlTransfer\.SetPort\(\) given roInvalid, not a roMessagePort/);
+            expect(warnings[0]).toMatch(/^warning,.*roUrlTransfer\.SetPort\(\) given Invalid, not a roMessagePort/);
         });
     });
 

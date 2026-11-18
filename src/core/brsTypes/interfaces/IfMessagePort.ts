@@ -41,7 +41,7 @@ export class IfSetMessagePort {
 
     readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
-            args: [new StdlibArgument("port", ValueKind.Object)],
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, port: BrsType) => {
@@ -51,7 +51,7 @@ export class IfSetMessagePort {
 
     readonly setPort = new Callable("setPort", {
         signature: {
-            args: [new StdlibArgument("port", ValueKind.Object)],
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
         impl: (interpreter: Interpreter, port: BrsType) => {

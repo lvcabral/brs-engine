@@ -1,8 +1,7 @@
 # Set Port Invalid Probe
 
-Checks what `SetMessagePort()` / `SetPort()` do when given something that is not a `roMessagePort`. Written for #1327:
-the Jellyfin client calls `SetPort()` with an unassigned member, and the engine threw `port.registerCallback is not a
-function`.
+Checks what `SetMessagePort()` / `SetPort()` do when given something that is not a `roMessagePort` (#1327), such as
+an unassigned member.
 
 1. **Argument kinds** (`PROBE|arg|...`): for `roUrlTransfer` (`SetMessagePort` and `SetPort`), `roDeviceInfo`,
    `roTextureManager`, `roAudioPlayer`, `roChannelStore` and `roInput`, calls the setter once on a fresh object with
@@ -24,9 +23,7 @@ ROKU_IP=<ip> ROKU_PASS=<pw> ./drive.sh   # device: packs, sideloads, launches, c
 ENGINE=1 ./drive.sh                      # engine, after npm run build:cli
 ```
 
-Both write `out/trace.txt` (the `PROBE` lines, without the `PROBE|try|` markers) and `out/run.txt` (the whole
-console of the run). A launch parameter `start=<n>` skips the first `n` argument cases (the index is printed in each
-`PROBE|try|<n>|` line), to resume after a case that kills the app. None did.
+Both write `out/trace.txt` (the `PROBE` lines) and `out/run.txt` (the whole console of the run).
 
 ## Results (Roku Express 4K+, OS 16.0.4, 2026-11-18)
 
