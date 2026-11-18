@@ -191,7 +191,11 @@ export class BrightScriptExtension implements BrsExtension {
         Field.deliverPendingConstructionCallbacks();
     }
 
-    onMessageLoop(_: Interpreter) {
+    onMessageLoop(interpreter: Interpreter) {
+        if (!sgRoot.inTaskThread() && sgRoot.takeEndRequest()) {
+            interpreter.requestEnd();
+            return;
+        }
         // Work deferred until the current handler returns (e.g. a list's content-reset itemFocused).
         // A handler dispatched from the message loop returns HERE: while Main blocks in wait(), no
         // statement runs outside an observer, so the tick drain above would never see depth 0.

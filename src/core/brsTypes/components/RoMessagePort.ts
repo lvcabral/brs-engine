@@ -99,6 +99,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             this.runMessageLoopHooks(interpreter);
+            if (interpreter.endRequested) {
+                return BrsInvalid.Instance;
+            }
             const msg = this.getNextMessage();
             if (msg instanceof BrsEvent) {
                 return msg;

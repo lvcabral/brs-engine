@@ -1,0 +1,8 @@
+PROBE|000|boot|start|
+PROBE|001|boot|device|model=Roku Express 4K+ os=16.0 mode=roscreen-after
+PROBE|010|A|live|ticks=3 audio=playing
+PROBE|011|A|obs-before-close|roSGNodeEvent:audio.state=bufferingx1 roSGNodeEvent:scene1.ticksx13 roSGNodeEvent:audio.state=playingx1 roSGNodeEvent:task1.state=runx1 roSGNodeEvent:task1.beatx5 roSGNodeEvent:.beatx4 
+PROBE|012|await|shot|name=roscreen-after-A-before-close
+PROBE|013|A|screen-port-before-close|
+PROBE|020|A|close|ticks=43 taskBeat=19
+11-18 21:01:44.401 app  [scrpt.ctx.run.exit] UI: Exiting 'SGScreen Close Probe', id 'dev', EXIT_USER_NAV, thrd 27473

@@ -66,6 +66,7 @@ export class SGRoot {
     private _measuring: boolean = false;
     private _renderPass: "layout" | "paint" = "paint";
     private readonly _pendingPorts: RoMessagePort[] = [];
+    private _endRequest: boolean = false;
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
      * skipping a rendezvous (a performance heuristic). Defaults to `false` so that every Task-thread
@@ -491,6 +492,28 @@ export class SGRoot {
             screen.registerPort(port);
         }
         this._pendingPorts.length = 0;
+    }
+
+    /**
+     * Stops the runtime of a closed screen's Scene: its timers, animations and transitions don't run
+     * again, even under a screen created later. Closing the last screen ends the app: unless an
+     * `roScreen` holds the display, the app ends at its next message-loop pass (see takeEndRequest).
+     */
+    closeScreen() {
+        this._timers.length = 0;
+        this._animations.length = 0;
+        this._transitions.clear();
+        this._endRequest ||= BrsDevice.liveRoScreens === 0;
+    }
+
+    /**
+     * Hands over a pending app end requested by {@link closeScreen}, once.
+     * @returns True when the app must end now
+     */
+    takeEndRequest(): boolean {
+        const pending = this._endRequest;
+        this._endRequest = false;
+        return pending;
     }
 
     /**

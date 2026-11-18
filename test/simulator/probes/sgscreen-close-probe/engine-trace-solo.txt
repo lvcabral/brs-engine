@@ -1,0 +1,9 @@
+PROBE|000|boot|start|
+PROBE|001|boot|device|model=Roku TV os=16.0 mode=solo
+PROBE|010|A|live|ticks=3 audio=none
+PROBE|011|A|obs-before-close|roSGNodeEvent:scene1.ticksx13 roSGNodeEvent:task1.state=runx1 roSGNodeEvent:task1.beatx3 roSGNodeEvent:.beatx3 
+PROBE|012|await|shot|name=solo-A-before-close
+PROBE|013|A|screen-port-before-close|
+PROBE|020|A|close|ticks=43 taskBeat=15
+PROBE|021|A|close-again|
+------ Finished 'sgscreen-close-probe' execution [EXIT_USER_NAV] ------

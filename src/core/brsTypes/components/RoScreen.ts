@@ -28,6 +28,8 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
     private readonly valid: boolean;
+    /** Counted in `BrsDevice.liveRoScreens` until disposed. */
+    private live: boolean = false;
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -89,6 +91,10 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const ifGetMsgPort = new IfGetMessagePort(this);
+        if (this.valid) {
+            this.live = true;
+            BrsDevice.liveRoScreens++;
+        }
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -196,6 +202,10 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
+        if (this.live) {
+            this.live = false;
+            BrsDevice.liveRoScreens--;
+        }
         this.port?.unregisterCallback(this.getComponentName());
         for (const c of this.canvas) {
             releaseCanvas(c);

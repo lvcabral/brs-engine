@@ -48,6 +48,15 @@ const rokuKeys: Map<number, string> = new Map([
     [13, "play"],
 ]);
 
+/**
+ * Message callback of every main-thread port, including the ones given to `setMessagePort`: whatever
+ * port Main reads, the pass runs on the current screen, so a screen created after another one closed
+ * renders no matter which port Main waits on.
+ */
+function pollCurrentScreen(interpreter: Interpreter) {
+    return sgRoot.screen?.getNewEvents(interpreter) ?? [];
+}
+
 export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -87,7 +96,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
-        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        const setPortIface = new IfSetMessagePort(this, pollCurrentScreen);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifSGScreen: [
@@ -105,7 +114,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     registerPort(port: RoMessagePort) {
         const component = this.getComponentName();
-        port.registerCallback(component, this.getNewEvents.bind(this));
+        port.registerCallback(component, pollCurrentScreen);
     }
 
     clearCanvas(rgba: number): void {
@@ -180,9 +189,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         };
     }
 
-    /** Message callback to handle control keys and Scene rendering */
-    private getNewEvents(interpreter: Interpreter) {
-        if (this.closed || this.rendering || !interpreter) {
+    /**
+     * Handles control keys and renders the Scene. A closed screen does nothing, and neither does an
+     * open one while an `roScreen` owns the display: the Scene is suspended under it, as on a device.
+     */
+    getNewEvents(interpreter: Interpreter) {
+        if (this.closed || this.rendering || !interpreter || BrsDevice.liveRoScreens > 0) {
             return [];
         }
         this.rendering = true;
@@ -336,8 +348,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            if (this.closed) {
+                return Uninitialized.Instance;
+            }
             this.closed = true;
             BrsDevice.resetKeysBuffer();
+            sgRoot.closeScreen();
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },

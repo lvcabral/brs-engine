@@ -60,6 +60,8 @@ export class BrsDevice {
      * lexeme stats, the texture registry, and the crash/`bt` backtrace output. */
     static tracking: boolean = false;
     static displayEnabled: boolean = true;
+    /** Live `roScreen` objects. While any exists it owns the display, which suspends a SceneGraph screen. */
+    static liveRoScreens: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
     static multiControllers: boolean = false; // Reset every app run in setManifest(); off = no behavior change

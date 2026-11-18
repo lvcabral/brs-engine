@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="BeatTask" extends="Task">
+    <interface>
+        <field id="beats" type="integer" value="10" />
+        <field id="beat" type="integer" value="0" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.top.functionName = "beatLoop"
+        end sub
+
+        ' Each beat writes a task field and m.global (a rendezvous with the render thread).
+        sub beatLoop()
+            for i = 1 to m.top.beats
+                sleep(200)
+                m.top.beat = i
+                m.global.beat = m.global.beat + 1
+            end for
+        end sub
+        ]]>
+    </script>
+</component>
