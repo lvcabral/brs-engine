@@ -222,7 +222,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D, Displ
     // Control Key Events
     private getNewEvents() {
         const owner = BrsDevice.displayOwner();
-        if (owner !== undefined && owner !== this && !(owner instanceof RoScreen)) {
+        if (owner && !(owner instanceof RoScreen)) {
             // A SceneGraph screen created later sits on top and takes the keys.
             return [];
         }

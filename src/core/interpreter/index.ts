@@ -125,7 +125,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     private _activeCallee?: Expr.Expression;
     private _printed = false; // Prevent the warning when no entry point exists
     private _lastStmt: Stmt.Statement | null = null;
-    private _endRequested = false;
 
     location: Location = {
         file: "",
@@ -190,19 +189,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return;
         }
         this._debugMode = mode;
-    }
-
-    /** True once {@link requestEnd} was called: the app is unwinding as if it ran an `end` statement. */
-    get endRequested() {
-        return this._endRequested;
-    }
-
-    /**
-     * Ends the app as an `end` statement would (`EXIT_USER_NAV`), from outside the statement loop:
-     * the next statement throws, and `roMessagePort.wait` returns so a blocked loop reaches one.
-     */
-    requestEnd() {
-        this._endRequested = true;
     }
 
     /**
@@ -2093,7 +2079,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param statement The statement being executed
      */
     private checkDebugger(statement: Stmt.Statement) {
-        if (this._endRequested) {
+        if (BrsDevice.appEndDue()) {
+            // The app's last screen closed (see BrsDevice.releaseDisplay): end as an `end` statement does.
             throw new Stmt.BlockEnd("end-statement", statement.location);
         }
         if (this.debugMode === DebugMode.EXIT) {

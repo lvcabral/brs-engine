@@ -5,16 +5,7 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import {
-    BrsDevice,
-    BufferType,
-    DataType,
-    genHexAddress,
-    Interpreter,
-    MediaEvent,
-    MediaTrack,
-    RoMessagePort,
-} from "brs-engine";
+import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
@@ -26,9 +17,6 @@ import type { RoSGScreen } from "./components/RoSGScreen";
 import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, Timer, Video } from "./nodes";
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import type { UITransition } from "./SGTransition";
-
-/** How long a device keeps running an app whose last screen closed, when Main reaches no message loop. */
-const APP_END_DELAY_MS = 1000;
 
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
@@ -68,9 +56,6 @@ export class SGRoot {
     private _rendering: boolean = false;
     private _measuring: boolean = false;
     private _renderPass: "layout" | "paint" = "paint";
-    private readonly _pendingPorts: RoMessagePort[] = [];
-    private _endRequest: boolean = false;
-    private _endDeadline: number = 0;
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
      * skipping a rendezvous (a performance heuristic). Defaults to `false` so that every Task-thread
@@ -478,62 +463,24 @@ export class SGRoot {
     }
 
     /**
-     * Stores a port to be registered with the screen once it is created.
-     * @param port RoMessagePort to register later
-     */
-    addPendingPort(port: RoMessagePort) {
-        this._pendingPorts.push(port);
-    }
-
-    /**
      * Sets the RoSGScreen instance for the application.
-     * Retroactively registers any ports created before the screen.
      * @param screen RoSGScreen instance to set
      */
     setScreen(screen: RoSGScreen) {
         this._screen = screen;
-        for (const port of this._pendingPorts) {
-            screen.registerPort(port);
-        }
-        this._pendingPorts.length = 0;
     }
 
     /**
-     * Handles a closed screen. The current screen's Scene stops: its timers, animations and transitions
-     * don't run again, even under a screen created later. When no other screen is left on the display,
-     * the app ends: at its next message-loop pass, or after {@link APP_END_DELAY_MS} if Main never
-     * reaches one (see takeEndRequest and endRequestDue).
+     * Stops the Scene of a closed screen when it is the current one: its timers, animations and
+     * transitions don't run again, even under a screen created later.
      * @param screen the screen that was just closed
      */
     closeScreen(screen: RoSGScreen) {
         if (screen === this._screen) {
             this._timers.length = 0;
             this._animations.length = 0;
-            this._transitions.clear();
+            this.clearTransitions();
         }
-        if (!this._endRequest && BrsDevice.displayOwner() === undefined) {
-            this._endRequest = true;
-            this._endDeadline = performance.now() + APP_END_DELAY_MS;
-        }
-    }
-
-    /**
-     * Hands over a pending app end requested by {@link closeScreen}, once.
-     * @returns True when the app must end now
-     */
-    takeEndRequest(): boolean {
-        const pending = this._endRequest;
-        this._endRequest = false;
-        return pending;
-    }
-
-    /**
-     * Hands over a pending app end once its delay has passed. Checked per statement, so the common
-     * case is a single flag read.
-     * @returns True when the app must end now
-     */
-    endRequestDue(): boolean {
-        return this._endRequest && performance.now() >= this._endDeadline && this.takeEndRequest();
     }
 
     /**

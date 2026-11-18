@@ -38,6 +38,9 @@ import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 import type { Lexeme } from "../lexer/Lexeme";
 
+/** How long a device keeps running an app whose last screen closed, when Main reaches no message loop. */
+const AppEndDelayMs = 1000;
+
 /** A screen that can own the display: an `roScreen`, or a SceneGraph screen registered by its extension. */
 export interface DisplayScreen {
     /** False once the screen is closed or released; it then gives the display back. */
@@ -54,6 +57,8 @@ export class BrsDevice {
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
     private static readonly displayStack: DisplayScreen[] = [];
+    /** `performance.now()` time the app ends at because its last screen closed; 0 is due now. */
+    private static appEndAt: number | undefined;
     static readonly terms: Map<string, string> = new Map<string, string>();
     static readonly sfx: string[] = DefaultSounds.slice();
     static readonly bscs = new Map<string, number>();
@@ -641,9 +646,36 @@ export class BrsDevice {
         return stack.at(-1);
     }
 
-    /** Forgets every screen, at the start of an app run. */
+    /** Forgets every screen and any pending app end, at the start of an app run. */
     static resetDisplay() {
         this.displayStack.length = 0;
+        this.appEndAt = undefined;
+    }
+
+    /**
+     * Called when a screen closes. With no screen left on the display the app ends, as an `end` statement
+     * would (`EXIT_USER_NAV`): at Main's next message-loop pass, or after {@link AppEndDelayMs} if Main
+     * never reaches one. Not at once: a device still runs the statements right after `close()`.
+     */
+    static releaseDisplay() {
+        if (this.appEndAt === undefined && this.displayOwner() === undefined) {
+            this.appEndAt = performance.now() + AppEndDelayMs;
+        }
+    }
+
+    /** Main reached its message loop: a pending app end is due now. */
+    static onMessageLoop() {
+        if (this.appEndAt !== undefined) {
+            this.appEndAt = 0;
+        }
+    }
+
+    /**
+     * Checked before every statement, so with no pending end it is a single field read.
+     * @returns True when the app must end now
+     */
+    static appEndDue(): boolean {
+        return this.appEndAt !== undefined && performance.now() >= this.appEndAt;
     }
 
     /**

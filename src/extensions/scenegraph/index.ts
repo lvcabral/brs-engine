@@ -33,7 +33,7 @@ import { Task } from "./nodes/Task";
 import { Field } from "./nodes/Field";
 import { Node } from "./nodes/Node";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
-import { RoSGScreen } from "./components/RoSGScreen";
+import { RoSGScreen, pollCurrentScreen } from "./components/RoSGScreen";
 import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -60,7 +60,6 @@ export class BrightScriptExtension implements BrsExtension {
         Field.resetDispatch();
         Node.resetFocusDispatch();
         sgRoot.clearTransitions();
-        sgRoot.takeEndRequest();
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;
@@ -81,12 +80,8 @@ export class BrightScriptExtension implements BrsExtension {
     private createMessagePort(interpreter?: Interpreter): RoMessagePort {
         const port = new RoMessagePort();
         if (interpreter && !sgRoot.inTaskThread()) {
-            // All ports created in Main thread are registered to the screen
-            if (sgRoot.screen) {
-                sgRoot.screen.registerPort(port);
-            } else {
-                sgRoot.addPendingPort(port);
-            }
+            // Every port Main reads drives the current SceneGraph screen, created before or after the port.
+            port.registerCallback("roSGScreen", pollCurrentScreen);
         }
         return port;
     }
@@ -176,7 +171,7 @@ export class BrightScriptExtension implements BrsExtension {
         }
     }
 
-    tick(interpreter: Interpreter) {
+    tick(_: Interpreter) {
         if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
             task?.processThreadUpdate();
@@ -186,20 +181,13 @@ export class BrightScriptExtension implements BrsExtension {
             // than synchronously at the end of init. Render-thread only — focus is a render-thread
             // concern and Task threads never establish it. No-op unless there is pending work.
             Field.deliverPendingInitFocus();
-            if (sgRoot.endRequestDue()) {
-                interpreter.requestEnd();
-            }
         }
         // Sibling drain for construction-time state replays (e.g. AnimatedImage.setState) —
         // see Field.runAfterConstruction/deliverPendingConstructionCallbacks.
         Field.deliverPendingConstructionCallbacks();
     }
 
-    onMessageLoop(interpreter: Interpreter) {
-        if (!sgRoot.inTaskThread() && sgRoot.takeEndRequest()) {
-            interpreter.requestEnd();
-            return;
-        }
+    onMessageLoop(_: Interpreter) {
         // Work deferred until the current handler returns (e.g. a list's content-reset itemFocused).
         // A handler dispatched from the message loop returns HERE: while Main blocks in wait(), no
         // statement runs outside an observer, so the tick drain above would never see depth 0.

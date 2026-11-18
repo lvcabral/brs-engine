@@ -54,9 +54,12 @@ const rokuKeys: Map<number, string> = new Map([
  * port Main reads, the pass runs on the current screen, so a screen created after another one closed
  * renders no matter which port Main waits on.
  */
-function pollCurrentScreen(interpreter: Interpreter) {
-    return sgRoot.screen?.getNewEvents(interpreter) ?? [];
+export function pollCurrentScreen(interpreter: Interpreter) {
+    return sgRoot.screen?.getNewEvents(interpreter) ?? NO_EVENTS;
 }
+
+/** Returned, never modified, by every pass that has nothing to report. */
+const NO_EVENTS: BrsEvent[] = [];
 
 export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, DisplayScreen {
     readonly kind = ValueKind.Object;
@@ -73,7 +76,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
     private alphaEnable: boolean;
     private lastMessage: number;
     private rendering: boolean;
-    private closed: boolean;
+    private closed: boolean = false;
     /** Set while a screen above holds the display, so the Scene repaints once it is back on top. */
     private suspended: boolean = false;
     width: number;
@@ -90,7 +93,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
         this.scaleMode = 1;
         this.isDirty = false;
         this.rendering = false;
-        this.closed = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
@@ -119,11 +121,6 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
     /** Owns the display until closed, unless a screen created later sits on top of it. */
     ownsDisplay() {
         return !this.closed;
-    }
-
-    registerPort(port: RoMessagePort) {
-        const component = this.getComponentName();
-        port.registerCallback(component, pollCurrentScreen);
     }
 
     clearCanvas(rgba: number): void {
@@ -204,11 +201,11 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
      */
     getNewEvents(interpreter: Interpreter) {
         if (this.rendering || !interpreter) {
-            return [];
+            return NO_EVENTS;
         }
         if (BrsDevice.displayOwner() !== this) {
             this.suspended = true;
-            return [];
+            return NO_EVENTS;
         }
         if (this.suspended) {
             this.suspended = false;
@@ -377,6 +374,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
                 BrsDevice.displayOwner()?.restoreDisplay?.();
             }
             sgRoot.closeScreen(this);
+            BrsDevice.releaseDisplay();
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },

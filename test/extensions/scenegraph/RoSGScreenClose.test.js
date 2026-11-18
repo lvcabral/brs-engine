@@ -3,7 +3,7 @@ const path = require("path");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
 
-const { RoSGScreen, SGNodeFactory, sgRoot } = scenegraph;
+const { RoSGScreen, SGNodeFactory, pollCurrentScreen, sgRoot } = scenegraph;
 const { BrsDevice, BrsInvalid, Interpreter, RoMessagePort, RoScreen } = core;
 
 describe("roSGScreen.close", () => {
@@ -17,7 +17,6 @@ describe("roSGScreen.close", () => {
     beforeEach(() => {
         interpreter = new Interpreter();
         BrsDevice.resetDisplay();
-        sgRoot.takeEndRequest();
     });
 
     function poll(port) {
@@ -26,6 +25,13 @@ describe("roSGScreen.close", () => {
 
     function close(screen) {
         screen.getMethod("close").call(interpreter);
+    }
+
+    /** A port Main created, which drives the current screen (as the extension's roMessagePort factory does). */
+    function mainPort() {
+        const port = new RoMessagePort();
+        port.registerCallback("roSGScreen", pollCurrentScreen);
+        return port;
     }
 
     function drawingScreen() {
@@ -44,8 +50,7 @@ describe("roSGScreen.close", () => {
 
     test("a closed screen stops drawing frames through ports registered to it", () => {
         const { screen, frames } = drawingScreen();
-        const port = new RoMessagePort();
-        screen.registerPort(port);
+        const port = mainPort();
 
         screen.makeDirty();
         poll(port);
@@ -72,8 +77,7 @@ describe("roSGScreen.close", () => {
 
     test("an roScreen created over the Scene suspends it; the Scene repaints once it is released", () => {
         const { screen, frames } = drawingScreen();
-        const port = new RoMessagePort();
-        screen.registerPort(port);
+        const port = mainPort();
         screen.makeDirty();
         poll(port);
         expect(frames).toHaveBeenCalledTimes(1);
@@ -90,8 +94,7 @@ describe("roSGScreen.close", () => {
 
     test("an roScreen that was never stored does not suspend the Scene", () => {
         const { screen, frames } = drawingScreen();
-        const port = new RoMessagePort();
-        screen.registerPort(port);
+        const port = mainPort();
 
         new RoScreen();
         screen.makeDirty();
@@ -102,8 +105,7 @@ describe("roSGScreen.close", () => {
     test("a screen created over an roScreen draws while the roScreen is still held", () => {
         heldRoScreen();
         const { screen, frames } = drawingScreen();
-        const port = new RoMessagePort();
-        screen.registerPort(port);
+        const port = mainPort();
 
         screen.makeDirty();
         poll(port);
@@ -112,8 +114,7 @@ describe("roSGScreen.close", () => {
 
     test("a screen created after a close draws through ports registered to the closed one", () => {
         const first = drawingScreen();
-        const oldPort = new RoMessagePort();
-        first.screen.registerPort(oldPort);
+        const oldPort = mainPort();
         const rs = heldRoScreen();
         close(first.screen);
         rs.removeReference();
@@ -125,17 +126,19 @@ describe("roSGScreen.close", () => {
         expect(first.frames).not.toHaveBeenCalled();
     });
 
-    test("closing the last screen requests the app end; closing it under an roScreen does not", () => {
+    test("closing the last screen ends the app at the next message loop; closing it under an roScreen does not", () => {
         const { screen } = drawingScreen();
         heldRoScreen();
         close(screen);
-        expect(sgRoot.takeEndRequest()).toBe(false);
+        BrsDevice.onMessageLoop();
+        expect(BrsDevice.appEndDue()).toBe(false);
 
         BrsDevice.resetDisplay();
         const last = drawingScreen();
         close(last.screen);
-        expect(sgRoot.takeEndRequest()).toBe(true);
-        expect(sgRoot.takeEndRequest()).toBe(false);
+        expect(BrsDevice.appEndDue()).toBe(false);
+        BrsDevice.onMessageLoop();
+        expect(BrsDevice.appEndDue()).toBe(true);
     });
 
     test("closing a screen that is not the current one leaves the current Scene running", () => {
@@ -146,7 +149,8 @@ describe("roSGScreen.close", () => {
 
         close(older.screen);
         expect(sgRoot.timers).toContain(timer);
-        expect(sgRoot.takeEndRequest()).toBe(false);
+        BrsDevice.onMessageLoop();
+        expect(BrsDevice.appEndDue()).toBe(false);
 
         close(current.screen);
         expect(sgRoot.timers).not.toContain(timer);
@@ -157,11 +161,10 @@ describe("roSGScreen.close", () => {
         now.mockReturnValue(1000);
         const { screen } = drawingScreen();
         close(screen);
-        expect(sgRoot.endRequestDue()).toBe(false);
+        expect(BrsDevice.appEndDue()).toBe(false);
 
         now.mockReturnValue(2000);
-        expect(sgRoot.endRequestDue()).toBe(true);
-        expect(sgRoot.endRequestDue()).toBe(false);
+        expect(BrsDevice.appEndDue()).toBe(true);
         now.mockRestore();
     });
 

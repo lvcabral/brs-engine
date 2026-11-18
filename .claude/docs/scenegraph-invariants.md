@@ -759,9 +759,11 @@ Device-measured in `test/simulator/probes/sgscreen-close-probe` (OS 16.0.4). Reg
 under an roScreen…" and "Ends the app when its last screen closes" in `test/cli/cli-scenegraph.test.js`, and
 `test/extensions/scenegraph/RoSGScreenClose.test.js`.
 
--   **Every main-thread port drives the current screen** (`pollCurrentScreen` in `RoSGScreen.ts`), never the
-    screen that existed when the port was made. A screen created after another one closed must render
-    whichever port Main reads, including the closed screen's own port. Don't bind `this.getNewEvents`.
+-   **Every main-thread port drives the current screen.** The extension's `roMessagePort` factory and
+    `setMessagePort` register the same `pollCurrentScreen` callback (`RoSGScreen.ts`), which runs whatever
+    `sgRoot.screen` is when the port is read. Never the screen that existed when the port was made: a
+    screen created after another one closed must render whichever port Main reads, including the closed
+    screen's own port. Don't bind `this.getNewEvents`, and don't bring back a pending-port queue.
 -   **The most recently created screen owns the display** (`BrsDevice.pushDisplay`/`displayOwner`, a stack
     of `DisplayScreen`s). `getNewEvents` runs only while its screen is the owner, so a Scene is suspended
     under an `roScreen` created later (no paint, timers, tasks or key handling), and an `roSGScreen`
@@ -778,13 +780,14 @@ under an roScreen…" and "Ends the app when its last screen closes" in `test/cl
 -   **`close()` is idempotent** (a single `isScreenClosed`). `sgRoot.closeScreen()` drops the timers,
     animations and transitions only when the closed screen is the current one. Closing an older screen
     must not stop the Scene that is shown. Keys are discarded only when the closed screen owned the display.
--   **Closing the last screen ends the app** (`EXIT_USER_NAV`). When no screen is left on the display stack,
-    `closeScreen()` records an end request. The extension's `onMessageLoop` takes it at the next
-    `wait`/`GetMessage`/`PeekMessage`, and `tick` takes it after `APP_END_DELAY_MS` when Main never reaches a
-    port. Either way `interpreter.requestEnd()` makes `wait()` return and the next statement throw
-    `BlockEnd("end-statement")`. It is never thrown inside `close()`, because the device still runs the
-    statements right after it. The `tick` check is a single flag read per statement, so keep it that way.
-    Creating a new screen after that `close()` does not cancel the end, and `onInit` clears a stale request.
+-   **Closing the last screen ends the app** (`EXIT_USER_NAV`). It lives in core, next to the display stack.
+    `close()` calls `BrsDevice.releaseDisplay()`, which sets `appEndAt` when no screen is left.
+    `RoMessagePort`'s message-loop pass (`wait`/`GetMessage`/`PeekMessage`) makes that end due at once,
+    otherwise it falls due after `AppEndDelayMs` when Main never reaches a port. Once it is due, `wait()`
+    returns and `checkDebugger` throws `BlockEnd("end-statement")` before the next statement. It is never
+    thrown inside `close()`, because the device still runs the statements right after it. With no end
+    pending, `appEndDue()` is a single field read per statement, so keep it that way. Creating a new screen
+    after that `close()` does not cancel the end, and `resetDisplay()` clears it per run.
 -   `try`/`catch` never catches a `BlockEnd` (control flow: `exit for`, `return`, `goto`, `end`, a requested
     end). Regression: `try-catch-control-flow.brs`.
 -   Known gap: a Task of the closed screen resumes once a new screen serves its rendezvous (on a device it stays
