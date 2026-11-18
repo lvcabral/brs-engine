@@ -63,6 +63,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private alphaEnable: boolean;
     private lastMessage: number;
     private rendering: boolean;
+    private closed: boolean;
     width: number;
     height: number;
     scaleMode: number;
@@ -77,6 +78,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.scaleMode = 1;
         this.isDirty = false;
         this.rendering = false;
+        this.closed = false;
         this.lastMessage = performance.now();
         const maxFps = BrsDevice.deviceInfo.maxFps;
         this.maxMs = Math.trunc((1 / maxFps) * 1000);
@@ -180,7 +182,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
 
     /** Message callback to handle control keys and Scene rendering */
     private getNewEvents(interpreter: Interpreter) {
-        if (this.rendering || !interpreter) {
+        if (this.closed || this.rendering || !interpreter) {
             return [];
         }
         this.rendering = true;
@@ -334,6 +336,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
+            this.closed = true;
             BrsDevice.resetKeysBuffer();
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;

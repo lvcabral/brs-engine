@@ -385,6 +385,22 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Stops a closed roSGScreen's Scene from running while main reads another port", async () => {
+        let command = ["node", brsCliPath, "-r closed-screen-render-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "timer ticking before close",
+            "closed event: true",
+            "ticks unchanged after close: true",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Fires itemFocused only when a list gains focus, not on content population while unfocused", async () => {
         let command = ["node", brsCliPath, "-r list-initial-focus-app", "source/main.brs", "-c 0"].join(" ");
 
