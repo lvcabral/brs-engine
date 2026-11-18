@@ -1,0 +1,28 @@
+PROBE|000|boot|start|
+PROBE|001|boot|device|model=Roku TV os=16.0 mode=roscreen-first
+PROBE|040|B|roscreen|t=- type=roScreen
+PROBE|041|B|roscreen-drawn|t=- pending=[]
+PROBE|100|await|shot|name=roscreen-first-roscreen
+PROBE|121|C|sg-shown|n=1 port=[roSGNodeEvent:scene2.ticksx20 ] rs=[] ticks=23
+PROBE|122|await|shot|name=roscreen-first-sg1
+PROBE|123|await|Down|
+PROBE|124|C|key-on-sg|port=[roSGNodeEvent:scene2.ticksx15 ] rs=[] lastKey=down
+PROBE|125|await|Up|
+PROBE|126|C|key-rs-read-first|rs=[] port=[roSGNodeEvent:scene2.ticksx22 ] lastKey=up
+PROBE|127|C|closed|n=1 port=[roSGScreenEvent:closedx1 ] rs=[]
+PROBE|128|await|shot|name=roscreen-first-after-close1-before-redraw
+PROBE|129|await|shot|name=roscreen-first-after-close1-redrawn
+PROBE|130|await|Left|
+PROBE|131|B|key-on-roscreen|rs=[roUniversalControlEvent:4x1 roUniversalControlEvent:104x1 ] port=[]
+PROBE|141|C|sg-shown|n=2 port=[roSGNodeEvent:scene2.ticksx20 ] rs=[] ticks=23
+PROBE|142|await|shot|name=roscreen-first-sg2
+PROBE|143|await|Down|
+PROBE|144|C|key-on-sg|port=[roSGNodeEvent:scene2.ticksx15 ] rs=[] lastKey=down
+PROBE|145|await|Up|
+PROBE|146|C|key-rs-read-first|rs=[] port=[roSGNodeEvent:scene2.ticksx22 ] lastKey=up
+PROBE|147|C|closed|n=2 port=[roSGScreenEvent:closedx1 ] rs=[]
+PROBE|148|await|shot|name=roscreen-first-after-close2-before-redraw
+PROBE|149|await|shot|name=roscreen-first-after-close2-redrawn
+PROBE|150|await|Left|
+PROBE|151|B|key-on-roscreen|rs=[roUniversalControlEvent:4x1 roUniversalControlEvent:104x1 ] port=[]
+PROBE|999|done|

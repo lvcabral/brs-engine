@@ -213,8 +213,19 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D, Displ
         return this.getReferenceCount() > 0;
     }
 
+    /** Posts the frame on display again: the front buffer, or the only one when single-buffered. */
+    restoreDisplay() {
+        const shown = this.doubleBuffer ? this.lastBuffer : this.currentBuffer;
+        postMessage(this.context[shown].getImageData(0, 0, this.width, this.height));
+    }
+
     // Control Key Events
     private getNewEvents() {
+        const owner = BrsDevice.displayOwner();
+        if (owner !== undefined && owner !== this && !(owner instanceof RoScreen)) {
+            // A SceneGraph screen created later sits on top and takes the keys.
+            return [];
+        }
         const events: BrsEvent[] = [];
         const nextKey = BrsDevice.updateKeysBuffer();
         if (nextKey) {

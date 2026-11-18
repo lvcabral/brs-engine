@@ -39,6 +39,7 @@ an `onKeyEvent` that stores the last pressed key in `lastKey`. `BeatTask` writes
 | `roscreen-after`  | `close()`, then create an `roScreen` right away                                                                                                                                                                                     |
 | `sgscreen-after`  | `close()`, then create a second `roSGScreen` right away                                                                                                                                                                             |
 | `roscreen-before` | create an `roScreen` while the Scene is shown, `close()` the `roSGScreen`, continue on the `roScreen`, release it, create a second `roSGScreen`, and only then read the first screen's nodes, each read marked because it may block |
+| `roscreen-first`  | create an `roScreen` and keep it open, then twice: show an `roSGScreen` over it, press keys (once with Main reading the `roScreen`'s port first), `close()` it, screenshot before and after the `roScreen` redraws, press a key     |
 
 ## Device findings (Roku Express 4K+, OS 16.0.4)
 
@@ -62,22 +63,32 @@ an `onKeyEvent` that stores the last pressed key in `lastKey`. `BeatTask` writes
    return their frozen value (19). `scene.ticks` on the closed Scene blocks until the driver gives up. In a run
    without the second screen, `task.beat` logged `Rendezvous aborted for BeatTask` (main) and
    `Rendezvous aborted for Node: BeatTask.xml(18)` (the task's `m.global` write), then the app exited.
+6. **The most recently created screen is the active one, in either order** (`roscreen-first`). An
+   `roSGScreen` shown over an `roScreen` that stays open renders and ticks (`ticks2=20` after 2 s,
+   `device-roscreen-first-sg-over-roscreen.jpg`). It takes the keys even while Main reads the `roScreen`'s
+   port first (`rs=[]`, `lastKey=up`). After its `close()` the app keeps running on the `roScreen`, whose last
+   frame shows again before the app redraws (`device-roscreen-first-after-close-before-redraw.jpg`), and the
+   keys go to the `roScreen` port again. A second `roSGScreen` over the same `roScreen` behaves the same way.
+   Reported by the PR author on a Roku TV (OS 16.0.4) and reproduced here.
 
 ## Engine vs device
 
 PR #1328 as first submitted (`828dcabd`) only stopped the closed screen's pass. The engine now follows the
 findings above (`engine-trace-<mode>.txt` are the post-fix runs):
 
-| Behavior                                           | Device                      | Engine before                | Engine now                                                                              |
-| -------------------------------------------------- | --------------------------- | ---------------------------- | --------------------------------------------------------------------------------------- |
-| `close()` with no `roScreen`                       | app exits                   | keeps running                | exits (`EXIT_USER_NAV`) at the next message-loop pass                                   |
-| `roScreen` created while the Scene is shown        | Scene suspended             | Scene keeps ticking under it | suspended                                                                               |
-| `close()` twice                                    | one `isScreenClosed`        | two                          | one                                                                                     |
-| Observer events after `close()`                    | none                        | only those already queued    | none from the Scene; the closed screen's Task resumes under a second screen (row below) |
-| Keys after `close()` with an `roScreen`            | `roScreen` port             | match                        | match                                                                                   |
-| Second `roSGScreen`, main reading only older ports | ticks (`ticks2=20`)         | frozen (`ticks2=0`)          | ticks (`ticks2=20`)                                                                     |
-| The closed screen's Task once a second screen runs | frozen (rendezvous aborted) | n/a                          | resumes (known gap)                                                                     |
-| Reading a closed Scene's field                     | blocks                      | returns                      | returns                                                                                 |
+| Behavior                                                                                 | Device                              | Engine before                | Engine now                                                                              |
+| ---------------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------- | --------------------------------------------------------------------------------------- |
+| `close()` with no `roScreen`                                                             | app exits                           | keeps running                | exits (`EXIT_USER_NAV`) at the next message-loop pass                                   |
+| `roScreen` created while the Scene is shown                                              | Scene suspended                     | Scene keeps ticking under it | suspended                                                                               |
+| `close()` twice                                                                          | one `isScreenClosed`                | two                          | one                                                                                     |
+| Observer events after `close()`                                                          | none                                | only those already queued    | none from the Scene; the closed screen's Task resumes under a second screen (row below) |
+| Keys after `close()` with an `roScreen`                                                  | `roScreen` port                     | match                        | match                                                                                   |
+| Second `roSGScreen`, main reading only older ports                                       | ticks (`ticks2=20`)                 | frozen (`ticks2=0`)          | ticks (`ticks2=20`)                                                                     |
+| The closed screen's Task once a second screen runs                                       | frozen (rendezvous aborted)         | n/a                          | resumes (known gap)                                                                     |
+| Reading a closed Scene's field                                                           | blocks                              | returns                      | returns                                                                                 |
+| `roSGScreen` shown over an open `roScreen`                                               | renders and ticks                   | renders                      | renders                                                                                 |
+| Keys while an `roSGScreen` is over an `roScreen`, Main reading the `roScreen` port first | Scene                               | `roScreen` port              | Scene                                                                                   |
+| `close()` of an `roSGScreen` over an open `roScreen`                                     | `roScreen`'s last frame shows again | Scene's last frame stays     | `roScreen`'s last frame shows again                                                     |
 
 In `roscreen-after` and `sgscreen-after`, the device never returns from the `CreateObject` that follows
 `close()`. The engine still creates the object and ends the app at the next `wait`.
@@ -86,5 +97,5 @@ The device traces of `solo`, `roscreen-after` and `sgscreen-after` were captured
 `run`. The device accepts that name, but the engine rejects it because it collides with the global `Run()`.
 The probe now uses `beatLoop`; the rename does not change what those runs measure.
 
-Committed captures: `device-trace-os16.0-<mode>.txt`, `engine-trace-<mode>.txt` (post-fix) and the three
-`device-roscreen-before-*.jpg` screenshots.
+Committed captures: `device-trace-os16.0-<mode>.txt`, `engine-trace-<mode>.txt` (post-fix), the three
+`device-roscreen-before-*.jpg` screenshots and the two `device-roscreen-first-*.jpg` screenshots.

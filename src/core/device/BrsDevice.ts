@@ -42,6 +42,8 @@ import type { Lexeme } from "../lexer/Lexeme";
 export interface DisplayScreen {
     /** False once the screen is closed or released; it then gives the display back. */
     ownsDisplay(): boolean;
+    /** Shows this screen's last frame again, when the screen above it gives the display back. */
+    restoreDisplay?(): void;
 }
 
 export class BrsDevice {

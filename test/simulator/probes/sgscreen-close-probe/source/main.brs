@@ -8,6 +8,7 @@
 '     roscreen-before create an roScreen while the roSGScreen is shown, then close() the roSGScreen; no node
 '                     reads until the end (each one is marked, as one may block)
 '     sgscreen-after  close(), then create a second roSGScreen right away
+'     roscreen-first  an roScreen created first and kept open, then two roSGScreens shown and closed over it
 '
 ' Trace record shape:
 '
@@ -23,6 +24,10 @@ sub Main(args as object)
 
     s = {}
     s.clock = CreateObject("roTimespan")
+    if mode = "roscreen-first"
+        runRoScreenFirst(s, mode)
+        return
+    end if
     ' ---- Phase A: a live SceneGraph screen ----
     s.screen = CreateObject("roSGScreen")
     s.port = CreateObject("roMessagePort")
@@ -176,6 +181,51 @@ sub runRoScreenBefore(s as object, mode as string)
     print "PROBE|999|done|"
     sleep(3000)
 end sub
+
+' An roScreen created first and kept open, then roSGScreens shown and closed over it, one after the other.
+' A closed screen's nodes are never read: on a device such a read can block or end the app.
+sub runRoScreenFirst(s as object, mode as string)
+    createRoScreen(s, "roScreen created first")
+    print "PROBE|100|await|shot|name=" + mode + "-roscreen"
+    sleep(4000)
+    for n = 1 to 2
+        base = 100 + n * 20
+        screen = CreateObject("roSGScreen")
+        port = CreateObject("roMessagePort")
+        screen.setMessagePort(port)
+        scene = screen.CreateScene("SecondScene")
+        screen.show()
+        scene.observeField("ticks", port)
+        print seq(base + 1) + "C|sg-shown|n=" + n.toStr() + " port=[" + drain(port, 2000) + "] rs=[" + drain(s.rsPort, 300) + "] ticks=" + scene.ticks.toStr()
+        print seq(base + 2) + "await|shot|name=" + mode + "-sg" + n.toStr()
+        drain(port, 4000)
+        print seq(base + 3) + "await|Down|"
+        print seq(base + 4) + "C|key-on-sg|port=[" + drain(port, 1500) + "] rs=[" + drain(s.rsPort, 300) + "] lastKey=" + scene.lastKey
+        ' Main reads the roScreen's port first: does a key meant for the Scene reach it?
+        print seq(base + 5) + "await|Up|"
+        print seq(base + 6) + "C|key-rs-read-first|rs=[" + drain(s.rsPort, 1500) + "] port=[" + drain(port, 300) + "] lastKey=" + scene.lastKey
+        screen.close()
+        print seq(base + 7) + "C|closed|n=" + n.toStr() + " port=[" + drain(port, 1500) + "] rs=[" + drain(s.rsPort, 300) + "]"
+        print seq(base + 8) + "await|shot|name=" + mode + "-after-close" + n.toStr() + "-before-redraw"
+        sleep(4000)
+        font = CreateObject("roFontRegistry").GetDefaultFont()
+        for i = 1 to 2
+            s.rs.Clear(&h603010FF)
+            s.rs.DrawText("roScreen redrawn after close " + n.toStr(), 120, 180, &hFFFFFFFF, font)
+            s.rs.SwapBuffers()
+        end for
+        print seq(base + 9) + "await|shot|name=" + mode + "-after-close" + n.toStr() + "-redrawn"
+        sleep(4000)
+        print seq(base + 10) + "await|Left|"
+        print seq(base + 11) + "B|key-on-roscreen|rs=[" + drain(s.rsPort, 1500) + "] port=[" + drain(port, 300) + "]"
+    end for
+    print "PROBE|999|done|"
+    sleep(3000)
+end sub
+
+function seq(n as integer) as string
+    return "PROBE|" + n.toStr() + "|"
+end function
 
 sub createRoScreen(s as object, text as string)
     s.rs = CreateObject("roScreen", true)

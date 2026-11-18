@@ -769,6 +769,12 @@ under an roScreen…" and "Ends the app when its last screen closes" in `test/cl
     that was never stored (`CreateObject("roScreen").GetWidth()`) gives it back at once, and so does an
     `roScreen` released by its variable. The stack is reset per app run in `setupPayload`. Don't replace it
     with a counter: that misses both creation order and temporaries.
+-   **Keys and frames follow the owner** (probe mode `roscreen-first`). An `roScreen` under a SceneGraph
+    screen takes no keys, even when Main reads the `roScreen`'s port first, because the Scene's callback
+    shares every Main port and would otherwise lose the race. An `roScreen` under another `roScreen` still
+    polls keys, since that order is unprobed. When the owning `roSGScreen` closes, the new owner's
+    `restoreDisplay()` reposts its last frame (an `roScreen`'s front buffer). A Scene that was suspended
+    repaints on its first owned pass.
 -   **`close()` is idempotent** (a single `isScreenClosed`). `sgRoot.closeScreen()` drops the timers,
     animations and transitions only when the closed screen is the current one. Closing an older screen
     must not stop the Scene that is shown. Keys are discarded only when the closed screen owned the display.

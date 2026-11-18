@@ -74,6 +74,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
     private lastMessage: number;
     private rendering: boolean;
     private closed: boolean;
+    /** Set while a screen above holds the display, so the Scene repaints once it is back on top. */
+    private suspended: boolean = false;
     width: number;
     height: number;
     scaleMode: number;
@@ -201,8 +203,16 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
      * is suspended under a screen created later (e.g. an `roScreen`), as on a device.
      */
     getNewEvents(interpreter: Interpreter) {
-        if (this.rendering || !interpreter || BrsDevice.displayOwner() !== this) {
+        if (this.rendering || !interpreter) {
             return [];
+        }
+        if (BrsDevice.displayOwner() !== this) {
+            this.suspended = true;
+            return [];
+        }
+        if (this.suspended) {
+            this.suspended = false;
+            this.isDirty = true;
         }
         this.rendering = true;
         try {
@@ -363,6 +373,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
             if (owned) {
                 // Keys pressed for this screen must not reach the next one; a screen on top keeps its own.
                 BrsDevice.resetKeysBuffer();
+                // The screen below takes the display back with the frame it last showed.
+                BrsDevice.displayOwner()?.restoreDisplay?.();
             }
             sgRoot.closeScreen(this);
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));

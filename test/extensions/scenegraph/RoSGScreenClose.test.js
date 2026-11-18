@@ -70,19 +70,22 @@ describe("roSGScreen.close", () => {
         expect(poll(port)).toBe(BrsInvalid.Instance);
     });
 
-    test("an roScreen created over the Scene suspends it until released", () => {
+    test("an roScreen created over the Scene suspends it; the Scene repaints once it is released", () => {
         const { screen, frames } = drawingScreen();
         const port = new RoMessagePort();
         screen.registerPort(port);
+        screen.makeDirty();
+        poll(port);
+        expect(frames).toHaveBeenCalledTimes(1);
 
         const rs = heldRoScreen();
         screen.makeDirty();
         poll(port);
-        expect(frames).not.toHaveBeenCalled();
+        expect(frames).toHaveBeenCalledTimes(1);
 
         rs.removeReference();
         poll(port);
-        expect(frames).toHaveBeenCalledTimes(1);
+        expect(frames).toHaveBeenCalledTimes(2);
     });
 
     test("an roScreen that was never stored does not suspend the Scene", () => {
@@ -160,5 +163,33 @@ describe("roSGScreen.close", () => {
         expect(sgRoot.endRequestDue()).toBe(true);
         expect(sgRoot.endRequestDue()).toBe(false);
         now.mockRestore();
+    });
+
+    test("an roScreen below a Scene takes no keys, even when Main reads its port first", () => {
+        const rs = heldRoScreen();
+        const rsPort = new RoMessagePort();
+        rs.getMethod("setMessagePort").call(interpreter, rsPort);
+        const keys = vi.spyOn(BrsDevice, "updateKeysBuffer");
+
+        const { screen } = drawingScreen();
+        poll(rsPort);
+        expect(keys).not.toHaveBeenCalled();
+
+        close(screen);
+        poll(rsPort);
+        expect(keys).toHaveBeenCalledTimes(1);
+        keys.mockRestore();
+    });
+
+    test("closing the Scene on top shows the roScreen's last frame again", () => {
+        const rs = heldRoScreen();
+        const restore = vi.spyOn(rs, "restoreDisplay").mockImplementation(() => {});
+        const older = drawingScreen();
+        const top = drawingScreen();
+
+        close(older.screen);
+        expect(restore).not.toHaveBeenCalled();
+        close(top.screen);
+        expect(restore).toHaveBeenCalledTimes(1);
     });
 });
