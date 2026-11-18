@@ -1,7 +1,8 @@
-import { BrsInvalid, ValueKind } from "..";
+import { BrsComponent, BrsInvalid, BrsType, RoMessagePort, ValueKind } from "..";
 import { Callable, StdlibArgument } from "../Callable";
-import { BrsComponent } from "../components/BrsComponent";
-import { RoMessagePort } from "../components/RoMessagePort";
+import { BrsDevice } from "../../device/BrsDevice";
+import { getNow } from "../../common";
+import { Interpreter } from "../../interpreter";
 
 /**
  * BrightScript Interface ifSetMessagePort
@@ -18,36 +19,43 @@ export class IfSetMessagePort {
         this.key = key;
     }
 
-    /** Sets the roMessagePort to be used for all events from the component */
-    private set(port: RoMessagePort) {
-        port.addReference();
+    /** Sets the roMessagePort to be used for all events from the component; a non-port value detaches it. */
+    private set(interpreter: Interpreter, method: string, port: BrsType) {
+        const component = this.component.getComponentName();
+        const newPort = port instanceof RoMessagePort ? port : undefined;
+        if (!newPort && BrsDevice.tracking) {
+            const kind = port instanceof BrsComponent ? port.getComponentName() : ValueKind.toString(port.kind);
+            BrsDevice.stderr.write(
+                `warning,${getNow()} [msgport.set.bad] ${component}.${method}() given ${kind}, not a roMessagePort: ${interpreter.formatLocation()}`
+            );
+        }
+        newPort?.addReference();
         this.component.port?.removeReference();
         if (this.callback) {
-            const component = this.component.getComponentName();
             this.component.port?.unregisterCallback(component, this.key);
-            port.registerCallback(component, this.callback, this.key);
+            newPort?.registerCallback(component, this.callback, this.key);
         }
-        this.component.port = port;
+        this.component.port = newPort;
         return BrsInvalid.Instance;
     }
 
     readonly setMessagePort = new Callable("setMessagePort", {
         signature: {
-            args: [new StdlibArgument("port", ValueKind.Object)],
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_, port: RoMessagePort) => {
-            return this.set(port);
+        impl: (interpreter: Interpreter, port: BrsType) => {
+            return this.set(interpreter, "SetMessagePort", port);
         },
     });
 
     readonly setPort = new Callable("setPort", {
         signature: {
-            args: [new StdlibArgument("port", ValueKind.Object)],
+            args: [new StdlibArgument("port", ValueKind.Dynamic)],
             returns: ValueKind.Void,
         },
-        impl: (_, port: RoMessagePort) => {
-            return this.set(port);
+        impl: (interpreter: Interpreter, port: BrsType) => {
+            return this.set(interpreter, "SetPort", port);
         },
     });
 }
