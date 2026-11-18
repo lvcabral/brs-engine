@@ -1,9 +1,8 @@
-import { BrsInvalid, ValueKind } from "..";
+import { BrsComponent, BrsInvalid, BrsType, RoMessagePort, ValueKind } from "..";
 import { Callable, StdlibArgument } from "../Callable";
-import { BrsComponent } from "../components/BrsComponent";
-import { RoMessagePort } from "../components/RoMessagePort";
 import { BrsDevice } from "../../device/BrsDevice";
 import { getNow } from "../../common";
+import { Interpreter } from "../../interpreter";
 
 /**
  * BrightScript Interface ifSetMessagePort
@@ -20,27 +19,23 @@ export class IfSetMessagePort {
         this.key = key;
     }
 
-    /** Sets the roMessagePort to be used for all events from the component */
-    private set(port: RoMessagePort) {
-        // Roku devices accept a non-port argument (e.g. an unset `m.x`, which is invalid) without
-        // crashing; the component is then left with no message port. Detach instead of throwing.
-        const valid = port instanceof RoMessagePort;
-        if (!valid) {
-            // Not logged on device; logged here to surface the bug.
-            BrsDevice.stderr.write(`warning,${getNow()} [msgport.set.bad] message port set to invalid value`);
+    /** Sets the roMessagePort to be used for all events from the component; a non-port value detaches it. */
+    private set(interpreter: Interpreter, method: string, port: BrsType) {
+        const component = this.component.getComponentName();
+        const newPort = port instanceof RoMessagePort ? port : undefined;
+        if (!newPort && BrsDevice.tracking) {
+            const kind = port instanceof BrsComponent ? port.getComponentName() : ValueKind.toString(port.kind);
+            BrsDevice.stderr.write(
+                `warning,${getNow()} [msgport.set.bad] ${component}.${method}() given ${kind}, not a roMessagePort: ${interpreter.formatLocation()}`
+            );
         }
-        if (valid) {
-            port.addReference();
-        }
+        newPort?.addReference();
         this.component.port?.removeReference();
         if (this.callback) {
-            const component = this.component.getComponentName();
             this.component.port?.unregisterCallback(component, this.key);
-            if (valid) {
-                port.registerCallback(component, this.callback, this.key);
-            }
+            newPort?.registerCallback(component, this.callback, this.key);
         }
-        this.component.port = valid ? port : undefined;
+        this.component.port = newPort;
         return BrsInvalid.Instance;
     }
 
@@ -49,8 +44,8 @@ export class IfSetMessagePort {
             args: [new StdlibArgument("port", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_, port: RoMessagePort) => {
-            return this.set(port);
+        impl: (interpreter: Interpreter, port: BrsType) => {
+            return this.set(interpreter, "SetMessagePort", port);
         },
     });
 
@@ -59,8 +54,8 @@ export class IfSetMessagePort {
             args: [new StdlibArgument("port", ValueKind.Object)],
             returns: ValueKind.Void,
         },
-        impl: (_, port: RoMessagePort) => {
-            return this.set(port);
+        impl: (interpreter: Interpreter, port: BrsType) => {
+            return this.set(interpreter, "SetPort", port);
         },
     });
 }

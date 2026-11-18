@@ -85,7 +85,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
-        const setPortIface = new IfSetMessagePort(this, this.getNewEvents.bind(this));
+        // The render callback stays on every main-thread port (registerPort), whatever port the screen uses.
+        const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifSGScreen: [
