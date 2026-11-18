@@ -71,7 +71,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
     private readonly context: BrsCanvasContext2D;
     private readonly textureManager: RoTextureManager;
     private readonly fontRegistry: RoFontRegistry;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
     private sceneType?: BrsString;
     private alphaEnable: boolean;
     private lastMessage: number;
@@ -101,7 +101,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
-        const setPortIface = new IfSetMessagePort(this, pollCurrentScreen);
+        // Every main-thread port already runs pollCurrentScreen, whatever port the screen is given.
+        const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
             ifSGScreen: [

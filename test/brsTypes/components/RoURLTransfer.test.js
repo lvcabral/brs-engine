@@ -1,12 +1,63 @@
 const brs = require("../../../packages/node/bin/brs.node");
-const { Interpreter } = brs;
-const { BrsString, BrsInvalid, RoURLTransfer, RoMessagePort, RoURLEvent, Callable } = brs.types;
+const { Interpreter, BrsDevice } = brs;
+const { BrsString, BrsInvalid, Int32, RoAssociativeArray, RoURLTransfer, RoMessagePort, RoURLEvent, Callable } =
+    brs.types;
 
 describe("RoURLTransfer", () => {
     let interpreter;
 
     beforeEach(() => {
         interpreter = new Interpreter();
+    });
+
+    describe("setPort", () => {
+        let tracking;
+
+        beforeEach(() => {
+            tracking = BrsDevice.tracking;
+        });
+
+        afterEach(() => {
+            BrsDevice.tracking = tracking;
+            vi.restoreAllMocks();
+        });
+
+        const setPort = (transfer, value) => transfer.getMethod("setPort").call(interpreter, value);
+        const getPort = (transfer) => transfer.getMethod("getMessagePort").call(interpreter);
+
+        it("detaches an attached port when given any non-port value, and re-attaches a later port, as on device", () => {
+            for (const value of [
+                BrsInvalid.Instance,
+                new Int32(5),
+                new BrsString("port"),
+                new RoAssociativeArray([]),
+            ]) {
+                const transfer = new RoURLTransfer();
+                const port = new RoMessagePort();
+                setPort(transfer, port);
+                expect(port.getReferenceCount()).toBe(2);
+                setPort(transfer, value);
+                expect(getPort(transfer)).toEqual(BrsInvalid.Instance);
+                expect(port.getReferenceCount()).toBe(0);
+                setPort(transfer, port);
+                expect(getPort(transfer)).toBe(port);
+            }
+        });
+
+        it("warns with the value's type in developer mode only, and not for a port", () => {
+            const messages = [];
+            vi.spyOn(BrsDevice.stderr, "write").mockImplementation((msg) => messages.push(msg));
+            const transfer = new RoURLTransfer();
+            BrsDevice.tracking = false;
+            setPort(transfer, BrsInvalid.Instance);
+            expect(messages.filter((msg) => msg.includes("[msgport.set.bad]"))).toHaveLength(0);
+            BrsDevice.tracking = true;
+            setPort(transfer, BrsInvalid.Instance);
+            setPort(transfer, new RoMessagePort());
+            const warnings = messages.filter((msg) => msg.includes("[msgport.set.bad]"));
+            expect(warnings).toHaveLength(1);
+            expect(warnings[0]).toMatch(/^warning,.*roUrlTransfer\.SetPort\(\) given Invalid, not a roMessagePort/);
+        });
     });
 
     describe("escape", () => {

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="ticks" type="integer" value="0" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.timer = m.top.findNode("ticker")
+            m.timer.observeField("fire", "onFire")
+            m.timer.control = "start"
+        end sub
+
+        sub onFire()
+            m.top.ticks = m.top.ticks + 1
+        end sub
+        ]]>
+    </script>
+    <children>
+        <Timer id="ticker" duration="0.1" repeat="true" />
+    </children>
+</component>

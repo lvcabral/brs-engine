@@ -1446,6 +1446,25 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Keeps rendering the scene whatever port roSGScreen.SetMessagePort() is given", async () => {
+        let command = ["node", brsCliPath, "-r set-port-invalid-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device: test/simulator/probes/set-port-invalid-probe
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "attached timer=advancing",
+            "set-invalid port=Invalid",
+            "after-invalid timer=advancing",
+            "switched-wait-old timer=advancing",
+            "switched-wait-new timer=advancing",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Exposes the device child layout of Video.trickPlayBar", async () => {
         let command = ["node", brsCliPath, "-r trickplaybar-children-app", "source/main.brs", "-c 0"].join(" ");
 

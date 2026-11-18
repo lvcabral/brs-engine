@@ -759,9 +759,10 @@ Device-measured in `test/simulator/probes/sgscreen-close-probe` (OS 16.0.4). Reg
 under an roScreen…" and "Ends the app when its last screen closes" in `test/cli/cli-scenegraph.test.js`, and
 `test/extensions/scenegraph/RoSGScreenClose.test.js`.
 
--   **Every main-thread port drives the current screen.** The extension's `roMessagePort` factory and
-    `setMessagePort` register the same `pollCurrentScreen` callback (`RoSGScreen.ts`), which runs whatever
-    `sgRoot.screen` is when the port is read. Never the screen that existed when the port was made: a
+-   **Every main-thread port drives the current screen.** The extension's `roMessagePort` factory registers
+    `pollCurrentScreen` (`RoSGScreen.ts`) on every Main-thread port, which runs whatever `sgRoot.screen` is
+    when the port is read. `setMessagePort` registers no callback, so `SetMessagePort(invalid)` or a port
+    switch never stops the Scene (#1327). Never the screen that existed when the port was made: a
     screen created after another one closed must render whichever port Main reads, including the closed
     screen's own port. Don't bind `this.getNewEvents`, and don't bring back a pending-port queue.
 -   **The most recently created screen owns the display** (`BrsDevice.pushDisplay`/`displayOwner`, a stack
