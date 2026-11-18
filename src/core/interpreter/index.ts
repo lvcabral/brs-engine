@@ -1184,7 +1184,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 // swallowing the exit and looping forever.
                 throw err;
             }
-            if (!(err instanceof BrsError) || err instanceof Stmt.GotoLabel || err instanceof Stmt.ReturnValue) {
+            // Control flow (`exit for`, `return`, `goto`, `end`, an app end) is not an error to catch.
+            if (!(err instanceof BrsError) || err instanceof Stmt.BlockEnd) {
                 throw err;
             }
             this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));

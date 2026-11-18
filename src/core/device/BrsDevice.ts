@@ -38,6 +38,12 @@ import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 import type { Lexeme } from "../lexer/Lexeme";
 
+/** A screen that can own the display: an `roScreen`, or a SceneGraph screen registered by its extension. */
+export interface DisplayScreen {
+    /** False once the screen is closed or released; it then gives the display back. */
+    ownsDisplay(): boolean;
+}
+
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
     static readonly registry: RegistryData = { current: new Map<string, string>(), removed: [], isDirty: false };
@@ -45,6 +51,7 @@ export class BrsDevice {
     static readonly extVolume: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
+    private static readonly displayStack: DisplayScreen[] = [];
     static readonly terms: Map<string, string> = new Map<string, string>();
     static readonly sfx: string[] = DefaultSounds.slice();
     static readonly bscs = new Map<string, number>();
@@ -60,8 +67,6 @@ export class BrsDevice {
      * lexeme stats, the texture registry, and the crash/`bt` backtrace output. */
     static tracking: boolean = false;
     static displayEnabled: boolean = true;
-    /** Live `roScreen` objects. While any exists it owns the display, which suspends a SceneGraph screen. */
-    static liveRoScreens: number = 0;
     static singleKeyEvents: boolean = true; // Default Roku behavior is `true`
     static useCORSProxy: boolean = true; // If CORS proxy is configured, use it by default
     static multiControllers: boolean = false; // Reset every app run in setManifest(); off = no behavior change
@@ -601,6 +606,42 @@ export class BrsDevice {
         postMessage("command,continue");
         Atomics.store(this.sharedArray, DataType.DBT, -1);
         Atomics.notify(this.sharedArray, DataType.DBT);
+    }
+
+    /**
+     * Puts a screen on top of the display: the most recently created screen owns it, and the one below
+     * takes it back once that screen is closed or released. Released screens are dropped here, so
+     * temporary screens don't accumulate.
+     * @param screen the screen just created
+     */
+    static pushDisplay(screen: DisplayScreen) {
+        const stack = this.displayStack;
+        let kept = 0;
+        for (const entry of stack) {
+            if (entry.ownsDisplay()) {
+                stack[kept] = entry;
+                kept++;
+            }
+        }
+        stack.length = kept;
+        stack.push(screen);
+    }
+
+    /**
+     * Returns the screen that owns the display: the most recent one still open.
+     * @returns the owner, or undefined when no screen is left
+     */
+    static displayOwner(): DisplayScreen | undefined {
+        const stack = this.displayStack;
+        while (stack.length > 0 && !stack.at(-1)!.ownsDisplay()) {
+            stack.pop();
+        }
+        return stack.at(-1);
+    }
+
+    /** Forgets every screen, at the start of an app run. */
+    static resetDisplay() {
+        this.displayStack.length = 0;
     }
 
     /**

@@ -60,6 +60,7 @@ export class BrightScriptExtension implements BrsExtension {
         Field.resetDispatch();
         Node.resetFocusDispatch();
         sgRoot.clearTransitions();
+        sgRoot.takeEndRequest();
         // Mirrors Roku's `logrendezvous`. Set per thread (the render thread and every Task worker
         // build their own extension instance), so a trace covers both ends of a rendezvous.
         sgRoot.logRendezvous = BrsDevice.deviceInfo.logRendezvous === true;
@@ -175,7 +176,7 @@ export class BrightScriptExtension implements BrsExtension {
         }
     }
 
-    tick(_: Interpreter) {
+    tick(interpreter: Interpreter) {
         if (sgRoot.inTaskThread()) {
             const task = sgRoot.getCurrentThreadTask();
             task?.processThreadUpdate();
@@ -185,6 +186,9 @@ export class BrightScriptExtension implements BrsExtension {
             // than synchronously at the end of init. Render-thread only — focus is a render-thread
             // concern and Task threads never establish it. No-op unless there is pending work.
             Field.deliverPendingInitFocus();
+            if (sgRoot.endRequestDue()) {
+                interpreter.requestEnd();
+            }
         }
         // Sibling drain for construction-time state replays (e.g. AnimatedImage.setState) —
         // see Field.runAfterConstruction/deliverPendingConstructionCallbacks.

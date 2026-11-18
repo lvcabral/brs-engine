@@ -68,16 +68,16 @@ an `onKeyEvent` that stores the last pressed key in `lastKey`. `BeatTask` writes
 PR #1328 as first submitted (`828dcabd`) only stopped the closed screen's pass. The engine now follows the
 findings above (`engine-trace-<mode>.txt` are the post-fix runs):
 
-| Behavior                                           | Device                      | Engine before                | Engine now                                            |
-| -------------------------------------------------- | --------------------------- | ---------------------------- | ----------------------------------------------------- |
-| `close()` with no `roScreen`                       | app exits                   | keeps running                | exits (`EXIT_USER_NAV`) at the next message-loop pass |
-| `roScreen` created while the Scene is shown        | Scene suspended             | Scene keeps ticking under it | suspended                                             |
-| `close()` twice                                    | one `isScreenClosed`        | two                          | one                                                   |
-| Observer events after `close()`                    | none                        | only those already queued    | none                                                  |
-| Keys after `close()` with an `roScreen`            | `roScreen` port             | match                        | match                                                 |
-| Second `roSGScreen`, main reading only older ports | ticks (`ticks2=20`)         | frozen (`ticks2=0`)          | ticks (`ticks2=20`)                                   |
-| The closed screen's Task once a second screen runs | frozen (rendezvous aborted) | n/a                          | resumes (known gap)                                   |
-| Reading a closed Scene's field                     | blocks                      | returns                      | returns                                               |
+| Behavior                                           | Device                      | Engine before                | Engine now                                                                              |
+| -------------------------------------------------- | --------------------------- | ---------------------------- | --------------------------------------------------------------------------------------- |
+| `close()` with no `roScreen`                       | app exits                   | keeps running                | exits (`EXIT_USER_NAV`) at the next message-loop pass                                   |
+| `roScreen` created while the Scene is shown        | Scene suspended             | Scene keeps ticking under it | suspended                                                                               |
+| `close()` twice                                    | one `isScreenClosed`        | two                          | one                                                                                     |
+| Observer events after `close()`                    | none                        | only those already queued    | none from the Scene; the closed screen's Task resumes under a second screen (row below) |
+| Keys after `close()` with an `roScreen`            | `roScreen` port             | match                        | match                                                                                   |
+| Second `roSGScreen`, main reading only older ports | ticks (`ticks2=20`)         | frozen (`ticks2=0`)          | ticks (`ticks2=20`)                                                                     |
+| The closed screen's Task once a second screen runs | frozen (rendezvous aborted) | n/a                          | resumes (known gap)                                                                     |
+| Reading a closed Scene's field                     | blocks                      | returns                      | returns                                                                                 |
 
 In `roscreen-after` and `sgscreen-after`, the device never returns from the `CreateObject` that follows
 `close()`. The engine still creates the object and ends the app at the next `wait`.

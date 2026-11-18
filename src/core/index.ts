@@ -926,6 +926,7 @@ function isEncryptedPayload(payload: AppPayload | TaskPayload): boolean {
 
 function setupPayload(interpreter: Interpreter, payload: AppPayload | TaskPayload): SourceResult {
     interpreter.setManifest(payload.manifest);
+    BrsDevice.resetDisplay();
     if (payload.device.registryBuffer) {
         BrsDevice.setRegistry(payload.device.registryBuffer);
     } else if (payload.device.registry?.size) {

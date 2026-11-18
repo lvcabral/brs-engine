@@ -762,16 +762,25 @@ under an roScreen…" and "Ends the app when its last screen closes" in `test/cl
 -   **Every main-thread port drives the current screen** (`pollCurrentScreen` in `RoSGScreen.ts`), never the
     screen that existed when the port was made. A screen created after another one closed must render
     whichever port Main reads, including the closed screen's own port. Don't bind `this.getNewEvents`.
--   **A live `roScreen` suspends the SceneGraph screen.** `BrsDevice.liveRoScreens` counts valid `roScreen`s
-    until `dispose()`. While it is non-zero, `getNewEvents` does nothing: no paint, no timers or tasks, and no
-    key consumption, so keys reach the `roScreen` port.
--   **`close()` is idempotent** (a single `isScreenClosed`) and calls `sgRoot.closeScreen()`, which drops the
-    Scene's timers, animations and transitions, so a later screen's passes don't run them.
--   **Closing the last screen ends the app** (`EXIT_USER_NAV`). With no live `roScreen`, `closeScreen()` sets an
-    end request that the extension's `onMessageLoop` hands to `interpreter.requestEnd()`. Then `wait()` returns
-    and the next statement throws `BlockEnd("end-statement")`. It runs at the message loop, not inside
-    `close()`, because the device still runs the statements after `close()` before the app goes. Creating a new
-    screen after that `close()` does not cancel it.
+-   **The most recently created screen owns the display** (`BrsDevice.pushDisplay`/`displayOwner`, a stack
+    of `DisplayScreen`s). `getNewEvents` runs only while its screen is the owner, so a Scene is suspended
+    under an `roScreen` created later (no paint, timers, tasks or key handling), and an `roSGScreen`
+    created over an `roScreen` renders. An `roScreen` owns the display while it is referenced: a temporary
+    that was never stored (`CreateObject("roScreen").GetWidth()`) gives it back at once, and so does an
+    `roScreen` released by its variable. The stack is reset per app run in `setupPayload`. Don't replace it
+    with a counter: that misses both creation order and temporaries.
+-   **`close()` is idempotent** (a single `isScreenClosed`). `sgRoot.closeScreen()` drops the timers,
+    animations and transitions only when the closed screen is the current one. Closing an older screen
+    must not stop the Scene that is shown. Keys are discarded only when the closed screen owned the display.
+-   **Closing the last screen ends the app** (`EXIT_USER_NAV`). When no screen is left on the display stack,
+    `closeScreen()` records an end request. The extension's `onMessageLoop` takes it at the next
+    `wait`/`GetMessage`/`PeekMessage`, and `tick` takes it after `APP_END_DELAY_MS` when Main never reaches a
+    port. Either way `interpreter.requestEnd()` makes `wait()` return and the next statement throw
+    `BlockEnd("end-statement")`. It is never thrown inside `close()`, because the device still runs the
+    statements right after it. The `tick` check is a single flag read per statement, so keep it that way.
+    Creating a new screen after that `close()` does not cancel the end, and `onInit` clears a stale request.
+-   `try`/`catch` never catches a `BlockEnd` (control flow: `exit for`, `return`, `goto`, `end`, a requested
+    end). Regression: `try-catch-control-flow.brs`.
 -   Known gap: a Task of the closed screen resumes once a new screen serves its rendezvous (on a device it stays
     frozen), and reading the closed Scene's fields returns values (a device blocks).
 

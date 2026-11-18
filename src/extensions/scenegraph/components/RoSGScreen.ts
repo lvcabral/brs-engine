@@ -22,6 +22,7 @@ import {
     BrsCanvas,
     BrsCanvasContext2D,
     BrsDraw2D,
+    DisplayScreen,
     createNewCanvas,
     drawObjectToComponent,
     IfDraw2D,
@@ -57,7 +58,7 @@ function pollCurrentScreen(interpreter: Interpreter) {
     return sgRoot.screen?.getNewEvents(interpreter) ?? [];
 }
 
-export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
+export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, DisplayScreen {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
@@ -110,6 +111,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
         });
         sgRoot.setScreen(this);
+        BrsDevice.pushDisplay(this);
+    }
+
+    /** Owns the display until closed, unless a screen created later sits on top of it. */
+    ownsDisplay() {
+        return !this.closed;
     }
 
     registerPort(port: RoMessagePort) {
@@ -190,11 +197,11 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     /**
-     * Handles control keys and renders the Scene. A closed screen does nothing, and neither does an
-     * open one while an `roScreen` owns the display: the Scene is suspended under it, as on a device.
+     * Handles control keys and renders the Scene, only while this screen owns the display: the Scene
+     * is suspended under a screen created later (e.g. an `roScreen`), as on a device.
      */
     getNewEvents(interpreter: Interpreter) {
-        if (this.closed || this.rendering || !interpreter || BrsDevice.liveRoScreens > 0) {
+        if (this.rendering || !interpreter || BrsDevice.displayOwner() !== this) {
             return [];
         }
         this.rendering = true;
@@ -351,9 +358,13 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             if (this.closed) {
                 return Uninitialized.Instance;
             }
+            const owned = BrsDevice.displayOwner() === this;
             this.closed = true;
-            BrsDevice.resetKeysBuffer();
-            sgRoot.closeScreen();
+            if (owned) {
+                // Keys pressed for this screen must not reach the next one; a screen on top keeps its own.
+                BrsDevice.resetKeysBuffer();
+            }
+            sgRoot.closeScreen(this);
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },

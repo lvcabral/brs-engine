@@ -17,9 +17,9 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../device/BrsDevice";
+import { BrsDevice, DisplayScreen } from "../../device/BrsDevice";
 
-export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
+export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D, DisplayScreen {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
@@ -28,8 +28,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly doubleBuffer: boolean;
     private readonly maxMs: number;
     private readonly valid: boolean;
-    /** Counted in `BrsDevice.liveRoScreens` until disposed. */
-    private live: boolean = false;
     private alphaEnable: boolean;
     private currentBuffer: number;
     private lastBuffer: number;
@@ -92,8 +90,7 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const ifGetMsgPort = new IfGetMessagePort(this);
         if (this.valid) {
-            this.live = true;
-            BrsDevice.liveRoScreens++;
+            BrsDevice.pushDisplay(this);
         }
         this.registerMethods({
             ifScreen: [this.swapBuffers],
@@ -202,10 +199,6 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     dispose() {
-        if (this.live) {
-            this.live = false;
-            BrsDevice.liveRoScreens--;
-        }
         this.port?.unregisterCallback(this.getComponentName());
         for (const c of this.canvas) {
             releaseCanvas(c);
@@ -213,6 +206,11 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     }
     isValid() {
         return this.valid;
+    }
+
+    /** Owns the display while referenced: a temporary that was never stored is released at once. */
+    ownsDisplay() {
+        return this.getReferenceCount() > 0;
     }
 
     // Control Key Events

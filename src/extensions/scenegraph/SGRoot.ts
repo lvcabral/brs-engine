@@ -27,6 +27,9 @@ import type { AnimationBase, Audio, Dialog, Node, Scene, StandardDialog, Task, T
 import type { RoRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import type { UITransition } from "./SGTransition";
 
+/** How long a device keeps running an app whose last screen closed, when Main reaches no message loop. */
+const APP_END_DELAY_MS = 1000;
+
 /**
  * A singleton object that holds the Node that represents the m.global, the root Scene,
  * the currently focused node, the arrays of tasks and timers and sound effects,
@@ -67,6 +70,7 @@ export class SGRoot {
     private _renderPass: "layout" | "paint" = "paint";
     private readonly _pendingPorts: RoMessagePort[] = [];
     private _endRequest: boolean = false;
+    private _endDeadline: number = 0;
     /**
      * When `true`, recently-written fields can be re-read from the local copy for a short window,
      * skipping a rendezvous (a performance heuristic). Defaults to `false` so that every Task-thread
@@ -495,15 +499,22 @@ export class SGRoot {
     }
 
     /**
-     * Stops the runtime of a closed screen's Scene: its timers, animations and transitions don't run
-     * again, even under a screen created later. Closing the last screen ends the app: unless an
-     * `roScreen` holds the display, the app ends at its next message-loop pass (see takeEndRequest).
+     * Handles a closed screen. The current screen's Scene stops: its timers, animations and transitions
+     * don't run again, even under a screen created later. When no other screen is left on the display,
+     * the app ends: at its next message-loop pass, or after {@link APP_END_DELAY_MS} if Main never
+     * reaches one (see takeEndRequest and endRequestDue).
+     * @param screen the screen that was just closed
      */
-    closeScreen() {
-        this._timers.length = 0;
-        this._animations.length = 0;
-        this._transitions.clear();
-        this._endRequest ||= BrsDevice.liveRoScreens === 0;
+    closeScreen(screen: RoSGScreen) {
+        if (screen === this._screen) {
+            this._timers.length = 0;
+            this._animations.length = 0;
+            this._transitions.clear();
+        }
+        if (!this._endRequest && BrsDevice.displayOwner() === undefined) {
+            this._endRequest = true;
+            this._endDeadline = performance.now() + APP_END_DELAY_MS;
+        }
     }
 
     /**
@@ -514,6 +525,15 @@ export class SGRoot {
         const pending = this._endRequest;
         this._endRequest = false;
         return pending;
+    }
+
+    /**
+     * Hands over a pending app end once its delay has passed. Checked per statement, so the common
+     * case is a single flag read.
+     * @returns True when the app must end now
+     */
+    endRequestDue(): boolean {
+        return this._endRequest && performance.now() >= this._endDeadline && this.takeEndRequest();
     }
 
     /**
