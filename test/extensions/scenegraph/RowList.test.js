@@ -109,6 +109,57 @@ describe("RowList key handling", () => {
         expect(list.getValueJS("currFocusColumn")).toBe(0);
     });
 
+    test("with transitions off a key move along a row passes one in-transit currFocusColumn", () => {
+        // A device always animates a move along a row, even with skipFocusAnimations
+        // (rowlist-motion-rect-probe), and apps read the direction from the fractional values: a home grid
+        // that only learns "right"/"left" from them kept a stale vertical direction and hid its preview.
+        const { RoMessagePort } = core;
+        const fakeInterpreter = { environment: {}, inSubEnv: () => {} };
+        const list = SGNodeFactory.createNode("RowList");
+        list.setValue("rowFocusAnimationStyle", new BrsString("fixedFocusWrap"));
+        list.setValue("itemSize", new RoArray([new Float(400), new Float(100)]));
+        list.setValue("rowItemSize", new RoArray([new RoArray([new Float(100), new Float(100)])]));
+        list.setValue(
+            "content",
+            buildContent([
+                ["A", "B", "C", "D", "E", "F"],
+                ["G", "H"],
+            ])
+        );
+        list.setNodeFocus(true);
+
+        const port = new RoMessagePort();
+        const log = [];
+        port.pushMessage = (event) => log.push(`${event.fieldName.getValue()}=${event.fieldValue.toString()}`);
+        for (const field of ["scrollingStatus", "currFocusColumn", "rowItemFocused"]) {
+            list.addObserver(fakeInterpreter, "unscoped", new BrsString(field), port);
+        }
+
+        list.handleKey("right", true);
+        expect(log.filter((entry) => entry.startsWith("currFocusColumn"))).toEqual([
+            "currFocusColumn=0.5",
+            "currFocusColumn=1",
+        ]);
+        expect(log[0]).toBe("scrollingStatus=true");
+        expect(log.at(-1)).toBe("scrollingStatus=false");
+
+        // Left from column 0 wraps: half way between the first and the last column.
+        log.length = 0;
+        list.handleKey("left", true);
+        list.handleKey("left", true);
+        expect(log.filter((entry) => entry.startsWith("currFocusColumn"))).toEqual([
+            "currFocusColumn=0.5",
+            "currFocusColumn=0",
+            "currFocusColumn=5.5",
+            "currFocusColumn=5",
+        ]);
+
+        // An app's jumpToRowItem stays instant.
+        log.length = 0;
+        list.setValue("jumpToRowItem", new RoArray([new Int32(0), new Int32(2)]));
+        expect(log.filter((entry) => entry.startsWith("currFocusColumn"))).toEqual(["currFocusColumn=2"]);
+    });
+
     test("vertical nav emits vertFocusDirection (then resets to none) and settles rowItemFocused last", () => {
         // Regression: an app that positions a per-row overlay reads the vertical scroll direction from
         // vertFocusDirection and treats the rowItemFocused observer as the authoritative "settled"

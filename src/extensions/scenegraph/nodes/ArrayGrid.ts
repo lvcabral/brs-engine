@@ -852,7 +852,7 @@ export class ArrayGrid extends Group implements UITransition {
         } else if (!this.beginMotion(contentIndex, base, target, now, apply)) {
             return;
         }
-        if (this.getValueJS("skipFocusAnimations") === true) {
+        if (this.getValueJS("skipFocusAnimations") === true && this.skipsFocusAnimation()) {
             this.motionPos = target.row;
             this.motionCol = target.col;
             this.emitMotionFrame();
@@ -860,6 +860,11 @@ export class ArrayGrid extends Group implements UITransition {
             return;
         }
         sgRoot.addTransition(this);
+    }
+
+    /** Whether `skipFocusAnimations` lands this motion at once: every motion of a flat grid. */
+    protected skipsFocusAnimation(): boolean {
+        return true;
     }
 
     /**

@@ -976,7 +976,13 @@ The rules:
    CLI `--no-transitions`, env `BRS_UI_TRANSITIONS=0`), or a non-positive duration, settles synchronously
    on the same code path. vitest sets `BRS_UI_TRANSITIONS=0` (inherited by the spawned CLI suites), so
    every existing test runs settled. Transition tests opt in with `sgRoot.uiTransitionsEnabled = true` and a
-   fake `sgClock` source, stepping `sgRoot.processTransitions()` themselves.
+   fake `sgClock` source, stepping `sgRoot.processTransitions()` themselves. One exception keeps a signal
+   apps depend on: a key move along a RowList row publishes one in-transit `currFocusColumn` (half a column
+   toward the key) right after `scrollingStatus` rises (`RowList.publishInstantSlide`). A device animates
+   that move even with `skipFocusAnimations` (`rowlist-motion-rect-probe`), and the fractional values are
+   the only horizontal-direction signal an app gets. The rects already report the new column. An app's
+   `jumpToRowItem` stays instant. Regression: "with transitions off a key move along a row passes one
+   in-transit currFocusColumn" in `RowList.test.js`.
 3. **Motion advances in the tick, never in render.** `tickTransition` writes positions; `renderNode` only
    reads them, so layout passes stay pure and bounding rects report the in-transit geometry, as a device
    does. `PanelSet.renderChildNodes` does call `reconcileLayout`, which detects target changes. That call
@@ -1582,9 +1588,8 @@ its own expectation from its declared `translation`/`rowItemSize`, so no pixel c
 
 **Row lists compute their sub parts from layout** (`layoutSubpartRect`, DEVICE-MEASURED in
 `test/simulator/probes/grid-rect-probe`, HD and FHD). A device reports every cell, including rows scrolled
-off or past `numRows`, at its laid-out position. A motion in flight doesn't move it
-(`list-focus-motion-probe`). So `RowList.layoutSubpartRect` derives each rect from the focus state, with
-no item component involved:
+off or past `numRows`, at its laid-out position. So `RowList.layoutSubpartRect` derives each rect from the
+focus state, with no item component involved:
 
 -   `item<r>_<c>` is the cell's `rowItemSize` slot, not the item component's drawn box. A column past the
     row's end is a zero-size rect at the row's left edge.
@@ -1594,6 +1599,18 @@ no item component involved:
 -   Each row keeps its own horizontal scroll. Fit and floating-focus scrolling are measured against the
     **list's** width (`itemSize.x`), not the screen's (`RowList.listWidth`). fixedFocusWrap reports
     linear positions, like fixedFocus.
+-   **A RowList motion in flight moves them, frame by frame** (DEVICE-MEASURED, OS 16.0,
+    `test/simulator/probes/rowlist-motion-rect-probe`). While the focus changes rows, every rect scrolls
+    with the rows (`motionScrollY`, the same frame `renderContent` draws). While it moves along a row, that
+    row's cells and its `item<r>` rect slide (`cellX`). A MarkupList is different: its rects stay
+    static during a motion (`list-focus-motion-probe`). Overlays that track the incoming row read these
+    per-frame rects. `skipFocusAnimations` lands only a RowList row change at once
+    (`RowList.skipsFocusAnimation`): a move along a row still slides.
+-   **`itemsY` uses the focused row's label band for every row**, not the row's own band. While the focus
+    moves between two rows, the band blends between theirs (`focusBandHeight`). A label-less row under a
+    labelled focused row reports its items one band lower than they are drawn (device: drawn at 530,
+    reported at 566). Same probe, with a device screenshot. Floating focus is unmeasured: it uses the
+    focused row, not the top visible row.
 
 Flat grids (MarkupGrid, MarkupList, PosterGrid) still read their item components. That diverges from the
 same probe in three ways: a device reports the slot size (`itemSize`), reports a hidden grid's items, and
