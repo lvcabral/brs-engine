@@ -53,13 +53,12 @@
                 m.timer.duration = s.secs
                 m.timer.control = "start"
                 return
-            else if s.op = "key"
-                rec("await", s.key, "case=" + m.kase)
-                m.timer.duration = 3
-                m.timer.control = "start"
-                return
-            else if s.op = "shot"
-                rec("await", "shot", "name=" + s.name)
+            else if s.op = "key" or s.op = "shot"
+                if s.op = "key"
+                    rec("await", s.key, "case=" + m.kase)
+                else
+                    rec("await", "shot", "name=" + s.name)
+                end if
                 m.timer.duration = 3
                 m.timer.control = "start"
                 return

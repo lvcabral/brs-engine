@@ -22,6 +22,12 @@ import { RoBoolean } from "./components/RoBoolean";
 import { RoURLEvent } from "./events/RoURLEvent";
 import { RoUniversalControlEvent } from "./events/RoUniversalControlEvent";
 import { ISGNode } from "../extensions";
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(utc);
+dayjs.extend(customParseFormat);
 // BrightScript Type exports
 export * from "./BrsType";
 export { hasNegativeSign } from "./BrsNumber";
@@ -351,12 +357,23 @@ export const ValidDateFormats = [
  * @param value The date string to normalize
  * @returns The string in one of the `ValidDateFormats` shapes, when it was a variant of one
  */
-export function normalizeISO8601(value: string): string {
+function normalizeISO8601(value: string): string {
     return value
         .replace(/^(\d{4}-\d{2}-\d{2}) (?=\d)/, "$1T")
         .replace(/(T\d{2}:\d{2}:\d{2})\.(\d+)/, (_match, time: string, fraction: string) => {
             return `${time}.${fraction.slice(0, 3).padEnd(3, "0")}`;
         });
+}
+
+/**
+ * Parses an ISO 8601 date string (as UTC when it has no zone) in one of the `ValidDateFormats` shapes,
+ * or a variant of one accepted by `normalizeISO8601`.
+ * @param value The date string to parse
+ * @returns The date as milliseconds from the Unix epoch, or `undefined` when the string is not a valid date
+ */
+export function parseISO8601(value: string): number | undefined {
+    const parsed = dayjs(normalizeISO8601(value), ValidDateFormats, true).utc(true);
+    return parsed.isValid() ? parsed.valueOf() : undefined;
 }
 
 /**

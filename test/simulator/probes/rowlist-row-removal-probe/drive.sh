@@ -30,8 +30,9 @@ current() { tr -d '\r' < $CONSOLE | awk '/PROBE\|000\|boot\|start\|/{n=0; delete
 last=0
 deadline=$((SECONDS + 240))
 while (( SECONDS < deadline )); do
-    current | grep -E "PROBE\|[0-9]+\|done\|" > /dev/null && break
-    for line in ${(f)"$(current | grep -E '^PROBE\|[0-9]+\|await\|')"}; do
+    run=$(current)
+    grep -qE "PROBE\|[0-9]+\|done\|" <<< $run && break
+    for line in ${(f)"$(grep -E '^PROBE\|[0-9]+\|await\|' <<< $run)"}; do
         seq=${${line#PROBE|}%%|*}
         (( 10#$seq <= last )) && continue
         last=$((10#$seq))

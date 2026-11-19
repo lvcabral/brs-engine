@@ -6,9 +6,7 @@ import os, pty, re, select, shutil, sys, time
 
 here = os.path.dirname(os.path.abspath(__file__))
 repo = os.path.abspath(os.path.join(here, "../../../.."))
-out = here
-os.makedirs(out, exist_ok=True)
-snap = os.path.join(out, "engine-current.png")
+snap = os.path.join(here, "engine-current.png")
 keys = {"Down": b"\x1b[B", "Up": b"\x1b[A", "Left": b"\x1b[D", "Right": b"\x1b[C", "Select": b"\r"}
 
 pid, fd = pty.fork()
@@ -16,18 +14,20 @@ if pid == 0:
     os.execvp("node", ["node", os.path.join(repo, "packages/node/bin/brs.cli.js"), "--root", here, "--snapshot", snap])
 
 buf = b""
+text = ""
 handled = set()
 deadline = time.time() + 180
 while time.time() < deadline:
     r, _, _ = select.select([fd], [], [], 0.1)
-    if r:
-        try:
-            data = os.read(fd, 65536)
-        except OSError:
-            break
-        if not data:
-            break
-        buf += data
+    if not r:
+        continue
+    try:
+        data = os.read(fd, 65536)
+    except OSError:
+        break
+    if not data:
+        break
+    buf += data
     text = re.sub(r"\x1b\[[0-9;?]*[a-zA-Z]", "", buf.decode("utf-8", "replace")).replace("\r", "")
     for m in re.finditer(r"PROBE\|(\d+)\|await\|(\w+)\|[^\n]*?(?:name=(\S+))?\n", text):
         seq, what, name = m.group(1), m.group(2), m.group(3)
@@ -43,7 +43,7 @@ while time.time() < deadline:
                 if os.path.exists(snap):
                     break
             if os.path.exists(snap):
-                shutil.move(snap, os.path.join(out, "engine-%s.png" % name))
+                shutil.move(snap, os.path.join(here, "engine-%s.png" % name))
         else:
             os.write(fd, keys[what])
     if re.search(r"PROBE\|\d+\|done\|", text):
@@ -56,6 +56,6 @@ try:
 except OSError:
     pass
 lines = [l for l in text.split("\n") if l.startswith("PROBE|")]
-with open(os.path.join(out, "engine-trace.txt"), "w") as f:
+with open(os.path.join(here, "engine-trace.txt"), "w") as f:
     f.write("\n".join(lines) + "\n")
 print("Wrote engine-trace.txt (%d lines)" % len(lines))

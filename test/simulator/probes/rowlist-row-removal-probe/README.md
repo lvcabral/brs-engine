@@ -17,7 +17,7 @@ Both build a RowList with 5 rows (`featured`, `banner` (1 item), `recommended`, 
 - **B** (control): remove row 1, then re-assign `rowItemSize`/`rowHeights` for the 4 rows left, then press Down.
 
 Each phase dumps every item component (`rowIndex`, `index`, `itemContent.title`, `width`, `height`) and takes
-a screenshot.
+a screenshot. Both cases start from the same layout, so only `device-A-before.jpg` is kept.
 
 ## Device result (Roku Express 4K+, OS 16.0.4)
 
@@ -40,7 +40,7 @@ scene coordinates for every item's `sceneBoundingRect`.
 
 So the app's "stretched poster on the banner" is device behavior for content the app left inconsistent; it showed
 up in the engine only because an ISO 8601 date with microseconds parsed as epoch 0, which made the app treat the
-live event as ended and remove the banner row (fixed in `normalizeISO8601`).
+live event as ended and remove the banner row (fixed in `parseISO8601`).
 
 ## Running
 
