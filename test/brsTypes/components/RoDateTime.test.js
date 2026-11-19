@@ -187,6 +187,24 @@ describe("RoDateTime", () => {
                 expect(result).toBe(Uninitialized.Instance);
             });
 
+            it("accepts a fractional second of any length, keeping millisecond precision", () => {
+                let fromISO8601String = dt.getMethod("fromISO8601String");
+                fromISO8601String.call(interpreter, new BrsString("2026-11-27T00:30:00.000000Z"));
+                expect(dt.markTime).toEqual(1795739400000);
+                fromISO8601String.call(interpreter, new BrsString("2026-11-27T00:30:00.123456Z"));
+                expect(dt.markTime).toEqual(1795739400123);
+                fromISO8601String.call(interpreter, new BrsString("2026-11-27T00:30:00.5"));
+                expect(dt.markTime).toEqual(1795739400500);
+            });
+
+            it("accepts a space as the date/time separator", () => {
+                let fromISO8601String = dt.getMethod("fromISO8601String");
+                fromISO8601String.call(interpreter, new BrsString("2009-01-01 01:00:00.000"));
+                expect(dt.markTime).toEqual(1230771600000);
+                fromISO8601String.call(interpreter, new BrsString("2009-01-01 01:00:00"));
+                expect(dt.markTime).toEqual(1230771600000);
+            });
+
             it("set the date/time using an invalid string", () => {
                 let fromISO8601String = dt.getMethod("fromISO8601String");
                 expect(fromISO8601String).toBeTruthy();

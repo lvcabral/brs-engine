@@ -345,6 +345,21 @@ export const ValidDateFormats = [
 ];
 
 /**
+ * Normalizes an ISO 8601 date string for parsing with `ValidDateFormats`: a space date/time separator
+ * becomes `T` (Roku documents "YYYY-MM-DD HH:MM:SS"), and a fractional second of any length is cut
+ * or padded to milliseconds (e.g. the microseconds in "2026-11-27T00:30:00.000000Z").
+ * @param value The date string to normalize
+ * @returns The string in one of the `ValidDateFormats` shapes, when it was a variant of one
+ */
+export function normalizeISO8601(value: string): string {
+    return value
+        .replace(/^(\d{4}-\d{2}-\d{2}) (?=\d)/, "$1T")
+        .replace(/(T\d{2}:\d{2}:\d{2})\.(\d+)/, (_match, time: string, fraction: string) => {
+            return `${time}.${fraction.slice(0, 3).padEnd(3, "0")}`;
+        });
+}
+
+/**
  * Interface for a flexible object with string keys and convertible values.
  * This is to be used to behave like and convert to a BrightScript Associative Array.
  */

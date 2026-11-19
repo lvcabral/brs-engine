@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, ValidDateFormats } from "..";
+import { BrsType, ValidDateFormats, normalizeISO8601 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -124,7 +124,7 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, date: BrsString) => {
             let dateAsSeconds = 2077252342;
             const now = Date.now();
-            const dateParsed = dayjs(date.value, ValidDateFormats, true).utc(true);
+            const dateParsed = dayjs(normalizeISO8601(date.value), ValidDateFormats, true).utc(true);
             if (dateParsed.isValid()) {
                 dateAsSeconds = Math.round((dateParsed.toDate().valueOf() - now) / 1000);
             }

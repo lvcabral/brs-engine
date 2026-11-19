@@ -1,6 +1,6 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int64, ValidDateFormats } from "..";
+import { BrsType, Int64, ValidDateFormats, normalizeISO8601 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
@@ -313,7 +313,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, dateString: BrsString) => {
-            let dateParsed = dayjs(dateString.value, ValidDateFormats, true).utc(true);
+            let dateParsed = dayjs(normalizeISO8601(dateString.value), ValidDateFormats, true).utc(true);
             if (!dateParsed.isValid()) {
                 dateParsed = dayjs(0);
             }
