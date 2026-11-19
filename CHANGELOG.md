@@ -22,7 +22,7 @@ This patch release fixes four behaviors found in production apps, each checked a
 
 #### Chores, Build and Dependencies
 
-* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.1 by [@lvcabral](https://github.com/lvcabral)
+* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.1 by [@lvcabral](https://github.com/lvcabral) in [#1332](https://github.com/lvcabral/brs-engine/pull/1332)
 
 ### New Contributors
 
