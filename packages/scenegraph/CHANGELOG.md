@@ -2,6 +2,20 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.7.1"></a>
+
+## [v0.7.1 (beta) - Screen Lifecycle and RowList Motion Rects](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.1) - 19 November 2026
+
+This patch release matches two more device behaviors, each checked against a real Roku with a probe app under `test/simulator/probes/`. `roSGScreen.close()` now works as on a device: a closed screen stops rendering, its Scene's timers and animations stop, and closing the last screen ends the app. An `roScreen` takes over the display and suspends the Scene while it is open, and keys and frames go to the screen that owns the display. `roSGScreen.SetMessagePort(invalid)` or switching to another port no longer freezes the Scene. `RowList` item sub-rects now report the in-transit geometry on every frame, `skipFocusAnimations` makes only a row change instant, and with transitions off a move along a row still publishes one half-way `currFocusColumn`, so apps that read the direction from it keep working. Requires `brs-engine` v2.7.1 or newer. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) A closed `roSGScreen` stops rendering, closing the last screen ends the app, and an `roScreen` suspends the Scene while it owns the display, as on the device by [@mcaustin](https://github.com/mcaustin) in [#1328](https://github.com/lvcabral/brs-engine/pull/1328)
+* (rsg) `roSGScreen.SetMessagePort(invalid)` or a switch to another port no longer freezes the Scene by [@polydeuxes](https://github.com/polydeuxes) in [#1327](https://github.com/lvcabral/brs-engine/pull/1327)
+* (rsg) `RowList` item rects now follow the focus motion, `skipFocusAnimations` skips only row changes, and a move along a row keeps its half-way `currFocusColumn` without transitions by [@lvcabral](https://github.com/lvcabral) in [#1330](https://github.com/lvcabral/brs-engine/pull/1330)
+
+[Full Changelog][v0.7.1]
+
 <a name="v0.7.0"></a>
 
 ## [v0.7.0 (beta) - UI Transitions and Device-faithful Layout](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.0) - 15 November 2026
@@ -495,6 +509,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.7.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.0...brs-sg-v0.7.1
 [v0.7.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.2...brs-sg-v0.7.0
 [v0.6.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.1...brs-sg-v0.6.2
 [v0.6.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.0...brs-sg-v0.6.1

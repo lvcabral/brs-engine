@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.7.1"></a>
+
+## [v2.7.1 - Screen Lifecycle, Message Ports and ISO 8601 Dates](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.1) - 19 November 2026
+
+This patch release fixes four behaviors found in production apps, each checked against a real Roku device with a probe app under `test/simulator/probes/`. In the **core engine**, `SetMessagePort()`/`SetPort()` now accept `invalid` (or any value that is not a message port) as a device does: the component silently drops its port instead of crashing the app, and in developer mode the engine prints a warning naming the call site. `roDateTime.FromISO8601String()` and `roTimespan.GetSecondsToISO8601Date()` now read any number of fractional-second digits and the documented space separator, so a microsecond timestamp no longer parses as epoch 0. In the **SceneGraph** extension, `roSGScreen.close()` now behaves as on a device: a closed screen stops rendering, its timers and animations stop, and closing the last screen ends the app. An `roScreen` takes over the display and suspends the Scene while it is open. `RowList` item sub-rects now follow the focus motion frame by frame, `skipFocusAnimations` skips only row changes, and with transitions off a move along a row still publishes one half-way `currFocusColumn`. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) `SetMessagePort()`/`SetPort()` now accept `invalid` or any other non-port value and drop the component's port, as on the device, instead of crashing by [@polydeuxes](https://github.com/polydeuxes) in [#1327](https://github.com/lvcabral/brs-engine/pull/1327)
+* (brs) `roDateTime.FromISO8601String()` and `roTimespan.GetSecondsToISO8601Date()` now parse ISO 8601 dates with any fractional-second length or a space separator by [@lvcabral](https://github.com/lvcabral) in [#1329](https://github.com/lvcabral/brs-engine/pull/1329)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.7.1)
+
+* (rsg) A closed `roSGScreen` stops rendering, closing the last screen ends the app, and an `roScreen` suspends the Scene while it owns the display, as on the device by [@mcaustin](https://github.com/mcaustin) in [#1328](https://github.com/lvcabral/brs-engine/pull/1328)
+* (rsg) `RowList` item rects now follow the focus motion, `skipFocusAnimations` skips only row changes, and a move along a row keeps its half-way `currFocusColumn` without transitions by [@lvcabral](https://github.com/lvcabral) in [#1330](https://github.com/lvcabral/brs-engine/pull/1330)
+
+#### Chores, Build and Dependencies
+
+* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.1 by [@lvcabral](https://github.com/lvcabral)
+
+### New Contributors
+
+* @polydeuxes made their first contribution in [#1327](https://github.com/lvcabral/brs-engine/pull/1327) - welcome to the project!
+
+[Full Changelog][v2.7.1]
+
 <a name="v2.7.0"></a>
 
 ## [v2.7.0 - UI Transitions, Background Worker and Device-faithful Layout](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.0) - 15 November 2026
@@ -2037,6 +2065,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.7.1]: https://github.com/lvcabral/brs-engine/compare/v2.7.0...v2.7.1
 [v2.7.0]: https://github.com/lvcabral/brs-engine/compare/v2.6.2...v2.7.0
 [v2.6.2]: https://github.com/lvcabral/brs-engine/compare/v2.6.1...v2.6.2
 [v2.6.1]: https://github.com/lvcabral/brs-engine/compare/v2.6.0...v2.6.1
