@@ -64,7 +64,7 @@ Options:
   -h, --help                output usage information
 ```
 
-SceneGraph nodes animate their built-in motion as a device does: `PanelSet` slides, and focus moves in lists, grids, `RowList` and `ZoomRowList`. `--no-transitions` turns this off, so every move lands at once in the same field order. Setting the `BRS_UI_TRANSITIONS=0` environment variable does the same, which is handy for automated runs that compare screens or field traces.
+SceneGraph nodes animate their built-in motion as a device does: `PanelSet` slides, and focus moves in lists, grids, `RowList` and `ZoomRowList`. `--no-transitions` turns this off, so every move lands at once in the same field order. Setting the `BRS_UI_TRANSITIONS=0` environment variable does the same, which is handy for automated runs that compare screens or field traces. One in-transit value is kept in either case: a key move along a `RowList` row first publishes a half-way `currFocusColumn`, because a device always animates that move and apps read its direction from that value.
 
 ### REPL
 

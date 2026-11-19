@@ -606,6 +606,105 @@ describe("RowList focus motion", () => {
         expect(mid).toBeGreaterThan(to);
     });
 
+    describe("item sub-rects while moving (rowlist-motion-rect-probe, device trace)", () => {
+        /** The probe's home grid: tall poster rows around a one-item banner row with no label, fixedFocus. */
+        function makeHomeGrid() {
+            const list = SGNodeFactory.createNode("RowList");
+            const vec = (x, y) => new RoArray([new Float(x), new Float(y)]);
+            const bools = (values) => new RoArray(values.map((v) => BrsBoolean.from(v)));
+            list.setValue("itemSize", vec(1613, 442));
+            list.setValue("numRows", new Int32(3));
+            list.setValue("rowFocusAnimationStyle", new BrsString("fixedFocus"));
+            list.setValue("vertFocusAnimationStyle", new BrsString("fixedFocus"));
+            list.setValue("showRowLabel", bools([true, false, true, true, true]));
+            list.setValue("rowItemSpacing", new RoArray([vec(16, 0)]));
+            list.setValue(
+                "rowItemSize",
+                new RoArray([vec(310, 442), vec(1613, 120), vec(310, 442), vec(310, 442), vec(310, 442)])
+            );
+            list.setValue("rowHeights", new RoArray([530, 160, 530, 530, 530].map((h) => new Float(h))));
+            list.setValue("focusXOffset", new RoArray([490, 0, 0, 0, 0].map((x) => new Float(x))));
+            const root = SGNodeFactory.createNode("ContentNode");
+            for (const count of [8, 1, 8, 8, 8]) {
+                const row = SGNodeFactory.createNode("ContentNode");
+                for (let c = 0; c < count; c++) {
+                    row.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+                }
+                root.appendChildToParent(row);
+            }
+            list.setValue("content", root);
+            list.setNodeFocus(true);
+            return list;
+        }
+
+        const rectOf = (list, id) => list.getSubBoundingRect("toParent", id);
+
+        test("rows report the focused row's label band, blended while the focus changes rows", () => {
+            const list = makeHomeGrid();
+            const band = rectOf(list, "item0_0").y;
+            expect(band).toBeGreaterThan(0);
+            // At rest on row 0 the label-less banner still reports row 0's band (device: 566 = 530 + 36).
+            expect(rectOf(list, "item1_0").y).toBe(530 + band);
+
+            tap(list, "down");
+            advance(60);
+            const p = list.getValueJS("currFocusRow");
+            expect(p).toBeGreaterThan(0);
+            expect(p).toBeLessThan(1);
+            // The rows scroll up by p rows and the band blends from row 0's to the banner's (none).
+            expect(rectOf(list, "item0_0").y).toBeCloseTo(band - (530 + band) * p, 3);
+            expect(rectOf(list, "item1_0").y).toBeCloseTo(530 - 530 * p + band * (1 - p), 3);
+
+            advance(500);
+            expect(list.getValueJS("rowItemFocused")).toEqual([1, 0]);
+            expect(rectOf(list, "item0_0").y).toBe(-530);
+            expect(rectOf(list, "item1_0").y).toBe(0);
+            // Row 2 has a label, but the focused banner's band (none) is the one reported.
+            expect(rectOf(list, "item2_0").y).toBe(160);
+        });
+
+        test("cells slide along the row with a move along it", () => {
+            const list = makeHomeGrid();
+            expect(rectOf(list, "item0_0").x).toBe(490);
+
+            tap(list, "right");
+            advance(60);
+            const c = list.getValueJS("currFocusColumn");
+            expect(c).toBeGreaterThan(0);
+            expect(c).toBeLessThan(1);
+            expect(rectOf(list, "item0_0").x).toBeCloseTo(490 - 326 * c, 3);
+            expect(rectOf(list, "item0_1").x).toBeCloseTo(816 - 326 * c, 3);
+            // Other rows don't move.
+            expect(rectOf(list, "item2_0").x).toBe(0);
+
+            advance(500);
+            expect(list.getValueJS("rowItemFocused")).toEqual([0, 1]);
+            expect(rectOf(list, "item0_0").x).toBe(164);
+            expect(rectOf(list, "item0_1").x).toBe(490);
+        });
+
+        test("skipFocusAnimations lands a row change at once, but a move along a row still slides", () => {
+            const list = makeHomeGrid();
+            list.setValue("skipFocusAnimations", BrsBoolean.True);
+            observe(list, ["currFocusRow", "currFocusColumn", "rowItemFocused"]);
+
+            tap(list, "down");
+            expect(list.getValueJS("rowItemFocused")).toEqual([1, 0]);
+            expect(log.filter((entry) => entry.startsWith("currFocusRow"))).toEqual(["currFocusRow=1"]);
+
+            tap(list, "up");
+            log.length = 0;
+            tap(list, "right");
+            advance(60);
+            const c = list.getValueJS("currFocusColumn");
+            expect(c).toBeGreaterThan(0);
+            expect(c).toBeLessThan(1);
+            expect(list.getValueJS("rowItemFocused")).toEqual([0, 0]);
+            advance(500);
+            expect(list.getValueJS("rowItemFocused")).toEqual([0, 1]);
+        });
+    });
+
     describe("ZoomRowList", () => {
         function makeZoom() {
             const list = SGNodeFactory.createNode("ZoomRowList");
