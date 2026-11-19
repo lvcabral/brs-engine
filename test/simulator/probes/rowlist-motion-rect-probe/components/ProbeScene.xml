@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' A RowList shaped like a home grid: tall poster rows with a one-item banner row between them, fixedFocus,
+    ' and a focusXOffset on the poster rows. Every in-transit currFocusRow/currFocusColumn value and every
+    ' settle field logs subBoundingRect("item<row>_<col>") of a fixed set of items, to show whether item rects
+    ' follow the scroll or report a static layout while the list moves. The last phase repeats the moves
+    ' with skipFocusAnimations set, the device's own instant mode.
+    sub init()
+        m.seq = 0
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        m.steps = [
+            { op: "create" }, { op: "wait", secs: 2 }, { op: "mark", what: "initial" },
+            { op: "key", key: "Down" }, { op: "key", key: "Up" },
+            { op: "key", key: "Right" }, { op: "key", key: "Left" },
+            { op: "key", key: "Down" }, { op: "key", key: "Down" }, { op: "key", key: "Up" },
+            { op: "skip" },
+            { op: "key", key: "Up" }, { op: "key", key: "Right" }, { op: "key", key: "Left" },
+            { op: "key", key: "Down" },
+            { op: "done" }
+        ]
+        m.timer.duration = 1
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, detail as string)
+        m.seq = m.seq + 1
+        print "PROBE|" + right("00" + m.seq.toStr(), 3) + "|" + phase + "|" + detail
+    end sub
+
+    sub runSteps()
+        while m.steps.count() > 0
+            s = m.steps.shift()
+            if s.op = "create"
+                createList()
+            else if s.op = "wait"
+                m.timer.duration = s.secs
+                m.timer.control = "start"
+                return
+            else if s.op = "skip"
+                m.list.skipFocusAnimations = true
+                rec("mark", "skipFocusAnimations=" + m.list.skipFocusAnimations.toStr() + rects())
+            else if s.op = "mark"
+                rec("mark", s.what + " " + rects())
+            else if s.op = "key"
+                rec("await", s.key + "|")
+                m.timer.duration = 3
+                m.timer.control = "start"
+                return
+            else if s.op = "done"
+                rec("done", "end")
+                m.top.probeExit = true
+                return
+            end if
+        end while
+    end sub
+
+    sub createList()
+        colors = ["0x3060C0FF", "0xC03060FF", "0x30A060FF", "0xA08020FF", "0x8040C0FF"]
+        counts = [8, 1, 8, 8, 8]
+        root = CreateObject("roSGNode", "ContentNode")
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            row.title = "row" + r.toStr()
+            for c = 0 to counts[r] - 1
+                item = row.createChild("ContentNode")
+                item.title = r.toStr() + "_" + c.toStr()
+                item.hdPosterUrl = colors[(r + c) mod colors.count()]
+            end for
+        end for
+        l = CreateObject("roSGNode", "RowList")
+        l.id = "list"
+        l.translation = [160, 144]
+        l.itemComponentName = "ProbeItem"
+        l.itemSize = [1613, 442]
+        l.numRows = 3
+        l.rowFocusAnimationStyle = "fixedFocus"
+        l.vertFocusAnimationStyle = "fixedFocus"
+        l.showRowLabel = [true, false, true, true, true]
+        l.rowItemSpacing = [[16, 0]]
+        l.rowItemSize = [[310, 442], [1613, 120], [310, 442], [310, 442], [310, 442]]
+        l.rowHeights = [530, 160, 530, 530, 530]
+        l.focusXOffset = [490, 0, 0, 0, 0]
+        l.content = root
+        m.top.appendChild(l)
+        m.list = l
+        for each f in ["currFocusRow", "currFocusColumn", "scrollingStatus", "rowItemFocused"]
+            l.observeField(f, "onListField")
+        end for
+        l.setFocus(true)
+        rec("create", "rows=" + root.getChildCount().toStr())
+    end sub
+
+    function fmtRect(r) as string
+        return r.x.toStr() + "," + r.y.toStr() + "," + r.width.toStr() + "," + r.height.toStr()
+    end function
+
+    ' The rects of a fixed set of items: two in row 0, the banner, the focused column of rows 2 and 3.
+    function rects() as string
+        l = m.list
+        out = ""
+        for each id in ["item0_0", "item0_1", "item1_0", "item2_0", "item3_0"]
+            out = out + " " + id + "=" + fmtRect(l.subBoundingRect(id))
+        end for
+        return out
+    end function
+
+    sub onListField(msg)
+        l = m.list
+        v = msg.getData()
+        if type(v) = "roArray"
+            v = FormatJson(v)
+        else
+            v = v.toStr()
+        end if
+        rec("field", msg.getField() + "=" + v + rects())
+    end sub
+    ]]>
+    </script>
+</component>
