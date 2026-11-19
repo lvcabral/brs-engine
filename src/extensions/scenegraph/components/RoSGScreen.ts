@@ -22,6 +22,7 @@ import {
     BrsCanvas,
     BrsCanvasContext2D,
     BrsDraw2D,
+    DisplayScreen,
     createNewCanvas,
     drawObjectToComponent,
     IfDraw2D,
@@ -48,7 +49,19 @@ const rokuKeys: Map<number, string> = new Map([
     [13, "play"],
 ]);
 
-export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
+/**
+ * Message callback of every main-thread port, including the ones given to `setMessagePort`: whatever
+ * port Main reads, the pass runs on the current screen, so a screen created after another one closed
+ * renders no matter which port Main waits on.
+ */
+export function pollCurrentScreen(interpreter: Interpreter) {
+    return sgRoot.screen?.getNewEvents(interpreter) ?? NO_EVENTS;
+}
+
+/** Returned, never modified, by every pass that has nothing to report. */
+const NO_EVENTS: BrsEvent[] = [];
+
+export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, DisplayScreen {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
@@ -58,11 +71,14 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly context: BrsCanvasContext2D;
     private readonly textureManager: RoTextureManager;
     private readonly fontRegistry: RoFontRegistry;
-    private port?: RoMessagePort;
+    private readonly port?: RoMessagePort;
     private sceneType?: BrsString;
     private alphaEnable: boolean;
     private lastMessage: number;
     private rendering: boolean;
+    private closed: boolean = false;
+    /** Set while a screen above holds the display, so the Scene repaints once it is back on top. */
+    private suspended: boolean = false;
     width: number;
     height: number;
     scaleMode: number;
@@ -85,7 +101,7 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         this.canvas = createNewCanvas(this.width, this.height);
         this.context = this.canvas.getContext("2d") as BrsCanvasContext2D;
 
-        // The render callback stays on every main-thread port (registerPort), whatever port the screen uses.
+        // Every main-thread port already runs pollCurrentScreen, whatever port the screen is given.
         const setPortIface = new IfSetMessagePort(this);
         const getPortIface = new IfGetMessagePort(this);
         this.registerMethods({
@@ -100,11 +116,12 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             ],
         });
         sgRoot.setScreen(this);
+        BrsDevice.pushDisplay(this);
     }
 
-    registerPort(port: RoMessagePort) {
-        const component = this.getComponentName();
-        port.registerCallback(component, this.getNewEvents.bind(this));
+    /** Owns the display until closed, unless a screen created later sits on top of it. */
+    ownsDisplay() {
+        return !this.closed;
     }
 
     clearCanvas(rgba: number): void {
@@ -179,10 +196,21 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         };
     }
 
-    /** Message callback to handle control keys and Scene rendering */
-    private getNewEvents(interpreter: Interpreter) {
+    /**
+     * Handles control keys and renders the Scene, only while this screen owns the display: the Scene
+     * is suspended under a screen created later (e.g. an `roScreen`), as on a device.
+     */
+    getNewEvents(interpreter: Interpreter) {
         if (this.rendering || !interpreter) {
-            return [];
+            return NO_EVENTS;
+        }
+        if (BrsDevice.displayOwner() !== this) {
+            this.suspended = true;
+            return NO_EVENTS;
+        }
+        if (this.suspended) {
+            this.suspended = false;
+            this.isDirty = true;
         }
         this.rendering = true;
         try {
@@ -335,7 +363,19 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter) => {
-            BrsDevice.resetKeysBuffer();
+            if (this.closed) {
+                return Uninitialized.Instance;
+            }
+            const owned = BrsDevice.displayOwner() === this;
+            this.closed = true;
+            if (owned) {
+                // Keys pressed for this screen must not reach the next one; a screen on top keeps its own.
+                BrsDevice.resetKeysBuffer();
+                // The screen below takes the display back with the frame it last showed.
+                BrsDevice.displayOwner()?.restoreDisplay?.();
+            }
+            sgRoot.closeScreen(this);
+            BrsDevice.releaseDisplay();
             this.port?.pushMessage(new RoSGScreenEvent(BrsBoolean.True));
             return Uninitialized.Instance;
         },

@@ -99,6 +99,9 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
                 return BrsInvalid.Instance;
             }
             this.runMessageLoopHooks(interpreter);
+            if (BrsDevice.appEndDue()) {
+                return BrsInvalid.Instance;
+            }
             const msg = this.getNextMessage();
             if (msg instanceof BrsEvent) {
                 return msg;
@@ -120,6 +123,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
 
     /** Lets extensions run work deferred to the message loop, so its events are seen this pass. */
     private runMessageLoopHooks(interpreter: Interpreter) {
+        BrsDevice.onMessageLoop();
         for (const ext of interpreter.extensions.values()) {
             ext.onMessageLoop?.(interpreter);
         }

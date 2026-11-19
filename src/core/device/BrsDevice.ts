@@ -38,6 +38,17 @@ import { FileSystem } from "./FileSystem";
 import { OutputProxy } from "./OutputProxy";
 import type { Lexeme } from "../lexer/Lexeme";
 
+/** How long a device keeps running an app whose last screen closed, when Main reaches no message loop. */
+const AppEndDelayMs = 1000;
+
+/** A screen that can own the display: an `roScreen`, or a SceneGraph screen registered by its extension. */
+export interface DisplayScreen {
+    /** False once the screen is closed or released; it then gives the display back. */
+    ownsDisplay(): boolean;
+    /** Shows this screen's last frame again, when the screen above it gives the display back. */
+    restoreDisplay?(): void;
+}
+
 export class BrsDevice {
     static readonly deviceInfo: DeviceInfo = DefaultDeviceInfo;
     static readonly registry: RegistryData = { current: new Map<string, string>(), removed: [], isDirty: false };
@@ -45,6 +56,9 @@ export class BrsDevice {
     static readonly extVolume: SharedObject = new SharedObject(ExtVolInitialSize, ExtVolMaxSize);
     static readonly isDevMode = process.env.NODE_ENV === "development";
     static readonly keysBuffer: KeyEvent[] = [];
+    private static readonly displayStack: DisplayScreen[] = [];
+    /** `performance.now()` time the app ends at because its last screen closed; 0 is due now. */
+    private static appEndAt: number | undefined;
     static readonly terms: Map<string, string> = new Map<string, string>();
     static readonly sfx: string[] = DefaultSounds.slice();
     static readonly bscs = new Map<string, number>();
@@ -599,6 +613,69 @@ export class BrsDevice {
         postMessage("command,continue");
         Atomics.store(this.sharedArray, DataType.DBT, -1);
         Atomics.notify(this.sharedArray, DataType.DBT);
+    }
+
+    /**
+     * Puts a screen on top of the display: the most recently created screen owns it, and the one below
+     * takes it back once that screen is closed or released. Released screens are dropped here, so
+     * temporary screens don't accumulate.
+     * @param screen the screen just created
+     */
+    static pushDisplay(screen: DisplayScreen) {
+        const stack = this.displayStack;
+        let kept = 0;
+        for (const entry of stack) {
+            if (entry.ownsDisplay()) {
+                stack[kept] = entry;
+                kept++;
+            }
+        }
+        stack.length = kept;
+        stack.push(screen);
+    }
+
+    /**
+     * Returns the screen that owns the display: the most recent one still open.
+     * @returns the owner, or undefined when no screen is left
+     */
+    static displayOwner(): DisplayScreen | undefined {
+        const stack = this.displayStack;
+        while (stack.length > 0 && !stack.at(-1)!.ownsDisplay()) {
+            stack.pop();
+        }
+        return stack.at(-1);
+    }
+
+    /** Forgets every screen and any pending app end, at the start of an app run. */
+    static resetDisplay() {
+        this.displayStack.length = 0;
+        this.appEndAt = undefined;
+    }
+
+    /**
+     * Called when a screen closes. With no screen left on the display the app ends, as an `end` statement
+     * would (`EXIT_USER_NAV`): at Main's next message-loop pass, or after {@link AppEndDelayMs} if Main
+     * never reaches one. Not at once: a device still runs the statements right after `close()`.
+     */
+    static releaseDisplay() {
+        if (this.appEndAt === undefined && this.displayOwner() === undefined) {
+            this.appEndAt = performance.now() + AppEndDelayMs;
+        }
+    }
+
+    /** Main reached its message loop: a pending app end is due now. */
+    static onMessageLoop() {
+        if (this.appEndAt !== undefined) {
+            this.appEndAt = 0;
+        }
+    }
+
+    /**
+     * Checked before every statement, so with no pending end it is a single field read.
+     * @returns True when the app must end now
+     */
+    static appEndDue(): boolean {
+        return this.appEndAt !== undefined && performance.now() >= this.appEndAt;
     }
 
     /**

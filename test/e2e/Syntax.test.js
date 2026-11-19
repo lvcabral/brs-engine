@@ -582,6 +582,15 @@ describe("end to end syntax", () => {
         ]);
     });
 
+    test("try-catch-control-flow.brs", async () => {
+        await execute([resourceFile("try-catch-control-flow.brs")], outputStreams);
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "for 1",
+            "while exited at 2",
+            "returned from try",
+        ]);
+    });
+
     test("goto.brs", async () => {
         await execute([resourceFile("goto.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([

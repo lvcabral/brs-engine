@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SecondScene" extends="Scene">
+    <interface>
+        <field id="ticks" type="integer" value="0" />
+        <field id="lastKey" type="string" value="none" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x104020FF" />
+        <Label id="label" translation="[160,160]" width="1600" text="Scene 2" />
+    </children>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.top.id = "scene2"
+            m.label = m.top.findNode("label")
+            m.timer = m.top.createChild("Timer")
+            m.timer.repeat = true
+            m.timer.duration = 0.1
+            m.timer.observeField("fire", "onFire")
+            m.timer.control = "start"
+            m.top.setFocus(true)
+        end sub
+
+        sub onFire()
+            m.top.ticks = m.top.ticks + 1
+            m.label.text = "Scene 2 ticks=" + m.top.ticks.toStr() + " lastKey=" + m.top.lastKey
+        end sub
+
+        function onKeyEvent(key as string, press as boolean) as boolean
+            if press then m.top.lastKey = key
+            return false
+        end function
+        ]]>
+    </script>
+</component>

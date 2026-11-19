@@ -14,7 +14,7 @@ opacity, draws through the passed `IfDraw2D`, updates bounding rects, then calls
 and `nodeRenderingDone(...)`.
 
 **Why the clip lives in the template.** `clippingRect` is declared on `Group`, so every Group-derived
-node inherits it, and the reference says it limits *"all drawing by this node **and** its children"* —
+node inherits it, and the reference says it limits _"all drawing by this node **and** its children"_ —
 so it has to bracket the node's own geometry, not just the child traversal. It used to sit inside
 `Group.renderNode` and `ArrayGrid.renderNode` around `renderChildren` only, which meant (a) the ~25 node
 types that override the entry point ignored their own rect entirely, and because `Rectangle`/`Poster`/
@@ -26,44 +26,45 @@ parent above them. Regression: `ClippingRect.test.js`.
 
 **Sub-invariants, each of which broke something while this was being written:**
 
-- **Measurement passes stay unclipped.** `pushClippingRect` no-ops without a `draw2D`, so
-  `boundingRect()` still computes under a clip. Unchanged by the template, and load-bearing.
-- **The clip pops in a `finally`.** `pushClip`/`popClip` are `ctx.save()`/`ctx.restore()`, so a leaked
-  clip is *permanent canvas state* — every later frame draws inside it. Arbitrary app BrightScript runs
-  inside the bracket (an item component's `init()`, a field observer), so the pop cannot be a plain
-  trailing statement. Same reasoning for the four inner clip brackets that are not the template's:
-  `ArrayGrid.renderItemClipped`, `RowList.renderSingleRow`, `ScrollableText`, `ScrollingLabel`. Backstop:
-  `IfDraw2D.resetClips()` in a `finally` around the per-frame paint in `RoSGScreen`, so one bad frame
-  cannot poison the next.
-- **Every node positions its drawing through `getDrawTranslation`.** Nothing may compute its own
-  `drawTrans` inline — if it did, the clip position could drift from the paint position. `rotateTranslation`
-  now appears only in `Group.getDrawTranslation` (plus one unrelated use in `MonospaceLabel`).
-- **An inherited rotation rotates EVERY node type's own translation.** **Device-measured** (Streaming
-  Stick / Roku OS 15.2, probe `test/simulator/probes/layout-measure-probe` case `R`): two identical hosts rotated 90° with
-  a child translated `[100, 0]` put the child at the same rotated position whether that child is a
-  `Group` or a `Rectangle`. The engine used to rotate for 18 renderable types but not for `Group` or the
-  keyboard/text-entry containers — a `rotatesDrawTranslation()` hook that this measurement removed. The
-  two behaviors are identical whenever the inherited angle is 0, which is why the split survived so
-  long. Regression: `RotatedTranslation.test.js`.
+-   **Measurement passes stay unclipped.** `pushClippingRect` no-ops without a `draw2D`, so
+    `boundingRect()` still computes under a clip. Unchanged by the template, and load-bearing.
+-   **The clip pops in a `finally`.** `pushClip`/`popClip` are `ctx.save()`/`ctx.restore()`, so a leaked
+    clip is _permanent canvas state_ — every later frame draws inside it. Arbitrary app BrightScript runs
+    inside the bracket (an item component's `init()`, a field observer), so the pop cannot be a plain
+    trailing statement. Same reasoning for the four inner clip brackets that are not the template's:
+    `ArrayGrid.renderItemClipped`, `RowList.renderSingleRow`, `ScrollableText`, `ScrollingLabel`. Backstop:
+    `IfDraw2D.resetClips()` in a `finally` around the per-frame paint in `RoSGScreen`, so one bad frame
+    cannot poison the next.
+-   **Every node positions its drawing through `getDrawTranslation`.** Nothing may compute its own
+    `drawTrans` inline — if it did, the clip position could drift from the paint position. `rotateTranslation`
+    now appears only in `Group.getDrawTranslation` (plus one unrelated use in `MonospaceLabel`).
+-   **An inherited rotation rotates EVERY node type's own translation.** **Device-measured** (Streaming
+    Stick / Roku OS 15.2, probe `test/simulator/probes/layout-measure-probe` case `R`): two identical hosts rotated 90° with
+    a child translated `[100, 0]` put the child at the same rotated position whether that child is a
+    `Group` or a `Rectangle`. The engine used to rotate for 18 renderable types but not for `Group` or the
+    keyboard/text-entry containers — a `rotatesDrawTranslation()` hook that this measurement removed. The
+    two behaviors are identical whenever the inherited angle is 0, which is why the split survived so
+    long. Regression: `RotatedTranslation.test.js`.
 
-  A *container's* extent under rotation (a `Group` wrapping a 20×20 marker under a 90°-rotated host:
-  device scene y = 200) and a rotated Group's own `boundingRect()` (issue #1260) are right since PR #1291
-  re-derived container rects from `rectLocal`. Regression: the #1260 cases in
-  `InheritParentTransform.test.js`.
-- **The visibility gates stay inside each `renderNodeContent`.** They differ per node type (soft skip for
-  containers, hard skip for renderables, hidden-extent measurement for grids) — see the
-  visibility-vs-measurement rule below. Only the cheap `isVisible()` guard on the *push* lives in the
-  template.
-- **A node that self-translates during layout must do it in `prepareRender`.** The template derives
-  `drawTrans` before the content hook, so a node whose layout assigns its own `translation` would
-  otherwise get a clip at its pre-layout position. `StandardDialog.layoutStandardDialog` recenters the
-  dialog, so its relayout gate lives in `prepareRender` — and because the four `Standard*Dialog`
-  subclasses build content that *drives* that layout, their preambles moved into chained
-  `prepareRender` overrides too. Getting this order wrong sizes a dialog from stale content
-  (regressions in `StandardDialogNodes.test.js` caught exactly that).
-- **Subclass delegation calls `super.renderNodeContent`, never `super.renderNode`** — the latter would
-  push the clip a second time. `LayoutGroup` matters most: it calls super inside a convergence loop, so
-  the mistake shows up as N clips per pass.
+    A _container's_ extent under rotation (a `Group` wrapping a 20×20 marker under a 90°-rotated host:
+    device scene y = 200) and a rotated Group's own `boundingRect()` (issue #1260) are right since PR #1291
+    re-derived container rects from `rectLocal`. Regression: the #1260 cases in
+    `InheritParentTransform.test.js`.
+
+-   **The visibility gates stay inside each `renderNodeContent`.** They differ per node type (soft skip for
+    containers, hard skip for renderables, hidden-extent measurement for grids) — see the
+    visibility-vs-measurement rule below. Only the cheap `isVisible()` guard on the _push_ lives in the
+    template.
+-   **A node that self-translates during layout must do it in `prepareRender`.** The template derives
+    `drawTrans` before the content hook, so a node whose layout assigns its own `translation` would
+    otherwise get a clip at its pre-layout position. `StandardDialog.layoutStandardDialog` recenters the
+    dialog, so its relayout gate lives in `prepareRender` — and because the four `Standard*Dialog`
+    subclasses build content that _drives_ that layout, their preambles moved into chained
+    `prepareRender` overrides too. Getting this order wrong sizes a dialog from stale content
+    (regressions in `StandardDialogNodes.test.js` caught exactly that).
+-   **Subclass delegation calls `super.renderNodeContent`, never `super.renderNode`** — the latter would
+    push the clip a second time. `LayoutGroup` matters most: it calls super inside a convergence loop, so
+    the mistake shows up as N clips per pass.
 
 External node types registered via `SGNodeFactory.addNodeTypes` may still override `renderNode`; they
 simply bypass the clip, exactly as every node did before.
@@ -77,37 +78,37 @@ rotation and no scale of its own is **not moved by its pivot**, even under a rot
 types that place their own content (grids, TargetGroup, PanelSet) scale all of it around their
 translation. How the engine composes that, each part of which broke something during PR #1291:
 
-- **Two anchors, not one.** `getDrawTranslation` is the node's unrotated local origin — where text and
-  grid items are placed from. A draw that turns around `x + scale * center` (`doDrawRotatedRect`,
-  `doDrawRotatedBitmap`, the Effect clip, `transformLocalRect`) must start at the pivot anchor instead
-  (`SGUtil.pivotAnchor`; nodes get their draw rect from `getPivotDrawRect`), which differs only under an
-  inherited rotation. Folding the pivot shift into `getDrawTranslation`
-  fixed Rectangles and moved every Label/grid ~120 px under a rotated parent.
-- **`updateBoundingRects` takes the UNSCALED box at the draw translation** (plus outsets) and applies the
-  node's own transform itself (`placeLocalRect`). Do not pass a pre-scaled rect: `rectLocal` would carry
-  the node's own scale, and children (whose `rectToParent` is in local units) would union into it in a
-  different unit.
-- **The node's own rotation is `rotation - inheritedAngle`**, with `inheritedAngle` stashed by the
-  `renderNode` template. A node type that ignores its own rotation passes the inherited angle and is then
-  placed unrotated — consistent with how it draws.
-- **A node's scale reaches its descendants as a scale frame** (`withScaleFrame`: canvas transform via
-  `IfDraw2D.pushScaleFrame` + `sgRoot.sceneMap` for scene rects), opened by `Group.renderChildren`. A node
-  type that places children itself overrides `renderChildNodes`, never `renderChildren` (PanelSet,
-  PosterGridItem), and
-  one that draws items outside `renderChildren` runs them inside the frame (ArrayGrid around
-  `renderContent`, TargetGroup around its items) and returns `[1,1]` from `contentScale` so its own draw
-  helpers don't scale a second time.
-- **The frame is on the clip stack.** Child traversals run app BrightScript and push clips; a plain
-  `pushScale`'s `ctx.restore()` would pop a leaked inner clip instead of itself and leave the scale on the
-  canvas for every later sibling. `pushScale` stays for synchronous, JS-only brackets (text draws).
-- **Screen-edge culling inside a frame uses `visibleSceneRect()`**, the screen mapped into the current
-  drawing units — testing `sceneRect` directly dropped rows a scaled list still shows on screen.
-- **Child unions are cheap.** A container's `rectToParent`/`rectToScene` are re-derived from `rectLocal`
-  after its children, and a grid's or TargetGroup's after its items (`rederivesBounds`), so those children
-  only union into `rectLocal`; a renderable parent's
-  transform is reused from its own `placeLocalRect` (`placedTrans`/`placedScale`/...) rather than read
-  again per child. Regressions: `ScaleRotateFrame.test.js`, `Rectangle.test.js` ("Group scale…"),
-  `IfDraw2D.test.js` (`pushScaleFrame`).
+-   **Two anchors, not one.** `getDrawTranslation` is the node's unrotated local origin — where text and
+    grid items are placed from. A draw that turns around `x + scale * center` (`doDrawRotatedRect`,
+    `doDrawRotatedBitmap`, the Effect clip, `transformLocalRect`) must start at the pivot anchor instead
+    (`SGUtil.pivotAnchor`; nodes get their draw rect from `getPivotDrawRect`), which differs only under an
+    inherited rotation. Folding the pivot shift into `getDrawTranslation`
+    fixed Rectangles and moved every Label/grid ~120 px under a rotated parent.
+-   **`updateBoundingRects` takes the UNSCALED box at the draw translation** (plus outsets) and applies the
+    node's own transform itself (`placeLocalRect`). Do not pass a pre-scaled rect: `rectLocal` would carry
+    the node's own scale, and children (whose `rectToParent` is in local units) would union into it in a
+    different unit.
+-   **The node's own rotation is `rotation - inheritedAngle`**, with `inheritedAngle` stashed by the
+    `renderNode` template. A node type that ignores its own rotation passes the inherited angle and is then
+    placed unrotated — consistent with how it draws.
+-   **A node's scale reaches its descendants as a scale frame** (`withScaleFrame`: canvas transform via
+    `IfDraw2D.pushScaleFrame` + `sgRoot.sceneMap` for scene rects), opened by `Group.renderChildren`. A node
+    type that places children itself overrides `renderChildNodes`, never `renderChildren` (PanelSet,
+    PosterGridItem), and
+    one that draws items outside `renderChildren` runs them inside the frame (ArrayGrid around
+    `renderContent`, TargetGroup around its items) and returns `[1,1]` from `contentScale` so its own draw
+    helpers don't scale a second time.
+-   **The frame is on the clip stack.** Child traversals run app BrightScript and push clips; a plain
+    `pushScale`'s `ctx.restore()` would pop a leaked inner clip instead of itself and leave the scale on the
+    canvas for every later sibling. `pushScale` stays for synchronous, JS-only brackets (text draws).
+-   **Screen-edge culling inside a frame uses `visibleSceneRect()`**, the screen mapped into the current
+    drawing units — testing `sceneRect` directly dropped rows a scaled list still shows on screen.
+-   **Child unions are cheap.** A container's `rectToParent`/`rectToScene` are re-derived from `rectLocal`
+    after its children, and a grid's or TargetGroup's after its items (`rederivesBounds`), so those children
+    only union into `rectLocal`; a renderable parent's
+    transform is reused from its own `placeLocalRect` (`placedTrans`/`placedScale`/...) rather than read
+    again per child. Regressions: `ScaleRotateFrame.test.js`, `Rectangle.test.js` ("Group scale…"),
+    `IfDraw2D.test.js` (`pushScaleFrame`).
 
 ### `inheritParentTransform = false` — detached drawing, quirky reporting
 
@@ -118,26 +119,26 @@ inherited. But it **reports** `boundingRect()` = `sceneBoundingRect()` = its `lo
 `sceneBoundingRect()` as if nothing were detached. `renderTracking` follows the drawn position. How the
 engine does it, and what must not be "simplified":
 
-- **Drawing is reset in the `renderNode` template** (`renderDetached`): origin `[0,0]`, angle 0,
-  `sgRoot.sceneMap` identity, and the canvas transform reset with `IfDraw2D.pushTransformReset` (a
-  clip-stack frame, popped with `popScaleFrame`). That is sound because the canvas transform is
-  always exactly `sceneMap` over an identity base — on the screen and on MaskGroup's offscreen bitmap —
-  so no reset is pushed under the identity map, and clips survive because canvas clips are fixed in
-  device space.
-- **The quirks are reporting-only.** `rectToParent`/`rectToScene` keep the rects the node is *drawn* with:
-  `renderTracking`, LayoutGroup sizing (`chooseActiveRect`) and pruning read them, and the device lays out
-  and tracks a detached node by where it is. Only `Group.getBoundingRect` (the BrightScript surface) and
-  the parent's union in `updateParentRects` apply the device's reporting. Swapping the stored rects
-  instead breaks tracking (D5) and LayoutGroup placement (D11). A descendant's reported scene rect is
-  its drawn `rectToScene` taken through the origin/angle/scene map each detached ancestor was entered
-  with (`detachedFrom`) — never re-derived from ancestors' `translation` fields, which misplaces
-  children a container positions itself (grid items, TargetGroup). An empty detached node reports
-  `{0,0,0,0}`, not its unset `{Inf,...}` local rect.
-- **The per-node read is gated by `Field.transformDetachUsed`**, raised by any `inheritParentTransform`
-  field that ever holds false (both `Field` value assignments — so clones, aliases and cross-thread
-  writes are covered). Until then the render path pays one static boolean read per node; reading the
-  field on every node measured ~4% on a 2.5k-node pass. The template caches the flag per pass in
-  `detached` for `updateParentRects`.
+-   **Drawing is reset in the `renderNode` template** (`renderDetached`): origin `[0,0]`, angle 0,
+    `sgRoot.sceneMap` identity, and the canvas transform reset with `IfDraw2D.pushTransformReset` (a
+    clip-stack frame, popped with `popScaleFrame`). That is sound because the canvas transform is
+    always exactly `sceneMap` over an identity base — on the screen and on MaskGroup's offscreen bitmap —
+    so no reset is pushed under the identity map, and clips survive because canvas clips are fixed in
+    device space.
+-   **The quirks are reporting-only.** `rectToParent`/`rectToScene` keep the rects the node is _drawn_ with:
+    `renderTracking`, LayoutGroup sizing (`chooseActiveRect`) and pruning read them, and the device lays out
+    and tracks a detached node by where it is. Only `Group.getBoundingRect` (the BrightScript surface) and
+    the parent's union in `updateParentRects` apply the device's reporting. Swapping the stored rects
+    instead breaks tracking (D5) and LayoutGroup placement (D11). A descendant's reported scene rect is
+    its drawn `rectToScene` taken through the origin/angle/scene map each detached ancestor was entered
+    with (`detachedFrom`) — never re-derived from ancestors' `translation` fields, which misplaces
+    children a container positions itself (grid items, TargetGroup). An empty detached node reports
+    `{0,0,0,0}`, not its unset `{Inf,...}` local rect.
+-   **The per-node read is gated by `Field.transformDetachUsed`**, raised by any `inheritParentTransform`
+    field that ever holds false (both `Field` value assignments — so clones, aliases and cross-thread
+    writes are covered). Until then the render path pays one static boolean read per node; reading the
+    field on every node measured ~4% on a 2.5k-node pass. The template caches the flag per pass in
+    `detached` for `updateParentRects`.
 
 Regressions: `InheritParentTransform.test.js`, `IfDraw2D.test.js` (`pushTransformReset`).
 
@@ -180,40 +181,40 @@ textures or creates item components. Regression:
 (in the `renderNode` template right after `prepareRender`: it sets `draw2D = undefined` and falls
 through). Apps commonly hide UI with `opacity = 0` rather than
 `visible = false`, and the engine used to paint such a subtree in full — every draw call issued,
-invisibility resting *entirely* on the final `ctx.globalAlpha` write. That made any lost alpha
+invisibility resting _entirely_ on the final `ctx.globalAlpha` write. That made any lost alpha
 downstream leak a full-strength draw over the visible screen: a grid with
 `focusFootprintBlendColor = 0x00000000` painted a solid black focus frame across the screen, because
 `setContextAlpha`'s truthiness guard dropped the alpha of the one color whose packed value is falsy
 (`IfDraw2D.setContextAlpha` now checks `!== undefined` — one of several defects in that area; see
-*Blend colors* below. Regression: `test/extensions/scenegraph/BlendColorAlpha.test.js`). Per the Group
+_Blend colors_ below. Regression: `test/extensions/scenegraph/BlendColorAlpha.test.js`). Per the Group
 reference, `opacity` 0 puts
 `renderTracking` in the same `"none"` bucket as `visible = false`, which paint already hard-skips.
 Load-bearing details, in order of how easily each is broken:
 
-- **Degrade, never early-return.** An early return cannot hand the parent a rect the subtree never
-  computed: a node faded out *before it ever laid out* has a `{0,0,0,0}` `rectToParent`, which
-  `unionRect` treats as finite and unions in, inflating every ancestor's bounds toward that node's
-  translation and leaving them wrong for every later frame (measured: paint reported a parent 100px
-  wider than a layout pass over the same tree). Dropping `draw2D` instead computes exactly the rects a
-  layout pass would, by construction, because **every** draw call in every node goes through
-  `draw2D?.` — and each descendant still reaches its own `nodeRenderingDone`, so `renderTracking` is
-  right for the whole subtree, not just its root. Any future node type that draws through a captured
-  non-optional draw target would silently break this.
-- **The gate multiplies in the node's OWN `opacity`.** The accumulated value the template receives has
-  only the *ancestors'* opacity folded in — each `renderNodeContent` folds its own in later
-  (`Group.ts` `opacity = this.isVisible() ? opacity * this.getOpacity() : 0`). Testing the incoming
-  value alone still painted a node that is itself `opacity = 0`, which is the common case of an app
-  fading one widget out.
-- **Paint only (`draw2D !== undefined`).** A layout pass has no draw target to drop, and
-  `renderNodeContent` *deliberately* propagates opacity 0 through measurement (the rule above), so UI
-  under a faded-out ancestor keeps computing bounding rects.
-- **`isDirty` stays set** — `nodeRenderingDone` only clears it when `draw2D` is present, so a
-  transparent subtree stays dirty and repaints on reveal.
-- **After `prepareRender`, before the clip** — `StandardDialog` self-centers there, and `prepareRender`
-  still sees the real `draw2D`.
-- **Exactly `=== 0`, not `<= 0`.** A negative accumulated opacity currently draws *fully opaque*
-  (`resolveBlitStyle` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
-  to be changed silently here.
+-   **Degrade, never early-return.** An early return cannot hand the parent a rect the subtree never
+    computed: a node faded out _before it ever laid out_ has a `{0,0,0,0}` `rectToParent`, which
+    `unionRect` treats as finite and unions in, inflating every ancestor's bounds toward that node's
+    translation and leaving them wrong for every later frame (measured: paint reported a parent 100px
+    wider than a layout pass over the same tree). Dropping `draw2D` instead computes exactly the rects a
+    layout pass would, by construction, because **every** draw call in every node goes through
+    `draw2D?.` — and each descendant still reaches its own `nodeRenderingDone`, so `renderTracking` is
+    right for the whole subtree, not just its root. Any future node type that draws through a captured
+    non-optional draw target would silently break this.
+-   **The gate multiplies in the node's OWN `opacity`.** The accumulated value the template receives has
+    only the _ancestors'_ opacity folded in — each `renderNodeContent` folds its own in later
+    (`Group.ts` `opacity = this.isVisible() ? opacity * this.getOpacity() : 0`). Testing the incoming
+    value alone still painted a node that is itself `opacity = 0`, which is the common case of an app
+    fading one widget out.
+-   **Paint only (`draw2D !== undefined`).** A layout pass has no draw target to drop, and
+    `renderNodeContent` _deliberately_ propagates opacity 0 through measurement (the rule above), so UI
+    under a faded-out ancestor keeps computing bounding rects.
+-   **`isDirty` stays set** — `nodeRenderingDone` only clears it when `draw2D` is present, so a
+    transparent subtree stays dirty and repaints on reveal.
+-   **After `prepareRender`, before the clip** — `StandardDialog` self-centers there, and `prepareRender`
+    still sees the real `draw2D`.
+-   **Exactly `=== 0`, not `<= 0`.** A negative accumulated opacity currently draws _fully opaque_
+    (`resolveBlitStyle` treats `opacity < 0` as "no opacity given") — its own unmeasured divergence, not
+    to be changed silently here.
 
 Because the traversal continues, `sgRoot.renderPass` is still `"paint"` and `isPaintPass()` stays true:
 time-based state and grid item creation behave exactly as before, so nothing is deferred to the reveal
@@ -225,12 +226,12 @@ frame. Only the drawing is suppressed. Regression:
 Dropping `draw2D` makes a suppressed paint **look like a layout pass** from inside a node, so
 `sgRoot.paintSuppressed` is set around the degraded traversal (saved/restored in a `finally`, so nesting
 is correct and an app exception cannot strand it). Every `draw2D`-presence check falls into one of two
-families, which want *opposite* answers here:
+families, which want _opposite_ answers here:
 
-| family | the question actually asked | ask |
-| --- | --- | --- |
-| **can I issue a draw call?** | is there anywhere to draw? | `draw2D` directly |
-| **is this a layout pass?** | may I do layout-pass-ONLY work? | `Node.isLayoutPass(draw2D)` |
+| family                       | the question actually asked     | ask                         |
+| ---------------------------- | ------------------------------- | --------------------------- |
+| **can I issue a draw call?** | is there anywhere to draw?      | `draw2D` directly           |
+| **is this a layout pass?**   | may I do layout-pass-ONLY work? | `Node.isLayoutPass(draw2D)` |
 
 The first family is already right by construction — a suppressed subtree genuinely has nowhere to draw —
 and includes three sites where the raw check is **load-bearing**: `nodeRenderingDone` must leave
@@ -246,7 +247,7 @@ fixed-point convergence passes instead of the single pass a real frame gets (mea
 content — in the path whose whole purpose is suppressing work; and `StdDlgCustomItem` stopped requesting
 a relayout, leaving a faded dialog item stuck mid-layout until something else dirtied it.
 
-**`layoutNode` clears the flag as well as setting `renderPass`.** A real layout pass *started from inside*
+**`layoutNode` clears the flag as well as setting `renderPass`.** A real layout pass _started from inside_
 a suppressed paint must not inherit the suppression, and that is reachable on every fade:
 `getBoundingRect`'s mid-render fallback and `LayoutGroup.measureUnsizedChildren` both call `layoutNode`
 from within the paint traversal, so an app observer or an item component's `init()` measuring during the
@@ -258,7 +259,7 @@ frame hits it. Without the clear, a hidden grid's mid-frame `boundingRect("toSce
 `isLayoutPass` is **not** the negation of `isPaintPass` and the two must not be collapsed: `isPaintPass`
 is deliberately true for a direct `renderNode(..., draw2D)` regardless of context, and stays true inside
 a suppressed subtree (that is what keeps time-based state and grid item creation unchanged). A
-`renderPass` enum value was rejected instead: suppression is a *subtree* property while `renderPass` is
+`renderPass` enum value was rejected instead: suppression is a _subtree_ property while `renderPass` is
 set once per traversal root, and mutating it mid-traversal breaks the two-valued contract
 `LayoutPaintSeam.test.js` pins. A null-object `IfDraw2D` was rejected too — it inverts the whole first
 family, starting with `isDirty`.
@@ -270,23 +271,23 @@ until a transparent blend color forced the guard open.
 
 **A tint is a true per-channel multiply, not a canvas `multiply` composite.**
 `RoBitmap.getRgbaCanvas` used `globalCompositeOperation = "multiply"`, but canvas's `multiply` is the
-W3C *blend* formula: over a semi-transparent backdrop it is `Co = (1-ab)*Cs + ab*Cb*Cs`, which drags the
+W3C _blend_ formula: over a semi-transparent backdrop it is `Co = (1-ab)*Cs + ab*Cb*Cs`, which drags the
 result **toward** the tint by `(1-ab)` instead of multiplying by it. It is only a true multiply where
 the source is fully opaque. Measured on a source pixel `rgba(200,100,50,128)`:
 
-| | raw | WHITE tint | GREY `0x808080` |
-| --- | --- | --- | --- |
-| composite (old) | `[198,100,50]` | `[226,178,152]` | `[114,88,76]` |
+|                      | raw            | WHITE tint                | GREY `0x808080`     |
+| -------------------- | -------------- | ------------------------- | ------------------- |
+| composite (old)      | `[198,100,50]` | `[226,178,152]`           | `[114,88,76]`       |
 | per-channel multiply | `[198,100,50]` | `[198,100,50]` — identity | `[98,48,24]` — half |
 
 So opaque white was **not** an identity (every antialiased edge and soft shadow shifted toward the
-tint), and a real tint came out *lighter* than the source it was meant to darken. Now an `ImageData`
+tint), and a real tint came out _lighter_ than the source it was meant to darken. Now an `ImageData`
 pass, with an `r=g=b=255` short-circuit so an all-white tint is byte-identical even if a sentinel slips
 through. Alpha stays untouched — the color's alpha is the blit transparency (`globalAlpha`), never the
 tint strength (#935).
 
 **"No color blending" is normalized in the extension, never in core.** The reference defines the case
-by *value* ("If set to the default, 0xFFFFFFFF, no color blending will occur"), but a `type: "color"`
+by _value_ ("If set to the default, 0xFFFFFFFF, no color blending will occur"), but a `type: "color"`
 field can hold five spellings of it: `undefined`, **`-1`** (what `convertHexColor`'s `| 0` actually
 stores, and what reaches production), `0xffffffff`, `0x7fffffff` (`new Int32(0xFFFFFFFF)` clamping),
 and `NaN`. `SGUtil.normalizeBlendColor` maps all of them to `undefined`. Note `-1` triples as opaque
@@ -308,7 +309,7 @@ resolved away. Every partially transparent image drawn at `opacity < 1` therefor
 faded toward WHITE rather than merely fading (measured drift `[+29,+77,+103]`), and paid for a
 `getRgbaCanvas` allocation per fade frame. `NaN` is "no color" in both predicates now; it used to mean
 "skip the tint" to `getCanvasFromDraw2d` and "alpha 0" to `setContextAlpha`, making a NaN blend color an
-*invisible* draw instead of an untinted one. Regressions:
+_invisible_ draw instead of an untinted one. Regressions:
 `test/extensions/scenegraph/BlendColorAlpha.test.js`, `Poster.test.js`, `SGUtil.test.js`.
 
 ## `LayoutGroup.layoutDirection` is an enum, and its rejected state is HORIZONTAL
@@ -317,12 +318,12 @@ faded toward WHITE rather than merely fading (measured drift `[+29,+77,+103]`), 
 runtime-write paths × 3 passes — every row agreed). Roku does **not** treat `layoutDirection` as free
 text:
 
-| Written | Reads back | Lays out |
-| --- | --- | --- |
-| never written | `"vert"` | **vert** |
-| `horiz` / `HORIZ` / `Horiz` | `"horiz"` | horiz |
-| `vert` | `"vert"` | vert |
-| `horz`, `horizontal`, `vertical`, `bogus`, `""` | `""` | **horiz** |
+| Written                                         | Reads back | Lays out  |
+| ----------------------------------------------- | ---------- | --------- |
+| never written                                   | `"vert"`   | **vert**  |
+| `horiz` / `HORIZ` / `Horiz`                     | `"horiz"`  | horiz     |
+| `vert`                                          | `"vert"`   | vert      |
+| `horz`, `horizontal`, `vertical`, `bogus`, `""` | `""`       | **horiz** |
 
 Two counter-intuitive consequences, both easy to "simplify" away:
 
@@ -355,11 +356,11 @@ share one value table.
 
 Geometry, however, splits by axis — and this is the part that is not guessable:
 
-| Stored value | Field governs the PRIMARY axis | Field governs the CROSS axis |
-| --- | --- | --- |
-| documented value | aligns the whole run | aligns each child independently |
-| `custom` | falls back to `left`/`top` (as documented) | honors each child's own translation |
-| rejected (`""`) | falls back to `left`/`top` | **collapses: every child at (0,0)** |
+| Stored value     | Field governs the PRIMARY axis             | Field governs the CROSS axis        |
+| ---------------- | ------------------------------------------ | ----------------------------------- |
+| documented value | aligns the whole run                       | aligns each child independently     |
+| `custom`         | falls back to `left`/`top` (as documented) | honors each child's own translation |
+| rejected (`""`)  | falls back to `left`/`top`                 | **collapses: every child at (0,0)** |
 
 The collapse (`collapseChildren`) is the surprise: a rejected cross-axis alignment makes the device
 **abandon layout entirely** — no primary-axis stacking, no item spacing, and the children's own
@@ -396,17 +397,17 @@ sized a dialog to 0 around a LayoutGroup once the fields went away. Regressions:
 
 **Device-measured** (`Samples/layoutspacing-probe`, three children, all rows reproduced):
 
-- The **last entry repeats** for every gap past the end of the array, so `itemSpacings="[4]"` spaces
-  *every* gap by 4. Apps rely on this constantly; it was an assumption in `getSpacingValue` until the
-  probe confirmed it.
-- Entries **past the last gap are dropped** — `[4,9,15]` with three children lays out exactly like
-  `[4,9]` and produces the same group size. No trailing space is added, which matters because the
-  group's measured size is what parents lay out against.
-- Negative spacings **overlap** (not clamped); fractional spacings are used **as-is** (not rounded).
-- With `addItemSpacingAfterChild=false` the space is inserted **before** each child *including the
-  first*, so the whole run shifts by `spacings[0]` and the gaps come from the *following* entries
-  (`[4,9]` → run starts at 4, both gaps 9). A third entry is then genuinely used (`[4,9,15]` → gaps
-  9, 15) where the `true` case would have dropped it.
+-   The **last entry repeats** for every gap past the end of the array, so `itemSpacings="[4]"` spaces
+    _every_ gap by 4. Apps rely on this constantly; it was an assumption in `getSpacingValue` until the
+    probe confirmed it.
+-   Entries **past the last gap are dropped** — `[4,9,15]` with three children lays out exactly like
+    `[4,9]` and produces the same group size. No trailing space is added, which matters because the
+    group's measured size is what parents lay out against.
+-   Negative spacings **overlap** (not clamped); fractional spacings are used **as-is** (not rounded).
+-   With `addItemSpacingAfterChild=false` the space is inserted **before** each child _including the
+    first_, so the whole run shifts by `spacings[0]` and the gaps come from the _following_ entries
+    (`[4,9]` → run starts at 4, both gaps 9). A third entry is then genuinely used (`[4,9,15]` → gaps
+    9, 15) where the `true` case would have dropped it.
 
 Regression: `test/extensions/scenegraph/LayoutSpacing.test.js`.
 
@@ -415,14 +416,14 @@ Regression: `test/extensions/scenegraph/LayoutSpacing.test.js`.
 When `addFields` builds a custom component's fields, a `<field>` whose name already exists is handled by
 **who defined the existing field**:
 
-- Inherited from a **built-in base type** (`Group`, `Label`, …) → a **system** field (`field.isSystem()`,
-  set by `registerDefaultFields`). Roku lets a component **redeclare** it: the redeclaration re-applies
-  the XML default/type and `addFields` continues, so a field declared *after* it is still added. Guard:
-  `else if (field && !field.isSystem())` — don't treat this as a duplicate.
-- Defined in an **ancestor XML component's** `<interface>` → *not* system (added via `addNodeField`,
-  `system=false`). Redeclaring it **is** a genuine duplicate: `addFields` writes
-  `Attempt to add duplicate field "…"` to `BrsDevice.stderr` and **returns early**, so trailing fields in
-  that component are never added (they read back `invalid`).
+-   Inherited from a **built-in base type** (`Group`, `Label`, …) → a **system** field (`field.isSystem()`,
+    set by `registerDefaultFields`). Roku lets a component **redeclare** it: the redeclaration re-applies
+    the XML default/type and `addFields` continues, so a field declared _after_ it is still added. Guard:
+    `else if (field && !field.isSystem())` — don't treat this as a duplicate.
+-   Defined in an **ancestor XML component's** `<interface>` → _not_ system (added via `addNodeField`,
+    `system=false`). Redeclaring it **is** a genuine duplicate: `addFields` writes
+    `Attempt to add duplicate field "…"` to `BrsDevice.stderr` and **returns early**, so trailing fields in
+    that component are never added (they read back `invalid`).
 
 `addNodeField` is a no-op when the field exists, so a redeclared system field keeps its `Field` instance;
 the XML default is applied by the subsequent `setValueSilent`. Regression:
@@ -440,7 +441,7 @@ Cloning them instead is silently destructive. A clone is built by `createFlatNod
 value the component cached in its own script scope reads back as `invalid` on the next `callFunc`.
 The pattern that trips over it is ordinary: an app stashes a component handle (an analytics agent, a
 service/manager object) in an AA field, reads the field back, and `callFunc`s through it. The failure
-surfaces *inside the component*, far from the field read:
+surfaces _inside the component_, far from the field read:
 
 ```
 pkg:/components/<Agent>.brs(NNN): Invalid value for left-side of expression.
@@ -454,54 +455,54 @@ out of an assocarray/array field or roUtils.DeepCopy" in `test/cli/cli-scenegrap
 
 Two identity traps when debugging this area:
 
-- `roUtils.IsSameObject` compares the **BrightScript handle, not the node**. A device mints a fresh
-  handle on *every* retrieval that crosses the SceneGraph boundary — a `node`-field read, `getField`,
-  `findNode`, `getChild`, `getParent`, even a node returned from `roUtils.DeepCopy` — so for two node
-  values it answers `false` in essentially every real shape, and `true` only when the same node is
-  aliased through a plain variable / plain AA / plain array (probe S1 vs S2). The engine answers `true`
-  whenever both values are the same node: a **known deviation**, since matching it needs a
-  per-retrieval handle object and one JS instance per node is load-bearing here for `isSameNode`, the
-  focus chain and the address-keyed cross-thread registry. Use `isSameNode` for node identity — it
-  matches the device on every probe line. The affected expectations are marked inline in the
-  `components/roUtils.brs` block of `test/e2e/BrsComponents.test.js`.
+-   `roUtils.IsSameObject` compares the **BrightScript handle, not the node**. A device mints a fresh
+    handle on _every_ retrieval that crosses the SceneGraph boundary — a `node`-field read, `getField`,
+    `findNode`, `getChild`, `getParent`, even a node returned from `roUtils.DeepCopy` — so for two node
+    values it answers `false` in essentially every real shape, and `true` only when the same node is
+    aliased through a plain variable / plain AA / plain array (probe S1 vs S2). The engine answers `true`
+    whenever both values are the same node: a **known deviation**, since matching it needs a
+    per-retrieval handle object and one JS instance per node is load-bearing here for `isSameNode`, the
+    focus chain and the address-keyed cross-thread registry. Use `isSameNode` for node identity — it
+    matches the device on every probe line. The affected expectations are marked inline in the
+    `components/roUtils.brs` block of `test/e2e/BrsComponents.test.js`.
 
 The copy runs on **both** directions of an `assocarray`/`array` field: reading returns a copy of the
 container, and **assigning copies the source** (`Field.setValue`, guarded by `!byRef` — device-confirmed,
 probe S3.1), so mutating the caller's container afterwards cannot rewrite the field. `setRef` opts out
 by construction, which is what it is for. Two consequences worth knowing:
 
-- The copy sits in **`Node.setValue`**, the app-facing funnel — `node.f = x`, `setField`, `setFields`,
-  `addFields`, `update` all reach it, including its new-field branch. Deliberately NOT in
-  `Field.setValue`: that is the storage primitive, and keeping it clean leaves engine-internal writes
-  (`setValueSilent`, cross-thread mirrors) and `moveIntoField` (the documented no-copy path) uncharged.
-  Cost measured at ~4.2 µs per container write and 0 on `layout-perf-app`; an animation writing 30
-  interpolated containers per frame pays ~0.75% of a frame.
-- `moveIntoField` does its own copy of nested containers, because `ifSGNodeField` says a nested object
-  holding external references is "preserved by copying it instead" of moved — pinned by the
-  device-derived `node.aa.bar` expectation in `test/e2e/resources/components/roUtils.brs`.
-- **The container copy DROPS what it cannot copy, and must guard cycles.** A member that is neither a
-  container, a node, boxable nor unboxable — a function reference, `roDateTime`, `roByteArray`,
-  `roMessagePort`, … — is **dropped**. Device-confirmed for a field assignment/read *and* for
-  `roUtils.DeepCopy` (probe S11: 8 members in, 3 out, and the two paths are byte-identical — so there is
-  one policy and no flag; an earlier pass added a `dropUncopyable` flag on the guess that the field path
-  should carry them, which the device disproved). An **associative array drops the key**; an **array keeps
-  the slot and stores `invalid`**, so `Count()` is unchanged (S11.10). A **node is the one non-copyable
-  that is carried**, on every path (S11.4/S11.16/S7.2), so its branch sits ahead of the drop. Both
-  `deepCopy`s also take a `visited` map that registers the empty copy before recursing: a back-pointer
-  (`parent.child.parent`) used to overflow the JS stack on assignment, and a device copies it with the
-  cycle intact (S12). Regression: "Copies a container into/out of a field without dropping uncopyable
-  members or looping on cycles" in `test/cli/cli-scenegraph.test.js`.
-- Because the stored value is now always a distinct object and `RoAssociativeArray.equalTo` is always
-  false, assigning the *same* AA twice notifies observers both times, where it previously suppressed the
-  second. That matches a device, where the field likewise holds a fresh copy each time.
+-   The copy sits in **`Node.setValue`**, the app-facing funnel — `node.f = x`, `setField`, `setFields`,
+    `addFields`, `update` all reach it, including its new-field branch. Deliberately NOT in
+    `Field.setValue`: that is the storage primitive, and keeping it clean leaves engine-internal writes
+    (`setValueSilent`, cross-thread mirrors) and `moveIntoField` (the documented no-copy path) uncharged.
+    Cost measured at ~4.2 µs per container write and 0 on `layout-perf-app`; an animation writing 30
+    interpolated containers per frame pays ~0.75% of a frame.
+-   `moveIntoField` does its own copy of nested containers, because `ifSGNodeField` says a nested object
+    holding external references is "preserved by copying it instead" of moved — pinned by the
+    device-derived `node.aa.bar` expectation in `test/e2e/resources/components/roUtils.brs`.
+-   **The container copy DROPS what it cannot copy, and must guard cycles.** A member that is neither a
+    container, a node, boxable nor unboxable — a function reference, `roDateTime`, `roByteArray`,
+    `roMessagePort`, … — is **dropped**. Device-confirmed for a field assignment/read _and_ for
+    `roUtils.DeepCopy` (probe S11: 8 members in, 3 out, and the two paths are byte-identical — so there is
+    one policy and no flag; an earlier pass added a `dropUncopyable` flag on the guess that the field path
+    should carry them, which the device disproved). An **associative array drops the key**; an **array keeps
+    the slot and stores `invalid`**, so `Count()` is unchanged (S11.10). A **node is the one non-copyable
+    that is carried**, on every path (S11.4/S11.16/S7.2), so its branch sits ahead of the drop. Both
+    `deepCopy`s also take a `visited` map that registers the empty copy before recursing: a back-pointer
+    (`parent.child.parent`) used to overflow the JS stack on assignment, and a device copies it with the
+    cycle intact (S12). Regression: "Copies a container into/out of a field without dropping uncopyable
+    members or looping on cycles" in `test/cli/cli-scenegraph.test.js`.
+-   Because the stored value is now always a distinct object and `RoAssociativeArray.equalTo` is always
+    false, assigning the _same_ AA twice notifies observers both times, where it previously suppressed the
+    second. That matches a device, where the field likewise holds a fresh copy each time.
 
 **No path duplicates a node** — device-confirmed across all of them, so there is no longer a
 node-duplication primitive at all (`Node.deepCopy` was deleted once its last caller went away):
 
-- container copies and `roUtils.DeepCopy` carry the node over (probe S4-S7);
-- `moveIntoField` carries it over (S9);
-- `clone()` duplicates the node's own field storage and its **children**, but a **node-valued field
-  points at the same node** (S10.2/S10.4/S10.5) — so `clone` is not a deep copy of the whole graph.
+-   container copies and `roUtils.DeepCopy` carry the node over (probe S4-S7);
+-   `moveIntoField` carries it over (S9);
+-   `clone()` duplicates the node's own field storage and its **children**, but a **node-valued field
+    points at the same node** (S10.2/S10.4/S10.5) — so `clone` is not a deep copy of the whole graph.
 
 When building a `Field` for a copy, use **`Field.copyWith(value)`** rather than the constructor: the 7
 positional arguments include `valueRef`, which defaults to `false`, so passing them by hand silently
@@ -510,21 +511,21 @@ stripped `setRef`/`getRef` from the copy.
 Two measured deviations remain here, both recorded in `docs/limitations.md` and
 `test/simulator/probes/clone-and-setref-probe`:
 
-- **`clone()` of a custom component** drops the component layer **only when the built-in base is exactly
-  `Node`** — device-measured, `test/simulator/probes/clone-basetype-probe` D0 vs D1-D4. The bare clone is
-  a plain `Node` with just `id`/`focusable`/`focusedChild`/`change`, carrying the instance's values;
-  `subtype()` reports `Node`, declared and `addField` fields are gone, `callFunc` returns `invalid`. Over
-  any other base (`Group`, `Label`, `ContentNode`, or another custom component) everything is preserved
-  and `callFunc` resolves against an **empty** `m` (`init()` is never re-run), which is what the engine
-  always did. No reason for the asymmetry is documented; `Node.cloneNode`'s `bareClone` condition encodes
-  it as the quirk it is. Do not generalise it into "collapse to the base type" — that was an early wrong
-  guess from one data point, and `clone-callfunc-app` (a `ContentNode`-based component) is correct as
-  written.
-- **`setRef`/`getRef`/`canGetRef` are render-thread-only on a device** and fail from `Main` (returning
-  false, field unassigned). Their render-thread semantics match the engine line for line — including that
-  a normal assignment does *not* make a field ref-gettable, and that `canGetRef` does not care whether
-  another reference to the source AA is alive. The engine accepts them from `Main` only because it has no
-  main/render ScriptEngine split.
+-   **`clone()` of a custom component** drops the component layer **only when the built-in base is exactly
+    `Node`** — device-measured, `test/simulator/probes/clone-basetype-probe` D0 vs D1-D4. The bare clone is
+    a plain `Node` with just `id`/`focusable`/`focusedChild`/`change`, carrying the instance's values;
+    `subtype()` reports `Node`, declared and `addField` fields are gone, `callFunc` returns `invalid`. Over
+    any other base (`Group`, `Label`, `ContentNode`, or another custom component) everything is preserved
+    and `callFunc` resolves against an **empty** `m` (`init()` is never re-run), which is what the engine
+    always did. No reason for the asymmetry is documented; `Node.cloneNode`'s `bareClone` condition encodes
+    it as the quirk it is. Do not generalise it into "collapse to the base type" — that was an early wrong
+    guess from one data point, and `clone-callfunc-app` (a `ContentNode`-based component) is correct as
+    written.
+-   **`setRef`/`getRef`/`canGetRef` are render-thread-only on a device** and fail from `Main` (returning
+    false, field unassigned). Their render-thread semantics match the engine line for line — including that
+    a normal assignment does _not_ make a field ref-gettable, and that `canGetRef` does not care whether
+    another reference to the source AA is alive. The engine accepts them from `Main` only because it has no
+    main/render ScriptEngine split.
 
 ## `ArrayGrid`/`RowList` item-component caches are position-keyed, not content-keyed
 
@@ -546,7 +547,7 @@ That misses in-place reordering. `removeChild`/`insertChild`/`appendChild`-as-mo
 `.changed` and call `makeDirty()` on the **container** node so `renderNodeContent`'s top-level check
 correctly rebuilds the flattened `this.content[]`/`this.metadata[]` model (`refreshContent`) — but the
 individual `ContentNode` objects that land at new positions in that array never had their own
-`.changed` set. So after a reorder, `this.content[index]` can be a *different* object than the one the
+`.changed` set. So after a reorder, `this.content[index]` can be a _different_ object than the one the
 position-keyed cache slot was last told about, and the app never sees its updated field/content until
 something else (a focus move touching unrelated fields on that slot) coincidentally papers over it.
 Fix: also compare the cached item component's live `itemContent` value (a plain reference read) against
@@ -555,21 +556,21 @@ the content object now assigned to that slot, and push whenever the two differ �
 
 ## `TimeGrid.channelParseCache` must invalidate on in-place program mutation, not just count
 
-`TimeGrid` doesn't cache item *components* like `ArrayGrid`/`RowList` do — it draws its program cells
+`TimeGrid` doesn't cache item _components_ like `ArrayGrid`/`RowList` do — it draws its program cells
 directly — but it does cache each channel's **parsed** program model:
 `TimeGrid.channelParseCache` (a `WeakMap<ContentNode, ChannelParse>`) holds the flattened
 `programs`/`starts`/`durations`/`gaps` derived from a channel's program children, and the invalidation
 gate used to be the channel's program **count** alone. That misses two real in-place mutations that
 keep the count unchanged:
 
-- **`replaceChildAtIndex`** swapping a program for a different object at the same position —
-  `ContentNode.makeDirty` only dirties the **container** (the channel), never the replaced child, so a
-  count-only gate kept serving the stale (removed) program object — its title (read live from the
-  object at draw time) stayed wrong indefinitely, with no self-correcting path (unlike `ArrayGrid`'s
-  item cache, nothing here is refreshed by a focus move).
-- **A field edit on an existing program object** (e.g. a schedule correction to
-  `PLAYSTART`/`PLAYDURATION`) — count unchanged again, and the edit sets the **program's own**
-  `.changed`, not the channel's or the root's.
+-   **`replaceChildAtIndex`** swapping a program for a different object at the same position —
+    `ContentNode.makeDirty` only dirties the **container** (the channel), never the replaced child, so a
+    count-only gate kept serving the stale (removed) program object — its title (read live from the
+    object at draw time) stayed wrong indefinitely, with no self-correcting path (unlike `ArrayGrid`'s
+    item cache, nothing here is refreshed by a focus move).
+-   **A field edit on an existing program object** (e.g. a schedule correction to
+    `PLAYSTART`/`PLAYDURATION`) — count unchanged again, and the edit sets the **program's own**
+    `.changed`, not the channel's or the root's.
 
 Fix: `channelParseStale` also compares the channel's current program children against the cached
 `rawPrograms` by **object identity per index** and by each program's own `.changed` flag, re-parsing
@@ -752,6 +753,47 @@ program, both only reachable once a placeholder-backed channel is actually FOCUS
 Regression: "focusing a still-loading (placeholder) row does not scroll the view to the far future" and
 "real data replacing the FOCUSED channel's placeholder re-snaps focus" in `TimeGrid.test.js`.
 
+## Screen lifecycle: `roSGScreen.close()` and `roScreen`
+
+Device-measured in `test/simulator/probes/sgscreen-close-probe` (OS 16.0.4). Regressions: "Suspends a Scene
+under an roScreen…" and "Ends the app when its last screen closes" in `test/cli/cli-scenegraph.test.js`, and
+`test/extensions/scenegraph/RoSGScreenClose.test.js`.
+
+-   **Every main-thread port drives the current screen.** The extension's `roMessagePort` factory registers
+    `pollCurrentScreen` (`RoSGScreen.ts`) on every Main-thread port, which runs whatever `sgRoot.screen` is
+    when the port is read. `setMessagePort` registers no callback, so `SetMessagePort(invalid)` or a port
+    switch never stops the Scene (#1327). Never the screen that existed when the port was made: a
+    screen created after another one closed must render whichever port Main reads, including the closed
+    screen's own port. Don't bind `this.getNewEvents`, and don't bring back a pending-port queue.
+-   **The most recently created screen owns the display** (`BrsDevice.pushDisplay`/`displayOwner`, a stack
+    of `DisplayScreen`s). `getNewEvents` runs only while its screen is the owner, so a Scene is suspended
+    under an `roScreen` created later (no paint, timers, tasks or key handling), and an `roSGScreen`
+    created over an `roScreen` renders. An `roScreen` owns the display while it is referenced: a temporary
+    that was never stored (`CreateObject("roScreen").GetWidth()`) gives it back at once, and so does an
+    `roScreen` released by its variable. The stack is reset per app run in `setupPayload`. Don't replace it
+    with a counter: that misses both creation order and temporaries.
+-   **Keys and frames follow the owner** (probe mode `roscreen-first`). An `roScreen` under a SceneGraph
+    screen takes no keys, even when Main reads the `roScreen`'s port first, because the Scene's callback
+    shares every Main port and would otherwise lose the race. An `roScreen` under another `roScreen` still
+    polls keys, since that order is unprobed. When the owning `roSGScreen` closes, the new owner's
+    `restoreDisplay()` reposts its last frame (an `roScreen`'s front buffer). A Scene that was suspended
+    repaints on its first owned pass.
+-   **`close()` is idempotent** (a single `isScreenClosed`). `sgRoot.closeScreen()` drops the timers,
+    animations and transitions only when the closed screen is the current one. Closing an older screen
+    must not stop the Scene that is shown. Keys are discarded only when the closed screen owned the display.
+-   **Closing the last screen ends the app** (`EXIT_USER_NAV`). It lives in core, next to the display stack.
+    `close()` calls `BrsDevice.releaseDisplay()`, which sets `appEndAt` when no screen is left.
+    `RoMessagePort`'s message-loop pass (`wait`/`GetMessage`/`PeekMessage`) makes that end due at once,
+    otherwise it falls due after `AppEndDelayMs` when Main never reaches a port. Once it is due, `wait()`
+    returns and `checkDebugger` throws `BlockEnd("end-statement")` before the next statement. It is never
+    thrown inside `close()`, because the device still runs the statements right after it. With no end
+    pending, `appEndDue()` is a single field read per statement, so keep it that way. Creating a new screen
+    after that `close()` does not cancel the end, and `resetDisplay()` clears it per run.
+-   `try`/`catch` never catches a `BlockEnd` (control flow: `exit for`, `return`, `goto`, `end`, a requested
+    end). Regression: `try-catch-control-flow.brs`.
+-   Known gap: a Task of the closed screen resumes once a new screen serves its rendezvous (on a device it stays
+    frozen), and reading the closed Scene's fields returns values (a device blocks).
+
 ## Undocumented internal children are public surface — keep the device's order
 
 Roku builds composite nodes from child nodes it never documents (`Video.trickPlayBar` has 12 children,
@@ -815,83 +857,82 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
 
 1. **Observer dispatch — `Field.notifyObservers` + `ContentNode` parentField fan-out.** Regressed
    repeatedly (#905 → #943 → #904). Dispatch is **synchronous depth-first**, guarded by a per-field
-   `notifying` re-entrancy flag — correct *only because* dispatch is synchronous (`notifying` stays true
+   `notifying` re-entrancy flag — correct _only because_ dispatch is synchronous (`notifying` stays true
    for the field's entire observer subtree). Do **not** convert to breadth-first/queued: releasing
    `notifying` between dispatches lets a sibling re-enqueue the field and it never terminates; adding
-   coalescing instead drops a legitimate *second* notification within one cascade and leaves dependent
+   coalescing instead drops a legitimate _second_ notification within one cascade and leaves dependent
    fields stale (the blank-`Label` regression). A `ContentNode` whose own observer writes back into the
    same node is bounded by a per-`ContentNode` `propagating` guard in `notifyParentFields`. Regression:
    `button-label-app`, `contentnode-recursion-app`, `contentnode-parentfield-app`,
    `sharedcontent-recursion-app` in `test/cli/` — all must stay green together.
 
-   > **`notifyParentFields` must also fan out cross-thread.** It is the one notification path that starts
-   > from a `Field` rather than from the node holding it, so it bypasses the fan-out `Node.setValue` does
-   > through `rendezvousSet`. On a device the parent field's port observer *is* the port the task waits
-   > on, so a task mutating content held by an observed field (a rendezvous call applied on the render
-   > thread) wakes itself; here the task holds its own copy and the render thread has to push the change
-   > back. That is what `Field.container` (recorded by `Node.setValue`/`setValueSilent`, first writer
-   > wins) exists for — it is the field's only route back to its owner's `syncType`/address. Regression:
-   > `task-contentcache-app` in `test/cli/`.
+    > **`notifyParentFields` must also fan out cross-thread.** It is the one notification path that starts
+    > from a `Field` rather than from the node holding it, so it bypasses the fan-out `Node.setValue` does
+    > through `rendezvousSet`. On a device the parent field's port observer _is_ the port the task waits
+    > on, so a task mutating content held by an observed field (a rendezvous call applied on the render
+    > thread) wakes itself; here the task holds its own copy and the render thread has to push the change
+    > back. That is what `Field.container` (recorded by `Node.setValue`/`setValueSilent`, first writer
+    > wins) exists for — it is the field's only route back to its owner's `syncType`/address. Regression:
+    > `task-contentcache-app` in `test/cli/`.
 
-   > **Observers a node's own machinery raises dispatch inline too.** A list's `itemFocused` from
-   > `setFocus` or `jumpToItem` runs its observers before the call returns, even inside another observer
-   > (device-measured, Roku Express 4K+ OS 16.0, `test/simulator/probes/list-focus-dispatch-probe`; the
-   > `deferred-observer-app` fixture's unguarded read crashes on the device exactly where inline dispatch
-   > reaches it). The engine once queued these "engine emissions" until the outermost observer
-   > returned (`deferredQueue`, `enterInternalUpdate`), on the belief that a device delivers them from
-   > the message loop. It doesn't, and the queue reordered every focus trace taken from an observer.
-   > Don't bring it back to work around an app that reads state its own handler hasn't assigned yet:
-   > that app crashes on a device too.
-   >
-   > One deferral path remains, gated by `observerDepth`, `initDepth` and `focusEmissionDepth`:
-   > **`pendingInitFocusFields`**, for `focusedChild` emissions raised during a component's `init()`
-   > (`initDepth > 0 && focusEmissionDepth > 0`). The reacting observer is often registered *after* the
-   > `setFocus` call, so a field (not a callback) is recorded and re-notified from the extension `tick`
-   > hook after init unwinds (`deliverPendingInitFocus`, render-thread only). `notifyObservers`
-   > **consumes** a field from `pendingInitFocusFields` as it dispatches so an inline re-focus of a
-   > still-pending ancestor doesn't double-fire, and `invoke` zeroes `focusEmissionDepth` so a handler's
-   > own focus changes are treated as app-initiated. `runAfterConstruction` shares its trigger (no init
-   > and no observer on the stack): AnimatedImage replays its construction-time states through it, and a
-   > list publishes the pending reset of new content (see the `ArrayGrid` focus model below). It drains
-   > from `tick` **and** from `onMessageLoop`: a handler dispatched from the message loop returns there,
-   > and while `Main` blocks in `wait(0)` no statement runs outside an observer, so a tick-only drain never
-   > fires (a menu's content reset then never reached its ListPanel's `createNextPanelIndex`).
-   > Regression: `init-focus-observer-app` (deferred delivery + no double-fire) plus the cascade apps
-   > above; `panelset-content-nextpanel-app` for the message-loop drain.
-   >
-   > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
-   > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
-   > never inside the `command`/`request` write. It is drained (`deliverMessageLoopCallbacks`) **only**
-   > from the core `onMessageLoop` extension hook — each `roMessagePort` `wait`/`GetMessage`/`PeekMessage`
-   > pass on any thread, before the port is checked — and **never from the per-statement `tick`**:
-   > a statement boundary is not a message-loop boundary (`onKeyEvent`, a `callFunc`'d function, `Main`
-   > or a Task body keep running after issuing a command), so do not merge it into the construction
-   > queue. Each pass runs only what was queued before it, one callback at a time (a chained command
-   > waits a pass; a throw leaves the rest queued). Regression: `channelstore-node-app` in `test/cli/`
-   > (re-entrant start sequence, next-statement check in Main and in a Task) and
-   > `ChannelStoreCommands.test.js`.
+    > **Observers a node's own machinery raises dispatch inline too.** A list's `itemFocused` from
+    > `setFocus` or `jumpToItem` runs its observers before the call returns, even inside another observer
+    > (device-measured, Roku Express 4K+ OS 16.0, `test/simulator/probes/list-focus-dispatch-probe`; the
+    > `deferred-observer-app` fixture's unguarded read crashes on the device exactly where inline dispatch
+    > reaches it). The engine once queued these "engine emissions" until the outermost observer
+    > returned (`deferredQueue`, `enterInternalUpdate`), on the belief that a device delivers them from
+    > the message loop. It doesn't, and the queue reordered every focus trace taken from an observer.
+    > Don't bring it back to work around an app that reads state its own handler hasn't assigned yet:
+    > that app crashes on a device too.
+    >
+    > One deferral path remains, gated by `observerDepth`, `initDepth` and `focusEmissionDepth`:
+    > **`pendingInitFocusFields`**, for `focusedChild` emissions raised during a component's `init()`
+    > (`initDepth > 0 && focusEmissionDepth > 0`). The reacting observer is often registered _after_ the
+    > `setFocus` call, so a field (not a callback) is recorded and re-notified from the extension `tick`
+    > hook after init unwinds (`deliverPendingInitFocus`, render-thread only). `notifyObservers` > **consumes** a field from `pendingInitFocusFields` as it dispatches so an inline re-focus of a
+    > still-pending ancestor doesn't double-fire, and `invoke` zeroes `focusEmissionDepth` so a handler's
+    > own focus changes are treated as app-initiated. `runAfterConstruction` shares its trigger (no init
+    > and no observer on the stack): AnimatedImage replays its construction-time states through it, and a
+    > list publishes the pending reset of new content (see the `ArrayGrid` focus model below). It drains
+    > from `tick` **and** from `onMessageLoop`: a handler dispatched from the message loop returns there,
+    > and while `Main` blocks in `wait(0)` no statement runs outside an observer, so a tick-only drain never
+    > fires (a menu's content reset then never reached its ListPanel's `createNextPanelIndex`).
+    > Regression: `init-focus-observer-app` (deferred delivery + no double-fire) plus the cascade apps
+    > above; `panelset-content-nextpanel-app` for the message-loop drain.
+    >
+    > A third, separate queue — **`Field.runOnMessageLoop`** — holds the results of node operations
+    > that are asynchronous on a device: every `ChannelStore` command publishes its result through it,
+    > never inside the `command`/`request` write. It is drained (`deliverMessageLoopCallbacks`) **only**
+    > from the core `onMessageLoop` extension hook — each `roMessagePort` `wait`/`GetMessage`/`PeekMessage`
+    > pass on any thread, before the port is checked — and **never from the per-statement `tick`**:
+    > a statement boundary is not a message-loop boundary (`onKeyEvent`, a `callFunc`'d function, `Main`
+    > or a Task body keep running after issuing a command), so do not merge it into the construction
+    > queue. Each pass runs only what was queued before it, one callback at a time (a chained command
+    > waits a pass; a throw leaves the rest queued). Regression: `channelstore-node-app` in `test/cli/`
+    > (re-entrant start sequence, next-statement check in Main and in a Task) and
+    > `ChannelStoreCommands.test.js`.
 
-   > **Argument binding is device-measured — `Field.satisfiedByEvent` (do not "generalize" it).** An
-   > observer registered by *name* is invoked with the `roSGNodeEvent` **only when it declares exactly one
-   > parameter whose declared type accepts an object**; otherwise it is called with **no arguments** (every
-   > parameter taking its declared default), which requires that no parameter is required; otherwise it is
-   > **not invoked at all, silently**. There is no coercion and no partial binding, so a callback declaring
-   > more than one parameter *never* receives the event — not even when the extras are optional and the
-   > first is `as object`. A default on the single parameter is irrelevant: `sub cb(e = invalid as object)`
-   > still receives the event, not its default. This is not BrightScript's normal call-binding rule (which
-   > would happily fill trailing optionals), so it cannot be delegated to `Callable.call` /
-   > `getFirstSatisfiedSignature([event])` alone — that fallback matched the *zero-argument* satisfaction
-   > while the binding loop still assigned the event to parameter 0, which is how
-   > `sub cb(state = "update" as string)` observing a Timer `fire` got an object in `state` and raised a
-   > `Type Mismatch` on a later `state = "stop"` — a crash impossible on a device. Measured across 16
-   > signature shapes × `observeField` / `observeFieldScoped` / `Timer.fire` / a string-typed field on Roku
-   > OS 15.2 (all four identical); the probe app and its device trace are in
-   > `test/simulator/probes/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
-   > does" in `test/cli/cli-scenegraph.test.js` (`observer-signature-app`).
+    > **Argument binding is device-measured — `Field.satisfiedByEvent` (do not "generalize" it).** An
+    > observer registered by _name_ is invoked with the `roSGNodeEvent` **only when it declares exactly one
+    > parameter whose declared type accepts an object**; otherwise it is called with **no arguments** (every
+    > parameter taking its declared default), which requires that no parameter is required; otherwise it is
+    > **not invoked at all, silently**. There is no coercion and no partial binding, so a callback declaring
+    > more than one parameter _never_ receives the event — not even when the extras are optional and the
+    > first is `as object`. A default on the single parameter is irrelevant: `sub cb(e = invalid as object)`
+    > still receives the event, not its default. This is not BrightScript's normal call-binding rule (which
+    > would happily fill trailing optionals), so it cannot be delegated to `Callable.call` /
+    > `getFirstSatisfiedSignature([event])` alone — that fallback matched the _zero-argument_ satisfaction
+    > while the binding loop still assigned the event to parameter 0, which is how
+    > `sub cb(state = "update" as string)` observing a Timer `fire` got an object in `state` and raised a
+    > `Type Mismatch` on a later `state = "stop"` — a crash impossible on a device. Measured across 16
+    > signature shapes × `observeField` / `observeFieldScoped` / `Timer.fire` / a string-typed field on Roku
+    > OS 15.2 (all four identical); the probe app and its device trace are in
+    > `test/simulator/probes/observer-signature-probe/`. Regression: "Binds an observer callback's parameters the way a device
+    > does" in `test/cli/cli-scenegraph.test.js` (`observer-signature-app`).
 
 2. **Re-entrant render — `Node.getBoundingRect`.** `localBoundingRect`/`boundingRect` refresh layout by
-   rendering the whole tree from the root. If BrightScript queries a bounding rect *while a render is
-   running* — e.g. an `ArrayGrid`/`RowList` lazily creating an item whose `init()` or observer measures a
+   rendering the whole tree from the root. If BrightScript queries a bounding rect _while a render is
+   running_ — e.g. an `ArrayGrid`/`RowList` lazily creating an item whose `init()` or observer measures a
    `Label` — the refresh re-enters rendering and recurses. Guard: `SGRoot.rendering`, set around the
    scene/dialog render in `RoSGScreen` **and around `getBoundingRect`'s own refresh render**;
    `getBoundingRect` skips the full-scene refresh while `rendering` is true (returning already-computed
@@ -954,7 +995,7 @@ The rules:
    transition registered with nothing to draw (a key held at the end of a non-wrapping list, a slide with
    nothing left to move holding `slidingStatus`). Returning "moving" there redraws every frame while the
    key is held.
-6. **A settle can start the next transition.** `processTransitions` drops a transition *before* ticking
+6. **A settle can start the next transition.** `processTransitions` drops a transition _before_ ticking
    it and keeps it only when the tick reports it active or the owner re-registered during the tick. A
    settle observer writing `animateToItem`, or appending a panel, re-registers; dropping it after the tick
    froze the list mid-motion with `scrollingStatus` true. On a list, a motion its own settle observer
@@ -964,122 +1005,128 @@ The rules:
    observer…" in `ListFocusMotion.test.js`.
 
 PanelSet specifics (all device-measured, see `test/simulator/probes/panelset-slide-probe/README.md`):
-- a per-panel `easeOutQuint` lasting `slideDuration`, which is in **seconds**;
-- fixed role offsets (+5 / +80 / +115 ms) that don't scale with the duration;
-- the slide settles at 0.1 px;
-- a 40 px HD gap;
-- `isGoingBack` is a pulse;
-- a full-screen panel counts twice in `numPanels`;
-- `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
+
+-   a per-panel `easeOutQuint` lasting `slideDuration`, which is in **seconds**;
+-   fixed role offsets (+5 / +80 / +115 ms) that don't scale with the duration;
+-   the slide settles at 0.1 px;
+-   a 40 px HD gap;
+-   `isGoingBack` is a pulse;
+-   a full-screen panel counts twice in `numPanels`;
+-   `replaceChild` indexes panels, not children (the arrow Posters are children 0–1).
 
 List and grid focus motion (`LabelList`, `MarkupList`, `MarkupGrid`, `PosterGrid`, via
 `ArrayGrid.focusMotionEnabled()`; device-measured, see the `list-focus-motion-probe` and
 `grid-focus-motion-probe` READMEs under `test/simulator/probes/`):
-- `focusIndex` moves at the key, so the next key navigates from the target. The `itemFocused` *field*
-  keeps the old value until the settle.
-- The motion is two-axis. `motionPos` is the unwrapped row and `motionCol` the column, each with its own
-  segment (`FocusMotion.row`/`.col`). Each step is an `easeOutCubic` taking `motionStepMs(axis)`: lists
-  200 ms; grids 330 ms (315 ms per row when the rows wrap).
-- A step lands when its time is up. Don't snap early: the device lands at u = 1, ~215 ms on a list.
-  `currFocusRow` is `motionPos` modulo the row count, and `currFocusColumn` is `motionCol`.
-- `focusPercent` is the product of the row and column weights (`1 − fraction` on the cell being left,
-  `fraction` on the next). It reads 0 below 0.05 and is rounded to 3 decimals. `itemHasFocus` is false on
-  every item while moving.
-- Directions: `vertFocusDirection` for rows and `horizFocusDirection` (an undocumented grid field) for
-  columns. Each opens when its axis starts moving. An axis that lands first resets its own; the last
-  one resets after the settle.
-- A press mid-step queues one more step (one at most; further presses are consumed). A retarget
-  (`animateToItem`, a held key's repeat) drops the queued step, or the motion would return to it.
-- A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
-  release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
-  list. Without this the list repeats to its end and the scene redraws forever.
-- Focus leaving mid-motion (device-measured, `test/simulator/probes/focus-motion-edge-probe`): the motion
-  runs on and its settle publishes only `scrollingStatus` false. `itemFocused` keeps the item the motion
-  left, not even written silently. `unfocusedSettleIndex` remembers the target, so a later focus gain lands
-  there (`focusGainIndex`).
-- Focus regained mid-motion keeps the motion. `publishMotionRegain` publishes the target item's
-  `itemHasFocus` and then `itemFocused` at once, and the settle publishes `itemFocused` again.
-  `motion.regained` keeps that item's `itemHasFocus` true for the rest of the motion. Don't re-apply the
-  `itemFocused` field on a gain mid-motion: it still holds the item being left, so the cursor snapped back
-  while the motion settled on the target. RowList and ZoomRowList weren't measured and override it to
-  publish at the settle only.
-- Leaving the focus chain drops the focused item's `itemHasFocus` at once, from the list's `focusedChild`
-  write (`ArrayGrid.setValue`), even while the list is hidden and not rendering.
-- Every jump path (`jumpToItem`, `jumpToRowItem`, `jumpToRow`) calls `settleMotion()` first.
-- A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
-  later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
-  out from rest. On release the step in flight eases out; the settle waits for the release.
-- `animateToItem` eases each axis over `cells × step`; `jumpToItem` and `skipFocusAnimations` are instant.
-- Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows (the target window's top is
-  `targetRow − currRow`, which also covers MarkupGrid's `updateCurrRow` scrolling), and places the
-  indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
-  `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
-  reported extent from the settled window's rows only.
-- **List and grid rows move by their own heights, and the indicator resizes on the way** (screenshots in
-  `test/simulator/probes/markupgrid-focus-resize-probe`, MarkupGrid, MarkupList and LabelList): with
-  `rowHeights`/`columnWidths`, a fraction of
-  a row scrolls that fraction of the row's own span (height plus spacing), and the indicator's top-left
-  and size take the same fraction between the two items' rects, so it grows toward a larger item and
-  shrinks toward a smaller one. `motionRowLayout` holds the vertical half (rows to draw, indicator y and
-  height, window height) for MarkupGrid, PosterGrid, MarkupList and LabelList (CheckList and
-  RadioButtonList through it); `gridMotionFocusRect` the horizontal. Never scroll by `itemSize` or one
-  row's pitch: the rows and the ring then jump when the move settles. A wrapping list's wrap and section
-  dividers take room too: each node's `spanOf(r)` adds `motionDividerSpace(r + 1, gap)`, the divider its row
-  loop draws above slot `r + 1`, with the spacing that loop adds after it. Regression: the resize tests in
-  `GridFocusMotion.test.js` and `ListFocusMotion.test.js`, and "rows scrolling across the wrap divider land
-  where they settle" in the latter.
-- **A key's navigation state holds only at the observer depth the key set it at.** `navDirection`,
-  `navAxis` and `animateRequested` are accessors that read 0/""/false inside an observer the move raised
-  (`Field.currentObserverDepth()`), because that observer is app code: a `jumpToItem`/`jumpToRowItem`/
-  `jumpToRow` it writes is an app jump (instant, no direction, no `itemUnfocused`/`itemFocused` on a row
-  list). An opening observer that jumps supersedes the key's motion: `beginMotion` sees the motion it
-  opened is gone and drops the move. A motion a settle observer starts is deferred to `settleFollowUps`
-  and keeps the `animateRequested` it was requested with (ZoomRowList's ~265 ms `animateToRow` step).
-  Regression: "an observer writes during a key move" in `ListFocusMotion.test.js` and
-  `RowListFocusMotion.test.js`, and "an animateToRow written from a settle observer" there.
-- **A row change queued behind a slide along a row draws from the motion, not from `focusIndex`.** The
-  queued press moves the focus cursor (and so the settled window) at once, while the slide on the old row
-  is still in flight. RowList and ZoomRowList therefore:
-  - take the sliding row from `ArrayGrid.slidingRow()`: the motion's own row while its column segment
-    moves, -1 once it lands;
-  - point the indicator column at `motionCol` only while that row slides, or on a row that doesn't wrap;
-    a wrapping row at rest keeps its fixed slot;
-  - offset the rows by the motion frame whenever it differs from the settled window (RowList
-    `frame.shift !== 0`, ZoomRowList rows from `motionPos`), not only once `rowMoved` is set.
 
-  Keyed to `focusIndex`, the new row drew with the old row's moving column and jumped to the top before
-  the rows scrolled, then snapped back (a flicker on a quick Right then Down). Regression: "a row change
-  pressed during a slide along a row never shifts the row it moves to" in `RowListFocusMotion.test.js`.
-- **OK lands a running motion before it selects** (`test/simulator/probes/grid-ok-midmotion-probe`).
-  `ArrayGrid.handleKey` calls `landMotionForSelect` ahead of every `handleOK`: the settle goes out at
-  once, then lists and grids publish `itemFocused` again, and only then `itemSelected`. At rest OK
-  publishes `itemSelected` alone. Without the landing, an app that tracks its focused item from
-  `itemFocused` (Rokanban's team screen) opened the item focused before the move. Regression: "OK during a
-  move lands it before itemSelected" in `GridFocusMotion.test.js`.
-- **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
-  `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
-  opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):
-  - written (XML attribute or BrightScript): honored as is, on every node;
-  - never written: the field **reads false**, yet grids and row lists (MarkupGrid, PosterGrid, RowList,
-    ZoomRowList) draw the indicator **over** their items, while lists (LabelList, MarkupList) draw it
-    **under**.
+-   `focusIndex` moves at the key, so the next key navigates from the target. The `itemFocused` _field_
+    keeps the old value until the settle.
+-   The motion is two-axis. `motionPos` is the unwrapped row and `motionCol` the column, each with its own
+    segment (`FocusMotion.row`/`.col`). Each step is an `easeOutCubic` taking `motionStepMs(axis)`: lists
+    200 ms; grids 330 ms (315 ms per row when the rows wrap).
+-   A step lands when its time is up. Don't snap early: the device lands at u = 1, ~215 ms on a list.
+    `currFocusRow` is `motionPos` modulo the row count, and `currFocusColumn` is `motionCol`.
+-   `focusPercent` is the product of the row and column weights (`1 − fraction` on the cell being left,
+    `fraction` on the next). It reads 0 below 0.05 and is rounded to 3 decimals. `itemHasFocus` is false on
+    every item while moving.
+-   Directions: `vertFocusDirection` for rows and `horizFocusDirection` (an undocumented grid field) for
+    columns. Each opens when its axis starts moving. An axis that lands first resets its own; the last
+    one resets after the settle.
+-   A press mid-step queues one more step (one at most; further presses are consumed). A retarget
+    (`animateToItem`, a held key's repeat) drops the queued step, or the motion would return to it.
+-   A held key is released when the list leaves the focus chain (checked in `tickTransition`): the key's
+    release goes to the newly focused node, and focus moving away never calls `setNodeFocus(false)` on the
+    list. Without this the list repeats to its end and the scene redraws forever.
+-   Focus leaving mid-motion (device-measured, `test/simulator/probes/focus-motion-edge-probe`): the motion
+    runs on and its settle publishes only `scrollingStatus` false. `itemFocused` keeps the item the motion
+    left, not even written silently. `unfocusedSettleIndex` remembers the target, so a later focus gain lands
+    there (`focusGainIndex`).
+-   Focus regained mid-motion keeps the motion. `publishMotionRegain` publishes the target item's
+    `itemHasFocus` and then `itemFocused` at once, and the settle publishes `itemFocused` again.
+    `motion.regained` keeps that item's `itemHasFocus` true for the rest of the motion. Don't re-apply the
+    `itemFocused` field on a gain mid-motion: it still holds the item being left, so the cursor snapped back
+    while the motion settled on the target. RowList and ZoomRowList weren't measured and override it to
+    publish at the settle only.
+-   Leaving the focus chain drops the focused item's `itemHasFocus` at once, from the list's `focusedChild`
+    write (`ArrayGrid.setValue`), even while the list is hidden and not rendering.
+-   Every jump path (`jumpToItem`, `jumpToRowItem`, `jumpToRow`) calls `settleMotion()` first.
+-   A held key repeats after `motionHoldDelayMs()` (400 ms list, 530 ms grid). The first repeat ramps in,
+    later ones are linear, and a repeat that can't continue (end of a non-wrapping row or column) eases
+    out from rest. On release the step in flight eases out; the settle waits for the release.
+-   `animateToItem` eases each axis over `cells × step`; `jumpToItem` and `skipFocusAnimations` are instant.
+-   Drawing: `listMotionFrame()` offsets the settled layout by `shift` rows (the target window's top is
+    `targetRow − currRow`, which also covers MarkupGrid's `updateCurrRow` scrolling), and places the
+    indicator at `focusSlot`/`focusCol` (`gridMotionFocusRect` interpolates the columns). PosterGrid keeps
+    `layoutByIndex` while moving, so the early-drawn indicator still frames the poster, and counts its
+    reported extent from the settled window's rows only.
+-   **List and grid rows move by their own heights, and the indicator resizes on the way** (screenshots in
+    `test/simulator/probes/markupgrid-focus-resize-probe`, MarkupGrid, MarkupList and LabelList): with
+    `rowHeights`/`columnWidths`, a fraction of
+    a row scrolls that fraction of the row's own span (height plus spacing), and the indicator's top-left
+    and size take the same fraction between the two items' rects, so it grows toward a larger item and
+    shrinks toward a smaller one. `motionRowLayout` holds the vertical half (rows to draw, indicator y and
+    height, window height) for MarkupGrid, PosterGrid, MarkupList and LabelList (CheckList and
+    RadioButtonList through it); `gridMotionFocusRect` the horizontal. Never scroll by `itemSize` or one
+    row's pitch: the rows and the ring then jump when the move settles. A wrapping list's wrap and section
+    dividers take room too: each node's `spanOf(r)` adds `motionDividerSpace(r + 1, gap)`, the divider its row
+    loop draws above slot `r + 1`, with the spacing that loop adds after it. Regression: the resize tests in
+    `GridFocusMotion.test.js` and `ListFocusMotion.test.js`, and "rows scrolling across the wrap divider land
+    where they settle" in the latter.
+-   **A key's navigation state holds only at the observer depth the key set it at.** `navDirection`,
+    `navAxis` and `animateRequested` are accessors that read 0/""/false inside an observer the move raised
+    (`Field.currentObserverDepth()`), because that observer is app code: a `jumpToItem`/`jumpToRowItem`/
+    `jumpToRow` it writes is an app jump (instant, no direction, no `itemUnfocused`/`itemFocused` on a row
+    list). An opening observer that jumps supersedes the key's motion: `beginMotion` sees the motion it
+    opened is gone and drops the move. A motion a settle observer starts is deferred to `settleFollowUps`
+    and keeps the `animateRequested` it was requested with (ZoomRowList's ~265 ms `animateToRow` step).
+    Regression: "an observer writes during a key move" in `ListFocusMotion.test.js` and
+    `RowListFocusMotion.test.js`, and "an animateToRow written from a settle observer" there.
+-   **A row change queued behind a slide along a row draws from the motion, not from `focusIndex`.** The
+    queued press moves the focus cursor (and so the settled window) at once, while the slide on the old row
+    is still in flight. RowList and ZoomRowList therefore:
 
-  `ArrayGrid.focusFeedbackOnTop()` holds the rule (`focusOnTopWritten` + `focusOnTopByDefault()`); every
-  draw site asks it, never the raw field. `focusOnTopWritten` is class state, not a field, so
-  `ArrayGrid.cloneNode` copies it (regression in `GridFocusFeedback.test.js`). Don't make the grid default `true` to get the over-the-items
-  look (MarkupGrid once did): the device reads `false`. A moving indicator drawn over the cells regardless
-  of the field hid the new item's content in an app whose side menu writes it false. RowList computes the
-  in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an
-  under-indicator before the focused row's items, because its item offset depends on the measured title.
-  Regression: the draw-order tests in `GridFocusMotion.test.js` and `RowListFocusMotion.test.js`.
-- **The footprint (an unfocused list's indicator) follows the same layering, but only lists have a
-  built-in one** (screenshots in `test/simulator/probes/focus-footprint-layer-probe`).
-  `focusFootprintBitmapUri` reads `""` on every node. Left unset, LabelList and MarkupList draw a built-in
-  gray footprint on the focused item. MarkupGrid, PosterGrid and RowList draw nothing there, even with
-  `drawFocusFeedbackOnTop` written true. So only LabelList, MarkupList (and TimeGrid, not probed) seed
-  `ArrayGrid.builtinFootprintUri`. Don't seed it in the ArrayGrid base: once grids draw over their items,
-  the translucent footprint shades the item the focus left (a RowList the app moved the focus away from).
-  Regression: "draws %i built-in footprint while unfocused" in `GridFocusFeedback.test.js`.
+    -   take the sliding row from `ArrayGrid.slidingRow()`: the motion's own row while its column segment
+        moves, -1 once it lands;
+    -   point the indicator column at `motionCol` only while that row slides, or on a row that doesn't wrap;
+        a wrapping row at rest keeps its fixed slot;
+    -   offset the rows by the motion frame whenever it differs from the settled window (RowList
+        `frame.shift !== 0`, ZoomRowList rows from `motionPos`), not only once `rowMoved` is set.
+
+    Keyed to `focusIndex`, the new row drew with the old row's moving column and jumped to the top before
+    the rows scrolled, then snapped back (a flicker on a quick Right then Down). Regression: "a row change
+    pressed during a slide along a row never shifts the row it moves to" in `RowListFocusMotion.test.js`.
+
+-   **OK lands a running motion before it selects** (`test/simulator/probes/grid-ok-midmotion-probe`).
+    `ArrayGrid.handleKey` calls `landMotionForSelect` ahead of every `handleOK`: the settle goes out at
+    once, then lists and grids publish `itemFocused` again, and only then `itemSelected`. At rest OK
+    publishes `itemSelected` alone. Without the landing, an app that tracks its focused item from
+    `itemFocused` (Rokanban's team screen) opened the item focused before the move. Regression: "OK during a
+    move lands it before itemSelected" in `GridFocusMotion.test.js`.
+-   **Indicator layering is the same at rest and while moving, and depends on whether the app wrote
+    `drawFocusFeedbackOnTop`** (screenshots in `test/simulator/probes/focus-opaque-layer-probe`, with an
+    opaque focus bitmap; `grid-focus-layer-probe` used the see-through default ring and could not tell):
+
+    -   written (XML attribute or BrightScript): honored as is, on every node;
+    -   never written: the field **reads false**, yet grids and row lists (MarkupGrid, PosterGrid, RowList,
+        ZoomRowList) draw the indicator **over** their items, while lists (LabelList, MarkupList) draw it
+        **under**.
+
+    `ArrayGrid.focusFeedbackOnTop()` holds the rule (`focusOnTopWritten` + `focusOnTopByDefault()`); every
+    draw site asks it, never the raw field. `focusOnTopWritten` is class state, not a field, so
+    `ArrayGrid.cloneNode` copies it (regression in `GridFocusFeedback.test.js`). Don't make the grid default `true` to get the over-the-items
+    look (MarkupGrid once did): the device reads `false`. A moving indicator drawn over the cells regardless
+    of the field hid the new item's content in an app whose side menu writes it false. RowList computes the
+    in-transit rect up front (`motionIndicatorRect`) so it can draw it before the rows. ZoomRowList draws an
+    under-indicator before the focused row's items, because its item offset depends on the measured title.
+    Regression: the draw-order tests in `GridFocusMotion.test.js` and `RowListFocusMotion.test.js`.
+
+-   **The footprint (an unfocused list's indicator) follows the same layering, but only lists have a
+    built-in one** (screenshots in `test/simulator/probes/focus-footprint-layer-probe`).
+    `focusFootprintBitmapUri` reads `""` on every node. Left unset, LabelList and MarkupList draw a built-in
+    gray footprint on the focused item. MarkupGrid, PosterGrid and RowList draw nothing there, even with
+    `drawFocusFeedbackOnTop` written true. So only LabelList, MarkupList (and TimeGrid, not probed) seed
+    `ArrayGrid.builtinFootprintUri`. Don't seed it in the ArrayGrid base: once grids draw over their items,
+    the translucent footprint shades the item the focus left (a RowList the app moved the focus away from).
+    Regression: "draws %i built-in footprint while unfocused" in `GridFocusFeedback.test.js`.
 
 Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same engine through hooks.
 `startFocusMotion` takes the target cell and an `apply` callback, and `openMotion` /
@@ -1087,61 +1134,62 @@ Row lists (RowList, ZoomRowList; `rowlist-focus-motion-probe`) reuse the same en
 `motionRowWeight`, `motionCellPercentIn`, `emitRowMotionFrame` and `settleRowMotionPercents` write
 `rowFocusPercent` (ZoomRowList also `rowHeightPercent`, same values) and `focusPercent` over the
 `rowItemComps` matrix. Device facts that look like bugs but are not:
-- **The settle order differs per node and axis:**
-  - RowList row change: `itemFocused`, `rowHasFocus` swap, `scrollingStatus=false`, `rowItemFocused`.
-  - RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
-  - ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
-  - ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
-- **A row change's column and indicator** (`rowlist-short-row-probe`, `rowlist-hero-grid-probe`):
-  - A `fixedFocusWrap` row whose items all fit floats its focus and is entered at the indicator's screen
-    slot, clamped to its last item, not on its remembered column (`columnAtIndicator`). From a long row
-    (indicator at slot 0) that is the first item; between two such rows (a grid made of 4-item rows) the
-    column is kept. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps the
-    screen slot.
-  - The indicator glides from its old x and size to the target slot and the new row's item size over the
-    row change (`glideIndicator`): a landscape row's ring grows into a portrait row's. It doesn't snap to
-    the target when the move opens. Its y is the target row's item top from the start.
-  - No row counter is drawn while the rows scroll.
-- `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
-  the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
-- An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a
-  later `itemUnfocused` reports the stale value). Key navigation, which routes through `jumpToRowItem`
-  internally, still publishes both. A focus gain therefore lands on `rowItemFocused`'s row, not on the
-  stale `itemFocused` (`focusGainIndex`). `Node.setNodeFocus` returns focusability, not "gained", so
-  `ArrayGrid.setNodeFocus` re-applies the focus only when `focusOn` is true (a blur used to snap a RowList
-  back to the stale row).
-- While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
-  `itemHasFocus`.
-- **Clipping while moving** (screenshots in `test/simulator/probes/rowlist-clip-probe`): a move along a
-  row clips nothing. A row change clips the scrolling rows to the window, which is each visible row's
-  layout height (`rowLayoutHeight`, band included) plus its spacing, **the last spacing included**
-  (`windowLayoutHeight`). Never derive the clip from `itemSize`/a uniform pitch: item components draw
-  captions below the poster, and a row with a label/counter band is taller than `itemSize`. Either way
-  they were cut mid-move. The scroll offset follows the same rule: rows move by the heights of the rows
-  actually scrolled past (`slotOffset`/`slotSpan`), never by `shift × pitch`. With per-row `rowHeights`
-  or `rowSpacings`, a uniform pitch overshoots and then snaps back at the settle (JellyRock's home rows;
-  regression in `RowListFocusMotion.test.js`). The device also clips the focused row to its row height at rest; the engine
-  doesn't (yet).
-- **A ZoomRowList row sliding under the fixed focus is cut at the row's left edge** (Roku's
-  `zoomRowListDefaultLayoutTest` sample; see the `rowlist-clip-probe` README). The item losing the focus
-  slides out of view there; the right side runs to the screen edge, and the focus ring stays outside the
-  clip. `ZoomRowList.renderRow` pushes that clip whenever the row's items start left of the row.
-  Regression: "a row sliding under the fixed focus is cut at the row's left edge" in
-  `RowListFocusMotion.test.js`.
-- A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
-  `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
-  `animateToRow` takes ~265 ms per row against ~330 ms for key steps.
-- RowList's `currRow` is the absolute top row (not a slot, as on ArrayGrid), so it has its own
-  `rowMotionFrame`.
-- Regression: `test/extensions/scenegraph/RowListFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
-  (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
-- **Cached focus style must match the field.** The `ArrayGrid` constructor caches
-  `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, *before* a subclass registers
-  its default. Every subclass with a different default must call `applyVertFocusStyle()` at the end of its
-  constructor: MarkupGrid, PosterGrid, LabelList and MarkupList do. The static layout keys off `wrap` and
-  hid the mismatch, but the motion asks `isFixedFocusMode()`. A default-style list then animated as
-  floating focus, with the indicator walking further down on every press.
-  Regression: `test/extensions/scenegraph/ListFocusMotion.test.js`.
+
+-   **The settle order differs per node and axis:**
+    -   RowList row change: `itemFocused`, `rowHasFocus` swap, `scrollingStatus=false`, `rowItemFocused`.
+    -   RowList move along a row: `rowItemFocused`, then `scrollingStatus=false`, with no direction field.
+    -   ZoomRowList row change: `scrollingStatus=false`, then `rowFocused`, `rowItemFocused`.
+    -   ZoomRowList move along a row: `scrollingStatus=false`, then `rowItemFocused`.
+-   **A row change's column and indicator** (`rowlist-short-row-probe`, `rowlist-hero-grid-probe`):
+    -   A `fixedFocusWrap` row whose items all fit floats its focus and is entered at the indicator's screen
+        slot, clamped to its last item, not on its remembered column (`columnAtIndicator`). From a long row
+        (indicator at slot 0) that is the first item; between two such rows (a grid made of 4-item rows) the
+        column is kept. `fixedFocus` scrolls such a row to keep the focus at slot 0. `floatingFocus` keeps the
+        screen slot.
+    -   The indicator glides from its old x and size to the target slot and the new row's item size over the
+        row change (`glideIndicator`): a landscape row's ring grows into a portrait row's. It doesn't snap to
+        the target when the move opens. Its y is the target row's item top from the start.
+    -   No row counter is drawn while the rows scroll.
+-   `rowHasFocus` swaps only at the settle (`flaggedRow`), not when the motion starts. Any path that moves
+    the cursor outside a motion must move `flaggedRow` too (`setFocusedItem`, `resetFocusForNewContent`).
+-   An app's `jumpToRowItem` publishes **no** `itemFocused`/`itemUnfocused` (the field stays stale, and a
+    later `itemUnfocused` reports the stale value). Key navigation, which routes through `jumpToRowItem`
+    internally, still publishes both. A focus gain therefore lands on `rowItemFocused`'s row, not on the
+    stale `itemFocused` (`focusGainIndex`). `Node.setNodeFocus` returns focusability, not "gained", so
+    `ArrayGrid.setNodeFocus` re-applies the focus only when `focusOn` is true (a blur used to snap a RowList
+    back to the stale row).
+-   While a held key pauses before repeating, a RowList publishes an interim `rowItemFocused` and
+    `itemHasFocus`.
+-   **Clipping while moving** (screenshots in `test/simulator/probes/rowlist-clip-probe`): a move along a
+    row clips nothing. A row change clips the scrolling rows to the window, which is each visible row's
+    layout height (`rowLayoutHeight`, band included) plus its spacing, **the last spacing included**
+    (`windowLayoutHeight`). Never derive the clip from `itemSize`/a uniform pitch: item components draw
+    captions below the poster, and a row with a label/counter band is taller than `itemSize`. Either way
+    they were cut mid-move. The scroll offset follows the same rule: rows move by the heights of the rows
+    actually scrolled past (`slotOffset`/`slotSpan`), never by `shift × pitch`. With per-row `rowHeights`
+    or `rowSpacings`, a uniform pitch overshoots and then snaps back at the settle (JellyRock's home rows;
+    regression in `RowListFocusMotion.test.js`). The device also clips the focused row to its row height at rest; the engine
+    doesn't (yet).
+-   **A ZoomRowList row sliding under the fixed focus is cut at the row's left edge** (Roku's
+    `zoomRowListDefaultLayoutTest` sample; see the `rowlist-clip-probe` README). The item losing the focus
+    slides out of view there; the right side runs to the screen edge, and the focus ring stays outside the
+    clip. `ZoomRowList.renderRow` pushes that clip whenever the row's items start left of the row.
+    Regression: "a row sliding under the fixed focus is cut at the row's left edge" in
+    `RowListFocusMotion.test.js`.
+-   A device ZoomRowList is not an ArrayGrid: it has no `vertFocusDirection`, `horizFocusDirection`,
+    `skipFocusAnimations` or `numRows`. The engine keeps them, but doesn't emit the direction fields.
+    `animateToRow` takes ~265 ms per row against ~330 ms for key steps.
+-   RowList's `currRow` is the absolute top row (not a slot, as on ArrayGrid), so it has its own
+    `rowMotionFrame`.
+-   Regression: `test/extensions/scenegraph/RowListFocusMotion.test.js`. Rows are clipped to the viewport, and per-item focus frames are suppressed while moving
+    (`hasNinePatch` must still follow `drawFocusFeedback`, or the reported rect loses its outset).
+-   **Cached focus style must match the field.** The `ArrayGrid` constructor caches
+    `vertFocusAnimationStyleName`/`wrap` from its own `floatingFocus` default, _before_ a subclass registers
+    its default. Every subclass with a different default must call `applyVertFocusStyle()` at the end of its
+    constructor: MarkupGrid, PosterGrid, LabelList and MarkupList do. The static layout keys off `wrap` and
+    hid the mismatch, but the motion asks `isFixedFocusMode()`. A default-style list then animated as
+    floating focus, with the indicator walking further down on every press.
+    Regression: `test/extensions/scenegraph/ListFocusMotion.test.js`.
 
 `PanelSet.focusIndex` must follow **where focus actually lands**, not where the PanelSet sent it.
 Going back from a full-screen panel focuses the panel before it, and apps commonly redirect from that
@@ -1164,7 +1212,7 @@ wrong and none of which is guessable from the reference alone.
 > channel from this section plus the trace format described in its README. The four rules below are the
 > durable artifact; treat them as the record, not the traces.
 
-1. **`control = "none"` is inert.** Writing it to a *running* animation leaves it running and its
+1. **`control = "none"` is inert.** Writing it to a _running_ animation leaves it running and its
    interpolated fields keep advancing (opacity went 0.58 → 0.88 across the write). It used to route to
    `stop()`. The reference calls `none` the "initial state with no associated action" — which reads like
    it only describes the initial value, so this needed measuring.
@@ -1174,7 +1222,7 @@ wrong and none of which is guessable from the reference alone.
    the container's own `state` and leaves every target field untouched, directly contradicting
    "All animated fields will be immediately set to their final values as if the animation had completed".
 3. **`SequentialAnimation.finish` fast-forwards children that never ran.** Finishing during child 1 put
-   children 2 *and* 3 on their final values. Capture the cursor **before** calling `super.setValue`:
+   children 2 _and_ 3 on their final values. Capture the cursor **before** calling `super.setValue`:
    `finishImmediately()` → `stop()` → this node's `stop()` override resets `currentChildIndex` to −1, so
    afterwards the active child is unknown. Sending `finish` to an already-stopped child still lands its
    target, because `finishImmediately` applies fraction 1 regardless of state.
@@ -1182,12 +1230,12 @@ wrong and none of which is guessable from the reference alone.
    `stopped` at start and through the delay, flipping to `running` only once it elapsed. The internal
    `_state` must still be `running` so `tick()` counts the delay down — hence the split between `_state`
    and `updateStateField`. **Only the initial delay was measured**: the repeat path re-seeds
-   `delayRemaining` between iterations and deliberately does *not* re-publish `"stopped"`, because what a
+   `delayRemaining` between iterations and deliberately does _not_ re-publish `"stopped"`, because what a
    repeating delayed animation reports between cycles is unmeasured. Don't "make it consistent" without a
    probe.
 
 **Rule 4 has a sharp edge that bit twice during implementation.** A container polls its children to
-decide when the group is finished, and if it reads the *public* `state` field it sees a delay-pending
+decide when the group is finished, and if it reads the _public_ `state` field it sees a delay-pending
 child as `"stopped"` — so it tears the whole group down before anything runs (`ParallelAnimation`), or
 skips straight past the delayed child (`SequentialAnimation`). Containers must poll
 **`AnimationBase.isSettled()`** (internal `_state`), never the field. For the same reason the
@@ -1198,7 +1246,7 @@ decrement `delayRemaining`, so publishing `"stopped"` on them would stick foreve
 
 Related edge: `resume` may only be relayed to children that are actually **paused**
 (`AnimationBase.isPaused()`). `handleControl("resume")` restarts a non-paused animation from the
-beginning, so relaying it blindly makes a child that had already *completed* before the pause replay its
+beginning, so relaying it blindly makes a child that had already _completed_ before the pause replay its
 settled part — visible as a flicker in a mixed-duration parallel group.
 
 Two things the probe **cleared**, so don't "fix" them: a device does **not** snap the target to
@@ -1206,8 +1254,9 @@ Two things the probe **cleared**, so don't "fix" them: a device does **not** sna
 already did), and `pause` leaves each child's own `state` reading `paused`.
 
 Regression: `test/extensions/scenegraph/AnimationControl.test.js`. Note the `resume` test asserts the
-*paused precondition* first — without pause propagation the children were never paused, so "they run
+_paused precondition_ first — without pause propagation the children were never paused, so "they run
 after resume" would pass vacuously.
+
 ## `PosterGrid` extent — asymmetric axes, trailing gaps, fall-back spacing
 
 **Device-measured** (Streaming Stick / Roku OS 15.2, HD 1280x720 and FHD 1920x1080; probes
@@ -1227,9 +1276,8 @@ marginBottom = 50 (HD) / 75 (FHD),  but == marginTop when rows == 1 && numColumn
 Seven rules, each of which the engine had wrong:
 
 1. **Short spacing arrays fall back to `itemSpacing`, they do not repeat the last entry.**
-   `columnSpacings=[10]` across 3 columns measured 438 (`10 + 50 + 50`); repeating would have given
-   358. Note `LayoutGroup.itemSpacings` **is** device-confirmed to repeat — the two genuinely differ,
-   which is why this was measured rather than reasoned by analogy. Watch the *fallback value* too: it
+   `columnSpacings=[10]` across 3 columns measured 438 (`10 + 50 + 50`); repeating would have given 358. Note `LayoutGroup.itemSpacings` **is** device-confirmed to repeat — the two genuinely differ,
+   which is why this was measured rather than reasoned by analogy. Watch the _fallback value_ too: it
    is `itemSpacing`, not the array's first entry (the old `defaultColumnSpacing` derived from
    `columnSpacings[0]`, which silently made short arrays behave like a repeat).
 2. **The gap AFTER the last track counts**, on both axes — matching the reference's "the spacing after
@@ -1240,33 +1288,34 @@ Seven rules, each of which the engine had wrong:
    **both axes at both resolutions** by `postergrid-margins-probe` (`x=-14 y=-14 w=128` HD,
    `x=-21 y=-21 w=142` FHD), with `left == right == top` in all six of its cases. The FHD pair used to be
    an inference: the caption probe reads `boundingRect().height` only, so at FHD it pinned the vertical
-   *sum* (`21 + 75 = 96`) and nothing about x or about where the split falls. Any split summing to 96
+   _sum_ (`21 + 75 = 96`) and nothing about x or about where the split falls. Any split summing to 96
    keeps every FHD height correct while moving every `y`, which is why that inference had to be closed by
    a probe printing the whole rect rather than argued from the design scale.
 5. **The vertical outset is asymmetric: 14 above the first row, 50 below the last** (21/75 FHD), where
    the horizontal one is 14 on both sides. See the caption-zone section below — this was the "+36" that
    masqueraded as a missing caption zone for two rounds of probing.
-6. **That extra bottom allowance is *conditional*** — absent exactly when the grid is a **horizontal
+6. **That extra bottom allowance is _conditional_** — absent exactly when the grid is a **horizontal
    strip**:
 
-   ```
-   marginBottom == marginTop   iff   displayed rows == 1 && numColumns > 1
-   ```
+    ```
+    marginBottom == marginTop   iff   displayed rows == 1 && numColumns > 1
+    ```
 
-   A **conjunction**, which is why no single variable explains it. `postergrid-outset-axis-probe` crossed
-   17 cases × both resolutions specifically to kill the plausible single-axis rules, and killed all of
-   them: **not** the column count (3 columns × 4 rows keeps the allowance, 3 × 1 loses it), **not** the
-   content shape (one column 400 wide *keeps* it; 3 columns of 100×400 lose it), **not** a width
-   threshold (700 wide keeps it, 90 wide over 3 columns loses it — a threshold would have to be both
-   above 700 and below 90), **not** the drawn item count (see rule 7), and **not** a mis-attributed
-   caption allowance (a captioned 3×1 grid reads HD 172 = `14 + 100 + 23 + 21 + 14`, so the zone and the
-   allowance are independent terms). That last one is only decidable at **HD**: at FHD,
-   zone-present/allowance-absent and zone-absent/allowance-present both give 196. Run both resolutions —
-   they cross-check each other.
+    A **conjunction**, which is why no single variable explains it. `postergrid-outset-axis-probe` crossed
+    17 cases × both resolutions specifically to kill the plausible single-axis rules, and killed all of
+    them: **not** the column count (3 columns × 4 rows keeps the allowance, 3 × 1 loses it), **not** the
+    content shape (one column 400 wide _keeps_ it; 3 columns of 100×400 lose it), **not** a width
+    threshold (700 wide keeps it, 90 wide over 3 columns loses it — a threshold would have to be both
+    above 700 and below 90), **not** the drawn item count (see rule 7), and **not** a mis-attributed
+    caption allowance (a captioned 3×1 grid reads HD 172 = `14 + 100 + 23 + 21 + 14`, so the zone and the
+    allowance are independent terms). That last one is only decidable at **HD**: at FHD,
+    zone-present/allowance-absent and zone-absent/allowance-present both give 196. Run both resolutions —
+    they cross-check each other.
 
-   `rows` is the **declared** `numRows`, not the rows displayed: a 3-row, 3-column grid holding one row
-   of content keeps the allowance (`grid-rect-probe` case `pg_3rows_1content`, OS 16.0). MarkupGrid has
-   the same allowance and gate (`ArrayGrid.gridBottomAllowance`/`isHorizontalStrip`).
+    `rows` is the **declared** `numRows`, not the rows displayed: a 3-row, 3-column grid holding one row
+    of content keeps the allowance (`grid-rect-probe` case `pg_3rows_1content`, OS 16.0). MarkupGrid has
+    the same allowance and gate (`ArrayGrid.gridBottomAllowance`/`isHorizontalStrip`).
+
 7. **Width counts the columns actually drawn; the allowance gate counts the columns declared.** A grid
    with `numColumns = 3` holding only 2 items reports a rect **two** cells wide (HD 228) — yet the
    allowance is still absent, which only a gate reading the declared `numColumns` produces. Two different
@@ -1274,13 +1323,13 @@ Seven rules, each of which the engine had wrong:
    **Do not unify them.** Only reachable when no row is full (`content.length < numColumns`), which is
    why it went unnoticed until a probe case deliberately under-filled a row.
 
-**Related general fix:** `Group.updateBoundingRects` built `rectToParent` from the node's *translation*,
+**Related general fix:** `Group.updateBoundingRects` built `rectToParent` from the node's _translation_,
 discarding `drawRect.x/y`. Identical for an ordinary node, but a grid's `updateRect` outsets `drawRect`
 by its focus margins — and a device reports that outset — so a grid's reported rect had the widened
 width/height with un-offset x/y. It now derives the position from `drawRect` too.
 
 The lesson below ("fixing two of three spaces is worse than fixing none, because the disagreement is
-silent") has a corollary that this fix went on to demonstrate: **a *compensating* error in a consumer is
+silent") has a corollary that this fix went on to demonstrate: **a _compensating_ error in a consumer is
 equally silent, and repairing the producer is what surfaces it.** The leaked `+marginY` above was being
 cancelled downstream by a `-focusMargins().top` subtraction in `RowList.getSubBoundingRect` (see the
 grid-sub-rect section below). Both were wrong; together they read as correct. So when you fix a geometry
@@ -1300,7 +1349,7 @@ path, which disagreed with where it actually painted). It now uses `getDrawTrans
 other node, so its paint position and its reported rect agree. Regression: `OverhangLayout.test.js`.
 
 **Per-track arrays: `rowHeights` follows the same fall-back rule as the spacing arrays.** It used to
-resolve through `ArrayGrid.resolveNumber`, which *repeats* the last entry — so `rowHeights=[200]` over
+resolve through `ArrayGrid.resolveNumber`, which _repeats_ the last entry — so `rowHeights=[200]` over
 3 rows measured `3 x 200` instead of `200 + 100 + 100`. `resolveNumber` itself is left alone:
 `ZoomRowList` depends on it and its behavior there is unmeasured.
 
@@ -1326,15 +1375,15 @@ gaps        = max(0, lines1-1) + max(0, lines2-1) + (both blocks present ? 1 : 0
 **Why every pre-registered hypothesis lost, and to what.** Six candidate models were written down before
 the run (five of them some form of "base zone + per-line"). All six were wrong the same way:
 
-- **The allowance is per *grid*, not per cell.** `h2 − h1` is exactly one cell in every one of the 22
-  cases, so solving for the residue from the 1-row and the 2-row readings independently gives the same
-  number (36 HD / 54 FHD). Only a grid-level term can do that. This is what a "cell padding" or
-  "caption zone" model cannot fit, and it is invisible if you only ever measure one row count.
-- **It is not caption-related.** It is present with `caption1NumLines = 0`, and unchanged when
-  `captionVertAlignment` is `center`/`above` — which draw the caption *over* the poster, so no zone is
-  needed at all. (Also already known not to be the empty-caption background:
-  `showBackgroundForEmptyCaptions = false` changed nothing.)
-- **It is not poster-relative.** A 200- or 300-tall poster grows the cell 1:1 and nothing more.
+-   **The allowance is per _grid_, not per cell.** `h2 − h1` is exactly one cell in every one of the 22
+    cases, so solving for the residue from the 1-row and the 2-row readings independently gives the same
+    number (36 HD / 54 FHD). Only a grid-level term can do that. This is what a "cell padding" or
+    "caption zone" model cannot fit, and it is invisible if you only ever measure one row count.
+-   **It is not caption-related.** It is present with `caption1NumLines = 0`, and unchanged when
+    `captionVertAlignment` is `center`/`above` — which draw the caption _over_ the poster, so no zone is
+    needed at all. (Also already known not to be the empty-caption background:
+    `showBackgroundForEmptyCaptions = false` changed nothing.)
+-   **It is not poster-relative.** A 200- or 300-tall poster grows the cell 1:1 and nothing more.
 
 **The caption base is 23, and it does not scale.** Three line counts (1, 2, 3) put the intercept at 23
 with no extra step at the 0→1 boundary, and it measured **23 at both HD and FHD** — the lone non-scaling
@@ -1344,24 +1393,24 @@ that gave 24 HD / 36 FHD. Above that base the zone is font-metric-driven (Larges
 `n−1` within a block plus one between the two blocks — which the engine already had right.
 
 **Still divergent, but not here: the per-line term is 1–2px short.** The engine asks for the right thing
-(the caption font's line height) but `RoFont.measureTextHeight` returns the font's *point size*, where a
+(the caption font's line height) but `RoFont.measureTextHeight` returns the font's _point size_, where a
 device returns its real line height: device `Label` heights are SmallerBold 21/31, Largest 61/91, Tiny
 18/26 against the engine's 20/30, 60/90, 16/24. So a captioned PosterGrid is still short by
 `lines × 1..2`. That is an **engine-wide font-metric** gap — it moves every `Label`, `MultiStyleLabel`
 and `ScrollableText` too, not just a caption — so it is deliberately **not** patched inside PosterGrid,
 where it would hide behind a grid-shaped fudge factor. `PosterGridExtent.test.js` therefore pins the
-uncaptioned heights absolutely and the captioned ones as *increments*, which hold under either metric.
+uncaptioned heights absolutely and the captioned ones as _increments_, which hold under either metric.
 
 **One inference from that run was later measured false, and is worth keeping as a worked example.**
 caption2's per-line cost measured 20/29 against caption1's 21/31 with both fields defaulted, yet the two
-were *equal* when set explicitly to the same font — read at the time as the device defaulting
+were _equal_ when set explicitly to the same font — read at the time as the device defaulting
 `caption2Font` to the non-bold face while the engine defaults both to `font:SmallerBoldSystemFont`. The
 margins probe set `caption2Font` explicitly to each face in turn (group N) and the device returned
 **identical heights for both**. `SmallerSystemFont` and `SmallerBoldSystemFont` share a point size, so
 height cannot separate them and the increment gap was never evidence about a font identity at all. It is
 fully explained by the metric gap in the previous paragraph: the device's real `Label` line heights are
 21/26 HD and 31/38 FHD against the engine's point sizes. **The engine's bold default is correct.** The
-lesson: an inference drawn from a *difference between two derived quantities* inherits every error in
+lesson: an inference drawn from a _difference between two derived quantities_ inherits every error in
 both, and here one of those errors was already known and documented one paragraph up.
 
 **The probe measures heights, so anything that is not a height is unpinned by it.** Three values in this
@@ -1370,11 +1419,11 @@ node rode along on the 88 readings without being measured by them — the FHD `r
 `postergrid-margins-probe` then measured all three directly. **Two of the four things it checked were
 wrong**, which is the argument for marking inferences rather than letting them read as measurements:
 
-- the FHD split (21/75) and the FHD x margin (21) were **right** — the plain 1.5× scale wins, and
-  `left == right == top`;
-- `CaptionTextOffset` was **wrong**: device-measured **0**, not `round(23 / 2)` = 12. The text starts
-  immediately below the poster and the entire 23px base sits *below* it, rather than being split around
-  it.
+-   the FHD split (21/75) and the FHD x margin (21) were **right** — the plain 1.5× scale wins, and
+    `left == right == top`;
+-   `CaptionTextOffset` was **wrong**: device-measured **0**, not `round(23 / 2)` = 12. The text starts
+    immediately below the poster and the entire 23px base sits _below_ it, rather than being split around
+    it.
 
 Why heights could not have settled the split: any pair summing to 96 keeps every FHD height in the 88
 readings correct while moving every `y`. Measuring `CaptionTextOffset` needed a **screenshot**, not a
@@ -1435,21 +1484,21 @@ per-row terms from the same helper (`accumulateRowExtent`).
 visible branch does below it.** So everything the visible pass does before laying out a row, the hidden
 pass has to do for itself, and the list is longer than it looks:
 
-| shared step | why the hidden pass needs it | symptom when it's missing |
-| --- | --- | --- |
-| `content.changed` → `refreshContent()` | `renderNodeContent` runs it only on the visible path (the inherited `measureHiddenExtent` does it itself, so overriding it drops the step) | content appended *after* `content` was assigned is invisible to the measurement — a feed arriving late measures the stale row count |
-| `currRow` ← `isFixedFocusMode() ? updateCurrRow() : updateListCurrRow()` | `getRenderRowIndex(r)` maps a row *position* to a content index through `currRow` | a grid scrolled past its first page measures its ORIGINAL rows: wrong height under per-row `rowHeights`, and under fixedFocus a wrong drawn-column count, so a wrong width too |
-| `numCols` ← declared-or-inferred column count | `rectMarginBottom` and `computeReportedWidth` both read it | the strip gate and the reported width read 0 columns |
-| rows actually **covered**, not rows requested | the bottom allowance is gated on the count, and a row can drop out at either end (out-of-range index, scene-edge cutoff) | fixedFocus with a partial last page: 50 charged where the visible pass charged 14 |
-| wrap/section divider between rows | `wrapDividerHeight`/`sectionDividerHeight` are plain field reads — nothing about them needs laid-out items | fixedFocusWrap short by one divider (HD 24) once the window wraps past the last row |
+| shared step                                                              | why the hidden pass needs it                                                                                                               | symptom when it's missing                                                                                                                                                      |
+| ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `content.changed` → `refreshContent()`                                   | `renderNodeContent` runs it only on the visible path (the inherited `measureHiddenExtent` does it itself, so overriding it drops the step) | content appended _after_ `content` was assigned is invisible to the measurement — a feed arriving late measures the stale row count                                            |
+| `currRow` ← `isFixedFocusMode() ? updateCurrRow() : updateListCurrRow()` | `getRenderRowIndex(r)` maps a row _position_ to a content index through `currRow`                                                          | a grid scrolled past its first page measures its ORIGINAL rows: wrong height under per-row `rowHeights`, and under fixedFocus a wrong drawn-column count, so a wrong width too |
+| `numCols` ← declared-or-inferred column count                            | `rectMarginBottom` and `computeReportedWidth` both read it                                                                                 | the strip gate and the reported width read 0 columns                                                                                                                           |
+| rows actually **covered**, not rows requested                            | the bottom allowance is gated on the count, and a row can drop out at either end (out-of-range index, scene-edge cutoff)                   | fixedFocus with a partial last page: 50 charged where the visible pass charged 14                                                                                              |
+| wrap/section divider between rows                                        | `wrapDividerHeight`/`sectionDividerHeight` are plain field reads — nothing about them needs laid-out items                                 | fixedFocusWrap short by one divider (HD 24) once the window wraps past the last row                                                                                            |
 
 `resolveLayoutTerms` holds the first three and both passes call it, so they cannot drift again;
 `accumulateRowExtent` holds the last two and returns `renderedRows` alongside the extent.
 
 The trap worth remembering: before the override, the inherited arithmetic agreed with the visible pass at
-**exactly one row** and diverged in *both* directions either side of it (HD: 0 at 1 row, −28 at 2, −56 at
+**exactly one row** and diverged in _both_ directions either side of it (HD: 0 at 1 row, −28 at 2, −56 at
 3). A single-row regression test would have passed and proved nothing. Any test here must vary the row
-count *and* the scroll position *and* the focus style — the divergences above hid behind a grid measured
+count _and_ the scroll position _and_ the focus style — the divergences above hid behind a grid measured
 unscrolled at `focusIndex` 0, which is exactly where all the paths coincide. Pinned by
 `PosterGridExtent.test.js` ("a hidden grid picks up content appended after the content node was assigned",
 "a hidden %s grid measures the same extent as a visible one after scrolling").
@@ -1458,30 +1507,30 @@ unscrolled at `focusIndex` 0, which is exactly where all the paths coincide. Pin
 
 Three outsets meet on `subBoundingRect("item<r>_<c>")` and only two of them exist. Keep them apart:
 
-| outset | applied by | shows up in |
-| --- | --- | --- |
-| `rectMargins()` + `reportedExtent()` | `ArrayGrid.updateRect` | the **grid's own** reported rect (device-measured) |
+| outset                                                       | applied by                 | shows up in                                                                                     |
+| ------------------------------------------------------------ | -------------------------- | ----------------------------------------------------------------------------------------------- |
+| `rectMargins()` + `reportedExtent()`                         | `ArrayGrid.updateRect`     | the **grid's own** reported rect (device-measured)                                              |
 | `focusMargins(bmp)` → the 9-patch's declared content margins | `ArrayGrid.focusFrameRect` | the **drawn** focus frame — paint only (a device's `focusIndicator` reports a frame, see below) |
-| *(none)* | — | an **item sub-rect** |
+| _(none)_                                                     | —                          | an **item sub-rect**                                                                            |
 
 **The own rects, DEVICE-MEASURED** (OS 16.0, `test/simulator/probes/grid-rect-probe`, HD and FHD). The
 outsets don't depend on the focus bitmap, `drawFocusFeedback`, focus or visibility, and they count the
 spacing after the last row. `reportedExtent` holds each rule, so the visible and hidden passes can't
 drift:
 
-| node | sides / top | bottom | extent |
-| --- | --- | --- | --- |
-| MarkupGrid | 22 (both resolutions) | 22, plus `gridBottomAllowance` (36 HD / 54 FHD) unless `isHorizontalStrip` | columns plus the spacing after each (none for one column), rows plus spacing |
-| MarkupList | 24 / 6 HD, 36 / 9 FHD | 5 × top | rows plus spacing, outset once per list |
-| RowList | 22 (both resolutions) | 22 | `itemSize.x`, and the first `min(numRows, rows)` rows plus spacing, whatever the scroll |
-| PosterGrid | see the `PosterGrid` extent section | | |
+| node       | sides / top                         | bottom                                                                     | extent                                                                                  |
+| ---------- | ----------------------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| MarkupGrid | 22 (both resolutions)               | 22, plus `gridBottomAllowance` (36 HD / 54 FHD) unless `isHorizontalStrip` | columns plus the spacing after each (none for one column), rows plus spacing            |
+| MarkupList | 24 / 6 HD, 36 / 9 FHD               | 5 × top                                                                    | rows plus spacing, outset once per list                                                 |
+| RowList    | 22 (both resolutions)               | 22                                                                         | `itemSize.x`, and the first `min(numRows, rows)` rows plus spacing, whatever the scroll |
+| PosterGrid | see the `PosterGrid` extent section |                                                                            |                                                                                         |
 
 **Override `focusFrameRect`, never `renderFocus`.** `renderFocus` is a template like
 `renderNode`/`renderNodeContent`: it owns which uri and blend field the focus state selects, the validity
 guard, the `hasNinePatch` write that `rectMargins()` reads, and the `drawImage` call —
 `focusFrameRect(itemRect, bmp, index)` owns only the geometry. `PosterGrid` used to override the whole
 method to specialize its rect math and silently dropped both the blend color (making
-`focusBitmapBlendColor` *and* `focusFootprintBlendColor` no-ops on that type) and the `hasNinePatch`
+`focusBitmapBlendColor` _and_ `focusFootprintBlendColor` no-ops on that type) and the `hasNinePatch`
 write; a geometry-only hook makes that class of omission impossible. Two deliberate asymmetries in
 `PosterGrid`'s override, both pinned by `GridFocusFeedback.test.js`: its outset is device-measured
 constants (`marginY + focusPadding*`) so it is **not** gated on `bmp.ninePatch` the way the base is —
@@ -1503,11 +1552,11 @@ methods reports that rect in its own space. DEVICE-MEASURED on OS 16.0 over Post
 RowList, under an offset parent, with the grid's own scale and with two rows
 (`test/simulator/probes/subrect-space-probe`, `device-trace-os16.0.txt`):
 
-| method | space | item 1 of a grid at [100,40] in a Group at [700,40], 100x100 items 20 apart |
-| --- | --- | --- |
-| `sceneSubBoundingRect` | scene | `{920,80,100,100}` |
-| `subBoundingRect` | **the grid's own**, from its translation origin, unscaled | `{120,0,100,100}` |
-| `localSubBoundingRect` | the item's own | `{0,0,100,100}` |
+| method                 | space                                                     | item 1 of a grid at [100,40] in a Group at [700,40], 100x100 items 20 apart |
+| ---------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `sceneSubBoundingRect` | scene                                                     | `{920,80,100,100}`                                                          |
+| `subBoundingRect`      | **the grid's own**, from its translation origin, unscaled | `{120,0,100,100}`                                                           |
+| `localSubBoundingRect` | the item's own                                            | `{0,0,100,100}`                                                             |
 
 `subBoundingRect` is **not** the grid's parent space, whatever `ifsgnodeboundingrect.md` says ("in its
 parent node's coordinate system"). Read "parent" as the item's parent, the grid. Under the grid's own
@@ -1518,7 +1567,7 @@ transform), so `getSubBoundingRect` keeps an internal `"ancestor"` type for it. 
 
 **A sub part the grid does not have** (`"bogus"`, `item9` past the content, or `item2` on a 2-row
 RowList) is a **zero-size rect at the grid's translation origin**: `{0,0,0,0}` in parent/local, and the
-origin's scene point in scene space. It is *not* the grid's own rect, despite the spec. A **non-grid**
+origin's scene point in scene space. It is _not_ the grid's own rect, despite the spec. A **non-grid**
 node (a Rectangle in the same probe) does return its own rect, as the spec says. So
 `Node.getSubBoundingRect` is only that own-rect fallback, and every sub-part rule lives in
 `ArrayGrid.getSubBoundingRect`. A missing part returns a literal `{0,0,0,0}` for parent/local;
@@ -1528,7 +1577,7 @@ steps back to the origin by `rectLocal × scale`. For ancestor it is the grid's 
 
 Pinned by `SubBoundingRect.test.js` (injected rects, including an outset grid), by
 `RowListItemSubRect.test.js` over {HD,FHD} × {`RowList`,`ZoomRowList`} × translations (which asserts the
-*composition* rather than either mechanism), and by the CLI fixture `rowlist-subrect-app` (which derives
+_composition_ rather than either mechanism), and by the CLI fixture `rowlist-subrect-app` (which derives
 its own expectation from its declared `translation`/`rowItemSize`, so no pixel constant can drift).
 
 **Row lists compute their sub parts from layout** (`layoutSubpartRect`, DEVICE-MEASURED in
@@ -1536,14 +1585,15 @@ its own expectation from its declared `translation`/`rowItemSize`, so no pixel c
 off or past `numRows`, at its laid-out position. A motion in flight doesn't move it
 (`list-focus-motion-probe`). So `RowList.layoutSubpartRect` derives each rect from the focus state, with
 no item component involved:
-- `item<r>_<c>` is the cell's `rowItemSize` slot, not the item component's drawn box. A column past the
-  row's end is a zero-size rect at the row's left edge.
-- `item<r>` is **row r**: `{focusX, itemsY, itemSize.x, rowHeight}`. `focusX` is the focused item's x,
-  the same in every row. ZoomRowList reports `{0, rowTop, rowWidth, rowHeight}` and keeps its cells
-  component-based, so its off-window rows are still missing.
-- Each row keeps its own horizontal scroll. Fit and floating-focus scrolling are measured against the
-  **list's** width (`itemSize.x`), not the screen's (`RowList.listWidth`). fixedFocusWrap reports
-  linear positions, like fixedFocus.
+
+-   `item<r>_<c>` is the cell's `rowItemSize` slot, not the item component's drawn box. A column past the
+    row's end is a zero-size rect at the row's left edge.
+-   `item<r>` is **row r**: `{focusX, itemsY, itemSize.x, rowHeight}`. `focusX` is the focused item's x,
+    the same in every row. ZoomRowList reports `{0, rowTop, rowWidth, rowHeight}` and keeps its cells
+    component-based, so its off-window rows are still missing.
+-   Each row keeps its own horizontal scroll. Fit and floating-focus scrolling are measured against the
+    **list's** width (`itemSize.x`), not the screen's (`RowList.listWidth`). fixedFocusWrap reports
+    linear positions, like fixedFocus.
 
 Flat grids (MarkupGrid, MarkupList, PosterGrid) still read their item components. That diverges from the
 same probe in three ways: a device reports the slot size (`itemSize`), reports a hidden grid's items, and
@@ -1551,10 +1601,10 @@ reports items past the window at their layout positions (`mg_scrolled`).
 
 **Still divergent from the probe, not fixed:**
 
-- `focusIndicator` on a device is the focus frame: the focused item outset by 21 (PosterGrid) or 22
-  (MarkupGrid/RowList) at FHD, reported even while the grid is unfocused. `local` is the outset itself
-  (`{-21,-21,142,142}`). The engine resolves it to the focused item. Those outsets equal each grid's own
-  `rectMargins` at FHD, but there is no HD data yet.
+-   `focusIndicator` on a device is the focus frame: the focused item outset by 21 (PosterGrid) or 22
+    (MarkupGrid/RowList) at FHD, reported even while the grid is unfocused. `local` is the outset itself
+    (`{-21,-21,142,142}`). The engine resolves it to the focused item. Those outsets equal each grid's own
+    `rectMargins` at FHD, but there is no HD data yet.
 
 **`ancestorBoundingRect(A)` / `ancestorSubBoundingRect(id, A)`** are the rect in A's own coordinates.
 Each node in between applies its translation, scale and rotation around `scaleRotateCenter`
@@ -1571,23 +1621,23 @@ must therefore be applied to all three spaces, or it reappears as a residue in e
 ### Worked example: two compensating errors that read as correct
 
 An app positioned a home-screen preview overlay from a `RowList`'s focused-item sub-rect. Three PRs each
-chased the same device symptom ("the overlay sits too low"), and two of them subtracted the *same* outset:
+chased the same device symptom ("the overlay sits too low"), and two of them subtracted the _same_ outset:
 
-| state | `sub.y − focusedPoster.y` |
-| --- | --- |
-| `marginY` = 33/22 (square, unmeasured) | +33 |
-| `marginY` → 6/4 (device-measured) | +6 |
-| plus a `− focusMargins(bmp).top` in `RowList.getSubBoundingRect` | **0** ← aligned, by two errors cancelling |
-| minus the `+marginY` leak, once `updateBoundingRects` was fixed | **−6** ← regression: overlay one margin too high |
+| state                                                            | `sub.y − focusedPoster.y`                        |
+| ---------------------------------------------------------------- | ------------------------------------------------ |
+| `marginY` = 33/22 (square, unmeasured)                           | +33                                              |
+| `marginY` → 6/4 (device-measured)                                | +6                                               |
+| plus a `− focusMargins(bmp).top` in `RowList.getSubBoundingRect` | **0** ← aligned, by two errors cancelling        |
+| minus the `+marginY` leak, once `updateBoundingRects` was fixed  | **−6** ← regression: overlay one margin too high |
 
-Why it stayed invisible: the cancellation was *exact* for that app, whose focus 9-patch declares 6px
+Why it stayed invisible: the cancellation was _exact_ for that app, whose focus 9-patch declares 6px
 content margins — the same number as `RowList`'s FHD `marginY`. The default `focus_grid.9.png` declares
-19px, so the CLI fixture (HD, `marginY` 4) had visibly *un*-cancelled arithmetic all along, and that
+19px, so the CLI fixture (HD, `marginY` 4) had visibly _un_-cancelled arithmetic all along, and that
 expectation was simply moved (`−15` → `−19`) rather than questioned. The footprint outset's own regression
-test asserted only the *shape* of the outset (`top > 0`), never a pixel count, so it never disagreed with
+test asserted only the _shape_ of the outset (`top > 0`), never a pixel count, so it never disagreed with
 a device either.
 
-Two facts settled which side was wrong: `sceneSubBoundingRect` was *already* `poster − top` before the
+Two facts settled which side was wrong: `sceneSubBoundingRect` was _already_ `poster − top` before the
 producer fix (the three spaces silently disagreed by `marginY`, and the fix only made `toParent`/`local`
 agree with the space that already leaked), and `PosterGridItem`'s sub-rect independently moved onto its
 poster. The consumer-side subtraction was deleted. RowList's sub parts are now computed from its layout
@@ -1598,18 +1648,18 @@ outside the reported rect, and that asymmetry is what makes the wrong fix look r
 
 ### Known fallout from the `updateBoundingRects` fix
 
-- **A `LayoutGroup` positions a grid by its outset rect, as a device does.** `chooseActiveRect` prefers
-  `child.rectToParent`, so the outset rect lands in the layout slot. DEVICE-MEASURED (`grid-rect-probe`
-  cases `lg_*`): a MarkupGrid or RowList after a 40px Rectangle in a vertical LayoutGroup with spacing 10
-  gets translation `[22,72]`, a PosterGrid `[21,71]` at FHD, and the next sibling follows the outset
-  rect. Don't add a paint-rect hook.
-- **`renderTracking` flips on the ancestor.** `updateParentRects` (`Group.ts:674-696`) unions the moved
-  `rectToParent` into the parent: a plain `Group` wrapping a `LabelList` went `{0,0,348,216}`/`"full"` →
-  `{-24,-4,348,216}`/`"partial"`. Apps gating viewable-impression work on `renderTracking == "full"`
-  silently stop firing.
-- **Two untested side effects**, both arguably now *correct* by the fix's own rationale and worth locking
-  in with a test rather than reverting: `SimpleLabel` reports the anchored glyph box (a center/center label
-  at `[500,300]` reports `{473,288}`), and `PosterGridItem`'s sub-rect landed on its poster (`sub.y` 4 → 0).
+-   **A `LayoutGroup` positions a grid by its outset rect, as a device does.** `chooseActiveRect` prefers
+    `child.rectToParent`, so the outset rect lands in the layout slot. DEVICE-MEASURED (`grid-rect-probe`
+    cases `lg_*`): a MarkupGrid or RowList after a 40px Rectangle in a vertical LayoutGroup with spacing 10
+    gets translation `[22,72]`, a PosterGrid `[21,71]` at FHD, and the next sibling follows the outset
+    rect. Don't add a paint-rect hook.
+-   **`renderTracking` flips on the ancestor.** `updateParentRects` (`Group.ts:674-696`) unions the moved
+    `rectToParent` into the parent: a plain `Group` wrapping a `LabelList` went `{0,0,348,216}`/`"full"` →
+    `{-24,-4,348,216}`/`"partial"`. Apps gating viewable-impression work on `renderTracking == "full"`
+    silently stop firing.
+-   **Two untested side effects**, both arguably now _correct_ by the fix's own rationale and worth locking
+    in with a test rather than reverting: `SimpleLabel` reports the anchored glyph box (a center/center label
+    at `[500,300]` reports `{473,288}`), and `PosterGridItem`'s sub-rect landed on its poster (`sub.y` 4 → 0).
 
 ## `ArrayGrid.scrollingStatus` — a lazy pulse around the focus settle, in device order
 
@@ -1631,32 +1681,33 @@ rebuilds it from `rowItemFocused`, and the device order still serves it.
 
 1. **The falling edge goes after `itemFocused` and before `rowItemFocused`.** Apps tear transient scroll
    state down on the falling edge (hiding a shared overlay/preview container that belongs to the
-   *outgoing* item) and rebuild it from the `rowItemFocused` settle. Put the edge after `rowItemFocused`
+   _outgoing_ item) and rebuild it from the `rowItemFocused` settle. Put the edge after `rowItemFocused`
    and the teardown runs last: the focused item's poster **and** its preview player both vanish.
    `openScrollPulse` goes out before `itemUnfocused` and `closeScrollPulse` right after `itemFocused`.
 
-2. **A key that scrolls nothing must emit NOTHING.** That is why the pulse is *armed* by `handleKey`
-   (`armScrollPulse`) and only *emitted* by the settle paths (both edges idempotent per press), rather
+2. **A key that scrolls nothing must emit NOTHING.** That is why the pulse is _armed_ by `handleKey`
+   (`armScrollPulse`) and only _emitted_ by the settle paths (both edges idempotent per press), rather
    than opened before the handler and closed after it. A boundary press on a non-wrapping list, or any
    key while the grid is outside the focus chain, publishes **no** focus fields at all. A pulse there is
    a teardown with no settle behind it. (Reachable in practice: `StandardDialog`/`Dialog`/`PanelSet`
    forward keys to children without checking focus.)
-   - It is not `alwaysNotify`, so a device emits nothing on those paths.
-   - Don't add `alwaysNotify`: the pulse always changes value, so both edges notify without it. Adding it
-     resurrects the spurious same-value notification that `ZoomRowList`'s old redeclaration produced.
+    - It is not `alwaysNotify`, so a device emits nothing on those paths.
+    - Don't add `alwaysNotify`: the pulse always changes value, so both edges notify without it. Adding it
+      resurrects the spurious same-value notification that `ZoomRowList`'s old redeclaration produced.
 
 `handleKey` arms **inside** its `try`, and `endScrollPulse` disarms (and closes a stranded pulse) in the
 `finally`. An exception from an observer must not strand the field at `true`, which would silently
 suppress every later notification.
 
 The settle paths are:
-- `ArrayGrid.setFocusedItem`;
-- `RowList.setFocusedItem` *and* `setRowItemFocused`. The horizontal handlers reach the latter directly,
-  so it opens the pulse too and closes it right before `rowItemFocused`;
-- `ZoomRowList.setFocusedItem` (open before `rowUnfocused`, close after `rowFocused`, before
-  `rowItemFocused`) *and* its direct `rowItemFocused` write in `handleLeftRight`;
-- the animated list motion (`moveFocusAnimated`/`settleMotion`), which emits the same order spread over
-  the motion's frames.
+
+-   `ArrayGrid.setFocusedItem`;
+-   `RowList.setFocusedItem` _and_ `setRowItemFocused`. The horizontal handlers reach the latter directly,
+    so it opens the pulse too and closes it right before `rowItemFocused`;
+-   `ZoomRowList.setFocusedItem` (open before `rowUnfocused`, close after `rowFocused`, before
+    `rowItemFocused`) _and_ its direct `rowItemFocused` write in `handleLeftRight`;
+-   the animated list motion (`moveFocusAnimated`/`settleMotion`), which emits the same order spread over
+    the motion's frames.
 
 **TimeGrid** still uses `emitScrollPulse` (both edges ahead of its settle), because its
 channel/program settle order has not been measured. Probe it before moving its edges. Adding a new
@@ -1667,12 +1718,12 @@ device-confirmed not to scroll the focus. `animateToItem` pulses on an animated 
 but not on the instant path.
 
 Related trap in the same area: `ZoomRowList.handleUpDown` must **not** pre-assign `this.focusIndex` before
-calling `setFocusedItem`, which reads it as the *outgoing* row to emit `rowUnfocused` (and assigns it
+calling `setFocusedItem`, which reads it as the _outgoing_ row to emit `rowUnfocused` (and assigns it
 itself). Pre-assigning made that emission dead, so an app collapsing the outgoing row never got the
 callback.
 
 Regression: `test/extensions/scenegraph/ArrayGridFields.test.js` (asserts on a merged notification log, so
-values *and* order are pinned — including three no-pulse cases), `ListFocusMotion.test.js` and the channel-info/time-pan test in
+values _and_ order are pinned — including three no-pulse cases), `ListFocusMotion.test.js` and the channel-info/time-pan test in
 `test/extensions/scenegraph/TimeGrid.test.js`.
 
 ### `currFocusRow`/`currFocusColumn` must be current BEFORE `itemFocused` fires
@@ -1681,8 +1732,8 @@ Both fields are documented on the base `ArrayGrid` (`arraygrid.md`), not just `R
 `currFocusRow`/`currFocusColumn` **synchronously from inside an `itemFocused` observer** — e.g. a header
 that collapses once the focused row leaves index 0 (found via a real app, Jellyfin-Roku's
 `VisualLibraryScene`). Since an engine emission dispatches its observers inline (see "Observers a node's
-own machinery raises dispatch inline too" above), whichever field is `super.setValue`'d *first* in
-source order is the one an observer on a *later* field sees as already-settled — and vice versa. Two bugs
+own machinery raises dispatch inline too" above), whichever field is `super.setValue`'d _first_ in
+source order is the one an observer on a _later_ field sees as already-settled — and vice versa. Two bugs
 from getting this backwards, both fixed together:
 
 1. `ArrayGrid.setFocusedItem` never wrote `currFocusRow`/`currFocusColumn` at all for grid types
@@ -1690,7 +1741,7 @@ from getting this backwards, both fixed together:
    derives row/column from `focusIndex`/`numColumns`.
 2. `RowList.setFocusedItem` emitted `itemFocused` before calling `setRowItemFocused` (which sets
    `currFocusRow`/`currFocusColumn`), so a synchronous read inside an `itemFocused` observer got the row
-   from *before* this navigation — the app's collapse logic ran one navigation late, or never, depending on
+   from _before_ this navigation — the app's collapse logic ran one navigation late, or never, depending on
    how many rows existed.
 
 Fix: both `ArrayGrid.setFocusedItem` and `RowList.setFocusedItem` now `super.setValue` `currFocusRow`/
@@ -1706,47 +1757,47 @@ Device-measured on a Roku Express 4K+ (OS 16.0) with `test/simulator/probes/list
 LabelList/MarkupList (and the grids, which share the code). RowList, ZoomRowList and TimeGrid override
 `listFocusModel()` to keep their older behavior until they are measured.
 
-- **A focus gain re-applies the focus where it is.** The item's `itemHasFocus` (if it changes) and then
-  `itemFocused`; never `itemUnfocused`, also not -1 on the first focus. `setNodeFocus` sets `gainingFocus`
-  around its `setFocusedItem` call.
-- **A move** (`jumpToItem`, an instant key): the old item's `itemHasFocus` false, `itemUnfocused`, the
-  direction, then the new item's `itemHasFocus` true, `currFocusRow`/`Column` and `itemFocused`.
-- **An unfocused `jumpToItem`** publishes `itemUnfocused` -1 at once, on every write (the field is
-  alwaysNotify), and records the target silently; the next gain lands there.
-- **New content publishes nothing at the write.** The focus resets to item 0 silently, and `itemFocused` 0
-  goes out once: before the next `jumpToItem`/`animateToItem`, or when the current handler or `init()`
-  returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. Like every
-  other focus landing it calls `itemFocusCallback`, so a ListPanel/GridPanel publishes
-  `createNextPanelIndex` for it. So `init()`
-  assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
-  handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
-  `flushContentFocus()` where a device would have returned from the handler.
-- **Children added to, removed from or replaced in the content node** (`test/simulator/probes/focus-populate-buttons-probe`
-  A1–A6) work the same way: nothing at the write, then `itemFocused` for the item the list is on (clamped
-  to the new count) once the handler returns, if the list is in the focus chain. `ContentNode.recordChildChange`
-  calls `contentChildrenChanged` on the node holding the content field. This is what an app that assigns an
-  empty content node and appends pages to it from a Task observer relies on (JellyRock's library grid
-  sets its backdrop from that `itemFocused` 0). An append that keeps the focus on item 3 publishes 3 again. An
-  unfocused list that had no item (`itemFocused` -1) takes 0 silently at the write.
-  - Only the children of the content node itself count; a change deeper in the tree (a section's
-    items) doesn't trigger it. The publish keeps the focus where it is, unless items at and below it
-    were removed: then it lands on the last item left, and the cursor, `currFocusRow`/`Column` and the item
-    focus move with it. An earlier render-time version called `setFocusedItem(0)` and broke vertical
-    navigation past row one (#1040). Don't go back to that.
-  - It publishes the **data index** (`dataIndexAt`), like every other focus landing. In a sectioned grid
-    the position differs, because placeholders pad each section's last row.
-  - During a focus motion the flush publishes nothing; the settle publishes `itemFocused` once.
-  - Render thread only (`sgRoot.inTaskThread()`): a Task's copy of the list must not move its own
-    `itemFocused`.
-  - The hook sets the grid's own `contentDirty`, and `refreshContentIfChanged()` (used by render, measure,
-    gain and flush) rebuilds the view on it or on the content node's `changed`. `changed` alone isn't
-    enough: every consumer of the node shares it, another list's render may already have cleared it, and
-    some mutators record the child change before they set it. A gain whose target still isn't in the view
-    rebuilds once more, for a deeper change behind a cleared flag. Without this, a list whose `itemFocused` became 0 silently would gain onto a
-    stale empty view. Regressions: `panelset-nextpanel-app`, `ListInPlaceContent.test.js`.
-- **A gain on an empty list publishes `itemFocused` -1** (same probe, A1–A3).
-- Still unmodeled: a `callFunc` body or an `onKeyEvent` isn't a handler to `Field.canDeliverDeferred`
-  (only `init()` and observers are), so a publish deferred from there goes out at the next statement.
+-   **A focus gain re-applies the focus where it is.** The item's `itemHasFocus` (if it changes) and then
+    `itemFocused`; never `itemUnfocused`, also not -1 on the first focus. `setNodeFocus` sets `gainingFocus`
+    around its `setFocusedItem` call.
+-   **A move** (`jumpToItem`, an instant key): the old item's `itemHasFocus` false, `itemUnfocused`, the
+    direction, then the new item's `itemHasFocus` true, `currFocusRow`/`Column` and `itemFocused`.
+-   **An unfocused `jumpToItem`** publishes `itemUnfocused` -1 at once, on every write (the field is
+    alwaysNotify), and records the target silently; the next gain lands there.
+-   **New content publishes nothing at the write.** The focus resets to item 0 silently, and `itemFocused` 0
+    goes out once: before the next `jumpToItem`/`animateToItem`, or when the current handler or `init()`
+    returns (`Field.runAfterConstruction`), and only if the list is in the focus chain then. Like every
+    other focus landing it calls `itemFocusCallback`, so a ListPanel/GridPanel publishes
+    `createNextPanelIndex` for it. So `init()`
+    assigning content and calling `setFocus` fires `itemFocused` 0 twice (the gain, then the reset), and a
+    handler doing content, `setFocus`, `jumpToItem` 3 fires 0, 0, 3. Unit tests with no message loop call
+    `flushContentFocus()` where a device would have returned from the handler.
+-   **Children added to, removed from or replaced in the content node** (`test/simulator/probes/focus-populate-buttons-probe`
+    A1–A6) work the same way: nothing at the write, then `itemFocused` for the item the list is on (clamped
+    to the new count) once the handler returns, if the list is in the focus chain. `ContentNode.recordChildChange`
+    calls `contentChildrenChanged` on the node holding the content field. This is what an app that assigns an
+    empty content node and appends pages to it from a Task observer relies on (JellyRock's library grid
+    sets its backdrop from that `itemFocused` 0). An append that keeps the focus on item 3 publishes 3 again. An
+    unfocused list that had no item (`itemFocused` -1) takes 0 silently at the write.
+    -   Only the children of the content node itself count; a change deeper in the tree (a section's
+        items) doesn't trigger it. The publish keeps the focus where it is, unless items at and below it
+        were removed: then it lands on the last item left, and the cursor, `currFocusRow`/`Column` and the item
+        focus move with it. An earlier render-time version called `setFocusedItem(0)` and broke vertical
+        navigation past row one (#1040). Don't go back to that.
+    -   It publishes the **data index** (`dataIndexAt`), like every other focus landing. In a sectioned grid
+        the position differs, because placeholders pad each section's last row.
+    -   During a focus motion the flush publishes nothing; the settle publishes `itemFocused` once.
+    -   Render thread only (`sgRoot.inTaskThread()`): a Task's copy of the list must not move its own
+        `itemFocused`.
+    -   The hook sets the grid's own `contentDirty`, and `refreshContentIfChanged()` (used by render, measure,
+        gain and flush) rebuilds the view on it or on the content node's `changed`. `changed` alone isn't
+        enough: every consumer of the node shares it, another list's render may already have cleared it, and
+        some mutators record the child change before they set it. A gain whose target still isn't in the view
+        rebuilds once more, for a deeper change behind a cleared flag. Without this, a list whose `itemFocused` became 0 silently would gain onto a
+        stale empty view. Regressions: `panelset-nextpanel-app`, `ListInPlaceContent.test.js`.
+-   **A gain on an empty list publishes `itemFocused` -1** (same probe, A1–A3).
+-   Still unmodeled: a `callFunc` body or an `onKeyEvent` isn't a handler to `Field.canDeliverDeferred`
+    (only `init()` and observers are), so a publish deferred from there goes out at the next statement.
 
 Regression for the in-place rules: "Republishes a grid's focus after in-place content changes…" in
 `test/cli/cli-scenegraph.test.js` (`inplace-focus-app`, driven from a field observer).
@@ -1776,7 +1827,7 @@ Device-measured on a Roku Express 4K+, OS 15.3 and 16.0 (identical): `test/simul
 their own observers (sgRouter's outlet, the `OnFocusedChildChange` shape in media apps, an overlay
 re-shown from `rowItemFocused`).
 
-1. **Commit, then notify.** `setNodeFocus` stages *every* `focusedChild` write (`stageFocusedChild`)
+1. **Commit, then notify.** `setNodeFocus` stages _every_ `focusedChild` write (`stageFocusedChild`)
    and dispatches the observers only afterwards (`notifyStagedFocus`), losing subtree first, so an
    observer reads the **finished** chain. Dispatch is synchronous, inside the `setFocus` call (init-time
    focus emissions excepted, see `pendingInitFocusFields`). Staging holds back only the notification:
@@ -1792,90 +1843,91 @@ re-shown from `rowItemFocused`).
 3. **Two pointers drive the writes.** `sgRoot.chainOwner` is the node whose path the next transaction
    unsets. `sgRoot.lastFocusTarget` is the target of the last BrightScript `setFocus(true)` call to
    return (set in the `setFocus` callable, after the subclass overrides ran).
-   - **A top-level call** (`applyFocus`) unsets the chain owner's path below their common ancestor,
-     clearing only links that still point along it (`unsetPathBelow`). It then writes the target's whole
-     path, moves `sgRoot.focused`, and becomes the chain owner.
-   - **A call raised while a focus round is dispatching** (`applyNestedFocus`) writes its path only below
-     its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
-     chain owner's path and takes it over. The live focus follows only when the chain from the root now
-     leads to the target.
-     - *Redirecting the owner's link lower down takes the chain over too* (`redirectsOwner`). A nested
-       write that moves a link the chain owner hangs below unsets the owner's path (through
-       `chainExtension`, like a top-level call) and takes the chain. A panel whose gain observer appends
-       the next panel and focuses its grid moves the PanelSet's link off the panel; left the owner, it had
-       the next `setFocus` (an app opening an example screen) unset its stale self-link and notify it again,
-       so the app's gain handler ran twice, re-appending the panel and doubling its item observer. The
-       device shows the same takeover: in `panelset-bounce-focus-probe` `forward`, the panel's forward to its
-       list clears the menu's links. Regression: "a forward into a sibling subtree takes the chain over from
-       the container" in `Focus.test.js`.
-   - **A forward extends the owner's chain** (`test/simulator/probes/nested-forward-focus-probe`). When a
-     nested call moves the live focus onto a node below the chain owner and newly writes that node's
-     self-link, the node becomes `sgRoot.chainExtension`, and the next top-level call unsets the chain
-     through it (`previous = chainExtension ?? chainOwner`). Without it, a list that forwards focus to a
-     button from its own observer left the button's self-link behind: the button kept `hasFocus()` and
-     never collapsed (the Popcorn gallery's ExpandButtonList). Re-writing links that already existed
-     extends nothing (`focus-flag-probe` D keeps them), and a takeover of the Scene's link still unsets
-     only the owner's own path (`focus-flag-probe` A1).
-   - **Focusing a node between the chain owner and the focus keeps the chain.** `holdsLiveFocus`: the owner
-     is a proper ancestor and the live focus a proper descendant. `restageChain` re-notifies the chain
-     from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
-     hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
-     (container-redirect scenario 2).
-   - **PanelSet key navigation is one transaction on the target panel** (`moveFocusToCurrentPanel`,
-     `test/simulator/probes/panelset-bounce-focus-probe`, OS 16.0.4). Never a release of the panel left
-     followed by a focus of the PanelSet itself: that cut a forwarding panel's link mid-chain (the next
-     transaction skipped it, so it never saw it leave), and the transient chain clear notified the screen
-     that it had lost the focus. The target's `setFocus` unsets the old chain through any forward.
-     - *A plain panel takes the focus in two phases.* `Node.announcePanelFocus` writes only its self-link
-       and notifies it while the chain still leads to the panel left; `Node.completePanelFocus` then
-       finishes the move, but only if the panel still links to itself **and** the focus is still on the
-       left panel's chain. So a panel that bounces the focus back on its gain (`setFocus(false)` on itself,
-       `setFocus(true)` on the menu: a details panel with nothing to show while it loads) leaves the menu
-       focused; one that forwards into its own list, or to the grid of a panel it just appended, keeps it
-       there; one whose observer only re-focuses the menu (`noUnfocus`) still takes the focus. While it is
-       notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (`sgRoot.pendingPanelFocus`,
-       the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
-       an `initialFocus` to apply, or a move started inside a focus round (an observer setting `goBack`, where
-       the first phase's notification would only be queued) takes the focus at once (the device's Left back
-       to a ListPanel is one ordinary transaction to its list).
-     - *The target becomes `lastFocusTarget`* when the move completes, a firmware `setFocus` returning
-       after any call nested in it; otherwise a panel forwarding to its grid again after a Left would find
-       that grid as the target and write only its self-link.
-     - Regression: `PanelSetForwardFocus.test.js`, and "navigation follows focus that an app redirects
-       while going back" in `PanelSetFullScreen.test.js` (a real observer, not a `setNodeFocus` stub: the
-       two-phase move never calls `setNodeFocus` on a plain panel).
-   - **`setFocus(false)` on the focused node notifies the chain from that node up**
-     (`test/simulator/probes/focus-populate-buttons-probe` B1–B4). This is the sgRouter shape: the
-     outlet's `focusedChild` observer sees the chain go and makes the view re-focus its saved node (a
-     button row) inside the same transaction. On the device the row and its button were already notified
-     in this round, so the row's nested `setFocus` writes its self-link without notifying it again, and
-     its gain observer never forwards back to the button. Root-down, the outlet ran first and the row
-     forwarded to the button it had just lost. That re-wrote the button's self-link, which the next
-     `setFocus` didn't unset, so every button the user passed kept `hasFocus()` and its border (JellyRock's
-     detail screen). Regression: `inplace-focus-app`.
-   - Still open: within a `setFocus(true)` transaction the device notifies the gaining path from the leaf
-     up and then the losing nodes (the gallery run of the probe above; the same probe shows the gain alone
-     leaf-up), while the engine notifies the losing nodes first, from the root down. `focus-probe2` N1 has
-     the device notifying a losing sibling first, so the rule is not yet known.
-   - Also open (same probe, B2): `setFocus(true)` on an ancestor of the focused node, where the focused
-     node is the chain owner, keeps the focus on that node and notifies it and the ancestor again. The
-     engine moves the focus to the ancestor, whose forward then writes only the button's self-link.
-   - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
-     `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
-     return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus
-     cell) checks `sgRoot.focused === this` after `super.setNodeFocus`. PanelSet's and ButtonGroup's
-     `refreshFocus` check the chain themselves, so they run when an observer forwarded the focus inside
-     them. Regression: "setFocus(true) returns focusable when an observer forwards the focus" in
-     `Focus.test.js`.
-   - **What this produces:**
-     - *Forward focus* to a sibling or into the container that just gained focus, or a request reaching
-       for an overlay beside it, writes up to the Scene and takes the focus.
-     - *A node re-grabbing the focus it is losing* writes only its own self-link (`focus-probe` S4,
-       `focus-probe2` N3), which leaves the chain where the transaction put it.
-     - *A request raised before a forward's `setFocus` returned* (an `itemFocused` observer inside the
-       forwarded list's call: R7, container-redirect scenario 1) does the same.
-     - *An observer restoring focus during a `setFocus(false)`* restores only the self-link, which leaves
-       nothing focused (`focus-steal-app`).
+
+    - **A top-level call** (`applyFocus`) unsets the chain owner's path below their common ancestor,
+      clearing only links that still point along it (`unsetPathBelow`). It then writes the target's whole
+      path, moves `sgRoot.focused`, and becomes the chain owner.
+    - **A call raised while a focus round is dispatching** (`applyNestedFocus`) writes its path only below
+      its common ancestor with `lastFocusTarget`. If that write replaces the root's link, it also unsets the
+      chain owner's path and takes it over. The live focus follows only when the chain from the root now
+      leads to the target.
+        - _Redirecting the owner's link lower down takes the chain over too_ (`redirectsOwner`). A nested
+          write that moves a link the chain owner hangs below unsets the owner's path (through
+          `chainExtension`, like a top-level call) and takes the chain. A panel whose gain observer appends
+          the next panel and focuses its grid moves the PanelSet's link off the panel; left the owner, it had
+          the next `setFocus` (an app opening an example screen) unset its stale self-link and notify it again,
+          so the app's gain handler ran twice, re-appending the panel and doubling its item observer. The
+          device shows the same takeover: in `panelset-bounce-focus-probe` `forward`, the panel's forward to its
+          list clears the menu's links. Regression: "a forward into a sibling subtree takes the chain over from
+          the container" in `Focus.test.js`.
+    - **A forward extends the owner's chain** (`test/simulator/probes/nested-forward-focus-probe`). When a
+      nested call moves the live focus onto a node below the chain owner and newly writes that node's
+      self-link, the node becomes `sgRoot.chainExtension`, and the next top-level call unsets the chain
+      through it (`previous = chainExtension ?? chainOwner`). Without it, a list that forwards focus to a
+      button from its own observer left the button's self-link behind: the button kept `hasFocus()` and
+      never collapsed (the Popcorn gallery's ExpandButtonList). Re-writing links that already existed
+      extends nothing (`focus-flag-probe` D keeps them), and a takeover of the Scene's link still unsets
+      only the owner's own path (`focus-flag-probe` A1).
+    - **Focusing a node between the chain owner and the focus keeps the chain.** `holdsLiveFocus`: the owner
+      is a proper ancestor and the live focus a proper descendant. `restageChain` re-notifies the chain
+      from the focused node up and changes no link, so a forwarding container's observer sees it doesn't
+      hold the focus and doesn't forward again. Focusing the owner itself rewrites the chain as usual
+      (container-redirect scenario 2).
+    - **PanelSet key navigation is one transaction on the target panel** (`moveFocusToCurrentPanel`,
+      `test/simulator/probes/panelset-bounce-focus-probe`, OS 16.0.4). Never a release of the panel left
+      followed by a focus of the PanelSet itself: that cut a forwarding panel's link mid-chain (the next
+      transaction skipped it, so it never saw it leave), and the transient chain clear notified the screen
+      that it had lost the focus. The target's `setFocus` unsets the old chain through any forward.
+        - _A plain panel takes the focus in two phases._ `Node.announcePanelFocus` writes only its self-link
+          and notifies it while the chain still leads to the panel left; `Node.completePanelFocus` then
+          finishes the move, but only if the panel still links to itself **and** the focus is still on the
+          left panel's chain. So a panel that bounces the focus back on its gain (`setFocus(false)` on itself,
+          `setFocus(true)` on the menu: a details panel with nothing to show while it loads) leaves the menu
+          focused; one that forwards into its own list, or to the grid of a panel it just appended, keeps it
+          there; one whose observer only re-focuses the menu (`noUnfocus`) still takes the focus. While it is
+          notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (`sgRoot.pendingPanelFocus`,
+          the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
+          an `initialFocus` to apply, or a move started inside a focus round (an observer setting `goBack`, where
+          the first phase's notification would only be queued) takes the focus at once (the device's Left back
+          to a ListPanel is one ordinary transaction to its list).
+        - _The target becomes `lastFocusTarget`_ when the move completes, a firmware `setFocus` returning
+          after any call nested in it; otherwise a panel forwarding to its grid again after a Left would find
+          that grid as the target and write only its self-link.
+        - Regression: `PanelSetForwardFocus.test.js`, and "navigation follows focus that an app redirects
+          while going back" in `PanelSetFullScreen.test.js` (a real observer, not a `setNodeFocus` stub: the
+          two-phase move never calls `setNodeFocus` on a plain panel).
+    - **`setFocus(false)` on the focused node notifies the chain from that node up**
+      (`test/simulator/probes/focus-populate-buttons-probe` B1–B4). This is the sgRouter shape: the
+      outlet's `focusedChild` observer sees the chain go and makes the view re-focus its saved node (a
+      button row) inside the same transaction. On the device the row and its button were already notified
+      in this round, so the row's nested `setFocus` writes its self-link without notifying it again, and
+      its gain observer never forwards back to the button. Root-down, the outlet ran first and the row
+      forwarded to the button it had just lost. That re-wrote the button's self-link, which the next
+      `setFocus` didn't unset, so every button the user passed kept `hasFocus()` and its border (JellyRock's
+      detail screen). Regression: `inplace-focus-app`.
+    - Still open: within a `setFocus(true)` transaction the device notifies the gaining path from the leaf
+      up and then the losing nodes (the gallery run of the probe above; the same probe shows the gain alone
+      leaf-up), while the engine notifies the losing nodes first, from the root down. `focus-probe2` N1 has
+      the device notifying a losing sibling first, so the rule is not yet known.
+    - Also open (same probe, B2): `setFocus(true)` on an ancestor of the focused node, where the focused
+      node is the chain owner, keeps the focus on that node and notifies it and the ancestor again. The
+      engine moves the focus to the ancestor, whose forward then writes only the button's self-link.
+    - **`setFocus(true)` returns the node's `focusable` value**, wherever the focus ends up, also when a
+      `focusedChild` observer moved it away before the call returned (`setfocus-return-probe` C2–E2). So the
+      return says nothing about a landing: an override that must know (ArrayGrid's gain, TimeGrid's focus
+      cell) checks `sgRoot.focused === this` after `super.setNodeFocus`. PanelSet's and ButtonGroup's
+      `refreshFocus` check the chain themselves, so they run when an observer forwarded the focus inside
+      them. Regression: "setFocus(true) returns focusable when an observer forwards the focus" in
+      `Focus.test.js`.
+    - **What this produces:**
+        - _Forward focus_ to a sibling or into the container that just gained focus, or a request reaching
+          for an overlay beside it, writes up to the Scene and takes the focus.
+        - _A node re-grabbing the focus it is losing_ writes only its own self-link (`focus-probe` S4,
+          `focus-probe2` N3), which leaves the chain where the transaction put it.
+        - _A request raised before a forward's `setFocus` returned_ (an `itemFocused` observer inside the
+          forwarded list's call: R7, container-redirect scenario 1) does the same.
+        - _An observer restoring focus during a `setFocus(false)`_ restores only the self-link, which leaves
+          nothing focused (`focus-steal-app`).
 
 4. **A nested call's notifications join the current round.** `notifyStagedFocus` appends them to the
    dispatching round (each field once per round) and returns, so the forwarded node's observer runs after

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="MainScene" extends="Scene">
+    <interface>
+        <field id="ticks" type="integer" value="0" />
+    </interface>
+    <script type="text/brightscript">
+        <![CDATA[
+        sub init()
+            m.timer = m.top.createChild("Timer")
+            m.timer.repeat = true
+            m.timer.duration = 0.01
+            m.timer.observeField("fire", "onFire")
+            m.timer.control = "start"
+        end sub
+
+        sub onFire()
+            m.top.ticks = m.top.ticks + 1
+        end sub
+        ]]>
+    </script>
+</component>

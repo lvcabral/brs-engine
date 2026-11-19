@@ -385,6 +385,38 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Suspends a Scene under an roScreen and keeps a closed one stopped under a new roSGScreen", async () => {
+        let command = ["node", brsCliPath, "-r closed-screen-render-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "timer ticking before roScreen",
+            "scene suspended under roScreen: true",
+            "closed events:  1",
+            "second screen runs through an older port: true",
+            "closed scene stays stopped: true",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Ends the app when its last screen closes", async () => {
+        let command = ["node", brsCliPath, "-r closed-last-screen-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "close returns",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Fires itemFocused only when a list gains focus, not on content population while unfocused", async () => {
         let command = ["node", brsCliPath, "-r list-initial-focus-app", "source/main.brs", "-c 0"].join(" ");
 

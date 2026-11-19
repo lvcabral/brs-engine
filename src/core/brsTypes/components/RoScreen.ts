@@ -17,9 +17,9 @@ import {
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfSetMessagePort, IfGetMessagePort } from "../interfaces/IfMessagePort";
-import { BrsDevice } from "../../device/BrsDevice";
+import { BrsDevice, DisplayScreen } from "../../device/BrsDevice";
 
-export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
+export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D, DisplayScreen {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
     readonly y: number = 0;
@@ -89,6 +89,9 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         const ifDraw2D = new IfDraw2D(this);
         const ifSetMsgPort = new IfSetMessagePort(this, this.getNewEvents.bind(this));
         const ifGetMsgPort = new IfGetMessagePort(this);
+        if (this.valid) {
+            BrsDevice.pushDisplay(this);
+        }
         this.registerMethods({
             ifScreen: [this.swapBuffers],
             ifDraw2D: [
@@ -205,8 +208,24 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D {
         return this.valid;
     }
 
+    /** Owns the display while referenced: a temporary that was never stored is released at once. */
+    ownsDisplay() {
+        return this.getReferenceCount() > 0;
+    }
+
+    /** Posts the frame on display again: the front buffer, or the only one when single-buffered. */
+    restoreDisplay() {
+        const shown = this.doubleBuffer ? this.lastBuffer : this.currentBuffer;
+        postMessage(this.context[shown].getImageData(0, 0, this.width, this.height));
+    }
+
     // Control Key Events
     private getNewEvents() {
+        const owner = BrsDevice.displayOwner();
+        if (owner && !(owner instanceof RoScreen)) {
+            // A SceneGraph screen created later sits on top and takes the keys.
+            return [];
+        }
         const events: BrsEvent[] = [];
         const nextKey = BrsDevice.updateKeysBuffer();
         if (nextKey) {

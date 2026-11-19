@@ -1,0 +1,31 @@
+PROBE|000|boot|start|
+PROBE|001|boot|device|model=Roku Express 4K+ os=16.0 mode=roscreen-before
+PROBE|010|A|live|ticks=3 audio=playing
+PROBE|011|A|obs-before-close|roSGNodeEvent:audio.state=bufferingx1 roSGNodeEvent:scene1.ticksx13 roSGNodeEvent:audio.state=playingx1 roSGNodeEvent:task1.state=runx1 roSGNodeEvent:task1.beatx5 roSGNodeEvent:.beatx4 
+PROBE|012|await|shot|name=roscreen-before-A-before-close
+PROBE|013|A|screen-port-before-close|
+PROBE|040|B|roscreen|t=- type=roScreen
+PROBE|041|B|roscreen-drawn|t=- pending=[]
+PROBE|014|await|shot|name=roscreen-before-roscreen-over-scene
+PROBE|015|B|obs-under-roscreen|roSGNodeEvent:.beatx15 roSGNodeEvent:scene1.ticksx30 roSGNodeEvent:task1.beatx14 
+PROBE|016|B|port-under-roscreen|
+PROBE|020|A|close|
+PROBE|021|A|close-again|
+PROBE|022|A|screen-port-after-close|roSGScreenEvent:closedx1 
+PROBE|023|A|obs-after-close|
+PROBE|030|await|Left|
+PROBE|031|B|key-after-close|rs=[roUniversalControlEvent:4x1 roUniversalControlEvent:104x1 ] port=[] obs=[]
+PROBE|032|await|shot|name=roscreen-before-after-close
+PROBE|033|B|alive|t=9170
+PROBE|050|C|screen2|t=9265
+PROBE|051|C|old-ports|port=[] obs=[] ticks2=20
+PROBE|052|await|shot|name=roscreen-before-second-screen
+PROBE|053|C|port2|roSGNodeEvent:scene2.ticksx60 
+PROBE|054|await|Down|
+PROBE|055|C|key-on-screen2|port2=[roSGNodeEvent:scene2.ticksx16 ] scene2LastKey=down ticks2=76
+PROBE|060|B|read|what=task.beat
+PROBE|061|B|read|task.beat=19 t=16863
+PROBE|062|B|read|what=global.beat
+PROBE|063|B|read|global.beat=19 t=16863
+PROBE|064|B|read|what=scene.ticks
+PROBE|---|note|driver-deadline|no further output: the scene.ticks read blocked until the driver gave up

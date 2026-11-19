@@ -1170,7 +1170,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 // swallowing the exit and looping forever.
                 throw err;
             }
-            if (!(err instanceof BrsError) || err instanceof Stmt.GotoLabel || err instanceof Stmt.ReturnValue) {
+            // Control flow (`exit for`, `return`, `goto`, `end`, an app end) is not an error to catch.
+            if (!(err instanceof BrsError) || err instanceof Stmt.BlockEnd) {
                 throw err;
             }
             this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));
@@ -2078,6 +2079,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param statement The statement being executed
      */
     private checkDebugger(statement: Stmt.Statement) {
+        if (BrsDevice.appEndDue()) {
+            // The app's last screen closed (see BrsDevice.releaseDisplay): end as an `end` statement does.
+            throw new Stmt.BlockEnd("end-statement", statement.location);
+        }
         if (this.debugMode === DebugMode.EXIT) {
             // EXIT can be entered outside the statement loop — e.g. `roMessagePort.wait`
             // consumes the EXIT command, sets the mode and *returns* (it cannot throw

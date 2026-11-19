@@ -33,7 +33,7 @@ import { Task } from "./nodes/Task";
 import { Field } from "./nodes/Field";
 import { Node } from "./nodes/Node";
 import { initializeTask, createNode, updateTypeDefHierarchy, getNodeType } from "./factory/NodeFactory";
-import { RoSGScreen } from "./components/RoSGScreen";
+import { RoSGScreen, pollCurrentScreen } from "./components/RoSGScreen";
 import { getRenderThreadQueue } from "./components/RoRenderThreadQueue";
 import packageInfo from "../../../packages/scenegraph/package.json";
 
@@ -80,12 +80,8 @@ export class BrightScriptExtension implements BrsExtension {
     private createMessagePort(interpreter?: Interpreter): RoMessagePort {
         const port = new RoMessagePort();
         if (interpreter && !sgRoot.inTaskThread()) {
-            // All ports created in Main thread are registered to the screen
-            if (sgRoot.screen) {
-                sgRoot.screen.registerPort(port);
-            } else {
-                sgRoot.addPendingPort(port);
-            }
+            // Every port Main reads drives the current SceneGraph screen, created before or after the port.
+            port.registerCallback("roSGScreen", pollCurrentScreen);
         }
         return port;
     }
