@@ -1,12 +1,9 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean, Uninitialized } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, Int64, ValidDateFormats } from "..";
+import { BrsType, Int64, parseISO8601 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import customParseFormat from "dayjs/plugin/customParseFormat";
 import { BrsDevice } from "../../device/BrsDevice";
 
 export class RoDateTime extends BrsComponent implements BrsValue {
@@ -15,8 +12,6 @@ export class RoDateTime extends BrsComponent implements BrsValue {
 
     constructor(seconds?: number) {
         super("roDateTime");
-        dayjs.extend(utc);
-        dayjs.extend(customParseFormat);
         this.registerMethods({
             ifDateTime: [
                 this.mark,
@@ -313,11 +308,7 @@ export class RoDateTime extends BrsComponent implements BrsValue {
             returns: ValueKind.Void,
         },
         impl: (_: Interpreter, dateString: BrsString) => {
-            let dateParsed = dayjs(dateString.value, ValidDateFormats, true).utc(true);
-            if (!dateParsed.isValid()) {
-                dateParsed = dayjs(0);
-            }
-            this.markTime = dateParsed.toDate().valueOf();
+            this.markTime = parseISO8601(dateString.value) ?? 0;
             return Uninitialized.Instance;
         },
     });

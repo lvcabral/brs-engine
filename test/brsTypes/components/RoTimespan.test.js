@@ -143,6 +143,15 @@ describe("Timespan", () => {
                 expect(result).toEqual(new Int32(43292429));
             });
 
+            it("accepts a date with a microsecond fraction", () => {
+                clock.uninstall();
+                clock = fakeTimer.install({ now: 1547072370937, toFake: ["Date"] });
+                let getsecondstoiso8601date = ts.getMethod("getsecondstoiso8601date");
+
+                let result = getsecondstoiso8601date.call(interpreter, new BrsString("2030-11-10T05:47:52.000000Z"));
+                expect(result).toEqual(new Int32(373447701));
+            });
+
             it("returns 2077252342 for strings that can't be parsed", () => {
                 let getsecondstoiso8601date = ts.getMethod("getsecondstoiso8601date");
 

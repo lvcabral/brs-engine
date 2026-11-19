@@ -6,7 +6,7 @@ evenly divided rows with a row of explicit `keyWidthFHD` values that sum short o
 Both keyboards use a 447×522 (FHD) board with six rows of 6 auto-width keys and a last row of
 3 explicit-width keys:
 
-- `data/short3.json`: 3 × 148 = 444 (the shape of Tubi's search keyboard KDF)
+- `data/short3.json`: 3 × 148 = 444 (the shape of a search keyboard KDF seen in a production app)
 - `data/short87.json`: 3 × 120 = 360
 
 ## Device result (Roku Express 4K+, OS 16.0.4, `device-screenshot.jpg`)

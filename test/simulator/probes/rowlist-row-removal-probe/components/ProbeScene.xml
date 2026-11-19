@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Rectangle width="1920" height="1080" color="0x201828FF" />
+        <Timer id="stepTimer" repeat="false" />
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Case A mirrors an app's home grid: row 1 is a one-item "banner" row with its own rowItemSize and
+    ' rowHeights entry. The row is removed in place with content.removeChildren() while the focus is on row 0,
+    ' and rowItemSize/rowHeights are left as they were (9 entries for 8 rows in the app; here 5 for 4).
+    ' Case B removes the same row and then re-assigns rowItemSize/rowHeights for the 4 rows left (control).
+    sub init()
+        m.seq = 0
+        m.list = invalid
+        m.kase = ""
+        m.global.addFields({ serial: 0, probeNodes: [] })
+        m.timer = m.top.findNode("stepTimer")
+        m.timer.observeField("fire", "runSteps")
+        m.steps = []
+        for each kase in ["A", "B"]
+            m.steps.push({ op: "create", kase: kase })
+            m.steps.push({ op: "wait", secs: 2 })
+            m.steps.push({ op: "dump", phase: "before" })
+            m.steps.push({ op: "shot", name: kase + "-before" })
+            m.steps.push({ op: "remove" })
+            m.steps.push({ op: "wait", secs: 2 })
+            m.steps.push({ op: "dump", phase: "removed" })
+            m.steps.push({ op: "shot", name: kase + "-removed" })
+            m.steps.push({ op: "key", key: "Down" })
+            m.steps.push({ op: "dump", phase: "down" })
+            m.steps.push({ op: "shot", name: kase + "-down" })
+        end for
+        m.steps.push({ op: "done" })
+        m.timer.duration = 1
+        m.timer.control = "start"
+    end sub
+
+    sub rec(phase as string, kase as string, detail as string)
+        m.seq = m.seq + 1
+        print "PROBE|" + right("00" + m.seq.toStr(), 3) + "|" + phase + "|" + kase + "|" + detail
+    end sub
+
+    sub runSteps()
+        while m.steps.count() > 0
+            s = m.steps.shift()
+            if s.op = "create"
+                createList(s.kase)
+            else if s.op = "wait"
+                m.timer.duration = s.secs
+                m.timer.control = "start"
+                return
+            else if s.op = "key" or s.op = "shot"
+                if s.op = "key"
+                    rec("await", s.key, "case=" + m.kase)
+                else
+                    rec("await", "shot", "name=" + s.name)
+                end if
+                m.timer.duration = 3
+                m.timer.control = "start"
+                return
+            else if s.op = "remove"
+                removeBanner()
+            else if s.op = "dump"
+                dumpPhase(s.phase)
+            else if s.op = "done"
+                rec("done", "end", "serial=" + m.global.serial.toStr())
+                m.top.probeExit = true
+                return
+            end if
+        end while
+    end sub
+
+    function buildContent() as object
+        colors = ["0x3060C0FF", "0xC03060FF", "0x30A060FF", "0xA08020FF", "0x8040C0FF"]
+        names = ["featured", "banner", "recommended", "movies", "more"]
+        counts = [6, 1, 8, 8, 8]
+        root = CreateObject("roSGNode", "ContentNode")
+        root.title = "root"
+        for r = 0 to counts.count() - 1
+            row = root.createChild("ContentNode")
+            row.title = names[r]
+            row.id = names[r]
+            for c = 0 to counts[r] - 1
+                item = row.createChild("ContentNode")
+                item.title = names[r] + "-" + c.toStr()
+                item.hdPosterUrl = colors[(r + c) mod colors.count()]
+            end for
+        end for
+        return root
+    end function
+
+    sub createList(kase as string)
+        if m.list <> invalid then m.top.removeChild(m.list)
+        m.kase = kase
+        m.global.probeNodes = []
+        l = CreateObject("roSGNode", "RowList")
+        l.id = "list" + kase
+        l.translation = [100, 60]
+        l.itemComponentName = "ProbeItem"
+        l.itemSize = [1720, 300]
+        l.numRows = 4
+        l.rowFocusAnimationStyle = "fixedFocus"
+        l.vertFocusAnimationStyle = "fixedFocus"
+        l.showRowLabel = [true, false, true, true, true]
+        l.rowLabelOffset = [[0, 8]]
+        l.rowItemSpacing = [[20, 0]]
+        l.rowItemSize = [[400, 240], [1600, 100], [220, 300], [220, 300], [220, 300]]
+        l.rowHeights = [320, 140, 380, 380, 380]
+        l.content = buildContent()
+        m.top.appendChild(l)
+        m.list = l
+        l.setFocus(true)
+        rec("create", kase, "rows=" + l.content.getChildCount().toStr())
+    end sub
+
+    sub removeBanner()
+        root = m.list.content
+        banner = root.getChild(1)
+        root.removeChildren([banner])
+        if m.kase = "B"
+            m.list.rowItemSize = [[400, 240], [220, 300], [220, 300], [220, 300]]
+            m.list.rowHeights = [320, 380, 380, 380]
+        end if
+        rec("remove", m.kase, "rows=" + root.getChildCount().toStr() + " row1=" + root.getChild(1).title)
+    end sub
+
+    function fmtArr(a) as string
+        if a = invalid then return "invalid"
+        return FormatJson(a)
+    end function
+
+    function fmtRect(r) as string
+        return "[" + r.x.toStr() + "," + r.y.toStr() + "," + r.width.toStr() + "," + r.height.toStr() + "]"
+    end function
+
+    sub dumpPhase(phase as string)
+        l = m.list
+        rec(phase, m.kase, "list rows=" + l.content.getChildCount().toStr() + " rowItemFocused=" + fmtArr(l.rowItemFocused) + " itemFocused=" + l.itemFocused.toStr() + " rowItemSize=" + fmtArr(l.rowItemSize) + " rowHeights=" + fmtArr(l.rowHeights))
+        for each n in m.global.probeNodes
+            c = n.itemContent
+            t = "invalid"
+            if c <> invalid then t = c.title
+            rec(phase, m.kase, n.id + " title=" + t + " rowIndex=" + n.rowIndex.toStr() + " index=" + n.index.toStr() + " w=" + n.width.toStr() + " h=" + n.height.toStr() + " visible=" + n.visible.toStr() + " rect=" + fmtRect(n.sceneBoundingRect()) + " focus=" + n.itemHasFocus.toStr())
+        end for
+    end sub
+    ]]>
+    </script>
+</component>

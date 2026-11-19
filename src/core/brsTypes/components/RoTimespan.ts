@@ -1,13 +1,10 @@
 import { BrsValue, ValueKind, BrsString, BrsInvalid, BrsBoolean } from "../BrsType";
 import { BrsComponent } from "./BrsComponent";
-import { BrsType, ValidDateFormats } from "..";
+import { BrsType, parseISO8601 } from "..";
 import { Callable, StdlibArgument } from "../Callable";
 import { Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { Int64 } from "../Int64";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import customParseFormat from "dayjs/plugin/customParseFormat";
 
 export class RoTimespan extends BrsComponent implements BrsValue {
     readonly kind = ValueKind.Object;
@@ -20,8 +17,6 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         } else {
             this.markTime = performance.now();
         }
-        dayjs.extend(utc);
-        dayjs.extend(customParseFormat);
         this.registerMethods({
             ifTimespan: [
                 this.mark,
@@ -124,9 +119,9 @@ export class RoTimespan extends BrsComponent implements BrsValue {
         impl: (_: Interpreter, date: BrsString) => {
             let dateAsSeconds = 2077252342;
             const now = Date.now();
-            const dateParsed = dayjs(date.value, ValidDateFormats, true).utc(true);
-            if (dateParsed.isValid()) {
-                dateAsSeconds = Math.round((dateParsed.toDate().valueOf() - now) / 1000);
+            const dateMs = parseISO8601(date.value);
+            if (dateMs !== undefined) {
+                dateAsSeconds = Math.round((dateMs - now) / 1000);
             }
             return new Int32(dateAsSeconds);
         },
