@@ -961,8 +961,8 @@ describe("Dynamic voice keyboards", () => {
                     expect(paintGrid(grid)(50, 10)[3]).toBeGreaterThanOrEqual(67);
                 });
 
-                // Device-observed (probe `test/simulator/probes/custom-kdf-width-probe`, Tubi's search
-                // KDF): evenly divided sizes are floored to whole pixels, so on a 447px board a row of
+                // Device-observed (probe `test/simulator/probes/custom-kdf-width-probe`, a search
+                // keyboard KDF): evenly divided sizes are floored to whole pixels, so on a 447px board a row of
                 // 6 keys is 6 x 74 = 444 and ends with a row of explicit 3 x 148 keys.
                 test("evenly divided key sizes are whole pixels, aligning with explicit-width rows", () => {
                     const six = { keys: ["a", "b", "c", "d", "e", "f"].map(plainKey) };
