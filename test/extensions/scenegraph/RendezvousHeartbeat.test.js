@@ -1,3 +1,4 @@
+const { once } = require("node:events");
 const { Worker } = require("node:worker_threads");
 const scenegraph = require("../../../packages/scenegraph/lib/brs-sg.node.js");
 const core = require("../../../packages/node/bin/brs.node.js");
@@ -95,19 +96,23 @@ describe("rendezvous render-thread heartbeat", () => {
         // exactly the arrangement it models: a render thread busy in app code for far longer than
         // the rendezvous timeout.
         const beater = new Worker(
-            `const { workerData } = require("node:worker_threads");
+            `const { workerData, parentPort } = require("node:worker_threads");
              const array = new Int32Array(workerData.buffer);
              const until = Date.now() + workerData.runMs;
+             Atomics.add(array, workerData.slot, 1);
+             parentPort.postMessage("beating");
              while (Date.now() < until) {
                  Atomics.add(array, workerData.slot, 1);
                  Atomics.wait(array, workerData.idle, -1, 10); // sleep 10ms: the slot holds -1
              }`,
             {
                 eval: true,
-                workerData: { buffer: sharedArray.buffer, slot: DataType.RHB, idle: DataType.DBT, runMs: 700 },
+                workerData: { buffer: sharedArray.buffer, slot: DataType.RHB, idle: DataType.DBT, runMs: 900 },
             }
         );
         try {
+            // Block only once the worker is beating: its startup can outlast the 150ms timeout on a busy host.
+            await once(beater, "message");
             const started = Date.now();
             expect(() => task.requestFieldValue("node", "ADDR0001", "foo", 150)).toThrow(/Rendezvous timeout/);
             // Failed only after the heartbeat stopped, not 150ms in.
