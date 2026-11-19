@@ -1,0 +1,235 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku Express 4K+ os=16.0
+PROBE|001|create|A|rows=5
+PROBE|---|content|item1|title=featured-0 rowIndex=0 index=0
+PROBE|---|content|item2|title=featured-1 rowIndex=0 index=1
+PROBE|---|content|item3|title=featured-2 rowIndex=0 index=2
+PROBE|---|content|item4|title=featured-3 rowIndex=0 index=3
+PROBE|---|content|item5|title=featured-4 rowIndex=0 index=4
+PROBE|---|content|item6|title=banner-0 rowIndex=1 index=0
+PROBE|---|content|item7|title=recommended-0 rowIndex=2 index=0
+PROBE|---|content|item8|title=recommended-1 rowIndex=2 index=1
+PROBE|---|content|item9|title=recommended-2 rowIndex=2 index=2
+PROBE|---|content|item10|title=recommended-3 rowIndex=2 index=3
+PROBE|---|content|item11|title=recommended-4 rowIndex=2 index=4
+PROBE|---|content|item12|title=recommended-5 rowIndex=2 index=5
+PROBE|---|content|item13|title=recommended-6 rowIndex=2 index=6
+PROBE|---|content|item14|title=recommended-7 rowIndex=2 index=7
+PROBE|---|content|item15|title=movies-0 rowIndex=3 index=0
+PROBE|---|content|item16|title=movies-1 rowIndex=3 index=1
+PROBE|---|content|item17|title=movies-2 rowIndex=3 index=2
+PROBE|---|content|item18|title=movies-3 rowIndex=3 index=3
+PROBE|---|content|item19|title=movies-4 rowIndex=3 index=4
+PROBE|---|content|item20|title=movies-5 rowIndex=3 index=5
+PROBE|---|content|item21|title=movies-6 rowIndex=3 index=6
+PROBE|---|content|item22|title=movies-7 rowIndex=3 index=7
+PROBE|002|before|A|list rows=5 rowItemFocused=[0,0] itemFocused=0 rowItemSize=[[400,240],[1600,100],[220,300],[220,300],[220,300]] rowHeights=[320,140,380,380,380]
+PROBE|003|before|A|item1 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[0,0,400,240] focus=true
+PROBE|004|before|A|item2 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|005|before|A|item3 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|006|before|A|item4 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|007|before|A|item5 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|008|before|A|item6 title=banner-0 rowIndex=1 index=0 w=1600 h=100 visible=true rect=[100,60,1600,100] focus=false
+PROBE|009|before|A|item7 title=recommended-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|010|before|A|item8 title=recommended-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|011|before|A|item9 title=recommended-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|012|before|A|item10 title=recommended-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|013|before|A|item11 title=recommended-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|014|before|A|item12 title=recommended-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|015|before|A|item13 title=recommended-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|016|before|A|item14 title=recommended-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|017|before|A|item15 title=movies-0 rowIndex=3 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|018|before|A|item16 title=movies-1 rowIndex=3 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|019|before|A|item17 title=movies-2 rowIndex=3 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|020|before|A|item18 title=movies-3 rowIndex=3 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|021|before|A|item19 title=movies-4 rowIndex=3 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|022|before|A|item20 title=movies-5 rowIndex=3 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|023|before|A|item21 title=movies-6 rowIndex=3 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|024|before|A|item22 title=movies-7 rowIndex=3 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|025|await|shot|name=A-before
+PROBE|026|remove|A|rows=4 row1=recommended
+PROBE|---|content|item6|title=more-0 rowIndex=3 index=0
+PROBE|---|content|item23|title=more-1 rowIndex=3 index=1
+PROBE|---|content|item24|title=more-2 rowIndex=3 index=2
+PROBE|---|content|item25|title=more-3 rowIndex=3 index=3
+PROBE|---|content|item26|title=more-4 rowIndex=3 index=4
+PROBE|---|content|item27|title=more-5 rowIndex=3 index=5
+PROBE|---|content|item28|title=more-6 rowIndex=3 index=6
+PROBE|---|content|item29|title=more-7 rowIndex=3 index=7
+PROBE|027|removed|A|list rows=4 rowItemFocused=[0,0] itemFocused=0 rowItemSize=[[400,240],[1600,100],[220,300],[220,300],[220,300]] rowHeights=[320,140,380,380,380]
+PROBE|028|removed|A|item1 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[0,0,400,240] focus=true
+PROBE|029|removed|A|item2 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|030|removed|A|item3 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|031|removed|A|item4 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|032|removed|A|item5 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|033|removed|A|item6 title=more-0 rowIndex=3 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|034|removed|A|item7 title=recommended-0 rowIndex=1 index=0 w=1600 h=100 visible=true rect=[100,60,1600,100] focus=false
+PROBE|035|removed|A|item8 title=recommended-1 rowIndex=1 index=1 w=1600 h=100 visible=true rect=[1720,60,1600,100] focus=false
+PROBE|036|removed|A|item9 title=recommended-2 rowIndex=1 index=2 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|037|removed|A|item10 title=recommended-3 rowIndex=1 index=3 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|038|removed|A|item11 title=recommended-4 rowIndex=1 index=4 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|039|removed|A|item12 title=recommended-5 rowIndex=1 index=5 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|040|removed|A|item13 title=recommended-6 rowIndex=1 index=6 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|041|removed|A|item14 title=recommended-7 rowIndex=1 index=7 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|042|removed|A|item15 title=movies-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|043|removed|A|item16 title=movies-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|044|removed|A|item17 title=movies-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|045|removed|A|item18 title=movies-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|046|removed|A|item19 title=movies-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|047|removed|A|item20 title=movies-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|048|removed|A|item21 title=movies-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|049|removed|A|item22 title=movies-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|050|removed|A|item23 title=more-1 rowIndex=3 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|051|removed|A|item24 title=more-2 rowIndex=3 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|052|removed|A|item25 title=more-3 rowIndex=3 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|053|removed|A|item26 title=more-4 rowIndex=3 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|054|removed|A|item27 title=more-5 rowIndex=3 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|055|removed|A|item28 title=more-6 rowIndex=3 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|056|removed|A|item29 title=more-7 rowIndex=3 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|057|await|shot|name=A-removed
+PROBE|058|await|Down|case=A
+PROBE|059|down|A|list rows=4 rowItemFocused=[1,0] itemFocused=1 rowItemSize=[[400,240],[1600,100],[220,300],[220,300],[220,300]] rowHeights=[320,140,380,380,380]
+PROBE|060|down|A|item1 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[100,104,400,240] focus=false
+PROBE|061|down|A|item2 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[520,104,400,240] focus=false
+PROBE|062|down|A|item3 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[940,104,400,240] focus=false
+PROBE|063|down|A|item4 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[1360,104,400,240] focus=false
+PROBE|064|down|A|item5 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[1780,104,400,240] focus=false
+PROBE|065|down|A|item6 title=more-0 rowIndex=3 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|066|down|A|item7 title=recommended-0 rowIndex=1 index=0 w=1600 h=100 visible=true rect=[0,0,1600,100] focus=true
+PROBE|067|down|A|item8 title=recommended-1 rowIndex=1 index=1 w=1600 h=100 visible=true rect=[0,0,1600,100] focus=false
+PROBE|068|down|A|item9 title=recommended-2 rowIndex=1 index=2 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|069|down|A|item10 title=recommended-3 rowIndex=1 index=3 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|070|down|A|item11 title=recommended-4 rowIndex=1 index=4 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|071|down|A|item12 title=recommended-5 rowIndex=1 index=5 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|072|down|A|item13 title=recommended-6 rowIndex=1 index=6 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|073|down|A|item14 title=recommended-7 rowIndex=1 index=7 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|074|down|A|item15 title=movies-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|075|down|A|item16 title=movies-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|076|down|A|item17 title=movies-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|077|down|A|item18 title=movies-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|078|down|A|item19 title=movies-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|079|down|A|item20 title=movies-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|080|down|A|item21 title=movies-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|081|down|A|item22 title=movies-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|082|down|A|item23 title=more-1 rowIndex=3 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|083|down|A|item24 title=more-2 rowIndex=3 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|084|down|A|item25 title=more-3 rowIndex=3 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|085|down|A|item26 title=more-4 rowIndex=3 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|086|down|A|item27 title=more-5 rowIndex=3 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|087|down|A|item28 title=more-6 rowIndex=3 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|088|down|A|item29 title=more-7 rowIndex=3 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|089|await|shot|name=A-down
+PROBE|090|create|B|rows=5
+PROBE|---|content|item30|title=featured-0 rowIndex=0 index=0
+PROBE|---|content|item31|title=featured-1 rowIndex=0 index=1
+PROBE|---|content|item32|title=featured-2 rowIndex=0 index=2
+PROBE|---|content|item33|title=featured-3 rowIndex=0 index=3
+PROBE|---|content|item34|title=featured-4 rowIndex=0 index=4
+PROBE|---|content|item35|title=banner-0 rowIndex=1 index=0
+PROBE|---|content|item36|title=recommended-0 rowIndex=2 index=0
+PROBE|---|content|item37|title=recommended-1 rowIndex=2 index=1
+PROBE|---|content|item38|title=recommended-2 rowIndex=2 index=2
+PROBE|---|content|item39|title=recommended-3 rowIndex=2 index=3
+PROBE|---|content|item40|title=recommended-4 rowIndex=2 index=4
+PROBE|---|content|item41|title=recommended-5 rowIndex=2 index=5
+PROBE|---|content|item42|title=recommended-6 rowIndex=2 index=6
+PROBE|---|content|item43|title=recommended-7 rowIndex=2 index=7
+PROBE|---|content|item44|title=movies-0 rowIndex=3 index=0
+PROBE|---|content|item45|title=movies-1 rowIndex=3 index=1
+PROBE|---|content|item46|title=movies-2 rowIndex=3 index=2
+PROBE|---|content|item47|title=movies-3 rowIndex=3 index=3
+PROBE|---|content|item48|title=movies-4 rowIndex=3 index=4
+PROBE|---|content|item49|title=movies-5 rowIndex=3 index=5
+PROBE|---|content|item50|title=movies-6 rowIndex=3 index=6
+PROBE|---|content|item51|title=movies-7 rowIndex=3 index=7
+PROBE|091|before|B|list rows=5 rowItemFocused=[0,0] itemFocused=0 rowItemSize=[[400,240],[1600,100],[220,300],[220,300],[220,300]] rowHeights=[320,140,380,380,380]
+PROBE|092|before|B|item30 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[0,0,400,240] focus=true
+PROBE|093|before|B|item31 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|094|before|B|item32 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|095|before|B|item33 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|096|before|B|item34 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|097|before|B|item35 title=banner-0 rowIndex=1 index=0 w=1600 h=100 visible=true rect=[100,60,1600,100] focus=false
+PROBE|098|before|B|item36 title=recommended-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|099|before|B|item37 title=recommended-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|100|before|B|item38 title=recommended-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|101|before|B|item39 title=recommended-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|102|before|B|item40 title=recommended-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|103|before|B|item41 title=recommended-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|104|before|B|item42 title=recommended-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|105|before|B|item43 title=recommended-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|106|before|B|item44 title=movies-0 rowIndex=3 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|107|before|B|item45 title=movies-1 rowIndex=3 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|108|before|B|item46 title=movies-2 rowIndex=3 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|109|before|B|item47 title=movies-3 rowIndex=3 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|110|before|B|item48 title=movies-4 rowIndex=3 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|111|before|B|item49 title=movies-5 rowIndex=3 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|112|before|B|item50 title=movies-6 rowIndex=3 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|113|before|B|item51 title=movies-7 rowIndex=3 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|114|await|shot|name=B-before
+PROBE|115|remove|B|rows=4 row1=recommended
+PROBE|116|removed|B|list rows=4 rowItemFocused=[0,0] itemFocused=0 rowItemSize=[[400,240],[220,300],[220,300],[220,300]] rowHeights=[320,380,380,380]
+PROBE|117|removed|B|item30 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[0,0,400,240] focus=true
+PROBE|118|removed|B|item31 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|119|removed|B|item32 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|120|removed|B|item33 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|121|removed|B|item34 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[0,0,400,240] focus=false
+PROBE|122|removed|B|item35 title=banner-0 rowIndex=1 index=0 w=1600 h=100 visible=true rect=[0,0,1600,100] focus=false
+PROBE|123|removed|B|item36 title=recommended-0 rowIndex=1 index=0 w=220 h=300 visible=true rect=[100,60,220,300] focus=false
+PROBE|124|removed|B|item37 title=recommended-1 rowIndex=1 index=1 w=220 h=300 visible=true rect=[340,60,220,300] focus=false
+PROBE|125|removed|B|item38 title=recommended-2 rowIndex=1 index=2 w=220 h=300 visible=true rect=[580,60,220,300] focus=false
+PROBE|126|removed|B|item39 title=recommended-3 rowIndex=1 index=3 w=220 h=300 visible=true rect=[820,60,220,300] focus=false
+PROBE|127|removed|B|item40 title=recommended-4 rowIndex=1 index=4 w=220 h=300 visible=true rect=[1060,60,220,300] focus=false
+PROBE|128|removed|B|item41 title=recommended-5 rowIndex=1 index=5 w=220 h=300 visible=true rect=[1300,60,220,300] focus=false
+PROBE|129|removed|B|item42 title=recommended-6 rowIndex=1 index=6 w=220 h=300 visible=true rect=[1540,60,220,300] focus=false
+PROBE|130|removed|B|item43 title=recommended-7 rowIndex=1 index=7 w=220 h=300 visible=true rect=[1780,60,220,300] focus=false
+PROBE|131|removed|B|item44 title=movies-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|132|removed|B|item45 title=movies-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|133|removed|B|item46 title=movies-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|134|removed|B|item47 title=movies-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|135|removed|B|item48 title=movies-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|136|removed|B|item49 title=movies-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|137|removed|B|item50 title=movies-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|138|removed|B|item51 title=movies-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|139|await|shot|name=B-removed
+PROBE|140|await|Down|case=B
+PROBE|---|content|item35|title=more-0 rowIndex=3 index=0
+PROBE|---|content|item52|title=more-1 rowIndex=3 index=1
+PROBE|---|content|item53|title=more-2 rowIndex=3 index=2
+PROBE|---|content|item54|title=more-3 rowIndex=3 index=3
+PROBE|---|content|item55|title=more-4 rowIndex=3 index=4
+PROBE|---|content|item56|title=more-5 rowIndex=3 index=5
+PROBE|---|content|item57|title=more-6 rowIndex=3 index=6
+PROBE|---|content|item58|title=more-7 rowIndex=3 index=7
+PROBE|141|down|B|list rows=4 rowItemFocused=[1,0] itemFocused=1 rowItemSize=[[400,240],[220,300],[220,300],[220,300]] rowHeights=[320,380,380,380]
+PROBE|142|down|B|item30 title=featured-0 rowIndex=0 index=0 w=400 h=240 visible=true rect=[100,104,400,240] focus=false
+PROBE|143|down|B|item31 title=featured-1 rowIndex=0 index=1 w=400 h=240 visible=true rect=[520,104,400,240] focus=false
+PROBE|144|down|B|item32 title=featured-2 rowIndex=0 index=2 w=400 h=240 visible=true rect=[940,104,400,240] focus=false
+PROBE|145|down|B|item33 title=featured-3 rowIndex=0 index=3 w=400 h=240 visible=true rect=[1360,104,400,240] focus=false
+PROBE|146|down|B|item34 title=featured-4 rowIndex=0 index=4 w=400 h=240 visible=true rect=[1780,104,400,240] focus=false
+PROBE|147|down|B|item35 title=more-0 rowIndex=3 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|148|down|B|item36 title=recommended-0 rowIndex=1 index=0 w=220 h=300 visible=true rect=[0,0,220,300] focus=true
+PROBE|149|down|B|item37 title=recommended-1 rowIndex=1 index=1 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|150|down|B|item38 title=recommended-2 rowIndex=1 index=2 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|151|down|B|item39 title=recommended-3 rowIndex=1 index=3 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|152|down|B|item40 title=recommended-4 rowIndex=1 index=4 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|153|down|B|item41 title=recommended-5 rowIndex=1 index=5 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|154|down|B|item42 title=recommended-6 rowIndex=1 index=6 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|155|down|B|item43 title=recommended-7 rowIndex=1 index=7 w=220 h=300 visible=true rect=[0,0,220,300] focus=false
+PROBE|156|down|B|item44 title=movies-0 rowIndex=2 index=0 w=220 h=300 visible=true rect=[100,104,220,300] focus=false
+PROBE|157|down|B|item45 title=movies-1 rowIndex=2 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|158|down|B|item46 title=movies-2 rowIndex=2 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|159|down|B|item47 title=movies-3 rowIndex=2 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|160|down|B|item48 title=movies-4 rowIndex=2 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|161|down|B|item49 title=movies-5 rowIndex=2 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|162|down|B|item50 title=movies-6 rowIndex=2 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|163|down|B|item51 title=movies-7 rowIndex=2 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|164|down|B|item52 title=more-1 rowIndex=3 index=1 w=220 h=300 visible=true rect=[340,104,220,300] focus=false
+PROBE|165|down|B|item53 title=more-2 rowIndex=3 index=2 w=220 h=300 visible=true rect=[580,104,220,300] focus=false
+PROBE|166|down|B|item54 title=more-3 rowIndex=3 index=3 w=220 h=300 visible=true rect=[820,104,220,300] focus=false
+PROBE|167|down|B|item55 title=more-4 rowIndex=3 index=4 w=220 h=300 visible=true rect=[1060,104,220,300] focus=false
+PROBE|168|down|B|item56 title=more-5 rowIndex=3 index=5 w=220 h=300 visible=true rect=[1300,104,220,300] focus=false
+PROBE|169|down|B|item57 title=more-6 rowIndex=3 index=6 w=220 h=300 visible=true rect=[1540,104,220,300] focus=false
+PROBE|170|down|B|item58 title=more-7 rowIndex=3 index=7 w=220 h=300 visible=true rect=[1780,104,220,300] focus=false
+PROBE|171|await|shot|name=B-down
+PROBE|172|done|end|serial=58
+PROBE|999|boot|end|

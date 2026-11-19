@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeItem" extends="Group">
+    <interface>
+        <field id="width" type="float" value="-1" onChange="onSize" />
+        <field id="height" type="float" value="-1" onChange="onSize" />
+        <field id="index" type="integer" value="-1" />
+        <field id="rowIndex" type="integer" value="-1" />
+        <field id="itemContent" type="node" onChange="onContent" />
+        <field id="itemHasFocus" type="boolean" />
+        <field id="focusPercent" type="float" value="-1" />
+    </interface>
+    <children>
+        <Rectangle id="fill" color="0x3060C0FF">
+            <Label id="title" horizAlign="center" vertAlign="center" color="0xFFFFFFFF" />
+        </Rectangle>
+    </children>
+    <script type="text/brightscript">
+    <![CDATA[
+    ' Registers itself in m.global.probeNodes on its first content; reports every later content change.
+    sub onContent()
+        c = m.top.itemContent
+        if c = invalid then return
+        m.top.findNode("title").text = c.title
+        m.top.findNode("fill").color = c.hdPosterUrl
+        if m.serial = invalid
+            m.serial = m.global.serial + 1
+            m.global.serial = m.serial
+            m.top.id = "item" + m.serial.toStr()
+            nodes = m.global.probeNodes
+            nodes.push(m.top)
+            m.global.probeNodes = nodes
+        end if
+        print "PROBE|---|content|" + m.top.id + "|title=" + c.title + " rowIndex=" + m.top.rowIndex.toStr() + " index=" + m.top.index.toStr()
+    end sub
+
+    sub onSize()
+        fill = m.top.findNode("fill")
+        fill.width = m.top.width
+        fill.height = m.top.height
+        title = m.top.findNode("title")
+        title.width = m.top.width
+        title.height = m.top.height
+    end sub
+    ]]>
+    </script>
+</component>
