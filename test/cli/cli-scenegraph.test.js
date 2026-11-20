@@ -1822,6 +1822,33 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("a custom component shadows a built-in node type of the same name", async () => {
+        let command = ["node", brsCliPath, "-r shadow-builtin-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // A channel shipping components/ButtonGroup.xml (extends LayoutGroup) gets ITS component
+        // for every <ButtonGroup>, as on a device. createNode() used to ask the built-in factory
+        // first, so the built-in ButtonGroup class was returned: the component's init() never ran
+        // (no children, no observers), its script scope had no m.top, and the first remote key it
+        // received crashed on m.top. Device-confirmed against a shipping channel, 2026-11-20.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Shadow Built-in Repro ===",
+            "MAIN: scene init",
+            "node subtype = ButtonGroup",
+            "init ran = true",
+            "custom field = inited",
+            "inherited field = vert",
+            "child made in init = true",
+            "child count =  1",
+            "=== Shadow Built-in Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("PanelSet creates the right panel on item focus without hasNextPanel", async () => {
         let command = ["node", brsCliPath, "-r panelset-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
 

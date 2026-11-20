@@ -382,20 +382,30 @@ export class SGNodeFactory {
  * @returns Created node instance or BrsInvalid if creation fails
  */
 export function createNode(type: string, interpreter?: Interpreter, parent?: Node): Node | BrsInvalid {
-    // If this is a built-in node component, then return it.
-    let node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
-    if (node instanceof BrsInvalid) {
-        let typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
-        if (typeDef && interpreter instanceof Interpreter) {
+    // A channel's OWN component definition shadows a built-in node type of the same name, which is
+    // what a device does: `components/ButtonGroup.xml` extending LayoutGroup is what every
+    // <ButtonGroup> in that channel instantiates, and its init(), children and script scope are set
+    // up normally. The definition is therefore looked up FIRST. Asking SGNodeFactory first would
+    // hand back the built-in class of that name instead: init() is never called, the component's
+    // `m` stays empty, and the first key event it receives crashes on `m.top` (measured 2026-11-20
+    // against a shipping channel, which reproduces as `<component name="ButtonGroup"
+    // extends="LayoutGroup">` never running init and `onKeyEvent` reading an invalid `m.top`).
+    let node: Node | BrsInvalid = BrsInvalid.Instance;
+    const typeDef = sgRoot.nodeDefMap?.get(type.toLowerCase());
+    if (typeDef) {
+        if (interpreter instanceof Interpreter) {
             node = initializeNode(interpreter, type, typeDef, undefined, parent);
-        } else if (typeDef && sgRoot.inTaskThread() && sgRoot.interpreter) {
+        } else if (sgRoot.inTaskThread() && sgRoot.interpreter) {
             node = initializeNode(sgRoot.interpreter, type, typeDef, undefined, parent);
-        } else if (typeDef) {
+        } else {
             node = createNodeByTypeDef(typeDef, type);
             if (node instanceof BrsInvalid) {
                 node = new Node([], type);
             }
-        } else {
+        }
+    } else {
+        node = SGNodeFactory.createNode(type) ?? BrsInvalid.Instance;
+        if (node instanceof BrsInvalid) {
             BrsDevice.stderr.write(
                 `warning,Warning: Failed to create roSGNode with type ${type}: ${interpreter?.formatLocation() ?? ""}`
             );
