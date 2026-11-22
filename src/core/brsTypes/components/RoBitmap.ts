@@ -10,6 +10,7 @@ import {
     BrsCanvas,
     BrsCanvasContext2D,
     BrsDraw2D,
+    BrsImageData,
     createNewCanvas,
     drawImageAtPos,
     drawImageToContext,
@@ -53,6 +54,26 @@ function channelScale(multiplier: number): Uint8ClampedArray {
     return table;
 }
 
+/**
+ * Budget for one bitmap's cached tints. A 3D renderer that fills triangles with one shared texture tints
+ * it with a different shade per face, so a cache that held only the last tint re-read and re-multiplied
+ * the whole surface on almost every draw (a 400x400 texture with two alternating tints: ~1.2ms a draw,
+ * vs ~0.01ms on a Roku Express).
+ */
+const TINT_CACHE_MAX_PIXELS = 4_000_000;
+const TINT_CACHE_MAX_ENTRIES = 64;
+/**
+ * Only a tint idle for this long is evicted for a new one. When more tints are live than fit, the extras
+ * go through a scratch canvas instead: evicting the least recently used one would cycle through the
+ * whole cache and never hit when a frame repeats the same sequence of tints.
+ */
+const TINT_CACHE_STALE_MS = 1000;
+
+interface TintEntry {
+    canvas: BrsCanvas;
+    lastUsed: number;
+}
+
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -66,8 +87,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly valid: boolean;
     private readonly patchSizes?: NinePatch;
     private alphaEnable: boolean;
-    private rgbaCanvas?: BrsCanvas;
-    private rgbaLast: number;
+    /** Tinted copies of this bitmap by blend color, all invalidated together when it is drawn into. */
+    private readonly tintCache = new Map<number, TintEntry>();
+    /** Canvases from invalidated tints, reused before new ones are allocated. */
+    private readonly tintFree: BrsCanvas[] = [];
+    /** Holds a tint when the cache is full of recently used ones; overwritten by the next such tint. */
+    private tintScratch?: BrsCanvas;
+    /** This bitmap's pixels, read back once per invalidation rather than once per tint. */
+    private tintSource?: BrsImageData;
     rgbaRedraw: boolean;
     scaleMode: number;
     readonly address: string = nextAddress();
@@ -80,7 +107,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
      */
     constructor(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name?: string) {
         super("roBitmap");
-        this.rgbaLast = 0;
         this.rgbaRedraw = true;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         const source = bitmapSource(param, name ?? "");
@@ -184,15 +210,65 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     getRgbaCanvas(rgba: number): BrsCanvas {
-        if (!this.rgbaCanvas) {
-            this.rgbaCanvas = createNewCanvas(this.canvas.width, this.canvas.height);
-        } else if (!this.rgbaRedraw && rgba === this.rgbaLast) {
-            return this.rgbaCanvas;
-        } else {
-            this.rgbaCanvas.width = this.canvas.width;
-            this.rgbaCanvas.height = this.canvas.height;
+        if (this.rgbaRedraw) {
+            for (const entry of this.tintCache.values()) {
+                this.tintFree.push(entry.canvas);
+            }
+            this.tintCache.clear();
+            this.tintSource = undefined;
+            this.rgbaRedraw = false;
         }
-        const ctx = this.rgbaCanvas.getContext("2d", {
+        const now = performance.now();
+        const cached = this.tintCache.get(rgba);
+        if (cached) {
+            cached.lastUsed = now;
+            return cached.canvas;
+        }
+        const canvas = this.claimTintCanvas(rgba, now);
+        this.paintTint(canvas, rgba);
+        return canvas;
+    }
+
+    /**
+     * Picks the canvas a new tint is painted into: a reusable one, a new one while the budget allows,
+     * the stalest entry's once it has gone idle, or else the uncached scratch canvas.
+     */
+    private claimTintCanvas(rgba: number, now: number): BrsCanvas {
+        const { width, height } = this.canvas;
+        const pixels = width * height;
+        const capacity =
+            pixels === 0 ? 0 : Math.min(TINT_CACHE_MAX_ENTRIES, Math.floor(TINT_CACHE_MAX_PIXELS / pixels));
+        let canvas: BrsCanvas | undefined;
+        if (this.tintCache.size < capacity) {
+            canvas = this.tintFree.pop() ?? createNewCanvas(width, height);
+        } else if (capacity > 0) {
+            let stalest: number | undefined;
+            let stalestUsed = now - TINT_CACHE_STALE_MS;
+            for (const [key, entry] of this.tintCache) {
+                if (entry.lastUsed < stalestUsed) {
+                    stalest = key;
+                    stalestUsed = entry.lastUsed;
+                }
+            }
+            if (stalest !== undefined) {
+                canvas = this.tintCache.get(stalest)!.canvas;
+                this.tintCache.delete(stalest);
+            }
+        }
+        if (!canvas) {
+            this.tintScratch ??= createNewCanvas(width, height);
+            return this.tintScratch;
+        }
+        this.tintCache.set(rgba, { canvas, lastUsed: now });
+        return canvas;
+    }
+
+    private paintTint(canvas: BrsCanvas, rgba: number) {
+        if (canvas.width !== this.canvas.width || canvas.height !== this.canvas.height) {
+            canvas.width = this.canvas.width;
+            canvas.height = this.canvas.height;
+        }
+        const ctx = canvas.getContext("2d", {
             alpha: true,
         }) as BrsCanvasContext2D;
         // A per-channel multiply over the UN-PREMULTIPLIED pixels, NOT `globalCompositeOperation =
@@ -211,10 +287,21 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         } else if (red === 255 && green === 255 && blue === 255) {
             // Multiplying by white is a mathematical identity — copy, so an all-white tint stays
             // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
+            // The canvas may hold an older tint, and a copy blends over what is there.
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawImageAtPos(this.canvas, ctx, 0, 0);
         } else {
-            const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            // Reading the pixels back is the expensive part on a GPU-backed canvas, so it is done once
+            // per change to the bitmap; each tint multiplies into its own copy.
+            const original = (this.tintSource ??= this.context.getImageData(
+                0,
+                0,
+                this.canvas.width,
+                this.canvas.height
+            ));
+            const source = ctx.createImageData(this.canvas.width, this.canvas.height);
             const pixels = source.data;
+            pixels.set(original.data);
             // Per-channel lookup tables rather than the multiply inline: 256 entries build in noise even
             // for a 24x24 icon and the table is byte-identical to `(value * m) / 255` for all 65536
             // (value, multiplier) pairs, while cutting the arithmetic ~2.3x on a full-screen surface
@@ -236,9 +323,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             }
             putImageAtPos(source, ctx, 0, 0);
         }
-        this.rgbaLast = rgba;
-        this.rgbaRedraw = false;
-        return this.rgbaCanvas;
     }
 
     setCanvasAlpha(enable: boolean) {
@@ -279,9 +363,19 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             unregisterTexture(this);
         }
         releaseCanvas(this.canvas);
-        if (this.rgbaCanvas) {
-            releaseCanvas(this.rgbaCanvas);
+        for (const entry of this.tintCache.values()) {
+            releaseCanvas(entry.canvas);
         }
+        for (const canvas of this.tintFree) {
+            releaseCanvas(canvas);
+        }
+        if (this.tintScratch) {
+            releaseCanvas(this.tintScratch);
+        }
+        this.tintCache.clear();
+        this.tintFree.length = 0;
+        this.tintScratch = undefined;
+        this.tintSource = undefined;
     }
 
     /** Returns the parsed 9-patch layout, or `undefined` for non 9-patch bitmaps. */

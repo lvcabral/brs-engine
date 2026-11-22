@@ -200,3 +200,68 @@ describe("RoBitmap 9-patch parsing", () => {
         expect(paintedHeight(41)).toBe(0);
     });
 });
+
+describe("RoBitmap tint cache", () => {
+    const { RoAssociativeArray, BrsString, Int32, BrsBoolean } = brs.types;
+    const RED = 0xff0000ff;
+    const GREEN = 0x00ff00ff;
+    const BLUE = 0x0000ffff;
+
+    function whiteBitmap(size = 8) {
+        const bitmap = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(size) },
+                { name: new BrsString("height"), value: new Int32(size) },
+                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
+            ])
+        );
+        bitmap.clearCanvas(0xffffffff);
+        return bitmap;
+    }
+
+    function pixel(canvas, x = 0, y = 0) {
+        return Array.from(canvas.getContext("2d").getImageData(x, y, 1, 1).data);
+    }
+
+    it("returns the right colour for each tint when tints alternate", () => {
+        const bitmap = whiteBitmap();
+        // Retained canvases must not be overwritten by the next tint.
+        const red = bitmap.getRgbaCanvas(RED);
+        const green = bitmap.getRgbaCanvas(GREEN);
+        const blue = bitmap.getRgbaCanvas(BLUE);
+        expect(pixel(red)).toEqual([255, 0, 0, 255]);
+        expect(pixel(green)).toEqual([0, 255, 0, 255]);
+        expect(pixel(blue)).toEqual([0, 0, 255, 255]);
+    });
+
+    it("reuses the tinted canvas when a tint comes back", () => {
+        const bitmap = whiteBitmap();
+        const first = bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        expect(bitmap.getRgbaCanvas(RED)).toBe(first);
+        expect(pixel(first)).toEqual([255, 0, 0, 255]);
+    });
+
+    it("re-tints every cached colour after the bitmap is drawn into", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        // Grey source: every tint must now come out at half strength.
+        bitmap.clearCanvas(0x808080ff);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([128, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 128, 0, 255]);
+        bitmap.makeDirty();
+        bitmap.getContext().fillStyle = "#000000";
+        bitmap.getContext().fillRect(0, 0, 8, 8);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
+    });
+
+    it("keeps tinting correctly past the cache size", () => {
+        const bitmap = whiteBitmap();
+        for (let i = 0; i < 600; i++) {
+            const level = i % 256;
+            const rgba = ((level << 24) | 0xff) >>> 0;
+            expect(pixel(bitmap.getRgbaCanvas(rgba))).toEqual([level, 0, 0, 255]);
+        }
+    });
+});
