@@ -191,6 +191,7 @@ export class IfDraw2D {
         ctx.save();
         ctx.clearRect(baseX, baseY, rect.width, rect.height);
         ctx.restore();
+        this.component.makeDirty();
     }
 
     /**

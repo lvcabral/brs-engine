@@ -193,6 +193,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
+        // Writes into this bitmap (roCompositor's destination), so cached tints and their source are stale.
+        this.rgbaRedraw = true;
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
@@ -293,12 +295,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         } else {
             // Reading the pixels back is the expensive part on a GPU-backed canvas, so it is done once
             // per change to the bitmap; each tint multiplies into its own copy.
-            const original = (this.tintSource ??= this.context.getImageData(
-                0,
-                0,
-                this.canvas.width,
-                this.canvas.height
-            ));
+            this.tintSource ??= this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            const original = this.tintSource;
             const source = ctx.createImageData(this.canvas.width, this.canvas.height);
             const pixels = source.data;
             pixels.set(original.data);

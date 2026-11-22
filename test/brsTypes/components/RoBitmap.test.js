@@ -256,6 +256,17 @@ describe("RoBitmap tint cache", () => {
         expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
     });
 
+    it("re-tints after a compositor draws into the bitmap", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        const black = whiteBitmap();
+        black.clearCanvas(0x000000ff);
+        // roCompositor writes its sprites into the destination through drawImageToContext.
+        bitmap.drawImageToContext(black.getCanvas(), 0, 0);
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
+    });
+
     it("keeps tinting correctly past the cache size", () => {
         const bitmap = whiteBitmap();
         for (let i = 0; i < 600; i++) {
