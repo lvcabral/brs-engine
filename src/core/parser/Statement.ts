@@ -62,11 +62,12 @@ export class Assignment implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.name.location.file,
             start: this.name.location.start,
             end: this.value.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -87,11 +88,12 @@ export class Dim implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.dim.location.file,
             start: this.tokens.dim.location.start,
             end: this.tokens.closingBrace.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -189,11 +191,12 @@ export class Function implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.name.location.file,
             start: this.func.location.start,
             end: this.func.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -254,11 +257,12 @@ export class Increment implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.value.location.file,
             start: this.value.location.start,
             end: this.token.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -321,11 +325,12 @@ export class Goto implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.goto.location.file,
             start: this.tokens.goto.location.start,
             end: this.tokens.label.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -345,11 +350,12 @@ export class Label implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.identifier.location.file,
             start: this.tokens.identifier.location.start,
             end: this.tokens.colon.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -368,11 +374,12 @@ export class Return implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.return.location.file,
             start: this.tokens.return.location.start,
             end: this.value?.location.end ?? this.tokens.return.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -390,11 +397,12 @@ export class End implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.end.location.file,
             start: this.tokens.end.location.start,
             end: this.tokens.end.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -412,11 +420,12 @@ export class Stop implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.stop.location.file,
             start: this.tokens.stop.location.start,
             end: this.tokens.stop.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -441,11 +450,12 @@ export class For implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.for.location.file,
             start: this.tokens.for.location.start,
             end: this.tokens.endFor.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -468,11 +478,12 @@ export class ForEach implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.forEach.location.file,
             start: this.tokens.forEach.location.start,
             end: this.tokens.endFor.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -493,11 +504,12 @@ export class While implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.while.location.file,
             start: this.tokens.while.location.start,
             end: this.tokens.endWhile.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -511,11 +523,12 @@ export class DottedSet implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.value.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -534,11 +547,12 @@ export class IndexedSet implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.value.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -581,11 +595,12 @@ export class TryCatch implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.try.location.file,
             start: this.tokens.endtry.location.start,
             end: this.tokens.endtry.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -604,10 +619,11 @@ export class Throw implements Statement {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.throw.location.file,
             start: this.tokens.throw.location.start,
             end: this.value?.location.end ?? this.tokens.throw.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }

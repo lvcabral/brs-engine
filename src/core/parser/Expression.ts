@@ -40,11 +40,12 @@ export class Binary implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.token.location.file,
             start: this.left.location.start,
             end: this.right.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -65,11 +66,12 @@ export class Call implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.closingParen.location.file,
             start: this.callee.location.start,
             end: this.closingParen.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -89,11 +91,12 @@ export class Function implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.keyword.location.file,
             start: this.keyword.location.start,
             end: this.end.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -107,11 +110,12 @@ export class AtSignGet implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.name.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -125,11 +129,12 @@ export class DottedGet implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.name.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -148,11 +153,12 @@ export class IndexedGet implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.closingSquare.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -172,11 +178,12 @@ export class Grouping implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.tokens.left.location.file,
             start: this.tokens.left.location.start,
             end: this.tokens.right.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -214,11 +221,12 @@ export class ArrayLiteral implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.open.location.file,
             start: this.open.location.start,
             end: this.close.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -240,11 +248,12 @@ export class AALiteral implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.open.location.file,
             start: this.open.location.start,
             end: this.close.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
@@ -258,11 +267,12 @@ export class Unary implements Expression {
     /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
-        return (this.cachedLocation ??= {
+        this.cachedLocation ??= {
             file: this.operator.location.file,
             start: this.operator.location.start,
             end: this.right.location.end,
-        });
+        };
+        return this.cachedLocation;
     }
 }
 
