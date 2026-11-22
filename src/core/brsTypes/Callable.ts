@@ -5,6 +5,7 @@ import { Scope } from "../interpreter/Environment";
 import { Location } from "../lexer";
 import { tryCoerce } from "./Coercion";
 import { generateArgumentMismatchError } from "../error/ArgumentMismatch";
+import { ReturnValue } from "../parser/BlockEndReason";
 
 let anonCounter = 0;
 
@@ -163,7 +164,7 @@ export type SignatureAndMismatches = SignatureAndImplementation & {
  * description of why.
  */
 /** The function type required for all concrete Callables to provide. */
-export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType;
+export type CallableImplementation = (interpreter: Interpreter, ...args: any[]) => Brs.BrsType | ReturnValue;
 
 /** A `function` or `sub` (either "native" or implemented in BrightScript) that can be called in a BrightScript file. */
 export class Callable implements Brs.BrsValue, Brs.Boxable {
@@ -195,7 +196,22 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
      *
      * @returns the return value of the function, or `invalid` if nothing is explicitly returned.
      */
-    call(interpreter: Interpreter, ...args: Brs.BrsType[]) {
+    call(interpreter: Interpreter, ...args: Brs.BrsType[]): Brs.BrsType {
+        const result = this.callRaw(interpreter, ...args);
+        if (result instanceof ReturnValue) {
+            return result.value ?? Brs.BrsInvalid.Instance;
+        }
+        return result;
+    }
+
+    /**
+     * Same as `call`, but a user function that ends on a top-level `return` hands back the
+     * un-thrown `ReturnValue` so the interpreter can validate it against the signature.
+     * @param interpreter the interpreter to execute this callable in.
+     * @param args the arguments to pass to the callable routine.
+     * @returns the return value, or the `ReturnValue` produced by the function body
+     */
+    callRaw(interpreter: Interpreter, ...args: Brs.BrsType[]): Brs.BrsType | ReturnValue {
         let satisfiedSignature = this.getFirstSatisfiedSignature(args);
         if (satisfiedSignature == null) {
             interpreter.addError(generateArgumentMismatchError(this, args, interpreter.location));
@@ -205,7 +221,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
 
         let mutableArgs = [...satisfiedSignature.coercedArgs];
 
-        return interpreter.inSubEnv((subInterpreter) => {
+        return interpreter.inSubEnv((subInterpreter): Brs.BrsType | ReturnValue => {
             // first, we need to evaluate all of the parameter default values
             // and define them in a new environment
             for (const [index, param] of signature.args.entries()) {

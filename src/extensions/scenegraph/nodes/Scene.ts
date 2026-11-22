@@ -219,9 +219,12 @@ export class Scene extends Group {
                         press,
                         originalLocation
                     );
-                    impl(subInterpreter, key, press);
+                    const result = impl(subInterpreter, key, press);
                     interpreter.popFromStack();
                     interpreter.location = originalLocation;
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result.value ?? BrsBoolean.False;
+                    }
                 }
             } catch (err) {
                 if (err instanceof RuntimeError) {

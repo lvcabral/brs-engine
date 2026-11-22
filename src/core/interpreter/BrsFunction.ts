@@ -27,7 +27,10 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             while (!done) {
                 try {
                     for (const statement of func.body.statements) {
-                        interpreter.execute(statement);
+                        const result = interpreter.execute(statement);
+                        if (result instanceof Stmt.ReturnValue) {
+                            return result;
+                        }
                     }
                     done = true;
                 } catch (reason: any) {

@@ -51,6 +51,19 @@ describe("end to end functions", () => {
             "roFloat 3.14159",
             "invalidAsObject:",
             "roInvalid<Component: roInvalid>",
+            "forEachReturn:",
+            "b",
+            "tryReturn:",
+            "from try",
+            "catchReturn:",
+            "caught boom",
+            "nestedLoopReturn:",
+            " 22",
+            "objectFromLoop:",
+            " 2",
+            "coercedNestedReturn:",
+            "Float 3",
+            "voidEarlyReturn:",
         ]);
     });
 

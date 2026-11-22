@@ -315,13 +315,20 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param environment Optional environment to run the interpreter in
      * @returns The result of executing the function in the sub-environment
      */
-    inSubEnv(func: (interpreter: Interpreter) => BrsType, environment?: Environment): BrsType {
+    inSubEnv<T extends BrsType | Stmt.ReturnValue = BrsType>(
+        func: (interpreter: Interpreter) => T,
+        environment?: Environment
+    ): T {
         let originalEnvironment = this._environment;
         let newEnv = environment ?? this._environment.createSubEnvironment();
         let retValue: BrsComponent | undefined = undefined;
         try {
             this._environment = newEnv;
             const returnValue = func(this);
+            if (returnValue instanceof Stmt.ReturnValue && returnValue.value instanceof BrsComponent) {
+                retValue = returnValue.value;
+                retValue.setReturn(true);
+            }
             this._environment = originalEnvironment;
             return returnValue;
         } catch (err: any) {
@@ -356,7 +363,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
             }
         }
-        return statements.map((statement) => this.execute(statement));
+        return statements.map((statement) => this.executeOrThrow(statement));
     }
 
     /**
@@ -369,7 +376,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         if (sourceMap) {
             this._sourceMap = sourceMap;
         }
-        return statements.map((statement) => this.execute(statement));
+        return statements.map((statement) => this.executeOrThrow(statement));
     }
 
     /**
@@ -504,13 +511,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitReturn(statement: Stmt.Return): never {
-        if (!statement.value) {
-            throw new Stmt.ReturnValue(statement.tokens.return.location);
-        }
-
-        const toReturn = this.evaluate(statement.value);
-        throw new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
+    /**
+     * Returns are handed back up through the enclosing blocks as values rather than thrown,
+     * since unwinding an exception through every frame dominated the cost of a call.
+     * @param statement The return statement to execute
+     * @returns The value being returned, wrapped with its location
+     */
+    visitReturn(statement: Stmt.Return): Stmt.ReturnValue {
+        const toReturn = statement.value ? this.evaluate(statement.value) : undefined;
+        return new Stmt.ReturnValue(statement.tokens.return.location, toReturn);
     }
 
     visitExpression(statement: Stmt.Expression): BrsType {
@@ -1152,12 +1161,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitTryCatch(statement: Stmt.TryCatch): BrsInvalid {
+    visitTryCatch(statement: Stmt.TryCatch): Stmt.ExecResult {
         let tryMode = this._tryMode;
         try {
             this._tryMode = true;
-            this.visitBlock(statement.tryBlock);
+            const result = this.visitBlock(statement.tryBlock);
             this._tryMode = tryMode;
+            if (result instanceof Stmt.ReturnValue) {
+                return result;
+            }
         } catch (err: any) {
             this._tryMode = tryMode;
             if (this.inExitMode()) {
@@ -1171,7 +1183,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 throw err;
             }
             this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));
-            this.visitBlock(statement.catchBlock);
+            return this.visitBlock(statement.catchBlock);
         }
         return BrsInvalid.Instance;
     }
@@ -1241,9 +1253,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         }
     }
 
-    visitBlock(block: Stmt.Block): BrsType {
+    visitBlock(block: Stmt.Block): Stmt.ExecResult {
         for (const statement of block.statements) {
-            this.execute(statement);
+            const result = this.execute(statement);
+            if (result instanceof Stmt.ReturnValue) {
+                return result;
+            }
         }
         return BrsInvalid.Instance;
     }
@@ -1476,7 +1491,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return this.evaluate(expr.expression);
     }
 
-    visitFor(statement: Stmt.For): BrsType {
+    visitFor(statement: Stmt.For): Stmt.ExecResult {
         // BrightScript for/to loops evaluate the counter initial value, final value, and increment
         // values *only once*, at the top of the for/to loop.
         // Boxed numbers (roInt/roFloat/…) are valid in every numeric slot, matching Roku — e.g. a
@@ -1531,7 +1546,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             ) {
                 // execute the block
                 try {
-                    this.execute(statement.body);
+                    const result = this.execute(statement.body);
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result;
+                    }
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
@@ -1555,7 +1573,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             ) {
                 // execute the block
                 try {
-                    this.execute(statement.body);
+                    const result = this.execute(statement.body);
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result;
+                    }
                 } catch (reason) {
                     if (reason instanceof Stmt.ExitForReason) {
                         break;
@@ -1575,7 +1596,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitForEach(statement: Stmt.ForEach): BrsType {
+    visitForEach(statement: Stmt.ForEach): Stmt.ExecResult {
         let target = this.evaluate(statement.target);
         if (!isIterable(target)) {
             // Roku device does not crash if the value is not iterable, just send a console message
@@ -1615,7 +1636,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             // execute the block
             try {
                 if (continueAt <= index) {
-                    this.execute(statement.body);
+                    const result = this.execute(statement.body);
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result;
+                    }
                 }
             } catch (reason) {
                 if (reason instanceof Stmt.ExitForReason) {
@@ -1639,10 +1663,13 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitWhile(statement: Stmt.While): BrsType {
+    visitWhile(statement: Stmt.While): Stmt.ExecResult {
         while (this.evaluateCondition(statement.condition)) {
             try {
-                this.execute(statement.body);
+                const result = this.execute(statement.body);
+                if (result instanceof Stmt.ReturnValue) {
+                    return result;
+                }
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     break;
@@ -1658,24 +1685,19 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         return BrsInvalid.Instance;
     }
 
-    visitIf(statement: Stmt.If): BrsType {
+    visitIf(statement: Stmt.If): Stmt.ExecResult {
         if (this.evaluateCondition(statement.condition)) {
-            this.execute(statement.thenBranch);
-            return BrsInvalid.Instance;
-        } else {
-            for (const elseIf of statement.elseIfs || []) {
-                if (this.evaluateCondition(elseIf.condition)) {
-                    this.execute(elseIf.thenBranch);
-                    return BrsInvalid.Instance;
-                }
-            }
-
-            if (statement.elseBranch) {
-                this.execute(statement.elseBranch);
-            }
-
-            return BrsInvalid.Instance;
+            return this.execute(statement.thenBranch);
         }
+        for (const elseIf of statement.elseIfs || []) {
+            if (this.evaluateCondition(elseIf.condition)) {
+                return this.execute(elseIf.thenBranch);
+            }
+        }
+        if (statement.elseBranch) {
+            return this.execute(statement.elseBranch);
+        }
+        return BrsInvalid.Instance;
     }
 
     visitAnonymousFunction(func: Expr.Function): BrsType {
@@ -1943,7 +1965,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param statement The statement to execute
      * @returns The BrsType result of executing the statement
      */
-    execute(this: Interpreter, statement: Stmt.Statement): BrsType {
+    execute(this: Interpreter, statement: Stmt.Statement): Stmt.ExecResult {
         if (this.environment.gotoLabel !== "") {
             return this.searchLabel(statement);
         }
@@ -1956,6 +1978,15 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         this.location = statement.location;
         this._lastStmt = statement;
         return statement.accept<BrsType>(this);
+    }
+
+    /**
+     * Executes a statement where a `return` can't be passed back as a value, throwing it instead.
+     * @param statement The statement to execute
+     * @returns The BrsType result of executing the statement
+     */
+    private executeOrThrow(this: Interpreter, statement: Stmt.Statement): BrsType {
+        return throwIfReturn(this.execute(statement));
     }
 
     /**
@@ -1983,7 +2014,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     }
                     return arg;
                 });
-                return this.inSubEnv((subInterpreter) => {
+                const result = this.inSubEnv((subInterpreter): BrsType | Stmt.ReturnValue => {
                     if (hostNode) {
                         subInterpreter.environment.hostNode = hostNode;
                     }
@@ -1997,7 +2028,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         });
                     }
                     try {
-                        const returnValue = callee.call(this, ...args);
+                        const returnValue = callee.callRaw(this, ...args);
                         if (callee.isUserDefined()) this.popFromStack();
                         return returnValue;
                     } catch (err: any) {
@@ -2014,6 +2045,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         throw err;
                     }
                 });
+                if (result instanceof Stmt.ReturnValue) {
+                    return this.resolveReturn(result, signature.returns);
+                }
+                return result;
             } catch (reason: any) {
                 if (!(reason instanceof Stmt.BlockEnd)) {
                     if (reason instanceof BrsError) {
@@ -2028,47 +2063,56 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     throw new Error(reason.message);
                 }
 
-                let returnedValue = (reason as Stmt.ReturnValue).value;
-                let returnLocation = (reason as Stmt.ReturnValue).location;
-                const signatureKind = satisfiedSignature.signature.returns;
-
-                if (returnedValue && signatureKind === ValueKind.Void) {
-                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation));
-                }
-
-                if (!returnedValue && signatureKind !== ValueKind.Void) {
-                    this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation));
-                }
-
-                if (returnedValue) {
-                    const coercedValue = tryCoerce(returnedValue, signatureKind);
-                    if (coercedValue) {
-                        return coercedValue;
-                    }
-                }
-
-                if (returnedValue && signatureKind !== ValueKind.Dynamic && signatureKind !== returnedValue.kind) {
-                    this.addError(
-                        new TypeMismatch({
-                            message: `Unable to cast`,
-                            left: {
-                                type: signatureKind,
-                                location: returnLocation,
-                            },
-                            right: {
-                                type: returnedValue,
-                                location: returnLocation,
-                            },
-                            cast: true,
-                        })
-                    );
-                }
-
-                return returnedValue ?? BrsInvalid.Instance;
+                return this.resolveReturn(reason as Stmt.ReturnValue, satisfiedSignature.signature.returns);
             }
         } else {
             this.addError(generateArgumentMismatchError(callee, args, location));
         }
+    }
+
+    /**
+     * Checks a function's returned value against its declared return type, coercing it when possible.
+     * @param reason The `ReturnValue` produced by the function body
+     * @param signatureKind The declared return type of the function
+     * @returns The (possibly coerced) value to hand back to the caller
+     */
+    private resolveReturn(reason: Stmt.ReturnValue, signatureKind: ValueKind) {
+        let returnedValue = reason.value;
+        let returnLocation = reason.location;
+
+        if (returnedValue && signatureKind === ValueKind.Void) {
+            this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithValue, returnLocation));
+        }
+
+        if (!returnedValue && signatureKind !== ValueKind.Void) {
+            this.addError(new RuntimeError(RuntimeErrorDetail.ReturnWithoutValue, returnLocation));
+        }
+
+        if (returnedValue) {
+            const coercedValue = tryCoerce(returnedValue, signatureKind);
+            if (coercedValue) {
+                return coercedValue;
+            }
+        }
+
+        if (returnedValue && signatureKind !== ValueKind.Dynamic && signatureKind !== returnedValue.kind) {
+            this.addError(
+                new TypeMismatch({
+                    message: `Unable to cast`,
+                    left: {
+                        type: signatureKind,
+                        location: returnLocation,
+                    },
+                    right: {
+                        type: returnedValue,
+                        location: returnLocation,
+                    },
+                    cast: true,
+                })
+            );
+        }
+
+        return returnedValue ?? BrsInvalid.Instance;
     }
 
     /**
@@ -2134,18 +2178,18 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
-            this.visitBlock(statement.thenBranch);
+            throwIfReturn(this.visitBlock(statement.thenBranch));
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
-                this.visitBlock(statement.elseBranch);
+                throwIfReturn(this.visitBlock(statement.elseBranch));
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.TryCatch) {
             // Only search on Catch block, as labels are illegal inside Try block
-            this.visitBlock(statement.catchBlock);
+            throwIfReturn(this.visitBlock(statement.catchBlock));
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
-                this.visitBlock(statement.body);
+                throwIfReturn(this.visitBlock(statement.body));
                 this.environment.continueFor = this.environment.gotoLabel === "";
             } catch (reason) {
                 this.environment.continueFor = false;
@@ -2159,7 +2203,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else if (statement instanceof Stmt.While) {
             try {
-                this.visitBlock(statement.body);
+                throwIfReturn(this.visitBlock(statement.body));
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     return BrsInvalid.Instance;
@@ -2431,4 +2475,16 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         const value = this.unboxIfNumber(this.evaluate(condition));
         return value.equalTo(BrsBoolean.True).toBoolean();
     }
+}
+
+/**
+ * Throws a `return` that reached a caller unable to hand it back as a value.
+ * @param result The result of executing a statement
+ * @returns The result, when it is not a `return`
+ */
+function throwIfReturn(result: Stmt.ExecResult): BrsType {
+    if (result instanceof Stmt.ReturnValue) {
+        throw result;
+    }
+    return result;
 }
