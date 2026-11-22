@@ -37,12 +37,14 @@ export class Binary implements Expression {
         return visitor.visitBinary(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.token.location.file,
             start: this.left.location.start,
             end: this.right.location.end,
-        };
+        });
     }
 }
 
@@ -60,12 +62,14 @@ export class Call implements Expression {
         return visitor.visitCall(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.closingParen.location.file,
             start: this.callee.location.start,
             end: this.closingParen.location.end,
-        };
+        });
     }
 }
 
@@ -82,12 +86,14 @@ export class Function implements Expression {
         return visitor.visitAnonymousFunction(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.keyword.location.file,
             start: this.keyword.location.start,
             end: this.end.location.end,
-        };
+        });
     }
 }
 
@@ -98,12 +104,14 @@ export class AtSignGet implements Expression {
         return visitor.visitAtSignGet(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.name.location.end,
-        };
+        });
     }
 }
 
@@ -114,12 +122,14 @@ export class DottedGet implements Expression {
         return visitor.visitDottedGet(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.name.location.end,
-        };
+        });
     }
 }
 
@@ -135,12 +145,14 @@ export class IndexedGet implements Expression {
         return visitor.visitIndexedGet(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.closingSquare.location.end,
-        };
+        });
     }
 }
 
@@ -157,12 +169,14 @@ export class Grouping implements Expression {
         return visitor.visitGrouping(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.left.location.file,
             start: this.tokens.left.location.start,
             end: this.tokens.right.location.end,
-        };
+        });
     }
 }
 
@@ -197,12 +211,14 @@ export class ArrayLiteral implements Expression {
         return visitor.visitArrayLiteral(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.open.location.file,
             start: this.open.location.start,
             end: this.close.location.end,
-        };
+        });
     }
 }
 
@@ -221,12 +237,14 @@ export class AALiteral implements Expression {
         return visitor.visitAALiteral(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.open.location.file,
             start: this.open.location.start,
             end: this.close.location.end,
-        };
+        });
     }
 }
 
@@ -237,12 +255,14 @@ export class Unary implements Expression {
         return visitor.visitUnary(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.operator.location.file,
             start: this.operator.location.start,
             end: this.right.location.end,
-        };
+        });
     }
 }
 

@@ -1936,7 +1936,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns The BrsType result of evaluating the expression
      */
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
-        if (expression.location.start.line !== -1) this.location = expression.location;
+        const location = expression.location;
+        if (location.start.line !== -1) this.location = location;
         return expression.accept<BrsType>(this);
     }
 

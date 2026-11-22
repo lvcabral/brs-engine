@@ -59,12 +59,14 @@ export class Assignment implements Statement {
         return visitor.visitAssignment(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.name.location.file,
             start: this.name.location.start,
             end: this.value.location.end,
-        };
+        });
     }
 }
 
@@ -82,12 +84,14 @@ export class Dim implements Statement {
         return visitor.visitDim(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.dim.location.file,
             start: this.tokens.dim.location.start,
             end: this.tokens.closingBrace.location.end,
-        };
+        });
     }
 }
 
@@ -182,12 +186,14 @@ export class Function implements Statement {
         return visitor.visitNamedFunction(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.name.location.file,
             start: this.func.location.start,
             end: this.func.location.end,
-        };
+        });
     }
 }
 
@@ -245,12 +251,14 @@ export class Increment implements Statement {
         return visitor.visitIncrement(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.value.location.file,
             start: this.value.location.start,
             end: this.token.location.end,
-        };
+        });
     }
 }
 
@@ -310,12 +318,14 @@ export class Goto implements Statement {
         return visitor.visitGoto(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.goto.location.file,
             start: this.tokens.goto.location.start,
             end: this.tokens.label.location.end,
-        };
+        });
     }
 }
 
@@ -332,12 +342,14 @@ export class Label implements Statement {
         return BrsInvalid.Instance;
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.identifier.location.file,
             start: this.tokens.identifier.location.start,
             end: this.tokens.colon.location.end,
-        };
+        });
     }
 }
 
@@ -353,12 +365,14 @@ export class Return implements Statement {
         return visitor.visitReturn(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.return.location.file,
             start: this.tokens.return.location.start,
             end: this.value?.location.end ?? this.tokens.return.location.end,
-        };
+        });
     }
 }
 
@@ -373,12 +387,14 @@ export class End implements Statement {
         throw new BlockEnd("end-statement", this.tokens.end.location);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.end.location.file,
             start: this.tokens.end.location.start,
             end: this.tokens.end.location.end,
-        };
+        });
     }
 }
 
@@ -393,12 +409,14 @@ export class Stop implements Statement {
         return visitor.visitStop(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.stop.location.file,
             start: this.tokens.stop.location.start,
             end: this.tokens.stop.location.end,
-        };
+        });
     }
 }
 
@@ -420,12 +438,14 @@ export class For implements Statement {
         return visitor.visitFor(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.for.location.file,
             start: this.tokens.for.location.start,
             end: this.tokens.endFor.location.end,
-        };
+        });
     }
 }
 
@@ -445,12 +465,14 @@ export class ForEach implements Statement {
         return visitor.visitForEach(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.forEach.location.file,
             start: this.tokens.forEach.location.start,
             end: this.tokens.endFor.location.end,
-        };
+        });
     }
 }
 
@@ -468,12 +490,14 @@ export class While implements Statement {
         return visitor.visitWhile(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.while.location.file,
             start: this.tokens.while.location.start,
             end: this.tokens.endWhile.location.end,
-        };
+        });
     }
 }
 
@@ -484,12 +508,14 @@ export class DottedSet implements Statement {
         return visitor.visitDottedSet(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.value.location.end,
-        };
+        });
     }
 }
 
@@ -505,12 +531,14 @@ export class IndexedSet implements Statement {
         return visitor.visitIndexedSet(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.obj.location.file,
             start: this.obj.location.start,
             end: this.value.location.end,
-        };
+        });
     }
 }
 
@@ -550,12 +578,14 @@ export class TryCatch implements Statement {
         return visitor.visitTryCatch(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.try.location.file,
             start: this.tokens.endtry.location.start,
             end: this.tokens.endtry.location.end,
-        };
+        });
     }
 }
 
@@ -571,11 +601,13 @@ export class Throw implements Statement {
         return visitor.visitThrow(this);
     }
 
+    /** Built once: `evaluate`/`execute` read it for every node they visit. */
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        return (this.cachedLocation ??= {
             file: this.tokens.throw.location.file,
             start: this.tokens.throw.location.start,
             end: this.value?.location.end ?? this.tokens.throw.location.end,
-        };
+        });
     }
 }

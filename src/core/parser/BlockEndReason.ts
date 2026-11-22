@@ -3,7 +3,19 @@ import { BrsError } from "../error/BrsError";
 import { Location } from "../lexer";
 
 /** Marker class for errors thrown to exit block execution early. */
-export class BlockEnd extends BrsError {}
+export class BlockEnd extends BrsError {
+    constructor(message: string, location: Location) {
+        // Control flow, not a failure: every `return`, `exit for` and `continue for` throws one, and
+        // capturing a JavaScript stack trace for each was ~45% of the runtime of call-heavy code.
+        const limit = Error.stackTraceLimit;
+        Error.stackTraceLimit = 0;
+        try {
+            super(message, location);
+        } finally {
+            Error.stackTraceLimit = limit;
+        }
+    }
+}
 
 /** An error thrown to continue a for loop. */
 export class ContinueForReason extends BlockEnd {
