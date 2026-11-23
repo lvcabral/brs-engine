@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Shadows the built-in RSGPalette with a Node-rooted component (clone() degrades those to a bare Node). -->
+<component name="RSGPalette" extends="Node">
+    <interface>
+        <field id="marker" type="string" value="palette-marker" />
+    </interface>
+</component>

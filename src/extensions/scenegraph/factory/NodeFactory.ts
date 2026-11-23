@@ -126,8 +126,15 @@ import { FieldAliasTarget, FieldKind, ObservedField } from "../SGTypes";
  * @returns True if the value matches a SGNodeType (case-insensitive), false otherwise
  */
 export function isSGNodeType(value: string): value is SGNodeType {
-    const lowerValue = value.toLowerCase();
-    return Object.values(SGNodeType).some((enumVal) => enumVal.toLowerCase() === lowerValue);
+    return builtInTypeOf(value.toLowerCase()) !== undefined;
+}
+
+/** Lower-cased name → SGNodeType, built on first use (the enum may not be ready at module load). */
+let builtInTypes: Map<string, SGNodeType> | undefined;
+
+function builtInTypeOf(lowerName: string): SGNodeType | undefined {
+    builtInTypes ??= new Map(Object.values(SGNodeType).map((type) => [type.toLowerCase(), type]));
+    return builtInTypes.get(lowerName);
 }
 
 export class SGNodeFactory {
@@ -382,16 +389,9 @@ export class SGNodeFactory {
  * @returns Created node instance or BrsInvalid if creation fails
  */
 export function createNode(type: string, interpreter?: Interpreter, parent?: Node): Node | BrsInvalid {
-    // A channel's OWN component definition shadows a built-in node type of the same name, which is
-    // what a device does: `components/ButtonGroup.xml` extending LayoutGroup is what every
-    // <ButtonGroup> in that channel instantiates, and its init(), children and script scope are set
-    // up normally. The definition is therefore looked up FIRST. Asking SGNodeFactory first would
-    // hand back the built-in class of that name instead: init() is never called, the component's
-    // `m` stays empty, and the first key event it receives crashes on `m.top` (measured 2026-11-20
-    // against a shipping channel, which reproduces as `<component name="ButtonGroup"
-    // extends="LayoutGroup">` never running init and `onKeyEvent` reading an invalid `m.top`).
-    let node: Node | BrsInvalid = BrsInvalid.Instance;
-    const typeDef = sgRoot.nodeDefMap?.get(type.toLowerCase());
+    // A channel component definition shadows a built-in node type of the same name.
+    let node: Node | BrsInvalid;
+    const typeDef = sgRoot.nodeDefMap.get(type.toLowerCase());
     if (typeDef) {
         if (interpreter instanceof Interpreter) {
             node = initializeNode(interpreter, type, typeDef, undefined, parent);
@@ -802,11 +802,9 @@ export function updateTypeDefHierarchy(typeDef: ComponentDefinition | undefined)
     // in the correct order.
     typeDefStack.push(typeDef);
     while (typeDef) {
-        const typeKey = typeDef.name!.toLowerCase();
-        if (!subtypeHierarchy.has(typeKey)) {
-            // Add the current typedef to the subtypeHierarchy
-            subtypeHierarchy.set(typeKey, typeDef.extends || SGNodeType.Node);
-        }
+        // Overwrites a built-in's entry of the same name: on a device the firmware's own nodes of a
+        // shadowed type follow the channel's `extends` too (shadow-builtin-probe S3).
+        subtypeHierarchy.set(typeDef.name!.toLowerCase(), typeDef.extends || SGNodeType.Node);
         typeDef = sgRoot.nodeDefMap.get(typeDef.extends.toLowerCase());
         if (typeDef) typeDefStack.push(typeDef);
     }
@@ -1079,17 +1077,19 @@ export function isSubtypeCheck(currentNodeType: string, checkType: string): bool
  * @param subType Node subtype or custom component name
  * @returns Base SGNodeType or Node if not found
  */
-export function getNodeType(subType: string) {
-    if (isSGNodeType(subType)) {
-        return subType;
-    }
-    let nextNodeType = subtypeHierarchy.get(subType.toLowerCase());
-    if (nextNodeType == null) {
-        return SGNodeType.Node;
-    } else if (isSGNodeType(nextNodeType)) {
-        return nextNodeType;
-    } else {
-        return getNodeType(nextNodeType);
+export function getNodeType(subType: string): SGNodeType {
+    let key = subType.toLowerCase();
+    while (true) {
+        // A built-in name the channel redefines is not a root: keep walking its `extends`.
+        const builtIn = builtInTypeOf(key);
+        if (builtIn && !sgRoot.nodeDefMap.has(key)) {
+            return builtIn;
+        }
+        const parent = subtypeHierarchy.get(key);
+        if (!parent) {
+            return builtIn ?? SGNodeType.Node;
+        }
+        key = parent.toLowerCase();
     }
 }
 

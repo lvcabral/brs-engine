@@ -140,14 +140,13 @@ export class ComponentScopeResolver {
 
         let currentComponent: ComponentDefinition | undefined = component;
         while (currentComponent.extends) {
-            // If this is a built-in node component, then no work is needed and we can return.
-            if (SGNodeFactory.canResolveNodeType(currentComponent.extends)) {
-                return;
-            }
-
             let previousComponent = currentComponent;
             currentComponent = this.componentMap.get(currentComponent.extends.toLowerCase());
             if (!currentComponent) {
+                // A channel definition shadows a built-in of the same name, so check built-ins second.
+                if (SGNodeFactory.canResolveNodeType(previousComponent.extends)) {
+                    return;
+                }
                 // The reference implementation doesn't allow extensions of unknown node subtypes, but
                 // BRS hasn't implemented every node type in the reference implementation!  For now,
                 // let's warn when we detect unknown subtypes.

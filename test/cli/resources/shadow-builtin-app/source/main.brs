@@ -1,7 +1,5 @@
-' A channel may ship a component whose name is also a built-in SceneGraph node type.
-' On a device the channel's definition wins: <ButtonGroup> here is the component below,
-' not the built-in ButtonGroup. The engine used to return the built-in class, so the
-' component's init() never ran and the first key event it received crashed on `m.top`.
+' Channel components named after built-in node types (ButtonGroup, RSGPalette) replace the built-in.
+' Device trace: test/simulator/probes/shadow-builtin-probe.
 sub Main()
     print "=== Shadow Built-in Repro ==="
 
@@ -19,6 +17,18 @@ sub Main()
     print "inherited field = "; grp.layoutDirection
     print "child made in init = "; grp.findNode("madeInInit") <> invalid
     print "child count = "; grp.getChildCount()
+
+    login = CreateObject("roSGNode", "LoginButtons")
+    print "subclass subtype = "; login.subtype()
+    print "subclass isSubtype(ButtonGroup) = "; login.isSubtype("ButtonGroup")
+    print "subclass isSubtype(LayoutGroup) = "; login.isSubtype("LayoutGroup")
+    print "subclass base init = "; login.customOnly
+    print "subclass own init = "; login.loginTag
+
+    palette = CreateObject("roSGNode", "RSGPalette")
+    copy = palette.clone(false)
+    print "node-rooted clone subtype = "; copy.subtype()
+    print "node-rooted clone has marker = "; copy.hasField("marker")
 
     print "=== Shadow Built-in Complete ==="
 end sub

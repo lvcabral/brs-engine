@@ -1828,20 +1828,23 @@ describe.concurrent("cli scenegraph", () => {
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
-        // A channel shipping components/ButtonGroup.xml (extends LayoutGroup) gets ITS component
-        // for every <ButtonGroup>, as on a device. createNode() used to ask the built-in factory
-        // first, so the built-in ButtonGroup class was returned: the component's init() never ran
-        // (no children, no observers), its script scope had no m.top, and the first remote key it
-        // received crashed on m.top. Device-confirmed against a shipping channel, 2026-11-20.
+        // Device trace: test/simulator/probes/shadow-builtin-probe (S1, S5, S7).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Shadow Built-in Repro ===",
             "MAIN: scene init",
             "node subtype = ButtonGroup",
             "init ran = true",
-            "custom field = inited",
+            "custom field = inited:bg-helper",
             "inherited field = vert",
             "child made in init = true",
             "child count =  1",
+            "subclass subtype = LoginButtons",
+            "subclass isSubtype(ButtonGroup) = true",
+            "subclass isSubtype(LayoutGroup) = true",
+            "subclass base init = inited:bg-helper",
+            "subclass own init = login:bg-helper",
+            "node-rooted clone subtype = Node",
+            "node-rooted clone has marker = false",
             "=== Shadow Built-in Complete ===",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
