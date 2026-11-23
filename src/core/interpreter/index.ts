@@ -132,11 +132,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
         end: { line: 0, column: 0 },
     };
 
-    static readonly InternalLocation = {
-        file: "(internal)",
-        start: { line: -1, column: -1 },
-        end: { line: -1, column: -1 },
-    };
+    static readonly InternalLocation = Location.internal;
 
     readonly options: ExecutionOptions = defaultExecutionOptions;
     readonly manifest: Map<string, string> = new Map<string, string>();
@@ -1936,7 +1932,8 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @returns The BrsType result of evaluating the expression
      */
     evaluate(this: Interpreter, expression: Expr.Expression): BrsType {
-        if (expression.location.start.line !== -1) this.location = expression.location;
+        const location = expression.location;
+        if (location.start.line !== -1) this.location = location;
         return expression.accept<BrsType>(this);
     }
 

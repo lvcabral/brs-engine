@@ -51,6 +51,13 @@ export interface Location {
 }
 
 export namespace Location {
+    /** Location of nodes the engine builds itself, with no source position. Shared, so frozen. */
+    export const internal: Location = Object.freeze({
+        file: "(internal)",
+        start: Object.freeze({ line: -1, column: -1 }),
+        end: Object.freeze({ line: -1, column: -1 }),
+    });
+
     export function equalTo(loc1: Location, loc2: Location) {
         return (
             loc1.file === loc2.file &&

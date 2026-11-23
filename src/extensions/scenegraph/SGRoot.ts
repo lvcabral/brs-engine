@@ -5,7 +5,17 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
+import {
+    BlockEnd,
+    BrsDevice,
+    BrsError,
+    BufferType,
+    DataType,
+    genHexAddress,
+    Interpreter,
+    MediaEvent,
+    MediaTrack,
+} from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
@@ -674,9 +684,12 @@ export class SGRoot {
      * @param err The error thrown.
      */
     private reportTaskError(task: Task, action: string, err: any) {
+        const message = err instanceof BrsError ? err.format() : err?.message ?? err;
+        // A BlockEnd captures no JavaScript frames, so its stack would only repeat the message.
+        const stack = err instanceof BlockEnd ? undefined : err?.stack;
         BrsDevice.stderr.write(
-            `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${err?.message ?? err}${
-                err?.stack ? `\n${err.stack}` : ""
+            `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${message}${
+                stack ? `\n${stack}` : ""
             }`
         );
     }
