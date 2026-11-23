@@ -5,7 +5,16 @@
  *
  *  Licensed under the MIT License. See LICENSE in the repository root for license information.
  *--------------------------------------------------------------------------------------------*/
-import { BrsDevice, BufferType, DataType, genHexAddress, Interpreter, MediaEvent, MediaTrack } from "brs-engine";
+import {
+    BrsDevice,
+    BrsError,
+    BufferType,
+    DataType,
+    genHexAddress,
+    Interpreter,
+    MediaEvent,
+    MediaTrack,
+} from "brs-engine";
 import { ComponentDefinition } from "./parser/ComponentDefinition";
 import { Global } from "./nodes/Global";
 import { ThreadInfo } from "./SGTypes";
@@ -674,8 +683,9 @@ export class SGRoot {
      * @param err The error thrown.
      */
     private reportTaskError(task: Task, action: string, err: any) {
+        const message = err instanceof BrsError ? err.format() : err?.message ?? err;
         BrsDevice.stderr.write(
-            `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${err?.message ?? err}${
+            `error,[sg] Error ${action} task ${task.nodeSubtype} (thread ${task.threadId}): ${message}${
                 err?.stack ? `\n${err.stack}` : ""
             }`
         );

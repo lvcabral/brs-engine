@@ -597,7 +597,7 @@ export class TryCatch implements Statement {
     get location() {
         this.cachedLocation ??= {
             file: this.tokens.try.location.file,
-            start: this.tokens.endtry.location.start,
+            start: this.tokens.try.location.start,
             end: this.tokens.endtry.location.end,
         };
         return this.cachedLocation;

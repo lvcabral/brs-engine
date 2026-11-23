@@ -2,17 +2,36 @@ import { BrsType } from "../brsTypes";
 import { BrsError } from "../error/BrsError";
 import { Location } from "../lexer";
 
-/** Marker class for errors thrown to exit block execution early. */
+/**
+ * Sets `Error.stackTraceLimit` to 0 and returns its previous value, or `undefined` when the engine
+ * has no numeric limit (e.g. SpiderMonkey) or the property can't be written (a frozen `Error`).
+ */
+function suppressStackTrace(): number | undefined {
+    const limit = Error.stackTraceLimit;
+    if (typeof limit !== "number" || limit === 0) {
+        return undefined;
+    }
+    try {
+        Error.stackTraceLimit = 0;
+    } catch {
+        return undefined;
+    }
+    return limit;
+}
+
+/**
+ * Marker class for errors thrown to exit block execution early. It is control flow, not a failure,
+ * so no JavaScript stack is captured; the BrightScript `location` identifies where it was thrown.
+ */
 export class BlockEnd extends BrsError {
     constructor(message: string, location: Location) {
-        // Control flow, not a failure: every `return`, `exit for` and `continue for` throws one, and
-        // capturing a JavaScript stack trace for each was ~45% of the runtime of call-heavy code.
-        const limit = Error.stackTraceLimit;
-        Error.stackTraceLimit = 0;
+        const limit = suppressStackTrace();
         try {
             super(message, location);
         } finally {
-            Error.stackTraceLimit = limit;
+            if (limit !== undefined) {
+                Error.stackTraceLimit = limit;
+            }
         }
     }
 }

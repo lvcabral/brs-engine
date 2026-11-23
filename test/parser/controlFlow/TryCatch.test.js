@@ -107,6 +107,26 @@ describe("parser try/catch statements", () => {
         expect(statements).toMatchSnapshot();
     });
 
+    it("spans from try to end try", () => {
+        const { statements, errors } = parser.parse(
+            scan(
+                deindent(`
+                    try
+                        print "in try"
+                    catch e
+                        print "in catch"
+                    end try
+                `)
+            )
+        );
+
+        expect(errors).toEqual([]);
+        const { start, end } = statements[0].location;
+        expect(start).toEqual(statements[0].tokens.try.location.start);
+        expect(end).toEqual(statements[0].tokens.endtry.location.end);
+        expect(start.line).toBeLessThan(end.line);
+    });
+
     it("allows try/catch to nest in try", () => {
         const { statements, errors } = parser.parse(
             scan(
