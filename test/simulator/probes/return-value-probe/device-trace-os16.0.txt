@@ -1,0 +1,8 @@
+PROBE|start
+PROBE|plainInit|roSGNode
+PROBE|plainTypedFloat|roFloat
+PROBE|plainTypedBool|roBoolean
+PROBE|gotoInit|roSGNode
+PROBE|typedFloatCallFunc|roFloat
+PROBE|directGotoReturn|Float| 2
+PROBE|done
