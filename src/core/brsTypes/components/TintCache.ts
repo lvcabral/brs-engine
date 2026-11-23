@@ -83,7 +83,8 @@ export class TintCache {
     /** Returns the surface multiplied by `rgba`'s RGB. */
     get(rgba: number): BrsCanvas {
         const now = performance.now();
-        if (now - lastSweep >= IDLE_MS) {
+        // A clock behind the last sweep was replaced (fake timers), so it sweeps rather than waiting to catch up.
+        if (now - lastSweep >= IDLE_MS || now < lastSweep) {
             sweep(now);
         }
         this.lastUsed = now;
