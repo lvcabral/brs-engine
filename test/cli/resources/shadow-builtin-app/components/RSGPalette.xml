@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="RSGPalette" extends="Node">
+    <interface>
+        <field id="marker" type="string" value="palette" />
+    </interface>
+</component>

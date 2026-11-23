@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- Shadows the built-in ButtonGroup. Extends Group (not LayoutGroup) so isSubtype("LayoutGroup")
+     tells the channel component apart from the built-in. -->
+<component name="ButtonGroup" extends="Group">
+    <interface>
+        <field id="shadowTag" type="string" value="unset" />
+        <function name="describe" />
+    </interface>
+    <script type="text/brightscript" uri="ButtonGroup.brs" />
+</component>

@@ -429,6 +429,16 @@ When `addFields` builds a custom component's fields, a `<field>` whose name alre
 the XML default is applied by the subsequent `setValueSilent`. Regression:
 `duplicate-system-field-app` in `test/cli/cli-scenegraph.test.js`.
 
+## A channel component named after a built-in shadows it everywhere
+
+A channel's `components/ButtonGroup.xml` replaces the built-in `ButtonGroup` (device trace:
+`test/simulator/probes/shadow-builtin-probe`). Every lookup must try the channel definition **before**
+the built-in: `createNode`/`createFlatNode`, `ComponentScopeResolver.getStatements` (a subclass inherits
+the shadow's scripts and `onKeyEvent`), and `getNodeType` (`nodeType` is the shadow's real root, so a
+Node-rooted shadow bare-clones). The channel's `extends` also owns the `subtypeHierarchy` entry, so the
+firmware's own instances (`Dialog.buttonGroup`) answer `isSubtype` along the channel's chain, as on a
+device. A component that extends its own name is a compile error on a device.
+
 ## Copying a container NEVER clones a SceneGraph node inside it
 
 Reading a node field whose value is an `assocarray` or `array` hands the app a copy, so it cannot

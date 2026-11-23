@@ -1822,6 +1822,36 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("a custom component shadows a built-in node type of the same name", async () => {
+        let command = ["node", brsCliPath, "-r shadow-builtin-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device trace: test/simulator/probes/shadow-builtin-probe (S1, S5, S7).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Shadow Built-in Repro ===",
+            "MAIN: scene init",
+            "node subtype = ButtonGroup",
+            "init ran = true",
+            "custom field = inited:bg-helper",
+            "inherited field = vert",
+            "child made in init = true",
+            "child count =  1",
+            "subclass subtype = LoginButtons",
+            "subclass isSubtype(ButtonGroup) = true",
+            "subclass isSubtype(LayoutGroup) = true",
+            "subclass base init = inited:bg-helper",
+            "subclass own init = login:bg-helper",
+            "node-rooted clone subtype = Node",
+            "node-rooted clone has marker = false",
+            "=== Shadow Built-in Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("PanelSet creates the right panel on item focus without hasNextPanel", async () => {
         let command = ["node", brsCliPath, "-r panelset-nextpanel-app", "source/main.brs", "-c 0"].join(" ");
 
