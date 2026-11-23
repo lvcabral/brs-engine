@@ -348,8 +348,8 @@ export function convertHexColor(strColor: string): number {
  * `undefined`, so core already has a clean two-state world and no sentinel to resolve. Note the saving is
  * now purely cost, not pixels: `getRgbaCanvas` short-circuits an all-white tint to a copy, so
  * `drawObject(x, y, bmp, -1)` and an untinted draw are byte-identical (verified at source alpha 1 and
- * 0.5). What normalizing avoids is a wasted `rgbaCanvas` allocation and a thrash of `RoBitmap`'s
- * single-slot tint cache, which is shared across every node drawing that bitmap.
+ * 0.5). What normalizing avoids is a white tinted copy in the bitmap's `TintCache`, which is shared by every
+ * node drawing that bitmap.
  */
 export function normalizeBlendColor(rgba: unknown): number | undefined {
     if (typeof rgba !== "number" || Number.isNaN(rgba)) {

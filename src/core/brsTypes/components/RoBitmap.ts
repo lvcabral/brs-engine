@@ -11,7 +11,6 @@ import {
     BrsCanvasContext2D,
     BrsDraw2D,
     createNewCanvas,
-    drawImageAtPos,
     drawImageToContext,
     drawObjectToComponent,
     IfDraw2D,
@@ -19,6 +18,7 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
+import { TintCache } from "./TintCache";
 import { BrsDevice } from "../../device/BrsDevice";
 import { DecodedImage, decodeImage, imageMimeType } from "../../device/ImageDecoder";
 import { nextAddress, registerTexture, unregisterTexture } from "../../device/Graphics";
@@ -34,25 +34,6 @@ export interface NinePatch {
     margins: { left: number; right: number; top: number; bottom: number };
 }
 
-/**
- * A 256-entry table mapping a channel value to `value * multiplier / 255`, for the blend-color multiply
- * in `getRgbaCanvas`. Cached per multiplier: a tint is usually stable across frames, and even the first
- * build is cheaper than the per-pixel divides it replaces on anything above icon size.
- */
-const channelScales = new Map<number, Uint8ClampedArray>();
-
-function channelScale(multiplier: number): Uint8ClampedArray {
-    let table = channelScales.get(multiplier);
-    if (!table) {
-        table = new Uint8ClampedArray(256);
-        for (let value = 0; value < 256; value++) {
-            table[value] = (value * multiplier) / 255;
-        }
-        channelScales.set(multiplier, table);
-    }
-    return table;
-}
-
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -66,9 +47,8 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly valid: boolean;
     private readonly patchSizes?: NinePatch;
     private alphaEnable: boolean;
-    private rgbaCanvas?: BrsCanvas;
-    private rgbaLast: number;
-    rgbaRedraw: boolean;
+    /** Tinted copies of this bitmap, made on its first tinted draw. */
+    private tints?: TintCache;
     scaleMode: number;
     readonly address: string = nextAddress();
     /** Whether Clear()/the draw functions may modify this bitmap (see `roTextureRequest.SetDrawable`). */
@@ -80,8 +60,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
      */
     constructor(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name?: string) {
         super("roBitmap");
-        this.rgbaLast = 0;
-        this.rgbaRedraw = true;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         const source = bitmapSource(param, name ?? "");
         this.width = source.width;
@@ -149,7 +127,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ctx.fillStyle = rgbaIntToHex(rgba);
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
-        this.rgbaRedraw = true;
+        this.makeDirty();
         return BrsInvalid.Instance;
     }
 
@@ -162,11 +140,15 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         rgba?: number,
         alpha?: number
     ): boolean {
-        this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
+        // Marked after the draw: drawing a region of this bitmap tints this bitmap's pixels first.
+        const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
+        this.makeDirty();
+        return drawn;
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
+        // roCompositor draws its sprites into its destination bitmap through here.
+        this.makeDirty();
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
@@ -184,66 +166,13 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     getRgbaCanvas(rgba: number): BrsCanvas {
-        if (!this.rgbaCanvas) {
-            this.rgbaCanvas = createNewCanvas(this.canvas.width, this.canvas.height);
-        } else if (!this.rgbaRedraw && rgba === this.rgbaLast) {
-            return this.rgbaCanvas;
-        } else {
-            this.rgbaCanvas.width = this.canvas.width;
-            this.rgbaCanvas.height = this.canvas.height;
-        }
-        const ctx = this.rgbaCanvas.getContext("2d", {
-            alpha: true,
-        }) as BrsCanvasContext2D;
-        // A per-channel multiply over the UN-PREMULTIPLIED pixels, NOT `globalCompositeOperation =
-        // "multiply"` — canvas's `multiply` is the W3C *blend* formula, which over a semi-transparent
-        // backdrop drags the result toward the tint instead of multiplying by it, so opaque white was not
-        // an identity and a real tint came out lighter than the source. Measured table and derivation:
-        // `.claude/docs/scenegraph-invariants.md`, "Blend colors". Alpha is deliberately untouched:
-        // blendColor's alpha is the blit transparency (globalAlpha), never the tint strength (#935).
-        const red = (rgba >> 24) & 0xff;
-        const green = (rgba >> 16) & 0xff;
-        const blue = (rgba >> 8) & 0xff;
-        if (this.canvas.width === 0 || this.canvas.height === 0) {
-            // `getImageData` THROWS on a 0-wide/0-tall rect, and both a zero-sized bitmap (which
-            // `isValid()` reports true for) and a `dispose()`d one reach here. `drawImageAtPos` no-ops.
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else if (red === 255 && green === 255 && blue === 255) {
-            // Multiplying by white is a mathematical identity — copy, so an all-white tint stays
-            // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else {
-            const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            const pixels = source.data;
-            // Per-channel lookup tables rather than the multiply inline: 256 entries build in noise even
-            // for a 24x24 icon and the table is byte-identical to `(value * m) / 255` for all 65536
-            // (value, multiplier) pairs, while cutting the arithmetic ~2.3x on a full-screen surface
-            // (2.99ms -> 1.30ms at 1280x720). A channel multiplied by 255 is an identity, so it is left
-            // alone entirely — the common case for a tint that only shifts one or two channels.
-            const scaleRed = red === 255 ? undefined : channelScale(red);
-            const scaleGreen = green === 255 ? undefined : channelScale(green);
-            const scaleBlue = blue === 255 ? undefined : channelScale(blue);
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (scaleRed) {
-                    pixels[i] = scaleRed[pixels[i]];
-                }
-                if (scaleGreen) {
-                    pixels[i + 1] = scaleGreen[pixels[i + 1]];
-                }
-                if (scaleBlue) {
-                    pixels[i + 2] = scaleBlue[pixels[i + 2]];
-                }
-            }
-            putImageAtPos(source, ctx, 0, 0);
-        }
-        this.rgbaLast = rgba;
-        this.rgbaRedraw = false;
-        return this.rgbaCanvas;
+        this.tints ??= new TintCache(this.canvas, this.context);
+        return this.tints.get(rgba);
     }
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        this.rgbaRedraw = true;
+        this.makeDirty();
     }
 
     getCanvasAlpha(): boolean {
@@ -255,7 +184,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     makeDirty() {
-        this.rgbaRedraw = true;
+        this.tints?.markStale();
     }
 
     finishDraw(): void {
@@ -279,9 +208,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             unregisterTexture(this);
         }
         releaseCanvas(this.canvas);
-        if (this.rgbaCanvas) {
-            releaseCanvas(this.rgbaCanvas);
-        }
+        this.tints?.release();
     }
 
     /** Returns the parsed 9-patch layout, or `undefined` for non 9-patch bitmaps. */

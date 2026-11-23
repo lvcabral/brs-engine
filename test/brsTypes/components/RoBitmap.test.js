@@ -200,3 +200,267 @@ describe("RoBitmap 9-patch parsing", () => {
         expect(paintedHeight(41)).toBe(0);
     });
 });
+
+describe("RoBitmap tint cache", () => {
+    const { RoAssociativeArray, BrsString, Int32, BrsBoolean, RoRegion, sweepIdleTints } = brs.types;
+    const RED = 0xff0000ff;
+    const GREEN = 0x00ff00ff;
+    const BLUE = 0x0000ffff;
+
+    // The cache clock only moves on message-loop passes; tests pass their own times, ahead of any earlier pass.
+    let now = performance.now() + 1e6;
+    function messageLoopPass(ms = 0) {
+        now += ms;
+        sweepIdleTints(now);
+    }
+
+    function whiteBitmap(size = 8, height = size) {
+        const bitmap = new RoBitmap(
+            new RoAssociativeArray([
+                { name: new BrsString("width"), value: new Int32(size) },
+                { name: new BrsString("height"), value: new Int32(height) },
+                { name: new BrsString("alphaEnable"), value: BrsBoolean.True },
+            ])
+        );
+        bitmap.clearCanvas(0xffffffff);
+        return bitmap;
+    }
+
+    function pixel(canvas, x = 0, y = 0) {
+        return Array.from(canvas.getContext("2d").getImageData(x, y, 1, 1).data);
+    }
+
+    function alternate(bitmap) {
+        for (let i = 0; i < 3; i++) {
+            bitmap.getRgbaCanvas(RED);
+            bitmap.getRgbaCanvas(GREEN);
+        }
+    }
+
+    it("returns the right colour for each tint when tints alternate", () => {
+        const bitmap = whiteBitmap();
+        // A tinted canvas is drawn right away; it only has to hold until the next tint.
+        for (let i = 0; i < 3; i++) {
+            expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([255, 0, 0, 255]);
+            expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+            expect(pixel(bitmap.getRgbaCanvas(BLUE))).toEqual([0, 0, 255, 255]);
+        }
+    });
+
+    it("reuses the tinted canvas when a tint comes back", () => {
+        const bitmap = whiteBitmap();
+        const first = bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        expect(bitmap.getRgbaCanvas(RED)).toBe(first);
+        expect(pixel(first)).toEqual([255, 0, 0, 255]);
+    });
+
+    it("re-tints every cached colour after the bitmap is drawn into", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        // Grey source: every tint must now come out at half strength.
+        bitmap.clearCanvas(0x808080ff);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([128, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 128, 0, 255]);
+        bitmap.makeDirty();
+        bitmap.getContext().fillStyle = "#000000";
+        bitmap.getContext().fillRect(0, 0, 8, 8);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
+    });
+
+    it("re-tints after a compositor draws into the bitmap", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        const black = whiteBitmap();
+        black.clearCanvas(0x000000ff);
+        // roCompositor writes its sprites into the destination through drawImageToContext.
+        bitmap.drawImageToContext(black.getCanvas(), 0, 0);
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
+    });
+
+    it("keeps tinting correctly past the cache size", () => {
+        const bitmap = whiteBitmap();
+        for (let i = 0; i < 600; i++) {
+            const level = i % 256;
+            const rgba = ((level << 24) | 0xff) >>> 0;
+            expect(pixel(bitmap.getRgbaCanvas(rgba))).toEqual([level, 0, 0, 255]);
+        }
+    });
+
+    function region(bitmap, x, y, width, height) {
+        return new RoRegion(bitmap, new Int32(x), new Int32(y), new Int32(width), new Int32(height));
+    }
+
+    function countReads(bitmap) {
+        const ctx = bitmap.getContext();
+        const read = ctx.getImageData.bind(ctx);
+        const counter = { reads: 0 };
+        ctx.getImageData = (...args) => {
+            counter.reads++;
+            return read(...args);
+        };
+        return counter;
+    }
+
+    it("re-tints after a region of the bitmap is drawn tinted into it", () => {
+        // Device-checked (test/simulator/probes/bitmap-tint-cache-probe, self.region).
+        const bitmap = whiteBitmap(32, 16);
+        bitmap.getContext().fillStyle = "#000000";
+        bitmap.getContext().fillRect(16, 0, 16, 16);
+        bitmap.makeDirty();
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+        bitmap.drawImage(region(bitmap, 16, 0, 16, 16), 0, 0, 1, 1, RED);
+        expect(pixel(bitmap.getCanvas())).toEqual([0, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 0, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([0, 0, 0, 255]);
+    });
+
+    it("shares one copy between blend colors that differ only in alpha", () => {
+        const bitmap = whiteBitmap();
+        const opaque = bitmap.getRgbaCanvas(RED);
+        expect(bitmap.getRgbaCanvas(0xff000080)).toBe(opaque);
+        expect(bitmap.getRgbaCanvas(0xff000000)).toBe(opaque);
+        // BrightScript passes &hFF0000FF as a signed Integer.
+        expect(bitmap.getRgbaCanvas(RED | 0)).toBe(opaque);
+        expect(pixel(opaque)).toEqual([255, 0, 0, 255]);
+    });
+
+    it("keeps one copy of a bitmap larger than the cache budget", () => {
+        const bitmap = whiteBitmap(2001, 2000);
+        const counter = countReads(bitmap);
+        const first = bitmap.getRgbaCanvas(RED);
+        expect(bitmap.getRgbaCanvas(RED)).toBe(first);
+        expect(counter.reads).toBe(1);
+        bitmap.dispose();
+    });
+
+    it("keeps the source pixels only for a bitmap drawn with several tints", () => {
+        const single = whiteBitmap();
+        single.getRgbaCanvas(RED);
+        single.getRgbaCanvas(RED);
+        expect(single.tints.source).toBeUndefined();
+
+        const multi = whiteBitmap();
+        const counter = countReads(multi);
+        multi.getRgbaCanvas(RED);
+        multi.getRgbaCanvas(GREEN);
+        expect(counter.reads).toBe(2);
+        multi.makeDirty();
+        multi.getRgbaCanvas(RED);
+        multi.getRgbaCanvas(GREEN);
+        multi.getRgbaCanvas(BLUE);
+        expect(counter.reads).toBe(3);
+        expect(pixel(multi.getRgbaCanvas(BLUE))).toEqual([0, 0, 255, 255]);
+    });
+
+    it("gives a tint its own copy only when it comes back", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        // A colour animation: every tint is new.
+        for (let level = 0; level < 100; level++) {
+            expect(pixel(bitmap.getRgbaCanvas(((level << 16) | 0xff) >>> 0))).toEqual([0, level, 0, 255]);
+        }
+        expect(bitmap.tints.entries.size).toBe(1);
+        // The second draw keeps the scratch canvas it was painted into as its copy.
+        const green = bitmap.getRgbaCanvas(GREEN);
+        expect(green).toBe(bitmap.tints.scratch);
+        expect(bitmap.getRgbaCanvas(GREEN)).toBe(green);
+        expect(bitmap.tints.scratch).toBeUndefined();
+        expect(bitmap.tints.entries.size).toBe(2);
+        expect(bitmap.getRgbaCanvas(GREEN)).toBe(bitmap.getRgbaCanvas(GREEN));
+    });
+
+    it("releases idle copies and pixels on a message-loop pass, keeping the latest copy", () => {
+        messageLoopPass(10_000);
+        const bitmap = whiteBitmap();
+        alternate(bitmap);
+        expect(bitmap.tints.entries.size).toBe(2);
+        expect(bitmap.tints.source).toBeDefined();
+        messageLoopPass(500);
+        expect(bitmap.tints.entries.size).toBe(2);
+        messageLoopPass(1000);
+        expect(bitmap.tints.entries.size).toBe(1);
+        expect(bitmap.tints.scratch).toBeUndefined();
+        expect(bitmap.tints.source).toBeUndefined();
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+        expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([255, 0, 0, 255]);
+    });
+
+    it("keeps copies that are still in use", () => {
+        messageLoopPass(10_000);
+        const bitmap = whiteBitmap();
+        alternate(bitmap);
+        for (let frame = 0; frame < 5; frame++) {
+            messageLoopPass(600);
+            alternate(bitmap);
+        }
+        expect(bitmap.tints.entries.size).toBe(2);
+        expect(bitmap.tints.source).toBeDefined();
+    });
+
+    it("draws a tint held in the scratch canvas again without repainting it", () => {
+        // Over the per-bitmap budget, so the second tint lives in the scratch canvas.
+        const bitmap = whiteBitmap(2001, 2000);
+        bitmap.getRgbaCanvas(RED);
+        const green = bitmap.getRgbaCanvas(GREEN);
+        expect(green).toBe(bitmap.tints.scratch);
+        green.getContext("2d").fillStyle = "#123456";
+        green.getContext("2d").fillRect(0, 0, 1, 1);
+        expect(bitmap.getRgbaCanvas(GREEN)).toBe(green);
+        expect(pixel(green)).toEqual([0x12, 0x34, 0x56, 255]);
+        bitmap.makeDirty();
+        expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+        bitmap.dispose();
+    });
+
+    it("stops keeping the source pixels once the bitmap is tinted one way again", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        bitmap.makeDirty();
+        bitmap.getRgbaCanvas(RED);
+        expect(bitmap.tints.source).toBeDefined();
+        bitmap.makeDirty();
+        bitmap.getRgbaCanvas(RED);
+        expect(bitmap.tints.source).toBeUndefined();
+    });
+
+    it("re-tints at the new size after the surface is resized", () => {
+        const bitmap = whiteBitmap();
+        alternate(bitmap);
+        const canvas = bitmap.getCanvas();
+        canvas.width = 4;
+        canvas.height = 4;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 4, 4);
+        bitmap.makeDirty();
+        const blue = bitmap.getRgbaCanvas(BLUE);
+        expect(blue.width).toBe(4);
+        expect(pixel(blue, 3, 3)).toEqual([0, 0, 255, 255]);
+        const red = bitmap.getRgbaCanvas(RED);
+        expect(red.width).toBe(4);
+        expect(pixel(red, 3, 3)).toEqual([255, 0, 0, 255]);
+    });
+
+    it("repaints an existing copy instead of adding a scratch canvas past the global budget", () => {
+        // Each holds a scratch canvas and its source pixels: 2 x 4M of the 16M budget.
+        const full = [whiteBitmap(2000), whiteBitmap(2000)];
+        for (const bitmap of full) {
+            alternate(bitmap);
+            expect(bitmap.tints.scratch).toBeDefined();
+        }
+        const over = whiteBitmap(2000);
+        alternate(over);
+        expect(over.tints.scratch).toBeUndefined();
+        expect(over.tints.source).toBeUndefined();
+        expect(over.tints.entries.size).toBe(1);
+        expect(pixel(over.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+        expect(pixel(over.getRgbaCanvas(RED))).toEqual([255, 0, 0, 255]);
+        for (const bitmap of [...full, over]) {
+            bitmap.dispose();
+        }
+    });
+});

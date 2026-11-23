@@ -71,6 +71,7 @@ export * from "./components/RoBitmap";
 export * from "./components/AnimatedFrameSource";
 export * from "./components/RoAnimatedImage";
 export * from "./components/RoRegion";
+export { sweepIdleTints } from "./components/TintCache";
 export * from "./components/RoScreen";
 export * from "./components/RoSprite";
 export * from "./components/RoCompositor";
