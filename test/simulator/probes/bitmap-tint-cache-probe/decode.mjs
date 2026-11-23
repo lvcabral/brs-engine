@@ -1,0 +1,32 @@
+// Replaces each px:<png hex>:<raw hex> readout in a probe trace with its pixels as r,g,b,a (joined by ';').
+// The raw GetByteArray bytes are used unless they are all zero (the device reads back zeros; every probe pixel is
+// opaque), else the PNG is decoded.
+// Usage: node decode.mjs <trace.txt>
+import { readFileSync } from "node:fs";
+import pngjs from "pngjs";
+
+function format(data) {
+    const out = [];
+    for (let i = 0; i < data.length; i += 4) {
+        out.push(Array.from(data.subarray(i, i + 4)).join(","));
+    }
+    return out.join(";");
+}
+
+function pixels(pngHex, rawHex) {
+    const raw = Buffer.from(rawHex, "hex");
+    if (raw.some((byte) => byte !== 0)) {
+        return format(raw);
+    }
+    try {
+        return format(pngjs.PNG.sync.read(Buffer.from(pngHex, "hex")).data);
+    } catch (err) {
+        return `png-error(${err.message})`;
+    }
+}
+
+for (const line of readFileSync(process.argv[2], "utf8").split("\n")) {
+    if (line) {
+        console.log(line.replaceAll(/px:([0-9A-Fa-f]*):([0-9A-Fa-f]*)/g, (_, png, raw) => pixels(png, raw)));
+    }
+}

@@ -14,13 +14,13 @@ import {
     drawImageAtPos,
     drawObjectToComponent,
     IfDraw2D,
-    putImageAtPos,
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
 import { IfGetMessagePort, IfSetMessagePort } from "../interfaces/IfMessagePort";
 import { advanceElapsed, AnimatedFrameSource, applyLoadSize, decodeAnimatedContent } from "./AnimatedFrameSource";
 import { RoAnimatedImageEvent } from "../events/RoAnimatedImageEvent";
+import { TintCache } from "./TintCache";
 import { BrsDevice } from "../../device/BrsDevice";
 import { validUri } from "../../device/FileSystem";
 import { download } from "../../interpreter/Network";
@@ -29,25 +29,6 @@ import { download } from "../../interpreter/Network";
 export type AnimatedImageState = "init" | "first" | "decode" | "stop" | "error";
 
 const validTargetStates = new Set(["play", "pause", "loop", "rewind"]);
-
-/**
- * Per-channel `value * multiplier / 255` lookup table for the blend-color multiply in
- * `getRgbaCanvas`, duplicated from `RoBitmap`'s identical table (see `RoBitmap.getRgbaCanvas` for
- * the full rationale/regression history) rather than shared, so `RoBitmap` stays untouched.
- */
-const channelScales = new Map<number, Uint8ClampedArray>();
-
-function channelScale(multiplier: number): Uint8ClampedArray {
-    let table = channelScales.get(multiplier);
-    if (!table) {
-        table = new Uint8ClampedArray(256);
-        for (let value = 0; value < 256; value++) {
-            table[value] = (value * multiplier) / 255;
-        }
-        channelScales.set(multiplier, table);
-    }
-    return table;
-}
 
 let nextIdentity = 1;
 
@@ -63,8 +44,8 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     private alphaEnable: boolean = false;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
-    private rgbaCanvas?: BrsCanvas;
-    private rgbaLast: number = 0;
+    /** Tinted copies of the current frame, made on the first tinted draw. */
+    private tints?: TintCache;
     private frameSource?: AnimatedFrameSource;
     /** True once `setFrameSource`/`renderAtElapsed` (the SceneGraph `AnimatedImage` node's entry
      *  points) has been called — see `refreshFrame`'s doc comment. */
@@ -149,8 +130,9 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         rgba?: number,
         alpha?: number
     ): boolean {
+        const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
         this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
+        return drawn;
     }
 
     getCanvas(): BrsCanvas {
@@ -165,44 +147,12 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
 
     getRgbaCanvas(rgba: number): BrsCanvas {
         this.refreshFrame();
-        if (!this.rgbaCanvas) {
-            this.rgbaCanvas = createNewCanvas(this.canvas.width, this.canvas.height);
-        } else if (!this.rgbaRedraw && rgba === this.rgbaLast) {
-            return this.rgbaCanvas;
-        } else {
-            this.rgbaCanvas.width = this.canvas.width;
-            this.rgbaCanvas.height = this.canvas.height;
+        this.tints ??= new TintCache(this.canvas, this.context);
+        if (this.rgbaRedraw) {
+            this.tints.invalidate();
+            this.rgbaRedraw = false;
         }
-        const ctx = this.rgbaCanvas.getContext("2d", { alpha: true }) as BrsCanvasContext2D;
-        const red = (rgba >> 24) & 0xff;
-        const green = (rgba >> 16) & 0xff;
-        const blue = (rgba >> 8) & 0xff;
-        if (this.canvas.width === 0 || this.canvas.height === 0) {
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else if (red === 255 && green === 255 && blue === 255) {
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else {
-            const source = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            const pixels = source.data;
-            const scaleRed = red === 255 ? undefined : channelScale(red);
-            const scaleGreen = green === 255 ? undefined : channelScale(green);
-            const scaleBlue = blue === 255 ? undefined : channelScale(blue);
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (scaleRed) {
-                    pixels[i] = scaleRed[pixels[i]];
-                }
-                if (scaleGreen) {
-                    pixels[i + 1] = scaleGreen[pixels[i + 1]];
-                }
-                if (scaleBlue) {
-                    pixels[i + 2] = scaleBlue[pixels[i + 2]];
-                }
-            }
-            putImageAtPos(source, ctx, 0, 0);
-        }
-        this.rgbaLast = rgba;
-        this.rgbaRedraw = false;
-        return this.rgbaCanvas;
+        return this.tints.get(rgba);
     }
 
     setCanvasAlpha(enable: boolean) {
@@ -246,9 +196,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     dispose() {
         this.frameSource?.dispose();
         releaseCanvas(this.canvas);
-        if (this.rgbaCanvas) {
-            releaseCanvas(this.rgbaCanvas);
-        }
+        this.tints?.release();
         this.port?.removeReference();
     }
 

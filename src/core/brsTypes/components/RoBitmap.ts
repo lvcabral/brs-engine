@@ -10,9 +10,7 @@ import {
     BrsCanvas,
     BrsCanvasContext2D,
     BrsDraw2D,
-    BrsImageData,
     createNewCanvas,
-    drawImageAtPos,
     drawImageToContext,
     drawObjectToComponent,
     IfDraw2D,
@@ -20,6 +18,7 @@ import {
     releaseCanvas,
     rgbaIntToHex,
 } from "../interfaces/IfDraw2D";
+import { TintCache } from "./TintCache";
 import { BrsDevice } from "../../device/BrsDevice";
 import { DecodedImage, decodeImage, imageMimeType } from "../../device/ImageDecoder";
 import { nextAddress, registerTexture, unregisterTexture } from "../../device/Graphics";
@@ -35,45 +34,6 @@ export interface NinePatch {
     margins: { left: number; right: number; top: number; bottom: number };
 }
 
-/**
- * A 256-entry table mapping a channel value to `value * multiplier / 255`, for the blend-color multiply
- * in `getRgbaCanvas`. Cached per multiplier: a tint is usually stable across frames, and even the first
- * build is cheaper than the per-pixel divides it replaces on anything above icon size.
- */
-const channelScales = new Map<number, Uint8ClampedArray>();
-
-function channelScale(multiplier: number): Uint8ClampedArray {
-    let table = channelScales.get(multiplier);
-    if (!table) {
-        table = new Uint8ClampedArray(256);
-        for (let value = 0; value < 256; value++) {
-            table[value] = (value * multiplier) / 255;
-        }
-        channelScales.set(multiplier, table);
-    }
-    return table;
-}
-
-/**
- * Budget for one bitmap's cached tints. A 3D renderer that fills triangles with one shared texture tints
- * it with a different shade per face, so a cache that held only the last tint re-read and re-multiplied
- * the whole surface on almost every draw (a 400x400 texture with two alternating tints: ~1.2ms a draw,
- * vs ~0.01ms on a Roku Express).
- */
-const TINT_CACHE_MAX_PIXELS = 4_000_000;
-const TINT_CACHE_MAX_ENTRIES = 64;
-/**
- * Only a tint idle for this long is evicted for a new one. When more tints are live than fit, the extras
- * go through a scratch canvas instead: evicting the least recently used one would cycle through the
- * whole cache and never hit when a frame repeats the same sequence of tints.
- */
-const TINT_CACHE_STALE_MS = 1000;
-
-interface TintEntry {
-    canvas: BrsCanvas;
-    lastUsed: number;
-}
-
 export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     readonly kind = ValueKind.Object;
     readonly x: number = 0;
@@ -87,14 +47,9 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private readonly valid: boolean;
     private readonly patchSizes?: NinePatch;
     private alphaEnable: boolean;
-    /** Tinted copies of this bitmap by blend color, all invalidated together when it is drawn into. */
-    private readonly tintCache = new Map<number, TintEntry>();
-    /** Canvases from invalidated tints, reused before new ones are allocated. */
-    private readonly tintFree: BrsCanvas[] = [];
-    /** Holds a tint when the cache is full of recently used ones; overwritten by the next such tint. */
-    private tintScratch?: BrsCanvas;
-    /** This bitmap's pixels, read back once per invalidation rather than once per tint. */
-    private tintSource?: BrsImageData;
+    /** Tinted copies of this bitmap, made on its first tinted draw. */
+    private tints?: TintCache;
+    /** Set when this bitmap is drawn into, so its tinted copies are stale. */
     rgbaRedraw: boolean;
     scaleMode: number;
     readonly address: string = nextAddress();
@@ -188,12 +143,14 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
         rgba?: number,
         alpha?: number
     ): boolean {
+        // Marked after the draw: drawing a region of this bitmap tints this bitmap's pixels first.
+        const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
         this.rgbaRedraw = true;
-        return drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
+        return drawn;
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
-        // Writes into this bitmap (roCompositor's destination), so cached tints and their source are stale.
+        // roCompositor draws its sprites into its destination bitmap through here.
         this.rgbaRedraw = true;
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
@@ -212,115 +169,12 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     getRgbaCanvas(rgba: number): BrsCanvas {
+        this.tints ??= new TintCache(this.canvas, this.context);
         if (this.rgbaRedraw) {
-            for (const entry of this.tintCache.values()) {
-                this.tintFree.push(entry.canvas);
-            }
-            this.tintCache.clear();
-            this.tintSource = undefined;
+            this.tints.invalidate();
             this.rgbaRedraw = false;
         }
-        const now = performance.now();
-        const cached = this.tintCache.get(rgba);
-        if (cached) {
-            cached.lastUsed = now;
-            return cached.canvas;
-        }
-        const canvas = this.claimTintCanvas(rgba, now);
-        this.paintTint(canvas, rgba);
-        return canvas;
-    }
-
-    /**
-     * Picks the canvas a new tint is painted into: a reusable one, a new one while the budget allows,
-     * the stalest entry's once it has gone idle, or else the uncached scratch canvas.
-     */
-    private claimTintCanvas(rgba: number, now: number): BrsCanvas {
-        const { width, height } = this.canvas;
-        const pixels = width * height;
-        const capacity =
-            pixels === 0 ? 0 : Math.min(TINT_CACHE_MAX_ENTRIES, Math.floor(TINT_CACHE_MAX_PIXELS / pixels));
-        let canvas: BrsCanvas | undefined;
-        if (this.tintCache.size < capacity) {
-            canvas = this.tintFree.pop() ?? createNewCanvas(width, height);
-        } else if (capacity > 0) {
-            let stalest: number | undefined;
-            let stalestUsed = now - TINT_CACHE_STALE_MS;
-            for (const [key, entry] of this.tintCache) {
-                if (entry.lastUsed < stalestUsed) {
-                    stalest = key;
-                    stalestUsed = entry.lastUsed;
-                }
-            }
-            if (stalest !== undefined) {
-                canvas = this.tintCache.get(stalest)!.canvas;
-                this.tintCache.delete(stalest);
-            }
-        }
-        if (!canvas) {
-            this.tintScratch ??= createNewCanvas(width, height);
-            return this.tintScratch;
-        }
-        this.tintCache.set(rgba, { canvas, lastUsed: now });
-        return canvas;
-    }
-
-    private paintTint(canvas: BrsCanvas, rgba: number) {
-        if (canvas.width !== this.canvas.width || canvas.height !== this.canvas.height) {
-            canvas.width = this.canvas.width;
-            canvas.height = this.canvas.height;
-        }
-        const ctx = canvas.getContext("2d", {
-            alpha: true,
-        }) as BrsCanvasContext2D;
-        // A per-channel multiply over the UN-PREMULTIPLIED pixels, NOT `globalCompositeOperation =
-        // "multiply"` — canvas's `multiply` is the W3C *blend* formula, which over a semi-transparent
-        // backdrop drags the result toward the tint instead of multiplying by it, so opaque white was not
-        // an identity and a real tint came out lighter than the source. Measured table and derivation:
-        // `.claude/docs/scenegraph-invariants.md`, "Blend colors". Alpha is deliberately untouched:
-        // blendColor's alpha is the blit transparency (globalAlpha), never the tint strength (#935).
-        const red = (rgba >> 24) & 0xff;
-        const green = (rgba >> 16) & 0xff;
-        const blue = (rgba >> 8) & 0xff;
-        if (this.canvas.width === 0 || this.canvas.height === 0) {
-            // `getImageData` THROWS on a 0-wide/0-tall rect, and both a zero-sized bitmap (which
-            // `isValid()` reports true for) and a `dispose()`d one reach here. `drawImageAtPos` no-ops.
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else if (red === 255 && green === 255 && blue === 255) {
-            // Multiplying by white is a mathematical identity — copy, so an all-white tint stays
-            // byte-identical even when a "no blend" sentinel slips past the caller's normalization.
-            // The canvas may hold an older tint, and a copy blends over what is there.
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawImageAtPos(this.canvas, ctx, 0, 0);
-        } else {
-            // Reading the pixels back is the expensive part on a GPU-backed canvas, so it is done once
-            // per change to the bitmap; each tint multiplies into its own copy.
-            this.tintSource ??= this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            const original = this.tintSource;
-            const source = ctx.createImageData(this.canvas.width, this.canvas.height);
-            const pixels = source.data;
-            pixels.set(original.data);
-            // Per-channel lookup tables rather than the multiply inline: 256 entries build in noise even
-            // for a 24x24 icon and the table is byte-identical to `(value * m) / 255` for all 65536
-            // (value, multiplier) pairs, while cutting the arithmetic ~2.3x on a full-screen surface
-            // (2.99ms -> 1.30ms at 1280x720). A channel multiplied by 255 is an identity, so it is left
-            // alone entirely — the common case for a tint that only shifts one or two channels.
-            const scaleRed = red === 255 ? undefined : channelScale(red);
-            const scaleGreen = green === 255 ? undefined : channelScale(green);
-            const scaleBlue = blue === 255 ? undefined : channelScale(blue);
-            for (let i = 0; i < pixels.length; i += 4) {
-                if (scaleRed) {
-                    pixels[i] = scaleRed[pixels[i]];
-                }
-                if (scaleGreen) {
-                    pixels[i + 1] = scaleGreen[pixels[i + 1]];
-                }
-                if (scaleBlue) {
-                    pixels[i + 2] = scaleBlue[pixels[i + 2]];
-                }
-            }
-            putImageAtPos(source, ctx, 0, 0);
-        }
+        return this.tints.get(rgba);
     }
 
     setCanvasAlpha(enable: boolean) {
@@ -361,19 +215,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             unregisterTexture(this);
         }
         releaseCanvas(this.canvas);
-        for (const entry of this.tintCache.values()) {
-            releaseCanvas(entry.canvas);
-        }
-        for (const canvas of this.tintFree) {
-            releaseCanvas(canvas);
-        }
-        if (this.tintScratch) {
-            releaseCanvas(this.tintScratch);
-        }
-        this.tintCache.clear();
-        this.tintFree.length = 0;
-        this.tintScratch = undefined;
-        this.tintSource = undefined;
+        this.tints?.release();
     }
 
     /** Returns the parsed 9-patch layout, or `undefined` for non 9-patch bitmaps. */
