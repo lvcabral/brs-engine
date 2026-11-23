@@ -2482,7 +2482,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
  * @param result The result of executing a statement
  * @returns The result, when it is not a `return`
  */
-function throwIfReturn(result: Stmt.ExecResult): BrsType {
+export function throwIfReturn(result: Stmt.ExecResult): BrsType {
     if (result instanceof Stmt.ReturnValue) {
         throw result;
     }

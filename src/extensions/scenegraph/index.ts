@@ -237,10 +237,19 @@ export class BrightScriptExtension implements BrsExtension {
                         });
                         taskNode.captureCallFuncSnapshot();
                         taskNode.started = true;
-                        funcToCall.call(subInterpreter);
-                        BrsDevice.stdout.write(
-                            `debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`
-                        );
+                        const result = funcToCall.callRaw(subInterpreter);
+                        if (result instanceof Stmt.ReturnValue) {
+                            // The Task function's return value is ignored; returning closes the Task.
+                            BrsDevice.stdout.write(
+                                `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${
+                                    result.value ?? ""
+                                }`
+                            );
+                        } else {
+                            BrsDevice.stdout.write(
+                                `debug,[sg] Task function finished: ${taskData.name} ${functionName} active: ${taskNode.active}`
+                            );
+                        }
                         taskNode.stopTask();
                         taskData.state = TaskState.STOP;
                         postMessage(taskData);
@@ -250,16 +259,7 @@ export class BrightScriptExtension implements BrsExtension {
                     return BrsInvalid.Instance;
                 }, taskEnv);
             } catch (err: any) {
-                if (err instanceof Stmt.ReturnValue) {
-                    // ignore return value from Task function, closing the Task
-                    BrsDevice.stdout.write(
-                        `debug,[sg] Returned from Task function: ${taskData.name} ${functionName} ${err.value ?? ""}`
-                    );
-                    taskNode.stopTask();
-                    taskData.state = TaskState.STOP;
-                    postMessage(taskData);
-                    return;
-                } else if (err instanceof RuntimeError) {
+                if (err instanceof RuntimeError) {
                     interpreter.checkCrashDebug(err);
                 }
                 throw err;
