@@ -1329,10 +1329,10 @@ export function drawObjectToComponent(
     // Resolved and checked BEFORE the tint: a fully transparent blit contributes nothing, and
     // `getCanvasFromDraw2d` would otherwise build a whole tinted canvas — a fresh surface plus a
     // full-surface multiply — to draw with it. Measured at 0.71ms for a cold 300x300 tint, ~4x a real
-    // blit, thrown away. Validity is still reported off the untinted source, which a tint never changes the size of, so the
-    // return value is what it would have been. It must also leave the destination ALONE: on a non-alpha
-    // target the draw loop replaces the rect rather than compositing over it, so drawing a 0-alpha blit
-    // would erase what was there (an `roScreen` defaults to alphaEnable false — a transparent hole in an
+    // blit, thrown away. Validity is still reported off the untinted source, which a tint never changes the
+    // size of, so the return value is what it would have been. It must also leave the destination ALONE: on a
+    // non-alpha target the draw loop replaces the rect rather than compositing over it, so drawing a 0-alpha
+    // blit would erase what was there (an `roScreen` defaults to alphaEnable false — a transparent hole in an
     // opaque screen). Only reachable since alpha 0 started being honored; before that it drew opaque.
     const blitAlpha = alpha ?? blitAlphaOf(rgba);
     if (blitAlpha === 0) {
