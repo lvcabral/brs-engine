@@ -13,7 +13,7 @@ const MAX_ENTRIES = 64;
 const MAX_PIXELS = 4_000_000;
 /**
  * Most pixels held across every surface beyond its first tinted copy: the other copies, the scratch canvas
- * and the kept source pixels. Past it a surface keeps tinting, through its scratch canvas.
+ * and the kept source pixels. Past it a surface repaints a copy it already has for each new tint.
  */
 const GLOBAL_MAX_PIXELS = 16_000_000;
 /** A copy unused this long can be repainted with another tint, and the next sweep releases it. */
@@ -23,7 +23,7 @@ const MISS_MEMORY = 64;
 
 /** Pixels held by every cache beyond its first copy, bounded by `GLOBAL_MAX_PIXELS`. */
 let heldPixels = 0;
-/** Caches holding more than their first copy, which the sweep trims once idle. */
+/** Caches holding more than their first copy, which the sweep trims once idle (see `sweepIdleTints`). */
 const trimmable = new Set<TintCache>();
 let lastSweep = 0;
 
@@ -70,22 +70,28 @@ export class TintCache {
     /** The surface's pixels, kept for a surface tinted several ways so each tint skips the read-back. */
     private source?: BrsImageData;
     private epoch = 0;
+    /** The surface size the copies were painted at. */
+    private width: number;
+    private height: number;
     /** Tints painted from the surface's pixels since it last changed. */
     private paints = 0;
-    /** Whether the surface was painted with two tints between changes; keeps `source` from then on. */
+    /** Whether the surface was painted with two tints before it last changed; keeps `source` if so. */
     private multiTint = false;
     private lastUsed = 0;
     /** This cache's share of `heldPixels`. */
     private held = 0;
 
-    constructor(private readonly surface: BrsCanvas, private readonly context: BrsCanvasContext2D) {}
+    constructor(private readonly surface: BrsCanvas, private readonly context: BrsCanvasContext2D) {
+        this.width = surface.width;
+        this.height = surface.height;
+    }
 
     /** Returns the surface multiplied by `rgba`'s RGB. */
     get(rgba: number): BrsCanvas {
         const now = performance.now();
-        // A clock behind the last sweep was replaced (fake timers), so it sweeps rather than waiting to catch up.
-        if (now - lastSweep >= IDLE_MS || now < lastSweep) {
-            sweep(now);
+        sweepIfDue(now);
+        if (this.surface.width !== this.width || this.surface.height !== this.height) {
+            this.invalidate();
         }
         this.lastUsed = now;
         const key = rgba >>> 8;
@@ -109,11 +115,12 @@ export class TintCache {
     /** Marks every copy stale: the surface's pixels changed. */
     invalidate() {
         this.epoch++;
+        this.multiTint = this.paints > 1;
         this.paints = 0;
-        if (this.source) {
-            this.source = undefined;
-            this.account();
-        }
+        this.width = this.surface.width;
+        this.height = this.surface.height;
+        this.source = undefined;
+        this.account();
     }
 
     /** Releases every canvas the cache holds. */
@@ -129,6 +136,7 @@ export class TintCache {
         }
         this.source = undefined;
         this.account();
+        sweepIfDue(performance.now());
     }
 
     /** Releases copies, the scratch canvas and the kept pixels unused for `IDLE_MS`, keeping the latest copy. */
@@ -160,7 +168,8 @@ export class TintCache {
 
     /**
      * Picks the canvas for a tint that has no copy: the first copy, a stale copy, a new copy while the
-     * budgets allow and the tint was missed before, an idle copy, or else the scratch canvas.
+     * budgets allow and the tint was missed before, an idle copy, the scratch canvas while the global
+     * budget allows it, or else the least recently used copy.
      */
     private claim(key: number, now: number): BrsCanvas {
         const pixels = this.surface.width * this.surface.height;
@@ -181,6 +190,9 @@ export class TintCache {
             return this.rekey(idle, key, now);
         }
         if (!this.scratch) {
+            if (heldPixels + pixels > GLOBAL_MAX_PIXELS) {
+                return this.rekey(this.oldest(() => true)!, key, now);
+            }
             this.scratch = createNewCanvas(this.surface.width, this.surface.height);
             this.account();
         }
@@ -302,7 +314,7 @@ export class TintCache {
         if (this.paints > 1) {
             this.multiTint = true;
         }
-        if (this.source) {
+        if (this.source?.width === width && this.source.height === height) {
             const copy = ctx.createImageData(width, height);
             copy.data.set(this.source.data);
             return copy;
@@ -319,8 +331,22 @@ export class TintCache {
     }
 }
 
-/** Trims every cache holding more than its first copy. */
-function sweep(now: number) {
+/**
+ * Trims idle copies once `IDLE_MS` has passed since the last sweep. Runs on tinted and untinted draws and on
+ * `release`, so copies an app stopped drawing with are freed without waiting for another tint. Costs a set
+ * size check while no cache holds extra copies.
+ */
+export function sweepIdleTints() {
+    if (trimmable.size > 0) {
+        sweepIfDue(performance.now());
+    }
+}
+
+function sweepIfDue(now: number) {
+    // A clock behind the last sweep was replaced (fake timers), so it sweeps rather than waiting to catch up.
+    if (now - lastSweep < IDLE_MS && now >= lastSweep) {
+        return;
+    }
     lastSweep = now;
     for (const cache of trimmable) {
         cache.trim(now);

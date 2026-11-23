@@ -17,6 +17,7 @@ import { numberToHex } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoCompositor } from "../components/RoCompositor";
+import { sweepIdleTints } from "../components/TintCache";
 import { Int32 } from "../Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
 import UPNG from "@lvcabral/upng";
@@ -1133,6 +1134,7 @@ function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
     if (rgba !== undefined && !Number.isNaN(rgba) && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba);
     } else {
+        sweepIdleTints();
         cvs = object.getCanvas();
     }
     return cvs;

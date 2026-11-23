@@ -265,6 +265,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         this.height = source?.height ?? 1;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        this.rgbaRedraw = true;
     }
 
     /**

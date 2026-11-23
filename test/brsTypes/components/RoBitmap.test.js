@@ -377,4 +377,72 @@ describe("RoBitmap tint cache", () => {
         expect(pixel(bitmap.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
         expect(pixel(bitmap.getRgbaCanvas(RED))).toEqual([255, 0, 0, 255]);
     });
+
+    it("frees idle copies on an untinted draw", () => {
+        vi.useFakeTimers({ toFake: ["performance"] });
+        const bitmap = whiteBitmap();
+        for (let i = 0; i < 3; i++) {
+            bitmap.getRgbaCanvas(RED);
+            bitmap.getRgbaCanvas(GREEN);
+        }
+        expect(bitmap.tints.entries.size).toBe(2);
+        vi.advanceTimersByTime(1500);
+        whiteBitmap().drawImage(whiteBitmap(), 0, 0);
+        expect(bitmap.tints.entries.size).toBe(1);
+    });
+
+    it("stops keeping the source pixels once the bitmap is tinted one way again", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        bitmap.makeDirty();
+        bitmap.getRgbaCanvas(RED);
+        expect(bitmap.tints.source).toBeDefined();
+        bitmap.makeDirty();
+        bitmap.getRgbaCanvas(RED);
+        expect(bitmap.tints.source).toBeUndefined();
+    });
+
+    it("re-tints at the new size when the surface is resized without being marked dirty", () => {
+        const bitmap = whiteBitmap();
+        bitmap.getRgbaCanvas(RED);
+        bitmap.getRgbaCanvas(GREEN);
+        const canvas = bitmap.getCanvas();
+        canvas.width = 4;
+        canvas.height = 4;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, 4, 4);
+        const blue = bitmap.getRgbaCanvas(BLUE);
+        expect(blue.width).toBe(4);
+        expect(pixel(blue, 3, 3)).toEqual([0, 0, 255, 255]);
+        const red = bitmap.getRgbaCanvas(RED);
+        expect(red.width).toBe(4);
+        expect(pixel(red, 3, 3)).toEqual([255, 0, 0, 255]);
+    });
+
+    it("repaints an existing copy instead of adding a scratch canvas past the global budget", () => {
+        const alternate = (bitmap) => {
+            for (let i = 0; i < 3; i++) {
+                bitmap.getRgbaCanvas(RED);
+                bitmap.getRgbaCanvas(GREEN);
+            }
+        };
+        // Each holds a scratch canvas and its source pixels: 2 x 4M of the 16M budget.
+        const full = [whiteBitmap(2000), whiteBitmap(2000)];
+        for (const bitmap of full) {
+            alternate(bitmap);
+            expect(bitmap.tints.scratch).toBeDefined();
+        }
+        const over = whiteBitmap(2000);
+        alternate(over);
+        expect(over.tints.scratch).toBeUndefined();
+        expect(over.tints.source).toBeUndefined();
+        expect(over.tints.entries.size).toBe(1);
+        expect(pixel(over.getRgbaCanvas(GREEN))).toEqual([0, 255, 0, 255]);
+        expect(pixel(over.getRgbaCanvas(RED))).toEqual([255, 0, 0, 255]);
+        for (const bitmap of [...full, over]) {
+            bitmap.dispose();
+        }
+    });
 });

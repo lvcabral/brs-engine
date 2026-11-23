@@ -3,7 +3,7 @@
 // opaque), else the PNG is decoded.
 // Usage: node decode.mjs <trace.txt>
 import { readFileSync } from "node:fs";
-import pngjs from "pngjs";
+import UPNG from "@lvcabral/upng";
 
 function format(data) {
     const out = [];
@@ -19,7 +19,9 @@ function pixels(pngHex, rawHex) {
         return format(raw);
     }
     try {
-        return format(pngjs.PNG.sync.read(Buffer.from(pngHex, "hex")).data);
+        const png = Buffer.from(pngHex, "hex");
+        const image = UPNG.decode(png.buffer.slice(png.byteOffset, png.byteOffset + png.byteLength));
+        return format(new Uint8Array(UPNG.toRGBA8(image)[0]));
     } catch (err) {
         return `png-error(${err.message})`;
     }
