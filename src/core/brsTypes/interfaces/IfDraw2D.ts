@@ -17,7 +17,6 @@ import { numberToHex } from "../../common";
 import { Interpreter } from "../../interpreter";
 import { BrsComponent } from "../components/BrsComponent";
 import { RoCompositor } from "../components/RoCompositor";
-import { sweepIdleTints } from "../components/TintCache";
 import { Int32 } from "../Int32";
 import { Canvas, CanvasRenderingContext2D, createCanvas, ImageData as NodeImageData } from "canvas";
 import UPNG from "@lvcabral/upng";
@@ -1090,7 +1089,7 @@ const USE_IMAGE_DATA_WHEN_ALPHA_DISABLED = true;
  * The ONE place that answers "what transparency does this rgba mean", so nothing can disagree about it.
  * Two inputs made that a real bug rather than a tidiness concern: `0x00000000` is a legitimate color
  * whose entire packed value is falsy, so a truthiness guard here painted a fully transparent blend as
- * SOLID BLACK (`RoBitmap.getRgbaCanvas` applies the RGB tint at full strength regardless of alpha,
+ * SOLID BLACK (`TintCache` applies the RGB tint at full strength regardless of alpha,
  * #935, so there is nothing to fall back on); and `NaN` used to mean "no tint" to `getCanvasFromDraw2d`
  * and "alpha 0" to the alpha path, which made a NaN blend color an invisible draw.
  */
@@ -1134,7 +1133,6 @@ function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
     if (rgba !== undefined && !Number.isNaN(rgba) && !(object instanceof RoScreen)) {
         cvs = object.getRgbaCanvas(rgba);
     } else {
-        sweepIdleTints();
         cvs = object.getCanvas();
     }
     return cvs;

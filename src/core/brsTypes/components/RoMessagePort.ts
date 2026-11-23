@@ -6,6 +6,7 @@ import { DebugMode, Interpreter } from "../../interpreter";
 import { Int32 } from "../Int32";
 import { DebugCommand } from "../../common";
 import { BrsDevice } from "../../device/BrsDevice";
+import { sweepIdleTints } from "./TintCache";
 
 /** Sentinel passed as the callback `wait` argument for a non-blocking poll (`GetMessage`/`PeekMessage`).
  *  Distinct from `0`, which by convention (see `wait()` below) means "block indefinitely". */
@@ -124,6 +125,7 @@ export class RoMessagePort extends BrsComponent implements BrsValue {
     /** Lets extensions run work deferred to the message loop, so its events are seen this pass. */
     private runMessageLoopHooks(interpreter: Interpreter) {
         BrsDevice.onMessageLoop();
+        sweepIdleTints();
         for (const ext of interpreter.extensions.values()) {
             ext.onMessageLoop?.(interpreter);
         }

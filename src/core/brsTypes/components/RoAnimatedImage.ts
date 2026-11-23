@@ -40,7 +40,6 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     width: number = 1;
     height: number = 1;
     scaleMode: number = 0;
-    rgbaRedraw: boolean = true;
     private alphaEnable: boolean = false;
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
@@ -117,7 +116,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
             ctx.fillStyle = rgbaIntToHex(rgba);
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
-        this.rgbaRedraw = true;
+        this.makeDirty();
         return BrsInvalid.Instance;
     }
 
@@ -131,7 +130,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         alpha?: number
     ): boolean {
         const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
-        this.rgbaRedraw = true;
+        this.makeDirty();
         return drawn;
     }
 
@@ -148,16 +147,12 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     getRgbaCanvas(rgba: number): BrsCanvas {
         this.refreshFrame();
         this.tints ??= new TintCache(this.canvas, this.context);
-        if (this.rgbaRedraw) {
-            this.tints.invalidate();
-            this.rgbaRedraw = false;
-        }
         return this.tints.get(rgba);
     }
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        this.rgbaRedraw = true;
+        this.makeDirty();
     }
 
     getCanvasAlpha(): boolean {
@@ -169,7 +164,14 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     }
 
     makeDirty() {
-        this.rgbaRedraw = true;
+        this.tints?.markStale();
+    }
+
+    /** Sizes the canvas to `width`x`height`, which clears it. */
+    private resizeCanvas() {
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+        this.makeDirty();
     }
 
     finishDraw(): void {
@@ -247,7 +249,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
     private applyFrame(frameCanvas: BrsCanvas) {
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
         drawImageAtPos(frameCanvas, this.context, 0, 0);
-        this.rgbaRedraw = true;
+        this.makeDirty();
     }
 
     /**
@@ -263,9 +265,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         this.frameSource = source;
         this.width = source?.width ?? 1;
         this.height = source?.height ?? 1;
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
-        this.rgbaRedraw = true;
+        this.resizeCanvas();
     }
 
     /**
@@ -339,8 +339,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
             this.frameSource = frameSource;
             this.width = frameSource.width;
             this.height = frameSource.height;
-            this.canvas.width = this.width;
-            this.canvas.height = this.height;
+            this.resizeCanvas();
             this.valid = true;
             this.state = "first";
             this.pushReadyEvent();
@@ -449,7 +448,7 @@ export class RoAnimatedImage extends BrsComponent implements BrsValue, BrsDraw2D
         impl: (_: Interpreter, translationX: Int32, translationY: Int32) => {
             this.translationX = translationX.getValue();
             this.translationY = translationY.getValue();
-            this.rgbaRedraw = true;
+            this.makeDirty();
             return BrsInvalid.Instance;
         },
     });

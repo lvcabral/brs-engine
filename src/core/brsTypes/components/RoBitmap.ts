@@ -49,8 +49,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     private alphaEnable: boolean;
     /** Tinted copies of this bitmap, made on its first tinted draw. */
     private tints?: TintCache;
-    /** Set when this bitmap is drawn into, so its tinted copies are stale. */
-    rgbaRedraw: boolean;
     scaleMode: number;
     readonly address: string = nextAddress();
     /** Whether Clear()/the draw functions may modify this bitmap (see `roTextureRequest.SetDrawable`). */
@@ -62,7 +60,6 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
      */
     constructor(param: BrsType | ArrayBuffer | Buffer | DecodedImage, name?: string) {
         super("roBitmap");
-        this.rgbaRedraw = true;
         this.scaleMode = 0; // Valid: 0=fast 1=smooth (maybe slow)
         const source = bitmapSource(param, name ?? "");
         this.width = source.width;
@@ -130,7 +127,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
             ctx.fillStyle = rgbaIntToHex(rgba);
             ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
-        this.rgbaRedraw = true;
+        this.makeDirty();
         return BrsInvalid.Instance;
     }
 
@@ -145,13 +142,13 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     ): boolean {
         // Marked after the draw: drawing a region of this bitmap tints this bitmap's pixels first.
         const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
-        this.rgbaRedraw = true;
+        this.makeDirty();
         return drawn;
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         // roCompositor draws its sprites into its destination bitmap through here.
-        this.rgbaRedraw = true;
+        this.makeDirty();
         const ctx = this.context;
         return drawImageToContext(ctx, image, this.alphaEnable, x, y);
     }
@@ -170,16 +167,12 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
 
     getRgbaCanvas(rgba: number): BrsCanvas {
         this.tints ??= new TintCache(this.canvas, this.context);
-        if (this.rgbaRedraw) {
-            this.tints.invalidate();
-            this.rgbaRedraw = false;
-        }
         return this.tints.get(rgba);
     }
 
     setCanvasAlpha(enable: boolean) {
         this.alphaEnable = enable;
-        this.rgbaRedraw = true;
+        this.makeDirty();
     }
 
     getCanvasAlpha(): boolean {
@@ -191,7 +184,7 @@ export class RoBitmap extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     makeDirty() {
-        this.rgbaRedraw = true;
+        this.tints?.markStale();
     }
 
     finishDraw(): void {
