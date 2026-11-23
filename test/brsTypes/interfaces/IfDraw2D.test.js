@@ -312,6 +312,45 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 4, 3, 3)).toEqual([170, 187, 204, 255]);
         });
 
+        // Regression (#1337): roRegion.Clear() must replace the region's pixels like roBitmap.Clear(),
+        // not blend the color over them (a transparent clear used to leave the old content intact).
+        it("roRegion.clear(0) wipes only the region's pixels to transparent", () => {
+            const bmp = makeBitmap(8, 4, true);
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(8),
+                new Int32(4),
+                rgba(0xffffffff)
+            );
+            const rgn = new RoRegion(bmp, new Int32(0), new Int32(0), new Int32(4), new Int32(4));
+            const result = rgn.getMethod("clear").call(interpreter, new Int32(0));
+            expect(result).toBe(BrsBoolean.True);
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 8, 0, 0)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 8, 3, 3)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 8, 4, 0)).toEqual([255, 255, 255, 255]);
+            expect(pixelAt(ctx, 8, 7, 3)).toEqual([255, 255, 255, 255]);
+        });
+
+        it("roRegion.clear with a translucent color replaces, not blends, the region's pixels", () => {
+            const bmp = makeBitmap(4, 4, true);
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(4),
+                new Int32(4),
+                rgba(0xffffffff)
+            );
+            const rgn = new RoRegion(bmp, new Int32(0), new Int32(0), new Int32(4), new Int32(4));
+            rgn.getMethod("clear").call(interpreter, rgba(0xff000080));
+            const [r, g, b, a] = pixelAt(bmp.getContext(), 4, 1, 1);
+            expect([r, g, b]).toEqual([255, 0, 0]);
+            expect(a).toBe(128);
+        });
+
         it("finish is a no-op that returns invalid", () => {
             const bmp = makeBitmap(4, 4, true);
             const result = bmp.getMethod("finish").call(interpreter);

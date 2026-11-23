@@ -169,9 +169,13 @@ export class RoRegion extends BrsComponent implements BrsValue, BrsDraw2D {
     }
 
     clearCanvas(rgba: number) {
+        // Clear replaces the region's pixels (like roBitmap.Clear), it doesn't blend the color over them.
         const ctx = this.bitmap.getContext();
-        ctx.fillStyle = rgbaIntToHex(rgba);
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.clearRect(this.x, this.y, this.width, this.height);
+        if ((rgba & 255) > 0) {
+            ctx.fillStyle = rgbaIntToHex(rgba);
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+        }
         this.bitmap.makeDirty();
     }
 
