@@ -26,7 +26,10 @@ export interface Expression {
      */
     accept<R>(visitor: Visitor<R>): R;
 
-    /** The starting and ending location of the expression. */
+    /**
+     * The starting and ending location of the expression. Nodes spanning several tokens build
+     * it once and cache it, since `evaluate` reads it for every node it visits.
+     */
     location: Location;
 }
 
@@ -37,7 +40,6 @@ export class Binary implements Expression {
         return visitor.visitBinary(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -63,7 +65,6 @@ export class Call implements Expression {
         return visitor.visitCall(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -88,7 +89,6 @@ export class Function implements Expression {
         return visitor.visitAnonymousFunction(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -107,7 +107,6 @@ export class AtSignGet implements Expression {
         return visitor.visitAtSignGet(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -126,7 +125,6 @@ export class DottedGet implements Expression {
         return visitor.visitDottedGet(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -150,7 +148,6 @@ export class IndexedGet implements Expression {
         return visitor.visitIndexedGet(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -175,7 +172,6 @@ export class Grouping implements Expression {
         return visitor.visitGrouping(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -195,19 +191,7 @@ export class Literal implements Expression {
     }
 
     get location() {
-        return (
-            this._location ?? {
-                file: "(internal)",
-                start: {
-                    line: -1,
-                    column: -1,
-                },
-                end: {
-                    line: -1,
-                    column: -1,
-                },
-            }
-        );
+        return this._location ?? Location.internal;
     }
 }
 
@@ -218,7 +202,6 @@ export class ArrayLiteral implements Expression {
         return visitor.visitArrayLiteral(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -245,7 +228,6 @@ export class AALiteral implements Expression {
         return visitor.visitAALiteral(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -264,7 +246,6 @@ export class Unary implements Expression {
         return visitor.visitUnary(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {

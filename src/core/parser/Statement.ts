@@ -42,7 +42,10 @@ export interface Statement {
      */
     accept<R>(visitor: Visitor<R>): BrsType;
 
-    /** The starting and ending location of the expression. */
+    /**
+     * The starting and ending location of the statement. Nodes spanning several tokens build
+     * it once and cache it, since `execute` reads it for every statement it runs.
+     */
     location: Location;
 }
 
@@ -59,7 +62,6 @@ export class Assignment implements Statement {
         return visitor.visitAssignment(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -85,7 +87,6 @@ export class Dim implements Statement {
         return visitor.visitDim(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -188,7 +189,6 @@ export class Function implements Statement {
         return visitor.visitNamedFunction(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -238,12 +238,14 @@ export class If implements Statement {
         }
     }
 
+    private declare cachedLocation?: Location;
     get location() {
-        return {
+        this.cachedLocation ??= {
             file: this.tokens.if.location.file,
             start: this.tokens.if.location.start,
             end: this.getEndLocation().end,
         };
+        return this.cachedLocation;
     }
 }
 
@@ -254,7 +256,6 @@ export class Increment implements Statement {
         return visitor.visitIncrement(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -299,14 +300,14 @@ export class Print implements Statement {
         return visitor.visitPrint(this);
     }
 
+    private declare cachedLocation?: Location;
     get location() {
-        let end = this.expressions.length ? this.expressions.at(-1)!.location.end : this.tokens.print.location.end;
-
-        return {
+        this.cachedLocation ??= {
             file: this.tokens.print.location.file,
             start: this.tokens.print.location.start,
-            end: end,
+            end: (this.expressions.at(-1) ?? this.tokens.print).location.end,
         };
+        return this.cachedLocation;
     }
 }
 
@@ -322,7 +323,6 @@ export class Goto implements Statement {
         return visitor.visitGoto(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -347,7 +347,6 @@ export class Label implements Statement {
         return BrsInvalid.Instance;
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -371,7 +370,6 @@ export class Return implements Statement {
         return visitor.visitReturn(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -394,15 +392,8 @@ export class End implements Statement {
         throw new BlockEnd("end-statement", this.tokens.end.location);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
-    private declare cachedLocation?: Location;
     get location() {
-        this.cachedLocation ??= {
-            file: this.tokens.end.location.file,
-            start: this.tokens.end.location.start,
-            end: this.tokens.end.location.end,
-        };
-        return this.cachedLocation;
+        return this.tokens.end.location;
     }
 }
 
@@ -417,15 +408,8 @@ export class Stop implements Statement {
         return visitor.visitStop(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
-    private declare cachedLocation?: Location;
     get location() {
-        this.cachedLocation ??= {
-            file: this.tokens.stop.location.file,
-            start: this.tokens.stop.location.start,
-            end: this.tokens.stop.location.end,
-        };
-        return this.cachedLocation;
+        return this.tokens.stop.location;
     }
 }
 
@@ -447,7 +431,6 @@ export class For implements Statement {
         return visitor.visitFor(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -475,7 +458,6 @@ export class ForEach implements Statement {
         return visitor.visitForEach(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -501,7 +483,6 @@ export class While implements Statement {
         return visitor.visitWhile(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -520,7 +501,6 @@ export class DottedSet implements Statement {
         return visitor.visitDottedSet(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -544,7 +524,6 @@ export class IndexedSet implements Statement {
         return visitor.visitIndexedSet(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -592,7 +571,6 @@ export class TryCatch implements Statement {
         return visitor.visitTryCatch(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
@@ -616,7 +594,6 @@ export class Throw implements Statement {
         return visitor.visitThrow(this);
     }
 
-    /** Built once: `evaluate`/`execute` read it for every node they visit. */
     private declare cachedLocation?: Location;
     get location() {
         this.cachedLocation ??= {
