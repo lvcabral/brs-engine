@@ -178,8 +178,31 @@ const forwardedDisplayEvents = new Set(["redraw", "resolution", "framePainted", 
  * Sets up display, control, video, sound, and task modules.
  * @param customDeviceInfo Optional partial DeviceInfo to customize device configuration
  * @param options Optional configuration object with flags for debugging, stats, etc.
+ * @returns A promise that resolves once the engine is ready and the load of common.zip (the `common:` volume) has
+ * finished; a failed load is reported as an `error` event rather than a rejection
  */
 export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
+    const init = initializeEngine(customDeviceInfo, options);
+    pendingInit = init;
+    try {
+        await init;
+    } finally {
+        if (pendingInit === init) {
+            pendingInit = undefined;
+        }
+    }
+}
+
+/**
+ * Pending `initialize()`, so an `execute()` called before it settles waits for it.
+ */
+let pendingInit: Promise<void> | undefined;
+/**
+ * Identifies the latest queued `execute()`; bumped by `terminate()` and by each new `execute()` to cancel it.
+ */
+let queuedExecute = 0;
+
+async function initializeEngine(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     if (customDeviceInfo) {
         // Prevent hosting apps to override some device info keys
         const invalidKeys: (keyof DeviceInfo)[] = [
@@ -331,7 +354,7 @@ export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options
     brsWorker = new Worker(brsWrkLib);
     brsWorker.addEventListener("message", mainCallback);
     brsWorker.postMessage("getVersion");
-    updateDeviceAssets();
+    await updateDeviceAssets();
 }
 
 // Observers Handling
@@ -378,6 +401,32 @@ function notifyAll(eventName: string, eventData?: any) {
  * @param deepLink Optional deep link parameters to pass to the app
  */
 export function execute(filePath: string, fileData: any, options: any = {}, deepLink?: Map<string, string>) {
+    const ticket = ++queuedExecute;
+    if (pendingInit) {
+        // A host that didn't await `initialize()` must not start the app with an empty `common:` volume.
+        pendingInit.then(
+            () => {
+                if (ticket !== queuedExecute) {
+                    return;
+                }
+                try {
+                    startApp(filePath, fileData, options, deepLink);
+                } catch (err: any) {
+                    apiException("error", `[api] Error running ${filePath}: ${err.message}`);
+                }
+            },
+            () => {
+                if (ticket === queuedExecute) {
+                    apiException("error", `[api] Not running ${filePath}: engine initialization failed`);
+                }
+            }
+        );
+        return;
+    }
+    startApp(filePath, fileData, options, deepLink);
+}
+
+function startApp(filePath: string, fileData: any, options: any, deepLink?: Map<string, string>) {
     setupCurrentApp(filePath);
     const fileName = filePath.split(/.*[\/|\\]/)[1] ?? filePath;
     const fileExt = filePath.split(".").pop()?.toLowerCase();
@@ -443,6 +492,7 @@ function setupCurrentApp(filePath: string) {
  * @param reason Reason for termination (defaults to Unknown)
  */
 export function terminate(reason: AppExitReason = AppExitReason.Unknown) {
+    queuedExecute++;
     if (currentApp.running) {
         currentApp.running = false;
         currentApp.exitReason = reason;
@@ -770,30 +820,26 @@ function runApp(payload: AppPayload) {
     }
 }
 
+let captionsFonts: Promise<void> | undefined;
+
 /**
- * Loads device assets (common.zip) if not already loaded.
- * Fetches from assets directory and loads caption fonts.
+ * Loads device assets (common.zip), unless the host provided them, then the caption fonts they contain.
  */
-function updateDeviceAssets() {
-    if (deviceData.assets.byteLength) {
-        return;
-    }
-    fetch(`./assets/common.zip?v=${packageInfo.version}`)
-        .then(async function (response) {
-            if (response.status === 200 || response.status === 0) {
-                return response.blob().then(function (zipBlob) {
-                    zipBlob.arrayBuffer().then(function (zipData) {
-                        deviceData.assets = zipData;
-                        loadCaptionsFonts(zipData);
-                    });
-                });
-            } else {
+async function updateDeviceAssets() {
+    if (!deviceData.assets?.byteLength) {
+        try {
+            const response = await fetch(`./assets/common.zip?v=${packageInfo.version}`);
+            if (response.status !== 200 && response.status !== 0) {
                 throw new Error(response.statusText);
             }
-        })
-        .catch((err) => {
+            deviceData.assets = await response.arrayBuffer();
+        } catch (err: any) {
             apiException("error", `[api] Error loading common.zip: ${err.message}`);
-        });
+            return;
+        }
+    }
+    captionsFonts ??= loadCaptionsFonts(deviceData.assets);
+    await captionsFonts;
 }
 
 /**
