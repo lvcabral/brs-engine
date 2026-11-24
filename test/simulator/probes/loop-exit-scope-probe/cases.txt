@@ -1,0 +1,14 @@
+exitfor-outside-loop
+continuefor-outside-loop
+exitwhile-outside-loop
+continuewhile-outside-loop
+exitwhile-in-for
+continuewhile-in-for
+exitfor-in-while
+continuefor-in-while
+exitfor-in-while-in-for
+continuefor-in-while-in-for
+exitwhile-in-for-in-while
+continuewhile-in-for-in-while
+exitfor-in-foreach
+exitfor-in-anon-fn

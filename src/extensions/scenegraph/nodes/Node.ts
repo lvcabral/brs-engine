@@ -22,7 +22,6 @@ import {
     generateArgumentMismatchError,
     Rect,
     IfDraw2D,
-    Stmt,
     Callable,
     Interpreter,
     BrsDevice,
@@ -2270,11 +2269,7 @@ export class Node extends RoSGNode implements BrsValue {
                         interpreter.popFromStack();
                         interpreter.location = originalLocation;
                     }
-                    if (!(reason instanceof Stmt.ReturnValue)) {
-                        // re-throw interpreter errors
-                        throw reason;
-                    }
-                    return reason.value ?? BrsInvalid.Instance;
+                    throw reason;
                 }
             }, this.componentDef.environment);
         }

@@ -26,8 +26,9 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             let done = false;
             while (!done) {
                 try {
-                    for (const statement of func.body.statements) {
-                        interpreter.execute(statement);
+                    const result = interpreter.visitBlock(func.body);
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result;
                     }
                     done = true;
                 } catch (reason: any) {

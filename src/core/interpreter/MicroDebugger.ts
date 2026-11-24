@@ -1,4 +1,4 @@
-import { DebugMode, Interpreter, TracePoint } from ".";
+import { DebugMode, Interpreter, TracePoint, throwIfReturn } from ".";
 import { Lexer, Location } from "../lexer";
 import { Parser } from "../parser";
 import { BrsDevice } from "../device/BrsDevice";
@@ -200,13 +200,13 @@ function runStatement(interpreter: Interpreter, exprStmt: Statement) {
         } else if (exprStmt instanceof Increment) {
             interpreter.visitIncrement(exprStmt);
         } else if (exprStmt instanceof If) {
-            interpreter.visitIf(exprStmt);
+            throwIfReturn(interpreter.visitIf(exprStmt));
         } else if (exprStmt instanceof For) {
-            interpreter.visitFor(exprStmt);
+            throwIfReturn(interpreter.visitFor(exprStmt));
         } else if (exprStmt instanceof ForEach) {
-            interpreter.visitForEach(exprStmt);
+            throwIfReturn(interpreter.visitForEach(exprStmt));
         } else if (exprStmt instanceof While) {
-            interpreter.visitWhile(exprStmt);
+            throwIfReturn(interpreter.visitWhile(exprStmt));
         } else if (exprStmt instanceof Function) {
             interpreter.visitNamedFunction(exprStmt);
         } else {

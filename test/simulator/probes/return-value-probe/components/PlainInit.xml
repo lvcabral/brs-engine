@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="PlainInit" extends="Node">
+<interface><function name="typedFloat"/><function name="typedBool"/></interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    if true then return
+end sub
+function typedFloat() as float
+    return 1
+end function
+function typedBool() as boolean
+    return 1
+end function
+]]></script>
+</component>

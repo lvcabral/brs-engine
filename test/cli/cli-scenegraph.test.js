@@ -1446,6 +1446,25 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Returns the node when a component init() ends on a return, with or without goto", async () => {
+        let command = ["node", brsCliPath, "-r init-return-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-confirmed by test/simulator/probes/return-value-probe.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Init Return Repro ===",
+            "plain init: roSGNode",
+            "goto init: roSGNode",
+            "direct goto return: Float 2",
+            "=== Init Return Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Keeps rendering the scene whatever port roSGScreen.SetMessagePort() is given", async () => {
         let command = ["node", brsCliPath, "-r set-port-invalid-app", "source/main.brs", "-c 0"].join(" ");
 

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="GotoInit" extends="Node">
+<interface><function name="typedFloat"/></interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    if true then
+        goto done
+        print "skipped"
+done:
+        return
+    end if
+end sub
+function typedFloat() as float
+    return 1
+end function
+]]></script>
+</component>

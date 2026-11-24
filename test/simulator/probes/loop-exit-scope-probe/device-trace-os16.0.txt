@@ -1,0 +1,45 @@
+== exitfor-outside-loop
+COMPILE|Exit For is not inside a For loop. (compile error &ha5)|line 10
+== continuefor-outside-loop
+COMPILE|Continue For is not inside a For loop (compile error &h8d)|line 10
+== exitwhile-outside-loop
+COMPILE|Exit While is not inside a While. (compile error &haf)|line 10
+== continuewhile-outside-loop
+COMPILE|Continue While is not inside a While (compile error &h8e)|line 10
+== exitwhile-in-for
+COMPILE|Exit While is not inside a While. (compile error &haf)|line 12
+== continuewhile-in-for
+COMPILE|Continue While is not inside a While (compile error &h8e)|line 12
+== exitfor-in-while
+COMPILE|Exit For is not inside a For loop. (compile error &ha5)|line 14
+== continuefor-in-while
+COMPILE|Continue For is not inside a For loop (compile error &h8d)|line 14
+== exitfor-in-while-in-for
+PROBE|start
+PROBE|i= 1 w= 1
+PROBE|after for
+PROBE|done
+== continuefor-in-while-in-for
+PROBE|start
+PROBE|i= 1 w= 1
+PROBE|i= 2 w= 1
+PROBE|after for
+PROBE|done
+== exitwhile-in-for-in-while
+PROBE|start
+PROBE|w= 1 i= 1
+PROBE|after while
+PROBE|done
+== continuewhile-in-for-in-while
+PROBE|start
+PROBE|w= 1 i= 1
+PROBE|w= 2 i= 1
+PROBE|after while
+PROBE|done
+== exitfor-in-foreach
+PROBE|start
+PROBE|each v= 1
+PROBE|after for each
+PROBE|done
+== exitfor-in-anon-fn
+COMPILE|Exit For is not inside a For loop. (compile error &ha5)|line 12
