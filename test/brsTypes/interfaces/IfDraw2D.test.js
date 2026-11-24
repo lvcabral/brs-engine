@@ -1,5 +1,6 @@
 const brs = require("../../../packages/node/bin/brs.node");
 const UPNG = require("@lvcabral/upng");
+const zlib = require("node:zlib");
 const { createCanvas } = require("canvas");
 const {
     RoBitmap,
@@ -388,6 +389,48 @@ describe("IfDraw2D", () => {
             expect(decoded.height).toBe(4);
             const rgba8 = new Uint8Array(UPNG.toRGBA8(decoded)[0]);
             expect(Array.from(rgba8.slice(0, 4))).toEqual([17, 34, 51, 255]);
+        });
+
+        it("getPng writes a standard PNG: CRC-checked chunks and a zlib IDAT stream", () => {
+            const bmp = makeBitmap(64, 64, true);
+            bmp.getMethod("clear").call(interpreter, rgba(0xff8040ff));
+            for (let i = 1; i < 64; i++) {
+                bmp.getMethod("drawPoint").call(
+                    interpreter,
+                    new Float((i * 37) % 64),
+                    new Float((i * 11) % 64),
+                    new Float(1),
+                    rgba(((i * 0x2f1d3b) << 8) | 0xff)
+                );
+            }
+            for (const [w, h] of [
+                [1, 1],
+                [64, 64],
+            ]) {
+                const png = Buffer.from(
+                    bmp.getMethod("getPng").call(interpreter, new Int32(0), new Int32(0), new Int32(w), new Int32(h))
+                        .elements
+                );
+                expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+                const idat = [];
+                const types = [];
+                let off = 8;
+                while (off < png.length) {
+                    const len = png.readUInt32BE(off);
+                    const type = png.toString("ascii", off + 4, off + 8);
+                    expect(off + 12 + len).toBeLessThanOrEqual(png.length);
+                    expect(png.readUInt32BE(off + 8 + len)).toBe(zlib.crc32(png.subarray(off + 4, off + 8 + len)));
+                    types.push(type);
+                    if (type === "IDAT") {
+                        idat.push(png.subarray(off + 8, off + 8 + len));
+                    }
+                    off += 12 + len;
+                }
+                expect(types.at(-1)).toBe("IEND");
+                expect(() => zlib.inflateSync(Buffer.concat(idat))).not.toThrow();
+                const rgba8 = new Uint8Array(UPNG.toRGBA8(UPNG.decode(png))[0]);
+                expect(Array.from(rgba8.slice(0, 4))).toEqual([255, 128, 64, 255]);
+            }
         });
     });
 
