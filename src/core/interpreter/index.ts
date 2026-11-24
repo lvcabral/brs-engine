@@ -2174,6 +2174,12 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
             throwIfReturn(this.visitBlock(statement.thenBranch));
+            for (const elseIf of statement.elseIfs) {
+                if (this.environment.gotoLabel === "") {
+                    break;
+                }
+                throwIfReturn(this.visitBlock(elseIf.thenBranch));
+            }
             if (this.environment.gotoLabel !== "" && statement.elseBranch) {
                 throwIfReturn(this.visitBlock(statement.elseBranch));
             }

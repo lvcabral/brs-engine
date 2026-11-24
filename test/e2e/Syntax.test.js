@@ -605,6 +605,16 @@ describe("end to end syntax", () => {
         ]);
     });
 
+    test("goto-elseif.brs", async () => {
+        await execute([resourceFile("goto-elseif.brs")], outputStreams);
+        // Device-confirmed (OS 16.0): a label inside an `else if` branch is a valid goto target.
+        expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
+            "returned: found",
+            "second else if, after label",
+            "after if",
+        ]);
+    });
+
     test("goto-func-for.brs", async () => {
         await execute([resourceFile("goto-func-for.brs")], outputStreams);
         expect(allArgs(outputStreams.stdout.write).map((arg) => arg.trimEnd())).toEqual([
