@@ -183,24 +183,20 @@ const forwardedDisplayEvents = new Set(["redraw", "resolution", "framePainted", 
  */
 export async function initialize(customDeviceInfo?: Partial<DeviceInfo>, options: any = {}) {
     const init = initializeEngine(customDeviceInfo, options);
-    const gate = init.then(
-        () => true,
-        () => false
-    );
-    pendingInit = gate;
+    pendingInit = init;
     try {
         await init;
     } finally {
-        if (pendingInit === gate) {
+        if (pendingInit === init) {
             pendingInit = undefined;
         }
     }
 }
 
 /**
- * Pending `initialize()`, so an `execute()` called before it settles waits for it; resolves to whether it succeeded.
+ * Pending `initialize()`, so an `execute()` called before it settles waits for it.
  */
-let pendingInit: Promise<boolean> | undefined;
+let pendingInit: Promise<void> | undefined;
 /**
  * Identifies the latest queued `execute()`; bumped by `terminate()` and by each new `execute()` to cancel it.
  */
@@ -408,19 +404,23 @@ export function execute(filePath: string, fileData: any, options: any = {}, deep
     const ticket = ++queuedExecute;
     if (pendingInit) {
         // A host that didn't await `initialize()` must not start the app with an empty `common:` volume.
-        pendingInit.then((initialized) => {
-            if (ticket !== queuedExecute) {
-                return;
-            } else if (!initialized) {
-                apiException("error", `[api] Not running ${filePath}: engine initialization failed`);
-                return;
+        pendingInit.then(
+            () => {
+                if (ticket !== queuedExecute) {
+                    return;
+                }
+                try {
+                    startApp(filePath, fileData, options, deepLink);
+                } catch (err: any) {
+                    apiException("error", `[api] Error running ${filePath}: ${err.message}`);
+                }
+            },
+            () => {
+                if (ticket === queuedExecute) {
+                    apiException("error", `[api] Not running ${filePath}: engine initialization failed`);
+                }
             }
-            try {
-                startApp(filePath, fileData, options, deepLink);
-            } catch (err: any) {
-                apiException("error", `[api] Error running ${filePath}: ${err.message}`);
-            }
-        });
+        );
         return;
     }
     startApp(filePath, fileData, options, deepLink);
