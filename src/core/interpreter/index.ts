@@ -332,7 +332,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = originalEnvironment;
             return returnValue;
         } catch (err: any) {
-            // A function body hands its `return` back as a value, so no `ReturnValue` is thrown here.
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
@@ -508,8 +507,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
     }
 
     /**
-     * Returns are handed back up through the enclosing blocks as values rather than thrown,
-     * since unwinding an exception through every frame dominated the cost of a call.
+     * Evaluates a `return`, which the enclosing blocks hand back up to the function as a value.
      * @param statement The return statement to execute
      * @returns The value being returned, wrapped with its location
      */
@@ -1163,9 +1161,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._tryMode = true;
             const result = this.visitBlock(statement.tryBlock);
             this._tryMode = tryMode;
-            if (result instanceof Stmt.ReturnValue) {
-                return result;
-            }
+            return result;
         } catch (err: any) {
             this._tryMode = tryMode;
             if (this.inExitMode()) {
@@ -1181,7 +1177,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this.environment.define(Scope.Function, statement.errorBinding.name.text, this.formatErrorVariable(err));
             return this.visitBlock(statement.catchBlock);
         }
-        return BrsInvalid.Instance;
     }
 
     visitThrow(statement: Stmt.Throw): never {
@@ -1533,60 +1528,30 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             return BrsInvalid.Instance;
         }
 
-        if (increment.getValue() > 0) {
-            while (
-                (this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
-                    .greaterThan(finalValue)
-                    .not()
-                    .toBoolean()
-            ) {
-                // execute the block
-                try {
-                    const result = this.execute(statement.body);
-                    if (result instanceof Stmt.ReturnValue) {
-                        return result;
-                    }
-                } catch (reason) {
-                    if (reason instanceof Stmt.ExitForReason) {
-                        break;
-                    } else if (reason instanceof Stmt.ContinueForReason) {
-                        // continue to the next iteration
-                    } else {
-                        // re-throw returns, runtime errors, etc.
-                        throw reason;
-                    }
-                }
-
-                // then increment the counter
-                this.execute(step);
+        const ascending = increment.getValue() > 0;
+        while (true) {
+            const counter = this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float;
+            const pastEnd = ascending ? counter.greaterThan(finalValue) : counter.lessThan(finalValue);
+            if (pastEnd.toBoolean()) {
+                break;
             }
-        } else {
-            while (
-                (this.unboxIfNumber(this.evaluate(new Expr.Variable(counterName))) as Int32 | Float)
-                    .lessThan(finalValue)
-                    .not()
-                    .toBoolean()
-            ) {
-                // execute the block
-                try {
-                    const result = this.execute(statement.body);
-                    if (result instanceof Stmt.ReturnValue) {
-                        return result;
-                    }
-                } catch (reason) {
-                    if (reason instanceof Stmt.ExitForReason) {
-                        break;
-                    } else if (reason instanceof Stmt.ContinueForReason) {
-                        // continue to the next iteration
-                    } else {
-                        // re-throw returns, runtime errors, etc.
-                        throw reason;
-                    }
+            // execute the block
+            try {
+                const result = this.execute(statement.body);
+                if (result instanceof Stmt.ReturnValue) {
+                    return result;
                 }
-
-                // then increment the counter
-                this.execute(step);
+            } catch (reason) {
+                if (reason instanceof Stmt.ExitForReason) {
+                    break;
+                } else if (!(reason instanceof Stmt.ContinueForReason)) {
+                    // re-throw runtime errors, etc.
+                    throw reason;
+                }
             }
+
+            // then increment the counter
+            this.execute(step);
         }
 
         return BrsInvalid.Instance;
@@ -1647,7 +1612,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                     this.environment.continueForEach = index + 1;
                     throw reason;
                 } else {
-                    // re-throw returns, runtime errors, etc.
+                    // re-throw runtime errors, etc.
                     throw reason;
                 }
             }
@@ -1672,7 +1637,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 } else if (reason instanceof Stmt.ContinueWhileReason) {
                     // continue to the next iteration
                 } else {
-                    // re-throw returns, runtime errors, etc.
+                    // re-throw runtime errors, etc.
                     throw reason;
                 }
             }
@@ -2024,7 +1989,7 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                         });
                     }
                     try {
-                        const returnValue = callee.callRaw(this, ...args);
+                        const returnValue = callee.callRaw(this, args);
                         if (callee.isUserDefined()) this.popFromStack();
                         return returnValue;
                     } catch (err: any) {
@@ -2046,7 +2011,6 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 return result;
             } catch (reason: any) {
-                // A function body hands its `return` back as a value, so no `ReturnValue` is thrown here.
                 if (reason instanceof Stmt.BlockEnd && TerminateReasons.includes(reason.message)) {
                     throw new Error(reason.message);
                 } else if (reason instanceof BrsError) {
@@ -2164,31 +2128,34 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
      * @param statement The root statement to start searching from
      * @returns BrsInvalid if no exception is thrown
      */
-    private searchLabel(this: Interpreter, statement: Stmt.Statement) {
+    private searchLabel(this: Interpreter, statement: Stmt.Statement): Stmt.ExecResult {
         if (statement instanceof Stmt.Label) {
             if (statement.tokens.identifier.text.toLowerCase() === this.environment.gotoLabel) {
                 this.environment.gotoLabel = "";
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.If) {
-            throwIfReturn(this.visitBlock(statement.thenBranch));
-            for (const elseIf of statement.elseIfs) {
-                if (this.environment.gotoLabel === "") {
-                    break;
-                }
-                throwIfReturn(this.visitBlock(elseIf.thenBranch));
+            const branches = [statement.thenBranch, ...statement.elseIfs.map((elseIf) => elseIf.thenBranch)];
+            if (statement.elseBranch) {
+                branches.push(statement.elseBranch);
             }
-            if (this.environment.gotoLabel !== "" && statement.elseBranch) {
-                throwIfReturn(this.visitBlock(statement.elseBranch));
+            // Search each branch until the label is found; the rest of that branch then runs.
+            for (const branch of branches) {
+                const result = this.visitBlock(branch);
+                if (result instanceof Stmt.ReturnValue || this.environment.gotoLabel === "") {
+                    return result;
+                }
             }
             return BrsInvalid.Instance;
         } else if (statement instanceof Stmt.TryCatch) {
             // Only search on Catch block, as labels are illegal inside Try block
-            throwIfReturn(this.visitBlock(statement.catchBlock));
-            return BrsInvalid.Instance;
+            return this.visitBlock(statement.catchBlock);
         } else if (statement instanceof Stmt.For || statement instanceof Stmt.ForEach) {
             try {
-                throwIfReturn(this.visitBlock(statement.body));
+                const result = this.visitBlock(statement.body);
+                if (result instanceof Stmt.ReturnValue) {
+                    return result;
+                }
                 this.environment.continueFor = this.environment.gotoLabel === "";
             } catch (reason) {
                 this.environment.continueFor = false;
@@ -2202,7 +2169,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             }
         } else if (statement instanceof Stmt.While) {
             try {
-                throwIfReturn(this.visitBlock(statement.body));
+                const result = this.visitBlock(statement.body);
+                if (result instanceof Stmt.ReturnValue) {
+                    return result;
+                }
             } catch (reason) {
                 if (reason instanceof Stmt.ExitWhileReason) {
                     return BrsInvalid.Instance;

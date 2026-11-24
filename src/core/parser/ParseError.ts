@@ -2,6 +2,11 @@ import { Token, Lexeme } from "../lexer";
 import { BrsError, ErrorDetail, RuntimeErrorDetail } from "../error/BrsError";
 import { numberToHex } from "../common";
 
+/** Formats a compile error as the device reports it, e.g. `Syntax Error. (compile error &h2)`. */
+function compileError(detail: ErrorDetail) {
+    return `${detail.message} (compile error &h${numberToHex(detail.errno)})`;
+}
+
 export class ParseError extends BrsError {
     /**
      * @param token the token where the error occurred
@@ -10,16 +15,13 @@ export class ParseError extends BrsError {
      */
     constructor(token: Token, message: string | ErrorDetail) {
         let m: string;
-        if (typeof message === "string") {
-            const errorDetail = RuntimeErrorDetail.BadSyntax;
-            m = `${errorDetail.message} (compile error &h${numberToHex(errorDetail.errno)}) ${message}`;
-            if (token.kind === Lexeme.Eof) {
-                m = "(At end of file) " + message;
-            }
+        if (typeof message !== "string") {
+            m = compileError(message);
+        } else if (token.kind === Lexeme.Eof) {
+            m = "(At end of file) " + message;
         } else {
-            m = `${message.message} (compile error &h${numberToHex(message.errno)})`;
+            m = `${compileError(RuntimeErrorDetail.BadSyntax)} ${message}`;
         }
-
         super(m, token.location);
     }
 }

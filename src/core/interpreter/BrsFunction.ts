@@ -26,18 +26,13 @@ export function toCallable(func: Expr.Function, name: string = "[Function]") {
             let done = false;
             while (!done) {
                 try {
-                    for (const statement of func.body.statements) {
-                        const result = interpreter.execute(statement);
-                        if (result instanceof Stmt.ReturnValue) {
-                            return result;
-                        }
+                    const result = interpreter.visitBlock(func.body);
+                    if (result instanceof Stmt.ReturnValue) {
+                        return result;
                     }
                     done = true;
                 } catch (reason: any) {
-                    if (reason instanceof Stmt.ReturnValue) {
-                        // A `return` reached after a `goto` label is thrown out of the label search.
-                        return reason;
-                    } else if (reason instanceof Stmt.GotoLabel) {
+                    if (reason instanceof Stmt.GotoLabel) {
                         interpreter.environment.gotoLabel = reason.label.toLowerCase();
                         location = reason.location;
                     } else {

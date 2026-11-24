@@ -197,7 +197,7 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
      * @returns the return value of the function, or `invalid` if nothing is explicitly returned.
      */
     call(interpreter: Interpreter, ...args: Brs.BrsType[]): Brs.BrsType {
-        const result = this.callRaw(interpreter, ...args);
+        const result = this.callRaw(interpreter, args);
         if (result instanceof ReturnValue) {
             return result.value ?? Brs.BrsInvalid.Instance;
         }
@@ -205,13 +205,13 @@ export class Callable implements Brs.BrsValue, Brs.Boxable {
     }
 
     /**
-     * Same as `call`, but a user function that ends on a top-level `return` hands back the
-     * un-thrown `ReturnValue` so the interpreter can validate it against the signature.
+     * Same as `call`, but returns the body's `ReturnValue` unresolved, so the interpreter can
+     * validate it against the signature.
      * @param interpreter the interpreter to execute this callable in.
      * @param args the arguments to pass to the callable routine.
      * @returns the return value, or the `ReturnValue` produced by the function body
      */
-    callRaw(interpreter: Interpreter, ...args: Brs.BrsType[]): Brs.BrsType | ReturnValue {
+    callRaw(interpreter: Interpreter, args: Brs.BrsType[]): Brs.BrsType | ReturnValue {
         let satisfiedSignature = this.getFirstSatisfiedSignature(args);
         if (satisfiedSignature == null) {
             interpreter.addError(generateArgumentMismatchError(this, args, interpreter.location));

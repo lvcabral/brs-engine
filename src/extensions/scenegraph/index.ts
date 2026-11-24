@@ -237,7 +237,7 @@ export class BrightScriptExtension implements BrsExtension {
                         });
                         taskNode.captureCallFuncSnapshot();
                         taskNode.started = true;
-                        const result = funcToCall.callRaw(subInterpreter);
+                        const result = funcToCall.callRaw(subInterpreter, []);
                         if (result instanceof Stmt.ReturnValue) {
                             // The Task function's return value is ignored; returning closes the Task.
                             BrsDevice.stdout.write(

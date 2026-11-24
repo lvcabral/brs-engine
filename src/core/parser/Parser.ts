@@ -142,6 +142,9 @@ const disallowedIdentifiers = new Set(
 
 const bsLibraries = new Map<string, boolean>();
 
+/** The loop kinds that `exit`/`continue` statements refer to: For covers `for each` too. */
+type LoopKind = Lexeme.For | Lexeme.While;
+
 /** The results of a Parser's parsing pass. */
 export interface ParseResults {
     /** The statements produced by the parser. */
@@ -223,10 +226,9 @@ export class Parser {
         //the depth of the calls to function declarations. Helps some checks know if they are at the root or not.
         let functionDeclarationLevel = 0;
 
-        // Enclosing `for`/`for each` and `while` loops of the function being parsed: `exit for` and
+        // Kinds of the loops enclosing the statement being parsed, within its function: `exit for` and
         // `continue for` need some enclosing For loop, `exit while` and `continue while` some While.
-        let forLoopDepth = 0;
-        let whileLoopDepth = 0;
+        let enclosingLoops: LoopKind[] = [];
 
         function isAtRootLevel() {
             return functionDeclarationLevel === 0;
@@ -342,10 +344,8 @@ export class Parser {
         function functionDeclaration(isAnonymous: false): Stmt.Function;
         function functionDeclaration(isAnonymous: boolean) {
             // A function body starts outside any loop, even when it is declared inside one.
-            const outerForLoopDepth = forLoopDepth;
-            const outerWhileLoopDepth = whileLoopDepth;
-            forLoopDepth = 0;
-            whileLoopDepth = 0;
+            const outerLoops = enclosingLoops;
+            enclosingLoops = [];
             try {
                 //certain statements need to know if they are contained within a function body
                 //so track the depth here
@@ -463,8 +463,7 @@ export class Parser {
                 }
             } finally {
                 functionDeclarationLevel--;
-                forLoopDepth = outerForLoopDepth;
-                whileLoopDepth = outerWhileLoopDepth;
+                enclosingLoops = outerLoops;
             }
         }
 
@@ -681,13 +680,7 @@ export class Parser {
             const condition = expression();
 
             checkOrThrow("Expected newline or ':' after 'while ...condition...'", Lexeme.Newline, Lexeme.Colon);
-            whileLoopDepth++;
-            let maybeWhileBlock: ReturnType<typeof block>;
-            try {
-                maybeWhileBlock = block(Lexeme.EndWhile);
-            } finally {
-                whileLoopDepth--;
-            }
+            const maybeWhileBlock = loopBlock(Lexeme.While);
             if (!maybeWhileBlock) {
                 throw addError(peek(), "Expected 'end while' to terminate while-loop block");
             }
@@ -701,7 +694,7 @@ export class Parser {
 
         function continueWhile(): Stmt.ContinueWhile {
             let keyword = advance();
-            if (whileLoopDepth === 0) {
+            if (!enclosingLoops.includes(Lexeme.While)) {
                 addError(keyword, RuntimeErrorDetail.ContinueWhileWithoutWhile);
             }
             checkOrThrow("Expected newline after 'continue while'", Lexeme.Newline);
@@ -710,7 +703,7 @@ export class Parser {
 
         function exitWhile(): Stmt.ExitWhile {
             let keyword = advance();
-            if (whileLoopDepth === 0) {
+            if (!enclosingLoops.includes(Lexeme.While)) {
                 addError(keyword, RuntimeErrorDetail.ExitWhileWithoutWhile);
             }
             checkOrThrow("Expected newline after 'exit while'", Lexeme.Newline);
@@ -737,7 +730,7 @@ export class Parser {
                 countLiteral(Lexeme.Integer, increment.value);
             }
 
-            let maybeBody = forLoopBlock();
+            let maybeBody = loopBlock(Lexeme.For);
             if (!maybeBody) {
                 throw addError(peek(), "Expected 'end for' or 'next' to terminate for-loop block");
             }
@@ -775,7 +768,7 @@ export class Parser {
             }
             advance();
 
-            let maybeBody = forLoopBlock();
+            let maybeBody = loopBlock(Lexeme.For);
             if (!maybeBody) {
                 throw addError(peek(), "Expected 'end for' or 'next' to terminate for-loop block");
             }
@@ -792,18 +785,19 @@ export class Parser {
             );
         }
 
-        function forLoopBlock() {
-            forLoopDepth++;
+        /** Parses a loop body, with the loop counted as enclosing its statements. */
+        function loopBlock(kind: LoopKind) {
+            enclosingLoops.push(kind);
             try {
-                return block(Lexeme.EndFor, Lexeme.Next);
+                return kind === Lexeme.For ? block(Lexeme.EndFor, Lexeme.Next) : block(Lexeme.EndWhile);
             } finally {
-                forLoopDepth--;
+                enclosingLoops.pop();
             }
         }
 
         function continueFor(): Stmt.ContinueFor {
             let keyword = advance();
-            if (forLoopDepth === 0) {
+            if (!enclosingLoops.includes(Lexeme.For)) {
                 addError(keyword, RuntimeErrorDetail.ContinueForWithoutFor);
             }
             checkOrThrow("Expected newline after 'continue for'", Lexeme.Newline);
@@ -812,7 +806,7 @@ export class Parser {
 
         function exitFor(): Stmt.ExitFor {
             let keyword = advance();
-            if (forLoopDepth === 0) {
+            if (!enclosingLoops.includes(Lexeme.For)) {
                 addError(keyword, RuntimeErrorDetail.ExitForWithoutFor);
             }
             checkOrThrow("Expected newline after 'exit for'", Lexeme.Newline);
