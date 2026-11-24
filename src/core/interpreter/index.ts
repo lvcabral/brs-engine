@@ -332,12 +332,10 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
             this._environment = originalEnvironment;
             return returnValue;
         } catch (err: any) {
+            // A function body hands its `return` back as a value, so no `ReturnValue` is thrown here.
             if (!this._tryMode && this.options.stopOnCrash && !(err instanceof Stmt.BlockEnd)) {
                 // Keep environment for Micro Debugger in case of a crash
                 originalEnvironment = this._environment;
-            } else if (err instanceof Stmt.ReturnValue && err.value instanceof BrsComponent) {
-                retValue = err.value;
-                retValue.setReturn(true);
             }
             this._environment = originalEnvironment;
             throw err;
