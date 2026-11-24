@@ -235,9 +235,6 @@ export class Scene extends Group {
                 }
                 interpreter.popFromStack();
                 interpreter.location = originalLocation;
-                if (err instanceof Stmt.ReturnValue) {
-                    return err.value ?? BrsBoolean.False;
-                }
                 throw err;
             }
             return BrsBoolean.False;
