@@ -18,9 +18,8 @@ from before the source was drawn into) shows up as a wrong value.
 
 ## Readout
 
-The device's `GetByteArray` returns all zeros on bitmaps (and `invalid` on `roScreen`), and the engine's `GetPng`
-writes broken palette PNGs for small images. So each readout is `px:<GetPng hex>:<GetByteArray hex>`, and
-`decode.mjs` uses whichever one holds the pixels.
+The device's `GetByteArray` returns all zeros on bitmaps (and `invalid` on `roScreen`), so each readout is
+`px:<GetPng hex>:<GetByteArray hex>`, and `decode.mjs` uses whichever one holds the pixels.
 
 ## Run
 
