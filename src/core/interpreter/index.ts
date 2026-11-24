@@ -2050,20 +2050,17 @@ export class Interpreter implements Expr.Visitor<BrsType>, Stmt.Visitor<BrsType>
                 }
                 return result;
             } catch (reason: any) {
-                if (!(reason instanceof Stmt.BlockEnd)) {
-                    if (reason instanceof BrsError) {
-                        throw reason;
-                    } else if (BrsDevice.isDevMode && reason.message && !TerminateReasons.includes(reason.message)) {
-                        // Expose the Javascript error stack trace on `development` mode
-                        console.error(reason);
-                        throw new Error("");
-                    }
+                // A function body hands its `return` back as a value, so no `ReturnValue` is thrown here.
+                if (reason instanceof Stmt.BlockEnd && TerminateReasons.includes(reason.message)) {
                     throw new Error(reason.message);
-                } else if (TerminateReasons.includes(reason.message)) {
-                    throw new Error(reason.message);
+                } else if (reason instanceof BrsError) {
+                    throw reason;
+                } else if (BrsDevice.isDevMode && reason.message && !TerminateReasons.includes(reason.message)) {
+                    // Expose the Javascript error stack trace on `development` mode
+                    console.error(reason);
+                    throw new Error("");
                 }
-
-                return this.resolveReturn(reason as Stmt.ReturnValue, satisfiedSignature.signature.returns);
+                throw new Error(reason.message);
             }
         } else {
             this.addError(generateArgumentMismatchError(callee, args, location));
