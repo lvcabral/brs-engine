@@ -949,6 +949,37 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Whether a frame would render this node: attached under the scene (or as its current dialog)
+     * with no hidden or fully transparent ancestor. A closed dialog keeps the scene as its parent
+     * without being one of its children, so membership is checked at every step.
+     */
+    isOnDisplay(): boolean {
+        const path = this.createPath(); // [root, ..., this]
+        for (let i = path.length - 1; i > 0; i--) {
+            const node = path[i];
+            if (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0) {
+                return false;
+            }
+            if (sgRoot.isDisplayRoot(node)) {
+                return true;
+            }
+            if (!path[i - 1].children.includes(node)) {
+                return false;
+            }
+        }
+        return sgRoot.isDisplayRoot(path[0]);
+    }
+
+    /** Reports `renderTracking` "none" for every rendered Group in this (detached) subtree. */
+    clearRenderTracking() {
+        for (const child of this.children) {
+            if (child instanceof Node) {
+                child.clearRenderTracking();
+            }
+        }
+    }
+
+    /**
      * Performs a depth-first search to determine if any descendant currently has focus.
      * @returns True when a focused child exists.
      */

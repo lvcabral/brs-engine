@@ -332,6 +332,12 @@ export class SGRoot {
 
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
+
+    /** Set once any node enables render tracking; gates the detach bookkeeping. */
+    renderTrackingUsed: boolean = false;
+
+    /** Subtrees removed from a parent since the last frame (see `flushDetachedTracking`). */
+    private readonly _detachedTracking: Set<Node> = new Set();
     /** `BRS_UI_TRANSITIONS=0`: intrinsic UI transitions start disabled and DeviceInfo cannot enable them. */
     private readonly transitionsEnvDisabled: boolean = false;
 
@@ -500,6 +506,7 @@ export class SGRoot {
     setScene(scene: Scene) {
         this._scene = scene;
         scene.setResolution(this._resolution);
+        this.flushDetachedTracking();
     }
 
     /**
@@ -507,6 +514,8 @@ export class SGRoot {
      * @param dialog Dialog instance to set
      */
     removeDialog(dialog: Dialog | StandardDialog) {
+        // Closed or replaced, it stops rendering: "none" on the next frame (probe case H).
+        this.queueDetachedTracking(dialog);
         if (this._scene?.dialog === dialog) {
             this._scene.dialog = undefined;
         }
@@ -1189,6 +1198,33 @@ export class SGRoot {
      */
     clearDirty() {
         this._dirty = false;
+    }
+
+    /** Whether a traversal rooted at `node` renders to the display (the scene or its dialog). */
+    isDisplayRoot(node: Node): boolean {
+        const scene = this._scene;
+        return scene !== undefined && (node === scene || node === scene.dialog);
+    }
+
+    /** Records a subtree just removed from its parent, for the next frame's tracking update. */
+    queueDetachedTracking(node: Node) {
+        if (this.renderTrackingUsed && !this.inTaskThread()) {
+            this._detachedTracking.add(node);
+        }
+    }
+
+    /**
+     * A tracked node removed from the scene reports "none" on the next frame (device:
+     * render-tracking-detached-probe, case E). A subtree re-attached in the meantime is left to the
+     * paint pass.
+     */
+    flushDetachedTracking() {
+        for (const node of this._detachedTracking) {
+            if (!node.isOnDisplay()) {
+                node.clearRenderTracking();
+            }
+        }
+        this._detachedTracking.clear();
     }
 }
 export const sgRoot: SGRoot = new SGRoot();

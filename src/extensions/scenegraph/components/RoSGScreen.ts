@@ -206,6 +206,8 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
         }
         if (BrsDevice.displayOwner() !== this) {
             this.suspended = true;
+            // Nothing paints while suspended, so settle removed subtrees here rather than hold them.
+            sgRoot.flushDetachedTracking();
             return NO_EVENTS;
         }
         if (this.suspended) {
@@ -251,6 +253,9 @@ export class RoSGScreen extends BrsComponent implements BrsValue, BrsDraw2D, Dis
                         // one bad frame would silently clip every frame after it.
                         this.draw2D.resetClips();
                     }
+                    // After the paint: the device reports this frame's newly rendered nodes before
+                    // the removed ones drop to "none" (probe case H).
+                    sgRoot.flushDetachedTracking();
                 }
                 // Limited FPS enforcement - caps redraw cadence only. Keep polling timers during
                 // the wait so near-zero-duration Timer nodes (e.g. the promise library's

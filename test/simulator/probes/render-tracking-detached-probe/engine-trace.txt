@@ -1,0 +1,88 @@
+PROBE|000|boot|start|
+PROBE|000|boot|device|model=Roku TV os=16.0
+PROBE|task|T|beforeEnable|renderTracking=disabled
+PROBE|task|T|afterEnable|renderTracking=none
+PROBE|task|T|labelLocalRect|w=88 h=24
+PROBE|task|T|afterMeasure|renderTracking=none
+PROBE|001|T|arrived|renderTracking=none enable=true
+PROBE|002|T|beforeAttach|renderTracking=none
+PROBE|003|T|attached|renderTracking=none
+PROBE|004|T|event|renderTracking=full
+PROBE|005|T|settled|renderTracking=full
+PROBE|006|T|removed|renderTracking=full
+PROBE|007|T|event|renderTracking=none
+PROBE|008|T|final|renderTracking=none
+PROBE|009|A|created|renderTracking=none
+PROBE|010|A|labelLocalRect|x=0 y=0 w=91 h=24
+PROBE|011|A|afterMeasure|renderTracking=none
+PROBE|012|B|created|renderTracking=none
+PROBE|013|B|groupRect|x=100 y=100 w=88 h=24
+PROBE|014|B|afterMeasure|renderTracking=none
+PROBE|015|C|created|renderTracking=none
+PROBE|016|C|parentRect|x=100 y=100 w=89 h=24
+PROBE|017|C|afterMeasure|renderTracking=none
+PROBE|018|D|created|renderTracking=none
+PROBE|019|all|beforeAttach|A=none B=none C=none D=none
+PROBE|020|all|attached|A=none B=none C=none D=none
+PROBE|021|A|event|renderTracking=full
+PROBE|022|B|event|renderTracking=full
+PROBE|023|C|event|renderTracking=full
+PROBE|024|D|event|renderTracking=full
+PROBE|025|all|settled|A=full B=full C=full D=full
+PROBE|026|E|removed|renderTracking=full
+PROBE|027|D|event|renderTracking=none
+PROBE|028|E|detachedSettled|renderTracking=none
+PROBE|029|E|groupRect|x=100 y=100 w=90 h=24
+PROBE|030|E|afterMeasure|renderTracking=none
+PROBE|031|E|final|renderTracking=none
+PROBE|032|G|enableEvent|enable=true renderTracking=none
+PROBE|033|G|afterEnable|renderTracking=none
+PROBE|034|G|enableEvent|enable=false renderTracking=disabled
+PROBE|035|G|afterDisable|renderTracking=disabled
+PROBE|036|F|attached|renderTracking=none
+PROBE|037|F|groupRect|x=100 y=100 w=88 h=24
+PROBE|038|F|afterGroupMeasure|renderTracking=none
+PROBE|039|F|labelLocalRect|x=0 y=0 w=88 h=24
+PROBE|040|F|afterLabelMeasure|renderTracking=none
+PROBE|041|F|event|renderTracking=full
+PROBE|042|F|settled|renderTracking=full
+PROBE|043|H1|shown|dialog=none child=none
+PROBE|044|H1_child|event|renderTracking=full
+PROBE|045|H1|event|renderTracking=full
+PROBE|046|H1|settled|dialog=full child=full
+PROBE|047|H1|closeSet|dialog=full child=full
+PROBE|048|H1|event|renderTracking=none
+PROBE|049|H1_child|event|renderTracking=none
+PROBE|050|H1|closed|dialog=none child=none
+PROBE|051|H2_child|event|renderTracking=full
+PROBE|052|H2|event|renderTracking=full
+PROBE|053|H2|settled|dialog=full child=full
+PROBE|054|H2|replacedSync|dialog=full child=full
+PROBE|055|H3_child|event|renderTracking=full
+PROBE|056|H3|event|renderTracking=full
+PROBE|057|H2|event|renderTracking=none
+PROBE|058|H2_child|event|renderTracking=none
+PROBE|059|H2|replaced|dialog=none child=none
+PROBE|060|H3|settled|dialog=full child=full
+PROBE|061|H3|invalidSync|dialog=full child=full
+PROBE|062|H3|event|renderTracking=none
+PROBE|063|H3_child|event|renderTracking=none
+PROBE|064|H3|cleared|dialog=none child=none
+PROBE|065|I_child|event|renderTracking=full
+PROBE|066|I|event|renderTracking=full
+PROBE|067|I|settled|parent=full child=full
+PROBE|068|I|hiddenSync|parent=full child=full
+PROBE|069|I|event|renderTracking=none
+PROBE|070|I_child|event|renderTracking=none
+PROBE|071|I|hidden|parent=none child=none
+PROBE|072|I_child|event|renderTracking=full
+PROBE|073|I|event|renderTracking=full
+PROBE|074|I|shownAgain|parent=full child=full
+PROBE|075|I|fadedSync|parent=full child=full
+PROBE|076|I_child|event|renderTracking=none
+PROBE|077|I|event|renderTracking=none
+PROBE|078|I|faded|parent=none child=none
+PROBE|079|I_child|event|renderTracking=full
+PROBE|080|I|event|renderTracking=full
+PROBE|081|I|final|parent=full child=full
+PROBE|done

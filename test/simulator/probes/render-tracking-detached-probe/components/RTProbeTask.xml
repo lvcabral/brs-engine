@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="RTProbeTask" extends="Task">
+  <script type="text/brightscript" uri="RTProbeTask.brs" />
+  <interface>
+    <field id="result" type="node" />
+  </interface>
+</component>

@@ -264,6 +264,43 @@ set once per traversal root, and mutating it mid-traversal breaks the two-valued
 `LayoutPaintSeam.test.js` pins. A null-object `IfDraw2D` was rejected too — it inverts the whole first
 family, starting with `isDirty`.
 
+### `renderTracking` changes only on painted frames
+
+DEVICE-MEASURED (OS 16.1, `test/simulator/probes/render-tracking-detached-probe`, cases T and A–I):
+`renderTracking` reflects what the last frame drew, and changes only when a frame is painted.
+
+-   **Gate: `sgRoot.renderPass === "paint"`.** `layoutNode` switches it to `"layout"`, so no layout pass
+    tracks: not `boundingRect()` on a detached node (A–C), not one on an attached node before its first
+    frame (F), not the scoped mid-render fallback or `measureUnsizedChildren`. `Group.updateRenderTracking`
+    checks it (`Scene` reuses it through its `renderTrackingStatus` override). Why it matters: a button that measures its label before its
+    owner appends it, then waits for `renderTracking = "full"` to report itself ready, never saw the
+    change once a measurement had already written `"full"`. Consequence: whatever a layout pass used to
+    settle must be settled by paint, which is why the next two rules exist.
+-   **Enabling reports `"none"`, disabling `"disabled"`, immediately, on any thread, BEFORE the
+    `enableRenderTracking` notification** (`Group.setValue` → `applyRenderTrackingEnabled`), so
+    the field's own observers read the new status (G, T). The first painted frame then moves `"none"`
+    to `"full"`/`"partial"`.
+-   **A hidden node's descendants report `"none"` on the next frame (I).** Paint stops at a hidden node,
+    so `Group.trackHiddenSubtree` (end of the `renderNode` template, painted frames only) clears the
+    subtree once per hide (`hiddenTrackingCleared`, re-armed when painted visible). A fully transparent
+    subtree needs nothing: paint degrades to a traversal at opacity 0 and each node reports `"none"`.
+-   **Removal reports `"none"` on the next frame, after that frame's paint (E, H, T).** `Group.removeParent`
+    and `sgRoot.removeDialog` (dialog closed or replaced) queue the subtree; `RoSGScreen` runs
+    `sgRoot.flushDetachedTracking()` after painting (the device reports the frame's new `"full"` before the
+    removed `"none"`), and while SceneGraph is suspended, and `setScene` runs it too. A node still
+    `isOnDisplay()` at flush time is skipped: attached under the scene with no hidden or transparent
+    ancestor, or the current dialog. A closed StandardDialog keeps the scene as its parent without being
+    one of its children, which is why `isOnDisplay` checks membership at every step. Only Groups are
+    queued and reset, so a custom field named `renderTracking` on a plain Node is never touched.
+-   **`sgRoot.renderTrackingUsed`** gates the queue and the hidden-subtree walk. It is set by the
+    enable hook and by `updateRenderTracking`, because a Task-built node reaches render through the
+    Serializer's silent writes and never runs the hook there (T).
+
+**Known difference:** within one frame the device fires a parent's event before its child's (H, I);
+the engine fires the child's first, since tracking is written in `nodeRenderingDone` after the children.
+
+Regression: `test/extensions/scenegraph/RenderTrackingDetached.test.js`.
+
 ## Blend colors: a tint is a MULTIPLY, and "no blend" has five spellings
 
 Two independent defects here **cancelled for the default value only**, which is why neither showed up
