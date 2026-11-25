@@ -159,8 +159,8 @@ export class Scene extends Group {
     }
 
     /** A visible scene always covers the display. */
-    protected renderTrackingStatus(invisible: boolean): string {
-        return invisible ? "none" : "full";
+    protected renderTrackingStatus(): string {
+        return "full";
     }
 
     /** Handle SceneGraph onKeyEvent event */

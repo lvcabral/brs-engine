@@ -1431,15 +1431,15 @@ export class Group extends Node {
         if (enableRenderTracking) {
             // Also covers nodes that enabled tracking on a Task thread and arrived here by copy.
             sgRoot.renderTrackingUsed = true;
-            newStatus = this.renderTrackingStatus(invisible);
+            newStatus = invisible ? "none" : this.renderTrackingStatus();
         }
         if (newStatus !== renderTracking) {
             this.setValue("renderTracking", new BrsString(newStatus));
         }
     }
 
-    /** The status a tracked node reports for this paint. */
-    protected renderTrackingStatus(invisible: boolean): string {
-        return invisible ? "none" : rectContainsRect(this.sceneRect, this.rectToScene);
+    /** The status a tracked node reports when painted visible. */
+    protected renderTrackingStatus(): string {
+        return rectContainsRect(this.sceneRect, this.rectToScene);
     }
 }
