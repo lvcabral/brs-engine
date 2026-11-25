@@ -156,14 +156,17 @@ export class RoScreen extends BrsComponent implements BrsValue, BrsDraw2D, Displ
         rgba?: number,
         alpha?: number
     ): boolean {
-        this.isDirty = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
-        return this.isDirty;
+        // A draw that fails leaves the earlier draws of the frame to be shown.
+        const drawn = drawObjectToComponent(this, object, x, y, scaleX, scaleY, rgba, alpha);
+        this.isDirty ||= drawn;
+        return drawn;
     }
 
     drawImageToContext(image: BrsCanvas, x: number, y: number): boolean {
         const ctx = this.context[this.currentBuffer];
-        this.isDirty = drawImageToContext(ctx, image, this.alphaEnable, x, y);
-        return this.isDirty;
+        const drawn = drawImageToContext(ctx, image, this.alphaEnable, x, y);
+        this.isDirty ||= drawn;
+        return drawn;
     }
 
     setCanvasAlpha(enable: boolean) {

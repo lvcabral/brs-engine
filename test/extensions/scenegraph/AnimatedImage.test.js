@@ -71,6 +71,13 @@ describe("AnimatedImage clock behavior across pass kinds", () => {
         expect(node.getValueJS("error")).toBe("");
     });
 
+    test("shows the first frame before it plays", () => {
+        // Device-checked: test/simulator/probes/animated-image-node-probe ("idle").
+        const node = buildNode();
+        expect(node.getValueJS("state")).toBe("first");
+        expect(paintAndCapturePixel(node)).toEqual([255, 0, 0, 255]);
+    });
+
     test("loads a Lottie file when mimeType is set, uri applied first (imperative write order)", () => {
         const node = SGNodeFactory.createNode("AnimatedImage");
         node.setValue("uri", new BrsString("pkg:/images/lottie.json"));

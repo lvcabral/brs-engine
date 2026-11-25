@@ -158,21 +158,39 @@ describe.concurrent("cli", () => {
         // Proves the roAnimatedImage/ifAnimatedImage surface works end-to-end against a real
         // animated WebP: local pkg: load, ready event (GetMessage/GetInfo), GetWidth/Height,
         // pretranslation, and compatibility as a DrawObject/DrawRotatedObject/DrawScaledObject
-        // source.
+        // source. Then each way SetContent can fail, as on the device.
         let command = ["node", brsCliPath, "--root .", "roAnimatedImage.brs", "-c 0"].join(" ");
 
         let { stdout } = await exec(command, {
             cwd: path.join(__dirname, "resources"),
         });
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
-            "SetContent returned:true",
+            "before content:invalid valid:false size: 0x 0",
+            "play before content:false",
             "ready message:ready",
             "ready id:true",
+            'ready error:""',
             "width: 4",
             "height: 4",
             "pretranslation x:-2",
             "pretranslation y:-2",
+            "loop:true",
             "drew roAnimatedImage via DrawObject/DrawRotatedObject/DrawScaledObject",
+            'content:{"uri":"pkg:/images/missing.webp"}',
+            "  event:failed Unable to open animated image: pkg:/images/missing.webp",
+            "  state:invalid valid:false size: 0x 0 drawn:false play:false",
+            'content:{"uri":"pkg:/roAnimatedImage.brs"}',
+            "  event:failed Unable to detect decoder type from file header: pkg:/roAnimatedImage.brs",
+            "  state:invalid valid:false size: 0x 0 drawn:false play:false",
+            'content:{"mimeType":"image/gif","uri":"pkg:/images/animated.webp"}',
+            "  event:failed Unsupported decoder type 'image/gif' for file: pkg:/images/animated.webp",
+            "  state:invalid valid:false size: 0x 0 drawn:false play:false",
+            'content:{"mimeType":"video/lottie+json","uri":"pkg:/images/animated.webp"}',
+            "  event:ready",
+            "  state:error valid:true size: 0x 0 drawn:true play:true",
+            "content:{}",
+            "  event:none",
+            "  state:invalid valid:false size: 0x 0 drawn:false play:false",
             "------ Finished 'roAnimatedImage.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

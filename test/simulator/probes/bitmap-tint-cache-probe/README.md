@@ -19,15 +19,15 @@ from before the source was drawn into) shows up as a wrong value.
 ## Readout
 
 The device's `GetByteArray` returns all zeros on bitmaps (and `invalid` on `roScreen`), so each readout is
-`px:<GetPng hex>:<GetByteArray hex>`, and `decode.mjs` uses whichever one holds the pixels.
+`px:<GetPng hex>:<GetByteArray hex>`, and `../decode-px.mjs` uses whichever one holds the pixels.
 
 ## Run
 
 ```bash
 ROKU_IP=<ip> ROKU_PASS=<pw> ./run-device.sh     # writes device-trace.txt
 ./run-engine.sh                                 # after npm run build:cli; writes engine-trace.txt
-node decode.mjs device-trace.txt > device-trace-decoded.txt
-node decode.mjs engine-trace.txt > engine-trace-decoded.txt
+node ../decode-px.mjs device-trace.txt > device-trace-decoded.txt
+node ../decode-px.mjs engine-trace.txt > engine-trace-decoded.txt
 diff <(grep -v -e '|time|' -e device-crash device-trace-decoded.txt) <(grep -v '|time|' engine-trace-decoded.txt)
 ```
 
