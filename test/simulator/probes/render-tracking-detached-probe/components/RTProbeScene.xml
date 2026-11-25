@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="RTProbeScene" extends="Scene">
+  <script type="text/brightscript" uri="RTProbeScene.brs" />
+  <children>
+    <Timer id="stepTimer" duration="0.5" repeat="true" />
+  </children>
+</component>

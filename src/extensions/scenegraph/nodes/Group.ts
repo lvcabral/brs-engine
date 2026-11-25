@@ -123,6 +123,8 @@ export class Group extends Node {
     private detached = false;
     /** The origin, angle and scene map a detached node would have drawn under, from its last render. */
     private detachedFrom: { origin: number[]; angle: number; sceneMap: SceneMap } | undefined = undefined;
+    /** Set once a hidden paint has reported "none" through the subtree (`trackHiddenSubtree`). */
+    private hiddenTrackingCleared = false;
     /** @internal Number of non-skipped render passes this node has run; exposed for pruning tests. */
     layoutPassCount = 0;
 
@@ -163,22 +165,58 @@ export class Group extends Node {
     }
 
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind, sync?: boolean) {
-        if (sgRoot.inTaskThread()) {
-            return super.setValue(index, value, alwaysNotify, kind, sync);
-        }
         const mapKey = index.toLowerCase();
-        const field = this.fields.get(mapKey);
-
-        if (field?.getType() === FieldKind.Color && isBrsString(value)) {
-            let strColor = value.getValue();
-            if (strColor.length) {
-                value = new Int32(convertHexColor(strColor));
-            } else {
-                return;
+        if (!sgRoot.inTaskThread()) {
+            const field = this.fields.get(mapKey);
+            if (field?.getType() === FieldKind.Color && isBrsString(value)) {
+                let strColor = value.getValue();
+                if (strColor.length) {
+                    value = new Int32(convertHexColor(strColor));
+                } else {
+                    return;
+                }
             }
+            this.isDirty = true;
         }
-        this.isDirty = true;
-        super.setValue(index, value, alwaysNotify, kind, sync);
+        if (mapKey !== "enablerendertracking") {
+            super.setValue(index, value, alwaysNotify, kind, sync);
+        } else if (value instanceof BrsBoolean) {
+            // Status first, so the field's own observers read the new `renderTracking` (probe case G).
+            this.applyRenderTrackingEnabled(value.toBoolean());
+            super.setValue(index, value, alwaysNotify, kind, sync);
+        } else {
+            super.setValue(index, value, alwaysNotify, kind, sync);
+            this.applyRenderTrackingEnabled(this.getValueJS("enableRenderTracking") === true);
+        }
+    }
+
+    removeParent() {
+        super.removeParent();
+        sgRoot.queueDetachedTracking(this);
+    }
+
+    clearRenderTracking() {
+        const status = this.getValueJS("renderTracking");
+        if (status === "full" || status === "partial") {
+            this.setValue("renderTracking", new BrsString("none"));
+        }
+        super.clearRenderTracking();
+    }
+
+    /**
+     * Enabling tracking reports "none" until the node is rendered, on any thread (device:
+     * render-tracking-detached-probe); disabling reports "disabled" at once, per the reference.
+     */
+    private applyRenderTrackingEnabled(enabled: boolean) {
+        const status = this.getValueJS("renderTracking") as string;
+        if (enabled) {
+            sgRoot.renderTrackingUsed = true;
+            if (status === "disabled") {
+                this.setValue("renderTracking", new BrsString("none"));
+            }
+        } else if (status !== "disabled") {
+            this.setValue("renderTracking", new BrsString("disabled"));
+        }
     }
 
     setValueSilent(fieldName: string, value: BrsType): void {
@@ -1003,12 +1041,30 @@ export class Group extends Node {
         const clipped = draw2D !== undefined && this.isVisible() && this.pushClippingRect(origin, angle, draw2D);
         try {
             this.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
+            this.trackHiddenSubtree(draw2D);
         } finally {
             if (clipped) {
                 draw2D?.popClip();
             }
             sgRoot.paintSuppressed = wasSuppressed;
             this.rederivesBounds = false;
+        }
+    }
+
+    /**
+     * A hidden node's paint stops at the node, so its descendants are never visited to report
+     * "none". The device reports it for them on the next frame (probe case I), so clear the subtree
+     * once when the node is painted hidden, and re-arm once it is painted visible again.
+     */
+    private trackHiddenSubtree(draw2D?: IfDraw2D) {
+        if (!sgRoot.renderTrackingUsed || sgRoot.renderPass !== "paint") {
+            return;
+        }
+        if (this.isVisible()) {
+            this.hiddenTrackingCleared = false;
+        } else if (draw2D !== undefined && !this.hiddenTrackingCleared) {
+            this.hiddenTrackingCleared = true;
+            super.clearRenderTracking();
         }
     }
 
@@ -1361,21 +1417,29 @@ export class Group extends Node {
     }
 
     /**
-     * Runs on layout passes too (not gated on `isPaintPass`): tracking is a deterministic
-     * function of layout state (rects + visibility), the write only fires on a genuine change,
-     * and HiddenMeasure pins that a bounding-rect refresh reports "none" for UI measured under a
-     * hidden ancestor. That keeps layout passes idempotent without freezing tracking between
-     * frames.
+     * Only paint passes track: a bounding-rect refresh or other layout pass leaves `renderTracking`
+     * alone, even for an attached node (render-tracking-detached-probe, cases A-C and F). Writes only
+     * on a genuine change.
      */
     protected updateRenderTracking(invisible: boolean) {
+        if (sgRoot.renderPass !== "paint") {
+            return;
+        }
         const enableRenderTracking = this.getValueJS("enableRenderTracking") as boolean;
         const renderTracking = this.getValueJS("renderTracking") as string;
         let newStatus = "disabled";
         if (enableRenderTracking) {
-            newStatus = invisible ? "none" : rectContainsRect(this.sceneRect, this.rectToScene);
+            // Also covers nodes that enabled tracking on a Task thread and arrived here by copy.
+            sgRoot.renderTrackingUsed = true;
+            newStatus = this.renderTrackingStatus(invisible);
         }
         if (newStatus !== renderTracking) {
             this.setValue("renderTracking", new BrsString(newStatus));
         }
+    }
+
+    /** The status a tracked node reports for this paint. */
+    protected renderTrackingStatus(invisible: boolean): string {
+        return invisible ? "none" : rectContainsRect(this.sceneRect, this.rectToScene);
     }
 }
