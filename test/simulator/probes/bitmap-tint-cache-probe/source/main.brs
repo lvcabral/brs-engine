@@ -1,7 +1,7 @@
 ' Tinted roBitmap draws: every case draws a source tinted onto an opaque black bitmap and prints the pixels, so a
 ' stale tint (pixels from before the source was drawn into) shows as a wrong value. Each readout is
 ' px:<GetPng hex>:<GetByteArray hex>, because the device reads back zeros from GetByteArray and the engine writes
-' broken small PNGs; decode.mjs turns it into r,g,b,a.
+' broken small PNGs; ../decode-px.mjs turns it into r,g,b,a.
 ' Launched with contentId=<case> it runs one self-draw case (drawing a bitmap into itself crashes some of them on
 ' the device, so each gets its own launch); otherwise every other case.
 sub Main(args as object)

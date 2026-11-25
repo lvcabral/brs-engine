@@ -25,6 +25,9 @@ export interface AnimatedFrameSource {
     readonly durationMs: number;
     /** WebP `ANIM` loop_count semantics: 0 = infinite. */
     readonly loopCount: number;
+    /** Must change whenever `renderAt` draws a different frame onto its canvas: consumers re-copy the
+     *  canvas only when it does. */
+    readonly version: number;
     /** Renders (and internally caches) the frame visible at `elapsedMs` since playback start,
      *  returning the canvas it was rendered onto. Re-rendering the same elapsed frame is a no-op. */
     renderAt(elapsedMs: number): BrsCanvas;
@@ -78,6 +81,7 @@ export class WebPFrameSource implements AnimatedFrameSource {
     private readonly context: BrsCanvasContext2D;
     private readonly frameStarts: number[];
     private lastIndex = -1;
+    private frameVersion = 0;
 
     constructor(
         readonly width: number,
@@ -112,7 +116,12 @@ export class WebPFrameSource implements AnimatedFrameSource {
             }
         }
         this.lastIndex = targetIndex;
+        this.frameVersion++;
         return this.canvas;
+    }
+
+    get version(): number {
+        return this.frameVersion;
     }
 
     private frameIndexAt(elapsedMs: number): number {
@@ -169,6 +178,8 @@ class ScaledFrameSource implements AnimatedFrameSource {
     private readonly canvas: BrsCanvas;
     private readonly context: BrsCanvasContext2D;
     private lastElapsedMs = -1;
+    /** The inner source's `version` this canvas was scaled from. */
+    private scaledVersion = -1;
 
     constructor(private readonly inner: AnimatedFrameSource, readonly width: number, readonly height: number) {
         this.durationMs = inner.durationMs;
@@ -182,10 +193,17 @@ class ScaledFrameSource implements AnimatedFrameSource {
             return this.canvas;
         }
         const frame = this.inner.renderAt(elapsedMs);
-        this.context.clearRect(0, 0, this.width, this.height);
-        drawCanvasRegion(this.context, frame, 0, 0, frame.width, frame.height, 0, 0, this.width, this.height);
         this.lastElapsedMs = elapsedMs;
+        if (this.inner.version !== this.scaledVersion) {
+            this.context.clearRect(0, 0, this.width, this.height);
+            drawCanvasRegion(this.context, frame, 0, 0, frame.width, frame.height, 0, 0, this.width, this.height);
+            this.scaledVersion = this.inner.version;
+        }
         return this.canvas;
+    }
+
+    get version(): number {
+        return this.inner.version;
     }
 
     dispose() {
@@ -282,6 +300,7 @@ class LottieFrameSource implements AnimatedFrameSource {
     private readonly context: BrsCanvasContext2D;
     private readonly imageSurface: LottieImageSurface;
     private lastFrame = -1;
+    private frameVersion = 0;
 
     constructor(private readonly anim: LottieAnimation, readonly width: number, readonly height: number) {
         this.durationMs = anim.duration * 1000;
@@ -301,7 +320,12 @@ class LottieFrameSource implements AnimatedFrameSource {
         imageData.data.set(rendered.data);
         putImageAtPos(imageData, this.context, 0, 0);
         this.lastFrame = frame;
+        this.frameVersion++;
         return this.canvas;
+    }
+
+    get version(): number {
+        return this.frameVersion;
     }
 
     dispose() {
@@ -340,11 +364,11 @@ type AnimatedContentType = "webp" | "lottie" | "mp4";
  * (and is registered) as `image/webp`; Roku just repurposes the (usually static-image) `video/`
  * prefix to mean "this is meant to be played as a video-like animation."
  */
-const declaredMimeTypes: Record<string, AnimatedContentType> = {
-    "video/webp": "webp",
-    "video/lottie+json": "lottie",
-    "video/mp4": "mp4",
-};
+const declaredMimeTypes = new Map<string, AnimatedContentType>([
+    ["video/webp", "webp"],
+    ["video/lottie+json", "lottie"],
+    ["video/mp4", "mp4"],
+]);
 
 /**
  * Sniffs the actual content family from the raw bytes — a WebP RIFF container, a Lottie/Bodymovin
@@ -369,6 +393,25 @@ function sniffAnimatedContentType(data: Buffer): AnimatedContentType | undefined
     return text.startsWith("{") || text.startsWith("[") ? "lottie" : undefined;
 }
 
+/** Why `tryDecodeAnimatedContent` produced no frame source. */
+export type AnimatedDecodeError =
+    /** The declared `mimeType` is not one of the documented values, or the format has no decoder here (MP4). */
+    | "unsupported"
+    /** No `mimeType` was given and the content is not a recognized format. */
+    | "undetected"
+    /** The format was chosen, but the content does not decode as it (including a contradicting `mimeType`). */
+    | "undecodable";
+
+export type AnimatedDecodeResult =
+    | { source: AnimatedFrameSource; error?: undefined }
+    | {
+          source?: undefined;
+          error: "unsupported";
+          /** The `mimeType` as given; "video/mp4" for content sniffed as MP4 without one. */
+          mimeType: string;
+      }
+    | { source?: undefined; error: Exclude<AnimatedDecodeError, "unsupported"> };
+
 /**
  * Decodes animated content per `ifAnimatedImage.SetContent`'s `mimeType` contract: "If omitted,
  * the file type is auto-detected." DEVICE-CONFIRMED (real WebP apps never set `mimeType` at all —
@@ -376,35 +419,45 @@ function sniffAnimatedContentType(data: Buffer): AnimatedContentType | undefined
  * authoritative format switch: its own `"video/webp"` value doesn't match the format's real,
  * sniffable MIME (`image/webp`). So:
  * - `mimeType` omitted: the format is auto-detected from the content (`sniffAnimatedContentType`).
- * - `mimeType` given: it is VALIDATED — an unrecognized value, or one that contradicts what the
- *   content actually sniffs as, means the content does not play (returns `undefined`) rather than
- *   guessing. A declared value that can't be checked against an inconclusive sniff (e.g. a
- *   dotLottie ZIP whose contents this decoder doesn't parse further) is trusted and attempted.
+ * - `mimeType` given: an unrecognized value is unsupported; a recognized one is decoded as that
+ *   format, so content that contradicts it does not decode. A dotLottie ZIP, whose contents this
+ *   decoder doesn't parse further, is trusted and attempted.
  */
-export function decodeAnimatedContent(data: Buffer, mimeType: string): AnimatedFrameSource | undefined {
-    const declared = mimeType.trim().toLowerCase();
+export function tryDecodeAnimatedContent(data: Buffer, mimeType: string): AnimatedDecodeResult {
+    const given = mimeType.trim();
+    const declared = given.toLowerCase();
     let contentType: AnimatedContentType | undefined;
     if (declared) {
-        const expected = declaredMimeTypes[declared];
-        if (!expected) {
-            return undefined;
+        contentType = declaredMimeTypes.get(declared);
+        if (!contentType) {
+            return { error: "unsupported", mimeType: given };
         }
         const sniffed = sniffAnimatedContentType(data);
-        if (sniffed !== undefined && sniffed !== expected) {
-            return undefined;
+        if (sniffed !== undefined && sniffed !== contentType) {
+            return { error: "undecodable" };
         }
-        contentType = expected;
     } else {
         contentType = sniffAnimatedContentType(data);
+        if (!contentType) {
+            return { error: "undetected" };
+        }
     }
+    let source: AnimatedFrameSource | undefined;
     switch (contentType) {
         case "webp":
-            return decodeAnimatedWebP(data);
+            source = decodeAnimatedWebP(data);
+            break;
         case "lottie":
-            return decodeLottie(data);
+            source = decodeLottie(data);
+            break;
         default:
-            // "mp4" is a recognized/sniffed mimeType, but this engine has no MP4 decoder; anything
-            // else is genuinely unrecognized content.
-            return undefined;
+            // The engine has no MP4 decoder.
+            return { error: "unsupported", mimeType: given || "video/mp4" };
     }
+    return source ? { source } : { error: "undecodable" };
+}
+
+/** `tryDecodeAnimatedContent`'s frame source, or `undefined` when the content does not play. */
+export function decodeAnimatedContent(data: Buffer, mimeType: string): AnimatedFrameSource | undefined {
+    return tryDecodeAnimatedContent(data, mimeType).source;
 }

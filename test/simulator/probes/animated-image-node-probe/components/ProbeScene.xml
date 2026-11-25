@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+    <script type="text/brightscript" uri="ProbeScene.brs" />
+    <children>
+        <Rectangle width="1280" height="720" color="0x202060FF" />
+        <!-- No uri: without and with width/height. -->
+        <AnimatedImage id="empty" translation="[40, 40]" />
+        <AnimatedImage id="emptySized" translation="[40, 200]" width="100" height="100" />
+        <!-- Loaded, never played: natural size and 100x100. -->
+        <AnimatedImage id="idle" translation="[300, 40]" uri="pkg:/images/anim.webp" />
+        <AnimatedImage id="idleSized" translation="[300, 300]" width="100" height="100" uri="pkg:/images/anim.webp" />
+        <!-- Played once: holds the last frame (cyan). -->
+        <AnimatedImage id="played" translation="[560, 40]" uri="pkg:/images/anim.webp" control="play" />
+        <!-- An empty node between two 50x50 rectangles: the second one's x shows the empty node's width. -->
+        <LayoutGroup id="row" translation="[40, 500]" layoutDirection="horiz" itemSpacings="[10]">
+            <Rectangle id="left" width="50" height="50" color="0xFF0000FF" />
+            <AnimatedImage id="inRow" />
+            <Rectangle id="right" width="50" height="50" color="0x00FF00FF" />
+        </LayoutGroup>
+    </children>
+</component>

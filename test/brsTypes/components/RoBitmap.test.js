@@ -3,6 +3,7 @@ const path = require("path");
 const { createCanvas } = require("canvas");
 const brs = require("../../../packages/node/bin/brs.node");
 const { RoBitmap } = brs.types;
+const { pixel, countReads } = require("../../testUtils/canvas");
 
 describe("RoBitmap 9-patch parsing", () => {
     it("flags non 9-patch bitmaps and returns no patch sizes", () => {
@@ -226,10 +227,6 @@ describe("RoBitmap tint cache", () => {
         return bitmap;
     }
 
-    function pixel(canvas, x = 0, y = 0) {
-        return Array.from(canvas.getContext("2d").getImageData(x, y, 1, 1).data);
-    }
-
     function alternate(bitmap) {
         for (let i = 0; i < 3; i++) {
             bitmap.getRgbaCanvas(RED);
@@ -291,17 +288,6 @@ describe("RoBitmap tint cache", () => {
 
     function region(bitmap, x, y, width, height) {
         return new RoRegion(bitmap, new Int32(x), new Int32(y), new Int32(width), new Int32(height));
-    }
-
-    function countReads(bitmap) {
-        const ctx = bitmap.getContext();
-        const read = ctx.getImageData.bind(ctx);
-        const counter = { reads: 0 };
-        ctx.getImageData = (...args) => {
-            counter.reads++;
-            return read(...args);
-        };
-        return counter;
     }
 
     it("re-tints after a region of the bitmap is drawn tinted into it", () => {

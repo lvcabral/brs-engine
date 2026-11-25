@@ -1,6 +1,6 @@
 #!/bin/zsh
 # Sideloads the probe and runs it once with no case, then once per self-draw case (a launch each, since some of
-# them crash the device). Writes device-trace.txt (decode with decode.mjs) and console-<case>.txt.
+# them crash the device). Writes device-trace.txt (decode with ../decode-px.mjs) and console-<case>.txt.
 # Usage: ROKU_IP=<ip> ROKU_PASS=<pw> ./run-device.sh [case...]
 set -u
 cd "$(dirname "$0")"

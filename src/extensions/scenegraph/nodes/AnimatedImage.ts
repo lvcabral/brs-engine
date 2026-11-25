@@ -69,7 +69,6 @@ export class AnimatedImage extends Group {
     /** Reused purely as the `BrsDraw2D`-compatible current-frame canvas holder that
      *  `doDrawScaledObject`/`doDrawRotatedBitmap`/`doDrawCroppedBitmap` already accept. */
     private readonly drawable = new RoAnimatedImage();
-    private frameSource?: AnimatedFrameSource;
     private playing: boolean = false;
     /** True for control="play" (single-shot, stops once the duration elapses); false for
      *  control="loop". */
@@ -118,8 +117,6 @@ export class AnimatedImage extends Group {
     }
 
     private clearContent() {
-        this.frameSource?.dispose();
-        this.frameSource = undefined;
         this.drawable.setFrameSource(undefined);
         this.playing = false;
         this.elapsedMs = 0;
@@ -156,8 +153,6 @@ export class AnimatedImage extends Group {
             source = applyLoadSize(source, loadWidth, loadHeight);
         }
         this.stateWrites.set("init");
-        this.frameSource?.dispose();
-        this.frameSource = source;
         this.drawable.setFrameSource(source);
         this.elapsedMs = 0;
         this.lastTickTime = this.playing ? sgClock.now() : undefined;
@@ -172,9 +167,8 @@ export class AnimatedImage extends Group {
             super.setValue("error", new BrsString(`Unable to load/decode ${uri}`));
             this.stateWrites.set("error");
         }
-        if (this.playing) {
-            this.drawable.renderAtElapsed(this.elapsedMs);
-        }
+        // Shows the first frame even before it plays (state "first").
+        this.drawable.renderAtElapsed(this.elapsedMs);
     }
 
     private handleControl(control: string) {
@@ -202,7 +196,7 @@ export class AnimatedImage extends Group {
         }
         // Only once content is loaded — an early control write (uri not yet set) must not override
         // the "stop" default; loadContent's own state write accounts for `playing` once it loads.
-        if (this.frameSource) {
+        if (this.drawable.source) {
             this.stateWrites.set(this.playing ? "decode" : "stop");
         }
     }
@@ -268,11 +262,12 @@ export class AnimatedImage extends Group {
         opacity = opacity * this.getOpacity();
         // Advance playback only on a paint pass; a layout pass draws the already-rendered frame
         // without advancing it (isPaintPass invariant, .claude/docs/scenegraph-invariants.md).
-        if (this.playing && this.frameSource && this.isPaintPass(draw2D)) {
+        const source = this.drawable.source;
+        if (this.playing && source && this.isPaintPass(draw2D)) {
             const now = sgClock.now();
             const deltaMs = this.lastTickTime === undefined ? 0 : now - this.lastTickTime;
             this.lastTickTime = now;
-            const advance = advanceElapsed(this.elapsedMs, deltaMs, this.frameSource.durationMs, this.singleShot);
+            const advance = advanceElapsed(this.elapsedMs, deltaMs, source.durationMs, this.singleShot);
             this.elapsedMs = advance.elapsedMs;
             if (advance.completed) {
                 this.playing = false;
@@ -284,7 +279,7 @@ export class AnimatedImage extends Group {
         }
         const bounds = this.contentRect(drawTrans);
         const rect = this.getPivotDrawRect(bounds, angle, scale);
-        if (this.frameSource) {
+        if (source) {
             const mode = (this.getValueJS("loadDisplayMode") as string).trim().toLowerCase();
             if (mode === "scaletofit") {
                 this.drawImage(this.drawable, this.scaleToFit(rect), rotation, opacity, draw2D);

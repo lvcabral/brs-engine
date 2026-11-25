@@ -1,7 +1,7 @@
 // Replaces each px:<png hex>:<raw hex> readout in a probe trace with its pixels as r,g,b,a (joined by ';').
 // The raw GetByteArray bytes are used unless they are all zero (the device reads back zeros; every probe pixel is
 // opaque), else the PNG is decoded.
-// Usage: node decode.mjs <trace.txt>
+// Shared by the Draw2D probes in this folder. Usage: node ../decode-px.mjs <trace.txt> (from a probe folder)
 import { readFileSync } from "node:fs";
 import UPNG from "@lvcabral/upng";
 

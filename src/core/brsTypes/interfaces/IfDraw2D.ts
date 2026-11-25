@@ -1138,6 +1138,11 @@ function getCanvasFromDraw2d(object: BrsDraw2D, rgba?: number): BrsCanvas {
     return cvs;
 }
 
+/** An roAnimatedImage whose content loaded but did not decode: the device reports its draws as done. */
+function loadedWithoutFrame(object: BrsComponent): boolean {
+    return object instanceof RoAnimatedImage && object.loaded;
+}
+
 function isCanvasValid(cvs?: BrsCanvas): boolean {
     if (!cvs) {
         return false;
@@ -1334,11 +1339,11 @@ export function drawObjectToComponent(
     // opaque screen). Only reachable since alpha 0 started being honored; before that it drew opaque.
     const blitAlpha = alpha ?? blitAlphaOf(rgba);
     if (blitAlpha === 0) {
-        return isCanvasValid(object.getCanvas());
+        return isCanvasValid(object.getCanvas()) || loadedWithoutFrame(object);
     }
     const image = getCanvasFromDraw2d(object, rgba);
     if (!isCanvasValid(image)) {
-        return false;
+        return loadedWithoutFrame(object);
     }
     const alphaEnable = component.getCanvasAlpha();
     // `globalAlpha` is PERSISTENT canvas state, and this function is reached from every

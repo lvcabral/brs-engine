@@ -1,7 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 const brs = require("../../../packages/node/bin/brs.node");
-const { applyLoadSize, decodeAnimatedContent, decodeAnimatedWebP, decodeLottie, WebPFrameSource } = brs.types;
+const {
+    applyLoadSize,
+    decodeAnimatedContent,
+    decodeAnimatedWebP,
+    decodeLottie,
+    tryDecodeAnimatedContent,
+    WebPFrameSource,
+} = brs.types;
 
 // 4x4, 3-frame, lossless animated WebP (solid red/green/blue frames, durations 100/150/200ms,
 // full-canvas frames with blend=1) generated with Pillow — see git history for the generator script.
@@ -184,6 +191,9 @@ describe("applyLoadSize", () => {
             height: inner.height,
             durationMs: inner.durationMs,
             loopCount: inner.loopCount,
+            get version() {
+                return inner.version;
+            },
             renderAt: (elapsedMs) => {
                 renderCount++;
                 return inner.renderAt(elapsedMs);
@@ -240,6 +250,23 @@ describe("decodeAnimatedContent", () => {
 
     it("rejects content that doesn't sniff as anything recognized when mimeType is omitted", () => {
         expect(decodeAnimatedContent(Buffer.from("not animated content"), "")).toBeUndefined();
+    });
+
+    it("reports why content does not play, naming the mimeType as given", () => {
+        expect(tryDecodeAnimatedContent(webp(), "Image/GIF")).toEqual({ error: "unsupported", mimeType: "Image/GIF" });
+        // A declared MP4 the content doesn't contradict: the engine has no MP4 decoder.
+        expect(tryDecodeAnimatedContent(Buffer.from("text"), "Video/MP4")).toEqual({
+            error: "unsupported",
+            mimeType: "Video/MP4",
+        });
+        expect(tryDecodeAnimatedContent(webp(), "video/lottie+json")).toEqual({ error: "undecodable" });
+        expect(tryDecodeAnimatedContent(Buffer.from("text"), "")).toEqual({ error: "undetected" });
+    });
+
+    it("does not take names inherited by plain objects for mimeTypes", () => {
+        for (const name of ["constructor", "toString", "__proto__", "hasOwnProperty"]) {
+            expect(tryDecodeAnimatedContent(lottie(), name)).toEqual({ error: "unsupported", mimeType: name });
+        }
     });
 });
 
