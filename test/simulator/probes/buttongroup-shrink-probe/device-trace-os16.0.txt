@@ -1,0 +1,37 @@
+PROBE|set4-immediate|count= 4|children=Button:A,Button:B,Button:C,Button:D|changes=add(0,0) add(1,1) add(2,2) add(3,3)
+PROBE|set4-frame|count= 4|children=Button:A,Button:B,Button:C,Button:D|changes=-
+PROBE|focusD|D.hasFocus=true|bg.buttonFocused= 3
+PROBE|set2-immediate|count= 2|children=Button:A,Button:B|changes=remove(0,3) add(0,0) add(1,1)
+PROBE|removed-immediate|C.parent=invalid|D.parent=invalid|D.hasFocus=false|bg.isInFocusChain=false
+PROBE|identity|child0.isSameA=false|A.parent=invalid|focused=none
+PROBE|set2-frame|count= 2|children=Button:A,Button:B|changes=-
+PROBE|removed-frame|C.parent=invalid|D.parent=invalid|D.hasFocus=false|bg.isInFocusChain=false|bg.buttonFocused= 3
+PROBE|set3-immediate|count= 3|children=Button:X,Button:Y,Button:Z|changes=remove(0,1) add(0,0) add(1,1) add(2,2)
+PROBE|regrow|C.parent=invalid|child2.isSameC=false
+PROBE|set3-frame|count= 3|children=Button:X,Button:Y,Button:Z|changes=-
+PROBE|append-rect|count= 4|children=Button:X,Button:Y,Button:Z,Rectangle|changes=add(3,3)
+PROBE|set1-with-rect-immediate|count= 1|children=Button:X|changes=remove(0,3) add(0,0)
+PROBE|set1-with-rect-frame|count= 1|children=Button:X|changes=-
+PROBE|group-focus|focused=ButtonGroup|bg.buttonFocused= 3
+PROBE|focusButton2|focused=Button:R|bg.buttonFocused= 2
+PROBE|set2-group-focused|count= 2|children=Button:S,Button:T|changes=remove(0,2) add(0,0) add(1,1)
+PROBE|after-replace|focused=none|bg.buttonFocused= 2|bg.hasFocus=false|bg.isInFocusChain=false
+PROBE|after-replace-frame|focused=none|bg.buttonFocused= 2
+PROBE|same-array|count= 2|children=Button:S,Button:T|changes=-
+PROBE|same-array|child0.isSameS=true|focused=none
+PROBE|plain-before|leaf.hasFocus=true|focused=Group
+PROBE|plain-removed|leaf.hasFocus=false|focused=none|holder.isInFocusChain=false
+PROBE|reparent|moved.hasFocus=false|focused=none|first.isInFocusChain=false|second.isInFocusChain=false
+PROBE|replaced|old.hasFocus=false|focused=none|first.isInFocusChain=false
+PROBE|ancestor-removed|twig.hasFocus=false|focused=none|branch.isInFocusChain=false
+PROBE|reparent-same-ancestor|ok=true|inner.hasFocus=false|focused=none|home.isInFocusChain=false|order=sibling,view
+PROBE|reparent-other-ancestor|ok=true|inner.hasFocus=false|focused=none|away.isInFocusChain=false|view.parent=true
+PROBE|reparent-same-focused|ok=true|inner.hasFocus=false|focused=none
+PROBE|reparent-other-focused|ok=true|inner.hasFocus=false|focused=none|home.isInFocusChain=false
+PROBE|mount-created|list.hasFocus=true|focused=none
+PROBE|mount-appended|list.hasFocus=true|focused=none|view.isInFocusChain=false
+PROBE|mount-reparented|list.hasFocus=true|focused=none|view.isInFocusChain=false
+PROBE|mount-view-focus|list.hasFocus=true|view.hasFocus=true|focused=RoutedView
+PROBE|mount2-reparented|list.hasFocus=true|focused=RoutedView
+PROBE|attached-reparented|leaf.hasFocus=false|focused=none
+PROBE|done

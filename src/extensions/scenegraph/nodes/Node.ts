@@ -957,6 +957,18 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Detaches a child leaving this node's children: when it holds the scene's live focus (see
+     * `sgRoot.focusTakenInScene`), the focus goes with it and nothing is focused.
+     */
+    private detachChild(child: Node) {
+        const focused = sgRoot.focused;
+        if (focused instanceof Node && sgRoot.focusTakenInScene && child.isFocusWithin(focused)) {
+            focused.setNodeFocus(false);
+        }
+        child.removeParent();
+    }
+
+    /**
      * Whether a frame would render this node: attached under the scene (or as its current dialog)
      * with no hidden or fully transparent ancestor. A closed dialog keeps the scene as its parent
      * without being one of its children, so membership is checked at every step.
@@ -1329,6 +1341,7 @@ export class Node extends RoSGNode implements BrsValue {
                 }
             }
             if (!this.isFocusable() && this.isChildrenFocused()) {
+                sgRoot.claimFocusForScene(this);
                 return false;
             }
 
@@ -1338,6 +1351,7 @@ export class Node extends RoSGNode implements BrsValue {
                 this.applyNestedFocus(path, staged);
             } else if (this.holdsLiveFocus(path)) {
                 Node.restageChain(sgRoot.focused as Node, staged);
+                sgRoot.claimFocusForScene(this);
             } else {
                 this.applyFocus(path, staged);
             }
@@ -2021,7 +2035,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (child instanceof Node) {
             const spliceIndex = this.children.indexOf(child);
             if (spliceIndex >= 0) {
-                child.removeParent();
+                this.detachChild(child);
                 this.children.splice(spliceIndex, 1);
                 this.recordChildChange("remove", spliceIndex);
                 this.makeDirty();
@@ -2053,7 +2067,7 @@ export class Node extends RoSGNode implements BrsValue {
         if (count > 0 && index >= 0 && index < this.children.length) {
             const removedChildren = this.children.splice(index, count);
             for (const node of removedChildren.filter((n): n is Node => n instanceof Node)) {
-                node.removeParent();
+                this.detachChild(node);
             }
             if (removedChildren.length > 0) {
                 this.recordChildChange("remove", index, index + removedChildren.length - 1);
@@ -2120,7 +2134,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         const oldChild = this.children[index];
         if (oldChild instanceof Node) {
-            oldChild.removeParent();
+            this.detachChild(oldChild);
         }
         this.detachFromCurrentParent(newChild);
         newChild.setNodeParent(this);

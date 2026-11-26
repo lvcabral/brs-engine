@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Focuses itself in init(), before its owner is appended anywhere. -->
+<component name="SelfFocus" extends="Group">
+    <script type="text/brightscript"><![CDATA[
+    sub init()
+        m.top.setFocus(true)
+    end sub
+    ]]></script>
+</component>

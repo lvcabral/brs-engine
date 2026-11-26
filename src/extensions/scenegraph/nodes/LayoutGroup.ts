@@ -15,7 +15,7 @@ import { jsValueOf } from "../factory/Serializer";
 import { sgRoot } from "../SGRoot";
 import { scaledExtent } from "../SGUtil";
 import { Group } from "./Group";
-import { Node } from "./Node";
+import { ChangeOperation, Node } from "./Node";
 
 type LayoutDirection = "horiz" | "vert";
 type HorizontalAlignment = "left" | "center" | "right" | "custom";
@@ -49,7 +49,8 @@ export class LayoutGroup extends Group {
     /** @internal Passes the last layout call ran; exposed for convergence tests. */
     lastPassCount = 0;
     private layoutDirty = true;
-    private metricsUsedThisPass?: WeakMap<Node, LayoutMetrics>;
+    /** Metrics the last `applyLayout` placed each child with; persists across (re-entrant) passes. */
+    private appliedMetrics?: WeakMap<Node, LayoutMetrics>;
     private readonly childSizes = new WeakMap<Node, NodeSize>();
     // Translation applyLayout last assigned to each child. The LayoutGroup owns its children's
     // managed-axis positions, so if a child's translation drifts from this (e.g. an app writes a
@@ -154,20 +155,10 @@ export class LayoutGroup extends Group {
         return LayoutGroup.enumFieldValues.get(fieldName)?.has(normalized) ? normalized : "";
     }
 
-    appendChildToParent(child: BrsType): boolean {
-        const appended = super.appendChildToParent(child);
-        if (appended) {
-            this.layoutDirty = true;
-        }
-        return appended;
-    }
-
-    removeChildByReference(child: BrsType): boolean {
-        const removed = super.removeChildByReference(child);
-        if (removed) {
-            this.layoutDirty = true;
-        }
-        return removed;
+    /** @override Every child-list mutation re-lays out, including a replace or reorder (same count). */
+    protected recordChildChange(operation: ChangeOperation, index1: number, index2?: number) {
+        this.layoutDirty = true;
+        super.recordChildChange(operation, index1, index2);
     }
 
     protected renderNodeContent(
@@ -244,26 +235,28 @@ export class LayoutGroup extends Group {
                   toScene: { ...parentGroup.rectToScene },
               }
             : undefined;
-        this.lastPassCount = 0;
+        // Counted locally: a nested pass (a child observer's mid-render boundingRect() on this group)
+        // writes lastPassCount too, and the outer call must report its own count.
+        let passCount = 0;
         for (let pass = 0; pass < maxPasses; pass++) {
             if (pass > 0 && parentGroup && savedParentRects) {
                 parentGroup.rectLocal = { ...savedParentRects.local };
                 parentGroup.rectToParent = { ...savedParentRects.toParent };
                 parentGroup.rectToScene = { ...savedParentRects.toScene };
             }
-            this.lastPassCount = pass + 1;
-            this.metricsUsedThisPass = undefined;
-            if (layoutChildren.length && this.layoutDirty) {
+            passCount = pass + 1;
+            const appliedThisPass = layoutChildren.length > 0 && this.layoutDirty;
+            if (appliedThisPass) {
                 this.measureUnsizedChildren(layoutChildren, interpreter);
-                this.metricsUsedThisPass = new WeakMap<Node, LayoutMetrics>();
-                this.applyLayout(layoutChildren, direction, spacings, addAfter, this.metricsUsedThisPass);
+                this.appliedMetrics = new WeakMap<Node, LayoutMetrics>();
+                this.applyLayout(layoutChildren, direction, spacings, addAfter, this.appliedMetrics);
                 this.layoutDirty = false;
             }
 
             super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
 
             if (layoutChildren.length) {
-                this.synchronizeChildMetrics(layoutChildren, direction);
+                this.synchronizeChildMetrics(layoutChildren, direction, appliedThisPass);
             }
 
             // Stop once the layout settled (or on a live frame's single pass).
@@ -271,6 +264,7 @@ export class LayoutGroup extends Group {
                 break;
             }
         }
+        this.lastPassCount = passCount;
     }
 
     /**
@@ -456,7 +450,12 @@ export class LayoutGroup extends Group {
         this.layoutHeight = height;
     }
 
-    private synchronizeChildMetrics(children: Group[], direction: LayoutDirection) {
+    /**
+     * Re-dirties the layout when a child no longer matches what `applyLayout` placed: size and
+     * position on the applying pass, size only afterwards, so a child that moves its own content (a
+     * sliding highlight) is not pulled back every frame.
+     */
+    private synchronizeChildMetrics(children: Group[], direction: LayoutDirection, appliedThisPass: boolean) {
         let needsRelayout = false;
         for (const child of children) {
             const actualMetrics = this.measureChild(child, direction);
@@ -465,7 +464,7 @@ export class LayoutGroup extends Group {
                     ? { width: actualMetrics.primary, height: actualMetrics.cross }
                     : { width: actualMetrics.cross, height: actualMetrics.primary };
             const previousSize = this.childSizes.get(child);
-            const expected = this.metricsUsedThisPass?.get(child);
+            const expected = this.appliedMetrics?.get(child);
 
             this.childSizes.set(child, actualSize);
 
@@ -473,7 +472,7 @@ export class LayoutGroup extends Group {
                 needsRelayout = true;
             }
 
-            if (expected && !this.metricsClose(expected, actualMetrics)) {
+            if (expected && !this.metricsClose(expected, actualMetrics, appliedThisPass)) {
                 needsRelayout = true;
             }
         }
@@ -482,8 +481,6 @@ export class LayoutGroup extends Group {
             this.layoutDirty = true;
             this.isDirty = true;
         }
-
-        this.metricsUsedThisPass = undefined;
     }
 
     private measureChild(
@@ -776,12 +773,12 @@ export class LayoutGroup extends Group {
         return Math.abs((a || 0) - (b || 0)) <= this.epsilon;
     }
 
-    private metricsClose(a: LayoutMetrics, b: LayoutMetrics) {
+    private metricsClose(a: LayoutMetrics, b: LayoutMetrics, comparePositions: boolean) {
         return (
             this.nearlyEqual(a.primary, b.primary) &&
             this.nearlyEqual(a.cross, b.cross) &&
-            this.nearlyEqual(a.crossStart, b.crossStart) &&
-            this.nearlyEqual(a.primaryStart, b.primaryStart)
+            (!comparePositions ||
+                (this.nearlyEqual(a.crossStart, b.crossStart) && this.nearlyEqual(a.primaryStart, b.primaryStart)))
         );
     }
 

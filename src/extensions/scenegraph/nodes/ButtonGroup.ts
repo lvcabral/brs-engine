@@ -20,6 +20,7 @@ import { Font } from "./Font";
 import { Label } from "./Label";
 import { Group } from "./Group";
 import { LayoutGroup } from "./LayoutGroup";
+import { Node } from "./Node";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -99,15 +100,41 @@ export class ButtonGroup extends LayoutGroup {
                 // button. Otherwise refreshFocus would snap focusIndex back to the still-focused
                 // previous button and navigation would appear stuck.
                 const target = this.children[newIndex];
-                if (this.hasKeyFocus() && target instanceof RoSGNode && sgRoot.focused !== target) {
-                    sgRoot.setFocused(target);
+                if (this.hasKeyFocus() && target instanceof Node && sgRoot.focused !== target) {
+                    target.setNodeFocus(true);
                 }
             }
         }
+        const replacesButtons =
+            fieldName === "buttons" && value instanceof RoArray && !this.isCurrentButtons(jsValueOf(value) as string[]);
         super.setValue(index, value, alwaysNotify, kind);
-        if (fieldName === "buttons" && value instanceof RoArray) {
+        if (replacesButtons) {
+            // DEVICE-MEASURED (buttongroup-shrink-probe): a different array removes every child, custom
+            // ones included, and creates a new Button per entry. The same array changes nothing.
+            this.removeChildrenAtIndex(0, this.children.length);
             this.refreshButtons();
             this.refreshFocus();
+        } else if (fieldName === "focusedchild") {
+            this.followFocusedButton(value);
+        }
+    }
+
+    /** Whether `buttons` already holds exactly these texts. */
+    protected isCurrentButtons(next: string[]): boolean {
+        const current = jsValueOf(this.getValue("buttons")) as string[] | undefined;
+        return Array.isArray(current) && current.length === next.length && current.every((b, i) => b === next[i]);
+    }
+
+    /** A managed Button gaining focus moves `buttonFocused` to it at once (buttongroup-shrink-probe). */
+    private followFocusedButton(value: BrsType) {
+        if (!(value instanceof Button)) {
+            return;
+        }
+        const index = this.children.indexOf(value);
+        if (index >= 0 && index !== this.focusIndex) {
+            this.focusIndex = index;
+            super.setValue("buttonFocused", new Int32(index));
+            this.isDirty = true;
         }
     }
 
@@ -227,7 +254,7 @@ export class ButtonGroup extends LayoutGroup {
         if (!buttons?.length) {
             return;
         }
-        const buttonsCount = Math.max(buttons.length, this.children.length);
+        const buttonsCount = buttons.length;
         const buttonHeight = this.getValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, Font.drawFontOf(this.getValue("focusedTextFont")));
         for (let i = 0; i < buttonsCount; i++) {
@@ -266,12 +293,6 @@ export class ButtonGroup extends LayoutGroup {
                 break;
             }
         }
-        // Drop only surplus managed Buttons beyond the `buttons` array — never custom children.
-        for (let i = this.children.length - 1; i >= buttons.length; i--) {
-            if (this.children[i] instanceof Button) {
-                this.children.splice(i, 1);
-            }
-        }
     }
 
     private createButton(): Button {
@@ -305,12 +326,7 @@ export class ButtonGroup extends LayoutGroup {
         ) {
             // A managed button was focused directly (e.g. by app code): follow it instead of
             // stealing focus back to the previously focused index.
-            const index = this.children.indexOf(focusedNode);
-            if (index !== this.focusIndex) {
-                this.focusIndex = index;
-                super.setValue("buttonFocused", new Int32(index));
-                this.isDirty = true;
-            }
+            this.followFocusedButton(focusedNode);
             this.wasFocused = true;
         } else if (this.wasFocused) {
             this.wasFocused = false;

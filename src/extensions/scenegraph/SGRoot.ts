@@ -45,6 +45,7 @@ export class SGRoot {
     private _screen?: RoSGScreen;
     private _scene?: Scene;
     private _focused?: RoSGNode;
+    private _focusTakenInScene = false;
     private _chainOwner?: RoSGNode;
     private _chainExtension?: RoSGNode;
     private _lastFocusTarget?: RoSGNode;
@@ -528,9 +529,34 @@ export class SGRoot {
      */
     setFocused(node?: RoSGNode) {
         this._focused = node;
+        this._focusTakenInScene = node !== undefined && this.isUnderScene(node);
         if (!node) {
             this.setChainOwner();
         }
+    }
+
+    /**
+     * Whether the live focus was taken while its node was under the scene. A focus taken inside a
+     * still-detached tree (an `init()` focusing itself) is not the scene's, and the device keeps it
+     * when that tree is mounted or reparented (see `Node.detachChild`).
+     */
+    get focusTakenInScene(): boolean {
+        return this._focusTakenInScene;
+    }
+
+    /**
+     * A `setFocus(true)` that keeps the live focus where it is (on an ancestor of the focused node)
+     * still claims it for the scene when made under the scene: on the device that call focuses the
+     * mounted view, so a later removal of the view drops the focus.
+     */
+    claimFocusForScene(node: RoSGNode) {
+        if (this.isUnderScene(node)) {
+            this._focusTakenInScene = true;
+        }
+    }
+
+    private isUnderScene(node: RoSGNode): boolean {
+        return this._scene?.isFocusWithin(node) ?? false;
     }
 
     /**

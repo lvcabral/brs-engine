@@ -238,3 +238,81 @@ describe("ButtonGroup with managed Button children", () => {
         expect(group.getNodeChildren().includes(sgRoot.focused)).toBe(false);
     });
 });
+
+/**
+ * Setting `buttons` on a device (OS 16.0, test/simulator/probes/buttongroup-shrink-probe): a different
+ * array removes every child, custom ones included, and creates a new Button per entry; the same
+ * array changes nothing. A focused button that goes takes the focus with it.
+ */
+describe("ButtonGroup buttons replacement", () => {
+    beforeAll(() => {
+        const commonZip = fs.readFileSync(path.join(__dirname, "../../../packages/scenegraph/assets/common.zip"));
+        BrsDevice.fileSystem.setup(commonZip.buffer, new ArrayBuffer(1024 * 1024), new ArrayBuffer(1024 * 1024));
+    });
+
+    afterEach(() => {
+        sgRoot.setFocused();
+    });
+
+    const strings = (...texts) => new RoArray(texts.map((t) => new BrsString(t)));
+    const texts = (group) => group.getNodeChildren().map((c) => c.getValueJS("text") ?? c.nodeSubtype);
+
+    test("a different array replaces every child with new Buttons and detaches the old ones", () => {
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        group.setValue("buttons", strings("A", "B", "C", "D"));
+        const [a, , c] = group.getNodeChildren();
+        const rect = SGNodeFactory.createNode("Rectangle");
+        group.appendChildToParent(rect);
+
+        group.setValue("buttons", strings("A", "B"));
+
+        expect(texts(group)).toEqual(["A", "B"]);
+        expect(group.getNodeChildren()[0]).not.toBe(a);
+        for (const removed of [a, c, rect]) {
+            expect(removed.getNodeParent()).toBe(core.BrsInvalid.Instance);
+        }
+    });
+
+    test("the same array keeps the existing Buttons", () => {
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        group.setValue("buttons", strings("S", "T"));
+        const [s] = group.getNodeChildren();
+
+        group.setValue("buttons", strings("S", "T"));
+
+        expect(group.getNodeChildren()[0]).toBe(s);
+    });
+
+    test("removing the focused Button leaves nothing focused and keeps buttonFocused", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        scene.setInitState("initialized");
+        sgRoot.setScene(scene);
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        scene.appendChildToParent(group);
+        group.setValue("buttons", strings("A", "B", "C", "D"));
+        const d = group.getNodeChildren()[3];
+        d.setNodeFocus(true);
+        expect(group.getValueJS("buttonFocused")).toBe(3);
+
+        group.setValue("buttons", strings("A", "B"));
+
+        expect(sgRoot.focused).toBeUndefined();
+        expect(core.isInvalid(group.getValue("focusedChild"))).toBe(true);
+        expect(core.isInvalid(scene.getValue("focusedChild"))).toBe(true);
+        expect(group.getValueJS("buttonFocused")).toBe(3);
+    });
+
+    test("focusButton on a focused group moves the focus chain, not only the live focus", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        const group = SGNodeFactory.createNode("ButtonGroup");
+        scene.appendChildToParent(group);
+        group.setValue("buttons", strings("P", "Q", "R"));
+        group.setNodeFocus(true);
+
+        group.setValue("focusButton", new Int32(2));
+
+        const r = group.getNodeChildren()[2];
+        expect(sgRoot.focused).toBe(r);
+        expect(group.getValue("focusedChild")).toBe(r);
+    });
+});

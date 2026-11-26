@@ -1895,6 +1895,28 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("LayoutGroup re-lays out a child that grew during a boundingRect() query made mid-paint", async () => {
+        let command = ["node", brsCliPath, "-r layoutgroup-reentrant-measure-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Buttons size themselves on their first painted "full", and the group centers itself with
+        // boundingRect() from that observer, re-entering its own render: both buttons must be laid
+        // out at their grown widths, and the centering query must report the full row.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== LayoutGroup Re-entrant Measure Repro ===",
+            "centering width =  590",
+            "first x =  0",
+            "second x =  320",
+            "group x =  665",
+            "=== LayoutGroup Re-entrant Measure Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("a custom component shadows a built-in node type of the same name", async () => {
         let command = ["node", brsCliPath, "-r shadow-builtin-app", "source/main.brs", "-c 0"].join(" ");
 

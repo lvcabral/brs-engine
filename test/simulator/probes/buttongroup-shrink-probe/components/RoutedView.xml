@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A routed view whose list takes focus in its own init(), like a profile picker. -->
+<component name="RoutedView" extends="Group">
+    <children>
+        <SelfFocus id="list" />
+    </children>
+</component>
