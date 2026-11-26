@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.7.2"></a>
+
+## [v2.7.2 - Faster Calls and Tints, Observer Loops and Shadowed Components](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.2) - 25 November 2026
+
+This patch release makes call-heavy and tint-heavy code much faster and fixes several behaviors found in production apps, most of them checked against a real Roku device with a probe app under `test/simulator/probes/`. In the **core engine**, `return`, `exit`, `continue` and `goto` no longer capture a JavaScript stack trace, and `return` is handed back as a value instead of thrown, so 200k function calls now run close to device speed (from ~780ms to ~210ms in the Desktop Simulator, against ~180ms on a Roku Express). An `roBitmap` keeps up to 64 tinted copies instead of one, so drawing the same bitmap in alternating colors no longer re-tints it on every draw, and a tinted `roAnimatedImage` reuses its tinted frames until the frame changes. `roAnimatedImage` now exposes the device's interface and states, `roRegion.Clear()` replaces the region's pixels instead of blending over them, and `GetPng()` writes PNGs that other decoders accept. In the browser API, `initialize()` now resolves only after `common.zip` has loaded. In the **SceneGraph** extension, a channel component named like a built-in node type (e.g. `ButtonGroup`) now shadows the built-in as on a device, `renderTracking` changes only when a frame is painted, and two loops that ran a production app out of memory are fixed: an observer that re-registered itself during dispatch, and a list re-assigning `itemContent` on every frame. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (brs) Cut per-call overhead: `return`/`exit`/`continue`/`goto` no longer capture a JS stack trace and node locations are memoized, and a `try` block's location now starts at `try` by [@markwpearce](https://github.com/markwpearce) in [#1335](https://github.com/lvcabral/brs-engine/pull/1335)
+* (brs) `return` is now passed back as a value instead of thrown, bringing function and method calls close to device speed by [@markwpearce](https://github.com/markwpearce) in [#1336](https://github.com/lvcabral/brs-engine/pull/1336)
+* (draw2d) `roBitmap` now caches several tinted copies, so drawing it with alternating colors no longer re-tints the whole bitmap each time by [@markwpearce](https://github.com/markwpearce) in [#1334](https://github.com/lvcabral/brs-engine/pull/1334)
+* (draw2d) `roRegion.Clear()` now replaces the region's pixels instead of blending over them, so `Clear(0)` clears to transparent by [@markwpearce](https://github.com/markwpearce) in [#1342](https://github.com/lvcabral/brs-engine/pull/1342)
+* (draw2d) A tinted `roAnimatedImage` now reuses its tinted frames, and its interface, states and error events match the device by [@lvcabral](https://github.com/lvcabral) in [#1345](https://github.com/lvcabral/brs-engine/pull/1345)
+* (draw2d) `GetPng()` now writes standard PNGs that libpng and other decoders accept, by upgrading `@lvcabral/upng` to 2.4.0 by [@lvcabral](https://github.com/lvcabral) in [#1343](https://github.com/lvcabral/brs-engine/pull/1343)
+* (api) `initialize()` now waits for `common.zip` before resolving, and an `execute()` made during initialization waits for it by [@lvcabral](https://github.com/lvcabral) in [#1344](https://github.com/lvcabral/brs-engine/pull/1344)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.7.2)
+
+* (rsg) A channel component now shadows a built-in node type of the same name, as on the device by [@larsmaultsby](https://github.com/larsmaultsby) in [#1333](https://github.com/lvcabral/brs-engine/pull/1333)
+* (rsg) `renderTracking` now changes only when a frame is painted, as on the device by [@lvcabral](https://github.com/lvcabral) in [#1346](https://github.com/lvcabral/brs-engine/pull/1346)
+* (rsg) Fixed two loops that ran a production app out of memory: a field change runs only the observers registered when it started, and lists re-assign `itemContent` only when the content really changed by [@lvcabral](https://github.com/lvcabral) in [#1347](https://github.com/lvcabral/brs-engine/pull/1347)
+* (rsg) An `AnimatedImage` node that loaded but never played shows its first frame, and one without content measures 0x0 by [@lvcabral](https://github.com/lvcabral) in [#1345](https://github.com/lvcabral/brs-engine/pull/1345)
+
+#### Chores, Build and Dependencies
+
+* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.2 by [@lvcabral](https://github.com/lvcabral) in [#1348](https://github.com/lvcabral/brs-engine/pull/1348)
+
+### New Contributors
+
+* @larsmaultsby made their first contribution in [#1333](https://github.com/lvcabral/brs-engine/pull/1333) - welcome to the project!
+
+[Full Changelog][v2.7.2]
+
 <a name="v2.7.1"></a>
 
 ## [v2.7.1 - Screen Lifecycle, Message Ports and ISO 8601 Dates](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.1) - 19 November 2026
@@ -2065,6 +2100,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.7.2]: https://github.com/lvcabral/brs-engine/compare/v2.7.1...v2.7.2
 [v2.7.1]: https://github.com/lvcabral/brs-engine/compare/v2.7.0...v2.7.1
 [v2.7.0]: https://github.com/lvcabral/brs-engine/compare/v2.6.2...v2.7.0
 [v2.6.2]: https://github.com/lvcabral/brs-engine/compare/v2.6.1...v2.6.2
