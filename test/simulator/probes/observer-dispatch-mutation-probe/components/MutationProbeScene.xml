@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="MutationProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+        <field id="f1" type="integer" alwaysNotify="true" />
+        <field id="f2" type="integer" alwaysNotify="true" />
+        <field id="f3" type="integer" alwaysNotify="true" />
+        <field id="f4" type="integer" alwaysNotify="true" />
+        <field id="f5" type="integer" alwaysNotify="true" />
+        <field id="f6" type="integer" alwaysNotify="true" />
+        <field id="f7" type="integer" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript" uri="MutationProbeScene.brs" />
+    <children>
+        <Timer id="startTimer" duration="5" />
+    </children>
+</component>

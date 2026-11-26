@@ -437,22 +437,30 @@ export class Field {
     }
 
     private dispatchObservers() {
+        // Only the observers registered when the change happened run, each one only while it is still
+        // registered (DEVICE-MEASURED, `observer-dispatch-mutation-probe`): an observer added during the
+        // dispatch waits for the next change, and one removed during it is skipped. Adding an observer
+        // replaces its list and removing one marks it `removed`, so walking the lists held now gives
+        // exactly that, even for a callback that unobserves and re-observes its own field.
         // An XML `onChange` runs on the thread that owns the node, whichever thread wrote the field
         // (a Task node is owned by render), so a task thread skips it for a node it doesn't own.
+        if (!this.isObserved()) {
+            return;
+        }
+        const lists: BrsCallback[][] = [];
         if (this.permanentObservers && !this.permanentObservers[0]?.eventParams.node.shouldRendezvous()) {
-            for (const observer of this.permanentObservers) {
-                this.executeCallbacks(observer);
-            }
+            lists.push(this.permanentObservers);
         }
         if (this.unscopedObservers) {
-            for (const observer of this.unscopedObservers) {
-                this.executeCallbacks(observer);
-            }
+            lists.push(this.unscopedObservers);
         }
         if (this.scopedObservers) {
-            for (const [_node, callbacks] of this.scopedObservers) {
-                for (const callback of callbacks) {
-                    this.executeCallbacks(callback);
+            lists.push(...this.scopedObservers.values());
+        }
+        for (const list of lists) {
+            for (const observer of list) {
+                if (!observer.removed) {
+                    this.executeCallbacks(observer);
                 }
             }
         }
@@ -544,11 +552,9 @@ export class Field {
             const maybeCallbacks = this.scopedObservers.get(subscriber) || [];
             this.scopedObservers.set(subscriber, [...maybeCallbacks, brsCallback]);
         } else if (mode === "unscoped") {
-            this.unscopedObservers ??= [];
-            this.unscopedObservers.push(brsCallback);
+            this.unscopedObservers = [...(this.unscopedObservers ?? []), brsCallback];
         } else {
-            this.permanentObservers ??= [];
-            this.permanentObservers.push(brsCallback);
+            this.permanentObservers = [...(this.permanentObservers ?? []), brsCallback];
         }
     }
 
@@ -567,15 +573,21 @@ export class Field {
     }
 
     removeUnscopedObservers() {
-        this.unscopedObservers?.splice(0);
+        markRemoved(this.unscopedObservers);
+        this.unscopedObservers = undefined;
     }
 
     removeScopedObservers(scope: Node) {
-        this.scopedObservers?.get(scope)?.splice(0);
+        markRemoved(this.scopedObservers?.get(scope));
         this.scopedObservers?.delete(scope);
     }
 
     clearObservers() {
+        markRemoved(this.permanentObservers);
+        markRemoved(this.unscopedObservers);
+        for (const callbacks of this.scopedObservers?.values() ?? []) {
+            markRemoved(callbacks);
+        }
         this.permanentObservers = undefined;
         this.unscopedObservers = undefined;
         this.scopedObservers = undefined;
@@ -803,6 +815,11 @@ export class Field {
         return new RoArray(colors);
     }
 
+    /** Whether the field's value is no longer `previous` (with the comparison change notification uses). */
+    differsFrom(previous: BrsType): boolean {
+        return !this.isEqual(previous, this.value);
+    }
+
     private isEqual(oldValue: BrsType, newValue: BrsType): boolean {
         if (isAnyNumber(oldValue) && isAnyNumber(newValue)) {
             return oldValue.getValue() === newValue.getValue();
@@ -1001,5 +1018,12 @@ export class DeferredFieldWrites {
         for (const value of values) {
             this.commit(value);
         }
+    }
+}
+
+/** Marks observers as removed, so a dispatch already holding them skips them. */
+function markRemoved(callbacks?: BrsCallback[]) {
+    for (const callback of callbacks ?? []) {
+        callback.removed = true;
     }
 }

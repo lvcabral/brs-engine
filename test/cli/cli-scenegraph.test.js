@@ -1002,12 +1002,9 @@ describe.concurrent("cli scenegraph", () => {
         // getBoundingRect must render just that unmeasured subtree (not skip and return a stale 0),
         // so the content width is real and the background is not collapsed. Before the fix every
         // measurement read 0 (in the app: a 9-patch pill drawn at its corner sum — a circle).
+        // Each of the two items gets its itemContent once (rowlist-content-rewrite-probe).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Button Measure Repro ===",
-            "content measured > 0 = true",
-            "background wider than padding = true",
-            "content measured > 0 = true",
-            "background wider than padding = true",
             "content measured > 0 = true",
             "background wider than padding = true",
             "content measured > 0 = true",
@@ -1440,6 +1437,63 @@ describe.concurrent("cli scenegraph", () => {
             "observe ok=true",
             "OBSERVER FIRED",
             "=== Anon Observer Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Dispatches only the observers registered when the field changed", async () => {
+        let command = ["node", brsCliPath, "-r observer-dispatch-mutation-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-confirmed by test/simulator/probes/observer-dispatch-mutation-probe: an observer added
+        // during a dispatch waits for the next change, one removed is skipped, and a callback that
+        // unobserves and re-observes its own field runs once (c1 printed the guard, 5, when it looped).
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "PROBE|c1-scoped-self-reobserve|first-set|calls=1",
+            "PROBE|c1-scoped-self-reobserve|second-set|calls=2",
+            "PROBE|c2-unscoped-self-reobserve|first-set|calls=1",
+            "PROBE|c2-unscoped-self-reobserve|second-set|calls=2",
+            "PROBE|c3-scoped-add|first-set|a=1 b=0",
+            "PROBE|c3-scoped-add|second-set|a=2 b=1",
+            "PROBE|c4-unscoped-add|first-set|a=1 b=0",
+            "PROBE|c4-unscoped-add|second-set|a=2 b=1",
+            "PROBE|c5-scoped-remove-sibling|first-set|a=1 b=0",
+            "PROBE|c5-scoped-remove-sibling|second-set|a=1 b=0",
+            "PROBE|c6-unscoped-remove-sibling|first-set|a=1 b=0",
+            "PROBE|c6-unscoped-remove-sibling|second-set|a=1 b=0",
+            "PROBE|c7-scoped-reobserve-then-write|first-set|calls=1 trace=[1]",
+            "PROBE|done",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
+    it("Gives a RowList item its itemContent again only when the content really changed", async () => {
+        let command = ["node", brsCliPath, "-r rowlist-content-rewrite-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Device-confirmed by test/simulator/probes/rowlist-content-rewrite-probe: a write the item's own
+        // itemContent observer makes, or one that leaves the value unchanged, doesn't call it again; a new
+        // value from outside calls it once. Before, an item that wrote back an unchanged value from its
+        // observer was given its content again every frame, rebuilding its children until memory ran out.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "PROBE|call|item=same-update calls=1",
+            "PROBE|call|item=same-assign calls=1",
+            "PROBE|call|item=new-assign calls=1",
+            "PROBE|call|item=external-same calls=1",
+            "PROBE|call|item=external-new calls=1",
+            "PROBE|step|external writes",
+            "PROBE|holder|calls=1",
+            "PROBE|call|item=external-new calls=2",
+            "PROBE|step|external update same",
+            "PROBE|done",
             "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
             "",
             "",

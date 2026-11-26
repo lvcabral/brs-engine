@@ -2144,6 +2144,19 @@ export class ArrayGrid extends Group implements UITransition {
         this.updateBoundingRects(rect, origin, angle + this.getRotation());
     }
 
+    /**
+     * Gives a cached item component its content again when it missed a change of it (see
+     * `ContentNode.holdersBehind`) or holds another node, then clears the content's change flag.
+     * Item components are cached by position, so a reorder, which dirties only the container
+     * ContentNode, shows up as a different node in the slot.
+     */
+    protected refreshItemContent(itemComp: Node, content: ContentNode) {
+        if (content.holdersBehind || itemComp.getValue("itemContent") !== content) {
+            itemComp.setValue("itemContent", content, true);
+        }
+        content.changed = false;
+    }
+
     protected renderItemComponent(
         interpreter: Interpreter,
         index: number,
@@ -2172,15 +2185,7 @@ export class ArrayGrid extends Group implements UITransition {
         // was applied would stay frozen at the wrong (full-width) size — stretching the item.
         this.itemComps[index].setValue("width", new Float(itemRect.width), false);
         this.itemComps[index].setValue("height", new Float(itemRect.height), false);
-        // itemComps[] is keyed by POSITION, not by content identity. A reorder (removeChild/
-        // insertChild/appendChild-as-move) only dirties the container ContentNode, never the moved
-        // child itself, so content.changed alone misses "this slot now holds a different object".
-        // Compare against what the cached item component was last told, too.
-        const currentContent = this.itemComps[index].getValue("itemContent");
-        if (content.changed || currentContent !== content) {
-            this.itemComps[index].setValue("itemContent", content, true);
-            content.changed = false;
-        }
+        this.refreshItemContent(this.itemComps[index], content);
         this.updateItemFocus(index, focused, nodeFocus);
         // While the focus moves, the indicator is drawn once at its in-transit slot instead.
         const drawFocus = this.getValueJS("drawFocusFeedback") && !this.motion;
@@ -2443,6 +2448,10 @@ export class ArrayGrid extends Group implements UITransition {
                 this.setItemIndexes(itemComp, position);
             }
             itemComp.setValue("itemContent", content, false);
+            // The item now shows this content, including what its own itemContent observer wrote to
+            // it, so the render that created it doesn't assign it again (DEVICE-MEASURED,
+            // `rowlist-content-rewrite-probe`).
+            content.changed = false;
         }
         return itemComp;
     }
@@ -2848,6 +2857,14 @@ export class ArrayGridItem extends Group {
             this.poster.setValue(index, value, alwaysNotify, kind);
         }
         super.setValue(index, value, alwaysNotify, kind);
+    }
+
+    /** @override The poster follows the content's poster URL. */
+    heldContentChanged(field: Field) {
+        const content = field.getValue(false);
+        if (field.getName().toLowerCase() === "itemcontent" && content instanceof ContentNode) {
+            this.poster.setValue("uri", new BrsString(this.getPosterUri(content)));
+        }
     }
 
     private getPosterUri(content: ContentNode) {

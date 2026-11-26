@@ -963,13 +963,9 @@ export class ZoomRowList extends ArrayGrid {
                 this.rowItemComps[rowIndex][colIndex] = itemComp;
             }
         }
-        if (content.changed) {
-            this.rowItemComps[rowIndex][colIndex].setValue("itemContent", content, true);
-            content.changed = false;
-        }
-
         const itemComp = this.rowItemComps[rowIndex][colIndex];
         if (itemComp) {
+            this.refreshItemContent(itemComp, content);
             itemComp.setValue("width", brsValueOf(itemRect.width), false);
             itemComp.setValue("height", brsValueOf(itemRect.height), false);
             // rowHasFocus moves only when a motion settles; while moving no item has focus and the percents

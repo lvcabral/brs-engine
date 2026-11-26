@@ -151,6 +151,8 @@ export class ContentNode extends Node {
      * node breaks the cascade flat while leaving cross-node parentField propagation intact.
      */
     private propagating = false;
+    /** A change the fields holding this node have not been notified of yet (see `holdersBehind`). */
+    private unnotifiedChange = false;
 
     constructor(readonly name: string = SGNodeType.ContentNode) {
         super([], name);
@@ -223,6 +225,16 @@ export class ContentNode extends Node {
     }
 
     /**
+     * Whether this node changed since the fields holding it were last notified. An item component
+     * holding the node has seen every change that `notifyParentFields` delivered, so a list gives
+     * it the content again only for this one (DEVICE-MEASURED, `rowlist-content-rewrite-probe`: a
+     * write notifies the item's itemContent observer once).
+     */
+    get holdersBehind(): boolean {
+        return this.changed && this.unnotifiedChange;
+    }
+
+    /**
      * Notifies the observers of every field that holds this ContentNode, so parent nodes react
      * to changes within their content. Guarded against re-entry on the same node: an observer
      * that mutates this same ContentNode would otherwise re-trigger propagation synchronously
@@ -240,9 +252,12 @@ export class ContentNode extends Node {
             return;
         }
         this.propagating = true;
+        // Cleared first, so a write an observer makes during the loop counts as unnotified.
+        this.unnotifiedChange = false;
         try {
             for (const field of this.parentFields) {
                 field.notifyObservers();
+                field.getContainer()?.heldContentChanged(field);
                 // No-op off the render thread and when no task port-observes the field, so a purely
                 // local content update pays only the (short) walk over the active task list.
                 field.getContainer()?.fanOutFieldToObservingTasks(field.getName().toLowerCase());
@@ -395,6 +410,7 @@ export class ContentNode extends Node {
      */
     protected makeDirty() {
         this.changed = true;
+        this.unnotifiedChange = true;
         this.markSubtreeStale();
         // Propagate the dirty flag up to the content root so an ancestor ArrayGrid/TimeGrid
         // re-parses its model when a descendant ContentNode changes. This must happen on any
