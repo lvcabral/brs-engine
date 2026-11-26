@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="RewriteProbeItem" extends="Group">
+    <interface>
+        <field id="itemContent" type="node" onChange="onItemContentChange" />
+        <field id="width" type="float" />
+        <field id="height" type="float" />
+    </interface>
+    <script type="text/brightscript" uri="RewriteProbeItem.brs" />
+    <children>
+        <Rectangle id="bg" width="200" height="150" color="0x333333FF" />
+        <Label id="lbl" translation="[10,10]" />
+    </children>
+</component>

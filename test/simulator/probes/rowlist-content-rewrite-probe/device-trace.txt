@@ -1,0 +1,12 @@
+PROBE|boot|start
+PROBE|boot|device|model=Roku Express 4K+ os=16.1
+PROBE|call|item=same-update calls=1
+PROBE|call|item=same-assign calls=1
+PROBE|call|item=new-assign calls=1
+PROBE|call|item=external-same calls=1
+PROBE|call|item=external-new calls=1
+PROBE|step|external writes
+PROBE|holder|calls=1
+PROBE|call|item=external-new calls=2
+PROBE|step|external update same
+PROBE|done

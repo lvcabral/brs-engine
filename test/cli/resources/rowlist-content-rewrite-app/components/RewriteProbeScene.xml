@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="RewriteProbeScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <script type="text/brightscript" uri="RewriteProbeScene.brs" />
+    <children>
+        <RowList id="list" translation="[50,200]" itemComponentName="RewriteProbeItem" numRows="1"
+            itemSize="[1180,200]" rowItemSize="[[200,150]]" rowItemSpacing="[[20,0]]" showRowLabel="[false]" />
+        <Timer id="stepTimer" duration="0.05" repeat="true" />
+    </children>
+</component>

@@ -913,6 +913,39 @@ capture the **native JS stack** mid-recursion (a temporary depth tripwire dumpin
    `button-label-app`, `contentnode-recursion-app`, `contentnode-parentfield-app`,
    `sharedcontent-recursion-app` in `test/cli/` — all must stay green together.
 
+    > **A dispatch runs the observers registered when it started.** `dispatchObservers` walks the
+    > observer lists it holds at the start. `addObserver` replaces a list instead of pushing to it, and
+    > removal marks each callback `removed`, so an observer added during the dispatch waits for the next
+    > change and one removed is skipped (device-measured, OS 16.1,
+    > `test/simulator/probes/observer-dispatch-mutation-probe`). Don't walk a collection another call can
+    > grow mid-dispatch: `unobserveFieldScoped` deletes the scope's `Map` entry and `observeFieldScoped`
+    > re-inserts it at the end, which a live `Map` iteration visits again, so a callback that re-observes
+    > its own field loops until memory runs out. Regression:
+    > `observer-dispatch-mutation-app` in `test/cli/`.
+
+    > **A list gives an item its `itemContent` again only for a change the item hasn't seen.**
+    > Device-measured, OS 16.1, `test/simulator/probes/rowlist-content-rewrite-probe`:
+    >
+    > - Creation assigns `itemContent` once, whatever the item's observer writes back.
+    > - A write that leaves a field's value unchanged does nothing.
+    > - A new value from outside calls the item's observer once.
+    >
+    > These rules keep the engine there:
+    >
+    > - `Node.setValue` calls `makeDirty()` only when the value changed or the field notified
+    >   (`alwaysNotify`). `update()`/`setFields()` must not add their own `makeDirty()` per field.
+    > - `createItemComponent` clears `content.changed` after the first assignment.
+    > - The per-frame re-assign (`ArrayGrid.refreshItemContent`, used by ArrayGrid, RowList and
+    >   ZoomRowList) tests `ContentNode.holdersBehind`, not `changed`. `notifyParentFields` already notified
+    >   the item's `itemContent` field of every write it delivered, so only a change it didn't deliver
+    >   (silent, or made by an observer during the delivery) needs the re-assign. A node that derives
+    >   state from its content without an observer (the built-in `ArrayGridItem` poster) overrides
+    >   `Node.heldContentChanged`, which `notifyParentFields` calls with each notified field.
+    > - `Node.setValue` still dirties a task's write to a node it doesn't own, unchanged or not: the
+    >   task's copy may be stale, so the write must reach the owner.
+    >
+    > Regression: `rowlist-content-rewrite-app` in `test/cli/`.
+
     > **`notifyParentFields` must also fan out cross-thread.** It is the one notification path that starts
     > from a `Field` rather than from the node holding it, so it bypasses the fan-out `Node.setValue` does
     > through `rendezvousSet`. On a device the parent field's port observer _is_ the port the task waits

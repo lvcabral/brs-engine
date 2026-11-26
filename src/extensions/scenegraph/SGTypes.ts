@@ -26,6 +26,8 @@ export interface BrsCallback {
         infoFields?: RoArray;
     };
     running?: boolean;
+    /** Set when the observer is removed, so a dispatch already holding it skips it. */
+    removed?: boolean;
 }
 
 /** This is used to define a field (usually a default/built-in field in a component definition). */

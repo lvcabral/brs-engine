@@ -142,4 +142,22 @@ describe("ArrayGrid/RowList item component reuse invalidates on content reorder,
         expect(grid.content[4].getValueJS("title")).toBe("G1.0");
         expect(item4.getValueJS("index")).toBe(3);
     });
+
+    test("Built-in item: a notified poster change still reaches the cached item's poster", () => {
+        const list = SGNodeFactory.createNode("MarkupList");
+        const root = buildFlatContent(["A"]);
+        root.getNodeChildren()[0].setValue("hdPosterUrl", new BrsString("pkg:/images/old.png"));
+        list.setValue("content", root);
+
+        const itemRect = { x: 0, y: 0, width: 100, height: 40 };
+        list.renderItemComponent({}, 0, itemRect, 0, 1);
+        const item0 = list.itemComps[0];
+        expect(item0.poster.getValueJS("uri")).toBe("pkg:/images/old.png");
+
+        root.getNodeChildren()[0].setValue("hdPosterUrl", new BrsString("pkg:/images/new.png"));
+        list.renderItemComponent({}, 0, itemRect, 0, 1);
+
+        expect(list.itemComps[0]).toBe(item0);
+        expect(item0.poster.getValueJS("uri")).toBe("pkg:/images/new.png");
+    });
 });

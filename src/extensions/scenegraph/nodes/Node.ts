@@ -491,6 +491,7 @@ export class Node extends RoSGNode implements BrsValue {
                 // A `focusedChild` write made while a focus transaction is staging is applied now
                 // but notified later, once the whole chain is committed — see stageFocusedChild.
                 const sink = mapKey === "focusedchild" ? Node.focusStagingSink : undefined;
+                const staged = sink ? field.getValue(false) : undefined;
                 this.notified = field.setValue(value, sink === undefined);
                 if (sink) {
                     sink.push(field);
@@ -505,7 +506,15 @@ export class Node extends RoSGNode implements BrsValue {
                         }
                     }
                 }
-                this.makeDirty();
+                // A write that leaves the value as it was changes nothing, so it doesn't mark the node
+                // changed: a list holding a ContentNode written that way doesn't re-assign the item's
+                // itemContent (DEVICE-MEASURED, `rowlist-content-rewrite-probe`). A notifying write
+                // already compared the values; a staged one didn't. A task's write to a node it doesn't
+                // own still goes to the owner, since the local copy may be stale.
+                const changed = staged ? field.differsFrom(staged) : this.notified;
+                if (changed || this.shouldRendezvous()) {
+                    this.makeDirty();
+                }
             } else if (!isInvalid(value)) {
                 errorMsg = `BRIGHTSCRIPT: ERROR: roSGNode.AddReplace: "${this.nodeSubtype}.${index}": Type mismatch!`;
             }
@@ -756,7 +765,6 @@ export class Node extends RoSGNode implements BrsValue {
                 } else {
                     this.setValue(key, value, false);
                 }
-                this.makeDirty();
             }
         }
     }
@@ -1964,7 +1972,6 @@ export class Node extends RoSGNode implements BrsValue {
             // Set all other fields, respecting the createFields parameter
             else if (node.hasNodeField(fieldName) || (createFields && !isInvalid(value))) {
                 node.setValue(key, value, false);
-                this.makeDirty();
             }
         }
     }
@@ -2448,6 +2455,15 @@ export class Node extends RoSGNode implements BrsValue {
      */
     contentChildrenChanged(_field: Field) {
         // Only nodes that present content react.
+    }
+
+    /**
+     * Called when a ContentNode held by one of this node's fields changed and the field's observers
+     * were notified.
+     * @param _field The field holding the ContentNode.
+     */
+    heldContentChanged(_field: Field) {
+        // Only nodes that derive state from their content react.
     }
 
     /**

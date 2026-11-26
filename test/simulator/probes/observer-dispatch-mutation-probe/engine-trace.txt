@@ -1,0 +1,16 @@
+PROBE|boot|start
+PROBE|boot|device|model=Roku TV os=16.0
+PROBE|c1-scoped-self-reobserve|first-set|calls=1
+PROBE|c1-scoped-self-reobserve|second-set|calls=2
+PROBE|c2-unscoped-self-reobserve|first-set|calls=1
+PROBE|c2-unscoped-self-reobserve|second-set|calls=2
+PROBE|c3-scoped-add|first-set|a=1 b=0
+PROBE|c3-scoped-add|second-set|a=2 b=1
+PROBE|c4-unscoped-add|first-set|a=1 b=0
+PROBE|c4-unscoped-add|second-set|a=2 b=1
+PROBE|c5-scoped-remove-sibling|first-set|a=1 b=0
+PROBE|c5-scoped-remove-sibling|second-set|a=1 b=0
+PROBE|c6-unscoped-remove-sibling|first-set|a=1 b=0
+PROBE|c6-unscoped-remove-sibling|second-set|a=1 b=0
+PROBE|c7-scoped-reobserve-then-write|first-set|calls=1 trace=[1]
+PROBE|done
