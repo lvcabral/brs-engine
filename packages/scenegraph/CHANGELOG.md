@@ -2,6 +2,22 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.7.2"></a>
+
+## [v0.7.2 (beta) - Shadowed Components, Render Tracking and Observer Loops](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.2) - 25 November 2026
+
+This patch release fixes four behaviors found in production apps, each checked against a real Roku device with a probe app under `test/simulator/probes/`. A channel component named like a built-in node type (e.g. a `ButtonGroup` extending `LayoutGroup`) now shadows the built-in, so its `init()` runs and `m.top` is bound; before, the built-in class was created and the first key it got crashed the app. `renderTracking` now changes only when a frame is painted: measuring a detached node keeps it `"none"`, and a removed node, a closed dialog or the children of a hidden parent go `"none"` on the next frame. Two loops that ran a production app out of memory are fixed: a field change runs only the observers registered when it started, so an observer that re-registers itself no longer runs forever, and lists re-assign `itemContent` only when the content really changed, which also drops the duplicate `itemContent` observer call at item creation. An `AnimatedImage` node that loaded but never played now shows its first frame, and one without content measures 0x0. Requires `brs-engine` v2.7.2 or newer. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) A channel component now shadows a built-in node type of the same name, as on the device by [@larsmaultsby](https://github.com/larsmaultsby) in [#1333](https://github.com/lvcabral/brs-engine/pull/1333)
+* (rsg) `renderTracking` now changes only when a frame is painted, as on the device by [@lvcabral](https://github.com/lvcabral) in [#1346](https://github.com/lvcabral/brs-engine/pull/1346)
+* (rsg) Fixed two loops that ran a production app out of memory: a field change runs only the observers registered when it started, and lists re-assign `itemContent` only when the content really changed by [@lvcabral](https://github.com/lvcabral) in [#1347](https://github.com/lvcabral/brs-engine/pull/1347)
+* (rsg) An `AnimatedImage` node that loaded but never played shows its first frame, and one without content measures 0x0 by [@lvcabral](https://github.com/lvcabral) in [#1345](https://github.com/lvcabral/brs-engine/pull/1345)
+* (rsg) `Scene.onKeyEvent` handles the engine's new value-based `return` by [@markwpearce](https://github.com/markwpearce) in [#1336](https://github.com/lvcabral/brs-engine/pull/1336)
+
+[Full Changelog][v0.7.2]
+
 <a name="v0.7.1"></a>
 
 ## [v0.7.1 (beta) - Screen Lifecycle and RowList Motion Rects](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.1) - 19 November 2026
@@ -509,6 +525,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.7.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.1...brs-sg-v0.7.2
 [v0.7.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.0...brs-sg-v0.7.1
 [v0.7.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.2...brs-sg-v0.7.0
 [v0.6.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.1...brs-sg-v0.6.2
