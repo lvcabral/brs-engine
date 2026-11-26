@@ -957,11 +957,8 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Detaches a child leaving this node's children. When the child holds the live focus (or is an
-     * ancestor of it), the focus goes with it and nothing is focused: removeChild, replaceChild,
-     * reparent and a reparenting append alike. A focus taken inside a still-detached tree (an `init()`
-     * focusing itself) is kept when that tree is mounted or reparented (DEVICE-MEASURED,
-     * buttongroup-shrink-probe).
+     * Detaches a child leaving this node's children: when it holds the scene's live focus (see
+     * `sgRoot.focusTakenInScene`), the focus goes with it and nothing is focused.
      */
     private detachChild(child: Node) {
         const focused = sgRoot.focused;

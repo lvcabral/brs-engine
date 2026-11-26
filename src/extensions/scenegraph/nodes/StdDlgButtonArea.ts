@@ -29,9 +29,8 @@ export class StdDlgButtonArea extends ButtonGroup {
 
     /** Replaces the displayed buttons; pass the dialog's `buttons` string array. */
     setButtons(buttons: string[]) {
-        const current = jsValueOf(this.getValue("buttons")) as string[];
-        if (Array.isArray(current) && current.length === buttons.length && current.every((b, i) => b === buttons[i])) {
-            return; // unchanged — avoid rebuilding the button children every frame
+        if (this.isCurrentButtons(buttons)) {
+            return; // unchanged: skip re-dirtying and restyling the row every frame
         }
         this.setValue("buttons", new RoArray(buttons.map((text) => new BrsString(text))));
     }

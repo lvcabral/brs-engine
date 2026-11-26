@@ -14,10 +14,16 @@ describe("focus when the focused node leaves its parent", () => {
         sgRoot.setFocused();
     });
 
-    function build() {
+    /** An initialized Scene installed as the screen's scene. */
+    function newScene() {
         const scene = SGNodeFactory.createNode("Scene");
         scene.setInitState("initialized");
         sgRoot.setScene(scene);
+        return scene;
+    }
+
+    function build() {
+        const scene = newScene();
         const holder = SGNodeFactory.createNode("Group");
         const leaf = SGNodeFactory.createNode("Group");
         scene.appendChildToParent(holder);
@@ -69,9 +75,8 @@ describe("focus when the focused node leaves its parent", () => {
     });
 
     test("a focus taken while detached survives the router mount (append, then reparent onto the same parent)", () => {
-        const { scene, outlet, view, list } = mountDetachedFocus();
+        const { outlet, view, list } = mountDetachedFocus();
         expect(sgRoot.focused).toBe(list);
-        expect(scene).toBeDefined();
         expect(outlet.getNodeChildren()).toContain(view);
     });
 
@@ -86,9 +91,7 @@ describe("focus when the focused node leaves its parent", () => {
 
     /** A view whose list focused itself in init(), mounted the way a router library does it. */
     function mountDetachedFocus() {
-        const scene = SGNodeFactory.createNode("Scene");
-        scene.setInitState("initialized");
-        sgRoot.setScene(scene);
+        const scene = newScene();
         const outlet = SGNodeFactory.createNode("Group");
         scene.appendChildToParent(outlet);
         const view = SGNodeFactory.createNode("Group");
@@ -98,6 +101,6 @@ describe("focus when the focused node leaves its parent", () => {
         outlet.appendChildToParent(view);
         outlet.removeChildByReference(view); // reparent(outlet): remove, then append again
         outlet.appendChildToParent(view);
-        return { scene, outlet, view, list };
+        return { outlet, view, list };
     }
 });

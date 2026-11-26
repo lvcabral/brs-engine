@@ -105,7 +105,8 @@ export class ButtonGroup extends LayoutGroup {
                 }
             }
         }
-        const replacesButtons = fieldName === "buttons" && value instanceof RoArray && !this.isCurrentButtons(value);
+        const replacesButtons =
+            fieldName === "buttons" && value instanceof RoArray && !this.isCurrentButtons(jsValueOf(value) as string[]);
         super.setValue(index, value, alwaysNotify, kind);
         if (replacesButtons) {
             // DEVICE-MEASURED (buttongroup-shrink-probe): a different array removes every child, custom
@@ -118,9 +119,9 @@ export class ButtonGroup extends LayoutGroup {
         }
     }
 
-    private isCurrentButtons(value: RoArray): boolean {
+    /** Whether `buttons` already holds exactly these texts. */
+    protected isCurrentButtons(next: string[]): boolean {
         const current = jsValueOf(this.getValue("buttons")) as string[] | undefined;
-        const next = jsValueOf(value) as string[];
         return Array.isArray(current) && current.length === next.length && current.every((b, i) => b === next[i]);
     }
 
@@ -133,6 +134,7 @@ export class ButtonGroup extends LayoutGroup {
         if (index >= 0 && index !== this.focusIndex) {
             this.focusIndex = index;
             super.setValue("buttonFocused", new Int32(index));
+            this.isDirty = true;
         }
     }
 
@@ -252,7 +254,7 @@ export class ButtonGroup extends LayoutGroup {
         if (!buttons?.length) {
             return;
         }
-        const buttonsCount = Math.max(buttons.length, this.children.length);
+        const buttonsCount = buttons.length;
         const buttonHeight = this.getValueJS("buttonHeight") as number;
         this.width = this.calculateButtonWidth(buttons, Font.drawFontOf(this.getValue("focusedTextFont")));
         for (let i = 0; i < buttonsCount; i++) {
@@ -324,12 +326,7 @@ export class ButtonGroup extends LayoutGroup {
         ) {
             // A managed button was focused directly (e.g. by app code): follow it instead of
             // stealing focus back to the previously focused index.
-            const index = this.children.indexOf(focusedNode);
-            if (index !== this.focusIndex) {
-                this.focusIndex = index;
-                super.setValue("buttonFocused", new Int32(index));
-                this.isDirty = true;
-            }
+            this.followFocusedButton(focusedNode);
             this.wasFocused = true;
         } else if (this.wasFocused) {
             this.wasFocused = false;

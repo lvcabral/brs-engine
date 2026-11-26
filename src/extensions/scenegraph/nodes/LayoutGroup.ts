@@ -773,7 +773,7 @@ export class LayoutGroup extends Group {
         return Math.abs((a || 0) - (b || 0)) <= this.epsilon;
     }
 
-    private metricsClose(a: LayoutMetrics, b: LayoutMetrics, comparePositions = true) {
+    private metricsClose(a: LayoutMetrics, b: LayoutMetrics, comparePositions: boolean) {
         return (
             this.nearlyEqual(a.primary, b.primary) &&
             this.nearlyEqual(a.cross, b.cross) &&

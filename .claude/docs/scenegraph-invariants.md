@@ -1929,11 +1929,13 @@ the focused node **before** clearing the parent, so the chain is still reachable
 a focus taken inside a still-detached tree (a component's `init()` focusing itself) survives mounting and
 reparenting that tree, on the device too. Router libraries mount every view with `appendChild` then
 `reparent` onto the same outlet, so dropping it there leaves a fresh screen with no focus. The gate is
-`sgRoot.focusTakenInScene`, recorded by `setFocused`; an app's later `setFocus(true)` on an ancestor of that focus,
-under the scene, claims it for the scene (`claimFocusForScene`; the device focuses the view there). It is deliberately not in `removeParent`: Scene's
-`dialog = invalid` calls that too, and dialog focus is unmodeled. Known difference (pre-existing): the
-device does not thread such a detached focus into the scene's chain on attach (`view.isInFocusChain()`
-stays false), the engine does (`restoreFocusChainOnAttach`). Regression: `FocusOnRemoval.test.js`.
+`sgRoot.focusTakenInScene`, recorded by `setFocused`. An app's later `setFocus(true)` on an ancestor of that
+focus, under the scene, claims it for the scene (`claimFocusForScene`): the device focuses the view there.
+Both exist for one pre-existing difference: the device never makes a detached focus live (the scene's chain
+doesn't reach it, `view.isInFocusChain()` stays false after attach), while the engine makes it live and
+threads it into the scene's chain on attach (`restoreFocusChainOnAttach`). The drop is deliberately not in
+`removeParent`: Scene's `dialog = invalid` calls that too, and dialog focus is unmodeled. Regression:
+`FocusOnRemoval.test.js`.
 
 **A `ButtonGroup` rebuilds its children when `buttons` changes** (same probe): a different array removes
 every child, custom ones included, through `removeChildrenAtIndex` (one `remove(0, n-1)` change, the

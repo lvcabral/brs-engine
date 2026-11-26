@@ -8,7 +8,6 @@
 import {
     BlockEnd,
     BrsDevice,
-    BrsInvalid,
     BrsError,
     BufferType,
     DataType,
@@ -551,20 +550,13 @@ export class SGRoot {
      * mounted view, so a later removal of the view drops the focus.
      */
     claimFocusForScene(node: RoSGNode) {
-        if (!this._focusTakenInScene && this._focused !== undefined && this.isUnderScene(node)) {
+        if (this.isUnderScene(node)) {
             this._focusTakenInScene = true;
         }
     }
 
     private isUnderScene(node: RoSGNode): boolean {
-        let current: RoSGNode | BrsInvalid = node;
-        while (!(current instanceof BrsInvalid)) {
-            if (current === this._scene) {
-                return true;
-            }
-            current = current.getNodeParent();
-        }
-        return false;
+        return this._scene?.isFocusWithin(node) ?? false;
     }
 
     /**
