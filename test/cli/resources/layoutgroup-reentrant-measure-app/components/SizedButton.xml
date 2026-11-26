@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="SizedButton" extends="Group">
+    <children>
+        <Rectangle id="background" color="0x333333FF" visible="false" />
+    </children>
+    <interface>
+        <field id="buttonWidth" type="integer" value="0" />
+        <field id="isReady" type="boolean" value="false" alwaysNotify="true" />
+    </interface>
+    <script type="text/brightscript" uri="SizedButton.brs" />
+</component>

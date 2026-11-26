@@ -166,7 +166,13 @@ the restore, a re-centered child leaves both positions in every ancestor's union
 `LayoutPruning.test.js` (including the two real-app scenarios) and the pruned-vs-`BRS_PRUNE_DISABLE=1`
 CLI comparison in `test/cli/cli-scenegraph.test.js`. `BRS_PRUNE_DISABLE=1` turns pruning off (field
 debugging). LayoutGroup converges to a fixed point on layout passes (`MAX_LAYOUT_PASSES` is a
-divergence backstop only) — regression: `LayoutConvergence.test.js`.
+divergence backstop only) — regression: `LayoutConvergence.test.js`. Its expected child metrics
+(`appliedMetrics`) persist from the last `applyLayout`, never reset per pass: a child observer that calls
+`boundingRect()` mid-paint re-enters the group's own render, and both that pass and the resumed one must
+see a child that grew since. Only the applying pass compares positions; later passes compare sizes, so a
+child animating its own content is not pulled back each frame. Every child-list mutation dirties the
+layout through `recordChildChange` (a replace or reorder keeps the count) — regressions:
+`LayoutGroupRelayout.test.js`, `layoutgroup-reentrant-measure-app` in `cli-scenegraph.test.js`.
 
 **Visibility vs. measurement:** plain containers (`Group`, `LayoutGroup`, `MaskGroup`) do their
 invisible early-return through `Group.skipRender(draw2D)`, which lets a **measurement pass** (a render
@@ -1914,6 +1920,27 @@ crash). So `Node.setNodeParent` (the single chokepoint all append paths call) **
 attach**: if live `sgRoot.focused` is within the newly parented subtree, it re-points `focusedChild` from
 the root down. Each attach extends the chain one level. Don't remove that repair as "redundant".
 Regression: `test/extensions/scenegraph/FocusBeforeAttach.test.js`.
+
+**Detaching the focused node leaves nothing focused** (DEVICE-MEASURED, OS 16.0,
+`test/simulator/probes/buttongroup-shrink-probe`): `removeChild`, `replaceChild`, `reparent` (even onto the
+same parent), removing an ancestor and a reparenting `appendChild` all clear the focus and every
+`focusedChild` on the way. `Node.detachChild` (the child-list removal paths) runs `setNodeFocus(false)` on
+the focused node **before** clearing the parent, so the chain is still reachable. **Exception, load-bearing:**
+a focus taken inside a still-detached tree (a component's `init()` focusing itself) survives mounting and
+reparenting that tree, on the device too. Router libraries mount every view with `appendChild` then
+`reparent` onto the same outlet, so dropping it there leaves a fresh screen with no focus. The gate is
+`sgRoot.focusTakenInScene`, recorded by `setFocused`; an app's later `setFocus(true)` on an ancestor of that focus,
+under the scene, claims it for the scene (`claimFocusForScene`; the device focuses the view there). It is deliberately not in `removeParent`: Scene's
+`dialog = invalid` calls that too, and dialog focus is unmodeled. Known difference (pre-existing): the
+device does not thread such a detached focus into the scene's chain on attach (`view.isInFocusChain()`
+stays false), the engine does (`restoreFocusChainOnAttach`). Regression: `FocusOnRemoval.test.js`.
+
+**A `ButtonGroup` rebuilds its children when `buttons` changes** (same probe): a different array removes
+every child, custom ones included, through `removeChildrenAtIndex` (one `remove(0, n-1)` change, the
+removed nodes detached), then creates a new Button per entry; the same array changes nothing.
+`buttonFocused` follows a Button child gaining focus at once (`ButtonGroup.setValue` sees its
+`focusedChild` write) and is never reset by a `buttons` change. Regression: `ButtonGroup.test.js`
+("ButtonGroup buttons replacement").
 
 ### A focus transaction commits before it notifies, and a nested request writes only part of the chain
 

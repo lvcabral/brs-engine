@@ -20,6 +20,7 @@ import { Font } from "./Font";
 import { Label } from "./Label";
 import { Group } from "./Group";
 import { LayoutGroup } from "./LayoutGroup";
+import { Node } from "./Node";
 import { RoSGNode } from "../components/RoSGNode";
 import { FieldKind, FieldModel } from "../SGTypes";
 import { SGNodeType } from ".";
@@ -99,15 +100,39 @@ export class ButtonGroup extends LayoutGroup {
                 // button. Otherwise refreshFocus would snap focusIndex back to the still-focused
                 // previous button and navigation would appear stuck.
                 const target = this.children[newIndex];
-                if (this.hasKeyFocus() && target instanceof RoSGNode && sgRoot.focused !== target) {
-                    sgRoot.setFocused(target);
+                if (this.hasKeyFocus() && target instanceof Node && sgRoot.focused !== target) {
+                    target.setNodeFocus(true);
                 }
             }
         }
+        const replacesButtons = fieldName === "buttons" && value instanceof RoArray && !this.isCurrentButtons(value);
         super.setValue(index, value, alwaysNotify, kind);
-        if (fieldName === "buttons" && value instanceof RoArray) {
+        if (replacesButtons) {
+            // DEVICE-MEASURED (buttongroup-shrink-probe): a different array removes every child, custom
+            // ones included, and creates a new Button per entry. The same array changes nothing.
+            this.removeChildrenAtIndex(0, this.children.length);
             this.refreshButtons();
             this.refreshFocus();
+        } else if (fieldName === "focusedchild") {
+            this.followFocusedButton(value);
+        }
+    }
+
+    private isCurrentButtons(value: RoArray): boolean {
+        const current = jsValueOf(this.getValue("buttons")) as string[] | undefined;
+        const next = jsValueOf(value) as string[];
+        return Array.isArray(current) && current.length === next.length && current.every((b, i) => b === next[i]);
+    }
+
+    /** A managed Button gaining focus moves `buttonFocused` to it at once (buttongroup-shrink-probe). */
+    private followFocusedButton(value: BrsType) {
+        if (!(value instanceof Button)) {
+            return;
+        }
+        const index = this.children.indexOf(value);
+        if (index >= 0 && index !== this.focusIndex) {
+            this.focusIndex = index;
+            super.setValue("buttonFocused", new Int32(index));
         }
     }
 
@@ -264,12 +289,6 @@ export class ButtonGroup extends LayoutGroup {
                 button.setValueSilent("translation", new RoArray([new Float(0), new Float(buttonY + offsetY)]));
             } else {
                 break;
-            }
-        }
-        // Drop only surplus managed Buttons beyond the `buttons` array — never custom children.
-        for (let i = this.children.length - 1; i >= buttons.length; i--) {
-            if (this.children[i] instanceof Button) {
-                this.children.splice(i, 1);
             }
         }
     }
