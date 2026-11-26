@@ -29,7 +29,7 @@ This patch release makes call-heavy and tint-heavy code much faster and fixes se
 
 #### Chores, Build and Dependencies
 
-* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.2 by [@lvcabral](https://github.com/lvcabral) in [#1348](https://github.com/lvcabral/brs-engine/pull/1348)
+* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.2, and updated the limitations documentation by [@lvcabral](https://github.com/lvcabral) in [#1348](https://github.com/lvcabral/brs-engine/pull/1348)
 
 ### New Contributors
 
