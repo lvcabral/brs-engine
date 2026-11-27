@@ -841,11 +841,33 @@ export class IfDraw2D {
             }
             const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
-            ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.moveTo(baseX + xStart.getValue(), baseY + yStart.getValue());
-            ctx.lineTo(baseX + xEnd.getValue(), baseY + yEnd.getValue());
-            ctx.stroke();
+            const [x0, y0, x1, y1] = [xStart.getValue(), yStart.getValue(), xEnd.getValue(), yEnd.getValue()];
+            // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
+            const replace = !this.component.getCanvasAlpha();
+            const color = rgbaIntToHex(rgba.getValue(), true);
+            const rect = axisLineRect(x0, y0, x1, y1);
+            if (rect) {
+                const [x, y, w, h] = rect;
+                if (replace) {
+                    ctx.clearRect(baseX + x, baseY + y, w, h);
+                }
+                ctx.fillStyle = color;
+                ctx.fillRect(baseX + x, baseY + y, w, h);
+            } else if (x0 !== x1 || y0 !== y1) {
+                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it
+                ctx.beginPath();
+                ctx.moveTo(baseX + x0 + 0.5, baseY + y0 + 0.5);
+                ctx.lineTo(baseX + x1 + 0.5, baseY + y1 + 0.5);
+                if (replace) {
+                    ctx.save();
+                    ctx.globalCompositeOperation = "destination-out";
+                    ctx.strokeStyle = "#000000";
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                ctx.strokeStyle = color;
+                ctx.stroke();
+            }
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -1487,6 +1509,26 @@ export function putImageAtPos(imageData: BrsImageData, ctx: BrsCanvasContext2D, 
         ctx.putImageData(imageData, x, y);
     }
     /// #endif
+}
+
+/**
+ * The `[x, y, width, height]` a device's DrawLine paints for a horizontal or vertical line, or undefined
+ * for a diagonal or zero-length one. Measured on a Roku Ultra (test/simulator/probes/drawline-probe): a
+ * horizontal line covers both end points, a vertical one runs from the smaller y up to, not including,
+ * the larger one, whichever way it's drawn. A zero-length line paints nothing.
+ */
+export function axisLineRect(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number
+): [number, number, number, number] | undefined {
+    if (y0 === y1 && x0 !== x1) {
+        return [Math.min(x0, x1), y0, Math.abs(x1 - x0) + 1, 1];
+    } else if (x0 === x1 && y0 !== y1) {
+        return [x0, Math.min(y0, y1), 1, Math.abs(y1 - y0)];
+    }
+    return undefined;
 }
 
 export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
