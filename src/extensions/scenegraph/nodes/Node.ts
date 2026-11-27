@@ -1415,42 +1415,60 @@ export class Node extends RoSGNode implements BrsValue {
      */
     setNodeFocus(focusOn: boolean): boolean {
         if (focusOn) {
-            if (!this.triedInitFocus) {
-                // Only try initial focus once
-                this.triedInitFocus = true;
-                if (this.componentDef?.initialFocus) {
-                    const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
-                    if (childToFocus instanceof Node) {
-                        childToFocus.setNodeFocus(true);
-                        return this.isFocusable();
-                    }
+            return this.gainFocus();
+        }
+        this.releaseFocus();
+        // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
+        // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
+        return this.isFocusable();
+    }
+
+    /**
+     * The `setFocus(true)` half of `setNodeFocus`.
+     * @returns Whether the node is focusable (false when a non-focusable container keeps a child's focus).
+     */
+    private gainFocus(): boolean {
+        if (!this.triedInitFocus) {
+            // Only try initial focus once
+            this.triedInitFocus = true;
+            if (this.componentDef?.initialFocus) {
+                const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
+                if (childToFocus instanceof Node) {
+                    childToFocus.setNodeFocus(true);
+                    return this.isFocusable();
                 }
             }
-            const detachedLeaf = this.detachedFocusBelow();
-            if (detachedLeaf) {
-                // Through the leaf's own setNodeFocus, so a subclass runs its gain (ArrayGrid's itemFocused).
-                detachedLeaf.setNodeFocus(true);
-                return this.isFocusable();
-            }
-            if (!this.isFocusable() && this.isChildrenFocused()) {
-                sgRoot.claimFocusForScene(this);
-                return false;
-            }
+        }
+        const detachedLeaf = this.detachedFocusBelow();
+        if (detachedLeaf) {
+            // Through the leaf's own setNodeFocus, so a subclass runs its gain (ArrayGrid's itemFocused).
+            detachedLeaf.setNodeFocus(true);
+            return this.isFocusable();
+        }
+        if (!this.isFocusable() && this.isChildrenFocused()) {
+            sgRoot.claimFocusForScene(this);
+            return false;
+        }
 
-            const path = this.createPath();
-            const staged: StagedFocus[] = [];
-            if (Node.staysInDetachedTree(this)) {
-                this.linkDetachedPath(path, staged);
-            } else if (Node.focusRound) {
-                this.applyNestedFocus(path, staged);
-            } else if (this.holdsLiveFocus(path)) {
-                Node.restageChain(sgRoot.focused as Node, staged);
-                sgRoot.claimFocusForScene(this);
-            } else {
-                this.applyFocus(path, staged);
-            }
-            Node.notifyStagedFocus(staged);
-        } else if (sgRoot.focused === this) {
+        const path = this.createPath();
+        const staged: StagedFocus[] = [];
+        if (Node.staysInDetachedTree(this)) {
+            this.linkDetachedPath(path, staged);
+        } else if (Node.focusRound) {
+            this.applyNestedFocus(path, staged);
+        } else if (this.holdsLiveFocus(path)) {
+            Node.restageChain(sgRoot.focused as Node, staged);
+            sgRoot.claimFocusForScene(this);
+        } else {
+            this.applyFocus(path, staged);
+        }
+        Node.notifyStagedFocus(staged);
+        return this.isFocusable();
+    }
+
+    /** The `setFocus(false)` half of `setNodeFocus`. */
+    private releaseFocus() {
+        if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
             sgRoot.setFocused();
@@ -1463,21 +1481,18 @@ export class Node extends RoSGNode implements BrsValue {
                 node.stageFocusedChild(BrsInvalid.Instance, staged);
             }
             Node.notifyStagedFocus(staged);
-        } else {
-            // If the node doesn't have focus already, and it's not gaining focus,
-            // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
-            if (sgRoot.chainOwner === this) {
-                sgRoot.setChainOwner();
-            } else if (sgRoot.chainExtension === this) {
-                sgRoot.setChainExtension();
-            }
-            const staged: StagedFocus[] = [];
-            this.stageFocusedChild(BrsInvalid.Instance, staged);
-            Node.notifyStagedFocus(staged);
+            return;
         }
-        // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
-        // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
-        return this.isFocusable();
+        // If the node doesn't have focus already, and it's not gaining focus,
+        // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
+        if (sgRoot.chainOwner === this) {
+            sgRoot.setChainOwner();
+        } else if (sgRoot.chainExtension === this) {
+            sgRoot.setChainExtension();
+        }
+        const staged: StagedFocus[] = [];
+        this.stageFocusedChild(BrsInvalid.Instance, staged);
+        Node.notifyStagedFocus(staged);
     }
 
     /**
@@ -1488,7 +1503,7 @@ export class Node extends RoSGNode implements BrsValue {
      */
     private static staysInDetachedTree(node: Node): boolean {
         const scene = sgRoot.scene;
-        if (scene === undefined || !scene.isFocusWithin()) {
+        if (!scene?.isFocusWithin()) {
             return false;
         }
         let root = node;
