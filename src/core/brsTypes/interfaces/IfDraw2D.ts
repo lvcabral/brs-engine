@@ -890,10 +890,10 @@ export class IfDraw2D {
             const ctx = this.component.getContext();
             // Roku documents DrawPoint() as having a maximum point size of 100.
             const [cx, cy, cw, ch] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
-            // Kept inside the surface: a region shares its bitmap's canvas, so canvas clipping won't do it.
+            // A device cuts the point at the surface's left and top edges only: inside a region it still
+            // paints past the right and bottom ones (test/simulator/probes/region-draw-probe).
             const [px, py] = [Math.max(cx, 0), Math.max(cy, 0)];
-            const w = Math.min(cx + cw, this.component.width) - px;
-            const h = Math.min(cy + ch, this.component.height) - py;
+            const [w, h] = [cx + cw - px, cy + ch - py];
             if (w > 0 && h > 0) {
                 // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
                 if (!this.component.getCanvasAlpha()) {

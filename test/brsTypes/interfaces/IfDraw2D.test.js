@@ -386,7 +386,8 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 10, 5, 5)).toEqual([0, 0, 0, 0]);
         });
 
-        it("drawPoint on a roRegion stays inside the region", () => {
+        // Device pixels from test/simulator/probes/region-draw-probe (edgePoint).
+        it("drawPoint on a roRegion is cut at the region's left and top edges only", () => {
             const bmp = makeBitmap(20, 20, true);
             const region = new RoRegion(bmp, new Int32(10), new Int32(10), new Int32(5), new Int32(5));
             region
@@ -402,11 +403,15 @@ describe("IfDraw2D", () => {
                 [9, 9],
                 [9, 10],
                 [10, 9],
+            ]) {
+                expect(pixelAt(ctx, 20, x, y)).toEqual([0, 0, 0, 0]);
+            }
+            for (const [x, y] of [
                 [15, 15],
                 [15, 14],
                 [14, 15],
             ]) {
-                expect(pixelAt(ctx, 20, x, y)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 20, x, y)).toEqual([255, 0, 0, 255]);
             }
         });
 
