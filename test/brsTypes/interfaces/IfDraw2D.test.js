@@ -142,6 +142,51 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 20, 3, 3)).toEqual([255, 0, 0, 128]);
             expect(pixelAt(ctx, 20, 0, 0)).toEqual([0, 0, 255, 255]);
         });
+
+        // Regression (#1351): with alpha blending off, a device replaces the pixels with the RGBA given,
+        // alpha included — on an roBitmap too, not only an roScreen. It used to paint the color opaque.
+        it("keeps the color's alpha on a non-alpha RoBitmap, replacing prior content", () => {
+            const bmp = makeBitmap(4, 4, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0xffffff00));
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(4),
+                new Int32(4),
+                rgba(0xffffff40)
+            );
+            expect(pixelAt(bmp.getContext(), 4, 1, 1)).toEqual([255, 255, 255, 64]);
+
+            // A second, more transparent rect replaces rather than blends over the first.
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(1),
+                new Int32(1),
+                new Int32(2),
+                new Int32(2),
+                rgba(0xff000010)
+            );
+            expect(pixelAt(bmp.getContext(), 4, 1, 1)).toEqual([255, 0, 0, 16]);
+            expect(pixelAt(bmp.getContext(), 4, 0, 0)).toEqual([255, 255, 255, 64]);
+        });
+
+        it("keeps the color's alpha on a non-alpha RoRegion", () => {
+            const bmp = makeBitmap(8, 4, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            const rgn = new RoRegion(bmp, new Int32(4), new Int32(0), new Int32(4), new Int32(4));
+            rgn.getMethod("setAlphaEnable").call(interpreter, BrsBoolean.False);
+            rgn.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(4),
+                new Int32(4),
+                rgba(0xff000080)
+            );
+            expect(pixelAt(bmp.getContext(), 8, 5, 1)).toEqual([255, 0, 0, 128]);
+            expect(pixelAt(bmp.getContext(), 8, 1, 1)).toEqual([0, 0, 255, 255]);
+        });
     });
 
     describe("drawLine and drawPoint", () => {

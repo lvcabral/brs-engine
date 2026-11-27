@@ -898,12 +898,12 @@ export class IfDraw2D {
             const w = width.getValue();
             const h = height.getValue();
             const ctx = this.component.getContext();
-            if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
+            // With alpha blending off the device replaces the pixels with the RGBA given, alpha included,
+            // on any surface (roScreen, roBitmap, roRegion) — so clear first, then fill keeping the alpha.
+            if (!this.component.getCanvasAlpha()) {
                 ctx.clearRect(baseX, baseY, w, h);
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            } else {
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
             }
+            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
             ctx.fillRect(baseX, baseY, w, h);
             this.component.makeDirty();
             return BrsBoolean.True;
