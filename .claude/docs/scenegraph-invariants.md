@@ -2120,6 +2120,22 @@ button before it is appended returns the focus on close"). With nothing focused 
 or after a removal), the engine still makes a detached focus live, and `restoreFocusChainOnAttach`
 threads it once the subtree is mounted. The device doesn't (the pre-existing difference above).
 
+**Focusing the mounted view hands the focus to that detached focus** (DEVICE-MEASURED, OS 16.1,
+`test/simulator/probes/detached-init-focus-probe` S2/S3/S7). Take a screen whose keyboard focused itself
+in `init()`. A screen stack appends it and calls `screen.setFocus(true)`, and the focus lands on the
+keyboard: the links run down to it, the screen's `hasFocus()` is false, and the keyboard owns the chain.
+`linkDetachedPath` records the node (`sgRoot.markDetachedFocus`). A top-level `setFocus(true)` on a node
+under the scene whose links lead to that node, still a descendant (`detachedFocusBelow`), calls that
+node's own `setNodeFocus(true)` instead. That is an ordinary top-level focus (`applyFocus`), and a subclass
+runs its gain (ArrayGrid publishes `itemFocused`). `focusable` on the view makes no difference (S7). The
+device notifies the target before the view, here and in the detached call; the engine notifies root
+first, as on every other path (the open gain-order question above). Stale links left in the scene's tree don't count (S5/S6: the container
+focuses itself), so the record is dropped once the node is live (`setFocused`) or unfocused. Don't rely
+on the screen's own forward instead: a `focusedChild` observer's `setFocus` on the keyboard is compared
+against the keyboard's detached call (`lastFocusTarget`), so it writes only the keyboard's self-link and
+the focus stays on the screen. Regression: `FocusOnRemoval.test.js`, "focusing a
+mounted view hands the focus to the node it focused while detached".
+
 Regression: `focus-steal-app`, `container-redirect-focus-app` and `dialog-buttongroup-focus-app` in
 `test/cli/`, and `Focus.test.js` (port observers stand in for BrightScript ones; the tests set
 `sgRoot.setLastFocusTarget` where a BrightScript `setFocus` would).

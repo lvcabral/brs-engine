@@ -1,0 +1,66 @@
+PROBE|S1|start kind=Keyboard initFocus=true forward=true viewFocusable=false
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|  onTargetFocus hasFocus=false inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S1|created nav=true view=false viewChain=true target=false targetChain=true links=/nav/self
+PROBE|S1|appended nav=true view=false viewChain=true target=false targetChain=true links=/nav/self
+PROBE|  onTargetFocus hasFocus=false inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S1|focused nav=false view=false viewChain=true target=false targetChain=true links=/stack/view/col/target//self
+PROBE|  onTargetFocus hasFocus=false inChain=false
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S1|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S2|start kind=Group initFocus=true forward=true viewFocusable=false
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S2|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S2|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S2|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onTargetFocus hasFocus=false inChain=false
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S2|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S3|start kind=Group initFocus=true forward=false viewFocusable=false
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S3|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S3|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S3|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onTargetFocus hasFocus=false inChain=false
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S3|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S4|start kind=Group initFocus=false forward=true viewFocusable=false
+PROBE|S4|created nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S4|appended nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|  onViewFocus hasFocus=true inChain=true
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|S4|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onTargetFocus hasFocus=false inChain=false
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S4|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S5|start containerFocusable=true
+PROBE|S5|after-drop nav=false overlay=true container=false containerChain=true leaf=true leafChain=true links=/overlay/self
+PROBE|S5|nav nav=true overlay=false container=false containerChain=true leaf=true leafChain=true links=/nav/self
+PROBE|S5|container-focused nav=false overlay=false container=true containerChain=true leaf=true leafChain=true links=/container/self
+PROBE|S5|back-to-nav nav=true overlay=false container=false containerChain=false leaf=true leafChain=true links=/nav/self
+PROBE|S6|start containerFocusable=false
+PROBE|S6|after-drop nav=false overlay=true container=false containerChain=true leaf=true leafChain=true links=/overlay/self
+PROBE|S6|nav nav=true overlay=false container=false containerChain=true leaf=true leafChain=true links=/nav/self
+PROBE|S6|container-focused nav=false overlay=false container=true containerChain=true leaf=true leafChain=true links=/container2/self
+PROBE|S6|back-to-nav nav=true overlay=false container=false containerChain=false leaf=true leafChain=true links=/nav/self
+PROBE|S7|start kind=Group initFocus=true forward=false viewFocusable=true
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S7|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S7|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onTargetFocus hasFocus=true inChain=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S7|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onTargetFocus hasFocus=false inChain=false
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S7|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|done

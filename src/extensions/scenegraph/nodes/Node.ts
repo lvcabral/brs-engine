@@ -1408,6 +1408,12 @@ export class Node extends RoSGNode implements BrsValue {
                     }
                 }
             }
+            const detachedLeaf = this.detachedFocusBelow();
+            if (detachedLeaf) {
+                // Through the leaf's own setNodeFocus, so a subclass runs its gain (ArrayGrid's itemFocused).
+                detachedLeaf.setNodeFocus(true);
+                return this.isFocusable();
+            }
             if (!this.isFocusable() && this.isChildrenFocused()) {
                 sgRoot.claimFocusForScene(this);
                 return false;
@@ -1442,6 +1448,7 @@ export class Node extends RoSGNode implements BrsValue {
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
+            sgRoot.dropDetachedFocus(this);
             if (sgRoot.chainOwner === this) {
                 sgRoot.setChainOwner();
             } else if (sgRoot.chainExtension === this) {
@@ -1474,11 +1481,35 @@ export class Node extends RoSGNode implements BrsValue {
      * @param staged Accumulator for the staged writes.
      */
     private linkDetachedPath(path: Node[], staged: StagedFocus[]) {
-        Node.unsetPathBelow(Node.chainLeaf(path[0]), path, staged);
+        const previous = Node.chainLeaf(path[0]);
+        if (previous) {
+            sgRoot.dropDetachedFocus(previous);
+        }
+        Node.unsetPathBelow(previous, path, staged);
         for (let i = 0; i < path.length - 1; i++) {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
         this.stageFocusedChild(this, staged);
+        sgRoot.markDetachedFocus(this);
+    }
+
+    /**
+     * The node a top-level `setFocus(true)` on this node hands the focus to (DEVICE-MEASURED,
+     * detached-init-focus-probe S2/S3/S7): one below it that took the focus inside a then-detached tree
+     * (`linkDetachedPath`), which this node's `focusedChild` links still lead to, once this node is under
+     * the scene. Stale links left in the scene's tree don't count (S5/S6): the node focuses itself.
+     */
+    private detachedFocusBelow(): Node | undefined {
+        if (Node.focusRound) {
+            return undefined;
+        }
+        // Cheapest first: most calls stop at the first link (none, or this node's own).
+        const leaf = Node.chainLeaf(this);
+        if (leaf === undefined || leaf === this || !sgRoot.hasDetachedFocus(leaf)) {
+            return undefined;
+        }
+        // A link left on a node the leaf was removed from doesn't lead to it.
+        return sgRoot.scene?.isFocusWithin(this) && this.isFocusWithin(leaf) ? leaf : undefined;
     }
 
     /**
@@ -1751,6 +1782,7 @@ export class Node extends RoSGNode implements BrsValue {
         sgRoot.setChainOwner();
         sgRoot.setLastFocusTarget();
         sgRoot.setPendingPanelFocus();
+        sgRoot.clearDetachedFocus();
     }
 
     /**
