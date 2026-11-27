@@ -1778,7 +1778,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (this.getValue("focusedchild") instanceof RoSGNode) {
                     return BrsBoolean.True;
                 }
-                if (sgRoot.focused === this || sgRoot.pendingPanelFocus === this) {
+                if (sgRoot.focused === this) {
                     return BrsBoolean.True;
                 }
                 return BrsBoolean.from(this.isChildrenFocused());

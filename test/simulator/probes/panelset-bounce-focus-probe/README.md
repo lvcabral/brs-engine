@@ -53,7 +53,7 @@ panel is notified first, while the rest of the chain still leads to the menu:
 ## Engine
 
 `PanelSet.moveFocusToCurrentPanel` with `Node.announcePanelFocus`/`Node.completePanelFocus`
-(`sgRoot.pendingPanelFocus` makes `isInFocusChain()` true during the first phase), and the chain takeover
+(the panel's self-link, written first, makes `isInFocusChain()` true during the first phase), and the chain takeover
 in `Node.applyNestedFocus` (`redirectsOwner`). Every case ends in the device's state, and every value an
 observer reads matches. The order of notifications inside a transaction still differs (see "Still open"
 in `.claude/docs/scenegraph-invariants.md`), and the device notifies the `chainGate` panel a second time

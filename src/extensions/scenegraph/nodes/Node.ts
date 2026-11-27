@@ -102,6 +102,11 @@ export class Node extends RoSGNode implements BrsValue {
      * one of them appends its own to this round instead of dispatching them (see `notifyStagedFocus`).
      */
     private static focusRound: { queue: StagedFocus[]; fields: Set<Field> } | undefined;
+    /**
+     * Nodes that focused themselves inside a detached tree, while their self-link still stands: any later
+     * `focusedChild` write on the node drops it (see `linkDetachedPath`, `detachedFocusBelow`).
+     */
+    private static readonly detachedFocus = new WeakSet<Node>();
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
@@ -1448,7 +1453,6 @@ export class Node extends RoSGNode implements BrsValue {
         } else {
             // If the node doesn't have focus already, and it's not gaining focus,
             // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
-            sgRoot.dropDetachedFocus(this);
             if (sgRoot.chainOwner === this) {
                 sgRoot.setChainOwner();
             } else if (sgRoot.chainExtension === this) {
@@ -1481,16 +1485,12 @@ export class Node extends RoSGNode implements BrsValue {
      * @param staged Accumulator for the staged writes.
      */
     private linkDetachedPath(path: Node[], staged: StagedFocus[]) {
-        const previous = Node.chainLeaf(path[0]);
-        if (previous) {
-            sgRoot.dropDetachedFocus(previous);
-        }
-        Node.unsetPathBelow(previous, path, staged);
+        Node.unsetPathBelow(Node.chainLeaf(path[0]), path, staged);
         for (let i = 0; i < path.length - 1; i++) {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
         this.stageFocusedChild(this, staged);
-        sgRoot.markDetachedFocus(this);
+        Node.detachedFocus.add(this);
     }
 
     /**
@@ -1505,11 +1505,11 @@ export class Node extends RoSGNode implements BrsValue {
         }
         // Cheapest first: most calls stop at the first link (none, or this node's own).
         const leaf = Node.chainLeaf(this);
-        if (leaf === undefined || leaf === this || !sgRoot.hasDetachedFocus(leaf)) {
+        if (leaf === undefined || leaf === this || !Node.detachedFocus.has(leaf)) {
             return undefined;
         }
         // A link left on a node the leaf was removed from doesn't lead to it.
-        return sgRoot.scene?.isFocusWithin(this) && this.isFocusWithin(leaf) ? leaf : undefined;
+        return sgRoot.isUnderScene(this) && this.isFocusWithin(leaf) ? leaf : undefined;
     }
 
     /**
@@ -1631,15 +1631,10 @@ export class Node extends RoSGNode implements BrsValue {
             return false;
         }
         const staged: StagedFocus[] = [];
+        // The self-link makes the panel report isInFocusChain() while it is notified (DEVICE-MEASURED, the
+        // probe's chainGate case), though the live focus is still on the panel being left.
         this.stageFocusedChild(this, staged);
-        // The panel already reports isInFocusChain() while it is notified (DEVICE-MEASURED, the probe's
-        // chainGate case), though the live focus is still on the panel being left.
-        sgRoot.setPendingPanelFocus(this);
-        try {
-            Node.notifyStagedFocus(staged);
-        } finally {
-            sgRoot.setPendingPanelFocus();
-        }
+        Node.notifyStagedFocus(staged);
         return true;
     }
 
@@ -1731,6 +1726,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param staged Accumulator the caller later hands to `notifyStagedFocus`.
      */
     private stageFocusedChild(value: BrsType, staged: StagedFocus[]) {
+        Node.detachedFocus.delete(this);
         const previousSink = Node.focusStagingSink;
         Node.focusStagingSink = staged;
         try {
@@ -1781,8 +1777,6 @@ export class Node extends RoSGNode implements BrsValue {
         Node.focusRound = undefined;
         sgRoot.setChainOwner();
         sgRoot.setLastFocusTarget();
-        sgRoot.setPendingPanelFocus();
-        sgRoot.clearDetachedFocus();
     }
 
     /**

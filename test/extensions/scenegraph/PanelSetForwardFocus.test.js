@@ -174,7 +174,6 @@ describe("PanelSet navigation with a panel that forwards its focus", () => {
         panelSet.handleKey("right", true);
         expect(seen[0]).toBe(true);
         expect(sgRoot.focused).toBe(inner);
-        expect(sgRoot.pendingPanelFocus).toBeUndefined();
     });
 
     test("a gain observer that leaves the focus on the menu's chain still completes the move", () => {

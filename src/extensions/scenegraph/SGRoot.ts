@@ -46,11 +46,9 @@ export class SGRoot {
     private _scene?: Scene;
     private _focused?: RoSGNode;
     private _focusTakenInScene = false;
-    private _detachedFocus = new WeakSet<RoSGNode>();
     private _chainOwner?: RoSGNode;
     private _chainExtension?: RoSGNode;
     private _lastFocusTarget?: RoSGNode;
-    private _pendingPanelFocus?: RoSGNode;
     private _threadId: number;
     private _resolution: string;
     private readonly _autoSub: { search: string; replace: string };
@@ -202,19 +200,6 @@ export class SGRoot {
     /** The node a nested forward extended the chain owner's chain to (see `Node.applyNestedFocus`). */
     get chainExtension(): RoSGNode | undefined {
         return this._chainExtension;
-    }
-
-    /** A panel a PanelSet move is notifying in its first phase (see `Node.announcePanelFocus`). */
-    get pendingPanelFocus(): RoSGNode | undefined {
-        return this._pendingPanelFocus;
-    }
-
-    /**
-     * Records the panel a PanelSet move is notifying in its first phase, or clears it.
-     * @param node That panel, or undefined to clear it
-     */
-    setPendingPanelFocus(node?: RoSGNode) {
-        this._pendingPanelFocus = node;
     }
 
     /** The target of the last `setFocus(true)` call to return (see `Node.applyNestedFocus`). */
@@ -538,38 +523,9 @@ export class SGRoot {
     setFocused(node?: RoSGNode) {
         this._focused = node;
         this._focusTakenInScene = node !== undefined && this.isUnderScene(node);
-        if (node) {
-            this._detachedFocus.delete(node);
-        } else {
+        if (!node) {
             this.setChainOwner();
         }
-    }
-
-    /**
-     * Records a node that took the focus inside a detached tree without becoming the live focus
-     * (`Node.linkDetachedPath`). Focusing its mounted ancestor hands it the focus (`Node.detachedFocusBelow`).
-     * @param node The node.
-     */
-    markDetachedFocus(node: RoSGNode) {
-        this._detachedFocus.add(node);
-    }
-
-    /**
-     * Drops a node's detached-focus record.
-     * @param node The node.
-     */
-    dropDetachedFocus(node: RoSGNode) {
-        this._detachedFocus.delete(node);
-    }
-
-    /** Drops every detached-focus record (between app runs). */
-    clearDetachedFocus() {
-        this._detachedFocus = new WeakSet<RoSGNode>();
-    }
-
-    /** Whether the node took the focus inside a detached tree and hasn't been focused since. */
-    hasDetachedFocus(node: RoSGNode): boolean {
-        return this._detachedFocus.has(node);
     }
 
     /**
@@ -592,7 +548,8 @@ export class SGRoot {
         }
     }
 
-    private isUnderScene(node: RoSGNode): boolean {
+    /** Whether the node is the scene or one of its descendants (walking up its parents). */
+    isUnderScene(node: RoSGNode): boolean {
         return this._scene?.isFocusWithin(node) ?? false;
     }
 

@@ -2047,8 +2047,8 @@ re-shown from `rowItemFocused`).
           `setFocus(true)` on the menu: a details panel with nothing to show while it loads) leaves the menu
           focused; one that forwards into its own list, or to the grid of a panel it just appended, keeps it
           there; one whose observer only re-focuses the menu (`noUnfocus`) still takes the focus. While it is
-          notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (`sgRoot.pendingPanelFocus`,
-          the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
+          notified, the panel reports `isInFocusChain()` true as well as `hasFocus()` (its self-link is written
+          before it is notified, the probe's `chainGate` case), so a gain handler gated on it still forwards. A list panel, a panel with
           an `initialFocus` to apply, or a move started inside a focus round (an observer setting `goBack`, where
           the first phase's notification would only be queued) takes the focus at once (the device's Left back
           to a ListPanel is one ordinary transaction to its list).
@@ -2124,13 +2124,13 @@ threads it once the subtree is mounted. The device doesn't (the pre-existing dif
 `test/simulator/probes/detached-init-focus-probe` S2/S3/S7). Take a screen whose keyboard focused itself
 in `init()`. A screen stack appends it and calls `screen.setFocus(true)`, and the focus lands on the
 keyboard: the links run down to it, the screen's `hasFocus()` is false, and the keyboard owns the chain.
-`linkDetachedPath` records the node (`sgRoot.markDetachedFocus`). A top-level `setFocus(true)` on a node
+`linkDetachedPath` records the node (`Node.detachedFocus`, dropped by its next `focusedChild` write). A top-level `setFocus(true)` on a node
 under the scene whose links lead to that node, still a descendant (`detachedFocusBelow`), calls that
 node's own `setNodeFocus(true)` instead. That is an ordinary top-level focus (`applyFocus`), and a subclass
 runs its gain (ArrayGrid publishes `itemFocused`). `focusable` on the view makes no difference (S7). The
 device notifies the target before the view, here and in the detached call; the engine notifies root
 first, as on every other path (the open gain-order question above). Stale links left in the scene's tree don't count (S5/S6: the container
-focuses itself), so the record is dropped once the node is live (`setFocused`) or unfocused. Don't rely
+focuses itself), so the record lasts only while the self-link the detached call wrote stands. Don't rely
 on the screen's own forward instead: a `focusedChild` observer's `setFocus` on the keyboard is compared
 against the keyboard's detached call (`lastFocusTarget`), so it writes only the keyboard's self-link and
 the focus stays on the screen. Regression: `FocusOnRemoval.test.js`, "focusing a
