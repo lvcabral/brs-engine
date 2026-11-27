@@ -2136,6 +2136,12 @@ against the keyboard's detached call (`lastFocusTarget`), so it writes only the 
 the focus stays on the screen. Regression: `FocusOnRemoval.test.js`, "focusing a
 mounted view hands the focus to the node it focused while detached".
 
+**`isInFocusChain()` follows the node's own links** (DEVICE-MEASURED, same probe, and every
+`outletInChain`/`outletFC` line of `focus-probe`): it is true while the node's `focusedChild` is a node, as
+well as while the node holds or is above the live focus. So a view whose child focused itself while the view
+was detached reports it before and after mounting. Regression: `FocusOnRemoval.test.js`, "isInFocusChain
+follows the node's own links".
+
 Regression: `focus-steal-app`, `container-redirect-focus-app` and `dialog-buttongroup-focus-app` in
 `test/cli/`, and `Focus.test.js` (port observers stand in for BrightScript ones; the tests set
 `sgRoot.setLastFocusTarget` where a BrightScript `setFocus` would).

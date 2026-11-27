@@ -5,6 +5,12 @@ const core = require("../../../packages/node/bin/brs.node.js");
 
 const { SGNodeFactory, sgRoot } = scenegraph;
 
+/** Calls the node's `isInFocusChain()` BrightScript method. */
+function isInFocusChain(node) {
+    const interpreter = new core.Interpreter();
+    return interpreter.call(node.getMethod("isinfocuschain"), [], node.m, interpreter.location).toBoolean();
+}
+
 /**
  * Detaching a node the scene's focus chain runs through leaves nothing focused: removeChild,
  * replaceChild, reparent and a reparenting append alike. A focus taken inside a still-detached tree
@@ -150,6 +156,29 @@ describe("focus when the focused node leaves its parent", () => {
             expect(sgRoot.focused).toBe(view);
         }
     );
+
+    test("isInFocusChain follows the node's own links, inside a detached tree too", () => {
+        // Device (detached-init-focus-probe S3): the view and its target report isInFocusChain() while
+        // the scene's focus stays elsewhere, before and after the view is mounted.
+        const { holder, leaf } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const target = SGNodeFactory.createNode("Group");
+        view.appendChildToParent(target);
+        expect(isInFocusChain(view)).toBe(false);
+        target.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(leaf);
+        expect(isInFocusChain(view)).toBe(true);
+        expect(isInFocusChain(target)).toBe(true);
+        expect(isInFocusChain(holder)).toBe(true);
+
+        holder.appendChildToParent(view);
+        expect(isInFocusChain(view)).toBe(true);
+
+        view.setNodeFocus(true);
+        leaf.setNodeFocus(true);
+        expect(isInFocusChain(view)).toBe(false);
+        expect(isInFocusChain(target)).toBe(false);
+    });
 
     test("a list focused while detached gains the focus when its view is focused", () => {
         // The hand-off runs the list's own setNodeFocus, so its gain publishes itemFocused.

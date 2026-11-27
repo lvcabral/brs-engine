@@ -1772,7 +1772,12 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                // loop through all children DFS and check if any children has focus
+                // A node is in the chain while its own `focusedChild` links anywhere (DEVICE-MEASURED,
+                // detached-init-focus-probe, focus-probe, setfocus-return-probe): true inside a detached tree,
+                // and on a stale link the scene's chain moved away from.
+                if (this.getValue("focusedchild") instanceof RoSGNode) {
+                    return BrsBoolean.True;
+                }
                 if (sgRoot.focused === this || sgRoot.pendingPanelFocus === this) {
                     return BrsBoolean.True;
                 }

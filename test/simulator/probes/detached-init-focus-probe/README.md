@@ -41,13 +41,15 @@ brs-cli --root test/simulator/probes/detached-init-focus-probe source/main.brs |
   self-link.
 - **Stale links in the scene don't do this** (S5, S6). The container focuses itself (`/container/self`),
   whether it is focusable or not.
+- **`isInFocusChain()` follows the node's own links:** it is true while its `focusedChild` is a node.
+  That includes a node inside a detached tree, and a node on a stale link the scene's chain moved away from
+  (S5/S6 `containerChain`). The engine does the same.
 - The target's observer runs before the view's, both in the detached `setFocus` and in the view's.
 - A `DynamicCustomKeyboard` hands its focus to an internal child (S1: `target//self`, and the keyboard's
   `hasFocus()` is false). The engine doesn't model that child.
 
 The engine matches the focus landing in every case. It still differs on these points:
 
-- `isInFocusChain()`. On the device it follows the node's own links, so it is true inside a detached tree.
 - The keyboard's internal child (S1).
 - Notification order. The device notifies the target before the view, on the gain (the detached call and
   the view's) and on the unset (`nav` focused again). The engine notifies the view first.
