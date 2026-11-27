@@ -174,6 +174,32 @@ child animating its own content is not pulled back each frame. Every child-list 
 layout through `recordChildChange` (a replace or reorder keeps the count) — regressions:
 `LayoutGroupRelayout.test.js`, `layoutgroup-reentrant-measure-app` in `cli-scenegraph.test.js`.
 
+**Re-entry from inside `applyLayout`** (a child's `translation` observer querying `boundingRect()` on the
+group or an ancestor, issue #1349). Device-measured, OS 16.1, `test/simulator/probes/layoutgroup-reentry-probe`:
+the observer runs inline mid-placement (later siblings still unplaced); its query lays the group out again
+(even nested inside another watcher's query) and returns that layout; then the interrupted loop **carries on
+from its own running offset**, with its start-of-pass sizes and start offset but `itemSpacings` read live, and
+nothing re-lays it out. An observer that changed the spacing therefore leaves mixed gaps on the device (c9/c10),
+and the engine reproduces them. Load-bearing pieces:
+
+-   **Targets are absolute**: translation at measure time plus the offset, never a delta on the current
+    translation (the nested pass may have rewritten it — that was the double shift).
+-   **`rectTranslations`** records the translation a child's cached rect was computed at, from the moment
+    `applyLayout` moves it (or `measureUnsizedChildren` measures it) until the children next render, when it
+    is cleared (so a clean frame does no work); `measureChild` shifts by the drift from it, falling back to
+    `assignedTranslations`, so a nested pass doesn't count the interrupted pass's unrendered moves twice.
+-   **One `appliedMetrics` map per layout**, shared by nested passes, written just before each translation
+    write: each child's expectation is its last write, so `synchronizeChildMetrics` doesn't "fix" the
+    device's result. `assignedTranslations` is likewise set before the write.
+-   **`sgRoot.pendingLayouts`** holds groups inside `applyLayout`. A query on one or an ancestor
+    (`Node.containsPendingLayout`) always re-measures, bypassing the `sgRoot.measuring` guard (restored, not
+    cleared, on exit); the walk stops at `hostsItemComponents()` nodes (ArrayGrid, TargetGroup) so a grid
+    is never re-rendered from its own item creation. The queried node is mid-render, so its own rects are
+    restored and the query gets a copy (`measureAroundPendingLayout`).
+
+Not replicated: with two watchers the device also re-runs the observers a few times with the watcher
+momentarily at `[0,0]`. Regression: `layoutgroup-reentry-app` in `cli-scenegraph.test.js`.
+
 **Visibility vs. measurement:** plain containers (`Group`, `LayoutGroup`, `MaskGroup`) do their
 invisible early-return through `Group.skipRender(draw2D)`, which lets a **measurement pass** (a render
 with no `draw2D` — `getBoundingRect`'s refresh) traverse them when invisible: on Roku, layout/bounding

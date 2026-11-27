@@ -57,6 +57,11 @@ export class LayoutGroup extends Group {
     // child's translation directly after layout, as SGDEX ButtonBar does to its label), re-layout
     // must run to re-impose the aligned position — a translation change alone does not dirty layout.
     private readonly assignedTranslations = new WeakMap<Node, number[]>();
+    // Translation a child's cached rect was computed at, kept from the moment applyLayout moves the
+    // child (or measures it alone) until the children next render. A pass that re-enters applyLayout
+    // from a child's observer measures children the interrupted pass moved but that haven't rendered
+    // since. Without an entry, the rect reflects the assigned translation.
+    private readonly rectTranslations = new Map<Node, number[]>();
     private lastSpacingSignature = "";
     private lastChildCount = 0;
     private readonly epsilon = 0.25;
@@ -228,32 +233,40 @@ export class LayoutGroup extends Group {
         // centered span — a 55-tall child reporting 82.5). Snapshot before the loop and restore
         // before each retry so only the final, converged pass's union survives.
         const parentGroup = this.parent instanceof Group ? this.parent : undefined;
-        const savedParentRects = parentGroup
-            ? {
-                  local: { ...parentGroup.rectLocal },
-                  toParent: { ...parentGroup.rectToParent },
-                  toScene: { ...parentGroup.rectToScene },
-              }
-            : undefined;
+        const savedParentRects = parentGroup?.snapshotRects();
         // Counted locally: a nested pass (a child observer's mid-render boundingRect() on this group)
         // writes lastPassCount too, and the outer call must report its own count.
         let passCount = 0;
         for (let pass = 0; pass < maxPasses; pass++) {
-            if (pass > 0 && parentGroup && savedParentRects) {
-                parentGroup.rectLocal = { ...savedParentRects.local };
-                parentGroup.rectToParent = { ...savedParentRects.toParent };
-                parentGroup.rectToScene = { ...savedParentRects.toScene };
+            if (pass > 0 && savedParentRects) {
+                parentGroup?.restoreRects(savedParentRects);
             }
             passCount = pass + 1;
             const appliedThisPass = layoutChildren.length > 0 && this.layoutDirty;
             if (appliedThisPass) {
                 this.measureUnsizedChildren(layoutChildren, interpreter);
-                this.appliedMetrics = new WeakMap<Node, LayoutMetrics>();
-                this.applyLayout(layoutChildren, direction, spacings, addAfter, this.appliedMetrics);
+                // A pass nested in an interrupted applyLayout (a child's translation observer querying a
+                // bounding rect) shares its map: each child's metrics are those of its last write.
+                const nested = sgRoot.pendingLayouts.has(this);
+                if (!this.appliedMetrics || !nested) {
+                    this.appliedMetrics = new WeakMap<Node, LayoutMetrics>();
+                }
+                sgRoot.pendingLayouts.add(this);
+                try {
+                    this.applyLayout(layoutChildren, direction, spacings, addAfter, this.appliedMetrics);
+                } finally {
+                    if (!nested) {
+                        sgRoot.pendingLayouts.delete(this);
+                    }
+                }
                 this.layoutDirty = false;
             }
 
             super.renderNodeContent(interpreter, origin, angle, opacity, draw2D);
+            // The children's rects now reflect their current translations.
+            if (this.rectTranslations.size) {
+                this.rectTranslations.clear();
+            }
 
             if (layoutChildren.length) {
                 this.synchronizeChildMetrics(layoutChildren, direction, appliedThisPass);
@@ -289,6 +302,7 @@ export class LayoutGroup extends Group {
                     child.rectToParent.width > 0 || child.rectToScene.width > 0 || child.rectLocal.width > 0;
                 if (!rectKnown && !(typeof dims.width === "number" && dims.width > 0)) {
                     child.layoutNode(interpreter, [0, 0], 0, 1);
+                    this.rectTranslations.set(child, this.getChildTranslation(child));
                     // The [0,0] measurement clobbered the subtree's rectToScene with origin-less
                     // values; deep-mark it so the surrounding pruned refresh re-descends and
                     // re-establishes in-tree rects instead of skipping the settled subtree.
@@ -300,6 +314,16 @@ export class LayoutGroup extends Group {
         }
     }
 
+    /**
+     * Places the children. Writing a translation runs its observers inline, and one that queries a
+     * bounding rect lays this group out again from inside the loop (`Node.containsPendingLayout`).
+     * Device-measured (`test/simulator/probes/layoutgroup-reentry-probe`): the observer sees the
+     * later siblings unplaced, its query returns the nested layout, and this loop then carries on from
+     * its own running offset with the measurements it started with, reading `itemSpacings` live — an
+     * observer that changed the spacing leaves the remaining gaps at the new value and the earlier
+     * ones at the old. So each target is absolute (translation at measure time plus the offset),
+     * never a delta on a translation the nested pass may have rewritten.
+     */
     private applyLayout(
         children: Group[],
         direction: LayoutDirection,
@@ -314,22 +338,30 @@ export class LayoutGroup extends Group {
             return;
         }
 
-        const metricsList = children.map((child) => this.measureChild(child, direction, metricsMap));
+        const metricsList = children.map((child) => this.measureChild(child, direction));
+        const baseTranslations = children.map((child) => this.getChildTranslation(child));
         const primaryAlignment =
             direction === "horiz" ? this.getHorizontalPrimaryAlignment() : this.getVerticalPrimaryAlignment();
         const crossAlignment =
             direction === "horiz" ? this.normalizeVertAlignment(direction) : this.normalizeHorizAlignment(direction);
 
         const totalPrimary = this.calculateTotalPrimary(metricsList, spacings, addSpacingAfterChild);
-        let currentOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
+        const startOffset = this.computeStartOffset(direction, totalPrimary, primaryAlignment);
+        let currentOffset = startOffset;
 
         const childCount = children.length;
+        let spacingField = this.getValue("itemSpacings");
 
         for (let i = 0; i < childCount; i++) {
             const child = children[i];
             const metrics = metricsList[i];
             const spacing = this.getSpacingValue(spacings, i);
-            const translation = this.getChildTranslation(child);
+            const translation = baseTranslations[i];
+            // Until the children render, the child's cached rect reflects the translation measureChild
+            // took it to have, whatever this loop or a nested pass writes in the meantime.
+            if (!this.rectTranslations.has(child)) {
+                this.rectTranslations.set(child, this.assignedTranslations.get(child) ?? translation.slice());
+            }
             let expectedCrossStart = metrics.crossStart;
 
             if (!addSpacingAfterChild) {
@@ -356,32 +388,37 @@ export class LayoutGroup extends Group {
                 }
             }
 
-            this.setChildTranslation(child, translation);
+            metricsMap.set(child, {
+                primary: metrics.primary,
+                cross: metrics.cross,
+                crossStart: expectedCrossStart,
+                primaryStart: positionOffset,
+            });
+            // Before the write: an observer may lay the group out again and record its own.
             this.assignedTranslations.set(child, translation.slice());
+            this.setChildTranslation(child, translation);
+            // A write's observer may have changed the spacing; the remaining gaps use the new value.
+            const field = this.getValue("itemSpacings");
+            if (field !== spacingField) {
+                spacingField = field;
+                spacings = this.getItemSpacingValues();
+            }
 
             currentOffset = positionOffset + metrics.primary;
             if (addSpacingAfterChild && i < childCount - 1) {
-                currentOffset += spacing;
-            }
-
-            if (metricsMap) {
-                metricsMap.set(child, {
-                    primary: metrics.primary,
-                    cross: metrics.cross,
-                    crossStart: expectedCrossStart,
-                    primaryStart: positionOffset,
-                });
+                currentOffset += this.getSpacingValue(spacings, i);
             }
         }
 
         // Report the group's own bounding size so parents can measure it (e.g. a StdDlgCustomItem
-        // sizing the dialog around it). The primary axis is the stacked total; the cross axis is the
+        // sizing the dialog around it). The primary axis is the stacked run; the cross axis is the
         // widest/tallest child.
+        const runPrimary = currentOffset - startOffset;
         const maxCross = metricsList.reduce((acc, m) => Math.max(acc, m.cross), 0);
         if (direction === "horiz") {
-            this.setLayoutDimensions(totalPrimary, maxCross);
+            this.setLayoutDimensions(runPrimary, maxCross);
         } else {
-            this.setLayoutDimensions(maxCross, totalPrimary);
+            this.setLayoutDimensions(maxCross, runPrimary);
         }
     }
 
@@ -414,8 +451,8 @@ export class LayoutGroup extends Group {
         let maxWidth = 0;
         let maxHeight = 0;
         for (const child of children) {
-            this.setChildTranslation(child, [0, 0]);
             this.assignedTranslations.set(child, [0, 0]);
+            this.setChildTranslation(child, [0, 0]);
             const { rect } = this.chooseActiveRect(child);
             maxWidth = Math.max(maxWidth, rect.width);
             maxHeight = Math.max(maxHeight, rect.height);
@@ -483,11 +520,7 @@ export class LayoutGroup extends Group {
         }
     }
 
-    private measureChild(
-        child: Group,
-        direction: LayoutDirection,
-        metricsMap?: WeakMap<Node, LayoutMetrics>
-    ): LayoutMetrics {
+    private measureChild(child: Group, direction: LayoutDirection): LayoutMetrics {
         if (!child.isVisible()) {
             // Mirrors Group.nodeRenderingDone's own rule ("an invisible node must not contribute to
             // the parent's bounds"), which LayoutGroup's custom measurement otherwise bypasses. A
@@ -497,46 +530,37 @@ export class LayoutGroup extends Group {
             // that draws nothing — position is irrelevant since it never renders, so the current
             // translation is reused as-is rather than a stale measured origin.
             const translation = this.getChildTranslation(child);
-            const metrics: LayoutMetrics = {
+            return {
                 primary: 0,
                 cross: 0,
                 crossStart: direction === "horiz" ? translation[1] : translation[0],
                 primaryStart: direction === "horiz" ? translation[0] : translation[1],
             };
-            if (metricsMap) {
-                metricsMap.set(child, metrics);
-            }
-            return metrics;
         }
         const { rect, cached } = this.chooseActiveRect(child);
         let originX = rect.x;
         let originY = rect.y;
-        // A cached rect's origin reflects the translation applyLayout assigned last time (the child
-        // rendered there), NOT the child's current translation. If the app has since moved the child,
-        // shift the measured origin by that drift so applyLayout positions from the CURRENT translation
-        // plus the child's intrinsic offset — otherwise the delta-based positioning below leaves the
-        // child at the app's translation on the managed axes (e.g. a ButtonBar label stuck low). The
-        // fallback rect already uses the current translation, so it needs no shift.
+        // A cached rect's origin reflects the translation the child had when the rect was computed
+        // (it rendered there), NOT the child's current translation. If the app or an interrupted layout
+        // pass has since moved the child, shift the measured origin by that drift so applyLayout
+        // positions from the CURRENT translation plus the child's intrinsic offset — otherwise the
+        // child is left at the app's translation on the managed axes (e.g. a ButtonBar label stuck
+        // low), or a nested pass counts the interrupted pass's move twice. The fallback rect already
+        // uses the current translation, so it needs no shift.
         if (cached) {
-            const assigned = this.assignedTranslations.get(child);
-            if (assigned) {
+            const reference = this.rectTranslations.get(child) ?? this.assignedTranslations.get(child);
+            if (reference) {
                 const current = this.getChildTranslation(child);
-                originX += current[0] - assigned[0];
-                originY += current[1] - assigned[1];
+                originX += current[0] - reference[0];
+                originY += current[1] - reference[1];
             }
         }
-        const metrics: LayoutMetrics = {
+        return {
             primary: direction === "horiz" ? rect.width : rect.height,
             cross: direction === "horiz" ? rect.height : rect.width,
             crossStart: direction === "horiz" ? originY : originX,
             primaryStart: direction === "horiz" ? originX : originY,
         };
-
-        if (metricsMap) {
-            metricsMap.set(child, metrics);
-        }
-
-        return metrics;
     }
 
     private chooseActiveRect(child: Group): { rect: Rect; cached: boolean } {

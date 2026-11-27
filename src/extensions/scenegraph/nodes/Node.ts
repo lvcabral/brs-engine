@@ -52,6 +52,13 @@ import { ComponentDefinition } from "../parser/ComponentDefinition";
 import { convertHexColor, IDENTITY_SCENE_MAP } from "../SGUtil";
 import type { Task } from "./Task";
 
+/** A copy of a node's three bounding rects (`Node.snapshotRects`). */
+export interface NodeRects {
+    local: Rect;
+    toParent: Rect;
+    toScene: Rect;
+}
+
 export type ChangeOperation = "none" | "insert" | "add" | "remove" | "set" | "clear" | "move" | "setall" | "modify";
 
 /** The field of a `focusedChild` write held back until its focus transaction is fully committed. */
@@ -1166,6 +1173,8 @@ export class Node extends RoSGNode implements BrsValue {
         // overflow the stack, so it is skipped while a render is in progress.
         if (interpreter && !sgRoot.rendering) {
             this.refreshLayoutFromRoot(interpreter);
+        } else if (interpreter && sgRoot.pendingLayouts.size > 0 && this.containsPendingLayout()) {
+            return this.measureAroundPendingLayout(type, interpreter);
         } else if (
             interpreter &&
             sgRoot.rendering &&
@@ -1196,37 +1205,12 @@ export class Node extends RoSGNode implements BrsValue {
             // background sibling renders), making a later query on the parent skip its own fallback and
             // return the too-small rect. Snapshot/restore the parent's rects so it stays degenerate and
             // re-measures its full subtree when queried.
-            const parent = this.parent instanceof Node ? this.parent : undefined;
-            const savedLocal = parent ? { ...parent.rectLocal } : undefined;
-            const savedToParent = parent ? { ...parent.rectToParent } : undefined;
-            const savedToScene = parent ? { ...parent.rectToScene } : undefined;
-            sgRoot.measuring = true;
-            // A scoped subtree measurement never prunes (it can run nested inside a pruned
-            // full-tree refresh — e.g. item creation measuring a label): it measures at origin
-            // [0,0], so cached last-layout contexts from tree positions do not apply.
-            const wasPruning = sgRoot.pruneLayout;
-            sgRoot.pruneLayout = false;
-            try {
-                this.layoutNode(interpreter, [0, 0], 0, 1);
-            } finally {
-                sgRoot.measuring = false;
-                sgRoot.pruneLayout = wasPruning;
-                if (parent && savedLocal && savedToParent && savedToScene) {
-                    parent.rectLocal = savedLocal;
-                    parent.rectToParent = savedToParent;
-                    parent.rectToScene = savedToScene;
-                }
-                // The [0,0] measurement clobbered this subtree's rectToScene with origin-less
-                // values; deep-mark it so the next pruned refresh re-descends and re-establishes
-                // in-tree rects instead of skipping the settled subtree.
-                this.markSubtreeStaleDeep();
-                // ...but the SIZES this pass just computed are current (width/height are
-                // translation-invariant), so clear the measurement mark that the deep mark above
-                // re-set. Without this, the flag the fallback keys on is left set by the very pass
-                // meant to satisfy it, and every repeat query re-renders the subtree.
-                this.clearSubtreeMeasureStale();
-            }
+            this.measureSubtree(interpreter);
         }
+        return this.boundingRectOf(type);
+    }
+
+    private boundingRectOf(type: string): Rect {
         switch (type) {
             case "local":
                 return this.rectLocal;
@@ -1235,6 +1219,90 @@ export class Node extends RoSGNode implements BrsValue {
             default:
                 return this.rectToParent;
         }
+    }
+
+    /** A copy of this node's three bounding rects. */
+    snapshotRects(): NodeRects {
+        return { local: { ...this.rectLocal }, toParent: { ...this.rectToParent }, toScene: { ...this.rectToScene } };
+    }
+
+    /** Puts back rects from `snapshotRects`, copied so the snapshot can be restored again. */
+    restoreRects(saved: NodeRects) {
+        this.rectLocal = { ...saved.local };
+        this.rectToParent = { ...saved.toParent };
+        this.rectToScene = { ...saved.toScene };
+    }
+
+    /** Lays out this node's subtree alone, at origin [0,0], from inside a render. */
+    private measureSubtree(interpreter: Interpreter) {
+        const parent = this.parent instanceof Node ? this.parent : undefined;
+        const savedParentRects = parent?.snapshotRects();
+        const wasMeasuring = sgRoot.measuring;
+        sgRoot.measuring = true;
+        // A scoped subtree measurement never prunes (it can run nested inside a pruned
+        // full-tree refresh — e.g. item creation measuring a label): it measures at origin
+        // [0,0], so cached last-layout contexts from tree positions do not apply.
+        const wasPruning = sgRoot.pruneLayout;
+        sgRoot.pruneLayout = false;
+        try {
+            this.layoutNode(interpreter, [0, 0], 0, 1);
+        } finally {
+            sgRoot.measuring = wasMeasuring;
+            sgRoot.pruneLayout = wasPruning;
+            if (savedParentRects) {
+                parent?.restoreRects(savedParentRects);
+            }
+            // The [0,0] measurement clobbered this subtree's rectToScene with origin-less
+            // values; deep-mark it so the next pruned refresh re-descends and re-establishes
+            // in-tree rects instead of skipping the settled subtree.
+            this.markSubtreeStaleDeep();
+            // ...but the SIZES this pass just computed are current (width/height are
+            // translation-invariant), so clear the measurement mark that the deep mark above
+            // re-set. Without this, the flag the fallback keys on is left set by the very pass
+            // meant to satisfy it, and every repeat query re-renders the subtree.
+            this.clearSubtreeMeasureStale();
+        }
+    }
+
+    /**
+     * A query on a LayoutGroup that is placing its children, or on an ancestor of one (a child's
+     * translation observer querying it), lays the subtree out again, even inside another measurement,
+     * as on a device (`test/simulator/probes/layoutgroup-reentry-probe`). This node is mid-render
+     * too, so its own rects are handed back as they were and the query gets the measured one: the
+     * resumed render keeps unioning into its own state, not into rects placed at [0,0].
+     */
+    private measureAroundPendingLayout(type: string, interpreter: Interpreter): Rect {
+        const saved = this.snapshotRects();
+        try {
+            this.measureSubtree(interpreter);
+            return this.boundingRectOf(type);
+        } finally {
+            this.restoreRects(saved);
+        }
+    }
+
+    /**
+     * Whether this node is, or is an ancestor of, a LayoutGroup placing its children. The walk stops
+     * at a node that hosts item components: re-rendering a grid from inside its own item creation
+     * recurses. Nesting is bounded: a field's observers don't run again while they are running, and
+     * an unchanged translation isn't written.
+     */
+    private containsPendingLayout(): boolean {
+        for (const group of sgRoot.pendingLayouts) {
+            let node: Node | undefined = group;
+            while (node && !node.hostsItemComponents()) {
+                if (node === this) {
+                    return true;
+                }
+                node = node.parent instanceof Node ? node.parent : undefined;
+            }
+        }
+        return false;
+    }
+
+    /** True for a node that creates and renders item components (grids, lists, TargetGroup). */
+    protected hostsItemComponents(): boolean {
+        return false;
     }
 
     /**

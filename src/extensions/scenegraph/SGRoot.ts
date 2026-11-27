@@ -331,6 +331,13 @@ export class SGRoot {
      */
     pruneLayout: boolean = false;
 
+    /**
+     * LayoutGroups that are placing their children right now (`LayoutGroup.applyLayout`). A child's
+     * translation observer can query a bounding rect from inside that loop; a query on one of these
+     * groups or an ancestor must lay the group out again, even inside another measurement.
+     */
+    readonly pendingLayouts = new Set<Node>();
+
     /** Set by BRS_PRUNE_DISABLE: turns pruned layout refreshes off entirely (field debugging). */
     pruneDisabled: boolean = false;
 

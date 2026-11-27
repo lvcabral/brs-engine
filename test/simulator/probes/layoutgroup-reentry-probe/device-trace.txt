@@ -1,0 +1,69 @@
+PROBE|boot|device|model=Roku Express 4K+ os=16.1
+PROBE|c1|config|dir=horiz align=left kids=RWR mode=measure
+PROBE|c1|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c1|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,320,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c1|settled|k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={600,400,320,40}
+PROBE|c2|config|dir=horiz align=left kids=RWR mode=log
+PROBE|c2|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c2|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0]
+PROBE|c2|settled|k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={600,400,320,40}
+PROBE|c3|config|dir=horiz align=center kids=WRR mode=measure
+PROBE|c3|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c3|obs-k0-1|self=[-160,0] before: k0=[-160,0] k1=[0,0] k2=[0,0] | rect(lg)={440,400,320,40} | after: k0=[-160,0] k1=[-60,0] k2=[60,0]
+PROBE|c3|settled|k0=[-160,0] k1=[-60,0] k2=[60,0] | rect(lg)={440,400,320,40}
+PROBE|c4|config|dir=vert align=top kids=RWR mode=measure
+PROBE|c4|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c4|obs-k1-1|self=[0,60] before: k0=[0,0] k1=[0,60] k2=[0,0] | rect(lg)={600,400,100,160} | after: k0=[0,0] k1=[0,60] k2=[0,120]
+PROBE|c4|settled|k0=[0,0] k1=[0,60] k2=[0,120] | rect(lg)={600,400,100,160}
+PROBE|c5|config|dir=horiz align=left kids=RWR mode=ancestor
+PROBE|c5|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c5|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(wrap)={600,400,320,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c5|settled|k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={0,0,320,40}
+PROBE|c6|config|dir=horiz align=left kids=RWW mode=measure
+PROBE|c6|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c6|obs-k2-1|self=[220,0] before: k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k1-2|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[0,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k1-3|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[220,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k2-2|self=[0,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k1-4|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[0,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k1-5|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[220,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|obs-k2-3|self=[0,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c6|settled|k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={600,400,300,40}
+PROBE|c7|config|dir=horiz align=right kids=WWR mode=measure
+PROBE|c7|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c7|obs-k1-1|self=[-200,0] before: k0=[-300,0] k1=[-200,0] k2=[0,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k0-1|self=[-300,0] before: k0=[-300,0] k1=[0,0] k2=[0,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k0-2|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k0-3|self=[0,0] before: k0=[0,0] k1=[-200,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k1-2|self=[0,0] before: k0=[-300,0] k1=[0,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k0-4|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k0-5|self=[0,0] before: k0=[0,0] k1=[-200,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|obs-k1-3|self=[0,0] before: k0=[-300,0] k1=[0,0] k2=[-100,0] | rect(lg)={300,400,300,40} | after: k0=[-300,0] k1=[-200,0] k2=[-100,0]
+PROBE|c7|settled|k0=[-300,0] k1=[-200,0] k2=[-100,0] | rect(lg)={300,400,300,40}
+PROBE|c8|config|dir=horiz align=left kids=RWW mode=ancestor
+PROBE|c8|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c8|obs-k2-1|self=[220,0] before: k0=[0,0] k1=[120,0] k2=[220,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k1-2|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[0,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k1-3|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[220,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k2-2|self=[0,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k1-4|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[0,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k1-5|self=[0,0] before: k0=[0,0] k1=[0,0] k2=[220,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|obs-k2-3|self=[0,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(wrap)={600,400,300,40} | after: k0=[0,0] k1=[120,0] k2=[220,0]
+PROBE|c8|settled|k0=[0,0] k1=[120,0] k2=[220,0] | rect(lg)={0,0,300,40}
+PROBE|c9|config|dir=horiz align=left kids=RWR mode=respace
+PROBE|c9|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c9|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,340,40} | after: k0=[0,0] k1=[130,0] k2=[240,0]
+PROBE|c9|settled|k0=[0,0] k1=[130,0] k2=[230,0] | rect(lg)={600,400,330,40}
+PROBE|c10|config|dir=horiz align=center kids=WRR mode=respace
+PROBE|c10|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c10|obs-k0-1|self=[-160,0] before: k0=[-160,0] k1=[0,0] k2=[0,0] | rect(lg)={430,400,340,40} | after: k0=[-170,0] k1=[-60,0] k2=[70,0]
+PROBE|c10|settled|k0=[-170,0] k1=[-50,0] k2=[80,0] | rect(lg)={430,400,350,40}
+PROBE|c11|config|dir=horiz align=left kids=RWR mode=append
+PROBE|c11|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c11|obs-k1-1|self=[120,0] before: k0=[0,0] k1=[120,0] k2=[0,0] | rect(lg)={600,400,440,40} | after: k0=[0,0] k1=[120,0] k2=[220,0] k3=[340,0]
+PROBE|c11|settled|k0=[0,0] k1=[120,0] k2=[220,0] k3=[340,0] | rect(lg)={600,400,440,40}
+PROBE|c12|config|dir=vert align=top kids=WRR mode=append
+PROBE|c12|appended|k0=[0,0] k1=[0,0] k2=[0,0]
+PROBE|c12|settled|k0=[0,0] k1=[0,60] k2=[0,120] | rect(lg)={600,400,100,160}
