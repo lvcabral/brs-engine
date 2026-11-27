@@ -133,7 +133,15 @@ engine does it, and what must not be "simplified":
     its drawn `rectToScene` taken through the origin/angle/scene map each detached ancestor was entered
     with (`detachedFrom`) — never re-derived from ancestors' `translation` fields, which misplaces
     children a container positions itself (grid items, TargetGroup). An empty detached node reports
-    `{0,0,0,0}`, not its unset `{Inf,...}` local rect.
+    `{0,0,0,0}`, not its unset `{Inf,...}` local rect. So does any Group's `localBoundingRect()` with
+    nothing visible to measure (no children, or only invisible ones): a layout pass starts `rectLocal` at
+    `{Inf,...}` and leaves it there, which `unionRect` reads as empty, but it must never reach
+    BrightScript. An app that sizes a button row from a button whose children stay hidden until it measures
+    its label otherwise computes a width of Infinity and places the row at -Infinity (`HiddenMeasure.test.js`;
+    attached case not device-probed). Inside the engine, `{Inf,...}` after a pass means "measured, nothing
+    visible", not "unmeasured" (that is the `{0,0,0,0}` default): don't add `isFinite` guards to the
+    measured-yet checks (`LayoutGroup.measureUnsizedChildren`, `Node.getBoundingRect`'s mid-render test).
+    `measureStale` already re-measures one that changed, and the guards only re-measure unchanged empty groups.
 -   **The per-node read is gated by `Field.transformDetachUsed`**, raised by any `inheritParentTransform`
     field that ever holds false (both `Field` value assignments — so clones, aliases and cross-thread
     writes are covered). Until then the render path pays one static boolean read per node; reading the
