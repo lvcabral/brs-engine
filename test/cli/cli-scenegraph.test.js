@@ -1833,9 +1833,10 @@ describe.concurrent("cli scenegraph", () => {
         // Every line but one matches a Roku Express 4K+ (OS 16.0) run: scenario 1's overlay request,
         // raised before the list's setFocus returned, writes only the overlay's own link (it reports
         // hasFocus() while the list keeps the chain); scenario 3's re-assert of the node taking focus
-        // is applied, so itemFocused fires twice. The exception is scenario 2's last line: the device
-        // keeps a shown dialog out of the scene's chain (listInChain=true overlayFocus=false), which
-        // the engine does not model yet.
+        // is applied, so itemFocused fires twice. Two lines come from the unmodeled dialog focus layer
+        // (#1309): scenario 2's last line (the device keeps a shown dialog out of the scene's chain:
+        // listInChain=true overlayFocus=false), and scenario 3's first line, where `dialog = invalid`
+        // hands the focus back to the list (on the device the list never lost it).
         expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
             "=== Container Redirect Focus Repro ===",
             "-- scenario 1",
@@ -1848,6 +1849,7 @@ describe.concurrent("cli scenegraph", () => {
             "   dialog inFocusChain=true",
             "   after setFocus: listInChain=false overlayFocus=true",
             "-- scenario 3",
+            "   onItemFocused index= 0 fireCount= 1",
             "   onItemFocused index= 0 fireCount= 1",
             "   onItemFocused index= 0 fireCount= 2",
             "-- scenario 4",
