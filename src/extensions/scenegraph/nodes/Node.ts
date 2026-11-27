@@ -1415,7 +1415,9 @@ export class Node extends RoSGNode implements BrsValue {
 
             const path = this.createPath();
             const staged: StagedFocus[] = [];
-            if (Node.focusRound) {
+            if (Node.staysInDetachedTree(path)) {
+                this.linkDetachedPath(path, staged);
+            } else if (Node.focusRound) {
                 this.applyNestedFocus(path, staged);
             } else if (this.holdsLiveFocus(path)) {
                 Node.restageChain(sgRoot.focused as Node, staged);
@@ -1452,6 +1454,31 @@ export class Node extends RoSGNode implements BrsValue {
         // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
         // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
         return this.isFocusable();
+    }
+
+    /**
+     * Whether a `setFocus(true)` on the node ending `path` stays inside its own detached tree
+     * (DEVICE-MEASURED, buttongroup-shrink-probe `mount2`): while the live focus is under the scene, focusing
+     * a node of a tree not attached to it leaves the scene's chain and its live focus where they are.
+     * @param path The node's path, root first.
+     */
+    private static staysInDetachedTree(path: Node[]): boolean {
+        const scene = sgRoot.scene;
+        return scene !== undefined && path[0] !== scene && scene.isFocusWithin(sgRoot.focused);
+    }
+
+    /**
+     * Writes this node's path inside its detached tree, unsetting the tree's previous path below the common
+     * ancestor, so the node reports `hasFocus()` without becoming the live focus.
+     * @param path This node's path, root first.
+     * @param staged Accumulator for the staged writes.
+     */
+    private linkDetachedPath(path: Node[], staged: StagedFocus[]) {
+        Node.unsetPathBelow(Node.chainLeaf(path[0]), path, staged);
+        for (let i = 0; i < path.length - 1; i++) {
+            path[i].stageFocusedChild(path[i + 1], staged);
+        }
+        this.stageFocusedChild(this, staged);
     }
 
     /**

@@ -6,8 +6,8 @@ const { SGNodeFactory, sgRoot } = scenegraph;
 /**
  * Detaching a node the scene's focus chain runs through leaves nothing focused: removeChild,
  * replaceChild, reparent and a reparenting append alike. A focus taken inside a still-detached tree
- * is not in the scene's chain and survives mounting and reparenting that tree (DEVICE-MEASURED,
- * OS 16.0, test/simulator/probes/buttongroup-shrink-probe).
+ * is not in the scene's chain and survives mounting and reparenting that tree. While the scene holds the
+ * focus, it stays there (DEVICE-MEASURED, OS 16.0, test/simulator/probes/buttongroup-shrink-probe).
  */
 describe("focus when the focused node leaves its parent", () => {
     afterEach(() => {
@@ -87,6 +87,54 @@ describe("focus when the focused node leaves its parent", () => {
         view.setNodeFocus(true);
         outlet.removeChildByReference(view);
         expect(sgRoot.focused).toBeUndefined();
+    });
+
+    test("a focus taken in a detached tree leaves the scene's focus and chain alone", () => {
+        // Device (probe `mount2-reparented`): a second view whose list focuses itself in init(), then
+        // mounted, leaves the scene's chain on the view focused before it.
+        const { scene, holder, leaf } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const list = SGNodeFactory.createNode("Group");
+        view.appendChildToParent(list);
+        list.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(leaf);
+        expect(scene.getValue("focusedChild")).toBe(holder);
+        expect(holder.getValue("focusedChild")).toBe(leaf);
+        expect(view.getValue("focusedChild")).toBe(list);
+        expect(list.getValue("focusedChild")).toBe(list);
+        holder.appendChildToParent(view);
+        expect(sgRoot.focused).toBe(leaf);
+        expect(holder.getValue("focusedChild")).toBe(leaf);
+    });
+
+    test("an overlay that focuses its button before it is appended returns the focus on close", () => {
+        // A scene-appended overlay dialog: it focuses its own button while still detached, the opener
+        // records the deepest focused node, the overlay is appended and focused, and closing it removes
+        // it and focuses the recorded node again. A re-layout after the removal focuses the detached
+        // button again, which must not take the focus back.
+        const { scene, holder, leaf } = build();
+        const dialog = SGNodeFactory.createNode("Group");
+        const row = SGNodeFactory.createNode("Group");
+        const button = SGNodeFactory.createNode("Group");
+        dialog.setValue("focusable", core.BrsBoolean.True, false);
+        dialog.appendChildToParent(row);
+        row.appendChildToParent(button);
+        button.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(leaf);
+
+        scene.appendChildToParent(dialog);
+        dialog.setNodeFocus(true);
+        button.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(button);
+        expect(scene.getValue("focusedChild")).toBe(dialog);
+
+        scene.removeChildByReference(dialog);
+        expect(sgRoot.focused).toBeUndefined();
+        leaf.setNodeFocus(true);
+        button.setNodeFocus(true);
+        expect(sgRoot.focused).toBe(leaf);
+        expect(scene.getValue("focusedChild")).toBe(holder);
+        expect(holder.getValue("focusedChild")).toBe(leaf);
     });
 
     /** A view whose list focused itself in init(), mounted the way a router library does it. */

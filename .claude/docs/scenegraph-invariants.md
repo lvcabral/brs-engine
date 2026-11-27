@@ -1959,7 +1959,9 @@ reparenting that tree, on the device too. Router libraries mount every view with
 focus, under the scene, claims it for the scene (`claimFocusForScene`): the device focuses the view there.
 Both exist for one pre-existing difference: the device never makes a detached focus live (the scene's chain
 doesn't reach it, `view.isInFocusChain()` stays false after attach), while the engine makes it live and
-threads it into the scene's chain on attach (`restoreFocusChainOnAttach`). The drop is deliberately not in
+threads it into the scene's chain on attach (`restoreFocusChainOnAttach`). The engine does that only when
+nothing under the scene holds the focus; otherwise the detached focus stays in its tree, as on the device
+(see "Disconnected trees" below). The drop is deliberately not in
 `removeParent`: Scene's `dialog = invalid` calls that too, and dialog focus is unmodeled. Regression:
 `FocusOnRemoval.test.js`.
 
@@ -2098,10 +2100,17 @@ re-focuses a node behind it (`focus-probe` S6/S7, container-redirect scenario 2)
 chain to the dialog.
 
 **Disconnected trees.** A component's `init()` focusing itself before it is appended has a path rooted at
-the detached node. It writes that path, and the live focus moves there. It doesn't touch the scene's
-chain owner, and `restoreFocusChainOnAttach` threads the chain once the subtree is mounted
-(`FocusBeforeAttach.test.js`, "honors a re-grab when the competing focus lives in a still-detached
-subtree").
+the detached node, and it writes only that path. **While the live focus is under the scene, it stays
+there** (DEVICE-MEASURED, `buttongroup-shrink-probe` `mount2-reparented`: a second view's self-focus
+leaves the scene on the first view). `Node.staysInDetachedTree` gates this, and `linkDetachedPath` writes
+the detached tree's links and self-link, so the node reports `hasFocus()` without being focused. The
+scene's chain isn't unset, and attaching the tree threads nothing. Don't drop the gate: a scene-appended
+overlay dialog that focuses its own button before it is appended (a field observer laying it out) would
+take the focus off the screen behind it. The opener then records no node to hand the focus back to, and
+closing the dialog leaves the screen unfocused (`FocusOnRemoval.test.js`, "an overlay that focuses its
+button before it is appended returns the focus on close"). With nothing focused under the scene (startup,
+or after a removal), the engine still makes a detached focus live, and `restoreFocusChainOnAttach`
+threads it once the subtree is mounted. The device doesn't (the pre-existing difference above).
 
 Regression: `focus-steal-app`, `container-redirect-focus-app` and `dialog-buttongroup-focus-app` in
 `test/cli/`, and `Focus.test.js` (port observers stand in for BrightScript ones; the tests set
