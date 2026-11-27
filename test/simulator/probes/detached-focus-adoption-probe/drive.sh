@@ -2,8 +2,8 @@
 # Runs the probe and answers its PROBE|<seq>|await|<what>| lines: a key name gets an ECP keypress, "sgnodes"
 # saves ECP query/sgnodes/all (device only) plus a screenshot. Writes $OUT/trace.txt.
 #
-# Device (sideload ./pack.sh's zip first):  ROKU_IP=<ip> ROKU_PASS=<pw> ./drive.sh
-# Engine (after npm run build:cli):          ENGINE=1 ./drive.sh
+# Device (sideload `zip -r probe.zip manifest source components` first):  ROKU_IP=<ip> ROKU_PASS=<pw> ./drive.sh
+# Engine (after npm run build:cli, brs-cli linked):  ENGINE=1 ./drive.sh   (ECP_PORT=<port> when 8060 is busy)
 set -u
 cd "$(dirname "$0")"
 PROBE_DIR=$(pwd)
@@ -15,12 +15,11 @@ nap() { perl -e "select undef,undef,undef,$1"; }
 
 if [[ -n ${ENGINE:-} ]]; then
     IP=127.0.0.1
-    REPO=$(cd ../../../.. && pwd)
     BRS_ECP_PORT=${ECP_PORT:-8060} brs-cli --root $PROBE_DIR source/main.brs --ecp > $CONSOLE 2>&1 &
     RUNPID=$!
 else
     IP=${ROKU_IP:?set ROKU_IP}
-    curl -s -d '' http://$IP:${ECP_PORT:-8060}/keypress/Home; nap 2
+    curl -s -d '' http://$IP:8060/keypress/Home; nap 2
     curl -s -d '' "http://$IP:8060/launch/dev"; nap 3
     # The launch drops console clients, so reconnect until the run ends (the console replays history on
     # each connect; current() drops the repeated lines). nc's stdin stays open: at EOF the device hangs up.

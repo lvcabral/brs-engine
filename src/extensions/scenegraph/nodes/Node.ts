@@ -982,6 +982,26 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
+     * Whether this node is in the displayed tree: each ancestor up to the scene (or its current dialog) holds
+     * it as a child, whatever its visibility. A closed dialog keeps the scene as its parent without being
+     * one of its children, so parent links alone don't tell.
+     */
+    isMounted(): boolean {
+        let node: Node = this;
+        for (let depth = 0; depth < 1000; depth++) {
+            if (sgRoot.isDisplayRoot(node)) {
+                return true;
+            }
+            const parent = node.getNodeParent();
+            if (!(parent instanceof Node) || !parent.children.includes(node)) {
+                return false;
+            }
+            node = parent;
+        }
+        return false;
+    }
+
+    /**
      * Whether a frame would render this node: attached under the scene (or as its current dialog)
      * with no hidden or fully transparent ancestor. A closed dialog keeps the scene as its parent
      * without being one of its children, so membership is checked at every step.
@@ -1523,10 +1543,17 @@ export class Node extends RoSGNode implements BrsValue {
         if (!Node.detachedFocus.has(this)) {
             return true;
         }
-        if (!sgRoot.isUnderScene(this) || this.detachedFocusClaim() !== "now") {
+        if (!this.isMounted() || this.detachedFocusClaim() !== "now") {
             return false;
         }
-        this.setNodeFocus(true);
+        const dialog = sgRoot.scene?.dialog;
+        if (dialog?.isFocusWithin(sgRoot.focused)) {
+            // An open dialog keeps the keys, and the focus comes back to the list when it closes
+            // (DEVICE-MEASURED, detached-focus-adoption-probe N).
+            dialog.returnFocusTo(this);
+        } else {
+            this.setNodeFocus(true);
+        }
         return true;
     }
 
@@ -1546,7 +1573,7 @@ export class Node extends RoSGNode implements BrsValue {
             return undefined;
         }
         // A link left on a node the leaf was removed from doesn't lead to it.
-        return sgRoot.isUnderScene(this) && this.isFocusWithin(leaf) ? leaf : undefined;
+        return this.isMounted() && this.isFocusWithin(leaf) ? leaf : undefined;
     }
 
     /**

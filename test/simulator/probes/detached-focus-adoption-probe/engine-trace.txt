@@ -126,4 +126,16 @@ PROBE|124|await|Play|
 PROBE|125|M|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
 PROBE|126|M|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
 PROBE|127|M|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
-PROBE|128|done|
+PROBE|128|N|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|129|N|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|130|await|Play|
+PROBE|131|N|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|132|N|mounted| nav=true view=false viewChain=false child=true childChain=true dialog=false dialogChain=false links=/nav/self 
+PROBE|133|N|mounted-next-tick| nav=false view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=///self 
+PROBE|134|N|filled| nav=false view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=///self 
+PROBE|135|await|Play|
+PROBE|136|N|key| nav=false view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=///self got=scene:play
+PROBE|137|N|after-key| nav=false view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=///self 
+PROBE|138|N|dialog-closed| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|139|N|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|140|done|

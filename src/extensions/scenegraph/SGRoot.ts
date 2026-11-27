@@ -157,6 +157,7 @@ export class SGRoot {
     private readonly _crossThreadNodes = new Map<string, WeakRef<Node>>();
     /** Nodes waiting to claim a focus they took inside a detached tree (see `Node.claimDetachedFocus`). */
     private _focusClaims = new Set<WeakRef<Node>>();
+    private _focusClaimNodes = new WeakSet<Node>();
     private readonly _crossThreadCleanup = new FinalizationRegistry((address: string) => {
         if (this._crossThreadNodes.get(address)?.deref() === undefined) {
             this._crossThreadNodes.delete(address);
@@ -896,7 +897,10 @@ export class SGRoot {
      * @param node The node
      */
     queueFocusClaim(node: Node) {
-        this._focusClaims.add(new WeakRef(node));
+        if (!this._focusClaimNodes.has(node)) {
+            this._focusClaimNodes.add(node);
+            this._focusClaims.add(new WeakRef(node));
+        }
     }
 
     /**
@@ -913,6 +917,9 @@ export class SGRoot {
             const node = ref.deref();
             if (!node || node.claimDetachedFocus()) {
                 this._focusClaims.delete(ref);
+                if (node) {
+                    this._focusClaimNodes.delete(node);
+                }
                 changed = true;
             }
         }
@@ -922,6 +929,7 @@ export class SGRoot {
     /** Drops every queued focus claim (between app runs). */
     clearFocusClaims() {
         this._focusClaims = new Set<WeakRef<Node>>();
+        this._focusClaimNodes = new WeakSet<Node>();
     }
 
     /**

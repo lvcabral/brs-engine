@@ -18,6 +18,7 @@
     J: as H, a RowList inside a hidden view.
     L: as E, nav is focused again right after the view is mounted.
     M: as E, the view is focused right after it is mounted.
+    N: as E, a StandardMessageDialog opens right after the view is mounted, before the content arrives.
 -->
 <component name="ProbeScene" extends="Scene">
 <children>
@@ -31,7 +32,8 @@ sub init()
     m.stack = m.top.findNode("stack")
     m.nav.observeField("lastKey", "onKey")
     m.seq = 0
-    m.cases = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "L", "M"]
+    m.dialog = invalid
+    m.cases = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "L", "M", "N"]
     m.caseIndex = 0
     m.step = 0
     m.waitKey = false
@@ -72,6 +74,7 @@ sub p(stage as string, extra = "" as string)
     if m.view <> invalid then
         line = line + " view=" + m.view.hasFocus().toStr() + " viewChain=" + m.view.isInFocusChain().toStr() + " child=" + m.child.hasFocus().toStr() + " childChain=" + m.child.isInFocusChain().toStr()
     end if
+    if m.dialog <> invalid then line = line + " dialog=" + m.dialog.hasFocus().toStr() + " dialogChain=" + m.dialog.isInFocusChain().toStr()
     print line + " links=" + links() + " " + extra
 end sub
 
@@ -130,17 +133,28 @@ sub runStep()
             m.view.reparent(m.stack, true)
             if m.case = "L" then m.nav.setFocus(true)
             if m.case = "M" then m.view.setFocus(true)
+            if m.case = "N" then
+                m.dialog = CreateObject("roSGNode", "StandardMessageDialog")
+                m.dialog.title = "probe"
+                m.dialog.buttons = ["OK"]
+                m.top.dialog = m.dialog
+            end if
         end if
         p("mounted")
     else if s = 3 then
         p("mounted-next-tick")
-        if m.case = "E" or m.case = "G" or m.case = "H" or m.case = "I" or m.case = "J" or m.case = "L" or m.case = "M" then
+        if m.case = "E" or m.case = "G" or m.case = "H" or m.case = "I" or m.case = "J" or m.case = "L" or m.case = "M" or m.case = "N" then
             fillRow()
             p("filled")
         end if
         askKey()
     else if s = 4 then
         p("after-key")
+        if m.dialog <> invalid then
+            m.dialog.close = true
+            m.dialog = invalid
+            p("dialog-closed")
+        end if
         m.nav.setFocus(true)
         p("nav-focused")
         m.caseIndex = m.caseIndex + 1
@@ -157,7 +171,7 @@ sub createView()
         m.child.id = "child"
         m.view.appendChild(m.child)
         m.child.setFocus(true)
-    else if m.case = "E" or m.case = "F" or m.case = "L" or m.case = "M" then
+    else if m.case = "E" or m.case = "F" or m.case = "L" or m.case = "M" or m.case = "N" then
         m.view = CreateObject("roSGNode", "RowView")
         m.view.id = "view"
         m.child = m.view.findNode("child")

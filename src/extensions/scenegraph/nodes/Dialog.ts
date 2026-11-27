@@ -143,6 +143,14 @@ export class Dialog extends Group {
         this.appendChildToParent(this.buttonGroup);
     }
 
+    /**
+     * Makes `node` the node the focus returns to when this dialog closes (see `Node.claimDetachedFocus`).
+     * @param node The node.
+     */
+    returnFocusTo(node: RoSGNode) {
+        this.lastFocus = node;
+    }
+
     setValue(index: string, value: BrsType, alwaysNotify?: boolean, kind?: FieldKind) {
         const fieldName = index.toLowerCase();
         if (fieldName === "focusbutton") {

@@ -2160,8 +2160,16 @@ pass. `linkDetachedPath` queues any node whose `detachedFocusClaim()` isn't `"ne
 `"now"` once its content has children). `sgRoot.processFocusClaims` runs each scene pass and calls
 `Node.claimDetachedFocus`, which runs the node's own `setNodeFocus(true)` once it is under the scene. A
 claim lapses when the detached-focus record does: the list's next `focusedChild` write. The queue holds
-`WeakRef`s, so a list that is never mounted isn't kept alive. Regression: `FocusOnRemoval.test.js`, "a list
-that focused itself while detached takes the focus once mounted with content".
+`WeakRef`s, so a list that is never mounted isn't kept alive.
+
+-   "Under the scene" means `Node.isMounted`: each parent holds the node as a child. A list in a closed dialog,
+    which keeps the scene as its parent, doesn't claim.
+-   While the scene's dialog holds the focus, the claim makes the list the dialog's return focus
+    (`returnFocusTo`). On the device the dialog keeps the keys, and the focus is on the list once it closes
+    (probe case N).
+
+Regression: `FocusOnRemoval.test.js`, "a list that focused itself while detached takes the focus once mounted
+with content" and "an open dialog keeps the keys when a list claims".
 
 **`isInFocusChain()` follows the node's own links** (DEVICE-MEASURED, same probe, and every
 `outletInChain`/`outletFC` line of `focus-probe`): it is true while the node's `focusedChild` is a node, as

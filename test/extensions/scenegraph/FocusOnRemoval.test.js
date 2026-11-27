@@ -289,6 +289,59 @@ describe("focus when the focused node leaves its parent", () => {
         expect(sgRoot.focused).toBe(leaf);
     });
 
+    test("an open dialog keeps the keys when a list claims, and returns the focus to it on close", () => {
+        // Device (detached-focus-adoption-probe N): the claim happens while the dialog is open, but the
+        // dialog keeps the keys. Closing it leaves the focus on the list.
+        const { scene, holder } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const list = labelList(0);
+        list.setNodeFocus(true);
+        view.appendChildToParent(list);
+        holder.appendChildToParent(view);
+        const dialog = SGNodeFactory.createNode("StandardMessageDialog");
+        dialog.setValue("buttons", new core.RoArray([new core.BrsString("OK")]));
+        scene.setValue("dialog", dialog);
+        dialog.setNodeFocus(true);
+        expect(dialog.isFocusWithin(sgRoot.focused)).toBe(true);
+
+        list.setValue("content", labelList(2).getValue("content"));
+        sgRoot.processFocusClaims();
+        expect(dialog.isFocusWithin(sgRoot.focused)).toBe(true);
+
+        dialog.setValue("close", core.BrsBoolean.True);
+        expect(sgRoot.focused).toBe(list);
+    });
+
+    test("a list inside a closed dialog doesn't claim its detached focus", () => {
+        // A closed dialog keeps the scene as its parent without being one of its children.
+        const { scene, leaf } = build();
+        const dialog = SGNodeFactory.createNode("Group");
+        const list = labelList(2);
+        list.setNodeFocus(true);
+        dialog.appendChildToParent(list);
+        dialog.setNodeParent(scene);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(leaf);
+    });
+
+    test("a detached setFocus isn't the last focus target, even when the call mounts its tree", () => {
+        // Judged before the call: here the call itself appends the tree, as an observer could.
+        const { holder } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const kbd = SGNodeFactory.createNode("Group");
+        view.appendChildToParent(kbd);
+        const setNodeFocus = kbd.setNodeFocus.bind(kbd);
+        kbd.setNodeFocus = (focusOn) => {
+            const result = setNodeFocus(focusOn);
+            holder.appendChildToParent(view);
+            return result;
+        };
+        const before = sgRoot.lastFocusTarget;
+        const interpreter = new core.Interpreter();
+        interpreter.call(kbd.getMethod("setfocus"), [core.BrsBoolean.True], kbd.m, interpreter.location);
+        expect(sgRoot.lastFocusTarget).toBe(before);
+    });
+
     test("an overlay that focuses its button before it is appended returns the focus on close", () => {
         // A scene-appended overlay dialog: it focuses its own button while still detached, the opener
         // records the deepest focused node, the overlay is appended and focused, and closing it removes

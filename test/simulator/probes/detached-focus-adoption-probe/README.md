@@ -29,6 +29,8 @@ reports which node received the key.
 -   **J:** as H, with a `RowList` inside a hidden view.
 -   **L:** as E, with `nav` focused again right after the view is mounted.
 -   **M:** as E, with the view focused right after it is mounted.
+-   **N:** as E, with a `StandardMessageDialog` opened right after the view is mounted, before the content
+    arrives. The dialog is closed after the key press.
 
 ## Capture
 
@@ -46,6 +48,9 @@ ENGINE=1 ./drive.sh                      # engine (set ECP_PORT when 8060 is bus
         mounted (L, M).
     -   It doesn't matter whether the view is visible (J).
     -   Content with a single empty row is enough (checked separately).
+-   **An open dialog keeps the keys** (N). The claim still happens: the scene's links run down to the list
+    while the dialog is open, but a key press reaches no probe node. Once the dialog closes, the focus is
+    on the list.
 -   **A plain `Group` never does** (A). The focus and the keys stay on `nav`, even after several frames.
 -   **A list that never focused itself doesn't either** (G).
 -   **Nothing happens until the list is mounted** (D). A detached list doesn't receive keys.
@@ -53,5 +58,11 @@ ENGINE=1 ./drive.sh                      # engine (set ECP_PORT when 8060 is bus
     too.
 -   **With nothing focused, a detached focus stays out of the chain** (C). No node receives keys.
 
-The engine matches every case except B and C. For B, the engine keeps the links that `reparent` drops.
-For C, the engine makes the focus live when nothing holds it.
+The engine matches every case except B, C and part of N:
+
+-   **B:** the engine keeps the links that `reparent` drops.
+-   **C:** the engine makes the focus live when nothing holds it.
+-   **N:** the engine has no separate dialog focus layer (#1309). While the dialog is open, it threads the
+    dialog into the scene's links, and it makes the list the dialog's return focus instead of writing the
+    list's links. An unconsumed Play key bubbles to the scene. Who gets the keys, and where the focus lands
+    on close, match the device.
