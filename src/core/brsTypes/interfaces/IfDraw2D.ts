@@ -846,25 +846,23 @@ export class IfDraw2D {
             const replace = !this.component.getCanvasAlpha();
             const color = rgbaIntToHex(rgba.getValue(), true);
             const rect = axisLineRect(x0, y0, x1, y1);
-            if (rect) {
-                const [x, y, w, h] = rect;
-                if (replace) {
-                    ctx.clearRect(baseX + x, baseY + y, w, h);
-                }
+            const translucent = (rgba.getValue() & 0xff) !== 0xff;
+            if (rect || (replace && translucent && (x0 !== x1 || y0 !== y1))) {
+                // Exact device pixels: replacing a translucent color can't go through an anti-aliased stroke,
+                // whose partly covered edges would mix the old pixels into the new alpha.
                 ctx.fillStyle = color;
-                ctx.fillRect(baseX + x, baseY + y, w, h);
+                for (const [x, y, w, h] of rect ? [rect] : steppedLineRuns(x0, y0, x1, y1)) {
+                    if (replace) {
+                        ctx.clearRect(baseX + x, baseY + y, w, h);
+                    }
+                    ctx.fillRect(baseX + x, baseY + y, w, h);
+                }
             } else if (x0 !== x1 || y0 !== y1) {
-                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it
+                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it.
+                // An opaque color replaces and blends alike, so the stroke serves both modes.
                 ctx.beginPath();
                 ctx.moveTo(baseX + x0 + 0.5, baseY + y0 + 0.5);
                 ctx.lineTo(baseX + x1 + 0.5, baseY + y1 + 0.5);
-                if (replace) {
-                    ctx.save();
-                    ctx.globalCompositeOperation = "destination-out";
-                    ctx.strokeStyle = "#000000";
-                    ctx.stroke();
-                    ctx.restore();
-                }
                 ctx.strokeStyle = color;
                 ctx.stroke();
             }
@@ -891,7 +889,11 @@ export class IfDraw2D {
             const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
             // Roku documents DrawPoint() as having a maximum point size of 100.
-            const [px, py, w, h] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
+            const [cx, cy, cw, ch] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
+            // Kept inside the surface: a region shares its bitmap's canvas, so canvas clipping won't do it.
+            const [px, py] = [Math.max(cx, 0), Math.max(cy, 0)];
+            const w = Math.min(cx + cw, this.component.width) - px;
+            const h = Math.min(cy + ch, this.component.height) - py;
             if (w > 0 && h > 0) {
                 // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
                 if (!this.component.getCanvasAlpha()) {
@@ -1535,6 +1537,41 @@ export function axisLineRect(
         return [x0, Math.min(y0, y1), 1, Math.abs(y1 - y0)];
     }
     return undefined;
+}
+
+/**
+ * The pixels a device's DrawLine paints for a diagonal, as `[x, y, width, height]` runs. Measured on a Roku
+ * Ultra (test/simulator/probes/drawline-probe): an x-major line covers every column from end to end, at
+ * the line's y rounded to the nearest pixel; a y-major or 45° line covers the rows from the smaller y up
+ * to, not including, the larger one, at the line's x through each row's center, rounded half down.
+ */
+export function steppedLineRuns(x0: number, y0: number, x1: number, y1: number): [number, number, number, number][] {
+    const runs: [number, number, number, number][] = [];
+    const [dx, dy] = [x1 - x0, y1 - y0];
+    if (Math.abs(dx) > Math.abs(dy)) {
+        const [xa, ya] = dx > 0 ? [x0, y0] : [x1, y1];
+        for (let x = xa; x <= xa + Math.abs(dx); x++) {
+            const y = Math.round(ya + ((x - xa) * dy) / dx);
+            const last = runs.at(-1);
+            if (last?.[1] === y) {
+                last[2]++;
+            } else {
+                runs.push([x, y, 1, 1]);
+            }
+        }
+    } else if (dy !== 0) {
+        const [xa, ya] = dy > 0 ? [x0, y0] : [x1, y1];
+        for (let y = ya; y < ya + Math.abs(dy); y++) {
+            const x = Math.ceil(xa + ((y + 0.5 - ya) * dx) / dy - 0.5);
+            const last = runs.at(-1);
+            if (last?.[0] === x) {
+                last[3]++;
+            } else {
+                runs.push([x, y, 1, 1]);
+            }
+        }
+    }
+    return runs;
 }
 
 /**

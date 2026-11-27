@@ -31,6 +31,7 @@ const {
     drawImageAtPos,
     putImageAtPos,
     drawCanvasRegion,
+    steppedLineRuns,
 } = brs.types;
 const { Interpreter } = brs;
 
@@ -288,15 +289,125 @@ describe("IfDraw2D", () => {
             expect(b).toBeLessThan(55);
         });
 
-        it("drawPoint paints a size x size square at the given position", () => {
+        it("steppedLineRuns covers the device's pixels for every probed diagonal", () => {
+            const pixels = (runs) =>
+                runs.flatMap(([x, y, w, h]) =>
+                    Array.from({ length: w * h }, (_, i) => `${x + (i % w)},${y + Math.floor(i / w)}`)
+                );
+            const cols = (spans) => spans.flatMap(([y, from, to]) => pixels([[from, y, to - from + 1, 1]]));
+            for (const [x0, y0, x1, y1, expected] of [
+                [0, 0, 6, 6, cols([0, 1, 2, 3, 4, 5].map((i) => [i, i, i]))],
+                [
+                    0,
+                    7,
+                    11,
+                    4,
+                    cols([
+                        [7, 0, 1],
+                        [6, 2, 5],
+                        [5, 6, 9],
+                        [4, 10, 11],
+                    ]),
+                ],
+                [
+                    0,
+                    0,
+                    11,
+                    3,
+                    cols([
+                        [0, 0, 1],
+                        [1, 2, 5],
+                        [2, 6, 9],
+                        [3, 10, 11],
+                    ]),
+                ],
+                [
+                    2,
+                    7,
+                    5,
+                    0,
+                    cols([
+                        [0, 5, 5],
+                        [1, 4, 4],
+                        [2, 4, 4],
+                        [3, 3, 3],
+                        [4, 3, 3],
+                        [5, 3, 3],
+                        [6, 2, 2],
+                    ]),
+                ],
+                [9, 1, 3, 7, cols([1, 2, 3, 4, 5, 6].map((y) => [y, 9 - y, 9 - y]))],
+            ]) {
+                expect(pixels(steppedLineRuns(x0, y0, x1, y1)).sort()).toEqual(expected.sort());
+            }
+        });
+
+        it("drawLine replaces a diagonal with a translucent color pixel for pixel on a non-alpha bitmap", () => {
+            const bmp = makeBitmap(12, 8, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(bmp, 0, 0, 11, 3, 0xff000040);
+            const ctx = bmp.getContext();
+            for (const [x, y] of [
+                [0, 0],
+                [1, 0],
+                [2, 1],
+                [5, 1],
+                [6, 2],
+                [9, 2],
+                [10, 3],
+                [11, 3],
+            ]) {
+                expect(pixelAt(ctx, 12, x, y)).toEqual([255, 0, 0, 64]);
+            }
+            expect(pixelAt(ctx, 12, 2, 0)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 12, 1, 1)).toEqual([0, 0, 255, 255]);
+        });
+
+        it("drawLine keeps an opaque diagonal's surface opaque on a non-alpha bitmap", () => {
+            const bmp = makeBitmap(12, 8, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(bmp, 0, 0, 11, 3, 0xffffffff);
+            const data = bmp.getContext().getImageData(0, 0, 12, 8).data;
+            for (let i = 3; i < data.length; i += 4) {
+                expect(data[i]).toBe(255);
+            }
+        });
+
+        it("drawPoint paints a size x size square centered on the given position", () => {
             const bmp = makeBitmap(10, 10, true);
             const result = bmp
                 .getMethod("drawPoint")
                 .call(interpreter, new Int32(4), new Int32(4), new Float(2.0), rgba(0x0000ffff));
             expect(result).toBe(BrsBoolean.True);
             const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 3, 3)).toEqual([0, 0, 255, 255]);
             expect(pixelAt(ctx, 10, 4, 4)).toEqual([0, 0, 255, 255]);
-            expect(pixelAt(ctx, 10, 4, 6)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 10, 2, 2)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 10, 5, 5)).toEqual([0, 0, 0, 0]);
+        });
+
+        it("drawPoint on a roRegion stays inside the region", () => {
+            const bmp = makeBitmap(20, 20, true);
+            const region = new RoRegion(bmp, new Int32(10), new Int32(10), new Int32(5), new Int32(5));
+            region
+                .getMethod("drawPoint")
+                .call(interpreter, new Int32(0), new Int32(0), new Float(4.0), rgba(0xff0000ff));
+            region
+                .getMethod("drawPoint")
+                .call(interpreter, new Int32(4), new Int32(4), new Float(4.0), rgba(0xff0000ff));
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 20, 10, 10)).toEqual([255, 0, 0, 255]);
+            expect(pixelAt(ctx, 20, 14, 14)).toEqual([255, 0, 0, 255]);
+            for (const [x, y] of [
+                [9, 9],
+                [9, 10],
+                [10, 9],
+                [15, 15],
+                [15, 14],
+                [14, 15],
+            ]) {
+                expect(pixelAt(ctx, 20, x, y)).toEqual([0, 0, 0, 0]);
+            }
         });
 
         it("drawPoint clamps size to Roku's documented maximum of 100", () => {

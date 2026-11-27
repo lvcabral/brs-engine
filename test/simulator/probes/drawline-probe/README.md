@@ -47,3 +47,5 @@ The engine (after #1351) matches `hv`, `vertUp`, `horizLeft`, `zeroLen`, `alphaO
 Horizontal and vertical lines are filled as one rect; diagonals are stroked through pixel centers, so they follow the
 device's path but anti-alias across neighbouring pixels instead of stepping. Stepping them exactly (a rect per run of
 pixels) measured 10-20x slower on long diagonals, in Chrome and node-canvas, so it isn't done.
+The exception is a translucent color with blending off: a stroke can't replace its partly covered edge pixels, so
+that case is stepped exactly (`steppedLineRuns`, which reproduces every diagonal above).
