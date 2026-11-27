@@ -52,8 +52,13 @@ const NO_CENTER: number[] = [0, 0];
 /** The origin a node with `inheritParentTransform` false draws from. Never mutated. */
 const SCENE_ORIGIN: number[] = [0, 0];
 
-/** What a detached node with nothing measured reports. Never mutated. */
+/** What a node with nothing measured reports. Never mutated. */
 const EMPTY_RECT: Rect = Object.freeze({ x: 0, y: 0, width: 0, height: 0 });
+
+/** `rect`, or `EMPTY_RECT` when it is the unset `{Inf,...}` a pass that found nothing visible leaves. */
+function rectOrEmpty(rect: Rect): Rect {
+    return Number.isFinite(rect.x) ? rect : EMPTY_RECT;
+}
 
 /** `origin + R(angle) * translation`: where a node at `translation` sits under `origin`. */
 function drawTranslationOf(translation: number[], origin: number[], angle: number): number[] {
@@ -895,10 +900,15 @@ export class Group extends Node {
      * whatever its own translation, scale or rotation; and a node under such an ancestor reports its
      * scene rect as if no ancestor were detached. The rects the node is drawn with stay in
      * `rectToParent`/`rectToScene`, which layout and `renderTracking` keep using.
+     * A node with nothing visible to measure (no children, or only invisible ones) reports an empty local
+     * rect, not the unset `{Inf,...}` that marks it empty inside a pass.
      */
     getBoundingRect(type: string, interpreter?: Interpreter): Rect {
         const rect = super.getBoundingRect(type, interpreter);
-        if (type === "local" || !Field.transformDetachUsed) {
+        if (type === "local") {
+            return rectOrEmpty(rect);
+        }
+        if (!Field.transformDetachUsed) {
             return rect;
         }
         if (this.isTransformDetached()) {
@@ -933,7 +943,7 @@ export class Group extends Node {
 
     /** The rect a detached node reports and its parent unions: its local rect, empty at its origin if unset. */
     private detachedRect(): Rect {
-        return Number.isFinite(this.rectLocal.x) ? this.rectLocal : EMPTY_RECT;
+        return rectOrEmpty(this.rectLocal);
     }
 
     handleKey(key: string, press: boolean) {

@@ -113,3 +113,47 @@ describe("bounding rects are measured under invisible ancestors", () => {
         expect(root.getBoundingRect("toParent")).toEqual({ x: 10, y: 20, width: 100, height: 50 });
     });
 });
+
+/**
+ * A Group with nothing visible to measure (no children, or only invisible ones) reports an empty local
+ * rect, as an empty detached node does on a device (group-scale-probe), never the unset `{Inf,...}`.
+ */
+describe("local bounding rect of a Group with nothing visible", () => {
+    let interpreter;
+
+    beforeEach(() => {
+        interpreter = new Interpreter();
+    });
+
+    function expectEmpty(rect) {
+        expect(rect).toEqual({ x: 0, y: 0, width: 0, height: 0 });
+    }
+
+    test("a Group with no children", () => {
+        const scene = SGNodeFactory.createNode("Scene");
+        const group = SGNodeFactory.createNode("Group");
+        scene.appendChildToParent(group);
+        expectEmpty(group.getBoundingRect("local", interpreter));
+    });
+
+    test("a Group whose only child is invisible, attached or not, and the LayoutGroup holding it", () => {
+        const row = SGNodeFactory.createNode("LayoutGroup");
+        const button = SGNodeFactory.createNode("Group");
+        const background = SGNodeFactory.createNode("Rectangle");
+        background.setValue("width", new Float(204));
+        background.setValue("height", new Float(82));
+        background.setValue("visible", BrsBoolean.False);
+        button.appendChildToParent(background);
+        row.appendChildToParent(button);
+        expectEmpty(button.getBoundingRect("local", interpreter));
+
+        const scene = SGNodeFactory.createNode("Scene");
+        scene.appendChildToParent(row);
+        expectEmpty(button.getBoundingRect("local", interpreter));
+        expectEmpty(row.getBoundingRect("local", interpreter));
+
+        background.setValue("visible", BrsBoolean.True);
+        expect(button.getBoundingRect("local", interpreter)).toEqual({ x: 0, y: 0, width: 204, height: 82 });
+        expect(row.getBoundingRect("local", interpreter)).toEqual({ x: 0, y: 0, width: 204, height: 82 });
+    });
+});
