@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="ReentryScene" extends="Scene">
+    <interface>
+        <field id="probeExit" type="boolean" value="false" />
+    </interface>
+    <children>
+        <Timer id="step" repeat="false" />
+    </children>
+    <script type="text/brightscript" uri="ProbeUtil.brs" />
+    <script type="text/brightscript" uri="ReentryScene.brs" />
+</component>

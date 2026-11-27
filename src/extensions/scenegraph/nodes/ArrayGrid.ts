@@ -276,6 +276,11 @@ export class ArrayGrid extends Group implements UITransition {
     /** `setNodeFocus` is re-applying the focus on a gain (see `setFocusedItem`). */
     private gainingFocus = false;
 
+    /** @override Creates and renders item components. */
+    protected hostsItemComponents(): boolean {
+        return true;
+    }
+
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.ArrayGrid) {
         super([], name);
         this.setExtendsType(SGNodeType.ArrayGrid, SGNodeType.Group);

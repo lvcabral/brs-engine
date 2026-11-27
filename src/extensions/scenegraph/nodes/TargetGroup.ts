@@ -46,6 +46,11 @@ export class TargetGroup extends Group {
     protected wrap: boolean = false;
     protected lastPressHandled: string = "";
 
+    /** @override Creates and renders item components. */
+    protected hostsItemComponents(): boolean {
+        return true;
+    }
+
     constructor(initializedFields: AAMember[] = [], readonly name: string = SGNodeType.TargetGroup) {
         super([], name);
         this.setExtendsType(SGNodeType.TargetGroup, SGNodeType.Group);

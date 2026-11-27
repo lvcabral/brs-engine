@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component name="Watcher" extends="Group">
+    <interface>
+        <field id="caseId" type="string" />
+        <!-- log: only print; measure: parent.boundingRect(); ancestor: grandparent.boundingRect();
+             respace: set the parent's itemSpacings to [30], then measure; append: append a
+             100x40 Rectangle to the parent (first call only), then measure -->
+        <field id="mode" type="string" value="log" />
+    </interface>
+    <children>
+        <Rectangle id="box" width="80" height="40" color="0x3080F0FF" />
+    </children>
+    <script type="text/brightscript" uri="ProbeUtil.brs" />
+    <script type="text/brightscript" uri="Watcher.brs" />
+</component>
