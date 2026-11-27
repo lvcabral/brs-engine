@@ -551,8 +551,7 @@ export class SGRoot {
         }
     }
 
-    /** Whether the node is the scene or one of its descendants (walking up its parents). */
-    isUnderScene(node: RoSGNode): boolean {
+    private isUnderScene(node: RoSGNode): boolean {
         return this._scene?.isFocusWithin(node) ?? false;
     }
 

@@ -492,7 +492,7 @@ export class ArrayGrid extends Group implements UITransition {
     /** A list or grid that focused itself while detached takes the focus once mounted with content. */
     protected detachedFocusClaim(): "never" | "wait" | "now" {
         const content = this.getValue("content");
-        return content instanceof Node && content.getNodeChildren().length > 0 ? "now" : "wait";
+        return content instanceof ContentNode && content.getNodeChildren().length > 0 ? "now" : "wait";
     }
 
     /**

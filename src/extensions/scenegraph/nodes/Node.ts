@@ -987,40 +987,32 @@ export class Node extends RoSGNode implements BrsValue {
      * one of its children, so parent links alone don't tell.
      */
     isMounted(): boolean {
-        let node: Node = this;
-        for (let depth = 0; depth < 1000; depth++) {
-            if (sgRoot.isDisplayRoot(node)) {
-                return true;
-            }
-            const parent = node.getNodeParent();
-            if (!(parent instanceof Node) || !parent.children.includes(node)) {
-                return false;
-            }
-            node = parent;
-        }
-        return false;
+        return this.inDisplayTree(false);
     }
 
     /**
-     * Whether a frame would render this node: attached under the scene (or as its current dialog)
-     * with no hidden or fully transparent ancestor. A closed dialog keeps the scene as its parent
-     * without being one of its children, so membership is checked at every step.
+     * Whether a frame would render this node: mounted (`isMounted`) with no hidden or fully transparent
+     * node on the way, the topmost one aside.
      */
     isOnDisplay(): boolean {
-        const path = this.createPath(); // [root, ..., this]
-        for (let i = path.length - 1; i > 0; i--) {
-            const node = path[i];
-            if (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0) {
+        return this.inDisplayTree(true);
+    }
+
+    private inDisplayTree(visibleOnly: boolean): boolean {
+        let node: Node = this;
+        while (node.parent instanceof Node) {
+            if (visibleOnly && (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0)) {
                 return false;
             }
             if (sgRoot.isDisplayRoot(node)) {
                 return true;
             }
-            if (!path[i - 1].children.includes(node)) {
+            if (!node.parent.children.includes(node)) {
                 return false;
             }
+            node = node.parent;
         }
-        return sgRoot.isDisplayRoot(path[0]);
+        return sgRoot.isDisplayRoot(node);
     }
 
     /** Reports `renderTracking` "none" for every rendered Group in this (detached) subtree. */
@@ -1447,7 +1439,7 @@ export class Node extends RoSGNode implements BrsValue {
 
             const path = this.createPath();
             const staged: StagedFocus[] = [];
-            if (Node.staysInDetachedTree(path)) {
+            if (Node.staysInDetachedTree(this)) {
                 this.linkDetachedPath(path, staged);
             } else if (Node.focusRound) {
                 this.applyNestedFocus(path, staged);
@@ -1489,19 +1481,26 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Whether a `setFocus(true)` on the node ending `path` stays inside its own detached tree
+     * Whether a `setFocus(true)` on `node` stays inside its own detached tree
      * (DEVICE-MEASURED, buttongroup-shrink-probe `mount2`): while the live focus is under the scene, focusing
      * a node of a tree not attached to it leaves the scene's chain and its live focus where they are.
-     * @param path The node's path, root first.
+     * @param node The node.
      */
-    private static staysInDetachedTree(path: Node[]): boolean {
+    private static staysInDetachedTree(node: Node): boolean {
         const scene = sgRoot.scene;
-        return scene !== undefined && path[0] !== scene && scene.isFocusWithin(sgRoot.focused);
+        if (scene === undefined || !scene.isFocusWithin()) {
+            return false;
+        }
+        let root = node;
+        while (root.parent instanceof Node) {
+            root = root.parent;
+        }
+        return root !== scene;
     }
 
     /** Whether a `setFocus(true)` on this node now would stay inside its detached tree (`staysInDetachedTree`). */
     protected focusStaysDetached(): boolean {
-        return Node.staysInDetachedTree(this.createPath());
+        return Node.staysInDetachedTree(this);
     }
 
     /**
@@ -1543,11 +1542,11 @@ export class Node extends RoSGNode implements BrsValue {
         if (!Node.detachedFocus.has(this)) {
             return true;
         }
-        if (!this.isMounted() || this.detachedFocusClaim() !== "now") {
+        if (this.detachedFocusClaim() !== "now" || !this.isMounted()) {
             return false;
         }
         const dialog = sgRoot.scene?.dialog;
-        if (dialog?.isFocusWithin(sgRoot.focused)) {
+        if (dialog?.isFocusWithin()) {
             // An open dialog keeps the keys, and the focus comes back to the list when it closes
             // (DEVICE-MEASURED, detached-focus-adoption-probe N).
             dialog.returnFocusTo(this);
