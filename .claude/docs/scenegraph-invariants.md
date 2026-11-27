@@ -2120,21 +2120,48 @@ button before it is appended returns the focus on close"). With nothing focused 
 or after a removal), the engine still makes a detached focus live, and `restoreFocusChainOnAttach`
 threads it once the subtree is mounted. The device doesn't (the pre-existing difference above).
 
-**Focusing the mounted view hands the focus to that detached focus** (DEVICE-MEASURED, OS 16.1,
-`test/simulator/probes/detached-init-focus-probe` S2/S3/S7). Take a screen whose keyboard focused itself
-in `init()`. A screen stack appends it and calls `screen.setFocus(true)`, and the focus lands on the
-keyboard: the links run down to it, the screen's `hasFocus()` is false, and the keyboard owns the chain.
-`linkDetachedPath` records the node (`Node.detachedFocus`, dropped by its next `focusedChild` write). A top-level `setFocus(true)` on a node
-under the scene whose links lead to that node, still a descendant (`detachedFocusBelow`), calls that
-node's own `setNodeFocus(true)` instead. That is an ordinary top-level focus (`applyFocus`), and a subclass
-runs its gain (ArrayGrid publishes `itemFocused`). `focusable` on the view makes no difference (S7). The
-device notifies the target before the view, here and in the detached call; the engine notifies root
-first, as on every other path (the open gain-order question above). Stale links left in the scene's tree don't count (S5/S6: the container
-focuses itself), so the record lasts only while the self-link the detached call wrote stands. Don't rely
-on the screen's own forward instead: a `focusedChild` observer's `setFocus` on the keyboard is compared
-against the keyboard's detached call (`lastFocusTarget`), so it writes only the keyboard's self-link and
-the focus stays on the screen. Regression: `FocusOnRemoval.test.js`, "focusing a
-mounted view hands the focus to the node it focused while detached".
+**Focusing the mounted view hands the focus to a detached focus requested outside `init()`**
+(DEVICE-MEASURED, OS 16.1, `test/simulator/probes/detached-init-focus-probe` S2/S3/S7/S11–S14).
+
+-   **The rule.** A node focused while its tree was detached, by code outside any component's `init()`
+    (an observer, the opener after `CreateObject`), takes the focus when a mounted ancestor whose links lead
+    to it is focused. The ancestor's `hasFocus()` stays false, and `focusable` on it makes no difference
+    (S7). A focus requested inside an `init()` only writes the links. The ancestor focuses itself and the
+    node keeps a stale self-link (S11/S13).
+-   **Why it matters.** A production app's search screen focuses its keyboard in its `init()`. The screen
+    stack then appends the screen and calls `screen.setFocus(true)`. The screen takes the focus, and its
+    `focusedChild` observer, seeing `hasFocus()`, resets the background and forwards to the keyboard
+    (device trace of the app). Handing that focus straight to the keyboard skipped the background reset.
+-   **Implementation.**
+    -   `linkDetachedPath` records the node in `Node.detachedFocus`, with whether it was requested outside
+        `init()` (`Field.isConstructing()`). The node's next `focusedChild` write drops the record.
+    -   A top-level `setFocus(true)` on a node under the scene whose links still lead to a descendant
+        recorded `true` (`detachedFocusBelow`) calls that node's own `setNodeFocus(true)`. That is an ordinary
+        top-level focus (`applyFocus`), so a subclass still runs its gain logic.
+    -   Stale links left in the scene's tree don't count (S5/S6).
+-   **A detached request isn't the scene's last target.** `setFocus` records `sgRoot.lastFocusTarget` only
+    when the call didn't stay inside a detached tree (`focusStaysDetached`). Otherwise the screen's forward
+    above is compared against the keyboard's own init-time call, read as the keyboard re-grabbing the
+    focus, and writes only its self-link.
+-   **Notification order.** The device notifies the target before the view. The engine notifies root
+    first, as on every other path (the open gain-order question above).
+-   **Regressions.** "Focuses a mounted screen itself when its keyboard took the focus in the screen's
+    init()" in `test/cli/cli-scenegraph.test.js` (`detached-init-focus-app`), and "focusing a mounted view
+    hands the focus to the node it focused while detached" in `FocusOnRemoval.test.js`.
+
+**A list or grid that focused itself while detached claims the focus once mounted with content**
+(DEVICE-MEASURED, OS 16.1, `test/simulator/probes/detached-focus-adoption-probe`). A screen's user row (a
+`RowList`) focuses itself in its own `init()`, before the screen appends it. The screen then gets mounted
+by a router while another node holds the focus, and receives its items. On the device, the row takes the
+focus at the next pass and the keys follow. A plain `Group` never does this. The row takes it from
+whatever holds the focus, even a node the app focused after the mount, and visible or not. That is why
+`view.setFocus(true)` in the same synchronous call still focuses the view: the claim comes at the next
+pass. `linkDetachedPath` queues any node whose `detachedFocusClaim()` isn't `"never"` (`ArrayGrid`:
+`"now"` once its content has children). `sgRoot.processFocusClaims` runs each scene pass and calls
+`Node.claimDetachedFocus`, which runs the node's own `setNodeFocus(true)` once it is under the scene. A
+claim lapses when the detached-focus record does: the list's next `focusedChild` write. The queue holds
+`WeakRef`s, so a list that is never mounted isn't kept alive. Regression: `FocusOnRemoval.test.js`, "a list
+that focused itself while detached takes the focus once mounted with content".
 
 **`isInFocusChain()` follows the node's own links** (DEVICE-MEASURED, same probe, and every
 `outletInChain`/`outletFC` line of `focus-probe`): it is true while the node's `focusedChild` is a node, as

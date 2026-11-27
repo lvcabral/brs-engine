@@ -223,6 +223,72 @@ describe("focus when the focused node leaves its parent", () => {
         expect(holder.getValue("focusedChild")).toBe(view);
     });
 
+    /** A LabelList with `count` items. */
+    function labelList(count) {
+        const list = SGNodeFactory.createNode("LabelList");
+        const content = SGNodeFactory.createNode("ContentNode");
+        for (let i = 0; i < count; i++) {
+            content.appendChildToParent(SGNodeFactory.createNode("ContentNode"));
+        }
+        list.setValue("content", content);
+        return list;
+    }
+
+    test("a list that focused itself while detached takes the focus once mounted with content", () => {
+        // Device (detached-focus-adoption-probe E/H/M): the list claims the focus at the first scene pass
+        // where it is under the scene with content, whatever holds the focus then, even the view focused
+        // after it was mounted.
+        const { scene, holder, leaf } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const list = labelList(0);
+        list.setNodeFocus(true);
+        view.appendChildToParent(list);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(leaf);
+
+        holder.appendChildToParent(view);
+        view.setNodeFocus(true);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(view);
+
+        list.setValue("content", labelList(2).getValue("content"));
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(list);
+        expect(scene.getValue("focusedChild")).toBe(holder);
+        expect(holder.getValue("focusedChild")).toBe(view);
+        expect(view.getValue("focusedChild")).toBe(list);
+
+        // Claimed once: focusing elsewhere afterwards keeps the focus there.
+        leaf.setNodeFocus(true);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(leaf);
+    });
+
+    test("a Group that focused itself while detached doesn't claim the focus when mounted", () => {
+        // Device (same probe, case A): only lists and grids claim it.
+        const { holder, leaf } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const child = SGNodeFactory.createNode("Group");
+        child.setValue("focusable", core.BrsBoolean.True, false);
+        child.setNodeFocus(true);
+        view.appendChildToParent(child);
+        holder.appendChildToParent(view);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(leaf);
+    });
+
+    test("a list whose detached focus is taken away doesn't claim it when mounted", () => {
+        const { holder, leaf } = build();
+        const view = SGNodeFactory.createNode("Group");
+        const list = labelList(2);
+        list.setNodeFocus(true);
+        list.setNodeFocus(false);
+        view.appendChildToParent(list);
+        holder.appendChildToParent(view);
+        sgRoot.processFocusClaims();
+        expect(sgRoot.focused).toBe(leaf);
+    });
+
     test("an overlay that focuses its button before it is appended returns the focus on close", () => {
         // A scene-appended overlay dialog: it focuses its own button while still detached, the opener
         // records the deepest focused node, the overlay is appended and focused, and closing it removes

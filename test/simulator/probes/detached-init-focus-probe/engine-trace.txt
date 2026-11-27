@@ -61,4 +61,51 @@ PROBE|S7|focused nav=false view=false viewChain=true target=true targetChain=tru
 PROBE|  onViewFocus hasFocus=false inChain=false
 PROBE|  onTargetFocus hasFocus=false inChain=false
 PROBE|S7|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S8|start view=RowView holderFocused=true
+PROBE|S8|created nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S8|mounted nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S8|focused nav=false view=true viewChain=true viewFC=view row=true rowChain=true links=/stack/view/self
+PROBE|S8|back-to-nav nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S9|start view=GroupView holderFocused=true
+PROBE|S9|created nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S9|mounted nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S9|focused nav=false view=true viewChain=true viewFC=view row=true rowChain=true links=/stack/view/self
+PROBE|S9|back-to-nav nav=true view=false viewChain=false viewFC=- row=true rowChain=true links=/nav/self
+PROBE|S10|start view=RowView holderFocused=false
+PROBE|S10|created nav=false view=false viewChain=true viewFC=row row=true rowChain=true links=/-
+PROBE|S10|mounted nav=false view=false viewChain=true viewFC=row row=true rowChain=true links=/stack/view/row/self
+PROBE|S10|focused nav=false view=false viewChain=true viewFC=row row=true rowChain=true links=/stack/view/row/self
+PROBE|S10|back-to-nav nav=true view=false viewChain=false viewFC=- row=false rowChain=false links=/nav/self
+PROBE|S11|start view=InitGroupView inInit=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S11|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S11|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onViewFocus hasFocus=true inChain=true
+PROBE|S11|focused nav=false view=true viewChain=true target=true targetChain=true links=/stack/view/self
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S11|back-to-nav nav=true view=false viewChain=false target=true targetChain=true links=/nav/self
+PROBE|S12|start view=InitGroupView inInit=false
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S12|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S12|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S12|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S12|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
+PROBE|S13|start view=InitKbdView inInit=true
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S13|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S13|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onViewFocus hasFocus=true inChain=true
+PROBE|S13|focused nav=false view=true viewChain=true target=true targetChain=true links=/stack/view/self
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S13|back-to-nav nav=true view=false viewChain=false target=true targetChain=true links=/nav/self
+PROBE|S14|start view=InitKbdView inInit=false
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S14|created nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|S14|appended nav=true view=false viewChain=true target=true targetChain=true links=/nav/self
+PROBE|  onViewFocus hasFocus=false inChain=true
+PROBE|S14|focused nav=false view=false viewChain=true target=true targetChain=true links=/stack/view/col/target/self
+PROBE|  onViewFocus hasFocus=false inChain=false
+PROBE|S14|back-to-nav nav=true view=false viewChain=false target=false targetChain=false links=/nav/self
 PROBE|done

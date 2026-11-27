@@ -224,6 +224,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         ...funcArgs: BrsType[]
     ): BrsType;
     protected abstract setNodeFocus(focusOn: boolean): boolean;
+    protected abstract focusStaysDetached(): boolean;
 
     protected abstract moveObjectIntoField(fieldName: string, data: RoAssociativeArray): { code: number; msg?: string };
     protected abstract moveObjectFromField(fieldName: string): BrsType | string;
@@ -1749,7 +1750,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 this.location = interpreter.formatLocation();
                 const focusOn = on.toBoolean();
                 const result = this.setNodeFocus(focusOn);
-                if (focusOn) {
+                // A call that stayed inside a detached tree isn't the scene's last target: a nested request
+                // from the screen that mounts it later must not read as that node re-grabbing the focus.
+                if (focusOn && !this.focusStaysDetached()) {
                     sgRoot.setLastFocusTarget(this);
                 }
                 return BrsBoolean.from(result);

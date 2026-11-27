@@ -103,10 +103,11 @@ export class Node extends RoSGNode implements BrsValue {
      */
     private static focusRound: { queue: StagedFocus[]; fields: Set<Field> } | undefined;
     /**
-     * Nodes that focused themselves inside a detached tree, while their self-link still stands: any later
-     * `focusedChild` write on the node drops it (see `linkDetachedPath`, `detachedFocusBelow`).
+     * Nodes that focused themselves inside a detached tree, while their self-link still stands (any later
+     * `focusedChild` write on the node drops it): true when a mounted ancestor's `setFocus(true)` hands the
+     * focus down to it (see `linkDetachedPath`, `detachedFocusBelow`, `claimDetachedFocus`).
      */
-    private static readonly detachedFocus = new WeakSet<Node>();
+    private static readonly detachedFocus = new WeakMap<Node, boolean>();
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
@@ -1478,6 +1479,11 @@ export class Node extends RoSGNode implements BrsValue {
         return scene !== undefined && path[0] !== scene && scene.isFocusWithin(sgRoot.focused);
     }
 
+    /** Whether a `setFocus(true)` on this node now would stay inside its detached tree (`staysInDetachedTree`). */
+    protected focusStaysDetached(): boolean {
+        return Node.staysInDetachedTree(this.createPath());
+    }
+
     /**
      * Writes this node's path inside its detached tree, unsetting the tree's previous path below the common
      * ancestor, so the node reports `hasFocus()` without becoming the live focus.
@@ -1490,7 +1496,38 @@ export class Node extends RoSGNode implements BrsValue {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
         this.stageFocusedChild(this, staged);
-        Node.detachedFocus.add(this);
+        // A focus requested during a component's init() only writes these links (DEVICE-MEASURED,
+        // detached-init-focus-probe S11/S13 vs S12/S14).
+        Node.detachedFocus.set(this, !Field.isConstructing());
+        if (this.detachedFocusClaim() !== "never") {
+            sgRoot.queueFocusClaim(this);
+        }
+    }
+
+    /**
+     * Whether this node, after focusing itself inside a detached tree, takes the live focus once it is
+     * mounted: "never" (the base), "wait" (not yet), or "now" (see `claimDetachedFocus`).
+     */
+    protected detachedFocusClaim(): "never" | "wait" | "now" {
+        return "never";
+    }
+
+    /**
+     * Run each scene pass for a node queued by `linkDetachedPath` (DEVICE-MEASURED,
+     * detached-focus-adoption-probe E/F/H/I/J): a list or grid that focused itself inside a detached tree
+     * takes the live focus at the first pass where it is under the scene with content, visible or not,
+     * whatever holds the focus then. A plain Group never does (case A).
+     * @returns True when the node is done: it took the focus, or its detached focus is gone.
+     */
+    claimDetachedFocus(): boolean {
+        if (!Node.detachedFocus.has(this)) {
+            return true;
+        }
+        if (!sgRoot.isUnderScene(this) || this.detachedFocusClaim() !== "now") {
+            return false;
+        }
+        this.setNodeFocus(true);
+        return true;
     }
 
     /**
@@ -1505,7 +1542,7 @@ export class Node extends RoSGNode implements BrsValue {
         }
         // Cheapest first: most calls stop at the first link (none, or this node's own).
         const leaf = Node.chainLeaf(this);
-        if (leaf === undefined || leaf === this || !Node.detachedFocus.has(leaf)) {
+        if (leaf === undefined || leaf === this || Node.detachedFocus.get(leaf) !== true) {
             return undefined;
         }
         // A link left on a node the leaf was removed from doesn't lead to it.
@@ -1777,6 +1814,7 @@ export class Node extends RoSGNode implements BrsValue {
         Node.focusRound = undefined;
         sgRoot.setChainOwner();
         sgRoot.setLastFocusTarget();
+        sgRoot.clearFocusClaims();
     }
 
     /**

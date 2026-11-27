@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- As RowView, with a Group child. -->
+<component name="GroupView" extends="Group">
+<children>
+  <Label id="heading" text="Pick" />
+  <SelfGroup id="row" />
+</children>
+</component>

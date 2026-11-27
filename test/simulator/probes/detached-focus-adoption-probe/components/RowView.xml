@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A view whose XML child is a SelfRow (see that component). Keys the row doesn't consume reach the view. -->
+<component name="RowView" extends="KeyGroup">
+<children>
+  <SelfRow id="child" />
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.focusable = false
+    m.top.consume = false
+end sub
+]]></script>
+</component>

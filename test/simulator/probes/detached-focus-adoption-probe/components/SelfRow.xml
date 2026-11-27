@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A RowList with empty content that focuses itself in its own init() when `selfFocus` is set. -->
+<component name="SelfRow" extends="RowList">
+<interface>
+  <field id="selfFocus" type="boolean" value="true" />
+</interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.itemComponentName = "SimpleItem"
+    m.top.itemSize = [600, 100]
+    m.top.rowItemSize = [[200, 100]]
+    m.top.numRows = 1
+    m.top.content = CreateObject("roSGNode", "ContentNode")
+    m.top.setFocus(true)
+end sub
+]]></script>
+</component>

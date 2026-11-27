@@ -76,8 +76,65 @@ function runProbe(p)
     runStaleCase("S6", m.container2, m.leaf2)
     ' S7: as S3, a focusable view.
     runCase("S7", "Group", true, false, true)
+    ' S8: a view whose XML child RowList focuses itself in its own init() (before the view appends
+    ' it), mounted the way a router library does it while another node holds the focus.
+    runChildCase("S8", "RowView", true)
+    ' S9: as S8, with a Group child.
+    runChildCase("S9", "GroupView", true)
+    ' S10: as S8, with nothing focused.
+    runChildCase("S10", "RowView", false)
+    ' S11: the view's own init() focuses its XML Group child (the view links to it).
+    runInitCase("S11", "InitGroupView", true)
+    ' S12: as S11, the scene focuses the child after creating the view.
+    runInitCase("S12", "InitGroupView", false)
+    ' S13: as S11, a DynamicCustomKeyboard child.
+    runInitCase("S13", "InitKbdView", true)
+    ' S14: as S12, a DynamicCustomKeyboard child.
+    runInitCase("S14", "InitKbdView", false)
     return invalid
 end function
+
+sub runInitCase(name, viewType, inInit)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.nav.setFocus(true)
+    if not m.global.hasField("initFocus") then m.global.addFields({ initFocus: false })
+    m.global.initFocus = inInit
+    print "PROBE|" + name + "|start view=" + viewType + " inInit=" + inInit.toStr()
+    view = CreateObject("roSGNode", viewType)
+    view.id = "view"
+    if not inInit then view.target.setFocus(true)
+    dump(name, "created", view)
+    m.stack.appendChild(view)
+    dump(name, "appended", view)
+    view.setFocus(true)
+    dump(name, "focused", view)
+    m.nav.setFocus(true)
+    dump(name, "back-to-nav", view)
+end sub
+
+sub runChildCase(name, viewType, holderFocused)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.nav.setFocus(true)
+    if not holderFocused then m.nav.setFocus(false)
+    print "PROBE|" + name + "|start view=" + viewType + " holderFocused=" + holderFocused.toStr()
+    view = CreateObject("roSGNode", viewType)
+    view.id = "view"
+    row = view.findNode("row")
+    dumpChild(name, "created", view, row)
+    m.stack.appendChild(view)
+    view.reparent(m.stack, true)
+    dumpChild(name, "mounted", view, row)
+    view.setFocus(true)
+    dumpChild(name, "focused", view, row)
+    m.nav.setFocus(true)
+    dumpChild(name, "back-to-nav", view, row)
+end sub
+
+sub dumpChild(name, stage, view, row)
+    viewFC = "-"
+    if view.focusedChild <> invalid then viewFC = view.focusedChild.id
+    print "PROBE|" + name + "|" + stage + " nav=" + m.nav.hasFocus().toStr() + " view=" + view.hasFocus().toStr() + " viewChain=" + view.isInFocusChain().toStr() + " viewFC=" + viewFC + " row=" + row.hasFocus().toStr() + " rowChain=" + row.isInFocusChain().toStr() + " links=" + links()
+end sub
 
 sub runCase(name, kind, initFocus, forward, viewFocusable)
     m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)

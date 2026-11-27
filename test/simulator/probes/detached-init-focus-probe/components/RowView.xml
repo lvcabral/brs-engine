@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A routed view whose XML child row focuses itself in its own init(). -->
+<component name="RowView" extends="Group">
+<children>
+  <Label id="heading" text="Pick" />
+  <SelfRow id="row" translation="[0, 100]" />
+</children>
+</component>

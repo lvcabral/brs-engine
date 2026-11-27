@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A focusable Group that reports every key it is offered (and consumes it when `consume` is set). -->
+<component name="KeyGroup" extends="Group">
+<interface>
+  <field id="consume" type="boolean" value="true" />
+  <field id="lastKey" type="string" alwaysNotify="true" />
+</interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.focusable = true
+end sub
+function onKeyEvent(key as string, press as boolean) as boolean
+    if press then m.top.lastKey = m.top.id + ":" + key
+    return press and m.top.consume
+end function
+]]></script>
+</component>

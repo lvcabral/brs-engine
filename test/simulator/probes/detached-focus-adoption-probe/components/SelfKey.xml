@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A KeyGroup that focuses itself in its own init(), before its owner appends it. -->
+<component name="SelfKey" extends="KeyGroup">
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.setFocus(true)
+end sub
+]]></script>
+</component>

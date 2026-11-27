@@ -155,6 +155,8 @@ export class SGRoot {
      * once a node is collected.
      */
     private readonly _crossThreadNodes = new Map<string, WeakRef<Node>>();
+    /** Nodes waiting to claim a focus they took inside a detached tree (see `Node.claimDetachedFocus`). */
+    private _focusClaims = new Set<WeakRef<Node>>();
     private readonly _crossThreadCleanup = new FinalizationRegistry((address: string) => {
         if (this._crossThreadNodes.get(address)?.deref() === undefined) {
             this._crossThreadNodes.delete(address);
@@ -868,6 +870,7 @@ export class SGRoot {
         const clockUpdated = this.processClock();
         const transitionsMoved = this.processTransitions();
         const tasksUpdated = this.processTasks();
+        const focusClaimed = this.processFocusClaims();
         const queuesDrained = this.processRenderQueues();
         const audioUpdated = this.processAudio();
         const sfxUpdated = this.processSFX();
@@ -879,12 +882,46 @@ export class SGRoot {
             clockUpdated ||
             transitionsMoved ||
             tasksUpdated ||
+            focusClaimed ||
             queuesDrained ||
             audioUpdated ||
             sfxUpdated ||
             videoUpdated ||
             animUpdated
         );
+    }
+
+    /**
+     * Queues a node that focused itself inside a detached tree, to claim the focus once mounted.
+     * @param node The node
+     */
+    queueFocusClaim(node: Node) {
+        this._focusClaims.add(new WeakRef(node));
+    }
+
+    /**
+     * Lets each queued node claim its detached focus (`Node.claimDetachedFocus`), dropping the ones that
+     * are done or were collected.
+     * @returns True if any node took the focus or left the queue
+     */
+    processFocusClaims(): boolean {
+        if (this._focusClaims.size === 0) {
+            return false;
+        }
+        let changed = false;
+        for (const ref of this._focusClaims) {
+            const node = ref.deref();
+            if (!node || node.claimDetachedFocus()) {
+                this._focusClaims.delete(ref);
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    /** Drops every queued focus claim (between app runs). */
+    clearFocusClaims() {
+        this._focusClaims = new Set<WeakRef<Node>>();
     }
 
     /**

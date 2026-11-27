@@ -1739,6 +1739,32 @@ describe.concurrent("cli scenegraph", () => {
         ]);
     }, 30000);
 
+    it("Focuses a mounted screen itself when its keyboard took the focus in the screen's init()", async () => {
+        let command = ["node", brsCliPath, "-r detached-init-focus-app", "source/main.brs", "-c 0"].join(" ");
+
+        let { stdout } = await exec(command, {
+            cwd: path.join(__dirname, "resources"),
+        });
+        // Roku Express 4K+ (OS 16.1), detached-init-focus-probe S11-S14 and a production app's search
+        // screen: a focus requested in the screen's init() only links the detached tree, so the screen's
+        // setFocus focuses the screen itself and its observer forwards to the keyboard. A focus requested
+        // by the opener after creating the screen draws the screen's setFocus down to the keyboard.
+        expect(stdout.split("\n").map((line) => line.trimEnd())).toEqual([
+            "=== Detached Init Focus Repro ===",
+            "-- scenario 1 (keyboard focused in init)",
+            "   before push: menu=true keyboard=true",
+            "  screen has the focus: background reset, forwarding to the keyboard",
+            "   after push: screen=false keyboard=true menu=false chain=/stack/search/page/kbd",
+            "-- scenario 2 (keyboard focused by the opener)",
+            "   before push: menu=true keyboard=true",
+            "   after push: screen=false keyboard=true menu=false chain=/stack/search/page/kbd",
+            "=== Detached Init Focus Repro Complete ===",
+            "------ Finished 'main.brs' execution [EXIT_USER_NAV] ------",
+            "",
+            "",
+        ]);
+    }, 30000);
+
     it("Applies a focus request raised from a focus notification the way a device does", async () => {
         let command = ["node", brsCliPath, "-r focus-steal-app", "source/main.brs", "-c 0"].join(" ");
 

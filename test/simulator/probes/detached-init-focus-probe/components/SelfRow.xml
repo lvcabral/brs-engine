@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A RowList that focuses itself in its own init(), before its owner appends it. -->
+<component name="SelfRow" extends="RowList">
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.itemComponentName = "SimpleItem"
+    m.top.itemSize = [600, 100]
+    m.top.rowItemSize = [[200, 100]]
+    m.top.numRows = 1
+    content = CreateObject("roSGNode", "ContentNode")
+    row = content.createChild("ContentNode")
+    row.createChild("ContentNode")
+    row.createChild("ContentNode")
+    m.top.content = content
+    m.top.setFocus(true)
+end sub
+]]></script>
+</component>
