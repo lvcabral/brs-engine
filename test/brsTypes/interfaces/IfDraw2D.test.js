@@ -303,14 +303,63 @@ describe("IfDraw2D", () => {
             const bmp = makeBitmap(200, 200, true);
             bmp.getMethod("drawPoint").call(
                 interpreter,
-                new Int32(0),
-                new Int32(0),
+                new Int32(100),
+                new Int32(100),
                 new Float(500.0),
                 rgba(0x0000ffff)
             );
             const ctx = bmp.getContext();
-            expect(pixelAt(ctx, 200, 99, 99)).toEqual([0, 0, 255, 255]);
-            expect(pixelAt(ctx, 200, 100, 100)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 200, 50, 50)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 200, 149, 149)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 200, 49, 49)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 200, 150, 150)).toEqual([0, 0, 0, 0]);
+        });
+
+        // Expected pixels below are from a Roku Ultra (test/simulator/probes/drawpoint-probe).
+        it("drawPoint centers the square on (x, y)", () => {
+            for (const [size, from, to] of [
+                [1, 5, 5],
+                [2, 4, 5],
+                [3, 4, 6],
+                [4, 3, 6],
+                [5, 3, 7],
+                [6, 2, 7],
+            ]) {
+                const bmp = makeBitmap(12, 12, false);
+                bmp.getMethod("drawPoint").call(
+                    interpreter,
+                    new Int32(5),
+                    new Int32(5),
+                    new Float(size),
+                    rgba(0xff0000ff)
+                );
+                const ctx = bmp.getContext();
+                expect(pixelAt(ctx, 12, from, from), `size ${size}`).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, to, to), `size ${size}`).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, from - 1, from - 1), `size ${size}`).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, to + 1, to + 1), `size ${size}`).toEqual([0, 0, 0, 0]);
+            }
+        });
+
+        // Regression: with alpha blending off the point replaces the pixels, its alpha included.
+        it("drawPoint keeps the color's alpha on a non-alpha bitmap, and blends on an alpha one", () => {
+            for (const [alphaEnable, expected] of [
+                [false, [255, 0, 0, 64]],
+                [true, [64, 0, 191, 255]],
+            ]) {
+                const bmp = makeBitmap(12, 8, alphaEnable);
+                bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+                bmp.getMethod("drawPoint").call(
+                    interpreter,
+                    new Int32(1),
+                    new Int32(1),
+                    new Float(3),
+                    rgba(0xff000040)
+                );
+                expect(pixelAt(bmp.getContext(), 12, 0, 0)).toEqual(expected);
+                expect(pixelAt(bmp.getContext(), 12, 2, 2)).toEqual(expected);
+                expect(pixelAt(bmp.getContext(), 12, 3, 3)).toEqual([0, 0, 255, 255]);
+            }
         });
     });
 

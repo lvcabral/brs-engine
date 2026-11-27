@@ -891,9 +891,15 @@ export class IfDraw2D {
             const { x: baseX, y: baseY } = this.component;
             const ctx = this.component.getContext();
             // Roku documents DrawPoint() as having a maximum point size of 100.
-            const pointSize = Math.min(size.getValue(), 100);
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), pointSize, pointSize);
+            const [px, py, w, h] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
+            if (w > 0 && h > 0) {
+                // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
+                if (!this.component.getCanvasAlpha()) {
+                    ctx.clearRect(baseX + px, baseY + py, w, h);
+                }
+                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
+                ctx.fillRect(baseX + px, baseY + py, w, h);
+            }
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -1529,6 +1535,18 @@ export function axisLineRect(
         return [x0, Math.min(y0, y1), 1, Math.abs(y1 - y0)];
     }
     return undefined;
+}
+
+/**
+ * The `[x, y, width, height]` of whole pixels a device's DrawPoint paints: a square centered on (x, y),
+ * covering each pixel whose center falls in [x + 0.5 - size / 2, x + 0.5 + size / 2). Measured on a Roku
+ * Ultra (test/simulator/probes/drawpoint-probe): exact for whole sizes, and for every height. A fractional
+ * size's width can come out a pixel off (1.5 and 2.5 are 2 wide on the device, 3.5 is 4).
+ */
+export function pointRect(x: number, y: number, size: number): [number, number, number, number] {
+    const left = Math.ceil(x - size / 2);
+    const top = Math.ceil(y - size / 2);
+    return [left, top, Math.ceil(x + size / 2) - left, Math.ceil(y + size / 2) - top];
 }
 
 export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
