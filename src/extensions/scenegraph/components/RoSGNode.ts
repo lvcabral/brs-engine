@@ -224,6 +224,7 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
         ...funcArgs: BrsType[]
     ): BrsType;
     protected abstract setNodeFocus(focusOn: boolean): boolean;
+    protected abstract focusStaysDetached(): boolean;
 
     protected abstract moveObjectIntoField(fieldName: string, data: RoAssociativeArray): { code: number; msg?: string };
     protected abstract moveObjectFromField(fieldName: string): BrsType | string;
@@ -1748,8 +1749,12 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 }
                 this.location = interpreter.formatLocation();
                 const focusOn = on.toBoolean();
+                // A call that stays inside a detached tree isn't the scene's last target: a nested request
+                // from the screen that mounts it later must not read as that node re-grabbing the focus.
+                // Judged before the call, which may run observers that mount the tree.
+                const staysDetached = focusOn && this.focusStaysDetached();
                 const result = this.setNodeFocus(focusOn);
-                if (focusOn) {
+                if (focusOn && !staysDetached) {
                     sgRoot.setLastFocusTarget(this);
                 }
                 return BrsBoolean.from(result);
@@ -1758,8 +1763,9 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
     }
 
     /**
-     * Returns true if the subject node or any of its descendants in the SceneGraph node tree
-     * has remote control focus
+     * Returns true while the subject node's own `focusedChild` links to a node (itself or a child), as on a
+     * device: inside a detached tree, and on a stale link the scene's chain moved away from, too. Also true
+     * while the node holds the live focus or is above it.
      */
     protected get isInFocusChain(): Callable {
         return new Callable("isInFocusChain", {
@@ -1772,8 +1778,13 @@ export abstract class RoSGNode extends BrsComponent implements BrsValue, ISGNode
                 if (remote !== undefined) {
                     return remote;
                 }
-                // loop through all children DFS and check if any children has focus
-                if (sgRoot.focused === this || sgRoot.pendingPanelFocus === this) {
+                // A node is in the chain while its own `focusedChild` links anywhere (DEVICE-MEASURED,
+                // detached-init-focus-probe, focus-probe, setfocus-return-probe): true inside a detached tree,
+                // and on a stale link the scene's chain moved away from.
+                if (this.getValue("focusedchild") instanceof RoSGNode) {
+                    return BrsBoolean.True;
+                }
+                if (sgRoot.focused === this) {
                     return BrsBoolean.True;
                 }
                 return BrsBoolean.from(this.isChildrenFocused());

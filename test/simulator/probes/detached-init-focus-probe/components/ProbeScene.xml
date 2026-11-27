@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeScene" extends="Scene">
+<interface><function name="runProbe" /></interface>
+<children>
+  <Group id="nav" focusable="true" />
+  <Group id="stack" />
+  <Group id="overlay" focusable="true" />
+  <Group id="container" focusable="true"><Group id="leaf" focusable="true" /></Group>
+  <Group id="container2"><Group id="leaf2" focusable="true" /></Group>
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.nav = m.top.findNode("nav")
+    m.stack = m.top.findNode("stack")
+    m.overlay = m.top.findNode("overlay")
+    m.container = m.top.findNode("container")
+    m.leaf = m.top.findNode("leaf")
+    m.arm = ""
+    m.container2 = m.top.findNode("container2")
+    m.leaf2 = m.top.findNode("leaf2")
+    m.container2.observeField("focusedChild", "onContainerFocus")
+    m.leaf2.observeField("focusedChild", "onLeafFocus")
+    m.container.observeField("focusedChild", "onContainerFocus")
+    m.leaf.observeField("focusedChild", "onLeafFocus")
+end sub
+
+sub onContainerFocus()
+    if m.arm = "fwd" and m.container.isInFocusChain() then
+        m.arm = "drop"
+        m.leaf.setFocus(true)
+    end if
+end sub
+
+sub onLeafFocus()
+    if m.arm = "drop" and m.leaf.isInFocusChain() then
+        m.arm = ""
+        m.overlay.setFocus(true)
+    end if
+end sub
+
+' S5: stale links left in the scene (a forward whose target asks for another node), then a plain
+' setFocus on the container whose stale link still leads to its self-linked child.
+sub runStaleCase(name, container, leaf)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.container = container
+    m.leaf = leaf
+    print "PROBE|" + name + "|start containerFocusable=" + container.focusable.toStr()
+    m.overlay.setFocus(true)
+    m.arm = "fwd"
+    m.container.setFocus(true)
+    m.arm = ""
+    dumpStale(name, "after-drop")
+    m.nav.setFocus(true)
+    dumpStale(name, "nav")
+    m.container.setFocus(true)
+    dumpStale(name, "container-focused")
+    m.nav.setFocus(true)
+    dumpStale(name, "back-to-nav")
+end sub
+
+sub dumpStale(name, stage)
+    print "PROBE|" + name + "|" + stage + " nav=" + m.nav.hasFocus().toStr() + " overlay=" + m.overlay.hasFocus().toStr() + " container=" + m.container.hasFocus().toStr() + " containerChain=" + m.container.isInFocusChain().toStr() + " leaf=" + m.leaf.hasFocus().toStr() + " leafChain=" + m.leaf.isInFocusChain().toStr() + " links=" + links()
+end sub
+
+function runProbe(p)
+    ' S1: the target focuses itself in init(); the view forwards to it when it gains the focus.
+    runCase("S1", "Keyboard", true, true, false)
+    ' S2: as S1, a plain Group target.
+    runCase("S2", "Group", true, true, false)
+    ' S3: the target focuses itself in init(); the view does not forward.
+    runCase("S3", "Group", true, false, false)
+    ' S4: no init() focus; the view forwards (control).
+    runCase("S4", "Group", false, true, false)
+    runStaleCase("S5", m.top.findNode("container"), m.top.findNode("leaf"))
+    ' S6: as S5, a container that is not focusable.
+    runStaleCase("S6", m.container2, m.leaf2)
+    ' S7: as S3, a focusable view.
+    runCase("S7", "Group", true, false, true)
+    ' S8: a view whose XML child RowList focuses itself in its own init() (before the view appends
+    ' it), mounted the way a router library does it while another node holds the focus.
+    runChildCase("S8", "RowView", true)
+    ' S9: as S8, with a Group child.
+    runChildCase("S9", "GroupView", true)
+    ' S10: as S8, with nothing focused.
+    runChildCase("S10", "RowView", false)
+    ' S11: the view's own init() focuses its XML Group child (the view links to it).
+    runInitCase("S11", "InitGroupView", true)
+    ' S12: as S11, the scene focuses the child after creating the view.
+    runInitCase("S12", "InitGroupView", false)
+    ' S13: as S11, a DynamicCustomKeyboard child.
+    runInitCase("S13", "InitKbdView", true)
+    ' S14: as S12, a DynamicCustomKeyboard child.
+    runInitCase("S14", "InitKbdView", false)
+    return invalid
+end function
+
+sub runInitCase(name, viewType, inInit)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.nav.setFocus(true)
+    if not m.global.hasField("initFocus") then m.global.addFields({ initFocus: false })
+    m.global.initFocus = inInit
+    print "PROBE|" + name + "|start view=" + viewType + " inInit=" + inInit.toStr()
+    view = CreateObject("roSGNode", viewType)
+    view.id = "view"
+    if not inInit then view.target.setFocus(true)
+    dump(name, "created", view)
+    m.stack.appendChild(view)
+    dump(name, "appended", view)
+    view.setFocus(true)
+    dump(name, "focused", view)
+    m.nav.setFocus(true)
+    dump(name, "back-to-nav", view)
+end sub
+
+sub runChildCase(name, viewType, holderFocused)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.nav.setFocus(true)
+    if not holderFocused then m.nav.setFocus(false)
+    print "PROBE|" + name + "|start view=" + viewType + " holderFocused=" + holderFocused.toStr()
+    view = CreateObject("roSGNode", viewType)
+    view.id = "view"
+    row = view.findNode("row")
+    dumpChild(name, "created", view, row)
+    m.stack.appendChild(view)
+    view.reparent(m.stack, true)
+    dumpChild(name, "mounted", view, row)
+    view.setFocus(true)
+    dumpChild(name, "focused", view, row)
+    m.nav.setFocus(true)
+    dumpChild(name, "back-to-nav", view, row)
+end sub
+
+sub dumpChild(name, stage, view, row)
+    viewFC = "-"
+    if view.focusedChild <> invalid then viewFC = view.focusedChild.id
+    print "PROBE|" + name + "|" + stage + " nav=" + m.nav.hasFocus().toStr() + " view=" + view.hasFocus().toStr() + " viewChain=" + view.isInFocusChain().toStr() + " viewFC=" + viewFC + " row=" + row.hasFocus().toStr() + " rowChain=" + row.isInFocusChain().toStr() + " links=" + links()
+end sub
+
+sub runCase(name, kind, initFocus, forward, viewFocusable)
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.nav.setFocus(true)
+    print "PROBE|" + name + "|start kind=" + kind + " initFocus=" + initFocus.toStr() + " forward=" + forward.toStr() + " viewFocusable=" + viewFocusable.toStr()
+    view = CreateObject("roSGNode", "ProbeView")
+    view.focusable = viewFocusable
+    view.id = "view"
+    view.forward = forward
+    view.initFocus = initFocus
+    view.kind = kind
+    dump(name, "created", view)
+    m.stack.appendChild(view)
+    dump(name, "appended", view)
+    view.setFocus(true)
+    dump(name, "focused", view)
+    m.nav.setFocus(true)
+    dump(name, "back-to-nav", view)
+end sub
+
+sub dump(name, stage, view)
+    t = view.target
+    print "PROBE|" + name + "|" + stage + " nav=" + m.nav.hasFocus().toStr() + " view=" + view.hasFocus().toStr() + " viewChain=" + view.isInFocusChain().toStr() + " target=" + t.hasFocus().toStr() + " targetChain=" + t.isInFocusChain().toStr() + " links=" + links()
+end sub
+
+function links() as string
+    s = ""
+    node = m.top
+    for i = 0 to 10
+        fc = node.focusedChild
+        if fc = invalid then return s + "/-"
+        if fc.isSameNode(node) then return s + "/self"
+        s = s + "/" + fc.id
+        node = fc
+    end for
+    return s
+end function
+]]></script>
+</component>

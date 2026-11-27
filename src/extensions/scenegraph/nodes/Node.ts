@@ -102,6 +102,12 @@ export class Node extends RoSGNode implements BrsValue {
      * one of them appends its own to this round instead of dispatching them (see `notifyStagedFocus`).
      */
     private static focusRound: { queue: StagedFocus[]; fields: Set<Field> } | undefined;
+    /**
+     * Nodes that focused themselves inside a detached tree, while their self-link still stands (any later
+     * `focusedChild` write on the node drops it): true when a mounted ancestor's `setFocus(true)` hands the
+     * focus down to it (see `linkDetachedPath`, `detachedFocusBelow`, `claimDetachedFocus`).
+     */
+    private static readonly detachedFocus = new WeakMap<Node, boolean>();
     /** Field registry keyed by lowercase name. */
     protected readonly fields: Map<string, Field>;
     /** Alias definitions pointing to fields on child nodes. */
@@ -976,25 +982,37 @@ export class Node extends RoSGNode implements BrsValue {
     }
 
     /**
-     * Whether a frame would render this node: attached under the scene (or as its current dialog)
-     * with no hidden or fully transparent ancestor. A closed dialog keeps the scene as its parent
-     * without being one of its children, so membership is checked at every step.
+     * Whether this node is in the displayed tree: each ancestor up to the scene (or its current dialog) holds
+     * it as a child, whatever its visibility. A closed dialog keeps the scene as its parent without being
+     * one of its children, so parent links alone don't tell.
+     */
+    isMounted(): boolean {
+        return Node.inDisplayTree(this, false);
+    }
+
+    /**
+     * Whether a frame would render this node: mounted (`isMounted`) with no hidden or fully transparent
+     * node on the way, the topmost one aside.
      */
     isOnDisplay(): boolean {
-        const path = this.createPath(); // [root, ..., this]
-        for (let i = path.length - 1; i > 0; i--) {
-            const node = path[i];
-            if (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0) {
+        return Node.inDisplayTree(this, true);
+    }
+
+    private static inDisplayTree(start: Node, visibleOnly: boolean): boolean {
+        let node = start;
+        while (node.parent instanceof Node) {
+            if (visibleOnly && (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0)) {
                 return false;
             }
             if (sgRoot.isDisplayRoot(node)) {
                 return true;
             }
-            if (!path[i - 1].children.includes(node)) {
+            if (!node.parent.children.includes(node)) {
                 return false;
             }
+            node = node.parent;
         }
-        return sgRoot.isDisplayRoot(path[0]);
+        return sgRoot.isDisplayRoot(node);
     }
 
     /** Reports `renderTracking` "none" for every rendered Group in this (detached) subtree. */
@@ -1397,36 +1415,60 @@ export class Node extends RoSGNode implements BrsValue {
      */
     setNodeFocus(focusOn: boolean): boolean {
         if (focusOn) {
-            if (!this.triedInitFocus) {
-                // Only try initial focus once
-                this.triedInitFocus = true;
-                if (this.componentDef?.initialFocus) {
-                    const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
-                    if (childToFocus instanceof Node) {
-                        childToFocus.setNodeFocus(true);
-                        return this.isFocusable();
-                    }
+            return this.gainFocus();
+        }
+        this.releaseFocus();
+        // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
+        // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
+        return this.isFocusable();
+    }
+
+    /**
+     * The `setFocus(true)` half of `setNodeFocus`.
+     * @returns Whether the node is focusable (false when a non-focusable container keeps a child's focus).
+     */
+    private gainFocus(): boolean {
+        if (!this.triedInitFocus) {
+            // Only try initial focus once
+            this.triedInitFocus = true;
+            if (this.componentDef?.initialFocus) {
+                const childToFocus = this.findNodeById(this, this.componentDef.initialFocus);
+                if (childToFocus instanceof Node) {
+                    childToFocus.setNodeFocus(true);
+                    return this.isFocusable();
                 }
             }
-            if (!this.isFocusable() && this.isChildrenFocused()) {
-                sgRoot.claimFocusForScene(this);
-                return false;
-            }
+        }
+        const detachedLeaf = this.detachedFocusBelow();
+        if (detachedLeaf) {
+            // Through the leaf's own setNodeFocus, so a subclass runs its gain (ArrayGrid's itemFocused).
+            detachedLeaf.setNodeFocus(true);
+            return this.isFocusable();
+        }
+        if (!this.isFocusable() && this.isChildrenFocused()) {
+            sgRoot.claimFocusForScene(this);
+            return false;
+        }
 
-            const path = this.createPath();
-            const staged: StagedFocus[] = [];
-            if (Node.staysInDetachedTree(path)) {
-                this.linkDetachedPath(path, staged);
-            } else if (Node.focusRound) {
-                this.applyNestedFocus(path, staged);
-            } else if (this.holdsLiveFocus(path)) {
-                Node.restageChain(sgRoot.focused as Node, staged);
-                sgRoot.claimFocusForScene(this);
-            } else {
-                this.applyFocus(path, staged);
-            }
-            Node.notifyStagedFocus(staged);
-        } else if (sgRoot.focused === this) {
+        const path = this.createPath();
+        const staged: StagedFocus[] = [];
+        if (Node.staysInDetachedTree(this)) {
+            this.linkDetachedPath(path, staged);
+        } else if (Node.focusRound) {
+            this.applyNestedFocus(path, staged);
+        } else if (this.holdsLiveFocus(path)) {
+            Node.restageChain(sgRoot.focused as Node, staged);
+            sgRoot.claimFocusForScene(this);
+        } else {
+            this.applyFocus(path, staged);
+        }
+        Node.notifyStagedFocus(staged);
+        return this.isFocusable();
+    }
+
+    /** The `setFocus(false)` half of `setNodeFocus`. */
+    private releaseFocus() {
+        if (sgRoot.focused === this) {
             // If we're unsetting focus on ourself, we need to unset it on all ancestors as well.
             const currFocusedNode = sgRoot.focused;
             sgRoot.setFocused();
@@ -1439,32 +1481,41 @@ export class Node extends RoSGNode implements BrsValue {
                 node.stageFocusedChild(BrsInvalid.Instance, staged);
             }
             Node.notifyStagedFocus(staged);
-        } else {
-            // If the node doesn't have focus already, and it's not gaining focus,
-            // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
-            if (sgRoot.chainOwner === this) {
-                sgRoot.setChainOwner();
-            } else if (sgRoot.chainExtension === this) {
-                sgRoot.setChainExtension();
-            }
-            const staged: StagedFocus[] = [];
-            this.stageFocusedChild(BrsInvalid.Instance, staged);
-            Node.notifyStagedFocus(staged);
+            return;
         }
-        // `setFocus(true)` returns the node's `focusable` value, wherever an observer moved the focus
-        // (DEVICE-MEASURED, setfocus-return-probe). Overrides that need the landing check `sgRoot.focused`.
-        return this.isFocusable();
+        // If the node doesn't have focus already, and it's not gaining focus,
+        // we don't need to notify any ancestors. Its own link to itself goes, so hasFocus() turns false.
+        if (sgRoot.chainOwner === this) {
+            sgRoot.setChainOwner();
+        } else if (sgRoot.chainExtension === this) {
+            sgRoot.setChainExtension();
+        }
+        const staged: StagedFocus[] = [];
+        this.stageFocusedChild(BrsInvalid.Instance, staged);
+        Node.notifyStagedFocus(staged);
     }
 
     /**
-     * Whether a `setFocus(true)` on the node ending `path` stays inside its own detached tree
+     * Whether a `setFocus(true)` on `node` stays inside its own detached tree
      * (DEVICE-MEASURED, buttongroup-shrink-probe `mount2`): while the live focus is under the scene, focusing
      * a node of a tree not attached to it leaves the scene's chain and its live focus where they are.
-     * @param path The node's path, root first.
+     * @param node The node.
      */
-    private static staysInDetachedTree(path: Node[]): boolean {
+    private static staysInDetachedTree(node: Node): boolean {
         const scene = sgRoot.scene;
-        return scene !== undefined && path[0] !== scene && scene.isFocusWithin(sgRoot.focused);
+        if (!scene?.isFocusWithin()) {
+            return false;
+        }
+        let root = node;
+        while (root.parent instanceof Node) {
+            root = root.parent;
+        }
+        return root !== scene;
+    }
+
+    /** Whether a `setFocus(true)` on this node now would stay inside its detached tree (`staysInDetachedTree`). */
+    protected focusStaysDetached(): boolean {
+        return Node.staysInDetachedTree(this);
     }
 
     /**
@@ -1479,6 +1530,64 @@ export class Node extends RoSGNode implements BrsValue {
             path[i].stageFocusedChild(path[i + 1], staged);
         }
         this.stageFocusedChild(this, staged);
+        // A focus requested during a component's init() only writes these links (DEVICE-MEASURED,
+        // detached-init-focus-probe S11/S13 vs S12/S14).
+        Node.detachedFocus.set(this, !Field.isConstructing());
+        if (this.detachedFocusClaim() !== "never") {
+            sgRoot.queueFocusClaim(this);
+        }
+    }
+
+    /**
+     * Whether this node, after focusing itself inside a detached tree, takes the live focus once it is
+     * mounted: "never" (the base), "wait" (not yet), or "now" (see `claimDetachedFocus`).
+     */
+    protected detachedFocusClaim(): "never" | "wait" | "now" {
+        return "never";
+    }
+
+    /**
+     * Run each scene pass for a node queued by `linkDetachedPath` (DEVICE-MEASURED,
+     * detached-focus-adoption-probe E/F/H/I/J): a list or grid that focused itself inside a detached tree
+     * takes the live focus at the first pass where it is under the scene with content, visible or not,
+     * whatever holds the focus then. A plain Group never does (case A).
+     * @returns True when the node is done: it took the focus, or its detached focus is gone.
+     */
+    claimDetachedFocus(): boolean {
+        if (!Node.detachedFocus.has(this)) {
+            return true;
+        }
+        if (this.detachedFocusClaim() !== "now" || !this.isMounted()) {
+            return false;
+        }
+        const dialog = sgRoot.scene?.dialog;
+        if (dialog?.isFocusWithin()) {
+            // An open dialog keeps the keys, and the focus comes back to the list when it closes
+            // (DEVICE-MEASURED, detached-focus-adoption-probe N).
+            dialog.returnFocusTo(this);
+        } else {
+            this.setNodeFocus(true);
+        }
+        return true;
+    }
+
+    /**
+     * The node a top-level `setFocus(true)` on this node hands the focus to (DEVICE-MEASURED,
+     * detached-init-focus-probe S2/S3/S7): one below it that took the focus inside a then-detached tree
+     * (`linkDetachedPath`), which this node's `focusedChild` links still lead to, once this node is under
+     * the scene. Stale links left in the scene's tree don't count (S5/S6): the node focuses itself.
+     */
+    private detachedFocusBelow(): Node | undefined {
+        if (Node.focusRound) {
+            return undefined;
+        }
+        // Cheapest first: most calls stop at the first link (none, or this node's own).
+        const leaf = Node.chainLeaf(this);
+        if (leaf === undefined || leaf === this || Node.detachedFocus.get(leaf) !== true) {
+            return undefined;
+        }
+        // A link left on a node the leaf was removed from doesn't lead to it.
+        return this.isMounted() && this.isFocusWithin(leaf) ? leaf : undefined;
     }
 
     /**
@@ -1600,15 +1709,10 @@ export class Node extends RoSGNode implements BrsValue {
             return false;
         }
         const staged: StagedFocus[] = [];
+        // The self-link makes the panel report isInFocusChain() while it is notified (DEVICE-MEASURED, the
+        // probe's chainGate case), though the live focus is still on the panel being left.
         this.stageFocusedChild(this, staged);
-        // The panel already reports isInFocusChain() while it is notified (DEVICE-MEASURED, the probe's
-        // chainGate case), though the live focus is still on the panel being left.
-        sgRoot.setPendingPanelFocus(this);
-        try {
-            Node.notifyStagedFocus(staged);
-        } finally {
-            sgRoot.setPendingPanelFocus();
-        }
+        Node.notifyStagedFocus(staged);
         return true;
     }
 
@@ -1700,6 +1804,7 @@ export class Node extends RoSGNode implements BrsValue {
      * @param staged Accumulator the caller later hands to `notifyStagedFocus`.
      */
     private stageFocusedChild(value: BrsType, staged: StagedFocus[]) {
+        Node.detachedFocus.delete(this);
         const previousSink = Node.focusStagingSink;
         Node.focusStagingSink = staged;
         try {
@@ -1750,7 +1855,7 @@ export class Node extends RoSGNode implements BrsValue {
         Node.focusRound = undefined;
         sgRoot.setChainOwner();
         sgRoot.setLastFocusTarget();
-        sgRoot.setPendingPanelFocus();
+        sgRoot.clearFocusClaims();
     }
 
     /**

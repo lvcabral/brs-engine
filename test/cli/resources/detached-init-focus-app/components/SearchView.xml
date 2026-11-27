@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    A search screen: its init() focuses the keyboard while the screen is still detached, and its
+    focusedChild observer resets the background and forwards to the keyboard when the screen itself
+    gains the focus. With `focusInInit` off, the scene focuses the keyboard after creating the screen.
+-->
+<component name="SearchView" extends="Group">
+<interface>
+  <field id="keyboard" type="node" />
+</interface>
+<children>
+  <Group id="page"><Group id="kbd" focusable="true" /></Group>
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.kbd = m.top.findNode("kbd")
+    m.top.keyboard = m.kbd
+    if m.global.focusInInit then m.kbd.setFocus(true)
+    m.top.observeField("focusedChild", "onScreenFocusChange")
+end sub
+
+sub onScreenFocusChange()
+    if m.top.hasFocus() then
+        print "  screen has the focus: background reset, forwarding to the keyboard"
+        m.kbd.setFocus(true)
+    end if
+end sub
+]]></script>
+</component>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!-- A view whose XML child (Group, under a Group) it focuses in its own init() when `initFocus` is set. -->
+<component name="InitGroupView" extends="Group">
+<interface>
+  <field id="target" type="node" />
+</interface>
+<children>
+  <Group id="col"><Group id="target" focusable="true" /></Group>
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.target = m.top.findNode("target")
+    m.top.target = m.target
+    m.top.observeField("focusedChild", "onViewFocus")
+    if m.global.initFocus = true then m.target.setFocus(true)
+end sub
+sub onViewFocus()
+    print "PROBE|  onViewFocus hasFocus=" + m.top.hasFocus().toStr() + " inChain=" + m.top.isInFocusChain().toStr()
+end sub
+]]></script>
+</component>

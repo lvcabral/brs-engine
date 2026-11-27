@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    When does a focus taken inside a detached tree become the focus that receives keys? Each case
+    creates a view whose child focuses itself while detached, mounts it the way a router library does
+    (appendChild, then reparent onto the same parent), and lets frames pass between steps (a Timer
+    drives them). A Play press after each step shows which node receives the remote's keys.
+    A: nav holds the focus. The view's XML child focuses itself in its own init() (no link from the view).
+    B: nav holds the focus. A child built in code focuses itself once the (detached) view holds it, so the
+       view links to it.
+    C: as A, with nothing focused.
+    D: as A, the view is never mounted.
+    E: nav holds the focus. The view's XML child is a RowList with empty content that focuses itself in its
+       own init(); it gets its content one tick after the view is mounted.
+    F: as E, the content is set before the view is mounted.
+    G: as E, a RowList that never focuses itself (control).
+    H: as E, a LabelList built in code: it focuses itself alone, then the view appends it.
+    I: as H, a MarkupGrid.
+    J: as H, a RowList inside a hidden view.
+    L: as E, nav is focused again right after the view is mounted.
+    M: as E, the view is focused right after it is mounted.
+    N: as E, a StandardMessageDialog opens right after the view is mounted, before the content arrives.
+-->
+<component name="ProbeScene" extends="Scene">
+<children>
+  <KeyGroup id="nav" />
+  <Group id="stack" />
+  <Timer id="tick" duration="0.4" repeat="true" />
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.nav = m.top.findNode("nav")
+    m.stack = m.top.findNode("stack")
+    m.nav.observeField("lastKey", "onKey")
+    m.seq = 0
+    m.dialog = invalid
+    m.cases = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "L", "M", "N"]
+    m.caseIndex = 0
+    m.step = 0
+    m.waitKey = false
+    m.waitTicks = 0
+    print "PROBE|000|boot|start|"
+    m.tick = m.top.findNode("tick")
+    m.tick.observeField("fire", "onTick")
+    m.tick.control = "start"
+end sub
+
+function onKeyEvent(key as string, press as boolean) as boolean
+    if press then reportKey("scene:" + key)
+    return press
+end function
+
+sub onKey(event as object)
+    reportKey(event.getData())
+end sub
+
+sub reportKey(who as string)
+    if m.waitKey then
+        m.waitKey = false
+        p("key", "got=" + who)
+    end if
+end sub
+
+function nextSeq() as string
+    m.seq = m.seq + 1
+    s = m.seq.toStr()
+    while len(s) < 3
+        s = "0" + s
+    end while
+    return s
+end function
+
+sub p(stage as string, extra = "" as string)
+    line = "PROBE|" + nextSeq() + "|" + m.case + "|" + stage + "| nav=" + m.nav.hasFocus().toStr()
+    if m.view <> invalid then
+        line = line + " view=" + m.view.hasFocus().toStr() + " viewChain=" + m.view.isInFocusChain().toStr() + " child=" + m.child.hasFocus().toStr() + " childChain=" + m.child.isInFocusChain().toStr()
+    end if
+    if m.dialog <> invalid then line = line + " dialog=" + m.dialog.hasFocus().toStr() + " dialogChain=" + m.dialog.isInFocusChain().toStr()
+    print line + " links=" + links() + " " + extra
+end sub
+
+sub askKey()
+    m.waitKey = true
+    m.waitTicks = 0
+    print "PROBE|" + nextSeq() + "|await|Play|"
+end sub
+
+function links() as string
+    s = ""
+    node = m.top
+    for i = 0 to 10
+        fc = node.focusedChild
+        if fc = invalid then return s + "/-"
+        if fc.isSameNode(node) then return s + "/self"
+        s = s + "/" + fc.id
+        node = fc
+    end for
+    return s
+end function
+
+sub onTick()
+    if m.waitKey then
+        m.waitTicks = m.waitTicks + 1
+        if m.waitTicks < 15 then return
+        m.waitKey = false
+        p("key", "got=none")
+    end if
+    if m.caseIndex >= m.cases.count() then
+        m.tick.control = "stop"
+        print "PROBE|" + nextSeq() + "|done|"
+        return
+    end if
+    m.case = m.cases[m.caseIndex]
+    runStep()
+    m.step = m.step + 1
+end sub
+
+sub runStep()
+    s = m.step
+    if s = 0 then
+        m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+        m.view = invalid
+        m.nav.setFocus(true)
+        if m.case = "C" then m.nav.setFocus(false)
+        createView()
+        if m.case = "F" then fillRow()
+        p("created")
+    else if s = 1 then
+        p("created-next-tick")
+        askKey()
+    else if s = 2 then
+        if m.case <> "D" then
+            m.stack.appendChild(m.view)
+            m.view.reparent(m.stack, true)
+            if m.case = "L" then m.nav.setFocus(true)
+            if m.case = "M" then m.view.setFocus(true)
+            if m.case = "N" then
+                m.dialog = CreateObject("roSGNode", "StandardMessageDialog")
+                m.dialog.title = "probe"
+                m.dialog.buttons = ["OK"]
+                m.top.dialog = m.dialog
+            end if
+        end if
+        p("mounted")
+    else if s = 3 then
+        p("mounted-next-tick")
+        if m.case = "E" or m.case = "G" or m.case = "H" or m.case = "I" or m.case = "J" or m.case = "L" or m.case = "M" or m.case = "N" then
+            fillRow()
+            p("filled")
+        end if
+        askKey()
+    else if s = 4 then
+        p("after-key")
+        if m.dialog <> invalid then
+            m.dialog.close = true
+            m.dialog = invalid
+            p("dialog-closed")
+        end if
+        m.nav.setFocus(true)
+        p("nav-focused")
+        m.caseIndex = m.caseIndex + 1
+        m.step = -1
+    end if
+end sub
+
+sub createView()
+    if m.case = "B" then
+        m.view = CreateObject("roSGNode", "KeyGroup")
+        m.view.consume = false
+        m.view.id = "view"
+        m.child = CreateObject("roSGNode", "KeyGroup")
+        m.child.id = "child"
+        m.view.appendChild(m.child)
+        m.child.setFocus(true)
+    else if m.case = "E" or m.case = "F" or m.case = "L" or m.case = "M" or m.case = "N" then
+        m.view = CreateObject("roSGNode", "RowView")
+        m.view.id = "view"
+        m.child = m.view.findNode("child")
+    else if m.case = "H" or m.case = "I" or m.case = "J" then
+        m.view = CreateObject("roSGNode", "KeyGroup")
+        m.view.consume = false
+        m.view.focusable = false
+        m.view.id = "view"
+        if m.case = "J" then m.view.visible = false
+        listType = "RowList"
+        if m.case = "H" then listType = "LabelList"
+        if m.case = "I" then listType = "MarkupGrid"
+        m.child = CreateObject("roSGNode", listType)
+        m.child.id = "child"
+        if listType = "RowList" then
+            m.child.itemComponentName = "SimpleItem"
+            m.child.itemSize = [600, 100]
+            m.child.rowItemSize = [[200, 100]]
+            m.child.numRows = 1
+        else if listType = "MarkupGrid" then
+            m.child.itemComponentName = "SimpleItem"
+            m.child.itemSize = [200, 100]
+            m.child.numColumns = 2
+            m.child.numRows = 1
+        end if
+        m.child.content = CreateObject("roSGNode", "ContentNode")
+        m.child.setFocus(true)
+        m.view.appendChild(m.child)
+    else if m.case = "G" then
+        m.view = CreateObject("roSGNode", "PlainRowView")
+        m.view.id = "view"
+        m.child = m.view.findNode("child")
+    else
+        m.view = CreateObject("roSGNode", "ChildView")
+        m.view.id = "view"
+        m.child = m.view.findNode("child")
+    end if
+    m.view.observeField("lastKey", "onKey")
+    if m.child.hasField("lastKey") then m.child.observeField("lastKey", "onKey")
+end sub
+
+sub fillRow()
+    content = CreateObject("roSGNode", "ContentNode")
+    if m.child.subtype() = "LabelList" or m.child.subtype() = "MarkupGrid" then
+        content.createChild("ContentNode").title = "one"
+        content.createChild("ContentNode").title = "two"
+    else
+        row = content.createChild("ContentNode")
+        row.createChild("ContentNode")
+        row.createChild("ContentNode")
+    end if
+    m.child.content = content
+end sub
+]]></script>
+</component>

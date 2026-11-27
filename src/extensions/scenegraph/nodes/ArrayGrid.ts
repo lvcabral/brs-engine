@@ -489,6 +489,12 @@ export class ArrayGrid extends Group implements UITransition {
         return true;
     }
 
+    /** A list or grid that focused itself while detached takes the focus once mounted with content. */
+    protected detachedFocusClaim(): "never" | "wait" | "now" {
+        const content = this.getValue("content");
+        return content instanceof ContentNode && content.getNodeChildren().length > 0 ? "now" : "wait";
+    }
+
     /**
      * Publishes the focus that new content left pending (the reset to item 0, or the current item after an
      * in-place change), when the list is in the focus chain. A running focus motion publishes its own

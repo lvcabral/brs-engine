@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="SimpleItem" extends="Group">
+<interface><field id="itemContent" type="node" /></interface>
+<children><Rectangle width="180" height="90" color="0x336699FF" /></children>
+</component>

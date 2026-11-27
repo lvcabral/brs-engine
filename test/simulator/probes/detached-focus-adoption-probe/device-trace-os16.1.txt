@@ -1,0 +1,141 @@
+PROBE|000|boot|start|
+PROBE|001|A|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|002|A|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|003|await|Play|
+PROBE|004|A|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|005|A|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|006|A|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|007|await|Play|
+PROBE|008|A|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|009|A|after-key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|010|A|nav-focused| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|011|B|created| nav=true view=false viewChain=true child=true childChain=true links=/nav/self 
+PROBE|012|B|created-next-tick| nav=true view=false viewChain=true child=true childChain=true links=/nav/self 
+PROBE|013|await|Play|
+PROBE|014|B|key| nav=true view=false viewChain=true child=true childChain=true links=/nav/self got=nav:play
+PROBE|015|B|mounted| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|016|B|mounted-next-tick| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|017|await|Play|
+PROBE|018|B|key| nav=true view=false viewChain=false child=false childChain=false links=/nav/self got=nav:play
+PROBE|019|B|after-key| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|020|B|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|021|C|created| nav=false view=false viewChain=false child=true childChain=true links=/- 
+PROBE|022|C|created-next-tick| nav=false view=false viewChain=false child=true childChain=true links=/- 
+PROBE|023|await|Play|
+PROBE|024|C|key| nav=false view=false viewChain=false child=true childChain=true links=/- got=none
+PROBE|025|C|mounted| nav=false view=false viewChain=false child=true childChain=true links=/- 
+PROBE|026|C|mounted-next-tick| nav=false view=false viewChain=false child=true childChain=true links=/- 
+PROBE|027|await|Play|
+PROBE|028|C|key| nav=false view=false viewChain=false child=true childChain=true links=/- got=none
+PROBE|029|C|after-key| nav=false view=false viewChain=false child=true childChain=true links=/- 
+PROBE|030|C|nav-focused| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|031|D|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|032|D|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|033|await|Play|
+PROBE|034|D|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|035|D|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|036|D|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|037|await|Play|
+PROBE|038|D|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|039|D|after-key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|040|D|nav-focused| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|041|E|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|042|E|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|043|await|Play|
+PROBE|044|E|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|045|E|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|046|E|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|047|E|filled| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|048|await|Play|
+PROBE|049|E|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|050|E|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|051|E|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|052|F|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|053|F|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|054|await|Play|
+PROBE|055|F|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|056|F|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|057|F|mounted-next-tick| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|058|await|Play|
+PROBE|059|F|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|060|F|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|061|F|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|062|G|created| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|063|G|created-next-tick| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|064|await|Play|
+PROBE|065|G|key| nav=true view=false viewChain=false child=false childChain=false links=/nav/self got=nav:play
+PROBE|066|G|mounted| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|067|G|mounted-next-tick| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|068|G|filled| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|069|await|Play|
+PROBE|070|G|key| nav=true view=false viewChain=false child=false childChain=false links=/nav/self got=nav:play
+PROBE|071|G|after-key| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|072|G|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|073|H|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|074|H|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|075|await|Play|
+PROBE|076|H|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|077|H|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|078|H|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|079|H|filled| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|080|await|Play|
+PROBE|081|H|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|082|H|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|083|H|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|084|I|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|085|I|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|086|await|Play|
+PROBE|087|I|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|088|I|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|089|I|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|090|I|filled| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|091|await|Play|
+PROBE|092|I|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|093|I|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|094|I|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|095|J|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|096|J|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|097|await|Play|
+PROBE|098|J|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|099|J|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|100|J|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|101|J|filled| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|102|await|Play|
+PROBE|103|J|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|104|J|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|105|J|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|106|L|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|107|L|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|108|await|Play|
+PROBE|109|L|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|110|L|mounted| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|111|L|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|112|L|filled| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|113|await|Play|
+PROBE|114|L|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|115|L|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|116|L|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|117|M|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|118|M|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|119|await|Play|
+PROBE|120|M|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|121|M|mounted| nav=false view=true viewChain=true child=true childChain=true links=/stack/view/self 
+PROBE|122|M|mounted-next-tick| nav=false view=true viewChain=true child=true childChain=true links=/stack/view/self 
+PROBE|123|M|filled| nav=false view=true viewChain=true child=true childChain=true links=/stack/view/self 
+PROBE|124|await|Play|
+PROBE|125|M|key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self got=view:play
+PROBE|126|M|after-key| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|127|M|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|128|N|created| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|129|N|created-next-tick| nav=true view=false viewChain=false child=true childChain=true links=/nav/self 
+PROBE|130|await|Play|
+PROBE|131|N|key| nav=true view=false viewChain=false child=true childChain=true links=/nav/self got=nav:play
+PROBE|132|N|mounted| nav=true view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=/nav/self 
+PROBE|133|N|mounted-next-tick| nav=true view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=/nav/self 
+PROBE|134|N|filled| nav=true view=false viewChain=false child=true childChain=true dialog=false dialogChain=true links=/nav/self 
+PROBE|135|await|Play|
+PROBE|136|N|key| nav=false view=false viewChain=true child=true childChain=true dialog=false dialogChain=true links=/stack/view/child/self got=none
+PROBE|137|N|after-key| nav=false view=false viewChain=true child=true childChain=true dialog=false dialogChain=true links=/stack/view/child/self 
+PROBE|138|N|dialog-closed| nav=false view=false viewChain=true child=true childChain=true links=/stack/view/child/self 
+PROBE|139|N|nav-focused| nav=true view=false viewChain=false child=false childChain=false links=/nav/self 
+PROBE|140|done|

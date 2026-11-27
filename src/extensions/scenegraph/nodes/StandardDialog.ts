@@ -116,6 +116,14 @@ export class StandardDialog extends Group {
         );
     }
 
+    /**
+     * Makes `node` the node the focus returns to when this dialog closes (see `Node.claimDetachedFocus`).
+     * @param node The node.
+     */
+    returnFocusTo(node: RoSGNode) {
+        this.lastFocus = node;
+    }
+
     appendChildToParent(child: BrsType): boolean {
         const added = super.appendChildToParent(child);
         if (added) {

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<component name="ProbeView" extends="Group">
+<interface>
+  <field id="kind" type="string" onChange="onKind" />
+  <field id="initFocus" type="boolean" value="false" />
+  <field id="forward" type="boolean" value="false" />
+  <field id="target" type="node" />
+</interface>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.top.observeField("focusedChild", "onViewFocus")
+end sub
+
+' Builds the target from a field observer: CreateObject runs init() before any field is set.
+sub onKind()
+    col = CreateObject("roSGNode", "Group")
+    col.id = "col"
+    if m.top.kind = "Keyboard" then
+        target = CreateObject("roSGNode", "DynamicCustomKeyboard")
+    else
+        target = CreateObject("roSGNode", "Group")
+        target.focusable = true
+    end if
+    target.id = "target"
+    m.target = target
+    m.top.target = target
+    target.observeFieldScoped("focusedChild", "onTargetFocus")
+    col.appendChild(target)
+    m.top.appendChild(col)
+    ' The view is still detached here, as in a component's init().
+    if m.top.initFocus then target.setFocus(true)
+end sub
+
+sub onViewFocus()
+    print "PROBE|  onViewFocus hasFocus=" + m.top.hasFocus().toStr() + " inChain=" + m.top.isInFocusChain().toStr()
+    if m.top.forward and m.top.hasFocus() then m.target.setFocus(true)
+end sub
+
+sub onTargetFocus()
+    print "PROBE|  onTargetFocus hasFocus=" + m.target.hasFocus().toStr() + " inChain=" + m.target.isInFocusChain().toStr()
+end sub
+]]></script>
+</component>

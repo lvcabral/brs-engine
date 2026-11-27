@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+    A screen whose keyboard took the focus while the screen was detached, pushed onto a stack and
+    focused while a menu holds the focus (DEVICE-MEASURED, OS 16.1, detached-init-focus-probe S11-S14
+    and a production app's search screen):
+    1. Focused in the screen's init(): the screen takes the focus itself, then forwards it.
+    2. Focused by the opener after creating the screen: the screen's setFocus lands on the keyboard.
+-->
+<component name="MainScene" extends="Scene">
+<interface>
+  <function name="runScenarios" />
+</interface>
+<children>
+  <Group id="menu" focusable="true" />
+  <Group id="stack" />
+</children>
+<script type="text/brightscript"><![CDATA[
+sub init()
+    m.menu = m.top.findNode("menu")
+    m.stack = m.top.findNode("stack")
+    m.global.addFields({ focusInInit: false })
+end sub
+
+function runScenarios(_params as object) as object
+    print "=== Detached Init Focus Repro ==="
+    runScenario("1 (keyboard focused in init)", true)
+    runScenario("2 (keyboard focused by the opener)", false)
+    print "=== Detached Init Focus Repro Complete ==="
+    return invalid
+end function
+
+sub runScenario(label as string, inInit as boolean)
+    print "-- scenario " + label
+    m.stack.removeChildrenIndex(m.stack.getChildCount(), 0)
+    m.menu.setFocus(true)
+    m.global.focusInInit = inInit
+    view = CreateObject("roSGNode", "SearchView")
+    view.id = "search"
+    if not inInit then view.keyboard.setFocus(true)
+    print "   before push: menu=" + m.menu.hasFocus().toStr() + " keyboard=" + view.keyboard.hasFocus().toStr()
+    m.stack.appendChild(view)
+    view.setFocus(true)
+    print "   after push: screen=" + view.hasFocus().toStr() + " keyboard=" + view.keyboard.hasFocus().toStr() + " menu=" + m.menu.hasFocus().toStr() + " chain=" + chain()
+end sub
+
+function chain() as string
+    s = ""
+    node = m.top
+    while node.focusedChild <> invalid and not node.focusedChild.isSameNode(node)
+        node = node.focusedChild
+        s = s + "/" + node.id
+    end while
+    return s
+end function
+]]></script>
+</component>
