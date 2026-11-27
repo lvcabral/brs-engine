@@ -24,37 +24,39 @@ sub Main()
     end for
 
     ' Region edges: a 4x4 region at (4,4) of a 12x12 bitmap, drawn past each of its edges
-    b = edgeBitmap()
-    r = CreateObject("roRegion", b, 4, 4, 4, 4)
+    r = edgeRegion()
     r.DrawPoint(0, 0, 4, &hFF0000FF)
     r.DrawPoint(3, 3, 4, &h00FF00FF)
-    report("edgePoint", b)
-    b = edgeBitmap()
-    r = CreateObject("roRegion", b, 4, 4, 4, 4)
+    report("edgePoint", r.GetBitmap())
+    r = edgeRegion()
     r.DrawRect(-2, -2, 4, 4, &hFF0000FF)
     r.DrawRect(2, 2, 4, 4, &h00FF00FF)
-    report("edgeRect", b)
-    b = edgeBitmap()
-    r = CreateObject("roRegion", b, 4, 4, 4, 4)
+    report("edgeRect", r.GetBitmap())
+    r = edgeRegion()
     r.DrawLine(-2, 1, 6, 1, &hFF0000FF)
     r.DrawLine(2, -2, 2, 6, &h00FF00FF)
     r.DrawLine(-2, -2, 6, 6, &h0000FFFF)
-    report("edgeLine", b)
+    report("edgeLine", r.GetBitmap())
 
     ' DrawPoint with a zero or negative size at (5, 5), blending off over transparent
     for each size in [0, -0.5, -1, -2, -3, -4]
-        b = CreateObject("roBitmap", {width: 12, height: 12, AlphaEnable: false})
-        b.Clear(0)
+        b = blankBitmap()
         ok = b.DrawPoint(5, 5, size, &hFF0000FF)
         report("size" + Str(size).Trim() + "|ok=" + ok.ToStr(), b)
     end for
     print "PROBE|done"
 end sub
 
-function edgeBitmap() as object
+' A 12x12 transparent bitmap, blending off
+function blankBitmap() as object
     b = CreateObject("roBitmap", {width: 12, height: 12, AlphaEnable: false})
     b.Clear(0)
     return b
+end function
+
+' A 4x4 region at (4,4) of a blankBitmap()
+function edgeRegion() as object
+    return CreateObject("roRegion", blankBitmap(), 4, 4, 4, 4)
 end function
 
 ' px:<GetPng hex>:<GetByteArray hex> - the device's GetByteArray reads back zeros, see ../decode-px.mjs

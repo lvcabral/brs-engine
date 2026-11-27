@@ -29,7 +29,7 @@ ROKU_IP=<ip> ROKU_PASS=<pw> ./run-device.sh     # writes device-trace.txt
 ./run-engine.sh                                 # after npm run build:cli; writes engine-trace.txt
 node ../decode-px.mjs device-trace.txt > device-trace-decoded.txt
 node ../decode-px.mjs engine-trace.txt > engine-trace-decoded.txt
-node grids.mjs device-trace-decoded.txt engine-trace-decoded.txt
+node ../draw2d-grids.mjs device-trace-decoded.txt engine-trace-decoded.txt 12
 ```
 
 ## Results (Roku Ultra, 2026-11-27)

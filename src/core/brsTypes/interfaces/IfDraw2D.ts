@@ -184,6 +184,22 @@ export class IfDraw2D {
         }
     }
 
+    /**
+     * Fills a rect of the surface the way DrawRect/DrawLine/DrawPoint do on a device: with alpha blending off
+     * the pixels are replaced with the color, alpha included, on any surface (roScreen, roBitmap, roRegion);
+     * with it on they blend.
+     */
+    private fillPixels(x: number, y: number, w: number, h: number, color: string) {
+        const ctx = this.component.getContext();
+        const left = this.component.x + x;
+        const top = this.component.y + y;
+        if (!this.component.getCanvasAlpha()) {
+            ctx.clearRect(left, top, w, h);
+        }
+        ctx.fillStyle = color;
+        ctx.fillRect(left, top, w, h);
+    }
+
     doDrawClearedRect(rect: Rect) {
         const baseX = this.component.x + rect.x;
         const baseY = this.component.y + rect.y;
@@ -839,27 +855,23 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const { x: baseX, y: baseY } = this.component;
-            const ctx = this.component.getContext();
             const [x0, y0, x1, y1] = [xStart.getValue(), yStart.getValue(), xEnd.getValue(), yEnd.getValue()];
-            // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
-            const replace = !this.component.getCanvasAlpha();
-            const color = rgbaIntToHex(rgba.getValue(), true);
+            const rgbaValue = rgba.getValue();
+            const color = rgbaIntToHex(rgbaValue, true);
             const rect = axisLineRect(x0, y0, x1, y1);
-            const translucent = (rgba.getValue() & 0xff) !== 0xff;
-            if (rect || (replace && translucent && (x0 !== x1 || y0 !== y1))) {
+            if (rect) {
+                this.fillPixels(...rect, color);
+            } else if (!this.component.getCanvasAlpha() && (rgbaValue & 0xff) !== 0xff) {
                 // Exact device pixels: replacing a translucent color can't go through an anti-aliased stroke,
                 // whose partly covered edges would mix the old pixels into the new alpha.
-                ctx.fillStyle = color;
-                for (const [x, y, w, h] of rect ? [rect] : steppedLineRuns(x0, y0, x1, y1)) {
-                    if (replace) {
-                        ctx.clearRect(baseX + x, baseY + y, w, h);
-                    }
-                    ctx.fillRect(baseX + x, baseY + y, w, h);
+                for (const run of steppedLineRuns(x0, y0, x1, y1)) {
+                    this.fillPixels(...run, color);
                 }
             } else if (x0 !== x1 || y0 !== y1) {
-                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it.
-                // An opaque color replaces and blends alike, so the stroke serves both modes.
+                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it. Its
+                // fully covered pixels get the color in either blending mode; only the edges blend.
+                const { x: baseX, y: baseY } = this.component;
+                const ctx = this.component.getContext();
                 ctx.beginPath();
                 ctx.moveTo(baseX + x0 + 0.5, baseY + y0 + 0.5);
                 ctx.lineTo(baseX + x1 + 0.5, baseY + y1 + 0.5);
@@ -886,21 +898,16 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const { x: baseX, y: baseY } = this.component;
-            const ctx = this.component.getContext();
             // Roku documents DrawPoint() as having a maximum point size of 100.
             const [cx, cy, cw, ch] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
             // A device cuts the point at the surface's left and top edges only: inside a region it still
             // paints past the right and bottom ones (test/simulator/probes/region-draw-probe).
-            const [px, py] = [Math.max(cx, 0), Math.max(cy, 0)];
-            const [w, h] = [cx + cw - px, cy + ch - py];
+            const px = Math.max(cx, 0);
+            const py = Math.max(cy, 0);
+            const w = cx + cw - px;
+            const h = cy + ch - py;
             if (w > 0 && h > 0) {
-                // Like DrawRect: with alpha blending off the pixels are replaced, the color's alpha included.
-                if (!this.component.getCanvasAlpha()) {
-                    ctx.clearRect(baseX + px, baseY + py, w, h);
-                }
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-                ctx.fillRect(baseX + px, baseY + py, w, h);
+                this.fillPixels(px, py, w, h, rgbaIntToHex(rgba.getValue(), true));
             }
             this.component.makeDirty();
             return BrsBoolean.True;
@@ -923,18 +930,13 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const baseX = this.component.x + x.getValue();
-            const baseY = this.component.y + y.getValue();
-            const w = width.getValue();
-            const h = height.getValue();
-            const ctx = this.component.getContext();
-            // With alpha blending off the device replaces the pixels with the RGBA given, alpha included,
-            // on any surface (roScreen, roBitmap, roRegion) — so clear first, then fill keeping the alpha.
-            if (!this.component.getCanvasAlpha()) {
-                ctx.clearRect(baseX, baseY, w, h);
-            }
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            ctx.fillRect(baseX, baseY, w, h);
+            this.fillPixels(
+                x.getValue(),
+                y.getValue(),
+                width.getValue(),
+                height.getValue(),
+                rgbaIntToHex(rgba.getValue())
+            );
             this.component.makeDirty();
             return BrsBoolean.True;
         },

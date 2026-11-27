@@ -212,6 +212,12 @@ describe("IfDraw2D", () => {
                 .call(interpreter, new Int32(x0), new Int32(y0), new Int32(x1), new Int32(y1), rgba(color));
         }
 
+        function point(surface, x, y, size, color) {
+            return surface
+                .getMethod("drawPoint")
+                .call(interpreter, new Int32(x), new Int32(y), new Float(size), rgba(color));
+        }
+
         // Regression (#1340): a 1px line used to be anti-aliased at half strength over two rows.
         it("drawLine paints a horizontal line on one row at full strength", () => {
             const bmp = makeBitmap(16, 16, true);
@@ -294,15 +300,15 @@ describe("IfDraw2D", () => {
                 runs.flatMap(([x, y, w, h]) =>
                     Array.from({ length: w * h }, (_, i) => `${x + (i % w)},${y + Math.floor(i / w)}`)
                 );
-            const cols = (spans) => spans.flatMap(([y, from, to]) => pixels([[from, y, to - from + 1, 1]]));
+            const rowSpans = (spans) => spans.flatMap(([y, from, to]) => pixels([[from, y, to - from + 1, 1]]));
             for (const [x0, y0, x1, y1, expected] of [
-                [0, 0, 6, 6, cols([0, 1, 2, 3, 4, 5].map((i) => [i, i, i]))],
+                [0, 0, 6, 6, rowSpans([0, 1, 2, 3, 4, 5].map((i) => [i, i, i]))],
                 [
                     0,
                     7,
                     11,
                     4,
-                    cols([
+                    rowSpans([
                         [7, 0, 1],
                         [6, 2, 5],
                         [5, 6, 9],
@@ -314,7 +320,7 @@ describe("IfDraw2D", () => {
                     0,
                     11,
                     3,
-                    cols([
+                    rowSpans([
                         [0, 0, 1],
                         [1, 2, 5],
                         [2, 6, 9],
@@ -326,7 +332,7 @@ describe("IfDraw2D", () => {
                     7,
                     5,
                     0,
-                    cols([
+                    rowSpans([
                         [0, 5, 5],
                         [1, 4, 4],
                         [2, 4, 4],
@@ -336,7 +342,7 @@ describe("IfDraw2D", () => {
                         [6, 2, 2],
                     ]),
                 ],
-                [9, 1, 3, 7, cols([1, 2, 3, 4, 5, 6].map((y) => [y, 9 - y, 9 - y]))],
+                [9, 1, 3, 7, rowSpans([1, 2, 3, 4, 5, 6].map((y) => [y, 9 - y, 9 - y]))],
             ]) {
                 expect(pixels(steppedLineRuns(x0, y0, x1, y1)).sort()).toEqual(expected.sort());
             }
@@ -375,9 +381,7 @@ describe("IfDraw2D", () => {
 
         it("drawPoint paints a size x size square centered on the given position", () => {
             const bmp = makeBitmap(10, 10, true);
-            const result = bmp
-                .getMethod("drawPoint")
-                .call(interpreter, new Int32(4), new Int32(4), new Float(2.0), rgba(0x0000ffff));
+            const result = point(bmp, 4, 4, 2, 0x0000ffff);
             expect(result).toBe(BrsBoolean.True);
             const ctx = bmp.getContext();
             expect(pixelAt(ctx, 10, 3, 3)).toEqual([0, 0, 255, 255]);
@@ -390,12 +394,8 @@ describe("IfDraw2D", () => {
         it("drawPoint on a roRegion is cut at the region's left and top edges only", () => {
             const bmp = makeBitmap(20, 20, true);
             const region = new RoRegion(bmp, new Int32(10), new Int32(10), new Int32(5), new Int32(5));
-            region
-                .getMethod("drawPoint")
-                .call(interpreter, new Int32(0), new Int32(0), new Float(4.0), rgba(0xff0000ff));
-            region
-                .getMethod("drawPoint")
-                .call(interpreter, new Int32(4), new Int32(4), new Float(4.0), rgba(0xff0000ff));
+            point(region, 0, 0, 4, 0xff0000ff);
+            point(region, 4, 4, 4, 0xff0000ff);
             const ctx = bmp.getContext();
             expect(pixelAt(ctx, 20, 10, 10)).toEqual([255, 0, 0, 255]);
             expect(pixelAt(ctx, 20, 14, 14)).toEqual([255, 0, 0, 255]);
@@ -417,13 +417,7 @@ describe("IfDraw2D", () => {
 
         it("drawPoint clamps size to Roku's documented maximum of 100", () => {
             const bmp = makeBitmap(200, 200, true);
-            bmp.getMethod("drawPoint").call(
-                interpreter,
-                new Int32(100),
-                new Int32(100),
-                new Float(500.0),
-                rgba(0x0000ffff)
-            );
+            point(bmp, 100, 100, 500, 0x0000ffff);
             const ctx = bmp.getContext();
             expect(pixelAt(ctx, 200, 50, 50)).toEqual([0, 0, 255, 255]);
             expect(pixelAt(ctx, 200, 149, 149)).toEqual([0, 0, 255, 255]);
@@ -442,13 +436,7 @@ describe("IfDraw2D", () => {
                 [6, 2, 7],
             ]) {
                 const bmp = makeBitmap(12, 12, false);
-                bmp.getMethod("drawPoint").call(
-                    interpreter,
-                    new Int32(5),
-                    new Int32(5),
-                    new Float(size),
-                    rgba(0xff0000ff)
-                );
+                point(bmp, 5, 5, size, 0xff0000ff);
                 const ctx = bmp.getContext();
                 expect(pixelAt(ctx, 12, from, from), `size ${size}`).toEqual([255, 0, 0, 255]);
                 expect(pixelAt(ctx, 12, to, to), `size ${size}`).toEqual([255, 0, 0, 255]);
@@ -465,13 +453,7 @@ describe("IfDraw2D", () => {
             ]) {
                 const bmp = makeBitmap(12, 8, alphaEnable);
                 bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
-                bmp.getMethod("drawPoint").call(
-                    interpreter,
-                    new Int32(1),
-                    new Int32(1),
-                    new Float(3),
-                    rgba(0xff000040)
-                );
+                point(bmp, 1, 1, 3, 0xff000040);
                 expect(pixelAt(bmp.getContext(), 12, 0, 0)).toEqual(expected);
                 expect(pixelAt(bmp.getContext(), 12, 2, 2)).toEqual(expected);
                 expect(pixelAt(bmp.getContext(), 12, 3, 3)).toEqual([0, 0, 255, 255]);

@@ -14,16 +14,16 @@ with a zero or negative size. Plain Draw2D, no SceneGraph.
 ## Readout
 
 Same as `../drawpoint-probe`: each readout is `px:<GetPng hex>:<GetByteArray hex>`, decoded by `../decode-px.mjs`.
-`grids.mjs` prints device and engine side by side.
+`../draw2d-grids.mjs` prints device and engine side by side.
 
 ## Run
 
 ```bash
 ROKU_IP=<ip> ROKU_PASS=<pw> ./run-device.sh     # writes device-trace.txt
-./run-engine.sh                                 # after npm run build:cli and npm link; writes engine-trace.txt
+./run-engine.sh                                 # after npm run build:cli; writes engine-trace.txt
 node ../decode-px.mjs device-trace.txt > device-trace-decoded.txt
 node ../decode-px.mjs engine-trace.txt > engine-trace-decoded.txt
-node grids.mjs device-trace-decoded.txt engine-trace-decoded.txt
+node ../draw2d-grids.mjs device-trace-decoded.txt engine-trace-decoded.txt
 ```
 
 ## Results (Roku Express 4K+, OS 16.1, 2026-11-27)
