@@ -987,7 +987,7 @@ export class Node extends RoSGNode implements BrsValue {
      * one of its children, so parent links alone don't tell.
      */
     isMounted(): boolean {
-        return this.inDisplayTree(false);
+        return Node.inDisplayTree(this, false);
     }
 
     /**
@@ -995,11 +995,11 @@ export class Node extends RoSGNode implements BrsValue {
      * node on the way, the topmost one aside.
      */
     isOnDisplay(): boolean {
-        return this.inDisplayTree(true);
+        return Node.inDisplayTree(this, true);
     }
 
-    private inDisplayTree(visibleOnly: boolean): boolean {
-        let node: Node = this;
+    private static inDisplayTree(start: Node, visibleOnly: boolean): boolean {
+        let node = start;
         while (node.parent instanceof Node) {
             if (visibleOnly && (node.getValueJS("visible") === false || node.getValueJS("opacity") === 0)) {
                 return false;
