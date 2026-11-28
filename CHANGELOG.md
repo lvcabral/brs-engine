@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+<a name="v2.7.3"></a>
+
+## [v2.7.3 - Detached Focus, LayoutGroup Re-entry and Draw 2D Alpha](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.3) - 27 November 2026
+
+This patch release fixes regressions and device differences found in production apps, each checked against a real Roku device with a probe app under `test/simulator/probes/`. In the **core engine**, `DrawRect()`, `DrawLine()` and `DrawPoint()` on an `roBitmap` or `roRegion` with alpha blending off now keep the color's alpha instead of painting it opaque, horizontal and vertical lines cover the same pixels as on a device instead of being anti-aliased over two rows, and a point is centered on its coordinates. In the **SceneGraph** extension, a focus taken in a tree that is not yet attached to the scene now follows the device: it no longer steals the scene's focus, a mounted ancestor's `setFocus(true)` hands it down to the node, and a list or grid that focused itself while detached takes the focus once mounted with content. A `LayoutGroup` lays its children out again when a child grows while the screen is painted or when a child's `translation` observer measures it, which fixes buttons drawn on top of each other. A `ButtonGroup` given a new `buttons` array rebuilds its children as on a device, removing a focused node now leaves nothing focused, and a `Group` with nothing visible reports an empty local rect instead of an infinite one, which fixes a dialog button drawn off screen. Read the full release notes below for more details.
+
+### Release Changes
+
+#### Core Engine
+
+* (draw2d) `DrawRect`/`DrawLine`/`DrawPoint` keep the color's alpha with blending off, draw horizontal and vertical lines pixel-exact and center `DrawPoint` as on the device by [@markwpearce](https://github.com/markwpearce) in [#1356](https://github.com/lvcabral/brs-engine/pull/1356)
+
+#### SceneGraph Extension (`brs-scenegraph` release v0.7.3)
+
+* (rsg) A `LayoutGroup` lays out again a child that grew mid-paint; a `ButtonGroup` rebuilds its children for a new `buttons` array and updates `buttonFocused` at once; removing a focused node leaves nothing focused by [@lvcabral](https://github.com/lvcabral) in [#1350](https://github.com/lvcabral/brs-engine/pull/1350)
+* (rsg) A `LayoutGroup` lays its children out again from a child's `translation` observer, resuming the interrupted pass as the device does by [@lvcabral](https://github.com/lvcabral) in [#1352](https://github.com/lvcabral/brs-engine/pull/1352)
+* (rsg) A node taking focus in a detached tree keeps the scene's focus, fixing a screen left unfocused after an overlay closed by [@lvcabral](https://github.com/lvcabral) in [#1353](https://github.com/lvcabral/brs-engine/pull/1353)
+* (rsg) A `Group` with nothing visible reports an empty `localBoundingRect()` instead of an infinite one by [@lvcabral](https://github.com/lvcabral) in [#1354](https://github.com/lvcabral/brs-engine/pull/1354)
+* (rsg) A focus taken in a detached tree now matches the device: a mounted ancestor hands it down, and a list or grid claims it once mounted with content by [@lvcabral](https://github.com/lvcabral) in [#1355](https://github.com/lvcabral/brs-engine/pull/1355)
+
+#### Chores, Build and Dependencies
+
+* Bumped versions and the `brs-scenegraph` → `brs-engine` peer dependency to v2.7.3, and updated the limitations documentation by [@lvcabral](https://github.com/lvcabral) in [#1357](https://github.com/lvcabral/brs-engine/pull/1357)
+
+[Full Changelog][v2.7.3]
+
 <a name="v2.7.2"></a>
 
 ## [v2.7.2 - Faster Calls and Tints, Observer Loops and Shadowed Components](https://github.com/lvcabral/brs-engine/releases/tag/v2.7.2) - 25 November 2026
@@ -2100,6 +2126,7 @@ The following is the list of components implemented (some partially or just mock
 
 [Full Changelog][v0.1.0-emu]
 
+[v2.7.3]: https://github.com/lvcabral/brs-engine/compare/v2.7.2...v2.7.3
 [v2.7.2]: https://github.com/lvcabral/brs-engine/compare/v2.7.1...v2.7.2
 [v2.7.1]: https://github.com/lvcabral/brs-engine/compare/v2.7.0...v2.7.1
 [v2.7.0]: https://github.com/lvcabral/brs-engine/compare/v2.6.2...v2.7.0
