@@ -31,6 +31,7 @@ const {
     drawImageAtPos,
     putImageAtPos,
     drawCanvasRegion,
+    steppedLineRuns,
 } = brs.types;
 const { Interpreter } = brs;
 
@@ -142,6 +143,51 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 20, 3, 3)).toEqual([255, 0, 0, 128]);
             expect(pixelAt(ctx, 20, 0, 0)).toEqual([0, 0, 255, 255]);
         });
+
+        // Regression (#1351): with alpha blending off, a device replaces the pixels with the RGBA given,
+        // alpha included — on an roBitmap too, not only an roScreen. It used to paint the color opaque.
+        it("keeps the color's alpha on a non-alpha RoBitmap, replacing prior content", () => {
+            const bmp = makeBitmap(4, 4, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0xffffff00));
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(4),
+                new Int32(4),
+                rgba(0xffffff40)
+            );
+            expect(pixelAt(bmp.getContext(), 4, 1, 1)).toEqual([255, 255, 255, 64]);
+
+            // A second, more transparent rect replaces rather than blends over the first.
+            bmp.getMethod("drawRect").call(
+                interpreter,
+                new Int32(1),
+                new Int32(1),
+                new Int32(2),
+                new Int32(2),
+                rgba(0xff000010)
+            );
+            expect(pixelAt(bmp.getContext(), 4, 1, 1)).toEqual([255, 0, 0, 16]);
+            expect(pixelAt(bmp.getContext(), 4, 0, 0)).toEqual([255, 255, 255, 64]);
+        });
+
+        it("keeps the color's alpha on a non-alpha RoRegion", () => {
+            const bmp = makeBitmap(8, 4, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            const rgn = new RoRegion(bmp, new Int32(4), new Int32(0), new Int32(4), new Int32(4));
+            rgn.getMethod("setAlphaEnable").call(interpreter, BrsBoolean.False);
+            rgn.getMethod("drawRect").call(
+                interpreter,
+                new Int32(0),
+                new Int32(0),
+                new Int32(4),
+                new Int32(4),
+                rgba(0xff000080)
+            );
+            expect(pixelAt(bmp.getContext(), 8, 5, 1)).toEqual([255, 0, 0, 128]);
+            expect(pixelAt(bmp.getContext(), 8, 1, 1)).toEqual([0, 0, 255, 255]);
+        });
     });
 
     describe("drawLine and drawPoint", () => {
@@ -159,29 +205,259 @@ describe("IfDraw2D", () => {
             expect(pixelAt(ctx, 10, 5, 0)[1]).toBe(255);
         });
 
-        it("drawPoint paints a size x size square at the given position", () => {
-            const bmp = makeBitmap(10, 10, true);
-            const result = bmp
+        // Expected pixels below are from a Roku Ultra (test/simulator/probes/drawline-probe).
+        function line(bmp, x0, y0, x1, y1, color) {
+            return bmp
+                .getMethod("drawLine")
+                .call(interpreter, new Int32(x0), new Int32(y0), new Int32(x1), new Int32(y1), rgba(color));
+        }
+
+        function point(surface, x, y, size, color) {
+            return surface
                 .getMethod("drawPoint")
-                .call(interpreter, new Int32(4), new Int32(4), new Float(2.0), rgba(0x0000ffff));
+                .call(interpreter, new Int32(x), new Int32(y), new Float(size), rgba(color));
+        }
+
+        // Regression (#1340): a 1px line used to be anti-aliased at half strength over two rows.
+        it("drawLine paints a horizontal line on one row at full strength", () => {
+            const bmp = makeBitmap(16, 16, true);
+            bmp.getMethod("clear").call(interpreter, rgba(0xffffffff));
+            line(bmp, 0, 0, 15, 0, 0x808080ff);
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 16, 0, 0)).toEqual([128, 128, 128, 255]);
+            expect(pixelAt(ctx, 16, 15, 0)).toEqual([128, 128, 128, 255]);
+            expect(pixelAt(ctx, 16, 0, 1)).toEqual([255, 255, 255, 255]);
+        });
+
+        it("drawLine covers both ends of a horizontal line, in either direction", () => {
+            for (const [x0, x1] of [
+                [2, 10],
+                [10, 2],
+            ]) {
+                const bmp = makeBitmap(12, 8, false);
+                line(bmp, x0, 3, x1, 3, 0xff0000ff);
+                const ctx = bmp.getContext();
+                expect(pixelAt(ctx, 12, 1, 3)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 2, 3)).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, 10, 3)).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, 11, 3)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 6, 2)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 6, 4)).toEqual([0, 0, 0, 0]);
+            }
+        });
+
+        it("drawLine stops a vertical line short of its larger y, in either direction", () => {
+            for (const [y0, y1] of [
+                [1, 6],
+                [6, 1],
+            ]) {
+                const bmp = makeBitmap(12, 8, false);
+                line(bmp, 5, y0, 5, y1, 0xff0000ff);
+                const ctx = bmp.getContext();
+                expect(pixelAt(ctx, 12, 5, 0)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 5, 1)).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, 5, 5)).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, 5, 6)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 4, 3)).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, 6, 3)).toEqual([0, 0, 0, 0]);
+            }
+        });
+
+        it("drawLine paints nothing for a zero-length line", () => {
+            const bmp = makeBitmap(12, 8, false);
+            line(bmp, 4, 4, 4, 4, 0xff0000ff);
+            expect(pixelAt(bmp.getContext(), 12, 4, 4)).toEqual([0, 0, 0, 0]);
+        });
+
+        // Regression (#1351): with alpha blending off the line replaces the pixels, its alpha included.
+        it("drawLine keeps the color's alpha on a non-alpha bitmap, and blends on an alpha one", () => {
+            const off = makeBitmap(10, 6, false);
+            off.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(off, 0, 2, 9, 2, 0xff000040);
+            line(off, 4, 0, 4, 5, 0x00ff0080);
+            expect(pixelAt(off.getContext(), 10, 1, 2)).toEqual([255, 0, 0, 64]);
+            expect(pixelAt(off.getContext(), 10, 4, 1)).toEqual([0, 255, 0, 128]);
+            expect(pixelAt(off.getContext(), 10, 1, 1)).toEqual([0, 0, 255, 255]);
+
+            const on = makeBitmap(10, 6, true);
+            on.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(on, 0, 2, 9, 2, 0xff000040);
+            expect(pixelAt(on.getContext(), 10, 1, 2)).toEqual([64, 0, 191, 255]);
+        });
+
+        it("drawLine replaces, not blends, along a diagonal on a non-alpha bitmap", () => {
+            const bmp = makeBitmap(12, 8, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(bmp, 0, 0, 6, 6, 0xff0000ff);
+            const [r, g, b] = pixelAt(bmp.getContext(), 12, 3, 3);
+            expect(r).toBeGreaterThan(200);
+            expect(g).toBe(0);
+            expect(b).toBeLessThan(55);
+        });
+
+        it("steppedLineRuns covers the device's pixels for every probed diagonal", () => {
+            const pixels = (runs) =>
+                runs.flatMap(([x, y, w, h]) =>
+                    Array.from({ length: w * h }, (_, i) => `${x + (i % w)},${y + Math.floor(i / w)}`)
+                );
+            const rowSpans = (spans) => spans.flatMap(([y, from, to]) => pixels([[from, y, to - from + 1, 1]]));
+            for (const [x0, y0, x1, y1, expected] of [
+                [0, 0, 6, 6, rowSpans([0, 1, 2, 3, 4, 5].map((i) => [i, i, i]))],
+                [
+                    0,
+                    7,
+                    11,
+                    4,
+                    rowSpans([
+                        [7, 0, 1],
+                        [6, 2, 5],
+                        [5, 6, 9],
+                        [4, 10, 11],
+                    ]),
+                ],
+                [
+                    0,
+                    0,
+                    11,
+                    3,
+                    rowSpans([
+                        [0, 0, 1],
+                        [1, 2, 5],
+                        [2, 6, 9],
+                        [3, 10, 11],
+                    ]),
+                ],
+                [
+                    2,
+                    7,
+                    5,
+                    0,
+                    rowSpans([
+                        [0, 5, 5],
+                        [1, 4, 4],
+                        [2, 4, 4],
+                        [3, 3, 3],
+                        [4, 3, 3],
+                        [5, 3, 3],
+                        [6, 2, 2],
+                    ]),
+                ],
+                [9, 1, 3, 7, rowSpans([1, 2, 3, 4, 5, 6].map((y) => [y, 9 - y, 9 - y]))],
+            ]) {
+                expect(pixels(steppedLineRuns(x0, y0, x1, y1)).sort()).toEqual(expected.sort());
+            }
+        });
+
+        it("drawLine replaces a diagonal with a translucent color pixel for pixel on a non-alpha bitmap", () => {
+            const bmp = makeBitmap(12, 8, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(bmp, 0, 0, 11, 3, 0xff000040);
+            const ctx = bmp.getContext();
+            for (const [x, y] of [
+                [0, 0],
+                [1, 0],
+                [2, 1],
+                [5, 1],
+                [6, 2],
+                [9, 2],
+                [10, 3],
+                [11, 3],
+            ]) {
+                expect(pixelAt(ctx, 12, x, y)).toEqual([255, 0, 0, 64]);
+            }
+            expect(pixelAt(ctx, 12, 2, 0)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 12, 1, 1)).toEqual([0, 0, 255, 255]);
+        });
+
+        it("drawLine keeps an opaque diagonal's surface opaque on a non-alpha bitmap", () => {
+            const bmp = makeBitmap(12, 8, false);
+            bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+            line(bmp, 0, 0, 11, 3, 0xffffffff);
+            const data = bmp.getContext().getImageData(0, 0, 12, 8).data;
+            for (let i = 3; i < data.length; i += 4) {
+                expect(data[i]).toBe(255);
+            }
+        });
+
+        it("drawPoint paints a size x size square centered on the given position", () => {
+            const bmp = makeBitmap(10, 10, true);
+            const result = point(bmp, 4, 4, 2, 0x0000ffff);
             expect(result).toBe(BrsBoolean.True);
             const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 10, 3, 3)).toEqual([0, 0, 255, 255]);
             expect(pixelAt(ctx, 10, 4, 4)).toEqual([0, 0, 255, 255]);
-            expect(pixelAt(ctx, 10, 4, 6)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 10, 2, 2)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 10, 5, 5)).toEqual([0, 0, 0, 0]);
+        });
+
+        // Device pixels from test/simulator/probes/region-draw-probe (edgePoint).
+        it("drawPoint on a roRegion is cut at the region's left and top edges only", () => {
+            const bmp = makeBitmap(20, 20, true);
+            const region = new RoRegion(bmp, new Int32(10), new Int32(10), new Int32(5), new Int32(5));
+            point(region, 0, 0, 4, 0xff0000ff);
+            point(region, 4, 4, 4, 0xff0000ff);
+            const ctx = bmp.getContext();
+            expect(pixelAt(ctx, 20, 10, 10)).toEqual([255, 0, 0, 255]);
+            expect(pixelAt(ctx, 20, 14, 14)).toEqual([255, 0, 0, 255]);
+            for (const [x, y] of [
+                [9, 9],
+                [9, 10],
+                [10, 9],
+            ]) {
+                expect(pixelAt(ctx, 20, x, y)).toEqual([0, 0, 0, 0]);
+            }
+            for (const [x, y] of [
+                [15, 15],
+                [15, 14],
+                [14, 15],
+            ]) {
+                expect(pixelAt(ctx, 20, x, y)).toEqual([255, 0, 0, 255]);
+            }
         });
 
         it("drawPoint clamps size to Roku's documented maximum of 100", () => {
             const bmp = makeBitmap(200, 200, true);
-            bmp.getMethod("drawPoint").call(
-                interpreter,
-                new Int32(0),
-                new Int32(0),
-                new Float(500.0),
-                rgba(0x0000ffff)
-            );
+            point(bmp, 100, 100, 500, 0x0000ffff);
             const ctx = bmp.getContext();
-            expect(pixelAt(ctx, 200, 99, 99)).toEqual([0, 0, 255, 255]);
-            expect(pixelAt(ctx, 200, 100, 100)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 200, 50, 50)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 200, 149, 149)).toEqual([0, 0, 255, 255]);
+            expect(pixelAt(ctx, 200, 49, 49)).toEqual([0, 0, 0, 0]);
+            expect(pixelAt(ctx, 200, 150, 150)).toEqual([0, 0, 0, 0]);
+        });
+
+        // Expected pixels below are from a Roku Ultra (test/simulator/probes/drawpoint-probe).
+        it("drawPoint centers the square on (x, y)", () => {
+            for (const [size, from, to] of [
+                [1, 5, 5],
+                [2, 4, 5],
+                [3, 4, 6],
+                [4, 3, 6],
+                [5, 3, 7],
+                [6, 2, 7],
+            ]) {
+                const bmp = makeBitmap(12, 12, false);
+                point(bmp, 5, 5, size, 0xff0000ff);
+                const ctx = bmp.getContext();
+                expect(pixelAt(ctx, 12, from, from), `size ${size}`).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, to, to), `size ${size}`).toEqual([255, 0, 0, 255]);
+                expect(pixelAt(ctx, 12, from - 1, from - 1), `size ${size}`).toEqual([0, 0, 0, 0]);
+                expect(pixelAt(ctx, 12, to + 1, to + 1), `size ${size}`).toEqual([0, 0, 0, 0]);
+            }
+        });
+
+        // Regression: with alpha blending off the point replaces the pixels, its alpha included.
+        it("drawPoint keeps the color's alpha on a non-alpha bitmap, and blends on an alpha one", () => {
+            for (const [alphaEnable, expected] of [
+                [false, [255, 0, 0, 64]],
+                [true, [64, 0, 191, 255]],
+            ]) {
+                const bmp = makeBitmap(12, 8, alphaEnable);
+                bmp.getMethod("clear").call(interpreter, rgba(0x0000ffff));
+                point(bmp, 1, 1, 3, 0xff000040);
+                expect(pixelAt(bmp.getContext(), 12, 0, 0)).toEqual(expected);
+                expect(pixelAt(bmp.getContext(), 12, 2, 2)).toEqual(expected);
+                expect(pixelAt(bmp.getContext(), 12, 3, 3)).toEqual([0, 0, 255, 255]);
+            }
         });
     });
 

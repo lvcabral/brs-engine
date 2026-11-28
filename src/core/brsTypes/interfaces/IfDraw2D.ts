@@ -184,6 +184,51 @@ export class IfDraw2D {
         }
     }
 
+    /**
+     * Fills a whole-pixel rect of the surface the way DrawRect/DrawLine/DrawPoint do on a device: with alpha
+     * blending off the pixels are replaced with the color, alpha included, on any surface (roScreen, roBitmap,
+     * roRegion); with it on they blend. An opaque fill replaces the pixels it covers either way.
+     */
+    private fillPixels(x: number, y: number, w: number, h: number, rgba: number) {
+        const ctx = this.component.getContext();
+        const left = this.component.x + x;
+        const top = this.component.y + y;
+        if ((rgba & 0xff) !== 0xff && !this.component.getCanvasAlpha()) {
+            ctx.clearRect(left, top, w, h);
+        }
+        ctx.fillStyle = rgbaIntToHex(rgba, true);
+        ctx.fillRect(left, top, w, h);
+    }
+
+    /**
+     * Replaces the pixels of whole-pixel `runs` with the color, alpha included. One clipped clear and one fill
+     * of a path of all the runs, which is cheaper than clearing and filling each run on its own.
+     */
+    private replacePixelRuns(runs: [number, number, number, number][], rgba: number) {
+        if (runs.length === 0) {
+            return;
+        }
+        const ctx = this.component.getContext();
+        const { x: baseX, y: baseY } = this.component;
+        let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+        ctx.beginPath();
+        for (const [x, y, w, h] of runs) {
+            ctx.rect(baseX + x, baseY + y, w, h);
+            left = Math.min(left, x);
+            top = Math.min(top, y);
+            right = Math.max(right, x + w);
+            bottom = Math.max(bottom, y + h);
+        }
+        ctx.save();
+        ctx.clip();
+        ctx.clearRect(baseX + left, baseY + top, right - left, bottom - top);
+        ctx.restore();
+        ctx.fillStyle = rgbaIntToHex(rgba, true);
+        ctx.fill();
+        // Drop the path: node-canvas copies the current path on every later fillRect/clearRect.
+        ctx.beginPath();
+    }
+
     doDrawClearedRect(rect: Rect) {
         const baseX = this.component.x + rect.x;
         const baseY = this.component.y + rect.y;
@@ -839,13 +884,26 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const { x: baseX, y: baseY } = this.component;
-            const ctx = this.component.getContext();
-            ctx.beginPath();
-            ctx.strokeStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.moveTo(baseX + xStart.getValue(), baseY + yStart.getValue());
-            ctx.lineTo(baseX + xEnd.getValue(), baseY + yEnd.getValue());
-            ctx.stroke();
+            const [x0, y0, x1, y1] = [xStart.getValue(), yStart.getValue(), xEnd.getValue(), yEnd.getValue()];
+            const rgbaValue = rgba.getValue();
+            const rect = axisLineRect(x0, y0, x1, y1);
+            if (rect) {
+                this.fillPixels(...rect, rgbaValue);
+            } else if (!this.component.getCanvasAlpha() && (rgbaValue & 0xff) !== 0xff) {
+                // Exact device pixels: replacing a translucent color can't go through an anti-aliased stroke,
+                // whose partly covered edges would mix the old pixels into the new alpha.
+                this.replacePixelRuns(steppedLineRuns(x0, y0, x1, y1), rgbaValue);
+            } else if (x0 !== x1 || y0 !== y1) {
+                // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it. Its
+                // fully covered pixels get the color in either blending mode; only the edges blend.
+                const { x: baseX, y: baseY } = this.component;
+                const ctx = this.component.getContext();
+                ctx.beginPath();
+                ctx.moveTo(baseX + x0 + 0.5, baseY + y0 + 0.5);
+                ctx.lineTo(baseX + x1 + 0.5, baseY + y1 + 0.5);
+                ctx.strokeStyle = rgbaIntToHex(rgbaValue, true);
+                ctx.stroke();
+            }
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -866,12 +924,17 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const { x: baseX, y: baseY } = this.component;
-            const ctx = this.component.getContext();
             // Roku documents DrawPoint() as having a maximum point size of 100.
-            const pointSize = Math.min(size.getValue(), 100);
-            ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            ctx.fillRect(baseX + x.getValue(), baseY + y.getValue(), pointSize, pointSize);
+            const [cx, cy, cw, ch] = pointRect(x.getValue(), y.getValue(), Math.min(size.getValue(), 100));
+            // A device cuts the point at the surface's left and top edges only: inside a region it still
+            // paints past the right and bottom ones (test/simulator/probes/region-draw-probe).
+            const px = Math.max(cx, 0);
+            const py = Math.max(cy, 0);
+            const w = cx + cw - px;
+            const h = cy + ch - py;
+            if (w > 0 && h > 0) {
+                this.fillPixels(px, py, w, h, rgba.getValue());
+            }
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -893,18 +956,7 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            const baseX = this.component.x + x.getValue();
-            const baseY = this.component.y + y.getValue();
-            const w = width.getValue();
-            const h = height.getValue();
-            const ctx = this.component.getContext();
-            if (this.component instanceof RoScreen && !this.component.getCanvasAlpha()) {
-                ctx.clearRect(baseX, baseY, w, h);
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), true);
-            } else {
-                ctx.fillStyle = rgbaIntToHex(rgba.getValue(), this.component.getCanvasAlpha());
-            }
-            ctx.fillRect(baseX, baseY, w, h);
+            this.fillPixels(x.getValue(), y.getValue(), width.getValue(), height.getValue(), rgba.getValue());
             this.component.makeDirty();
             return BrsBoolean.True;
         },
@@ -1487,6 +1539,73 @@ export function putImageAtPos(imageData: BrsImageData, ctx: BrsCanvasContext2D, 
         ctx.putImageData(imageData, x, y);
     }
     /// #endif
+}
+
+/**
+ * The `[x, y, width, height]` a device's DrawLine paints for a horizontal or vertical line, or undefined
+ * for a diagonal or zero-length one. Measured on a Roku Ultra (test/simulator/probes/drawline-probe): a
+ * horizontal line covers both end points, a vertical one runs from the smaller y up to, not including,
+ * the larger one, whichever way it's drawn. A zero-length line paints nothing.
+ */
+export function axisLineRect(
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number
+): [number, number, number, number] | undefined {
+    if (y0 === y1 && x0 !== x1) {
+        return [Math.min(x0, x1), y0, Math.abs(x1 - x0) + 1, 1];
+    } else if (x0 === x1 && y0 !== y1) {
+        return [x0, Math.min(y0, y1), 1, Math.abs(y1 - y0)];
+    }
+    return undefined;
+}
+
+/**
+ * The pixels a device's DrawLine paints for a diagonal, as `[x, y, width, height]` runs. Measured on a Roku
+ * Ultra (test/simulator/probes/drawline-probe): an x-major line covers every column from end to end, at
+ * the line's y rounded to the nearest pixel; a y-major or 45° line covers the rows from the smaller y up
+ * to, not including, the larger one, at the line's x through each row's center, rounded half down.
+ */
+export function steppedLineRuns(x0: number, y0: number, x1: number, y1: number): [number, number, number, number][] {
+    const runs: [number, number, number, number][] = [];
+    const [dx, dy] = [x1 - x0, y1 - y0];
+    if (Math.abs(dx) > Math.abs(dy)) {
+        const [xa, ya] = dx > 0 ? [x0, y0] : [x1, y1];
+        for (let x = xa; x <= xa + Math.abs(dx); x++) {
+            const y = Math.round(ya + ((x - xa) * dy) / dx);
+            const last = runs.at(-1);
+            if (last?.[1] === y) {
+                last[2]++;
+            } else {
+                runs.push([x, y, 1, 1]);
+            }
+        }
+    } else if (dy !== 0) {
+        const [xa, ya] = dy > 0 ? [x0, y0] : [x1, y1];
+        for (let y = ya; y < ya + Math.abs(dy); y++) {
+            const x = Math.ceil(xa + ((y + 0.5 - ya) * dx) / dy - 0.5);
+            const last = runs.at(-1);
+            if (last?.[0] === x) {
+                last[3]++;
+            } else {
+                runs.push([x, y, 1, 1]);
+            }
+        }
+    }
+    return runs;
+}
+
+/**
+ * The `[x, y, width, height]` of whole pixels a device's DrawPoint paints: a square centered on (x, y),
+ * covering each pixel whose center falls in [x + 0.5 - size / 2, x + 0.5 + size / 2). Measured on a Roku
+ * Ultra (test/simulator/probes/drawpoint-probe): exact for whole sizes, and for every height. A fractional
+ * size's width can come out a pixel off (1.5 and 2.5 are 2 wide on the device, 3.5 is 4).
+ */
+export function pointRect(x: number, y: number, size: number): [number, number, number, number] {
+    const left = Math.ceil(x - size / 2);
+    const top = Math.ceil(y - size / 2);
+    return [left, top, Math.ceil(x + size / 2) - left, Math.ceil(y + size / 2) - top];
 }
 
 export function rgbaIntToHex(rgba: number, alpha: boolean = true): string {
