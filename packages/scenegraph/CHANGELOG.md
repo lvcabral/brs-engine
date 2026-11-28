@@ -2,6 +2,22 @@
 
 All notable changes to `brs-scenegraph` extension will be documented in this file.
 
+<a name="v0.7.3"></a>
+
+## [v0.7.3 (beta) - Detached Focus and LayoutGroup Re-entry](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.3) - 27 November 2026
+
+This patch release fixes regressions and device differences found in production apps, each checked against a real Roku device with a probe app under `test/simulator/probes/`. A focus taken in a tree that is not yet attached to the scene now follows the device: it no longer steals the scene's focus (a screen was left unfocused after an overlay closed), a mounted ancestor's `setFocus(true)` hands it down to the node when it was requested outside `init()`, and a list or grid that focused itself while detached takes the focus at the next pass once mounted with content. A `LayoutGroup` lays its children out again when a child grows mid-paint or when a child's `translation` observer calls `boundingRect()`, resuming the interrupted pass as the device does, which fixes a row of buttons drawn on top of each other. A `ButtonGroup` given a new `buttons` array removes all its children and builds new buttons, `buttonFocused` updates as soon as a button gains focus, and removing, replacing or reparenting a focused node leaves nothing focused. A `Group` with no children, or only hidden ones, reports `localBoundingRect()` as `{0,0,0,0}` instead of infinite values, which placed a dialog's button off screen. Requires `brs-engine` v2.7.3 or newer. Read the full release notes below for more details.
+
+### Release Changes
+
+* (rsg) A `LayoutGroup` lays out again a child that grew mid-paint; a `ButtonGroup` rebuilds its children for a new `buttons` array and updates `buttonFocused` at once; removing a focused node leaves nothing focused by [@lvcabral](https://github.com/lvcabral) in [#1350](https://github.com/lvcabral/brs-engine/pull/1350)
+* (rsg) A `LayoutGroup` lays its children out again from a child's `translation` observer, resuming the interrupted pass as the device does by [@lvcabral](https://github.com/lvcabral) in [#1352](https://github.com/lvcabral/brs-engine/pull/1352)
+* (rsg) A node taking focus in a detached tree keeps the scene's focus, fixing a screen left unfocused after an overlay closed by [@lvcabral](https://github.com/lvcabral) in [#1353](https://github.com/lvcabral/brs-engine/pull/1353)
+* (rsg) A `Group` with nothing visible reports an empty `localBoundingRect()` instead of an infinite one by [@lvcabral](https://github.com/lvcabral) in [#1354](https://github.com/lvcabral/brs-engine/pull/1354)
+* (rsg) A focus taken in a detached tree now matches the device: a mounted ancestor hands it down, and a list or grid claims it once mounted with content by [@lvcabral](https://github.com/lvcabral) in [#1355](https://github.com/lvcabral/brs-engine/pull/1355)
+
+[Full Changelog][v0.7.3]
+
 <a name="v0.7.2"></a>
 
 ## [v0.7.2 (beta) - Shadowed Components, Render Tracking and Observer Loops](https://github.com/lvcabral/brs-engine/releases/tag/brs-sg-v0.7.2) - 25 November 2026
@@ -525,6 +541,7 @@ This first alpha delivers the **SceneGraph** runtime as a standalone extension t
   * Media + utility nodes: `Audio`, `Video`, `SoundEffect`, `Task`, `Timer`, `ChannelStore`.
 * Published merged `assets/common.zip` so SceneGraph fonts, locale data, dialogs, and imagery are available through the simulated `common:/` volume in both `brs-engine` and `brs-node` packages.
 
+[v0.7.3]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.2...brs-sg-v0.7.3
 [v0.7.2]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.1...brs-sg-v0.7.2
 [v0.7.1]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.7.0...brs-sg-v0.7.1
 [v0.7.0]: https://github.com/lvcabral/brs-engine/compare/brs-sg-v0.6.2...brs-sg-v0.7.0
