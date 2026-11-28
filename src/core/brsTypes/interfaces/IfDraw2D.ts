@@ -185,19 +185,48 @@ export class IfDraw2D {
     }
 
     /**
-     * Fills a rect of the surface the way DrawRect/DrawLine/DrawPoint do on a device: with alpha blending off
-     * the pixels are replaced with the color, alpha included, on any surface (roScreen, roBitmap, roRegion);
-     * with it on they blend.
+     * Fills a whole-pixel rect of the surface the way DrawRect/DrawLine/DrawPoint do on a device: with alpha
+     * blending off the pixels are replaced with the color, alpha included, on any surface (roScreen, roBitmap,
+     * roRegion); with it on they blend. An opaque fill replaces the pixels it covers either way.
      */
-    private fillPixels(x: number, y: number, w: number, h: number, color: string) {
+    private fillPixels(x: number, y: number, w: number, h: number, rgba: number) {
         const ctx = this.component.getContext();
         const left = this.component.x + x;
         const top = this.component.y + y;
-        if (!this.component.getCanvasAlpha()) {
+        if ((rgba & 0xff) !== 0xff && !this.component.getCanvasAlpha()) {
             ctx.clearRect(left, top, w, h);
         }
-        ctx.fillStyle = color;
+        ctx.fillStyle = rgbaIntToHex(rgba, true);
         ctx.fillRect(left, top, w, h);
+    }
+
+    /**
+     * Replaces the pixels of whole-pixel `runs` with the color, alpha included. One clipped clear and one fill
+     * of a path of all the runs, which is cheaper than clearing and filling each run on its own.
+     */
+    private replacePixelRuns(runs: [number, number, number, number][], rgba: number) {
+        if (runs.length === 0) {
+            return;
+        }
+        const ctx = this.component.getContext();
+        const { x: baseX, y: baseY } = this.component;
+        let [left, top, right, bottom] = [Infinity, Infinity, -Infinity, -Infinity];
+        ctx.beginPath();
+        for (const [x, y, w, h] of runs) {
+            ctx.rect(baseX + x, baseY + y, w, h);
+            left = Math.min(left, x);
+            top = Math.min(top, y);
+            right = Math.max(right, x + w);
+            bottom = Math.max(bottom, y + h);
+        }
+        ctx.save();
+        ctx.clip();
+        ctx.clearRect(baseX + left, baseY + top, right - left, bottom - top);
+        ctx.restore();
+        ctx.fillStyle = rgbaIntToHex(rgba, true);
+        ctx.fill();
+        // Drop the path: node-canvas copies the current path on every later fillRect/clearRect.
+        ctx.beginPath();
     }
 
     doDrawClearedRect(rect: Rect) {
@@ -857,16 +886,13 @@ export class IfDraw2D {
             }
             const [x0, y0, x1, y1] = [xStart.getValue(), yStart.getValue(), xEnd.getValue(), yEnd.getValue()];
             const rgbaValue = rgba.getValue();
-            const color = rgbaIntToHex(rgbaValue, true);
             const rect = axisLineRect(x0, y0, x1, y1);
             if (rect) {
-                this.fillPixels(...rect, color);
+                this.fillPixels(...rect, rgbaValue);
             } else if (!this.component.getCanvasAlpha() && (rgbaValue & 0xff) !== 0xff) {
                 // Exact device pixels: replacing a translucent color can't go through an anti-aliased stroke,
                 // whose partly covered edges would mix the old pixels into the new alpha.
-                for (const run of steppedLineRuns(x0, y0, x1, y1)) {
-                    this.fillPixels(...run, color);
-                }
+                this.replacePixelRuns(steppedLineRuns(x0, y0, x1, y1), rgbaValue);
             } else if (x0 !== x1 || y0 !== y1) {
                 // Diagonal: stroked through pixel centers, so anti-aliased where the device steps it. Its
                 // fully covered pixels get the color in either blending mode; only the edges blend.
@@ -875,7 +901,7 @@ export class IfDraw2D {
                 ctx.beginPath();
                 ctx.moveTo(baseX + x0 + 0.5, baseY + y0 + 0.5);
                 ctx.lineTo(baseX + x1 + 0.5, baseY + y1 + 0.5);
-                ctx.strokeStyle = color;
+                ctx.strokeStyle = rgbaIntToHex(rgbaValue, true);
                 ctx.stroke();
             }
             this.component.makeDirty();
@@ -907,7 +933,7 @@ export class IfDraw2D {
             const w = cx + cw - px;
             const h = cy + ch - py;
             if (w > 0 && h > 0) {
-                this.fillPixels(px, py, w, h, rgbaIntToHex(rgba.getValue(), true));
+                this.fillPixels(px, py, w, h, rgba.getValue());
             }
             this.component.makeDirty();
             return BrsBoolean.True;
@@ -930,13 +956,7 @@ export class IfDraw2D {
             if (!this.component.isDrawable()) {
                 return BrsBoolean.False;
             }
-            this.fillPixels(
-                x.getValue(),
-                y.getValue(),
-                width.getValue(),
-                height.getValue(),
-                rgbaIntToHex(rgba.getValue())
-            );
+            this.fillPixels(x.getValue(), y.getValue(), width.getValue(), height.getValue(), rgba.getValue());
             this.component.makeDirty();
             return BrsBoolean.True;
         },
